@@ -581,6 +581,97 @@ class LaTandaApp {
         this.showAlert('🚧 Edición de perfil en desarrollo', 'info');
     }
     
+    quickDemoLogin() {
+        // Quick demo access without full authentication
+        this.simulateLogin('demo@latanda.online');
+    }
+    
+    showTransactionHistory() {
+        this.showAlert('📊 Historial completo: Últimas 50 transacciones disponibles', 'info');
+    }
+    
+    showJoinGroup() {
+        this.showAlert('🔍 Buscar grupos: Encuentra cooperativas cercanas para unirte', 'info');
+    }
+    
+    showCalculator() {
+        this.showAlert('🧮 Calculadora: Planifica tus metas de ahorro mensual', 'info');
+    }
+    
+    showEducation() {
+        this.showAlert('📚 Educación: Aprende sobre cooperativas y finanzas personales', 'info');
+    }
+    
+    showNotifications() {
+        this.showAlert('🔔 Notificaciones: 5 mensajes nuevos disponibles', 'info');
+    }
+    
+    showSecurity() {
+        this.showAlert('🔒 Seguridad: Configurar autenticación de dos factores', 'info');
+    }
+    
+    showEmergencyContact() {
+        this.showAlert('🚨 Emergencia: +504 0000-0000 | WhatsApp: +504 0000-0001', 'info');
+    }
+    
+    updateNavigationBadges() {
+        // Update navigation badges based on user data
+        const badges = {
+            home: this.notifications.length > 0 ? this.notifications.length.toString() : '',
+            groups: this.groups.filter(g => g.status === 'pending').length > 0 ? '!' : '',
+            payments: this.payments.filter(p => p.status === 'pending').length > 0 ? '!' : '',
+            mia: '', // MIA always available
+            menu: ''
+        };
+        
+        Object.keys(badges).forEach(screen => {
+            const badge = document.getElementById(screen + 'Badge');
+            if (badge) {
+                badge.textContent = badges[screen];
+                badge.classList.toggle('show', badges[screen] !== '');
+            }
+        });
+    }
+    
+    loadScreenData(screenName) {
+        switch(screenName) {
+            case 'home':
+                this.updateDashboard();
+                break;
+            case 'groups':
+                this.renderGroups();
+                break;
+            case 'payments':
+                this.renderPayments();
+                break;
+            case 'mia':
+                this.initializeMIA();
+                break;
+            case 'profile':
+                this.loadProfile();
+                break;
+            case 'menu':
+                this.loadMenuScreen();
+                break;
+        }
+        
+        // Update navigation badges
+        this.updateNavigationBadges();
+    }
+    
+    loadMenuScreen() {
+        // Update menu profile summary
+        if (this.currentUser) {
+            const nameEl = document.getElementById('menuProfileName');
+            const roleEl = document.getElementById('menuProfileRole');
+            const balanceEl = document.getElementById('menuBalance');
+            
+            if (nameEl) nameEl.textContent = this.currentUser.name || 'Usuario Demo';
+            if (roleEl) roleEl.textContent = this.currentUser.userType === 'coordinator' ? 'Coordinador ✅' : 'Miembro Verificado ✅';
+            if (balanceEl) balanceEl.textContent = (this.currentUser.balance || 2500).toLocaleString();
+        }
+    }
+    
     showSettings() {
         this.showAlert('🚧 Configuración en desarrollo', 'info');
     }
