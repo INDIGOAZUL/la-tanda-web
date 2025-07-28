@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda - Acceso al Ecosistema Financiero</title>
+    <meta name="description" content="Accede al ecosistema financiero cooperativo más completo de Honduras">
+    <link rel="stylesheet" href="auth-styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Header del Sistema -->
+        <div class="auth-header">
+            <div class="logo-container">
+                <div class="logo">
+                    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="60" height="60" rx="12" fill="#2E86AB"/>
+                        <rect x="12" y="20" width="36" height="24" rx="2" fill="white"/>
+                        <rect x="15" y="23" width="6" height="18" rx="1" fill="#2E86AB"/>
+                        <rect x="24" y="23" width="6" height="18" rx="1" fill="#2E86AB"/>
+                        <rect x="33" y="23" width="6" height="18" rx="1" fill="#2E86AB"/>
+                        <rect x="42" y="23" width="6" height="18" rx="1" fill="#2E86AB"/>
+                        <rect x="12" y="14" width="36" height="4" rx="2" fill="white"/>
+                    </svg>
+                </div>
+                <h1>La Tanda</h1>
+                <p class="tagline">Ecosistema Financiero Cooperativo</p>
+            </div>
+        </div>
+
+        <!-- Contenedor Principal de Autenticación -->
+        <div class="auth-content">
+            <!-- Pestañas de Login/Registro -->
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Iniciar Sesión</button>
+                <button class="tab-btn" data-tab="register">Crear Cuenta</button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <div id="loginForm" class="auth-form active">
+                <h2>¡Bienvenido de vuelta!</h2>
+                <p class="form-subtitle">Accede a tu ecosistema financiero</p>
+                
+                <form id="loginFormElement" class="form-container">
+                    <div class="input-group">
+                        <label for="loginEmail">Correo Electrónico</label>
+                        <input type="email" id="loginEmail" name="email" required 
+                               placeholder="tu@email.com" value="demo@latanda.online">
+                        <span class="input-error" id="loginEmailError"></span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" name="password" required 
+                               placeholder="••••••••" value="demo123">
+                        <span class="input-error" id="loginPasswordError"></span>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
+                            Mantener sesión iniciada
+                        </label>
+                        <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <span class="btn-text">Iniciar Sesión</span>
+                        <span class="btn-loading">🔄 Verificando...</span>
+                    </button>
+                </form>
+                
+                <!-- Cuenta Demo -->
+                <div class="demo-section">
+                    <h4>🎯 Cuenta de Demostración</h4>
+                    <div class="demo-credentials">
+                        <p><strong>Email:</strong> demo@latanda.online</p>
+                        <p><strong>Contraseña:</strong> demo123</p>
+                    </div>
+                    <button type="button" class="btn-demo" onclick="auth.fillDemoCredentials()">
+                        Usar Cuenta Demo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="registerForm" class="auth-form">
+                <h2>¡Únete al Ecosistema!</h2>
+                <p class="form-subtitle">Crea tu cuenta y comienza a ahorrar</p>
+                
+                <form id="registerFormElement" class="form-container">
+                    <!-- Información Personal -->
+                    <div class="form-section">
+                        <h4>Información Personal</h4>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label for="firstName">Nombre</label>
+                                <input type="text" id="firstName" name="firstName" required 
+                                       placeholder="Tu nombre">
+                                <span class="input-error" id="firstNameError"></span>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="lastName">Apellido</label>
+                                <input type="text" id="lastName" name="lastName" required 
+                                       placeholder="Tu apellido">
+                                <span class="input-error" id="lastNameError"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="registerEmail">Correo Electrónico</label>
+                            <input type="email" id="registerEmail" name="email" required 
+                                   placeholder="tu@email.com">
+                            <span class="input-error" id="registerEmailError"></span>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" name="phone" required 
+                                   placeholder="+504 0000-0000">
+                            <span class="input-error" id="phoneError"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Información de Cuenta -->
+                    <div class="form-section">
+                        <h4>Seguridad de Cuenta</h4>
+                        
+                        <div class="input-group">
+                            <label for="registerPassword">Contraseña</label>
+                            <input type="password" id="registerPassword" name="password" required 
+                                   placeholder="••••••••" minlength="8">
+                            <div class="password-strength" id="passwordStrength"></div>
+                            <span class="input-error" id="registerPasswordError"></span>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="confirmPassword">Confirmar Contraseña</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required 
+                                   placeholder="••••••••">
+                            <span class="input-error" id="confirmPasswordError"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tipo de Usuario -->
+                    <div class="form-section">
+                        <h4>Tipo de Participación</h4>
+                        <div class="user-type-selection">
+                            <label class="user-type-card">
+                                <input type="radio" name="userType" value="member" checked>
+                                <div class="card-content">
+                                    <div class="card-icon">
+                                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L12 1L3 7V9C3 14.55 6.84 19.74 12 21C17.16 19.74 21 14.55 21 9Z"/>
+                                        </svg>
+                                    </div>
+                                    <h5>Miembro</h5>
+                                    <p>Participa en grupos de ahorro</p>
+                                </div>
+                            </label>
+                            
+                            <label class="user-type-card">
+                                <input type="radio" name="userType" value="coordinator">
+                                <div class="card-content">
+                                    <div class="card-icon">
+                                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M5 16L3 5H1V3H4L6 14H18L20 7H8V5H21.68C22 5 22.2 5.2 22.2 5.5C22.2 5.6 22.2 5.7 22.1 5.8L19.3 15.7C19.1 16.2 18.6 16.5 18 16.5H6C5.4 16.5 4.9 16.2 4.7 15.7L2 5H0V3H3L5 16ZM6 23C7.1 23 8 22.1 8 21S7.1 19 6 19 4 19.9 4 21 4.9 23 6 23ZM20 23C21.1 23 22 22.1 22 21S21.1 19 20 19 18 19.9 18 21 18.9 23 20 23Z"/>
+                                        </svg>
+                                    </div>
+                                    <h5>Coordinador</h5>
+                                    <p>Lidera grupos y gana comisiones</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Términos y Condiciones -->
+                    <div class="form-section">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="termsAccepted" required>
+                            <span class="checkmark"></span>
+                            Acepto los <a href="#" class="terms-link">Términos y Condiciones</a> 
+                            y la <a href="#" class="terms-link">Política de Privacidad</a>
+                        </label>
+                        
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="marketingAccepted">
+                            <span class="checkmark"></span>
+                            Deseo recibir ofertas y actualizaciones por email
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <span class="btn-text">Crear Mi Cuenta</span>
+                        <span class="btn-loading">🔄 Creando cuenta...</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer de Información -->
+        <div class="auth-footer">
+            <div class="features-preview">
+                <h4>🌟 ¿Por qué elegir La Tanda?</h4>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <span class="feature-icon">🔒</span>
+                        <span>Seguridad Bancaria</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💰</span>
+                        <span>Rentabilidad Garantizada</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">👥</span>
+                        <span>Comunidad Confiable</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📱</span>
+                        <span>Tecnología Avanzada</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <p>🏛️ La Tanda - Ecosistema Financiero Cooperativo de Honduras</p>
+                <p>📞 +504 0000-0000 | 📧 soporte@latanda.online</p>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Procesando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="auth.js"></script>
+</body>
+</html>
