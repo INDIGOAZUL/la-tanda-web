@@ -3,585 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Tanda v2.0 - Complete Mobile Experience</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
-            min-height: 100vh;
-            color: white;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            max-width: 414px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: rgba(0,0,0,0.1);
-            position: relative;
-        }
-        
-        .status-bar {
-            height: 44px;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .app-header {
-            text-align: center;
-            padding: 30px 20px;
-            background: linear-gradient(135deg, #2E86AB, #A23B72);
-        }
-        
-        .app-title {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        
-        .version-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-block;
-        }
-        
-        .tab-navigation {
-            display: flex;
-            background: rgba(255,255,255,0.95);
-            border-top: 1px solid #e0e0e0;
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 414px;
-            z-index: 100;
-        }
-        
-        .nav-item {
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #666;
-            background: transparent;
-            border: none;
-        }
-        
-        .nav-item.active {
-            color: #2E86AB;
-            background: rgba(46, 134, 171, 0.1);
-        }
-        
-        .nav-icon {
-            font-size: 20px;
-            display: block;
-            margin-bottom: 4px;
-        }
-        
-        .nav-label {
-            font-size: 10px;
-            font-weight: 500;
-        }
-        
-        .screen {
-            display: none;
-            padding: 20px 20px 80px 20px;
-            min-height: calc(100vh - 44px - 120px);
-        }
-        
-        .screen.active {
-            display: block;
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        .feature-card {
-            background: rgba(255,255,255,0.95);
-            color: #333;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-        }
-        
-        .feature-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2E86AB;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .feature-desc {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.4;
-        }
-        
-        .auth-form {
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 16px;
-        }
-        
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: #2E86AB;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary:hover {
-            background: #A23B72;
-            transform: translateY(-1px);
-        }
-        
-        .api-status {
-            position: fixed;
-            top: 60px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            z-index: 200;
-        }
-        
-        .success { color: #4CAF50; }
-        .loading { color: #FFC107; }
-        .error { color: #f44336; }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background: rgba(255,255,255,0.9);
-            color: #333;
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2E86AB;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-        
-        .chat-message {
-            background: rgba(255,255,255,0.9);
-            padding: 12px 16px;
-            border-radius: 18px;
-            margin-bottom: 8px;
-            max-width: 80%;
-        }
-        
-        .message-user {
-            background: #2E86AB;
-            color: white;
-            margin-left: auto;
-        }
-        
-        .message-mia {
-            background: rgba(255,255,255,0.9);
-            color: #333;
-        }
-    </style>
+    <title>La Tanda v2.0 - Ecosistema Financiero Completo</title>
+    <meta name="description" content="Plataforma cooperativa de ahorro inteligente para Honduras - La Tanda v2.0">
+    <meta name="keywords" content="cooperativa, ahorro, Honduras, fintech, La Tanda">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Status Bar -->
         <div class="status-bar">
-            <span>La Tanda v2.0</span>
+            <span>🤝 La Tanda v2.0</span>
             <span id="currentTime">--:--</span>
         </div>
         
         <!-- App Header -->
         <div class="app-header">
-            <div class="app-title">🤝 La Tanda</div>
-            <div class="version-badge">v2.0 - 85 Endpoints</div>
+            <div class="app-title">🏛️ La Tanda</div>
+            <div class="version-badge">v2.0 - Ecosistema Completo</div>
         </div>
         
         <!-- API Status Indicator -->
-        <div id="apiStatus" class="api-status loading">🔄 Conectando...</div>
+        <div id="apiStatus" class="api-status loading">🔄 Iniciando...</div>
+        
+        <!-- Alerts Container -->
+        <div id="alertsContainer"></div>
         
         <!-- Authentication Screen -->
         <div id="authScreen" class="screen active">
             <div class="auth-form">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Iniciar Sesión</h2>
-                <input type="email" class="form-input" placeholder="Email" id="emailInput" value="demo@latanda.online">
-                <input type="password" class="form-input" placeholder="Contraseña" id="passwordInput" value="demo123">
-                <button class="btn-primary" onclick="handleLogin()">Ingresar</button>
-                <div style="text-align: center; margin-top: 16px; color: #666; font-size: 14px;">
-                    Demo: demo@latanda.online / demo123
+                <h2>🔐 Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <input type="email" class="form-input" placeholder="Email" id="emailInput" value="demo@latanda.online" required>
+                    <input type="password" class="form-input" placeholder="Contraseña" id="passwordInput" value="demo123" required>
+                    <button type="submit" class="btn-primary">Ingresar</button>
+                </form>
+                <div class="demo-info">
+                    <p>🎯 <strong>Cuenta Demo:</strong></p>
+                    <p>📧 demo@latanda.online</p>
+                    <p>🔑 demo123</p>
                 </div>
             </div>
             
             <div class="feature-card">
-                <div class="feature-title">🔐 Sistema de Autenticación</div>
-                <div class="feature-desc">Login seguro con tokens JWT, gestión de sesiones y modo demo para pruebas.</div>
+                <div class="feature-title">🌟 Características Principales</div>
+                <div class="feature-desc">
+                    <ul>
+                        <li>💰 Gestión inteligente de ahorros</li>
+                        <li>👥 Grupos cooperativos organizados</li>
+                        <li>📱 Interfaz móvil responsiva</li>
+                        <li>🤖 Asistente MIA con IA</li>
+                        <li>🔒 Seguridad bancaria</li>
+                    </ul>
+                </div>
             </div>
         </div>
         
         <!-- Home Screen -->
         <div id="homeScreen" class="screen">
+            <div class="welcome-section">
+                <h2>👋 ¡Bienvenido!</h2>
+                <p id="welcomeMessage">Dashboard de tu ecosistema financiero</p>
+            </div>
+            
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number">L1.68M+</div>
-                    <div class="stat-label">Movidos Exitosamente</div>
+                    <div class="stat-number">L2,500</div>
+                    <div class="stat-label">Balance Actual</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">40+</div>
-                    <div class="stat-label">Familias Beneficiadas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">25+</div>
+                    <div class="stat-number">3</div>
                     <div class="stat-label">Grupos Activos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">0</div>
-                    <div class="stat-label">Incidentes</div>
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Transacciones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Notificaciones</div>
                 </div>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/groups')">
-                <div class="feature-title">🏠 Panel Principal</div>
-                <div class="feature-desc">Dashboard completo con estadísticas en tiempo real, notificaciones push y resumen de actividades.</div>
+            <div class="quick-actions">
+                <h3>⚡ Acciones Rápidas</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="app.switchScreen('groups')">
+                        <span class="action-icon">👥</span>
+                        <span>Ver Grupos</span>
+                    </button>
+                    <button class="action-btn" onclick="app.switchScreen('payments')">
+                        <span class="action-icon">💳</span>
+                        <span>Hacer Pago</span>
+                    </button>
+                    <button class="action-btn" onclick="app.switchScreen('mia')">
+                        <span class="action-icon">🤖</span>
+                        <span>Consultar MIA</span>
+                    </button>
+                    <button class="action-btn" onclick="app.showBalance()">
+                        <span class="action-icon">💰</span>
+                        <span>Ver Balance</span>
+                    </button>
+                </div>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/notifications/send')">
-                <div class="feature-title">🔔 Notificaciones Push</div>
-                <div class="feature-desc">Sistema inteligente de notificaciones con personalización, recordatorios y alertas importantes.</div>
+            <div class="recent-activity">
+                <h3>📊 Actividad Reciente</h3>
+                <div id="recentActivities">
+                    <div class="activity-item">
+                        <span class="activity-icon">💰</span>
+                        <div class="activity-details">
+                            <p>Aporte a Cooperativa Central</p>
+                            <small>Hace 2 días - L500</small>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">👥</span>
+                        <div class="activity-details">
+                            <p>Te uniste a Grupo Familiar</p>
+                            <small>Hace 1 semana</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
         <!-- Groups Screen -->
         <div id="groupsScreen" class="screen">
-            <div class="feature-card" onclick="testAPI('/api/registration/groups/list')">
-                <div class="feature-title">👥 Gestión de Grupos</div>
-                <div class="feature-desc">Crear, unirse y administrar grupos de ahorro. Sistema completo de coordinación.</div>
+            <div class="screen-header">
+                <h2>👥 Mis Grupos</h2>
+                <button class="btn-secondary" id="createGroupBtn">➕ Crear Grupo</button>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/registration/groups/create')">
-                <div class="feature-title">➕ Crear Grupo</div>
-                <div class="feature-desc">Herramientas avanzadas para crear y configurar nuevos grupos de ahorro con parámetros personalizados.</div>
+            <div id="groupsList" class="groups-container">
+                <!-- Groups will be loaded here -->
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/registration/coordinator/apply')">
-                <div class="feature-title">👑 Ser Coordinador</div>
-                <div class="feature-desc">Aplicar para rol de coordinador. Ingresos de L2,000-8,000+ mensuales garantizados.</div>
+            <div class="feature-card">
+                <div class="feature-title">💡 ¿Sabías que?</div>
+                <div class="feature-desc">
+                    Como coordinador de grupo puedes ganar L2,000-8,000+ mensuales. 
+                    <button class="btn-link" onclick="app.showCoordinatorInfo()">Más información</button>
+                </div>
             </div>
         </div>
         
         <!-- Payments Screen -->
         <div id="paymentsScreen" class="screen">
-            <div class="feature-card" onclick="testAPI('/api/payments/methods/available')">
-                <div class="feature-title">💳 Métodos de Pago</div>
-                <div class="feature-desc">Integración completa con Tigo Money, Claro Money y transferencias bancarias.</div>
+            <div class="screen-header">
+                <h2>💳 Pagos y Transacciones</h2>
+                <button class="btn-secondary" id="processPaymentBtn">💰 Nuevo Pago</button>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/payments/process/initiate')">
-                <div class="feature-title">💰 Procesar Pagos</div>
-                <div class="feature-desc">Sistema seguro de procesamiento de pagos con verificación automática y comprobantes.</div>
+            <div class="payment-methods">
+                <h3>💳 Métodos Disponibles</h3>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="app.selectPaymentMethod('tigo')">
+                        <div class="method-icon">📱</div>
+                        <div class="method-name">Tigo Money</div>
+                    </div>
+                    <div class="method-card" onclick="app.selectPaymentMethod('claro')">
+                        <div class="method-icon">📞</div>
+                        <div class="method-name">Claro Money</div>
+                    </div>
+                    <div class="method-card" onclick="app.selectPaymentMethod('bank')">
+                        <div class="method-icon">🏦</div>
+                        <div class="method-name">Transferencia</div>
+                    </div>
+                </div>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/payments/receipt/upload')">
-                <div class="feature-title">📄 Subir Comprobantes</div>
-                <div class="feature-desc">Upload inteligente de comprobantes con OCR y validación automática.</div>
+            <div id="paymentsList" class="payments-container">
+                <!-- Payments will be loaded here -->
             </div>
         </div>
         
         <!-- MIA Screen -->
         <div id="miaScreen" class="screen">
-            <div style="height: 300px; overflow-y: auto; margin-bottom: 16px; padding: 16px; background: rgba(255,255,255,0.1); border-radius: 12px;" id="chatContainer">
+            <div class="screen-header">
+                <h2>🤖 MIA - Asistente Inteligente</h2>
+                <div class="mia-status">🟢 En línea</div>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
                 <div class="chat-message message-mia">
                     ¡Hola! Soy MIA, tu asistente inteligente de La Tanda. ¿En qué puedo ayudarte hoy?
                 </div>
             </div>
             
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." style="flex: 1; padding: 12px; border: 1px solid #e0e0e0; border-radius: 20px;">
-                <button onclick="sendMessage()" style="padding: 12px 16px; background: #2E86AB; color: white; border: none; border-radius: 20px;">Enviar</button>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." class="chat-input">
+                <button onclick="app.sendMessage()" class="send-btn">📤</button>
             </div>
             
-            <div class="feature-card" style="margin-top: 16px;" onclick="testMIA()">
-                <div class="feature-title">🤖 MIA AI Assistant</div>
-                <div class="feature-desc">Asistente inteligente con IA avanzada, integración con Groq API y respuestas contextuales.</div>
+            <div class="quick-questions">
+                <h4>💬 Preguntas Frecuentes</h4>
+                <div class="questions-grid">
+                    <button class="question-btn" onclick="app.askMIA('balance')">💰 Mi balance</button>
+                    <button class="question-btn" onclick="app.askMIA('grupos')">👥 Mis grupos</button>
+                    <button class="question-btn" onclick="app.askMIA('pago')">💳 Hacer pago</button>
+                    <button class="question-btn" onclick="app.askMIA('ayuda')">❓ Ayuda</button>
+                </div>
             </div>
         </div>
         
         <!-- Profile Screen -->
         <div id="profileScreen" class="screen">
-            <div class="feature-card">
-                <div class="feature-title">👤 Perfil de Usuario</div>
-                <div class="feature-desc">Gestión completa de perfil, configuraciones de seguridad y preferencias personalizadas.</div>
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h2 id="profileName">Usuario Demo</h2>
+                    <p id="profileEmail">demo@latanda.online</p>
+                    <p class="profile-role">Miembro Verificado ✅</p>
+                </div>
             </div>
             
-            <div class="feature-card" onclick="testAPI('/api/verification/initiate')">
-                <div class="feature-title">✅ Verificación KYC</div>
-                <div class="feature-desc">Sistema completo de verificación de identidad con documentos, biometría y validación automática.</div>
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <span class="stat-label">Miembro desde</span>
+                    <span class="stat-value">Enero 2024</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-label">Grupos</span>
+                    <span class="stat-value">3 activos</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-label">Transacciones</span>
+                    <span class="stat-value">12 completadas</span>
+                </div>
             </div>
             
-            <div class="feature-card" onclick="handleLogout()">
-                <div class="feature-title">🚪 Cerrar Sesión</div>
-                <div class="feature-desc">Cerrar sesión de forma segura manteniendo datos sincronizados.</div>
+            <div class="profile-actions">
+                <button class="profile-btn" onclick="app.showEditProfile()">
+                    <span class="btn-icon">✏️</span>
+                    Editar Perfil
+                </button>
+                <button class="profile-btn" onclick="app.showSettings()">
+                    <span class="btn-icon">⚙️</span>
+                    Configuración
+                </button>
+                <button class="profile-btn" onclick="app.showHelp()">
+                    <span class="btn-icon">❓</span>
+                    Ayuda y Soporte
+                </button>
+                <button class="profile-btn danger" onclick="app.handleLogout()">
+                    <span class="btn-icon">🚪</span>
+                    Cerrar Sesión
+                </button>
             </div>
         </div>
         
         <!-- Tab Navigation -->
         <div class="tab-navigation">
-            <button class="nav-item" onclick="switchScreen('home')">
+            <button class="nav-item" data-screen="home">
                 <span class="nav-icon">🏠</span>
                 <span class="nav-label">Inicio</span>
             </button>
-            <button class="nav-item" onclick="switchScreen('groups')">
+            <button class="nav-item" data-screen="groups">
                 <span class="nav-icon">👥</span>
                 <span class="nav-label">Grupos</span>
             </button>
-            <button class="nav-item" onclick="switchScreen('payments')">
+            <button class="nav-item" data-screen="payments">
                 <span class="nav-icon">💳</span>
                 <span class="nav-label">Pagos</span>
             </button>
-            <button class="nav-item" onclick="switchScreen('mia')">
+            <button class="nav-item" data-screen="mia">
                 <span class="nav-icon">🤖</span>
                 <span class="nav-label">MIA</span>
             </button>
-            <button class="nav-item" onclick="switchScreen('profile')">
+            <button class="nav-item" data-screen="profile">
                 <span class="nav-icon">👤</span>
                 <span class="nav-label">Perfil</span>
             </button>
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'https://api.latanda.online';
-        let isAuthenticated = false;
-        
-        // Initialize app
-        window.onload = function() {
-            updateTime();
-            setInterval(updateTime, 1000);
-            setTimeout(testAllAPIs, 2000);
-        };
-        
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = 
-                now.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        function updateAPIStatus(message, type = 'loading') {
-            const statusEl = document.getElementById('apiStatus');
-            statusEl.textContent = message;
-            statusEl.className = `api-status ${type}`;
-        }
-        
-        async function testAllAPIs() {
-            updateAPIStatus('🔄 Probando 85 endpoints...', 'loading');
-            
-            const tests = [
-                { name: 'Authentication', url: `${API_BASE}/api/sofia-registration` },
-                { name: 'Groups', url: `${API_BASE}/api/groups` },
-                { name: 'Payments', url: `${API_BASE}/api/payments/methods/available` },
-                { name: 'Notifications', url: `${API_BASE}/api/notifications/send` },
-                { name: 'Verification', url: `${API_BASE}/api/verification/initiate` }
-            ];
-            
-            let successCount = 0;
-            
-            for (let test of tests) {
-                try {
-                    const response = await fetch(test.url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ test: true })
-                    });
-                    
-                    if (response.status < 500) {
-                        successCount++;
-                        console.log(`✅ ${test.name}: Connected`);
-                    }
-                } catch (error) {
-                    successCount++; // Count as success if server responds
-                    console.log(`✅ ${test.name}: Server detected`);
-                }
-            }
-            
-            updateAPIStatus(`✅ Sistema v2.0 operacional (${successCount}/5)`, 'success');
-        }
-        
-        async function testAPI(endpoint) {
-            const fullUrl = API_BASE + endpoint;
-            updateAPIStatus(`🔄 Probando ${endpoint}...`, 'loading');
-            
-            try {
-                const response = await fetch(fullUrl, {
-                    method: endpoint.includes('list') || endpoint.includes('groups') ? 'GET' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: endpoint.includes('list') || endpoint.includes('groups') ? 
-                        undefined : JSON.stringify({ test: true, user_id: 'demo_user' })
-                });
-                
-                updateAPIStatus(`✅ ${endpoint} - Conectado`, 'success');
-                alert(`✅ Endpoint funcionando!\n\nURL: ${endpoint}\nStatus: ${response.status}\nSistema: Operacional`);
-                
-            } catch (error) {
-                updateAPIStatus(`✅ ${endpoint} - Servidor detectado`, 'success');
-                alert(`✅ Servidor La Tanda detectado!\n\nEndpoint: ${endpoint}\nEstado: API disponible\nSistema v2.0: Funcionando`);
-            }
-        }
-        
-        function handleLogin() {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            
-            if (email && password) {
-                updateAPIStatus('🔄 Autenticando...', 'loading');
-                
-                setTimeout(() => {
-                    isAuthenticated = true;
-                    updateAPIStatus('✅ Usuario autenticado', 'success');
-                    switchScreen('home');
-                    alert('🎉 ¡Bienvenido a La Tanda v2.0!\n\n✅ Autenticación exitosa\n✅ 85 endpoints disponibles\n✅ Todas las funciones activadas');
-                }, 1500);
-            }
-        }
-        
-        function handleLogout() {
-            isAuthenticated = false;
-            switchScreen('auth');
-            updateAPIStatus('🔄 Cerrando sesión...', 'loading');
-            setTimeout(() => {
-                updateAPIStatus('✅ Sesión cerrada', 'success');
-            }, 1000);
-        }
-        
-        function switchScreen(screenName) {
-            if (screenName !== 'auth' && !isAuthenticated) {
-                alert('⚠️ Debes iniciar sesión primero');
-                return;
-            }
-            
-            // Hide all screens
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(screen => screen.classList.remove('active'));
-            
-            // Remove active from nav items
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => item.classList.remove('active'));
-            
-            // Show selected screen
-            const targetScreen = screenName === 'auth' ? 'authScreen' : screenName + 'Screen';
-            document.getElementById(targetScreen).classList.add('active');
-            
-            // Update active nav item
-            if (screenName !== 'auth') {
-                event.target.closest('.nav-item').classList.add('active');
-            }
-        }
-        
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            
-            if (message) {
-                const chatContainer = document.getElementById('chatContainer');
-                
-                // Add user message
-                const userMsg = document.createElement('div');
-                userMsg.className = 'chat-message message-user';
-                userMsg.textContent = message;
-                chatContainer.appendChild(userMsg);
-                
-                // Simulate MIA response
-                setTimeout(() => {
-                    const miaMsg = document.createElement('div');
-                    miaMsg.className = 'chat-message message-mia';
-                    miaMsg.textContent = getMIAResponse(message);
-                    chatContainer.appendChild(miaMsg);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }, 1000);
-                
-                input.value = '';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        }
-        
-        function getMIAResponse(message) {
-            const responses = {
-                'hola': '¡Hola! Soy MIA, tu asistente de La Tanda v2.0. ¿Cómo puedo ayudarte?',
-                'grupos': 'Tenemos 25+ grupos activos. ¿Te interesa unirte como miembro o ser coordinador?',
-                'coordinador': '¡Excelente! Como coordinador puedes ganar L2,000-8,000+ mensuales. ¿Quieres aplicar?',
-                'pagos': 'Aceptamos Tigo Money, Claro Money y transferencias bancarias. ¿Qué método prefieres?',
-                'ayuda': 'Estoy aquí para ayudarte con grupos, pagos, verificación y más. ¿Qué necesitas?'
-            };
-            
-            const key = Object.keys(responses).find(k => message.toLowerCase().includes(k));
-            return key ? responses[key] : 'Entiendo tu consulta. Nuestro sistema v2.0 con 85 endpoints puede ayudarte con eso. ¿Podrías ser más específico?';
-        }
-        
-        function testMIA() {
-            alert('🤖 MIA AI Assistant v2.0\n\n✅ Integración con Groq API\n✅ Respuestas contextuales\n✅ 85 endpoints disponibles\n✅ Procesamiento en tiempo real\n\nPrueba escribiendo: hola, grupos, coordinador, pagos, ayuda');
-        }
-        
-        // Allow Enter key in chat
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && e.target.id === 'chatInput') {
-                sendMessage();
-            }
-        });
-    </script>
+    <!-- Load JavaScript -->
+    <script src="app.js"></script>
 </body>
 </html>
