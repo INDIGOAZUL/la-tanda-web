@@ -8,6 +8,7 @@ class TandasManager {
     constructor() {
         this.API_BASE = 'https://api.latanda.online';
         this.currentUser = null;
+        this.userKYCStatus = null;
         this.currentPage = 1;
         this.itemsPerPage = 12;
         this.totalPages = 1;
@@ -27,10 +28,12 @@ class TandasManager {
     
     async init() {
         this.loadUserData();
+        await this.loadUserKYCStatus();
         this.setupEventListeners();
         await this.loadGroups();
         this.setupSearchFunctionality();
         this.loadSavedSearches();
+        this.updateUIBasedOnKYC();
     }
     
     loadUserData() {
@@ -38,6 +41,122 @@ class TandasManager {
         if (authData) {
             this.currentUser = JSON.parse(authData).user;
         }
+    }
+    
+    async loadUserKYCStatus() {
+        if (!this.currentUser) return;
+        
+        try {
+            const kycData = localStorage.getItem(`kyc_status_${this.currentUser.id}`);
+            
+            if (kycData) {
+                this.userKYCStatus = JSON.parse(kycData);
+            } else {
+                // Usuario sin KYC completo
+                this.userKYCStatus = {
+                    completed: false,
+                    verification_level: 0,
+                    restrictions: {
+                        max_tanda_amount: 0,
+                        can_coordinate: false,
+                        can_join_premium: false,
+                        can_access_loans: false,
+                        daily_transaction_limit: 0
+                    }
+                };
+            }
+        } catch (error) {
+            console.error('Error loading KYC status:', error);
+            this.userKYCStatus = { completed: false, verification_level: 0 };
+        }
+    }
+    
+    updateUIBasedOnKYC() {
+        if (!this.userKYCStatus || !this.userKYCStatus.completed) {
+            this.showKYCRequiredBanner();
+            return;
+        }
+        
+        // Actualizar UI según nivel de verificación
+        this.addKYCLevelIndicator();
+        this.filterGroupsByKYCLevel();
+    }
+    
+    showKYCRequiredBanner() {
+        const container = document.querySelector('.tandas-card .card-header');
+        if (!container) return;
+        
+        const banner = document.createElement('div');
+        banner.className = 'kyc-required-banner';
+        banner.innerHTML = `
+            <div class="kyc-banner-content">
+                <div class="kyc-banner-icon">🔒</div>
+                <div class="kyc-banner-text">
+                    <h4>Verificación KYC Requerida</h4>
+                    <p>Completa tu verificación de identidad para acceder a todas las funcionalidades de tandas</p>
+                </div>
+                <button class="kyc-banner-btn" onclick="window.location.href='kyc-registration.html'">
+                    Completar KYC
+                </button>
+            </div>
+        `;
+        
+        banner.style.cssText = `
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        `;
+        
+        container.parentNode.insertBefore(banner, container.nextSibling);
+    }
+    
+    addKYCLevelIndicator() {
+        if (!this.userKYCStatus.verification_details) return;
+        
+        const header = document.querySelector('.tandas-card .card-header h3');
+        if (!header) return;
+        
+        const levelBadge = document.createElement('span');
+        levelBadge.className = 'kyc-level-badge';
+        levelBadge.innerHTML = this.userKYCStatus.verification_details.badge;
+        levelBadge.style.cssText = `
+            margin-left: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        `;
+        
+        header.appendChild(levelBadge);
+    }
+    
+    filterGroupsByKYCLevel() {
+        // Esta función filtrará los grupos mostrados según las restricciones KYC
+        if (!this.userKYCStatus || !this.userKYCStatus.restrictions) return;
+        
+        const maxAmount = this.userKYCStatus.restrictions.max_tanda_amount;
+        
+        // Filtrar grupos mock según restricciones
+        if (maxAmount && maxAmount > 0) {
+            this.mockGroups = this.mockGroups.map(group => {
+                if (group.contribution_amount > maxAmount) {
+                    group.kyc_restricted = true;
+                    group.kyc_required_level = this.getRequiredKYCLevel(group.contribution_amount);
+                }
+                return group;
+            });
+        }
+    }
+    
+    getRequiredKYCLevel(amount) {
+        if (amount <= 500) return 1;
+        if (amount <= 2000) return 2;
+        if (amount <= 5000) return 3;
+        return 4;
     }
     
     setupEventListeners() {
@@ -712,6 +831,156 @@ class TandasManager {
         `;
     }
     
+    checkKYCRequirements(group) {
+        if (!this.userKYCStatus || !this.userKYCStatus.completed) {
+            return {
+                allowed: false,
+                reason: 'kyc_required',
+                message: 'Debes completar tu verificación KYC para unirte a grupos',
+                current_level: 0,
+                required_level: this.getRequiredKYCLevel(group.contribution_amount)
+            };
+        }
+        
+        const userLevel = this.userKYCStatus.verification_level;
+        const requiredLevel = this.getRequiredKYCLevel(group.contribution_amount);
+        
+        if (userLevel < requiredLevel) {
+            return {
+                allowed: false,
+                reason: 'insufficient_kyc_level',
+                message: `Este grupo requiere verificación nivel ${requiredLevel}. Tu nivel actual es ${userLevel}`,
+                current_level: userLevel,
+                required_level: requiredLevel
+            };
+        }
+        
+        // Verificar si puede coordinar (para grupos que lo requieran)
+        if (group.requires_coordination && !this.userKYCStatus.restrictions.can_coordinate) {
+            return {
+                allowed: false,
+                reason: 'cannot_coordinate',
+                message: 'Necesitas verificación nivel 2+ para coordinar grupos',
+                current_level: userLevel,
+                required_level: 2
+            };
+        }
+        
+        return { allowed: true };
+    }
+    
+    showKYCRestrictionModal(group, kycCheck) {
+        const modal = document.createElement('div');
+        modal.className = 'kyc-restriction-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        `;
+        
+        const levelNames = {
+            1: '🥉 Bronce',
+            2: '🥈 Plata', 
+            3: '🥇 Oro',
+            4: '💎 Diamante'
+        };
+        
+        modal.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+                border: 2px solid #fca5a5;
+                border-radius: 1.5rem;
+                padding: 2rem;
+                max-width: 400px;
+                text-align: center;
+                animation: modalSlideIn 0.3s ease-out;
+            ">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                <h3 style="color: #dc2626; margin: 0 0 1rem 0; font-size: 1.25rem;">
+                    Verificación KYC Requerida
+                </h3>
+                
+                <div style="
+                    background: white;
+                    border-radius: 0.75rem;
+                    padding: 1rem;
+                    margin-bottom: 1.5rem;
+                    border: 1px solid #fca5a5;
+                ">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #374151;">📊 ${group.name}</h4>
+                    <p style="margin: 0 0 0.75rem 0; color: #6b7280; font-size: 0.9rem;">
+                        Contribución: L. ${group.contribution_amount.toLocaleString()}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 0.75rem; color: #9ca3af;">Tu nivel:</span>
+                            <div style="font-weight: 600; color: #dc2626;">
+                                ${levelNames[kycCheck.current_level] || '❌ Sin verificar'}
+                            </div>
+                        </div>
+                        <div style="color: #d1d5db;">→</div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: #9ca3af;">Requiere:</span>
+                            <div style="font-weight: 600; color: #059669;">
+                                ${levelNames[kycCheck.required_level]}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p style="margin: 0 0 1.5rem 0; color: #6b7280; line-height: 1.5;">
+                    ${kycCheck.message}
+                </p>
+                
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                            style="
+                                flex: 1;
+                                padding: 0.75rem;
+                                background: #f3f4f6;
+                                border: none;
+                                border-radius: 0.5rem;
+                                color: #6b7280;
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">
+                        Cancelar
+                    </button>
+                    <button onclick="window.location.href='kyc-registration.html'" 
+                            style="
+                                flex: 2;
+                                padding: 0.75rem;
+                                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                                border: none;
+                                border-radius: 0.5rem;
+                                color: white;
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">
+                        ${kycCheck.current_level === 0 ? 'Completar KYC' : 'Mejorar Verificación'}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Remover modal al hacer clic fuera
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+    
     /**
      * ACCIONES DE GRUPOS
      */
@@ -720,6 +989,13 @@ class TandasManager {
             const group = this.mockGroups.find(g => g.id === groupId);
             if (!group) {
                 this.showNotification('Grupo no encontrado', 'error');
+                return;
+            }
+            
+            // Verificar restricciones KYC PRIMERO
+            const kycCheck = this.checkKYCRequirements(group);
+            if (!kycCheck.allowed) {
+                this.showKYCRestrictionModal(group, kycCheck);
                 return;
             }
             

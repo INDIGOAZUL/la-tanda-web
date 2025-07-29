@@ -731,12 +731,234 @@ class LaTandaKYCSystem {
         }, 1000);
     }
     
-    continueToNext() {
+    async continueToNext() {
         if (this.currentStep < this.totalSteps) {
             this.nextStep();
         } else {
-            // Redirect to dashboard
-            window.location.href = 'web3-dashboard.html';
+            // KYC completado - guardar estado y redireccionar
+            await this.completeKYCProcess();
+        }
+    }
+    
+    async completeKYCProcess() {
+        try {
+            this.showNotification('Procesando verificación KYC...', 'info');
+            
+            // Calcular nivel de verificación basado en datos completados
+            const verificationLevel = this.calculateVerificationLevel();
+            
+            // Obtener información del usuario actual
+            const authData = localStorage.getItem('laTandaWeb3Auth') || sessionStorage.getItem('laTandaWeb3Auth');
+            const currentUser = authData ? JSON.parse(authData).user : null;
+            
+            if (!currentUser) {
+                throw new Error('Usuario no autenticado');
+            }
+            
+            // Crear objeto KYC completo
+            const kycCompletionData = {
+                user_id: currentUser.id,
+                completed: true,
+                completion_date: new Date().toISOString(),
+                verification_level: verificationLevel,
+                personal_info: {
+                    full_name: this.formData.fullName,
+                    date_of_birth: this.formData.dateOfBirth,
+                    gender: this.formData.gender,
+                    nationality: this.formData.nationality,
+                    occupation: this.formData.occupation,
+                    address: this.formData.address,
+                    phone: this.formData.phone,
+                    email: this.formData.email
+                },
+                documents: {
+                    identity_document: !!this.uploadedFiles.identity,
+                    proof_of_address: !!this.uploadedFiles.address,
+                    income_proof: !!this.uploadedFiles.income
+                },
+                biometric_completed: this.biometricData.completed || false,
+                verification_details: this.getVerificationDetails(verificationLevel),
+                restrictions: this.getAccessRestrictions(verificationLevel)
+            };
+            
+            // Guardar estado KYC localmente
+            localStorage.setItem(`kyc_status_${currentUser.id}`, JSON.stringify(kycCompletionData));
+            
+            // Simular envío al servidor
+            await this.submitKYCToServer(kycCompletionData);
+            
+            // Mostrar resumen de verificación
+            this.showKYCCompletionSummary(verificationLevel);
+            
+            // Redireccionar después de 3 segundos
+            setTimeout(() => {
+                window.location.href = 'web3-dashboard.html';
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Error completing KYC:', error);
+            this.showNotification('Error al completar KYC: ' + error.message, 'error');
+        }
+    }
+    
+    calculateVerificationLevel() {
+        let level = 1; // Nivel base por completar registro
+        
+        // Nivel 2: Documentos de identidad subidos
+        if (this.uploadedFiles.identity && this.uploadedFiles.address) {
+            level = 2;
+        }
+        
+        // Nivel 3: Verificación biométrica completada
+        if (this.biometricData.completed && level >= 2) {
+            level = 3;
+        }
+        
+        // Nivel 4: Todos los documentos + biométrica + prueba de ingresos
+        if (this.uploadedFiles.income && level >= 3) {
+            level = 4;
+        }
+        
+        return level;
+    }
+    
+    getVerificationDetails(level) {
+        const details = {
+            1: {
+                title: 'Verificación Básica',
+                description: 'Información personal completada',
+                access: 'Tandas básicas hasta L.500',
+                badge: '🥉 Bronce'
+            },
+            2: {
+                title: 'Verificación Estándar', 
+                description: 'Información + Documentos de identidad',
+                access: 'Tandas hasta L.2,000 y crear grupos',
+                badge: '🥈 Plata'
+            },
+            3: {
+                title: 'Verificación Avanzada',
+                description: 'Documentos + Verificación biométrica',
+                access: 'Tandas hasta L.5,000 y grupos premium',
+                badge: '🥇 Oro'
+            },
+            4: {
+                title: 'Verificación Premium',
+                description: 'Verificación completa + Prueba de ingresos',
+                access: 'Sin límites + Funciones exclusivas',
+                badge: '💎 Diamante'
+            }
+        };
+        
+        return details[level] || details[1];
+    }
+    
+    getAccessRestrictions(level) {
+        return {
+            max_tanda_amount: level === 1 ? 500 : level === 2 ? 2000 : level === 3 ? 5000 : null,
+            can_coordinate: level >= 2,
+            can_join_premium: level >= 3,
+            can_access_loans: level >= 4,
+            daily_transaction_limit: level * 1000
+        };
+    }
+    
+    showKYCCompletionSummary(level) {
+        const details = this.getVerificationDetails(level);
+        
+        // Crear modal de resumen
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        `;
+        
+        modal.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 2rem;
+                border-radius: 1.5rem;
+                text-align: center;
+                color: white;
+                max-width: 400px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                animation: modalSlideIn 0.5s ease-out;
+            ">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">${details.badge.split(' ')[0]}</div>
+                <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">${details.title}</h2>
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.2rem; opacity: 0.9;">${details.badge}</h3>
+                <p style="margin: 0 0 1.5rem 0; opacity: 0.8; line-height: 1.4;">${details.description}</p>
+                <div style="
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 1rem;
+                    border-radius: 0.75rem;
+                    margin-bottom: 1.5rem;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                ">
+                    <p style="margin: 0; font-weight: 600; font-size: 0.9rem;">🎯 Acceso Habilitado:</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem;">${details.access}</p>
+                </div>
+                <div style="
+                    background: rgba(255, 255, 255, 0.15);
+                    padding: 0.75rem;
+                    border-radius: 0.5rem;
+                    font-size: 0.8rem;
+                    opacity: 0.8;
+                ">
+                    Redirigiendo al dashboard en 3 segundos...
+                </div>
+            </div>
+        `;
+        
+        // Agregar animación CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(modal);
+        
+        // Remover modal después de 3 segundos
+        setTimeout(() => {
+            modal.remove();
+            style.remove();
+        }, 3000);
+    }
+    
+    async submitKYCToServer(kycData) {
+        try {
+            // En producción, esto sería una llamada real al servidor
+            const response = await this.simulateAPICall('/api/kyc/complete', kycData);
+            
+            if (response.success) {
+                this.showNotification('✅ Verificación KYC completada exitosamente', 'success');
+                return response;
+            } else {
+                throw new Error(response.message || 'Error al enviar datos KYC');
+            }
+        } catch (error) {
+            console.error('Error submitting KYC:', error);
+            // No lanzar error aquí para no bloquear el flujo
+            this.showNotification('⚠️ Datos guardados localmente. Se sincronizarán automáticamente.', 'warning');
         }
     }
     

@@ -614,8 +614,72 @@ class LaTandaWeb3Auth {
         
         await this.delay(500);
         
-        // Redirect to main app (we'll create this next)
-        window.location.href = 'index-modern.html';
+        // Check if user needs KYC verification
+        await this.checkKYCStatusAndRedirect(user);
+    }
+    
+    async checkKYCStatusAndRedirect(user) {
+        try {
+            // Verificar estado KYC del usuario
+            const kycStatus = await this.getUserKYCStatus(user.id);
+            
+            if (kycStatus.level === 0 || !kycStatus.completed) {
+                // Usuario necesita completar KYC
+                window.location.href = 'kyc-registration.html';
+            } else {
+                // Usuario ya tiene KYC completo, ir al dashboard
+                window.location.href = 'web3-dashboard.html';
+            }
+        } catch (error) {
+            console.error('Error checking KYC status:', error);
+            // En caso de error, enviar a KYC por seguridad
+            window.location.href = 'kyc-registration.html';
+        }
+    }
+    
+    async getUserKYCStatus(userId) {
+        try {
+            // Verificar en localStorage si ya completó KYC
+            const kycData = localStorage.getItem(`kyc_status_${userId}`);
+            
+            if (kycData) {
+                const kycInfo = JSON.parse(kycData);
+                return {
+                    completed: kycInfo.completed,
+                    level: kycInfo.verification_level,
+                    lastUpdate: kycInfo.completion_date,
+                    documents: kycInfo.documents || {},
+                    biometric: kycInfo.biometric_completed || false
+                };
+            }
+            
+            // Si no hay datos locales, verificar con el servidor
+            const response = await fetch(this.API_BASE + `/api/users/${userId}/kyc-status`, {
+                headers: {
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                }
+            });
+            
+            if (response.ok) {
+                const serverKYC = await response.json();
+                return serverKYC.data;
+            }
+            
+            // Usuario nuevo, necesita KYC
+            return { completed: false, level: 0 };
+            
+        } catch (error) {
+            console.error('Error getting KYC status:', error);
+            return { completed: false, level: 0 };
+        }
+    }
+    
+    getAuthToken() {
+        const authData = localStorage.getItem('laTandaWeb3Auth') || sessionStorage.getItem('laTandaWeb3Auth');
+        if (authData) {
+            return JSON.parse(authData).auth_token;
+        }
+        return null;
     }
     
     loadStoredSession() {
@@ -631,7 +695,8 @@ class LaTandaWeb3Auth {
                 if (timeDiff < maxAge) {
                     this.currentUser = data.user;
                     this.connectedWallet = data.connectedWallet;
-                    window.location.href = 'index-modern.html';
+                    // Verificar KYC antes de redireccionar
+                    this.checkKYCStatusAndRedirect(data.user);
                 } else {
                     this.clearStoredSession();
                 }
