@@ -569,12 +569,20 @@ class LaTandaKYCSystem {
     formatPhoneNumber(event) {
         let value = event.target.value.replace(/\D/g, '');
         
-        // Limit to 8 digits for Honduras format
+        // Allow up to 8 digits for Honduras format (standard mobile: 8 digits)
         if (value.length > 8) {
             value = value.substring(0, 8);
         }
         
-        if (value.length >= 4) {
+        // Format as XXXX-XXXX for 8 digits, or X-XXX-XXXX for landlines
+        if (value.length >= 5) {
+            // Mobile format: 9XXX-XXXX (when starting with 9)
+            if (value.startsWith('9') && value.length === 8) {
+                value = value.replace(/(\d{4})(\d{4})/, '$1-$2');
+            } else if (value.length >= 4) {
+                value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
+            }
+        } else if (value.length >= 4) {
             value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
         }
         
