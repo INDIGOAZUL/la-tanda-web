@@ -51,9 +51,9 @@ class LaTandaKYCSystem {
             },
             phone: {
                 required: true,
-                pattern: /^[\d\-\s\(\)]+$/,
-                minLength: 8,
-                message: 'Teléfono debe tener formato válido'
+                pattern: /^[\d\-]+$/,
+                minLength: 9, // 8 digits + 1 dash = 9 characters (0000-0000)
+                message: 'Teléfono debe tener formato válido (ej: 0000-0000)'
             },
             birthDate: {
                 required: true,
@@ -224,16 +224,19 @@ class LaTandaKYCSystem {
         // Validate all fields
         let isValid = true;
         const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'birthDate', 'country', 'password', 'confirmPassword'];
+        const invalidFields = [];
         
         for (const field of requiredFields) {
             const input = document.getElementById(field);
             if (!this.validateField(input)) {
                 isValid = false;
+                invalidFields.push(field);
             }
         }
         
         if (!isValid) {
-            this.showNotification('Por favor corrige los errores antes de continuar', 'error');
+            console.log('Invalid fields:', invalidFields);
+            this.showNotification(`Por favor corrige: ${invalidFields.join(', ')}`, 'error');
             return;
         }
         
@@ -243,6 +246,7 @@ class LaTandaKYCSystem {
         }
         
         this.saveFormData();
+        this.showNotification('Información básica guardada. Avanzando...', 'success');
         this.nextStep();
     }
     
@@ -424,7 +428,7 @@ class LaTandaKYCSystem {
             return false;
         }
         
-        if (!value) return true; // Skip other validations if field is empty and not required
+        if (!value && !rule.required) return true; // Skip other validations if field is empty and not required
         
         // Length validation
         if (rule.minLength && value.length < rule.minLength) {
@@ -437,10 +441,19 @@ class LaTandaKYCSystem {
             return false;
         }
         
-        // Pattern validation
+        // Pattern validation - fix for phone field
         if (rule.pattern && !rule.pattern.test(value)) {
-            this.showFieldError(input, rule.message);
-            return false;
+            // Special handling for phone field with dashes
+            if (fieldName === 'phone') {
+                const phoneDigits = value.replace(/\D/g, '');
+                if (phoneDigits.length < 8) {
+                    this.showFieldError(input, 'Teléfono debe tener 8 dígitos');
+                    return false;
+                }
+            } else {
+                this.showFieldError(input, rule.message);
+                return false;
+            }
         }
         
         // Custom validation
@@ -552,11 +565,19 @@ class LaTandaKYCSystem {
     formatPhoneNumber(event) {
         let value = event.target.value.replace(/\D/g, '');
         
+        // Limit to 8 digits for Honduras format
+        if (value.length > 8) {
+            value = value.substring(0, 8);
+        }
+        
         if (value.length >= 4) {
-            value = value.replace(/(\d{4})(\d+)/, '$1-$2');
+            value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
         }
         
         event.target.value = value;
+        
+        // Clear any existing validation errors
+        this.clearFieldError(event.target);
     }
     
     // User Type Change
