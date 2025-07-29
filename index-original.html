@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda - Ecosistema Financiero de Honduras</title>
+    <meta name="description" content="Ecosistema financiero cooperativo de Honduras - Plataforma tradicional y Web3">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+            min-height: 100vh;
+            color: white;
+            position: relative;
+        }
+        
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #ffffff 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, #ffffff 2px, transparent 2px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding: 2rem 0;
+        }
+        
+        .logo-container {
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            max-width: 200px;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.25rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .platform-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .platform-card:hover::before {
+            left: 100%;
+        }
+        
+        .platform-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        
+        .platform-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .platform-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .platform-description {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .platform-features {
+            list-style: none;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .platform-features li {
+            padding: 0.5rem 0;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        
+        .platform-features li::before {
+            content: "✅";
+            margin-right: 0.5rem;
+        }
+        
+        .btn-access {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+        }
+        
+        .btn-access:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-access.secondary {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-access.secondary:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        
+        .web3-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .features-section {
+            margin-bottom: 4rem;
+        }
+        
+        .features-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-item {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .feature-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-desc {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .footer p {
+            margin-bottom: 1rem;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+        
+        .social-link {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .social-link:hover {
+            color: #6366F1;
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .platforms-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .platform-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo-container">
+                <img src="logo la tanda.png" alt="La Tanda Logo" class="logo">
+            </div>
+            <h1 class="title">La Tanda</h1>
+            <p class="subtitle">
+                Ecosistema Financiero Cooperativo de Honduras<br>
+                Plataforma tradicional y tecnología Web3 blockchain
+            </p>
+        </header>
+        
+        <main>
+            <div class="platforms-grid">
+                <!-- Plataforma Tradicional -->
+                <div class="platform-card">
+                    <div class="platform-icon">🏛️</div>
+                    <h2 class="platform-title">Plataforma Tradicional</h2>
+                    <p class="platform-description">
+                        Sistema cooperativo clásico con interfaz moderna y funcionalidades completas para grupos de ahorro.
+                    </p>
+                    <ul class="platform-features">
+                        <li>Gestión de grupos cooperativos</li>
+                        <li>Sistema de pagos tradicional</li>
+                        <li>Asistente MIA inteligente</li>
+                        <li>Interfaz responsive móvil</li>
+                        <li>Sistema de roles y permisos</li>
+                        <li>Notificaciones en tiempo real</li>
+                    </ul>
+                    <a href="kyc-registration.html" class="btn-access">Registrarse / Iniciar Sesión</a>
+                </div>
+                
+                <!-- Plataforma Web3 -->
+                <div class="platform-card">
+                    <div class="web3-badge">Web3</div>
+                    <div class="platform-icon">⚡</div>
+                    <h2 class="platform-title">Ecosistema Web3</h2>
+                    <p class="platform-description">
+                        Plataforma descentralizada con blockchain, smart contracts y características DeFi modernas.
+                    </p>
+                    <ul class="platform-features">
+                        <li>Integración MetaMask y wallets</li>
+                        <li>Smart contracts automáticos</li>
+                        <li>NFT rewards para coordinadores</li>
+                        <li>DeFi staking y yield farming</li>
+                        <li>Transparencia blockchain</li>
+                        <li>Diseño estilo Binance</li>
+                    </ul>
+                    <a href="web3-dashboard.html" class="btn-access">Acceder Ecosistema Web3</a>
+                </div>
+            </div>
+            
+            <!-- Acceso Rápido Demo -->
+            <div class="platform-card" style="max-width: 600px; margin: 0 auto;">
+                <div class="platform-icon">🎯</div>
+                <h2 class="platform-title">Acceso Demo Rápido</h2>
+                <p class="platform-description">
+                    Explora ambas plataformas sin registro usando nuestra cuenta de demostración.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
+                    <a href="kyc-registration.html" class="btn-access secondary">Sistema KYC Completo</a>
+                    <a href="dashboard.html" class="btn-access secondary">Dashboard Principal</a>
+                    <a href="web3-dashboard.html" class="btn-access secondary">Dashboard Web3</a>
+                    <a href="complete-app.html" class="btn-access secondary">App Completa</a>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: rgba(255,255,255,0.6);">
+                    <strong>Demo KYC:</strong> Completa el proceso de registro paso a paso<br>
+                    <strong>Demo Rápido:</strong> dashboard directo sin registro
+                </p>
+            </div>
+        </main>
+        
+        <section class="features-section">
+            <h2 class="features-title">¿Por qué elegir La Tanda?</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="feature-name">Seguridad Bancaria</h3>
+                    <p class="feature-desc">Protección de nivel bancario con encriptación avanzada</p>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">💰</div>
+                    <h3 class="feature-name">Rentabilidad</h3>
+                    <p class="feature-desc">Coordinadores ganan L2,000-8,000+ mensuales</p>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <h3 class="feature-name">Comunidad</h3>
+                    <p class="feature-desc">Red confiable de cooperativas en Honduras</p>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="feature-name">Tecnología</h3>
+                    <p class="feature-desc">Plataforma moderna con tecnología blockchain</p>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <p>&copy; 2024 La Tanda - Ecosistema Financiero Cooperativo de Honduras</p>
+            <div class="social-links">
+                <a href="#" class="social-link">Facebook</a>
+                <a href="#" class="social-link">Instagram</a>
+                <a href="#" class="social-link">WhatsApp</a>
+                <a href="#" class="social-link">Telegram</a>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
