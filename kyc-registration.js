@@ -481,8 +481,11 @@ class LaTandaKYCSystem {
             calculatedAge--;
         }
         
-        console.log(`Age validation: birthDate=${birthDate}, calculatedAge=${calculatedAge}`);
-        return calculatedAge >= 18 ? true : 'Debes ser mayor de 18 años';
+        if (calculatedAge >= 18) {
+            return true;
+        } else {
+            return `Debes ser mayor de 18 años (tienes ${calculatedAge} años)`;
+        }
     }
     
     validatePassword(password) {
