@@ -1,0 +1,521 @@
+/**
+ * La Tanda Wallet - Estilos CSS
+ * Sistema Web3 con Smart Contracts
+ * Versión: 1.0.0
+ */
+
+/* Animaciones de entrada */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(37, 99, 235, 0.6);
+    }
+}
+
+@keyframes countUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Estilos específicos para la wallet */
+.wallet-container {
+    position: relative;
+    overflow: visible;
+}
+
+.wallet-container::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ef4444, #10b981);
+    border-radius: 34px;
+    z-index: -1;
+    opacity: 0.1;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Efectos hover para estadísticas */
+.stat-card {
+    cursor: pointer;
+    position: relative;
+}
+
+.stat-card:hover .stat-value {
+    animation: countUp 0.3s ease-out;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::after {
+    opacity: 1;
+}
+
+/* Iconos animados */
+.stat-icon {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.stat-icon::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    border-radius: 24px;
+    background: inherit;
+    opacity: 0.2;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-icon::before {
+    transform: scale(1);
+    opacity: 0.3;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1);
+}
+
+/* Botones con efectos avanzados */
+.action-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+/* Efectos de carga en botones */
+.action-btn.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.action-btn.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Transacciones con animaciones */
+.transaction-item {
+    transform: translateX(-20px);
+    opacity: 0;
+    animation: slideInLeft 0.3s ease-out forwards;
+}
+
+.transaction-item:nth-child(1) { animation-delay: 0.1s; }
+.transaction-item:nth-child(2) { animation-delay: 0.2s; }
+.transaction-item:nth-child(3) { animation-delay: 0.3s; }
+.transaction-item:nth-child(4) { animation-delay: 0.4s; }
+.transaction-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInLeft {
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Iconos de transacciones con efectos */
+.transaction-icon {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.transaction-item:hover .transaction-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.tx-deposit {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.tx-withdraw {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.tx-locked {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+/* Restricciones inteligentes */
+.smart-restrictions {
+    position: relative;
+    overflow: hidden;
+}
+
+.smart-restrictions::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.restriction-item {
+    transition: all 0.3s ease;
+    transform: translateY(0);
+}
+
+.restriction-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.restriction-icon {
+    transition: all 0.3s ease;
+}
+
+.restriction-item:hover .restriction-icon {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Estados de la wallet */
+.wallet-state-active {
+    border-left: 4px solid #10b981;
+}
+
+.wallet-state-locked {
+    border-left: 4px solid #f59e0b;
+}
+
+.wallet-state-restricted {
+    border-left: 4px solid #ef4444;
+}
+
+.wallet-state-frozen {
+    border-left: 4px solid #6b7280;
+    opacity: 0.7;
+}
+
+/* Efectos de conexión Web3 */
+.web3-connected {
+    position: relative;
+}
+
+.web3-connected::after {
+    content: '🔗';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 14px;
+    opacity: 0.6;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* Indicadores de gas fee */
+.gas-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    font-size: 12px;
+    color: #3b82f6;
+    margin-top: 8px;
+}
+
+.gas-indicator.low {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.gas-indicator.medium {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.gas-indicator.high {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Hash de transacciones */
+.tx-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tx-hash:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Montos con animación */
+.amount-change {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.amount-change.positive {
+    color: #10b981;
+}
+
+.amount-change.negative {
+    color: #ef4444;
+}
+
+.amount-change.updated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 4px;
+    animation: flashGreen 0.6s ease-out;
+}
+
+@keyframes flashGreen {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+/* Loading states */
+.wallet-loading {
+    position: relative;
+}
+
+.wallet-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    background-size: 200% 100%;
+    animation: loadingBar 1.5s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes loadingBar {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Success states */
+.transaction-success {
+    animation: successPulse 0.5s ease-out;
+}
+
+@keyframes successPulse {
+    0% { 
+        background-color: rgba(16, 185, 129, 0.1);
+        transform: scale(1);
+    }
+    50% { 
+        background-color: rgba(16, 185, 129, 0.3);
+        transform: scale(1.02);
+    }
+    100% { 
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+/* Error states */
+.transaction-error {
+    animation: errorShake 0.5s ease-out;
+    border-color: #ef4444 !important;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Balance highlights */
+.balance-highlight {
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-highlight::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent);
+    animation: goldShimmer 2s ease-in-out infinite;
+}
+
+@keyframes goldShimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Responsive mejoras */
+@media (max-width: 640px) {
+    .stat-card {
+        text-align: center;
+    }
+    
+    .transaction-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .transaction-amount {
+        align-self: flex-end;
+    }
+    
+    .action-btn {
+        font-size: 14px;
+        padding: 14px 20px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .wallet-container {
+        background: rgba(17, 24, 39, 0.95);
+        color: #f9fafb;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .transactions-section {
+        background: #1f2937;
+    }
+    
+    .transaction-item {
+        background: #111827;
+        border-color: #374151;
+    }
+    
+    .smart-restrictions {
+        background: linear-gradient(135deg, #1c1917 0%, #292524 100%);
+        border-color: #44403c;
+    }
+}
+
+/* Accesibilidad */
+.action-btn:focus-visible,
+.transaction-item:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Reducir movimiento para usuarios que lo prefieran */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
