@@ -26,7 +26,18 @@ class GroupSecurityAdvisor {
             LOW: 'low',
             MEDIUM: 'medium',
             HIGH: 'high',
-            CRITICAL: 'critical'
+            CRITICAL: 'critical',
+            FROZEN: 'frozen',
+            BLACKLISTED: 'blacklisted'
+        };
+        
+        // Estados de cuenta y grupos
+        this.ACCOUNT_STATUS = {
+            ACTIVE: 'active',
+            FROZEN: 'frozen',
+            SUSPENDED: 'suspended',
+            BLACKLISTED: 'blacklisted',
+            UNDER_REVIEW: 'under_review'
         };
         
         this.init();
@@ -68,6 +79,15 @@ class GroupSecurityAdvisor {
             
             // Evaluar riesgo
             const riskAssessment = this.evaluateJoinRisk(groupInfo);
+            
+            // VERIFICAR SI ESTÁ BLOQUEADO POR CONGELAMIENTO
+            const hasBlockingRisk = riskAssessment.risks.some(risk => risk.blockAction);
+            
+            if (hasBlockingRisk) {
+                // Mostrar advertencia de cuenta congelada/bloqueada
+                this.showFrozenAccountWarning(groupInfo);
+                return;
+            }
             
             // Mostrar advertencia si es necesario
             if (riskAssessment.showWarning) {
@@ -129,6 +149,55 @@ class GroupSecurityAdvisor {
         const risks = [];
         let riskLevel = this.RISK_LEVELS.LOW;
         let showWarning = false;
+        
+        // VERIFICAR ESTADO DEL COORDINADOR
+        if (groupInfo.coordinator_status === this.ACCOUNT_STATUS.FROZEN) {
+            risks.push({
+                type: 'coordinator_frozen',
+                message: 'El coordinador de este grupo tiene su cuenta CONGELADA por incumplimientos',
+                level: this.RISK_LEVELS.FROZEN,
+                severity: 'critical',
+                blockAction: true
+            });
+            riskLevel = this.RISK_LEVELS.FROZEN;
+            showWarning = true;
+        }
+        
+        if (groupInfo.coordinator_status === this.ACCOUNT_STATUS.BLACKLISTED) {
+            risks.push({
+                type: 'coordinator_blacklisted',
+                message: 'El coordinador está en LISTA NEGRA por fraude confirmado',
+                level: this.RISK_LEVELS.BLACKLISTED,
+                severity: 'critical',
+                blockAction: true
+            });
+            riskLevel = this.RISK_LEVELS.BLACKLISTED;
+            showWarning = true;
+        }
+        
+        // VERIFICAR HISTORIAL DE INCUMPLIMIENTOS DEL COORDINADOR
+        if (groupInfo.coordinator_failed_payments && groupInfo.coordinator_failed_payments > 2) {
+            risks.push({
+                type: 'coordinator_payment_issues',
+                message: `El coordinador ha faltado ${groupInfo.coordinator_failed_payments} pagos en grupos anteriores`,
+                level: this.RISK_LEVELS.HIGH,
+                severity: 'high'
+            });
+            riskLevel = this.RISK_LEVELS.HIGH;
+            showWarning = true;
+        }
+        
+        // VERIFICAR ADVERTENCIAS PÚBLICAS
+        if (groupInfo.coordinator_public_warnings && groupInfo.coordinator_public_warnings > 5) {
+            risks.push({
+                type: 'coordinator_multiple_warnings',
+                message: `El coordinador tiene ${groupInfo.coordinator_public_warnings} advertencias públicas de otros usuarios`,
+                level: this.RISK_LEVELS.HIGH,
+                severity: 'high'
+            });
+            riskLevel = this.RISK_LEVELS.HIGH;
+            showWarning = true;
+        }
         
         // Verificar si el coordinador es nuevo
         if (groupInfo.coordinator_days_active < 30) {
@@ -493,6 +562,129 @@ class GroupSecurityAdvisor {
         });
         
         return actions;
+    }
+    
+    /**
+     * SISTEMA DE CONGELAMIENTO Y ADVERTENCIAS
+     */
+    async freezeCoordinatorAccount(coordinatorId, reason, evidence) {
+        try {
+            const response = await fetch(`${this.API_BASE}/api/security/freeze-account`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    coordinator_id: coordinatorId,
+                    reason: reason,
+                    evidence: evidence,
+                    freeze_type: 'AUTOMATIC_SYSTEM',
+                    initiated_by: 'SECURITY_SYSTEM',
+                    timestamp: new Date().toISOString()
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                await this.createPublicWarning(coordinatorId, reason, 'ACCOUNT_FROZEN');
+                return true;
+            }
+            throw new Error(result.message);
+            
+        } catch (error) {
+            console.error('Error freezing coordinator account:', error);
+            return false;
+        }
+    }
+    
+    async createPublicWarning(userId, reason, severity) {
+        try {
+            const response = await fetch(`${this.API_BASE}/api/security/public-warning`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    warning_type: severity,
+                    reason: reason,
+                    public_visibility: true,
+                    auto_generated: true,
+                    timestamp: new Date().toISOString()
+                })
+            });
+            
+            return await response.json();
+            
+        } catch (error) {
+            console.error('Error creating public warning:', error);
+            return { success: false };
+        }
+    }
+    
+    async checkAccountFrozenStatus(userId) {
+        try {
+            const response = await fetch(`${this.API_BASE}/api/security/account-status/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.getAuthToken()}`
+                }
+            });
+            
+            const result = await response.json();
+            return result.success ? result.data : { status: 'active' };
+            
+        } catch (error) {
+            console.error('Error checking account status:', error);
+            return { status: 'active' };
+        }
+    }
+    
+    showFrozenAccountWarning(groupInfo) {
+        const modal = document.createElement('div');
+        modal.className = 'security-warning-modal risk-frozen';
+        modal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="warning-header frozen-header">
+                    <h2>🧊 CUENTA CONGELADA</h2>
+                    <p class="warning-subtitle">No puedes unirte a este grupo</p>
+                </div>
+                
+                <div class="warning-body">
+                    <div class="frozen-alert">
+                        <div class="frozen-icon">🚨</div>
+                        <div class="frozen-message">
+                            <h3>Coordinador Sancionado</h3>
+                            <p>El coordinador de este grupo ha sido automáticamente congelado por el sistema debido a:</p>
+                            <ul>
+                                <li><strong>Faltas a pagos:</strong> ${groupInfo.coordinator_failed_payments || 0} incumplimientos</li>
+                                <li><strong>Advertencias públicas:</strong> ${groupInfo.coordinator_public_warnings || 0} reportes</li>
+                                <li><strong>Estado:</strong> Recursos congelados hasta resolver situación</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="security-advice">
+                        <h4>🛡️ Nuestra Recomendación</h4>
+                        <p>Por tu seguridad, busca grupos con coordinadores confiables y verificados. Los recursos de este coordinador están congelados hasta que resuelva los problemas pendientes.</p>
+                    </div>
+                </div>
+                
+                <div class="warning-actions">
+                    <button id="closeBtn" class="btn-primary">
+                        Entendido, buscaré otro grupo
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const closeBtn = modal.querySelector('#closeBtn');
+        closeBtn.onclick = () => modal.remove();
+        
+        document.body.appendChild(modal);
+        return modal;
     }
     
     /**
