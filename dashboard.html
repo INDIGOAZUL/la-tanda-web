@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda v2.0 - Ecosistema Financiero Completo</title>
+    <meta name="description" content="Plataforma cooperativa de ahorro inteligente para Honduras - La Tanda v2.0">
+    <meta name="keywords" content="cooperativa, ahorro, Honduras, fintech, La Tanda">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>🤝 La Tanda v2.0</span>
+            <span id="currentTime">--:--</span>
+        </div>
+        
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="app-logo">
+                <img src="Icon La Tanda.png" alt="La Tanda" style="width: 32px; height: 32px; border-radius: 6px;">
+            </div>
+            <div class="app-title">La Tanda</div>
+            <div class="version-badge">v2.0 - Ecosistema Completo</div>
+        </div>
+        
+        <!-- API Status Indicator -->
+        <div id="apiStatus" class="api-status loading">🔄 Iniciando...</div>
+        
+        <!-- Alerts Container -->
+        <div id="alertsContainer"></div>
+        
+        <!-- Authentication Screen - Redirect to comprehensive auth -->
+        <div id="authScreen" class="screen active">
+            <div class="auth-redirect-container">
+                <div class="auth-form">
+                    <h2>Acceso al Ecosistema</h2>
+                    <p class="form-subtitle">Para una experiencia completa, por favor utiliza nuestro sistema de autenticación avanzado.</p>
+                    
+                    <div class="redirect-actions">
+                        <a href="auth.html" class="btn-primary">
+                            Iniciar Sesión / Crear Cuenta
+                        </a>
+                        
+                        <div class="quick-demo">
+                            <p>¿Solo quieres explorar?</p>
+                            <button type="button" class="btn-demo-quick" onclick="app.quickDemoLogin()">
+                                Acceso Demo Rápido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-title">🌟 Ecosistema Completo</div>
+                    <div class="feature-desc">
+                        <ul>
+                            <li>💰 Gestión inteligente de ahorros</li>
+                            <li>👥 Grupos cooperativos organizados</li>
+                            <li>📱 Interfaz móvil responsiva</li>
+                            <li>🤖 Asistente MIA con IA</li>
+                            <li>🔒 Seguridad bancaria avanzada</li>
+                            <li>👑 Sistema de coordinadores</li>
+                            <li>📊 Analytics y reportes</li>
+                            <li>🔔 Notificaciones inteligentes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Home Screen -->
+        <div id="homeScreen" class="screen">
+            <div class="welcome-section">
+                <h2>👋 ¡Bienvenido!</h2>
+                <p id="welcomeMessage">Dashboard de tu ecosistema financiero</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">L2,500</div>
+                    <div class="stat-label">Balance Actual</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Grupos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">12</div>
+                    <div class="stat-label">Transacciones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Notificaciones</div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <h3>⚡ Acciones Rápidas</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="app.switchScreen('groups')">
+                        <span class="action-icon">👥</span>
+                        <span>Ver Grupos</span>
+                    </button>
+                    <button class="action-btn" onclick="app.switchScreen('payments')">
+                        <span class="action-icon">💳</span>
+                        <span>Hacer Pago</span>
+                    </button>
+                    <button class="action-btn" onclick="app.switchScreen('mia')">
+                        <span class="action-icon">🤖</span>
+                        <span>Consultar MIA</span>
+                    </button>
+                    <button class="action-btn" onclick="app.showBalance()">
+                        <span class="action-icon">💰</span>
+                        <span>Ver Balance</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h3>📊 Actividad Reciente</h3>
+                <div id="recentActivities">
+                    <div class="activity-item">
+                        <span class="activity-icon">💰</span>
+                        <div class="activity-details">
+                            <p>Aporte a Cooperativa Central</p>
+                            <small>Hace 2 días - L500</small>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-icon">👥</span>
+                        <div class="activity-details">
+                            <p>Te uniste a Grupo Familiar</p>
+                            <small>Hace 1 semana</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Groups Screen -->
+        <div id="groupsScreen" class="screen">
+            <div class="screen-header">
+                <h2>👥 Mis Grupos</h2>
+                <button class="btn-secondary" id="createGroupBtn">➕ Crear Grupo</button>
+            </div>
+            
+            <div id="groupsList" class="groups-container">
+                <!-- Groups will be loaded here -->
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-title">💡 ¿Sabías que?</div>
+                <div class="feature-desc">
+                    Como coordinador de grupo puedes ganar L2,000-8,000+ mensuales. 
+                    <button class="btn-link" onclick="app.showCoordinatorInfo()">Más información</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payments Screen -->
+        <div id="paymentsScreen" class="screen">
+            <div class="screen-header">
+                <h2>💳 Pagos y Transacciones</h2>
+                <button class="btn-secondary" id="processPaymentBtn">💰 Nuevo Pago</button>
+            </div>
+            
+            <div class="payment-methods">
+                <h3>💳 Métodos Disponibles</h3>
+                <div class="methods-grid">
+                    <div class="method-card" onclick="app.selectPaymentMethod('tigo')">
+                        <div class="method-icon">📱</div>
+                        <div class="method-name">Tigo Money</div>
+                    </div>
+                    <div class="method-card" onclick="app.selectPaymentMethod('claro')">
+                        <div class="method-icon">📞</div>
+                        <div class="method-name">Claro Money</div>
+                    </div>
+                    <div class="method-card" onclick="app.selectPaymentMethod('bank')">
+                        <div class="method-icon">🏦</div>
+                        <div class="method-name">Transferencia</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="paymentsList" class="payments-container">
+                <!-- Payments will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- MIA Screen -->
+        <div id="miaScreen" class="screen">
+            <div class="screen-header">
+                <h2>🤖 MIA - Asistente Inteligente</h2>
+                <div class="mia-status">🟢 En línea</div>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="chat-message message-mia">
+                    ¡Hola! Soy MIA, tu asistente inteligente de La Tanda. ¿En qué puedo ayudarte hoy?
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." class="chat-input">
+                <button onclick="app.sendMessage()" class="send-btn">📤</button>
+            </div>
+            
+            <div class="quick-questions">
+                <h4>💬 Preguntas Frecuentes</h4>
+                <div class="questions-grid">
+                    <button class="question-btn" onclick="app.askMIA('balance')">💰 Mi balance</button>
+                    <button class="question-btn" onclick="app.askMIA('grupos')">👥 Mis grupos</button>
+                    <button class="question-btn" onclick="app.askMIA('pago')">💳 Hacer pago</button>
+                    <button class="question-btn" onclick="app.askMIA('ayuda')">❓ Ayuda</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Screen - Comprehensive Navigation -->
+        <div id="menuScreen" class="screen">
+            <div class="screen-header">
+                <h2>☰ Menú Principal</h2>
+                <div class="user-status">
+                    <span id="userStatusIndicator">🟢 En línea</span>
+                </div>
+            </div>
+            
+            <!-- User Profile Summary -->
+            <div class="menu-profile-summary">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h3 id="menuProfileName">Usuario Demo</h3>
+                    <p id="menuProfileRole">Miembro Verificado ✅</p>
+                    <p class="balance-quick">Balance: L<span id="menuBalance">2,500</span></p>
+                </div>
+                <button class="btn-profile-details" onclick="app.switchScreen('profile')">
+                    Ver Perfil →
+                </button>
+            </div>
+            
+            <!-- Main Menu Sections -->
+            <div class="menu-sections">
+                <!-- Financial Management -->
+                <div class="menu-section">
+                    <h4>💰 Gestión Financiera</h4>
+                    <div class="menu-items">
+                        <button class="menu-item" onclick="app.switchScreen('home')">
+                            <span class="menu-icon">🏠</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Dashboard</span>
+                                <span class="menu-desc">Resumen de tu actividad</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.switchScreen('payments')">
+                            <span class="menu-icon">💳</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Pagos y Transacciones</span>
+                                <span class="menu-desc">Historial y nuevos pagos</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showBalance()">
+                            <span class="menu-icon">💰</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Consultar Balance</span>
+                                <span class="menu-desc">Balance actual detallado</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showTransactionHistory()">
+                            <span class="menu-icon">📊</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Historial Completo</span>
+                                <span class="menu-desc">Todas tus transacciones</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Group Management -->
+                <div class="menu-section">
+                    <h4>👥 Gestión de Grupos</h4>
+                    <div class="menu-items">
+                        <button class="menu-item" onclick="app.switchScreen('groups')">
+                            <span class="menu-icon">👥</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Mis Grupos</span>
+                                <span class="menu-desc">Gestionar grupos activos</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showCreateGroupModal()">
+                            <span class="menu-icon">➕</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Crear Grupo</span>
+                                <span class="menu-desc">Formar nueva cooperativa</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showJoinGroup()">
+                            <span class="menu-icon">🔍</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Buscar Grupos</span>
+                                <span class="menu-desc">Unirse a grupos existentes</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showCoordinatorInfo()">
+                            <span class="menu-icon">👑</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Ser Coordinador</span>
+                                <span class="menu-desc">Ganar L2,000-8,000+ mensuales</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tools & Assistance -->
+                <div class="menu-section">
+                    <h4>🛠️ Herramientas y Asistencia</h4>
+                    <div class="menu-items">
+                        <button class="menu-item" onclick="app.switchScreen('mia')">
+                            <span class="menu-icon">🤖</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Asistente MIA</span>
+                                <span class="menu-desc">Ayuda inteligente 24/7</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showCalculator()">
+                            <span class="menu-icon">🧮</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Calculadora de Ahorros</span>
+                                <span class="menu-desc">Planifica tus metas</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showEducation()">
+                            <span class="menu-icon">📚</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Educación Financiera</span>
+                                <span class="menu-desc">Aprende sobre cooperativas</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showNotifications()">
+                            <span class="menu-icon">🔔</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Notificaciones</span>
+                                <span class="menu-desc">Mensajes y alertas</span>
+                            </div>
+                            <span class="menu-badge">5</span>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Account & Settings -->
+                <div class="menu-section">
+                    <h4>⚙️ Cuenta y Configuración</h4>
+                    <div class="menu-items">
+                        <button class="menu-item" onclick="app.switchScreen('profile')">
+                            <span class="menu-icon">👤</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Mi Perfil</span>
+                                <span class="menu-desc">Información personal</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showSettings()">
+                            <span class="menu-icon">⚙️</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Configuración</span>
+                                <span class="menu-desc">Preferencias de la app</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showSecurity()">
+                            <span class="menu-icon">🔒</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Seguridad</span>
+                                <span class="menu-desc">Contraseña y 2FA</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                        
+                        <button class="menu-item" onclick="app.showHelp()">
+                            <span class="menu-icon">❓</span>
+                            <div class="menu-content">
+                                <span class="menu-title">Ayuda y Soporte</span>
+                                <span class="menu-desc">Contacto y FAQ</span>
+                            </div>
+                            <span class="menu-arrow">→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="menu-quick-actions">
+                <button class="quick-action-btn" onclick="app.showEmergencyContact()">
+                    <span class="action-icon">🚨</span>
+                    <span>Contacto de Emergencia</span>
+                </button>
+                
+                <button class="quick-action-btn danger" onclick="app.handleLogout()">
+                    <span class="action-icon">🚪</span>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Profile Screen -->
+        <div id="profileScreen" class="screen">
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h2 id="profileName">Usuario Demo</h2>
+                    <p id="profileEmail">demo@latanda.online</p>
+                    <p class="profile-role">Miembro Verificado ✅</p>
+                </div>
+            </div>
+            
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <span class="stat-label">Miembro desde</span>
+                    <span class="stat-value">Enero 2024</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-label">Grupos</span>
+                    <span class="stat-value">3 activos</span>
+                </div>
+                <div class="profile-stat">
+                    <span class="stat-label">Transacciones</span>
+                    <span class="stat-value">12 completadas</span>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <button class="profile-btn" onclick="app.showEditProfile()">
+                    <span class="btn-icon">✏️</span>
+                    Editar Perfil
+                </button>
+                <button class="profile-btn" onclick="app.showSettings()">
+                    <span class="btn-icon">⚙️</span>
+                    Configuración
+                </button>
+                <button class="profile-btn" onclick="app.showHelp()">
+                    <span class="btn-icon">❓</span>
+                    Ayuda y Soporte
+                </button>
+                <button class="profile-btn danger" onclick="app.handleLogout()">
+                    <span class="btn-icon">🚪</span>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+        
+        <!-- Enhanced Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="nav-item" data-screen="home" title="Panel principal del usuario">
+                <span class="nav-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Inicio</span>
+                <span class="nav-badge" id="homeBadge"></span>
+            </button>
+            <button class="nav-item" data-screen="groups" title="Gestión de grupos cooperativos">
+                <span class="nav-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-4h3v-3s1.39-1.84 2.56-1.84c.48 0 .75.52.75.52-.89.82-1.31 2.22-1.31 3.32v8H4c0-1.11-.89-2-2-2zM9 13c-1.11 0-2-.89-2-2s.89-2 2-2 2 .89 2 2-.89 2-2 2z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Grupos</span>
+                <span class="nav-badge" id="groupsBadge"></span>
+            </button>
+            <button class="nav-item" data-screen="payments" title="Pagos y transacciones">
+                <span class="nav-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Pagos</span>
+                <span class="nav-badge" id="paymentsBadge"></span>
+            </button>
+            <button class="nav-item" data-screen="mia" title="Asistente inteligente MIA">
+                <span class="nav-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">MIA</span>
+                <span class="nav-badge" id="miaBadge"></span>
+            </button>
+            <button class="nav-item nav-menu" data-screen="menu" title="Menú y configuración">
+                <span class="nav-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Menú</span>
+                <span class="nav-badge" id="menuBadge"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
