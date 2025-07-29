@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda Web3 - DeFi Dashboard</title>
+    <meta name="description" content="Dashboard DeFi completo - La Tanda Web3 Ecosystem">
+    <link rel="stylesheet" href="web3-dashboard.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="bg-glow"></div>
+        <div class="particles" id="particles"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <div class="logo-section">
+                    <img src="logo la tanda.png" alt="La Tanda" class="nav-logo">
+                    <div class="brand-info">
+                        <span class="brand-name">La Tanda</span>
+                        <span class="brand-tag">Web3</span>
+                    </div>
+                </div>
+                
+                <div class="nav-links">
+                    <a href="#" class="nav-link active">Dashboard</a>
+                    <a href="#" class="nav-link">Trading</a>
+                    <a href="#" class="nav-link">Staking</a>
+                    <a href="#" class="nav-link">NFTs</a>
+                    <a href="#" class="nav-link">DAO</a>
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <div class="network-selector">
+                    <div class="network-status">
+                        <div class="status-indicator"></div>
+                        <span>Honduras Chain</span>
+                    </div>
+                </div>
+                
+                <div class="wallet-info">
+                    <div class="wallet-address">0x742d35...8b2f</div>
+                    <div class="wallet-balance">2,500 LTD</div>
+                </div>
+                
+                <button class="profile-btn" onclick="dashboard.showProfile()">
+                    <img src="Icon La Tanda.png" alt="Profile" class="profile-avatar">
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Stats -->
+            <section class="stats-header">
+                <div class="stat-card primary">
+                    <div class="stat-header">
+                        <h3>Portfolio Value</h3>
+                        <span class="stat-change positive">+12.5%</span>
+                    </div>
+                    <div class="stat-value">$3,247.89</div>
+                    <div class="stat-subtitle">Total Value Locked</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>LTD Balance</h3>
+                        <span class="stat-change positive">+5.2%</span>
+                    </div>
+                    <div class="stat-value">2,500 LTD</div>
+                    <div class="stat-subtitle">≈ $1,875.00</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>Staking Rewards</h3>
+                        <span class="stat-change positive">+8.4%</span>
+                    </div>
+                    <div class="stat-value">127.3 LTD</div>
+                    <div class="stat-subtitle">APY: 24.5%</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <h3>NFT Collection</h3>
+                        <span class="stat-change neutral">--</span>
+                    </div>
+                    <div class="stat-value">3 NFTs</div>
+                    <div class="stat-subtitle">Coordinator Badges</div>
+                </div>
+            </section>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Trading Chart -->
+                <section class="card trading-card">
+                    <div class="card-header">
+                        <h3>LTD/USD Trading</h3>
+                        <div class="trading-controls">
+                            <button class="time-btn active">1D</button>
+                            <button class="time-btn">7D</button>
+                            <button class="time-btn">1M</button>
+                            <button class="time-btn">1Y</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="tradingChart" class="trading-chart"></canvas>
+                        <div class="chart-overlay">
+                            <div class="price-display">
+                                <span class="current-price">$0.75</span>
+                                <span class="price-change positive">+$0.04 (5.2%)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="trading-actions">
+                        <button class="trade-btn buy" onclick="dashboard.showTrading('buy')">
+                            Buy LTD
+                        </button>
+                        <button class="trade-btn sell" onclick="dashboard.showTrading('sell')">
+                            Sell LTD
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Quick Actions -->
+                <section class="card quick-actions-card">
+                    <div class="card-header">
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="dashboard.showStaking()">
+                            <div class="action-icon">💎</div>
+                            <div class="action-content">
+                                <h4>Stake LTD</h4>
+                                <p>Earn 24.5% APY</p>
+                            </div>
+                        </button>
+                        
+                        <button class="action-btn" onclick="dashboard.showYieldFarming()">
+                            <div class="action-icon">🌾</div>
+                            <div class="action-content">
+                                <h4>Yield Farm</h4>
+                                <p>Liquidity Mining</p>
+                            </div>
+                        </button>
+                        
+                        <button class="action-btn" onclick="dashboard.showLending()">
+                            <div class="action-icon">🏦</div>
+                            <div class="action-content">
+                                <h4>Lend Assets</h4>
+                                <p>Earn Interest</p>
+                            </div>
+                        </button>
+                        
+                        <button class="action-btn" onclick="dashboard.showNFTs()">
+                            <div class="action-icon">🎨</div>
+                            <div class="action-content">
+                                <h4>NFT Rewards</h4>
+                                <p>Claim Badges</p>
+                            </div>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- DeFi Pools -->
+                <section class="card pools-card">
+                    <div class="card-header">
+                        <h3>Liquidity Pools</h3>
+                        <button class="add-btn" onclick="dashboard.addLiquidity()">+ Add Liquidity</button>
+                    </div>
+                    <div class="pools-list">
+                        <div class="pool-item">
+                            <div class="pool-info">
+                                <div class="pool-tokens">
+                                    <img src="Icon La Tanda.png" alt="LTD" class="token-icon">
+                                    <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" alt="USDC" class="token-icon">
+                                    <span class="pool-name">LTD/USDC</span>
+                                </div>
+                                <div class="pool-stats">
+                                    <span class="pool-apy">45.2% APY</span>
+                                    <span class="pool-tvl">$127K TVL</span>
+                                </div>
+                            </div>
+                            <div class="pool-actions">
+                                <button class="pool-btn">Stake</button>
+                                <button class="pool-btn secondary">Info</button>
+                            </div>
+                        </div>
+                        
+                        <div class="pool-item">
+                            <div class="pool-info">
+                                <div class="pool-tokens">
+                                    <img src="Icon La Tanda.png" alt="LTD" class="token-icon">
+                                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" alt="ETH" class="token-icon">
+                                    <span class="pool-name">LTD/ETH</span>
+                                </div>
+                                <div class="pool-stats">
+                                    <span class="pool-apy">38.7% APY</span>
+                                    <span class="pool-tvl">$89K TVL</span>
+                                </div>
+                            </div>
+                            <div class="pool-actions">
+                                <button class="pool-btn">Stake</button>
+                                <button class="pool-btn secondary">Info</button>
+                            </div>
+                        </div>
+                        
+                        <div class="pool-item">
+                            <div class="pool-info">
+                                <div class="pool-tokens">
+                                    <img src="Icon La Tanda.png" alt="LTD" class="token-icon">
+                                    <span class="pool-name">LTD Single Stake</span>
+                                </div>
+                                <div class="pool-stats">
+                                    <span class="pool-apy">24.5% APY</span>
+                                    <span class="pool-tvl">$234K TVL</span>
+                                </div>
+                            </div>
+                            <div class="pool-actions">
+                                <button class="pool-btn">Stake</button>
+                                <button class="pool-btn secondary">Info</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recent Activity -->
+                <section class="card activity-card">
+                    <div class="card-header">
+                        <h3>Recent Activity</h3>
+                        <button class="view-all-btn">View All</button>
+                    </div>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon success">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-title">Staking Reward Claimed</p>
+                                <p class="activity-subtitle">+12.5 LTD earned</p>
+                            </div>
+                            <div class="activity-time">2 min ago</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon buy">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M7 14l5-5 5 5H7z"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-title">LTD Purchase</p>
+                                <p class="activity-subtitle">Bought 100 LTD at $0.73</p>
+                            </div>
+                            <div class="activity-time">1 hour ago</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon nft">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-title">NFT Badge Earned</p>
+                                <p class="activity-subtitle">Coordinator Level 2 achieved</p>
+                            </div>
+                            <div class="activity-time">3 hours ago</div>
+                        </div>
+                        
+                        <div class="activity-item">
+                            <div class="activity-icon governance">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 12l-5-5 1.41-1.41L11 12.17l7.59-7.59L20 6l-9 9z"/>
+                                </svg>
+                            </div>
+                            <div class="activity-content">
+                                <p class="activity-title">DAO Vote Cast</p>
+                                <p class="activity-subtitle">Voted on Proposal #15</p>
+                            </div>
+                            <div class="activity-time">1 day ago</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DAO Governance -->
+                <section class="card governance-card">
+                    <div class="card-header">
+                        <h3>DAO Governance</h3>
+                        <span class="voting-power">Voting Power: 2,500 LTD</span>
+                    </div>
+                    <div class="proposals-list">
+                        <div class="proposal-item active">
+                            <div class="proposal-header">
+                                <h4>Increase Staking Rewards to 30% APY</h4>
+                                <span class="proposal-status active">Active</span>
+                            </div>
+                            <div class="proposal-stats">
+                                <div class="vote-stats">
+                                    <div class="vote-bar">
+                                        <div class="vote-yes" style="width: 72%"></div>
+                                        <div class="vote-no" style="width: 28%"></div>
+                                    </div>
+                                    <div class="vote-numbers">
+                                        <span class="yes-votes">72% Yes (156K LTD)</span>
+                                        <span class="no-votes">28% No (60K LTD)</span>
+                                    </div>
+                                </div>
+                                <div class="proposal-time">
+                                    <span>Ends in 3 days</span>
+                                </div>
+                            </div>
+                            <div class="proposal-actions">
+                                <button class="vote-btn yes" onclick="dashboard.vote('yes', 15)">Vote Yes</button>
+                                <button class="vote-btn no" onclick="dashboard.vote('no', 15)">Vote No</button>
+                            </div>
+                        </div>
+                        
+                        <div class="proposal-item">
+                            <div class="proposal-header">
+                                <h4>Launch NFT Marketplace for Coordinator Badges</h4>
+                                <span class="proposal-status pending">Pending</span>
+                            </div>
+                            <div class="proposal-stats">
+                                <div class="vote-stats">
+                                    <div class="vote-bar">
+                                        <div class="vote-yes" style="width: 0%"></div>
+                                        <div class="vote-no" style="width: 0%"></div>
+                                    </div>
+                                    <div class="vote-numbers">
+                                        <span>Voting starts in 2 days</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- NFT Collection -->
+                <section class="card nft-card">
+                    <div class="card-header">
+                        <h3>My NFT Collection</h3>
+                        <button class="marketplace-btn" onclick="dashboard.showMarketplace()">Marketplace</button>
+                    </div>
+                    <div class="nft-grid">
+                        <div class="nft-item legendary">
+                            <div class="nft-image">
+                                <img src="Icon La Tanda.png" alt="NFT" class="nft-preview">
+                                <div class="nft-rarity">Legendary</div>
+                            </div>
+                            <div class="nft-info">
+                                <h4>Golden Coordinator</h4>
+                                <p>Level 5 Achievement</p>
+                                <span class="nft-value">Worth: 500 LTD</span>
+                            </div>
+                        </div>
+                        
+                        <div class="nft-item epic">
+                            <div class="nft-image">
+                                <img src="Icon La Tanda.png" alt="NFT" class="nft-preview">
+                                <div class="nft-rarity">Epic</div>
+                            </div>
+                            <div class="nft-info">
+                                <h4>Top Performer</h4>
+                                <p>Monthly Leader</p>
+                                <span class="nft-value">Worth: 200 LTD</span>
+                            </div>
+                        </div>
+                        
+                        <div class="nft-item rare">
+                            <div class="nft-image">
+                                <img src="Icon La Tanda.png" alt="NFT" class="nft-preview">
+                                <div class="nft-rarity">Rare</div>
+                            </div>
+                            <div class="nft-info">
+                                <h4>Group Founder</h4>
+                                <p>First 100 Users</p>
+                                <span class="nft-value">Worth: 50 LTD</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="tradingModal" class="modal">
+        <div class="modal-content trading-modal">
+            <div class="modal-header">
+                <h3 id="tradingModalTitle">Trade LTD</h3>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="trading-form">
+                    <div class="input-group">
+                        <label>Amount</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="tradeAmount" placeholder="0.0">
+                            <span class="input-suffix">LTD</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Price</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="tradePrice" placeholder="0.75">
+                            <span class="input-suffix">USD</span>
+                        </div>
+                    </div>
+                    <div class="trade-summary">
+                        <div class="summary-row">
+                            <span>Total</span>
+                            <span id="tradeTotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Fee</span>
+                            <span id="tradeFee">$0.00</span>
+                        </div>
+                    </div>
+                    <button class="trade-confirm-btn" id="tradeConfirmBtn">
+                        Confirm Trade
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="web3-dashboard.js"></script>
+</body>
+</html>
