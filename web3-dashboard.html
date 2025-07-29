@@ -6,6 +6,8 @@
     <title>La Tanda Web3 - DeFi Dashboard</title>
     <meta name="description" content="Dashboard DeFi completo - La Tanda Web3 Ecosystem">
     <link rel="stylesheet" href="web3-dashboard.css">
+    <link rel="stylesheet" href="group-security-advisor.css">
+    <link rel="stylesheet" href="tandas-styles.css">
     <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -349,6 +351,232 @@
                     </div>
                 </section>
 
+                <!-- Tandas Tradicionales -->
+                <section class="card tandas-card">
+                    <div class="card-header">
+                        <h3>🏛️ Tandas Tradicionales</h3>
+                        <div class="header-actions">
+                            <button class="create-group-btn" onclick="tandasManager.showCreateGroup()">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2v20m10-10H2"/>
+                                </svg>
+                                Crear Grupo
+                            </button>
+                            <button class="filter-btn" onclick="tandasManager.toggleFilters()">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+                                </svg>
+                                Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Barra de búsqueda y filtros -->
+                    <div class="tandas-search-section">
+                        <div class="search-container">
+                            <div class="search-input-wrapper">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" class="search-icon">
+                                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <input type="text" id="tandas-search" placeholder="Buscar grupos, coordinadores por ID, nombre..." class="search-input">
+                                <button class="clear-search" onclick="tandasManager.clearSearch()">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="advanced-search-toggle">
+                                <button onclick="tandasManager.toggleAdvancedSearch()" class="advanced-btn">
+                                    Búsqueda Avanzada
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M6 9l6 6 6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filtros avanzados (inicialmente ocultos) -->
+                        <div class="advanced-filters" id="advanced-filters" style="display: none;">
+                            <div class="filter-grid">
+                                <div class="filter-group">
+                                    <label>Tipo de Grupo</label>
+                                    <select id="group-type-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="family">👨‍👩‍👧‍👦 Familiar</option>
+                                        <option value="business">💼 Empresarial</option>
+                                        <option value="community">🏘️ Comunitario</option>
+                                        <option value="student">🎓 Estudiantes</option>
+                                        <option value="professional">👔 Profesionales</option>
+                                        <option value="women">👩 Solo Mujeres</option>
+                                        <option value="men">👨 Solo Hombres</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label>Contribución Mensual</label>
+                                    <select id="contribution-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Cualquier cantidad</option>
+                                        <option value="0-500">L. 0 - 500</option>
+                                        <option value="500-1000">L. 500 - 1,000</option>
+                                        <option value="1000-2500">L. 1,000 - 2,500</option>
+                                        <option value="2500-5000">L. 2,500 - 5,000</option>
+                                        <option value="5000+">L. 5,000+</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label>Ubicación</label>
+                                    <select id="location-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Cualquier ubicación</option>
+                                        <option value="tegucigalpa">Tegucigalpa</option>
+                                        <option value="san-pedro-sula">San Pedro Sula</option>
+                                        <option value="la-ceiba">La Ceiba</option>
+                                        <option value="choloma">Choloma</option>
+                                        <option value="danli">Danlí</option>
+                                        <option value="siguatepeque">Siguatepeque</option>
+                                        <option value="comayagua">Comayagua</option>
+                                        <option value="online">💻 Virtual</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label>Estado del Grupo</label>
+                                    <select id="status-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Todos los estados</option>
+                                        <option value="recruiting">🟢 Reclutando</option>
+                                        <option value="active">🔵 Activo</option>
+                                        <option value="full">🟡 Completo</option>
+                                        <option value="paused">🟠 Pausado</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label>Experiencia del Coordinador</label>
+                                    <select id="coordinator-exp-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Cualquier experiencia</option>
+                                        <option value="new">🆕 Nuevo (< 6 meses)</option>
+                                        <option value="experienced">⭐ Experimentado (6m - 2 años)</option>
+                                        <option value="veteran">🏆 Veterano (2+ años)</option>
+                                        <option value="master">👑 Maestro (5+ años)</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label>Frecuencia de Pago</label>
+                                    <select id="frequency-filter" onchange="tandasManager.applyFilters()">
+                                        <option value="">Cualquier frecuencia</option>
+                                        <option value="weekly">📅 Semanal</option>
+                                        <option value="biweekly">📅 Quincenal</option>
+                                        <option value="monthly">📅 Mensual</option>
+                                        <option value="custom">⚙️ Personalizada</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="filter-actions">
+                                <button class="clear-filters-btn" onclick="tandasManager.clearAllFilters()">
+                                    Limpiar Filtros
+                                </button>
+                                <button class="save-search-btn" onclick="tandasManager.saveCurrentSearch()">
+                                    Guardar Búsqueda
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas rápidas -->
+                    <div class="tandas-quick-stats">
+                        <div class="quick-stat">
+                            <div class="stat-number" id="total-groups">127</div>
+                            <div class="stat-label">Grupos Disponibles</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="stat-number" id="my-groups">3</div>
+                            <div class="stat-label">Mis Grupos</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="stat-number" id="coordinating">1</div>
+                            <div class="stat-label">Coordinando</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="stat-number" id="total-savings">L. 12,500</div>
+                            <div class="stat-label">Total Ahorrado</div>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas de navegación -->
+                    <div class="tandas-tabs">
+                        <button class="tab-btn active" data-tab="discover" onclick="tandasManager.switchTab('discover')">
+                            🔍 Descubrir
+                        </button>
+                        <button class="tab-btn" data-tab="my-groups" onclick="tandasManager.switchTab('my-groups')">
+                            👥 Mis Grupos
+                        </button>
+                        <button class="tab-btn" data-tab="coordinating" onclick="tandasManager.switchTab('coordinating')">
+                            👑 Coordinando
+                        </button>
+                        <button class="tab-btn" data-tab="requests" onclick="tandasManager.switchTab('requests')">
+                            📨 Solicitudes
+                            <span class="notification-badge" id="requests-badge">2</span>
+                        </button>
+                    </div>
+
+                    <!-- Contenido de las pestañas -->
+                    <div class="tab-content">
+                        <!-- Pestaña Descubrir -->
+                        <div class="tab-panel active" id="discover-panel">
+                            <div class="groups-grid" id="groups-grid">
+                                <!-- Los grupos se cargan dinámicamente aquí -->
+                            </div>
+                            
+                            <!-- Paginación -->
+                            <div class="pagination" id="groups-pagination">
+                                <button class="page-btn" onclick="tandasManager.previousPage()">Anterior</button>
+                                <span class="page-info">Página 1 de 13</span>
+                                <button class="page-btn" onclick="tandasManager.nextPage()">Siguiente</button>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña Mis Grupos -->
+                        <div class="tab-panel" id="my-groups-panel">
+                            <div class="my-groups-list" id="my-groups-list">
+                                <!-- Mis grupos se cargan aquí -->
+                            </div>
+                        </div>
+
+                        <!-- Pestaña Coordinando -->
+                        <div class="tab-panel" id="coordinating-panel">
+                            <div class="coordinating-groups" id="coordinating-groups">
+                                <!-- Grupos que coordino se cargan aquí -->
+                            </div>
+                        </div>
+
+                        <!-- Pestaña Solicitudes -->
+                        <div class="tab-panel" id="requests-panel">
+                            <div class="requests-section">
+                                <div class="requests-tabs">
+                                    <button class="requests-tab-btn active" data-tab="pending" onclick="tandasManager.switchRequestsTab('pending')">
+                                        Pendientes (2)
+                                    </button>
+                                    <button class="requests-tab-btn" data-tab="sent" onclick="tandasManager.switchRequestsTab('sent')">
+                                        Enviadas (1)
+                                    </button>
+                                    <button class="requests-tab-btn" data-tab="history" onclick="tandasManager.switchRequestsTab('history')">
+                                        Historial
+                                    </button>
+                                </div>
+                                
+                                <div class="requests-content">
+                                    <div class="requests-list" id="requests-list">
+                                        <!-- Las solicitudes se cargan aquí -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- NFT Collection -->
                 <section class="card nft-card">
                     <div class="card-header">
@@ -439,6 +667,8 @@
     </div>
 
     <!-- Scripts -->
+    <script src="group-security-advisor.js"></script>
     <script src="web3-dashboard.js"></script>
+    <script src="tandas-manager.js"></script>
 </body>
 </html>
