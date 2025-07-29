@@ -888,6 +888,177 @@ class LaTandaKYCSystem {
             }, 1000 + Math.random() * 2000); // 1-3 seconds delay
         });
     }
+    
+    // Camera and Biometric Methods
+    async openCamera() {
+        try {
+            this.showNotification('Abriendo cámara...', 'info');
+            
+            // Request camera permission
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' },
+                audio: false 
+            });
+            
+            // Create camera modal
+            this.showCameraModal(stream);
+            
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            this.showNotification('Error accediendo a la cámara. Por favor verifica los permisos.', 'error');
+            
+            // Fallback to file selection
+            setTimeout(() => {
+                this.selectSelfieFile();
+            }, 2000);
+        }
+    }
+    
+    showCameraModal(stream) {
+        // Create camera modal HTML
+        const modal = document.createElement('div');
+        modal.className = 'camera-modal';
+        modal.innerHTML = `
+            <div class="camera-modal-content">
+                <div class="camera-header">
+                    <h3>📷 Tomar Selfie con Documento</h3>
+                    <button class="close-camera" onclick="kycSystem.closeCameraModal()">✕</button>
+                </div>
+                <div class="camera-view">
+                    <video id="cameraVideo" autoplay playsinline></video>
+                    <div class="camera-overlay">
+                        <div class="face-guide"></div>
+                        <p>Sostén tu documento junto a tu cara</p>
+                    </div>
+                </div>
+                <div class="camera-actions">
+                    <button class="camera-btn secondary" onclick="kycSystem.closeCameraModal()">Cancelar</button>
+                    <button class="camera-btn primary" onclick="kycSystem.capturePhoto()">📸 Capturar</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Start video stream
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = stream;
+        this.currentStream = stream;
+    }
+    
+    capturePhoto() {
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        // Convert to blob
+        canvas.toBlob((blob) => {
+            const file = new File([blob], 'selfie-capture.jpg', { type: 'image/jpeg' });
+            this.handleCapturedPhoto(file);
+        }, 'image/jpeg', 0.8);
+    }
+    
+    handleCapturedPhoto(file) {
+        this.uploadedFiles.selfie = file;
+        this.showFilePreview(file, 'selfie');
+        this.closeCameraModal();
+        this.showNotification('Selfie capturada exitosamente', 'success');
+    }
+    
+    closeCameraModal() {
+        if (this.currentStream) {
+            this.currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        const modal = document.querySelector('.camera-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    selectSelfieFile() {
+        const input = document.getElementById('selfieFile');
+        if (input) {
+            input.click();
+        }
+    }
+    
+    async scanFace() {
+        this.showNotification('Iniciando escaneo biométrico...', 'info');
+        
+        try {
+            // Simulate biometric scanning
+            const loadingModal = this.createLoadingModal('🔍 Escaneando rostro...', 'Verificando características biométricas');
+            
+            setTimeout(() => {
+                loadingModal.remove();
+                this.showNotification('Escaneo biométrico completado', 'success');
+                
+                // Simulate successful scan
+                this.uploadedFiles.biometric = {
+                    type: 'biometric_scan',
+                    confidence: 98.5,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Show biometric result
+                this.showBiometricResult();
+                
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Error in biometric scan:', error);
+            this.showNotification('Error en escaneo biométrico', 'error');
+        }
+    }
+    
+    createLoadingModal(title, description) {
+        const modal = document.createElement('div');
+        modal.className = 'loading-modal';
+        modal.innerHTML = `
+            <div class="loading-modal-content">
+                <div class="loading-animation">
+                    <div class="scanning-circle"></div>
+                </div>
+                <h3>${title}</h3>
+                <p>${description}</p>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        return modal;
+    }
+    
+    showBiometricResult() {
+        const resultHtml = `
+            <div class="biometric-result">
+                <div class="biometric-header">
+                    <h4>✅ Verificación Biométrica Exitosa</h4>
+                </div>
+                <div class="biometric-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Confianza:</span>
+                        <span class="stat-value">98.5%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Estado:</span>
+                        <span class="stat-value success">Verificado</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add to selfie preview area
+        const selfiePreview = document.getElementById('selfiePreview');
+        if (selfiePreview) {
+            selfiePreview.innerHTML = resultHtml;
+            selfiePreview.style.display = 'block';
+        }
+    }
 }
 
 // Initialize the KYC system when DOM is loaded
