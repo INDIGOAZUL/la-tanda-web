@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda - Registro y Verificación KYC</title>
+    <meta name="description" content="Sistema avanzado de registro y verificación KYC para La Tanda Ecosystem">
+    <link rel="stylesheet" href="kyc-registration.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="bg-effects">
+        <div class="bg-grid"></div>
+        <div class="bg-particles" id="particles"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="registration-container">
+        <!-- Header -->
+        <div class="registration-header">
+            <div class="logo-section">
+                <img src="logo la tanda.png" alt="La Tanda" class="logo">
+                <div class="brand-info">
+                    <h1 class="brand-title">La Tanda</h1>
+                    <p class="brand-subtitle">Registro & Verificación KYC</p>
+                </div>
+            </div>
+            <div class="security-badge">
+                <div class="security-icon">🛡️</div>
+                <span>Verificación Segura</span>
+            </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Información Básica</div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Verificación KYC</div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Perfil Financiero</div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Verificación</div>
+                </div>
+                <div class="step" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-label">Completado</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Forms -->
+        <div class="forms-container">
+            <!-- Step 1: Basic Information -->
+            <div class="form-step active" id="step1">
+                <div class="step-header">
+                    <h2>Información Básica</h2>
+                    <p>Comencemos con tus datos personales fundamentales</p>
+                </div>
+
+                <form class="registration-form" id="basicInfoForm">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="firstName">Nombre <span class="required">*</span></label>
+                            <input type="text" id="firstName" name="firstName" required 
+                                   placeholder="Tu primer nombre" autocomplete="given-name">
+                            <span class="input-error" id="firstNameError"></span>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="lastName">Apellido <span class="required">*</span></label>
+                            <input type="text" id="lastName" name="lastName" required 
+                                   placeholder="Tu apellido" autocomplete="family-name">
+                            <span class="input-error" id="lastNameError"></span>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="email">Correo Electrónico <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" required 
+                                   placeholder="tu@email.com" autocomplete="email">
+                            <span class="input-error" id="emailError"></span>
+                            <span class="input-help">Usaremos este email para comunicaciones importantes</span>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="phone">Teléfono <span class="required">*</span></label>
+                            <div class="phone-input">
+                                <select id="countryCode" name="countryCode" class="country-selector">
+                                    <option value="+504" data-flag="🇭🇳">🇭🇳 +504</option>
+                                    <option value="+1" data-flag="🇺🇸">🇺🇸 +1</option>
+                                    <option value="+52" data-flag="🇲🇽">🇲🇽 +52</option>
+                                    <option value="+503" data-flag="🇸🇻">🇸🇻 +503</option>
+                                    <option value="+502" data-flag="🇬🇹">🇬🇹 +502</option>
+                                    <option value="+506" data-flag="🇨🇷">🇨🇷 +506</option>
+                                </select>
+                                <input type="tel" id="phone" name="phone" required 
+                                       placeholder="0000-0000" autocomplete="tel">
+                            </div>
+                            <span class="input-error" id="phoneError"></span>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="birthDate">Fecha de Nacimiento <span class="required">*</span></label>
+                            <input type="date" id="birthDate" name="birthDate" required 
+                                   max="2006-01-01" autocomplete="bday">
+                            <span class="input-error" id="birthDateError"></span>
+                            <span class="input-help">Debes ser mayor de 18 años</span>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="country">País de Residencia <span class="required">*</span></label>
+                            <select id="country" name="country" required autocomplete="country">
+                                <option value="">Selecciona tu país</option>
+                                <option value="HN">🇭🇳 Honduras</option>
+                                <option value="US">🇺🇸 Estados Unidos</option>
+                                <option value="MX">🇲🇽 México</option>
+                                <option value="SV">🇸🇻 El Salvador</option>
+                                <option value="GT">🇬🇹 Guatemala</option>
+                                <option value="CR">🇨🇷 Costa Rica</option>
+                                <option value="PA">🇵🇦 Panamá</option>
+                                <option value="NI">🇳🇮 Nicaragua</option>
+                                <option value="BZ">🇧🇿 Belice</option>
+                                <option value="OTHER">🌍 Otro país</option>
+                            </select>
+                            <span class="input-error" id="countryError"></span>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="password">Contraseña Segura <span class="required">*</span></label>
+                            <div class="password-input">
+                                <input type="password" id="password" name="password" required 
+                                       placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+                                <button type="button" class="password-toggle" onclick="kycSystem.togglePassword('password')">
+                                    <span class="toggle-icon">👁️</span>
+                                </button>
+                            </div>
+                            <div class="password-strength" id="passwordStrength"></div>
+                            <span class="input-error" id="passwordError"></span>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="confirmPassword">Confirmar Contraseña <span class="required">*</span></label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required 
+                                   placeholder="Repite tu contraseña" autocomplete="new-password">
+                            <span class="input-error" id="confirmPasswordError"></span>
+                        </div>
+                    </div>
+
+                    <div class="user-type-selection">
+                        <h3>¿Cómo planeas usar La Tanda?</h3>
+                        <div class="user-type-cards">
+                            <label class="user-type-card">
+                                <input type="radio" name="userType" value="participant" checked>
+                                <div class="card-content">
+                                    <div class="card-icon">👤</div>
+                                    <h4>Participante</h4>
+                                    <p>Quiero unirme a tandas existentes y ahorrar con otros</p>
+                                    <div class="card-benefits">
+                                        <span>✓ Ahorro automático</span>
+                                        <span>✓ Acceso a capital</span>
+                                        <span>✓ Comunidad confiable</span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="user-type-card coordinator">
+                                <input type="radio" name="userType" value="coordinator">
+                                <div class="card-content">
+                                    <div class="card-icon">👑</div>
+                                    <h4>Coordinador</h4>
+                                    <p>Quiero crear y liderar grupos, ganando comisiones</p>
+                                    <div class="card-benefits">
+                                        <span>✓ Ingresos de comisiones</span>
+                                        <span>✓ Liderazgo de grupos</span>
+                                        <span>✓ Crecimiento escalable</span>
+                                    </div>
+                                    <div class="earnings-preview">
+                                        <small>Ganancias potenciales: <strong>$500-5,000+ USD/mes</strong></small>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                            Volver al Inicio
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            Continuar →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: KYC Verification -->
+            <div class="form-step" id="step2">
+                <div class="step-header">
+                    <h2>Verificación KYC</h2>
+                    <p>Necesitamos verificar tu identidad para garantizar la seguridad del ecosistema</p>
+                </div>
+
+                <form class="registration-form" id="kycForm">
+                    <div class="kyc-section">
+                        <h3>📋 Documento de Identidad</h3>
+                        <p class="section-description">Sube una foto clara de tu documento oficial de identidad</p>
+
+                        <div class="document-type-selector">
+                            <label class="document-option">
+                                <input type="radio" name="documentType" value="national_id" checked>
+                                <div class="option-content">
+                                    <span class="option-icon">🆔</span>
+                                    <span class="option-text">Cédula de Identidad</span>
+                                </div>
+                            </label>
+                            <label class="document-option">
+                                <input type="radio" name="documentType" value="passport">
+                                <div class="option-content">
+                                    <span class="option-icon">📘</span>
+                                    <span class="option-text">Pasaporte</span>
+                                </div>
+                            </label>
+                            <label class="document-option">
+                                <input type="radio" name="documentType" value="driver_license">
+                                <div class="option-content">
+                                    <span class="option-icon">🚗</span>
+                                    <span class="option-text">Licencia de Conducir</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="file-upload-area">
+                            <div class="upload-zone" id="documentUpload">
+                                <div class="upload-icon">📄</div>
+                                <div class="upload-text">
+                                    <p><strong>Arrastra tu documento aquí</strong></p>
+                                    <p>o haz clic para seleccionar</p>
+                                </div>
+                                <input type="file" id="documentFile" name="documentFile" 
+                                       accept="image/*,.pdf" style="display: none;">
+                            </div>
+                            <div class="upload-requirements">
+                                <h4>Requisitos:</h4>
+                                <ul>
+                                    <li>✓ Imagen clara y nítida</li>
+                                    <li>✓ Todos los datos visibles</li>
+                                    <li>✓ Formato: JPG, PNG o PDF</li>
+                                    <li>✓ Tamaño máximo: 10MB</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="document-preview" id="documentPreview" style="display: none;">
+                            <div class="preview-header">
+                                <h4>Vista previa del documento</h4>
+                                <button type="button" class="remove-file" onclick="kycSystem.removeFile('document')">
+                                    ❌ Eliminar
+                                </button>
+                            </div>
+                            <div class="preview-content">
+                                <img id="documentPreviewImg" alt="Preview">
+                                <div class="file-info">
+                                    <span class="file-name" id="documentFileName"></span>
+                                    <span class="file-size" id="documentFileSize"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kyc-section">
+                        <h3>🤳 Selfie de Verificación</h3>
+                        <p class="section-description">Toma una selfie sosteniendo tu documento para verificar que eres tú</p>
+
+                        <div class="selfie-upload-area">
+                            <div class="upload-zone" id="selfieUpload">
+                                <div class="upload-icon">📸</div>
+                                <div class="upload-text">
+                                    <p><strong>Toma una selfie con tu documento</strong></p>
+                                    <p>o sube una foto existente</p>
+                                </div>
+                                <input type="file" id="selfieFile" name="selfieFile" 
+                                       accept="image/*" capture="user" style="display: none;">
+                            </div>
+                            
+                            <div class="selfie-requirements">
+                                <h4>Instrucciones:</h4>
+                                <ul>
+                                    <li>📱 Sostén tu documento junto a tu cara</li>
+                                    <li>💡 Buena iluminación, evita sombras</li>
+                                    <li>👀 Mira directamente a la cámara</li>
+                                    <li>📄 El documento debe ser legible</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="selfie-preview" id="selfiePreview" style="display: none;">
+                            <div class="preview-header">
+                                <h4>Vista previa de selfie</h4>
+                                <button type="button" class="remove-file" onclick="kycSystem.removeFile('selfie')">
+                                    ❌ Eliminar
+                                </button>
+                            </div>
+                            <div class="preview-content">
+                                <img id="selfiePreviewImg" alt="Selfie Preview">
+                                <div class="file-info">
+                                    <span class="file-name" id="selfieFileName"></span>
+                                    <span class="file-size" id="selfieFileSize"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kyc-section">
+                        <h3>🏠 Comprobante de Dirección</h3>
+                        <p class="section-description">Documento que confirme tu dirección actual (opcional pero recomendado)</p>
+
+                        <div class="address-proof-selector">
+                            <label class="document-option">
+                                <input type="radio" name="addressProofType" value="utility_bill">
+                                <div class="option-content">
+                                    <span class="option-icon">⚡</span>
+                                    <span class="option-text">Recibo de Servicios</span>
+                                </div>
+                            </label>
+                            <label class="document-option">
+                                <input type="radio" name="addressProofType" value="bank_statement">
+                                <div class="option-content">
+                                    <span class="option-icon">🏦</span>
+                                    <span class="option-text">Estado de Cuenta</span>
+                                </div>
+                            </label>
+                            <label class="document-option">
+                                <input type="radio" name="addressProofType" value="rental_agreement">
+                                <div class="option-content">
+                                    <span class="option-icon">📋</span>
+                                    <span class="option-text">Contrato de Alquiler</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="file-upload-area">
+                            <div class="upload-zone optional" id="addressUpload">
+                                <div class="upload-icon">🏠</div>
+                                <div class="upload-text">
+                                    <p><strong>Comprobante de dirección</strong></p>
+                                    <p>(Opcional - mejora tu verificación)</p>
+                                </div>
+                                <input type="file" id="addressFile" name="addressFile" 
+                                       accept="image/*,.pdf" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="address-preview" id="addressPreview" style="display: none;">
+                            <div class="preview-header">
+                                <h4>Comprobante de dirección</h4>
+                                <button type="button" class="remove-file" onclick="kycSystem.removeFile('address')">
+                                    ❌ Eliminar
+                                </button>
+                            </div>
+                            <div class="preview-content">
+                                <img id="addressPreviewImg" alt="Address Proof Preview">
+                                <div class="file-info">
+                                    <span class="file-name" id="addressFileName"></span>
+                                    <span class="file-size" id="addressFileSize"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="kycSystem.previousStep()">
+                            ← Anterior
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            Continuar →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: Financial Profile -->
+            <div class="form-step" id="step3">
+                <div class="step-header">
+                    <h2>Perfil Financiero</h2>
+                    <p>Esta información nos ayuda a ofrecerte las mejores opciones de tandas</p>
+                </div>
+
+                <form class="registration-form" id="financialForm">
+                    <div class="financial-section">
+                        <h3>💼 Información Laboral</h3>
+                        
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="employmentStatus">Estado Laboral <span class="required">*</span></label>
+                                <select id="employmentStatus" name="employmentStatus" required>
+                                    <option value="">Selecciona tu situación</option>
+                                    <option value="employed">Empleado/a</option>
+                                    <option value="self_employed">Trabajador/a Independiente</option>
+                                    <option value="business_owner">Empresario/a</option>
+                                    <option value="freelancer">Freelancer</option>
+                                    <option value="unemployed">Desempleado/a</option>
+                                    <option value="student">Estudiante</option>
+                                    <option value="retired">Jubilado/a</option>
+                                </select>
+                                <span class="input-error" id="employmentStatusError"></span>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="monthlyIncome">Ingresos Mensuales <span class="required">*</span></label>
+                                <select id="monthlyIncome" name="monthlyIncome" required>
+                                    <option value="">Selecciona rango</option>
+                                    <option value="0-500">$0 - $500 USD</option>
+                                    <option value="500-1000">$500 - $1,000 USD</option>
+                                    <option value="1000-2000">$1,000 - $2,000 USD</option>
+                                    <option value="2000-5000">$2,000 - $5,000 USD</option>
+                                    <option value="5000-10000">$5,000 - $10,000 USD</option>
+                                    <option value="10000+">$10,000+ USD</option>
+                                </select>
+                                <span class="input-error" id="monthlyIncomeError"></span>
+                            </div>
+
+                            <div class="input-group full-width">
+                                <label for="occupation">Ocupación/Profesión</label>
+                                <input type="text" id="occupation" name="occupation" 
+                                       placeholder="Ej: Comerciante, Ingeniero, etc.">
+                                <span class="input-help">Opcional - nos ayuda a conectarte con grupos afines</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="financial-section">
+                        <h3>🎯 Objetivos Financieros</h3>
+                        
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="savingGoal">Principal Objetivo de Ahorro</label>
+                                <select id="savingGoal" name="savingGoal">
+                                    <option value="">Selecciona objetivo</option>
+                                    <option value="emergency">Fondo de Emergencia</option>
+                                    <option value="business">Iniciar/Expandir Negocio</option>
+                                    <option value="education">Educación</option>
+                                    <option value="housing">Vivienda</option>
+                                    <option value="travel">Viajes</option>
+                                    <option value="retirement">Jubilación</option>
+                                    <option value="investment">Inversión</option>
+                                    <option value="other">Otros</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="preferredAmount">Monto Preferido por Tanda</label>
+                                <select id="preferredAmount" name="preferredAmount">
+                                    <option value="">Selecciona rango</option>
+                                    <option value="100-300">$100 - $300 USD</option>
+                                    <option value="300-500">$300 - $500 USD</option>
+                                    <option value="500-1000">$500 - $1,000 USD</option>
+                                    <option value="1000-2000">$1,000 - $2,000 USD</option>
+                                    <option value="2000-5000">$2,000 - $5,000 USD</option>
+                                    <option value="5000+">$5,000+ USD</option>
+                                </select>
+                                <span class="input-help">Puedes participar en tandas de diferentes montos</span>
+                            </div>
+
+                            <div class="input-group full-width">
+                                <label for="experience">Experiencia con Tandas</label>
+                                <select id="experience" name="experience">
+                                    <option value="">Selecciona tu experiencia</option>
+                                    <option value="none">Primera vez - Soy nuevo/a</option>
+                                    <option value="traditional">He participado en tandas tradicionales</option>
+                                    <option value="online">He usado plataformas digitales similares</option>
+                                    <option value="coordinator">He coordinado tandas antes</option>
+                                    <option value="expert">Tengo mucha experiencia</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="financial-section">
+                        <h3>🔐 Preferencias de Seguridad</h3>
+                        
+                        <div class="security-preferences">
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="notifications" value="email" checked>
+                                <span class="checkmark"></span>
+                                <div class="option-content">
+                                    <strong>Notificaciones por Email</strong>
+                                    <p>Recibir actualizaciones importantes por correo</p>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="notifications" value="sms">
+                                <span class="checkmark"></span>
+                                <div class="option-content">
+                                    <strong>Notificaciones por SMS</strong>
+                                    <p>Alertas de pagos y recordatorios por mensaje</p>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="privacy" value="public_profile">
+                                <span class="checkmark"></span>
+                                <div class="option-content">
+                                    <strong>Perfil Público</strong>
+                                    <p>Permitir que otros usuarios vean mi perfil básico</p>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-option">
+                                <input type="checkbox" name="marketing" value="promotions">
+                                <span class="checkmark"></span>
+                                <div class="option-content">
+                                    <strong>Ofertas y Promociones</strong>
+                                    <p>Recibir información sobre nuevas funciones y ofertas</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="kycSystem.previousStep()">
+                            ← Anterior
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            Continuar →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Verification -->
+            <div class="form-step" id="step4">
+                <div class="step-header">
+                    <h2>Verificación en Proceso</h2>
+                    <p>Estamos revisando tu información para completar tu registro</p>
+                </div>
+
+                <div class="verification-content">
+                    <div class="verification-status">
+                        <div class="status-icon" id="verificationIcon">
+                            <div class="loading-spinner"></div>
+                        </div>
+                        <div class="status-info">
+                            <h3 id="verificationTitle">Procesando Verificación...</h3>
+                            <p id="verificationMessage">Nuestro sistema está validando tu información KYC</p>
+                        </div>
+                    </div>
+
+                    <div class="verification-progress">
+                        <div class="progress-item completed">
+                            <div class="progress-icon">✅</div>
+                            <div class="progress-text">
+                                <h4>Información Básica</h4>
+                                <p>Datos personales verificados</p>
+                            </div>
+                        </div>
+
+                        <div class="progress-item processing" id="kycProgress">
+                            <div class="progress-icon">🔄</div>
+                            <div class="progress-text">
+                                <h4>Verificación KYC</h4>
+                                <p>Validando documentos de identidad</p>
+                            </div>
+                        </div>
+
+                        <div class="progress-item pending" id="profileProgress">
+                            <div class="progress-icon">⏳</div>
+                            <div class="progress-text">
+                                <h4>Perfil Financiero</h4>
+                                <p>Evaluando compatibilidad</p>
+                            </div>
+                        </div>
+
+                        <div class="progress-item pending" id="approvalProgress">
+                            <div class="progress-icon">⏳</div>
+                            <div class="progress-text">
+                                <h4>Aprobación Final</h4>
+                                <p>Revisión manual si es necesaria</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verification-info">
+                        <h4>📋 ¿Qué estamos verificando?</h4>
+                        <ul>
+                            <li><strong>Identidad:</strong> Confirmamos que eres quien dices ser</li>
+                            <li><strong>Documentos:</strong> Validamos la autenticidad de tus documentos</li>
+                            <li><strong>Perfil:</strong> Evaluamos tu idoneidad para el ecosistema</li>
+                            <li><strong>Seguridad:</strong> Verificamos que no hay riesgos de fraude</li>
+                        </ul>
+
+                        <div class="time-estimate">
+                            <p><strong>⏱️ Tiempo estimado:</strong> 2-24 horas</p>
+                            <p>Te notificaremos por email cuando esté listo</p>
+                        </div>
+                    </div>
+
+                    <div class="verification-actions">
+                        <button type="button" class="btn-secondary" onclick="kycSystem.checkStatus()">
+                            🔄 Verificar Estado
+                        </button>
+                        <button type="button" class="btn-primary" onclick="kycSystem.continueToNext()" disabled id="continueBtn">
+                            Continuar al Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Completion -->
+            <div class="form-step" id="step5">
+                <div class="step-header">
+                    <h2>¡Registro Completado!</h2>
+                    <p>Bienvenido al ecosistema La Tanda</p>
+                </div>
+
+                <div class="completion-content">
+                    <div class="success-animation">
+                        <div class="success-icon">🎉</div>
+                        <div class="celebration-text">
+                            <h3>¡Felicitaciones!</h3>
+                            <p>Tu cuenta ha sido verificada y activada exitosamente</p>
+                        </div>
+                    </div>
+
+                    <div class="welcome-benefits">
+                        <h4>🎁 Beneficios de Bienvenida</h4>
+                        <div class="benefits-grid">
+                            <div class="benefit-item">
+                                <div class="benefit-icon">🪙</div>
+                                <div class="benefit-content">
+                                    <h5>50 LTD Tokens</h5>
+                                    <p>Token de bienvenida gratis</p>
+                                </div>
+                            </div>
+
+                            <div class="benefit-item">
+                                <div class="benefit-icon">🏆</div>
+                                <div class="benefit-content">
+                                    <h5>NFT Genesis</h5>
+                                    <p>Badge exclusivo de usuario fundador</p>
+                                </div>
+                            </div>
+
+                            <div class="benefit-item">
+                                <div class="benefit-icon">💎</div>
+                                <div class="benefit-content">
+                                    <h5>Premium 30 días</h5>
+                                    <p>Acceso completo sin restricciones</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="next-steps">
+                        <h4>📋 Próximos Pasos</h4>
+                        <div class="steps-list">
+                            <div class="next-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h5>Explora tu Dashboard</h5>
+                                    <p>Familiarízate con todas las funciones disponibles</p>
+                                </div>
+                            </div>
+
+                            <div class="next-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h5>Configura tu Wallet</h5>
+                                    <p>Activa La Tanda Wallet para empezar a participar</p>
+                                </div>
+                            </div>
+
+                            <div class="next-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h5>Únete a tu Primera Tanda</h5>
+                                    <p>Encuentra un grupo que se adapte a tus necesidades</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="completion-actions">
+                        <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">
+                            Ir al Inicio
+                        </button>
+                        <button type="button" class="btn-primary" onclick="window.location.href='web3-dashboard.html'">
+                            Ir al Dashboard →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="kyc-registration.js"></script>
+</body>
+</html>
