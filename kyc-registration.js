@@ -226,11 +226,17 @@ class LaTandaKYCSystem {
         const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'birthDate', 'country', 'password', 'confirmPassword'];
         const invalidFields = [];
         
+        console.log('Starting basic info validation...');
+        
         for (const field of requiredFields) {
             const input = document.getElementById(field);
+            console.log(`Validating field: ${field}, value: "${input.value}", element:`, input);
             if (!this.validateField(input)) {
                 isValid = false;
                 invalidFields.push(field);
+                console.log(`Field ${field} is invalid`);
+            } else {
+                console.log(`Field ${field} is valid`);
             }
         }
         
