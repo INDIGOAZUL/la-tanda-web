@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace & Sistema Social - La Tanda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .nav-tab:hover,
+        .nav-tab.active {
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            color: white;
+            border-color: #8B5CF6;
+            transform: translateY(-2px);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+        
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 30px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        /* Product Card */
+        .product-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border-color: #8B5CF6;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+        }
+        
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .product-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .product-price {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .price-ltd {
+            font-size: 20px;
+            font-weight: 700;
+            color: #10B981;
+        }
+        
+        .price-usd {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .product-seller {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .seller-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .seller-info {
+            flex: 1;
+        }
+        
+        .seller-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .seller-rating {
+            font-size: 12px;
+            color: #F59E0B;
+        }
+        
+        /* Social Elements */
+        .social-post {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .post-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .post-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .action-btn.active {
+            background: rgba(139, 92, 246, 0.3);
+            color: #8B5CF6;
+        }
+        
+        /* Stats Card */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 15px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #8B5CF6;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        
+        .filter-select {
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            min-width: 150px;
+        }
+        
+        /* Profile Card */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+        
+        .profile-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .profile-role {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 15px;
+        }
+        
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-stat {
+            text-align: center;
+        }
+        
+        .profile-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #8B5CF6;
+        }
+        
+        .profile-stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: rgba(26, 54, 93, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .nav-tabs {
+                gap: 10px;
+            }
+            
+            .nav-tab {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .search-input,
+            .filter-select {
+                width: 100%;
+            }
+        }
+        
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛍️ Marketplace & Sistema Social</h1>
+            <p>Plataforma social integrada con marketplace descentralizado. Conecta, comparte y comercia usando tokens LTD con la comunidad La Tanda.</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="marketplace">🛍️ Marketplace</div>
+            <div class="nav-tab" data-tab="social">👥 Social</div>
+            <div class="nav-tab" data-tab="my-store">🏪 Mi Tienda</div>
+            <div class="nav-tab" data-tab="orders">📦 Pedidos</div>
+            <div class="nav-tab" data-tab="community">🌐 Comunidad</div>
+            <div class="nav-tab" data-tab="reputation">⭐ Reputación</div>
+        </div>
+
+        <!-- Marketplace Section -->
+        <div id="marketplace" class="content-section active">
+            <!-- Search and Filters -->
+            <div class="card">
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="Buscar productos, servicios o usuarios..." id="searchInput">
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">Todas las categorías</option>
+                        <option value="electronics">Electrónicos</option>
+                        <option value="clothing">Ropa y Moda</option>
+                        <option value="home">Hogar y Jardín</option>
+                        <option value="services">Servicios</option>
+                        <option value="food">Comida y Bebidas</option>
+                        <option value="digital">Productos Digitales</option>
+                    </select>
+                    <select class="filter-select" id="priceFilter">
+                        <option value="">Cualquier precio</option>
+                        <option value="0-100">0-100 LTD</option>
+                        <option value="100-500">100-500 LTD</option>
+                        <option value="500-1000">500-1000 LTD</option>
+                        <option value="1000+">1000+ LTD</option>
+                    </select>
+                    <select class="filter-select" id="locationFilter">
+                        <option value="">Cualquier ubicación</option>
+                        <option value="local">Local</option>
+                        <option value="national">Nacional</option>
+                        <option value="international">Internacional</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Marketplace Stats -->
+            <div class="grid grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon">🛍️</div>
+                    <div class="stat-value" id="totalProducts">1,247</div>
+                    <div class="stat-label">Productos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="totalSellers">342</div>
+                    <div class="stat-label">Vendedores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-value" id="totalTransactions">5,673</div>
+                    <div class="stat-label">Transacciones</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="totalVolume">89.2K</div>
+                    <div class="stat-label">LTD Volumen</div>
+                </div>
+            </div>
+
+            <!-- Featured Products -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Productos Destacados</h2>
+                        <p class="card-subtitle">Los más populares de la comunidad</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-3" id="featuredProducts">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Recent Products -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Últimos Productos</h2>
+                        <p class="card-subtitle">Recién agregados al marketplace</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showCreateProductModal()">
+                        <span>➕</span> Vender Producto
+                    </button>
+                </div>
+                
+                <div class="grid grid-4" id="recentProducts">
+                    <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Section -->
+        <div id="social" class="content-section">
+            <div class="grid grid-2">
+                <!-- Social Feed -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Feed de la Comunidad</h2>
+                            <p class="card-subtitle">Últimas actualizaciones y noticias</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreatePostModal()">
+                            <span>✍️</span> Crear Post
+                        </button>
+                    </div>
+                    
+                    <div id="socialFeed">
+                        <!-- Posts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Store Section -->
+        <div id="my-store" class="content-section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Mi Tienda</h2>
+                            <p class="card-subtitle">Gestiona tus productos y ventas</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateProductModal()">
+                            <span>➕</span> Nuevo Producto
+                        </button>
+                    </div>
+                    
+                    <div class="profile-card">
+                        <div class="profile-avatar">U</div>
+                        <div class="profile-name">Mi Tienda</div>
+                        <div class="profile-role">Vendedor Verificado</div>
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">23</div>
+                                <div class="profile-stat-label">Productos</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">4.8</div>
+                                <div class="profile-stat-label">Rating</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">156</div>
+                                <div class="profile-stat-label">Ventas</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" style="width: 100%;">
+                            <span>⚙️</span> Configurar Tienda
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Estadísticas de Ventas</h2>
+                            <p class="card-subtitle">Rendimiento este mes</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-2">
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #8B5CF6;">2,847</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">LTD Ganados</div>
+                            <div style="font-size: 12px; color: #10B981; margin-top: 5px;">+18.5% vs mes anterior</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #10B981;">34</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Productos Vendidos</div>
+                            <div style="font-size: 12px; color: #10B981; margin-top: 5px;">+12.3% vs mes anterior</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #F59E0B;">67</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Nuevos Clientes</div>
+                            <div style="font-size: 12px; color: #10B981; margin-top: 5px;">+25.8% vs mes anterior</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 32px; font-weight: 700; color: #EF4444;">3</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Productos Agotados</div>
+                            <div style="font-size: 12px; color: #EF4444; margin-top: 5px;">Requiere restock</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- My Products -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Mis Productos</h2>
+                        <p class="card-subtitle">Productos en mi tienda</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-4" id="myProducts">
+                    <!-- My products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="orders" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Mis Pedidos</h2>
+                        <p class="card-subtitle">Compras y ventas recientes</p>
+                    </div>
+                </div>
+                
+                <div class="nav-tabs" style="margin-bottom: 20px;">
+                    <div class="nav-tab active" data-subtab="purchases">🛒 Compras</div>
+                    <div class="nav-tab" data-subtab="sales">💰 Ventas</div>
+                </div>
+                
+                <div id="ordersContent">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Community Section -->
+        <div id="community" class="content-section">
+            <div class="grid grid-2">
+                <!-- Community Stats -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Estadísticas de Comunidad</h2>
+                            <p class="card-subtitle">Actividad general</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-2">
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value">12,847</div>
+                            <div class="stat-label">Miembros Activos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💬</div>
+                            <div class="stat-value">3,456</div>
+                            <div class="stat-label">Posts Este Mes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🛍️</div>
+                            <div class="stat-value">8,932</div>
+                            <div class="stat-label">Transacciones</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🏆</div>
+                            <div class="stat-value">4.9</div>
+                            <div class="stat-label">Rating Promedio</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Contributors -->
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Top Contributors</h2>
+                            <p class="card-subtitle">Miembros más activos</p>
+                        </div>
+                    </div>
+                    
+                    <div id="topContributors">
+                        <!-- Contributors will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Community Events -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Eventos de Comunidad</h2>
+                        <p class="card-subtitle">Próximos eventos y actividades</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-3" id="communityEvents">
+                    <!-- Events will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Reputation Section -->
+        <div id="reputation" class="content-section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Mi Reputación</h2>
+                            <p class="card-subtitle">Puntaje y badges obtenidos</p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 64px; font-weight: 700; color: #8B5CF6; margin-bottom: 10px;">4.8</div>
+                        <div style="color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Puntaje de Reputación</div>
+                        <div style="font-size: 14px; color: #F59E0B;">⭐⭐⭐⭐⭐ (156 reviews)</div>
+                    </div>
+                    
+                    <div class="grid grid-2">
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #10B981;">156</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Transacciones</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #10B981;">98.7%</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Tasa de Éxito</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #8B5CF6;">12</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Badges</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: 700; color: #F59E0B;">Gold</div>
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Nivel</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Badges Obtenidos</h2>
+                            <p class="card-subtitle">Logros desbloqueados</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-3" id="userBadges">
+                        <!-- Badges will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Reviews -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Reseñas Recientes</h2>
+                        <p class="card-subtitle">Feedback de otros usuarios</p>
+                    </div>
+                </div>
+                
+                <div id="recentReviews">
+                    <!-- Reviews will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Product Modal -->
+    <div id="createProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nuevo Producto</h2>
+                <button class="close-btn" onclick="closeCreateProductModal()">&times;</button>
+            </div>
+            
+            <form id="createProductForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="productName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="productCategory" required>
+                            <option value="">Seleccionar categoría</option>
+                            <option value="electronics">Electrónicos</option>
+                            <option value="clothing">Ropa y Moda</option>
+                            <option value="home">Hogar y Jardín</option>
+                            <option value="services">Servicios</option>
+                            <option value="food">Comida y Bebidas</option>
+                            <option value="digital">Productos Digitales</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio (LTD)</label>
+                        <input type="number" id="productPrice" min="1" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad Disponible</label>
+                        <input type="number" id="productQuantity" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="productDescription" rows="4" required></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateProductModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span>✅</span> Crear Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="createPostModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Crear Nuevo Post</h2>
+                <button class="close-btn" onclick="closeCreatePostModal()">&times;</button>
+            </div>
+            
+            <form id="createPostForm">
+                <div class="form-group">
+                    <label>¿Qué quieres compartir?</label>
+                    <textarea id="postContent" rows="4" placeholder="Comparte tus pensamientos con la comunidad..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de Post</label>
+                    <select id="postType">
+                        <option value="general">General</option>
+                        <option value="achievement">Logro</option>
+                        <option value="question">Pregunta</option>
+                        <option value="tip">Consejo</option>
+                        <option value="announcement">Anuncio</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreatePostModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span>📝</span> Publicar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="marketplace-social.js"></script>
+</body>
+</html>
