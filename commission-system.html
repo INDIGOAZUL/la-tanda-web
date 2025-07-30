@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Comisiones Descendentes 90/10 - La Tanda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .nav-tab:hover,
+        .nav-tab.active {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+            border-color: #F59E0B;
+            transform: translateY(-2px);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+        
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 30px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        /* Commission Flow Visualization */
+        .commission-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+        }
+        
+        .flow-step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        
+        .flow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #F59E0B;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 15px;
+        }
+        
+        .flow-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .flow-amount {
+            font-size: 18px;
+            color: #F59E0B;
+            font-weight: 600;
+        }
+        
+        .flow-description {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+        
+        /* Stats Cards */
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 15px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #F59E0B;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+        }
+        
+        .stat-change {
+            font-size: 14px;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        
+        .positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+        }
+        
+        .negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+        
+        /* Commission Tree */
+        .commission-tree {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            overflow-x: auto;
+        }
+        
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .tree-node {
+            background: rgba(245, 158, 11, 0.2);
+            border: 2px solid #F59E0B;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 0 10px;
+            text-align: center;
+            min-width: 140px;
+            position: relative;
+        }
+        
+        .tree-node.you {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            border-color: #6366F1;
+        }
+        
+        .node-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #F59E0B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        
+        .you .node-avatar {
+            background: #6366F1;
+        }
+        
+        .node-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .node-commission {
+            font-size: 14px;
+            color: #F59E0B;
+            font-weight: 600;
+        }
+        
+        .you .node-commission {
+            color: #6366F1;
+        }
+        
+        /* Earnings Table */
+        .earnings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .earnings-table th,
+        .earnings-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .earnings-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: #F59E0B;
+        }
+        
+        .earnings-table td {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .earnings-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .nav-tabs {
+                gap: 10px;
+            }
+            
+            .nav-tab {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .commission-flow {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .flow-step:not(:last-child)::after {
+                content: '↓';
+                right: auto;
+                top: auto;
+                bottom: -30px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            
+            .tree-level {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tree-node {
+                margin: 10px 0;
+            }
+        }
+        
+        /* Animation Classes */
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💰 Sistema de Comisiones Descendentes 90/10</h1>
+            <p>Sistema de distribución de comisiones con estructura piramidal de beneficios. 90% para participantes, 10% para coordinadores en múltiples niveles.</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="overview">📊 Resumen</div>
+            <div class="nav-tab" data-tab="my-network">🌐 Mi Red</div>
+            <div class="nav-tab" data-tab="earnings">💸 Ganancias</div>
+            <div class="nav-tab" data-tab="referrals">👥 Referidos</div>
+            <div class="nav-tab" data-tab="calculator">🧮 Calculadora</div>
+            <div class="nav-tab" data-tab="reports">📈 Reportes</div>
+        </div>
+
+        <!-- Overview Section -->
+        <div id="overview" class="content-section active">
+            <!-- Commission Flow Visualization -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Flujo de Comisiones</h2>
+                        <p class="card-subtitle">Distribución automática del sistema 90/10</p>
+                    </div>
+                </div>
+                
+                <div class="commission-flow">
+                    <div class="flow-step">
+                        <div class="flow-icon">💰</div>
+                        <div class="flow-title">Transacción Base</div>
+                        <div class="flow-amount">$1,000</div>
+                        <div class="flow-description">Pago de participante</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon">⚡</div>
+                        <div class="flow-title">Comisión Total</div>
+                        <div class="flow-amount">$100</div>
+                        <div class="flow-description">10% del total</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon">👑</div>
+                        <div class="flow-title">Coordinador Directo</div>
+                        <div class="flow-amount">$90</div>
+                        <div class="flow-description">90% de la comisión</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🔗</div>
+                        <div class="flow-title">Niveles Superiores</div>
+                        <div class="flow-amount">$10</div>
+                        <div class="flow-description">10% distribuido</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Statistics -->
+            <div class="grid grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon">💵</div>
+                    <div class="stat-value" id="totalEarnings">$0</div>
+                    <div class="stat-label">Ganancias Totales</div>
+                    <div class="stat-change positive">+15.2% este mes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="activeReferrals">0</div>
+                    <div class="stat-label">Referidos Activos</div>
+                    <div class="stat-change positive">+3 este mes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🌟</div>
+                    <div class="stat-value" id="commissionLevel">1</div>
+                    <div class="stat-label">Nivel de Comisión</div>
+                    <div class="stat-change">Coordinador</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-value" id="monthlyGrowth">0%</div>
+                    <div class="stat-label">Crecimiento Mensual</div>
+                    <div class="stat-change positive">↗️ Subiendo</div>
+                </div>
+            </div>
+
+            <!-- Commission Breakdown -->
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Desglose de Comisiones</h2>
+                            <p class="card-subtitle">Distribución detallada por nivel</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <span>Comisiones Directas (90%)</span>
+                            <span style="color: #F59E0B; font-weight: 600;">$2,430</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <span>Nivel 2 (5%)</span>
+                            <span style="color: #F59E0B; font-weight: 600;">$135</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 5%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <span>Nivel 3 (3%)</span>
+                            <span style="color: #F59E0B; font-weight: 600;">$81</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 3%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <span>Nivel 4+ (2%)</span>
+                            <span style="color: #F59E0B; font-weight: 600;">$54</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 2%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Próximas Distribuciones</h2>
+                            <p class="card-subtitle">Comisiones pendientes de pago</p>
+                        </div>
+                    </div>
+                    
+                    <div id="upcomingDistributions">
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div>
+                                <div style="font-weight: 600;">Cooperativa Central</div>
+                                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Pago del 15 de febrero</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #F59E0B; font-weight: 600;">$180</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Comisión directa</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div>
+                                <div style="font-weight: 600;">Red de María</div>
+                                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Pago del 20 de febrero</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #F59E0B; font-weight: 600;">$45</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Nivel 2</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0;">
+                            <div>
+                                <div style="font-weight: 600;">Profesionales Tech</div>
+                                <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Pago del 25 de febrero</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #F59E0B; font-weight: 600;">$120</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Comisión directa</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Network Section -->
+        <div id="my-network" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Estructura de Mi Red</h2>
+                        <p class="card-subtitle">Visualización de la jerarquía de comisiones</p>
+                    </div>
+                </div>
+                
+                <div class="commission-tree">
+                    <div class="tree-level">
+                        <div class="tree-node you">
+                            <div class="node-avatar">TÚ</div>
+                            <div class="node-name">Tu Posición</div>
+                            <div class="node-commission">Coordinador Principal</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tree-level">
+                        <div class="tree-node">
+                            <div class="node-avatar">M</div>
+                            <div class="node-name">María López</div>
+                            <div class="node-commission">$180/mes</div>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-avatar">J</div>
+                            <div class="node-name">Juan Pérez</div>
+                            <div class="node-commission">$150/mes</div>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-avatar">A</div>
+                            <div class="node-name">Ana García</div>
+                            <div class="node-commission">$120/mes</div>
+                        </div>
+                    </div>
+                    
+                    <div class="tree-level">
+                        <div class="tree-node">
+                            <div class="node-avatar">C</div>
+                            <div class="node-name">Carlos Ruiz</div>
+                            <div class="node-commission">$45/mes</div>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-avatar">L</div>
+                            <div class="node-name">Laura Silva</div>
+                            <div class="node-commission">$60/mes</div>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-avatar">D</div>
+                            <div class="node-name">Diego Morales</div>
+                            <div class="node-commission">$30/mes</div>
+                        </div>
+                        <div class="tree-node">
+                            <div class="node-avatar">S</div>
+                            <div class="node-name">Sofia Castro</div>
+                            <div class="node-commission">$75/mes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earnings Section -->
+        <div id="earnings" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Historial de Ganancias</h2>
+                        <p class="card-subtitle">Registro detallado de todas las comisiones</p>
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <select id="earningsFilter" style="padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2);">
+                            <option value="all">Todos los períodos</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                            <option value="quarter">Este trimestre</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="earnings-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Fuente</th>
+                                <th>Tipo</th>
+                                <th>Nivel</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="earningsTableBody">
+                            <tr>
+                                <td>15 Feb 2024</td>
+                                <td>Cooperativa Central</td>
+                                <td>Comisión Directa</td>
+                                <td>1</td>
+                                <td style="color: #10B981; font-weight: 600;">$180.00</td>
+                                <td><span style="padding: 4px 12px; background: rgba(16, 185, 129, 0.2); color: #10B981; border-radius: 20px; font-size: 12px;">Pagado</span></td>
+                            </tr>
+                            <tr>
+                                <td>10 Feb 2024</td>
+                                <td>Red de María</td>
+                                <td>Comisión Nivel 2</td>
+                                <td>2</td>
+                                <td style="color: #10B981; font-weight: 600;">$45.00</td>
+                                <td><span style="padding: 4px 12px; background: rgba(16, 185, 129, 0.2); color: #10B981; border-radius: 20px; font-size: 12px;">Pagado</span></td>
+                            </tr>
+                            <tr>
+                                <td>05 Feb 2024</td>
+                                <td>Profesionales Tech</td>
+                                <td>Comisión Directa</td>
+                                <td>1</td>
+                                <td style="color: #10B981; font-weight: 600;">$120.00</td>
+                                <td><span style="padding: 4px 12px; background: rgba(16, 185, 129, 0.2); color: #10B981; border-radius: 20px; font-size: 12px;">Pagado</span></td>
+                            </tr>
+                            <tr>
+                                <td>20 Feb 2024</td>
+                                <td>Red de Juan</td>
+                                <td>Comisión Nivel 2</td>
+                                <td>2</td>
+                                <td style="color: #F59E0B; font-weight: 600;">$60.00</td>
+                                <td><span style="padding: 4px 12px; background: rgba(245, 158, 11, 0.2); color: #F59E0B; border-radius: 20px; font-size: 12px;">Pendiente</span></td>
+                            </tr>
+                            <tr>
+                                <td>25 Feb 2024</td>
+                                <td>Familia Extendida</td>
+                                <td>Comisión Directa</td>
+                                <td>1</td>
+                                <td style="color: #F59E0B; font-weight: 600;">$90.00</td>
+                                <td><span style="padding: 4px 12px; background: rgba(245, 158, 11, 0.2); color: #F59E0B; border-radius: 20px; font-size: 12px;">Pendiente</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referrals Section -->
+        <div id="referrals" class="content-section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Invitar Usuarios</h2>
+                            <p class="card-subtitle">Expande tu red y aumenta tus comisiones</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tu Código de Referido</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="referralCode" value="REF-2024-TU001" readonly style="flex: 1;">
+                            <button class="btn btn-secondary" onclick="copyReferralCode()">📋 Copiar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Link de Invitación</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="referralLink" value="https://latanda.online/join?ref=TU001" readonly style="flex: 1;">
+                            <button class="btn btn-secondary" onclick="copyReferralLink()">📋 Copiar</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button class="btn btn-primary" onclick="shareReferralLink()">
+                            <span>📱</span> Compartir Enlace
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h2 class="card-title">Mis Referidos</h2>
+                            <p class="card-subtitle">Usuarios que se han unido por tu invitación</p>
+                        </div>
+                    </div>
+                    
+                    <div id="referralsList">
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: bold;">M</div>
+                                <div>
+                                    <div style="font-weight: 600;">María López</div>
+                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Se unió el 15 Ene 2024</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #10B981; font-weight: 600;">$180/mes</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Activo</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: bold;">J</div>
+                                <div>
+                                    <div style="font-weight: 600;">Juan Pérez</div>
+                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Se unió el 22 Ene 2024</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #10B981; font-weight: 600;">$150/mes</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Activo</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: #F59E0B; display: flex; align-items: center; justify-content: center; font-weight: bold;">A</div>
+                                <div>
+                                    <div style="font-weight: 600;">Ana García</div>
+                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Se unió el 05 Feb 2024</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="color: #10B981; font-weight: 600;">$120/mes</div>
+                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Activo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator Section -->
+        <div id="calculator" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Calculadora de Comisiones</h2>
+                        <p class="card-subtitle">Simula tus ganancias potenciales</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div>
+                        <div class="form-group">
+                            <label>Número de Referidos Directos</label>
+                            <input type="number" id="directReferrals" value="3" min="0" max="100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Contribución Promedio por Referido</label>
+                            <input type="number" id="avgContribution" value="1000" min="100" step="50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Referidos de Segundo Nivel</label>
+                            <input type="number" id="level2Referrals" value="6" min="0" max="500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Referidos de Tercer Nivel</label>
+                            <input type="number" id="level3Referrals" value="12" min="0" max="1000">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="calculateCommissions()" style="width: 100%;">
+                            <span>🧮</span> Calcular Ganancias
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <div class="card" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3);">
+                            <h3 style="color: #F59E0B; margin-bottom: 20px;">Proyección de Ganancias</h3>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                                    <span>Comisiones Directas (90%)</span>
+                                    <span id="directCommissions" style="color: #F59E0B; font-weight: 600;">$270</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 90%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                                    <span>Nivel 2 (5%)</span>
+                                    <span id="level2Commissions" style="color: #F59E0B; font-weight: 600;">$30</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 5%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                                    <span>Nivel 3 (3%)</span>
+                                    <span id="level3Commissions" style="color: #F59E0B; font-weight: 600;">$18</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 3%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="padding-top: 20px; border-top: 1px solid rgba(245, 158, 11, 0.3);">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span style="font-weight: 700; font-size: 18px;">Total Mensual</span>
+                                    <span id="totalCommissions" style="color: #F59E0B; font-weight: 700; font-size: 24px;">$318</span>
+                                </div>
+                                <div style="text-align: center; margin-top: 10px; color: rgba(255, 255, 255, 0.6); font-size: 14px;">
+                                    Ganancias anuales estimadas: <span id="annualCommissions" style="color: #F59E0B; font-weight: 600;">$3,816</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Reportes y Análisis</h2>
+                        <p class="card-subtitle">Métricas avanzadas de rendimiento</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" onclick="downloadReport()">
+                            <span>💾</span> Exportar PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div>
+                        <h3 style="margin-bottom: 20px;">Rendimiento por Mes</h3>
+                        <div id="monthlyPerformanceChart" style="height: 300px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.6);">
+                            📊 Gráfico de rendimiento mensual
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 20px;">Distribución por Niveles</h3>
+                        <div id="levelDistributionChart" style="height: 300px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.6);">
+                            🥧 Gráfico de distribución por niveles
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="commission-system.js"></script>
+</body>
+</html>
