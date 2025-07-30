@@ -142,27 +142,39 @@ class LaTandaUnifiedApp {
                 userData: null
             };
             
-            // Check localStorage for existing auth
-            const authData = localStorage.getItem('laTandaWeb3Auth');
+            // Check both localStorage and sessionStorage for existing auth
+            const authData = localStorage.getItem('laTandaWeb3Auth') || sessionStorage.getItem('laTandaWeb3Auth');
             if (authData) {
                 const parsed = JSON.parse(authData);
                 this.userState.authenticated = true;
                 this.userState.userData = parsed.user;
                 this.updateAuthStatus('success');
                 this.updateUserInfo(parsed.user);
-                console.log('✅ Authentication found:', parsed.user);
+                console.log('✅ Authentication found in storage:', parsed.user);
+                
+                // Also store in localStorage for consistency across components
+                if (!localStorage.getItem('laTandaWeb3Auth')) {
+                    localStorage.setItem('laTandaWeb3Auth', authData);
+                    console.log('📦 Auth data synchronized to localStorage');
+                }
             }
             
             // Check KYC completion with multiple patterns
             let kycCompleted = false;
             
-            // Pattern 1: General KYC data
-            const kycData = localStorage.getItem('laTandaKYCData');
+            // Pattern 1: General KYC data (check both storage types)
+            const kycData = localStorage.getItem('laTandaKYCData') || sessionStorage.getItem('laTandaKYCData');
             if (kycData) {
                 const parsed = JSON.parse(kycData);
                 if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
                     kycCompleted = true;
                     console.log('✅ KYC completed (general pattern):', parsed);
+                    
+                    // Sync to localStorage for consistency
+                    if (!localStorage.getItem('laTandaKYCData')) {
+                        localStorage.setItem('laTandaKYCData', kycData);
+                        console.log('📦 KYC data synchronized to localStorage');
+                    }
                 }
             }
             
@@ -202,12 +214,18 @@ class LaTandaUnifiedApp {
                 this.updateKYCStatus('success');
             }
             
-            // Check wallet connection
-            const walletData = localStorage.getItem('laTandaWalletData');
+            // Check wallet connection (check both storage types)
+            const walletData = localStorage.getItem('laTandaWalletData') || sessionStorage.getItem('laTandaWalletData');
             if (walletData) {
                 this.userState.walletConnected = true;
                 this.updateWalletStatus('success');
                 console.log('✅ Wallet connected');
+                
+                // Sync to localStorage for consistency
+                if (!localStorage.getItem('laTandaWalletData')) {
+                    localStorage.setItem('laTandaWalletData', walletData);
+                    console.log('📦 Wallet data synchronized to localStorage');
+                }
             }
             
             // Update status for new components based on KYC completion
@@ -396,6 +414,9 @@ class LaTandaUnifiedApp {
             case 'AUTH_SUCCESS':
                 this.handleAuthSuccess(data);
                 break;
+            case 'AUTH_ERROR':
+                this.handleAuthError(data);
+                break;
             case 'KYC_COMPLETED':
                 this.handleKYCCompleted(data);
                 break;
@@ -415,23 +436,56 @@ class LaTandaUnifiedApp {
     }
     
     handleAuthSuccess(data) {
+        console.log('🎉 Auth Success received:', data);
+        
         this.userState.authenticated = true;
         this.userState.userData = data.user;
         this.updateAuthStatus('success');
         this.updateUserInfo(data.user);
+        
+        // Handle KYC status from auth component
+        if (data.kycCompleted) {
+            this.userState.kycCompleted = true;
+            this.updateKYCStatus('success');
+            
+            // Update all component statuses since KYC unlocks advanced features
+            this.updateCommissionsStatus('success');
+            this.updateTokensStatus('success');
+            this.updateMarketplaceStatus('success');
+            
+            console.log('✅ KYC already completed for user');
+        }
+        
         this.updateNavigationState();
         
-        // Store auth data
-        localStorage.setItem('laTandaWeb3Auth', JSON.stringify(data));
+        // Store auth data in both storage types for consistency
+        const authData = {
+            user: data.user,
+            loginTime: Date.now(),
+            kycCompleted: data.kycCompleted || false,
+            kycLevel: data.kycLevel || 0
+        };
+        
+        localStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
+        sessionStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
         
         this.showNotification('¡Autenticación exitosa! 🎉', 'success');
         
-        // Auto-navigate to KYC if not completed
-        if (!this.userState.kycCompleted) {
+        // Navigate based on KYC status
+        if (data.kycCompleted) {
+            setTimeout(() => {
+                this.navigateToSection('wallet');
+            }, 2000);
+        } else {
             setTimeout(() => {
                 this.navigateToSection('kyc');
             }, 2000);
         }
+    }
+    
+    handleAuthError(data) {
+        console.error('❌ Auth Error received:', data);
+        this.showNotification('Error en la autenticación: ' + (data.error || 'Error desconocido'), 'error');
     }
     
     handleKYCCompleted(data) {
