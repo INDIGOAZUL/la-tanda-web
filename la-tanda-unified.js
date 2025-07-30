@@ -233,11 +233,26 @@ class LaTandaUnifiedApp {
                 this.updateCommissionsStatus('success');
                 this.updateTokensStatus('success');
                 this.updateMarketplaceStatus('success');
+                this.updateGroupsStatus('success');
                 console.log('✅ Advanced features unlocked');
+            } else {
+                // Ensure these are pending if KYC not completed
+                this.updateCommissionsStatus('pending');
+                this.updateTokensStatus('pending');
+                this.updateMarketplaceStatus('pending');
+                this.updateGroupsStatus('pending');
+            }
+            
+            // Update dashboard status based on full completion
+            if (this.userState.authenticated && this.userState.kycCompleted && this.userState.walletConnected) {
+                this.updateDashboardStatus('success');
+            } else {
+                this.updateDashboardStatus('pending');
             }
             
             // Update navigation based on state
             this.updateNavigationState();
+            this.updateWelcomeButton();
             
             console.log('📊 Final user state:', this.userState);
             
@@ -452,18 +467,28 @@ class LaTandaUnifiedApp {
             this.updateCommissionsStatus('success');
             this.updateTokensStatus('success');
             this.updateMarketplaceStatus('success');
+            this.updateGroupsStatus('success');
             
             console.log('✅ KYC already completed for user');
         }
         
+        // Handle wallet status from auth component
+        if (data.walletConnected) {
+            this.userState.walletConnected = true;
+            this.updateWalletStatus('success');
+            console.log('✅ Wallet already connected for user');
+        }
+        
         this.updateNavigationState();
+        this.updateWelcomeButton();
         
         // Store auth data in both storage types for consistency
         const authData = {
             user: data.user,
             loginTime: Date.now(),
             kycCompleted: data.kycCompleted || false,
-            kycLevel: data.kycLevel || 0
+            kycLevel: data.kycLevel || 0,
+            walletConnected: data.walletConnected || false
         };
         
         localStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
@@ -471,16 +496,16 @@ class LaTandaUnifiedApp {
         
         this.showNotification('¡Autenticación exitosa! 🎉', 'success');
         
-        // Navigate based on KYC status
-        if (data.kycCompleted) {
-            setTimeout(() => {
-                this.navigateToSection('wallet');
-            }, 2000);
-        } else {
-            setTimeout(() => {
+        // Navigate based on completion status
+        setTimeout(() => {
+            if (!data.kycCompleted) {
                 this.navigateToSection('kyc');
-            }, 2000);
-        }
+            } else if (!data.walletConnected) {
+                this.navigateToSection('wallet');
+            } else {
+                this.navigateToSection('dashboard');
+            }
+        }, 2000);
     }
     
     handleAuthError(data) {
@@ -509,6 +534,7 @@ class LaTandaUnifiedApp {
         
         // Force navigation state update
         this.updateNavigationState();
+        this.updateWelcomeButton();
         
         this.showNotification('¡Registro KYC completado! 🎉 Funciones avanzadas desbloqueadas', 'success');
         
@@ -522,6 +548,7 @@ class LaTandaUnifiedApp {
         this.userState.walletConnected = true;
         this.updateWalletStatus('success');
         this.updateNavigationState();
+        this.updateWelcomeButton();
         
         // Store wallet data
         localStorage.setItem('laTandaWalletData', JSON.stringify(data));
@@ -755,6 +782,36 @@ class LaTandaUnifiedApp {
     
     goToDashboard() {
         this.navigateToSection('dashboard');
+    }
+    
+    handleWelcomeAction() {
+        console.log('🎯 Welcome action triggered, current state:', this.userState);
+        
+        // Navigate based on user progress
+        if (!this.userState.authenticated) {
+            this.navigateToSection('auth');
+        } else if (!this.userState.kycCompleted) {
+            this.navigateToSection('kyc');
+        } else if (!this.userState.walletConnected) {
+            this.navigateToSection('wallet');
+        } else {
+            this.navigateToSection('dashboard');
+        }
+    }
+    
+    updateWelcomeButton() {
+        const welcomeBtn = document.getElementById('welcomeActionBtn');
+        if (!welcomeBtn) return;
+        
+        if (!this.userState.authenticated) {
+            welcomeBtn.textContent = 'Comenzar';
+        } else if (!this.userState.kycCompleted) {
+            welcomeBtn.textContent = 'Completar KYC';
+        } else if (!this.userState.walletConnected) {
+            welcomeBtn.textContent = 'Conectar Wallet';
+        } else {
+            welcomeBtn.textContent = 'Ir al Dashboard';
+        }
     }
     
     // Method to reset app state (for logout)

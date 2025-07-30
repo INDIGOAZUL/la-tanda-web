@@ -573,8 +573,25 @@ class LaTandaWeb3Auth {
         localStorage.setItem('laTandaKYCData', JSON.stringify(demoKYCData));
         localStorage.setItem(`kyc_status_${demoUser.id}`, JSON.stringify(demoKYCData));
         
+        // Set up demo wallet data
+        const demoWalletData = {
+            connected: true,
+            walletAddress: '0x1234567890123456789012345678901234567890',
+            balance: {
+                hnl: 2500.00,
+                ltd: 1000,
+                locked: 500.00
+            },
+            user_id: demoUser.id,
+            connected_at: new Date().toISOString()
+        };
+        
+        // Store demo wallet data in both storage types
+        storage.setItem('laTandaWalletData', JSON.stringify(demoWalletData));
+        localStorage.setItem('laTandaWalletData', JSON.stringify(demoWalletData));
+        
         await this.loginUser(demoUser, rememberMe);
-        this.showNotification('Welcome! Demo session with KYC verified started successfully.', 'success');
+        this.showNotification('Welcome! Demo session with KYC and Wallet ready!', 'success');
     }
     
     async loginRealUser(email, password, rememberMe) {
@@ -650,13 +667,18 @@ class LaTandaWeb3Auth {
             const kycStatus = await this.getUserKYCStatus(user.id);
             
             if (isInIframe) {
+                // Check if user also has wallet data for demo users
+                const walletData = localStorage.getItem('laTandaWalletData') || sessionStorage.getItem('laTandaWalletData');
+                const hasWallet = !!walletData;
+                
                 // If in iframe, send message to parent instead of redirecting
                 const message = {
                     type: 'AUTH_SUCCESS',
                     data: {
                         user: user,
                         kycCompleted: kycStatus.completed && kycStatus.level > 0,
-                        kycLevel: kycStatus.level
+                        kycLevel: kycStatus.level,
+                        walletConnected: hasWallet
                     }
                 };
                 
