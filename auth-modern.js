@@ -550,8 +550,31 @@ class LaTandaWeb3Auth {
             isDemo: true
         };
         
+        // Set up demo KYC status to avoid KYC loop
+        const demoKYCData = {
+            completed: true,
+            verification_level: 3,
+            status: 'completed',
+            completion_date: new Date().toISOString(),
+            user_id: demoUser.id,
+            documents: {
+                identity: { status: 'verified', type: 'passport' },
+                address: { status: 'verified', type: 'utility_bill' },
+                selfie: { status: 'verified' }
+            }
+        };
+        
+        // Store demo KYC data in both storage types
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('laTandaKYCData', JSON.stringify(demoKYCData));
+        storage.setItem(`kyc_status_${demoUser.id}`, JSON.stringify(demoKYCData));
+        
+        // Also store in localStorage for cross-component consistency
+        localStorage.setItem('laTandaKYCData', JSON.stringify(demoKYCData));
+        localStorage.setItem(`kyc_status_${demoUser.id}`, JSON.stringify(demoKYCData));
+        
         await this.loginUser(demoUser, rememberMe);
-        this.showNotification('Welcome! Demo session started successfully.', 'success');
+        this.showNotification('Welcome! Demo session with KYC verified started successfully.', 'success');
     }
     
     async loginRealUser(email, password, rememberMe) {
@@ -620,37 +643,81 @@ class LaTandaWeb3Auth {
     
     async checkKYCStatusAndRedirect(user) {
         try {
+            // Check if we're running inside an iframe (unified dashboard)
+            const isInIframe = window.self !== window.top;
+            
             // Verificar estado KYC del usuario
             const kycStatus = await this.getUserKYCStatus(user.id);
             
-            if (kycStatus.level === 0 || !kycStatus.completed) {
-                // Usuario necesita completar KYC
-                window.location.href = 'kyc-registration.html';
+            if (isInIframe) {
+                // If in iframe, send message to parent instead of redirecting
+                const message = {
+                    type: 'AUTH_SUCCESS',
+                    data: {
+                        user: user,
+                        kycCompleted: kycStatus.completed && kycStatus.level > 0,
+                        kycLevel: kycStatus.level
+                    }
+                };
+                
+                window.parent.postMessage(message, '*');
+                console.log('🎯 Auth success message sent to parent dashboard');
+                
             } else {
-                // Usuario ya tiene KYC completo, ir al dashboard
-                window.location.href = 'web3-dashboard.html';
+                // If not in iframe, use traditional redirect
+                if (kycStatus.level === 0 || !kycStatus.completed) {
+                    // Usuario necesita completar KYC
+                    window.location.href = 'kyc-registration.html';
+                } else {
+                    // Usuario ya tiene KYC completo, ir al dashboard
+                    window.location.href = 'web3-dashboard.html';
+                }
             }
         } catch (error) {
             console.error('Error checking KYC status:', error);
-            // En caso de error, enviar a KYC por seguridad
-            window.location.href = 'kyc-registration.html';
+            
+            if (window.self !== window.top) {
+                // In iframe, send error message
+                window.parent.postMessage({
+                    type: 'AUTH_ERROR',
+                    data: { error: 'KYC status check failed' }
+                }, '*');
+            } else {
+                // En caso de error, enviar a KYC por seguridad
+                window.location.href = 'kyc-registration.html';
+            }
         }
     }
     
     async getUserKYCStatus(userId) {
         try {
-            // Verificar en localStorage si ya completó KYC
-            const kycData = localStorage.getItem(`kyc_status_${userId}`);
+            // Verificar en ambos storage types si ya completó KYC
+            const kycData = localStorage.getItem(`kyc_status_${userId}`) || sessionStorage.getItem(`kyc_status_${userId}`);
             
             if (kycData) {
                 const kycInfo = JSON.parse(kycData);
                 return {
                     completed: kycInfo.completed,
-                    level: kycInfo.verification_level,
+                    level: kycInfo.verification_level || kycInfo.level || 0,
                     lastUpdate: kycInfo.completion_date,
                     documents: kycInfo.documents || {},
                     biometric: kycInfo.biometric_completed || false
                 };
+            }
+            
+            // Also check general KYC data pattern
+            const generalKycData = localStorage.getItem('laTandaKYCData') || sessionStorage.getItem('laTandaKYCData');
+            if (generalKycData) {
+                const kycInfo = JSON.parse(generalKycData);
+                if (kycInfo.user_id === userId || kycInfo.completed) {
+                    return {
+                        completed: kycInfo.completed,
+                        level: kycInfo.verification_level || kycInfo.level || 0,
+                        lastUpdate: kycInfo.completion_date,
+                        documents: kycInfo.documents || {},
+                        biometric: kycInfo.biometric_completed || false
+                    };
+                }
             }
             
             // Si no hay datos locales, verificar con el servidor
