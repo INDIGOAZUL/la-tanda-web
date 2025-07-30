@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Connectivity - La Tanda</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status-success { color: #10B981; }
+        .status-error { color: #EF4444; }
+        .status-pending { color: #F59E0B; }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success { background: #D1FAE5; }
+        .error { background: #FEE2E2; }
+        .pending { background: #FEF3C7; }
+        button {
+            background: #6366F1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #5B5AE6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 La Tanda API Connectivity Test</h1>
+    
+    <div class="test-container">
+        <h2>1. API Adapter & Configuration Test</h2>
+        <button onclick="testAPIAdapter()">Test API Adapter</button>
+        <div id="adapterResults"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>2. Authentication Endpoints</h2>
+        <button onclick="testAuthEndpoints()">Test Auth Endpoints</button>
+        <div id="authResults"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>3. Real Backend Connectivity</h2>
+        <button onclick="testRealBackend()">Test Real Backend</button>
+        <div id="backendResults"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>4. Legacy Component Compatibility</h2>
+        <button onclick="testLegacyComponents()">Test Legacy Components</button>
+        <div id="legacyResults"></div>
+    </div>
+
+    <!-- Load API components -->
+    <script src="api-endpoints-config.js"></script>
+    <script src="api-adapter.js"></script>
+
+    <script>
+        let testResults = {
+            adapter: null,
+            auth: null,
+            backend: null,
+            legacy: null
+        };
+
+        async function testAPIAdapter() {
+            const results = document.getElementById('adapterResults');
+            results.innerHTML = '<div class="test-result pending">Testing API Adapter...</div>';
+            
+            try {
+                // Test 1: Check if adapter is loaded
+                if (typeof window.laTandaAPIAdapter === 'undefined') {
+                    throw new Error('API Adapter not loaded');
+                }
+                
+                // Test 2: Check endpoint mapping
+                const testMapping = window.laTandaAPIAdapter.endpointMapping;
+                if (!testMapping || Object.keys(testMapping).length === 0) {
+                    throw new Error('Endpoint mapping is empty');
+                }
+                
+                // Test 3: Check fetch interception
+                const originalFetch = window.laTandaAPIAdapter.originalFetch;
+                if (!originalFetch) {
+                    throw new Error('Original fetch not stored');
+                }
+                
+                results.innerHTML = `
+                    <div class="test-result success">✅ API Adapter loaded successfully</div>
+                    <div class="test-result success">✅ ${Object.keys(testMapping).length} endpoint mappings loaded</div>
+                    <div class="test-result success">✅ Fetch interception active</div>
+                `;
+                testResults.adapter = 'success';
+                
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ API Adapter Error: ${error.message}</div>`;
+                testResults.adapter = 'error';
+            }
+        }
+
+        async function testAuthEndpoints() {
+            const results = document.getElementById('authResults');
+            results.innerHTML = '<div class="test-result pending">Testing Authentication Endpoints...</div>';
+            
+            try {
+                // Test legacy endpoint mapping
+                const testCalls = [
+                    { endpoint: '/api/auth/test', method: 'GET' },
+                    { endpoint: '/api/auth/signin', method: 'POST' },
+                    { endpoint: '/api/auth/signup', method: 'POST' }
+                ];
+                
+                let successCount = 0;
+                let resultHTML = '';
+                
+                for (const test of testCalls) {
+                    try {
+                        // Simulate API call through adapter
+                        const testUrl = `https://api.latanda.online${test.endpoint}`;
+                        const adapter = window.laTandaAPIAdapter;
+                        const mappingKey = `${test.method} ${test.endpoint}`;
+                        const mapping = adapter.findMapping(mappingKey, test.endpoint);
+                        
+                        if (mapping !== test.endpoint) {
+                            resultHTML += `<div class="test-result success">✅ ${test.endpoint} → ${mapping}</div>`;
+                            successCount++;
+                        } else {
+                            resultHTML += `<div class="test-result error">❌ No mapping for ${test.endpoint}</div>`;
+                        }
+                    } catch (error) {
+                        resultHTML += `<div class="test-result error">❌ ${test.endpoint}: ${error.message}</div>`;
+                    }
+                }
+                
+                results.innerHTML = resultHTML + `<div class="test-result ${successCount === testCalls.length ? 'success' : 'pending'}">Mapped ${successCount}/${testCalls.length} auth endpoints</div>`;
+                testResults.auth = successCount === testCalls.length ? 'success' : 'partial';
+                
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ Auth Test Error: ${error.message}</div>`;
+                testResults.auth = 'error';
+            }
+        }
+
+        async function testRealBackend() {
+            const results = document.getElementById('backendResults');
+            results.innerHTML = '<div class="test-result pending">Testing Real Backend Connectivity...</div>';
+            
+            try {
+                // Test system status endpoint
+                const statusTest = await fetch('https://api.latanda.online/api/system/status', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).catch(() => null);
+                
+                let resultHTML = '';
+                
+                if (statusTest && statusTest.ok) {
+                    const data = await statusTest.json();
+                    resultHTML += `<div class="test-result success">✅ System Status: ${statusTest.status} ${statusTest.statusText}</div>`;
+                    resultHTML += `<div class="test-result success">✅ Response data received</div>`;
+                    testResults.backend = 'success';
+                } else {
+                    resultHTML += `<div class="test-result error">❌ Cannot reach backend server</div>`;
+                    resultHTML += `<div class="test-result pending">⚠️ Using mock responses</div>`;
+                    testResults.backend = 'mock';
+                }
+                
+                // Test endpoint configuration
+                if (window.laTandaAPI) {
+                    const endpoints = Object.keys(window.laTandaAPI.ENDPOINTS);
+                    resultHTML += `<div class="test-result success">✅ ${endpoints.length} real endpoints configured</div>`;
+                }
+                
+                results.innerHTML = resultHTML;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ Backend Test Error: ${error.message}</div>`;
+                testResults.backend = 'error';
+            }
+        }
+
+        async function testLegacyComponents() {
+            const results = document.getElementById('legacyResults');
+            results.innerHTML = '<div class="test-result pending">Testing Legacy Component Compatibility...</div>';
+            
+            try {
+                // Test if legacy components can make API calls through adapter
+                const legacyTests = [
+                    { call: 'POST /api/auth/signin', expected: 'POST /api/auth/login' },
+                    { call: 'GET /api/users/123', expected: 'POST /api/registration/groups/details' },
+                    { call: 'GET /api/wallet/123/transactions', expected: 'POST /api/payments/history' }
+                ];
+                
+                let resultHTML = '';
+                let successCount = 0;
+                
+                for (const test of legacyTests) {
+                    const [method, path] = test.call.split(' ');
+                    const adapter = window.laTandaAPIAdapter;
+                    const mapped = adapter.findMapping(test.call, path);
+                    
+                    if (mapped.includes(test.expected.split(' ')[1])) {
+                        resultHTML += `<div class="test-result success">✅ ${test.call} → ${test.expected}</div>`;
+                        successCount++;
+                    } else {
+                        resultHTML += `<div class="test-result error">❌ ${test.call} mapping failed</div>`;
+                    }
+                }
+                
+                resultHTML += `<div class="test-result ${successCount === legacyTests.length ? 'success' : 'pending'}">Legacy compatibility: ${successCount}/${legacyTests.length}</div>`;
+                results.innerHTML = resultHTML;
+                testResults.legacy = successCount === legacyTests.length ? 'success' : 'partial';
+                
+            } catch (error) {
+                results.innerHTML = `<div class="test-result error">❌ Legacy Test Error: ${error.message}</div>`;
+                testResults.legacy = 'error';
+            }
+        }
+
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testAPIAdapter();
+                setTimeout(() => testAuthEndpoints(), 1000);
+                setTimeout(() => testRealBackend(), 2000);
+                setTimeout(() => testLegacyComponents(), 3000);
+            }, 500);
+        });
+
+        // Show overall results
+        function showOverallResults() {
+            const overall = document.createElement('div');
+            overall.className = 'test-container';
+            overall.innerHTML = `
+                <h2>📊 Overall Test Results</h2>
+                <div class="test-result ${testResults.adapter}">API Adapter: ${testResults.adapter || 'pending'}</div>
+                <div class="test-result ${testResults.auth}">Authentication: ${testResults.auth || 'pending'}</div>
+                <div class="test-result ${testResults.backend}">Backend: ${testResults.backend || 'pending'}</div>
+                <div class="test-result ${testResults.legacy}">Legacy Compatibility: ${testResults.legacy || 'pending'}</div>
+            `;
+            document.body.appendChild(overall);
+        }
+
+        setTimeout(showOverallResults, 5000);
+    </script>
+</body>
+</html>

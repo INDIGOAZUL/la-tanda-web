@@ -73,6 +73,16 @@
                 inset 1px 0 0 rgba(148, 163, 184, 0.05);
         }
         
+        /* Estado no autenticado - ocultar sidebar */
+        .sidebar.landing-mode {
+            transform: translateX(-100%);
+        }
+        
+        /* Estado autenticado - mostrar sidebar */
+        .sidebar.platform-mode {
+            transform: translateX(0);
+        }
+        
         .sidebar.hidden {
             transform: translateX(-100%);
         }
@@ -187,7 +197,19 @@
             flex: 1;
             margin-left: 280px;
             padding: 20px;
-            transition: margin-left 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Estado landing - sin sidebar */
+        .main-content.landing-mode {
+            margin-left: 0;
+            padding: 0;
+        }
+        
+        /* Estado plataforma - con sidebar */
+        .main-content.platform-mode {
+            margin-left: 280px;
+            padding: 20px;
         }
         
         .main-content.expanded {
@@ -201,6 +223,21 @@
             align-items: center;
             margin-bottom: 32px;
             padding: 20px 24px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 16px;
+            transition: all 0.4s ease;
+        }
+        
+        /* Ocultar header en modo landing */
+        .app-header.landing-mode {
+            display: none;
+        }
+        
+        /* Mostrar header en modo plataforma */
+        .app-header.platform-mode {
+            display: flex;
             background: rgba(248, 250, 252, 0.02);
             backdrop-filter: blur(20px);
             border-radius: 16px;
@@ -247,17 +284,126 @@
         .user-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             padding: 8px 16px;
-            background: rgba(148, 163, 184, 0.08);
-            border-radius: 12px;
+            background: rgba(248, 250, 252, 0.05);
             border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .user-balance {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding-right: 16px;
+            border-right: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        .balance-amount {
+            font-size: 16px;
+            font-weight: 500;
+            color: #22c55e;
+        }
+        
+        .balance-label {
+            font-size: 11px;
+            color: rgba(248, 250, 252, 0.6);
+            font-weight: 300;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
         
-        .user-info:hover {
+        .user-profile:hover {
             background: rgba(148, 163, 184, 0.12);
-            transform: translateY(-1px);
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .user-status {
+            font-size: 10px;
+            color: #22c55e;
+            font-weight: 400;
+        }
+        
+        .dropdown-arrow {
+            font-size: 10px;
+            color: rgba(248, 250, 252, 0.6);
+            transition: transform 0.3s ease;
+        }
+        
+        .user-profile.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* User Menu Dropdown */
+        .user-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 8px 0;
+            min-width: 200px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideInDown 0.3s ease-out;
+        }
+        
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: rgba(248, 250, 252, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 300;
+        }
+        
+        .user-menu-item:hover {
+            background: rgba(148, 163, 184, 0.1);
+            color: rgba(248, 250, 252, 1);
+        }
+        
+        .user-menu-item.logout {
+            color: #ef4444;
+        }
+        
+        .user-menu-item.logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .user-menu-divider {
+            height: 1px;
+            background: rgba(148, 163, 184, 0.1);
+            margin: 8px 16px;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .user-avatar {
@@ -1505,8 +1651,35 @@
                 </div>
                 <div class="header-right">
                     <div class="user-info" id="userInfo" style="display: none;">
-                        <div class="user-avatar" id="userAvatar">U</div>
-                        <span id="userName">Usuario</span>
+                        <div class="user-balance" id="userBalance">
+                            <span class="balance-amount">2,500 LTD</span>
+                            <span class="balance-label">Balance</span>
+                        </div>
+                        <div class="user-profile" onclick="toggleUserMenu()">
+                            <div class="user-avatar" id="userAvatar">U</div>
+                            <div class="user-details">
+                                <span id="userName">Usuario</span>
+                                <span class="user-status">Verificado ✓</span>
+                            </div>
+                            <div class="dropdown-arrow">▼</div>
+                        </div>
+                        
+                        <!-- User Menu Dropdown -->
+                        <div class="user-menu" id="userMenu" style="display: none;">
+                            <div class="user-menu-item" onclick="goToProfile()">
+                                <span>👤</span> Mi Perfil
+                            </div>
+                            <div class="user-menu-item" onclick="goToSettings()">
+                                <span>⚙️</span> Configuración
+                            </div>
+                            <div class="user-menu-item" onclick="goToSecurity()">
+                                <span>🔒</span> Seguridad
+                            </div>
+                            <div class="user-menu-divider"></div>
+                            <div class="user-menu-item logout" onclick="handleLogout()">
+                                <span>🚪</span> Cerrar Sesión
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -2406,6 +2579,70 @@
                     setTimeout(() => notification.remove(), 300);
                 }
             }, 5000);
+        }
+        
+        // User menu functionality
+        function toggleUserMenu() {
+            const userMenu = document.getElementById('userMenu');
+            const userProfile = document.querySelector('.user-profile');
+            
+            if (userMenu.style.display === 'none' || !userMenu.style.display) {
+                userMenu.style.display = 'block';
+                userProfile.classList.add('active');
+                
+                // Close menu when clicking outside
+                setTimeout(() => {
+                    document.addEventListener('click', closeUserMenuOutside);
+                }, 100);
+            } else {
+                userMenu.style.display = 'none';
+                userProfile.classList.remove('active');
+                document.removeEventListener('click', closeUserMenuOutside);
+            }
+        }
+        
+        function closeUserMenuOutside(event) {
+            const userInfo = document.getElementById('userInfo');
+            if (!userInfo.contains(event.target)) {
+                const userMenu = document.getElementById('userMenu');
+                const userProfile = document.querySelector('.user-profile');
+                
+                userMenu.style.display = 'none';
+                userProfile.classList.remove('active');
+                document.removeEventListener('click', closeUserMenuOutside);
+            }
+        }
+        
+        function goToProfile() {
+            console.log('Going to profile...');
+            closeUserMenuOutside({ target: document.body });
+            if (window.app) {
+                window.app.navigateToSection('dashboard'); // Placeholder
+            }
+            showNotification('Perfil de usuario - Próximamente disponible', 'info');
+        }
+        
+        function goToSettings() {
+            console.log('Going to settings...');
+            closeUserMenuOutside({ target: document.body });
+            showNotification('Configuración - Próximamente disponible', 'info');
+        }
+        
+        function goToSecurity() {
+            console.log('Going to security...');
+            closeUserMenuOutside({ target: document.body });
+            if (window.app) {
+                window.app.navigateToSection('security');
+            }
+        }
+        
+        function handleLogout() {
+            console.log('Logging out...');
+            closeUserMenuOutside({ target: document.body });
+            
+            if (window.app) {
+                window.app.logout();
+            }
         }
         
         // Initialize landing page

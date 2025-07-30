@@ -254,6 +254,9 @@ class LaTandaUnifiedApp {
             this.updateNavigationState();
             this.updateWelcomeButton();
             
+            // Update UI mode based on authentication status
+            this.updateUIMode();
+            
             console.log('📊 Final user state:', this.userState);
             
         } catch (error) {
@@ -495,6 +498,9 @@ class LaTandaUnifiedApp {
         sessionStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
         
         this.showNotification('¡Autenticación exitosa! 🎉', 'success');
+        
+        // Switch to platform mode
+        this.switchToPlatformMode();
         
         // Navigate based on completion status
         setTimeout(() => {
@@ -911,6 +917,110 @@ class LaTandaUnifiedApp {
             console.error('API connectivity test failed:', error);
             return null;
         }
+    }
+    
+    // UI Mode Management
+    switchToLandingMode() {
+        console.log('🎯 Switching to Landing Mode');
+        
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const appHeader = document.querySelector('.app-header');
+        
+        if (sidebar) {
+            sidebar.className = 'sidebar landing-mode';
+        }
+        
+        if (mainContent) {
+            mainContent.className = 'main-content landing-mode';
+        }
+        
+        if (appHeader) {
+            appHeader.className = 'app-header landing-mode';
+        }
+        
+        // Hide current section and show welcome
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        const welcomeSection = document.getElementById('welcome');
+        if (welcomeSection) {
+            welcomeSection.classList.add('active');
+        }
+        
+        this.currentSection = 'welcome';
+        
+        console.log('✅ Landing Mode activated');
+    }
+    
+    switchToPlatformMode() {
+        console.log('🚀 Switching to Platform Mode');
+        
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const appHeader = document.querySelector('.app-header');
+        
+        if (sidebar) {
+            sidebar.className = 'sidebar platform-mode';
+        }
+        
+        if (mainContent) {
+            mainContent.className = 'main-content platform-mode';
+        }
+        
+        if (appHeader) {
+            appHeader.className = 'app-header platform-mode';
+        }
+        
+        // Update page title to show current section
+        this.updatePageTitle(this.currentSection);
+        
+        console.log('✅ Platform Mode activated');
+    }
+    
+    // Method to determine which mode should be active
+    updateUIMode() {
+        if (this.userState.authenticated) {
+            this.switchToPlatformMode();
+        } else {
+            this.switchToLandingMode();
+        }
+    }
+    
+    // Enhanced logout method
+    logout() {
+        // Clear all stored data
+        localStorage.removeItem('laTandaWeb3Auth');
+        localStorage.removeItem('laTandaKYCData');
+        localStorage.removeItem('laTandaWalletData');
+        
+        // Reset user state
+        this.userState = {
+            authenticated: false,
+            kycCompleted: false,
+            walletConnected: false,
+            hasGroups: false,
+            userData: null
+        };
+        
+        // Update UI
+        this.updateAuthStatus('pending');
+        this.updateKYCStatus('pending');
+        this.updateWalletStatus('pending');
+        this.updateGroupsStatus('pending');
+        this.updateDashboardStatus('pending');
+        
+        // Hide user info
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.style.display = 'none';
+        }
+        
+        // Switch back to landing mode
+        this.switchToLandingMode();
+        
+        this.showNotification('Sesión cerrada exitosamente', 'info');
     }
     
     // Cleanup method for troubleshooting
