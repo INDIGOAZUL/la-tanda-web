@@ -15,15 +15,21 @@ class LaTandaUnifiedApp {
             userData: null
         };
         
-        // URLs de los componentes
+        // URLs de los componentes con API adapter - Phase 1 Complete
         this.componentUrls = {
             auth: 'auth-modern.html',
             kyc: 'kyc-registration.html',
             wallet: 'tanda-wallet.html',
-            groups: 'group-security-demo.html',
+            groups: 'groups-advanced-system.html',
+            commissions: 'commission-system.html',
+            tokens: 'ltd-token-economics.html',
+            marketplace: 'marketplace-social.html',
             security: 'group-security-demo.html',
             dashboard: 'web3-dashboard.html'
         };
+        
+        // Asegurar que API adapter esté disponible
+        this.ensureAPIAdapter();
         
         // Estado de carga de componentes
         this.loadedComponents = new Set();
@@ -33,6 +39,7 @@ class LaTandaUnifiedApp {
     
     async init() {
         try {
+            this.initializeStatusIndicators();
             await this.setupEventListeners();
             await this.loadUserState();
             await this.hideLoadingScreen();
@@ -44,25 +51,62 @@ class LaTandaUnifiedApp {
         }
     }
     
-    setupEventListeners() {
-        // Navigation links
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const section = link.dataset.section;
-                if (section) {
-                    this.navigateToSection(section);
-                }
-            });
+    initializeStatusIndicators() {
+        // Initialize all status indicators to pending state
+        console.log('🔄 Initializing status indicators...');
+        
+        const statusElements = ['authStatus', 'kycStatus', 'walletStatus', 'groupsStatus', 
+                               'commissionsStatus', 'tokensStatus', 'marketplaceStatus', 'dashboardStatus'];
+        
+        statusElements.forEach(elementId => {
+            this.updateStatusIndicator(elementId, 'pending');
         });
         
-        // Menu toggle for mobile
-        const menuToggle = document.getElementById('menuToggle');
-        if (menuToggle) {
-            menuToggle.addEventListener('click', () => {
-                this.toggleSidebar();
+        console.log('✅ Status indicators initialized');
+    }
+    
+    setupEventListeners() {
+        // Use setTimeout to ensure DOM is fully loaded
+        setTimeout(() => {
+            // Navigation links
+            const navLinks = document.querySelectorAll('.nav-link');
+            console.log(`🔗 Setting up ${navLinks.length} navigation links`);
+            
+            navLinks.forEach(link => {
+                // Remove existing listeners to avoid duplicates
+                link.removeEventListener('click', this.handleNavClick);
+                
+                // Add new listener with proper context
+                this.handleNavClick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const section = link.dataset.section;
+                    console.log(`🔍 Navigation clicked: ${section}`);
+                    
+                    if (section) {
+                        // Check if link is disabled
+                        if (link.classList.contains('disabled') || link.style.pointerEvents === 'none') {
+                            console.log(`⚠️ Navigation disabled for section: ${section}`);
+                            this.showAccessDenied(section);
+                            return;
+                        }
+                        
+                        this.navigateToSection(section);
+                    }
+                };
+                
+                link.addEventListener('click', this.handleNavClick);
             });
-        }
+            
+            // Menu toggle for mobile
+            const menuToggle = document.getElementById('menuToggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    this.toggleSidebar();
+                });
+            }
+        }, 100);
         
         // Listen for iframe messages
         window.addEventListener('message', (event) => {
@@ -71,7 +115,8 @@ class LaTandaUnifiedApp {
         
         // Listen for auth state changes
         window.addEventListener('storage', (event) => {
-            if (event.key === 'laTandaWeb3Auth') {
+            if (event.key === 'laTandaWeb3Auth' || event.key === 'laTandaKYCData') {
+                console.log('🔄 Storage change detected, reloading user state');
                 this.handleAuthStateChange();
             }
         });
@@ -86,6 +131,17 @@ class LaTandaUnifiedApp {
     
     async loadUserState() {
         try {
+            console.log('🔄 Loading user state...');
+            
+            // Reset state first
+            this.userState = {
+                authenticated: false,
+                kycCompleted: false,
+                walletConnected: false,
+                hasGroups: false,
+                userData: null
+            };
+            
             // Check localStorage for existing auth
             const authData = localStorage.getItem('laTandaWeb3Auth');
             if (authData) {
@@ -94,12 +150,55 @@ class LaTandaUnifiedApp {
                 this.userState.userData = parsed.user;
                 this.updateAuthStatus('success');
                 this.updateUserInfo(parsed.user);
+                console.log('✅ Authentication found:', parsed.user);
             }
             
-            // Check KYC completion
+            // Check KYC completion with multiple patterns
+            let kycCompleted = false;
+            
+            // Pattern 1: General KYC data
             const kycData = localStorage.getItem('laTandaKYCData');
             if (kycData) {
-                this.userState.kycCompleted = true;
+                const parsed = JSON.parse(kycData);
+                if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
+                    kycCompleted = true;
+                    console.log('✅ KYC completed (general pattern):', parsed);
+                }
+            }
+            
+            // Pattern 2: User-specific KYC data
+            if (this.userState.userData) {
+                const userKycKey = `kyc_status_${this.userState.userData.id}`;
+                const userKycData = localStorage.getItem(userKycKey);
+                if (userKycData) {
+                    const parsed = JSON.parse(userKycData);
+                    if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
+                        kycCompleted = true;
+                        console.log('✅ KYC completed (user-specific pattern):', parsed);
+                    }
+                }
+            }
+            
+            // Pattern 3: Check all localStorage keys for KYC
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.includes('kyc') || key.includes('KYC')) {
+                    const data = localStorage.getItem(key);
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
+                            kycCompleted = true;
+                            console.log('✅ KYC completed (pattern search):', key, parsed);
+                            break;
+                        }
+                    } catch (e) {
+                        // Skip non-JSON data
+                    }
+                }
+            }
+            
+            this.userState.kycCompleted = kycCompleted;
+            if (kycCompleted) {
                 this.updateKYCStatus('success');
             }
             
@@ -108,13 +207,24 @@ class LaTandaUnifiedApp {
             if (walletData) {
                 this.userState.walletConnected = true;
                 this.updateWalletStatus('success');
+                console.log('✅ Wallet connected');
+            }
+            
+            // Update status for new components based on KYC completion
+            if (this.userState.kycCompleted) {
+                this.updateCommissionsStatus('success');
+                this.updateTokensStatus('success');
+                this.updateMarketplaceStatus('success');
+                console.log('✅ Advanced features unlocked');
             }
             
             // Update navigation based on state
             this.updateNavigationState();
             
+            console.log('📊 Final user state:', this.userState);
+            
         } catch (error) {
-            console.error('Error loading user state:', error);
+            console.error('❌ Error loading user state:', error);
         }
     }
     
@@ -174,24 +284,35 @@ class LaTandaUnifiedApp {
     }
     
     canAccessSection(section) {
-        switch (section) {
-            case 'welcome':
-                return true;
-            case 'auth':
-                return true;
-            case 'kyc':
-                return this.userState.authenticated;
-            case 'wallet':
-                return this.userState.authenticated && this.userState.kycCompleted;
-            case 'groups':
-                return this.userState.authenticated && this.userState.kycCompleted;
-            case 'security':
-                return this.userState.authenticated;
-            case 'dashboard':
-                return this.userState.authenticated && this.userState.kycCompleted && this.userState.walletConnected;
-            default:
-                return false;
-        }
+        const result = (() => {
+            switch (section) {
+                case 'welcome':
+                    return true;
+                case 'auth':
+                    return true;
+                case 'kyc':
+                    return this.userState.authenticated;
+                case 'wallet':
+                    return this.userState.authenticated && this.userState.kycCompleted;
+                case 'groups':
+                    return this.userState.authenticated && this.userState.kycCompleted;
+                case 'commissions':
+                    return this.userState.authenticated && this.userState.kycCompleted;
+                case 'tokens':
+                    return this.userState.authenticated && this.userState.kycCompleted;
+                case 'marketplace':
+                    return this.userState.authenticated && this.userState.kycCompleted;
+                case 'security':
+                    return this.userState.authenticated;
+                case 'dashboard':
+                    return this.userState.authenticated && this.userState.kycCompleted && this.userState.walletConnected;
+                default:
+                    return false;
+            }
+        })();
+        
+        console.log(`🔐 Access check for ${section}: ${result} (auth: ${this.userState.authenticated}, kyc: ${this.userState.kycCompleted}, wallet: ${this.userState.walletConnected})`);
+        return result;
     }
     
     showAccessDenied(section) {
@@ -199,6 +320,9 @@ class LaTandaUnifiedApp {
             kyc: 'Debes autenticarte primero para acceder al registro KYC',
             wallet: 'Completa tu registro KYC para acceder a la wallet',
             groups: 'Completa tu registro KYC para acceder a los grupos',
+            commissions: 'Completa tu registro KYC para acceder al sistema de comisiones',
+            tokens: 'Completa tu registro KYC para acceder al sistema de tokens',
+            marketplace: 'Completa tu registro KYC para acceder al marketplace',
             dashboard: 'Completa la autenticación, KYC y conexión de wallet para acceder al dashboard'
         };
         
@@ -218,7 +342,10 @@ class LaTandaUnifiedApp {
             auth: 'Autenticación',
             kyc: 'Registro KYC',
             wallet: 'Wallet Web3',
-            groups: 'Grupos & Tandas',
+            groups: 'Grupos & Tandas Avanzado',
+            commissions: 'Sistema de Comisiones 90/10',
+            tokens: 'LTD Token Economics',
+            marketplace: 'Marketplace & Social',
             security: 'Seguridad',
             dashboard: 'Dashboard Principal'
         };
@@ -244,6 +371,7 @@ class LaTandaUnifiedApp {
             // Add load event listener
             frame.addEventListener('load', () => {
                 this.onComponentLoaded(section);
+                this.injectAPIAdapter(frame);
             });
         }
     }
@@ -307,19 +435,33 @@ class LaTandaUnifiedApp {
     }
     
     handleKYCCompleted(data) {
+        console.log('🎉 KYC Completed!', data);
+        
         this.userState.kycCompleted = true;
         this.updateKYCStatus('success');
+        
+        // Store KYC data with multiple patterns for reliability
+        localStorage.setItem('laTandaKYCData', JSON.stringify({...data, completed: true, status: 'completed'}));
+        
+        if (this.userState.userData) {
+            const userKycKey = `kyc_status_${this.userState.userData.id}`;
+            localStorage.setItem(userKycKey, JSON.stringify({...data, completed: true, status: 'completed'}));
+        }
+        
+        // Update all component statuses since KYC unlocks advanced features
+        this.updateCommissionsStatus('success');
+        this.updateTokensStatus('success');
+        this.updateMarketplaceStatus('success');
+        
+        // Force navigation state update
         this.updateNavigationState();
         
-        // Store KYC data
-        localStorage.setItem('laTandaKYCData', JSON.stringify(data));
+        this.showNotification('¡Registro KYC completado! 🎉 Funciones avanzadas desbloqueadas', 'success');
         
-        this.showNotification('¡Registro KYC completado! 🎉', 'success');
-        
-        // Auto-navigate to wallet
+        // Auto-navigate to wallet with a longer delay to show the success state
         setTimeout(() => {
             this.navigateToSection('wallet');
-        }, 2000);
+        }, 3000);
     }
     
     handleWalletConnected(data) {
@@ -370,6 +512,18 @@ class LaTandaUnifiedApp {
         this.updateStatusIndicator('dashboardStatus', status);
     }
     
+    updateCommissionsStatus(status) {
+        this.updateStatusIndicator('commissionsStatus', status);
+    }
+    
+    updateTokensStatus(status) {
+        this.updateStatusIndicator('tokensStatus', status);
+    }
+    
+    updateMarketplaceStatus(status) {
+        this.updateStatusIndicator('marketplaceStatus', status);
+    }
+    
     updateStatusIndicator(elementId, status) {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -397,37 +551,92 @@ class LaTandaUnifiedApp {
     }
     
     updateUserInfo(user) {
+        console.log('👤 Updating user info:', user);
+        
         const userInfo = document.getElementById('userInfo');
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
         
         if (userInfo && user) {
+            // Make sure user info is visible
             userInfo.style.display = 'flex';
+            userInfo.style.visibility = 'visible';
             
             if (userAvatar) {
-                userAvatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                const avatarText = user.name ? user.name.charAt(0).toUpperCase() : 
+                                 user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                userAvatar.textContent = avatarText;
+                console.log('✅ Avatar updated:', avatarText);
             }
             
             if (userName) {
-                userName.textContent = user.name || user.email || 'Usuario';
+                const displayName = user.name || user.email || 'Usuario';
+                userName.textContent = displayName;
+                console.log('✅ Username updated:', displayName);
             }
+            
+            console.log('✅ User info display updated');
+        } else {
+            console.log('❌ Cannot update user info - missing elements or user data');
+            if (!userInfo) console.log('❌ userInfo element not found');
+            if (!user) console.log('❌ user data not provided');
         }
     }
     
     updateNavigationState() {
+        console.log('🔄 Updating navigation state...');
+        
         // Update navigation link states based on user progress
         const navLinks = document.querySelectorAll('.nav-link');
+        console.log(`🔗 Found ${navLinks.length} navigation links`);
         
         navLinks.forEach(link => {
             const section = link.dataset.section;
-            if (this.canAccessSection(section)) {
+            const canAccess = this.canAccessSection(section);
+            
+            console.log(`🔍 Section: ${section}, Can Access: ${canAccess}`);
+            
+            if (canAccess) {
                 link.classList.remove('disabled');
                 link.style.opacity = '1';
                 link.style.pointerEvents = 'auto';
+                link.style.cursor = 'pointer';
+                
+                // Remove any disabled attributes
+                link.removeAttribute('disabled');
             } else {
                 link.classList.add('disabled');
                 link.style.opacity = '0.5';
                 link.style.pointerEvents = 'none';
+                link.style.cursor = 'not-allowed';
+            }
+        });
+        
+        console.log('✅ Navigation state updated');
+    }
+    
+    refreshNavigationListeners() {
+        // Only refresh the navigation click listeners without full setup
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            // Only add listener if it's not disabled and doesn't already have one
+            if (!link.classList.contains('disabled') && !link.hasAttribute('data-listener-added')) {
+                const handleClick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const section = link.dataset.section;
+                    console.log(`🔍 Navigation clicked: ${section}`);
+                    
+                    if (section && this.canAccessSection(section)) {
+                        this.navigateToSection(section);
+                    } else {
+                        this.showAccessDenied(section);
+                    }
+                };
+                
+                link.addEventListener('click', handleClick);
+                link.setAttribute('data-listener-added', 'true');
             }
         });
     }
@@ -528,6 +737,87 @@ class LaTandaUnifiedApp {
         
         this.showNotification('Sesión cerrada exitosamente', 'info');
     }
+    
+    // API Adapter Integration Methods
+    ensureAPIAdapter() {
+        // Ensure API adapter scripts are loaded
+        if (typeof window.laTandaAPIAdapter === 'undefined') {
+            this.loadAPIAdapterScripts();
+        }
+    }
+    
+    loadAPIAdapterScripts() {
+        // Load API endpoints config
+        const configScript = document.createElement('script');
+        configScript.src = 'api-endpoints-config.js';
+        configScript.onload = () => {
+            // Load API adapter after config
+            const adapterScript = document.createElement('script');
+            adapterScript.src = 'api-adapter.js';
+            document.head.appendChild(adapterScript);
+        };
+        document.head.appendChild(configScript);
+    }
+    
+    injectAPIAdapter(iframe) {
+        // Inject API adapter into iframe when it loads
+        try {
+            iframe.addEventListener('load', () => {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // Inject API adapter scripts into iframe
+                const configScript = iframeDoc.createElement('script');
+                configScript.src = '../api-endpoints-config.js';
+                
+                const adapterScript = iframeDoc.createElement('script');
+                adapterScript.src = '../api-adapter.js';
+                
+                iframeDoc.head.appendChild(configScript);
+                
+                configScript.onload = () => {
+                    iframeDoc.head.appendChild(adapterScript);
+                };
+                
+                console.log(`🔄 API Adapter injected into ${iframe.id}`);
+            });
+        } catch (error) {
+            console.warn('Cannot inject API adapter into iframe:', error);
+        }
+    }
+    
+    // Test API connectivity
+    async testAPIConnectivity() {
+        try {
+            if (window.laTandaAPIAdapter) {
+                const results = await window.laTandaAPIAdapter.testRealEndpoints();
+                console.table(results);
+                return results;
+            } else {
+                console.warn('API Adapter not available');
+                return null;
+            }
+        } catch (error) {
+            console.error('API connectivity test failed:', error);
+            return null;
+        }
+    }
+    
+    // Cleanup method for troubleshooting
+    cleanupEventListeners() {
+        console.log('🧹 Cleaning up event listeners...');
+        
+        // Remove all existing navigation event listeners
+        document.querySelectorAll('.nav-link').forEach(link => {
+            // Clone and replace to remove all event listeners
+            const newLink = link.cloneNode(true);
+            link.parentNode.replaceChild(newLink, link);
+        });
+        
+        // Re-setup clean event listeners
+        this.setupEventListeners();
+        
+        console.log('✅ Event listeners cleaned up and re-setup');
+    }
 }
 
 // CSS for animations
@@ -564,3 +854,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Export for global access
 window.LaTandaUnifiedApp = LaTandaUnifiedApp;
+
+// Add global method for troubleshooting
+window.cleanupApp = function() {
+    if (window.app && window.app.cleanupEventListeners) {
+        window.app.cleanupEventListeners();
+    }
+};
