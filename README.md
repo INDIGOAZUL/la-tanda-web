@@ -265,6 +265,7 @@ MIT License - See [LICENSE](./LICENSE) for details
 - **GitHub Discussions:** [Ask questions & share ideas](https://github.com/INDIGOAZUL/la-tanda-web/discussions)
 - **Twitter/X:** [@TandaWeb3](https://x.com/TandaWeb3)
 - **YouTube:** [La Tanda Channel](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
+- **Reddit:** [u/Valuable-Skin-7182](https://www.reddit.com/user/Valuable-Skin-7182/)
 - **Discord:** Coming soon
 
 ---
