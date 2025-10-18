@@ -13,6 +13,10 @@ class LaTandaWeb3Dashboard {
         this.daoContract = null;
         this.nftContract = null;
         
+        // API Integration Manager reference
+        this.apiManager = null;
+        this.paymentManager = null;
+        
         // Demo data for development
         this.demoData = {
             portfolio: {
@@ -135,17 +139,81 @@ class LaTandaWeb3Dashboard {
     
     async init() {
         try {
+            // Initialize API Integration first
+            await this.initializeAPIIntegration();
+            
+            // Then initialize Web3 and other components
             await this.initializeWeb3();
             this.initializeEventListeners();
             this.initializeChart();
             this.initializeParticles();
             this.startDataRefresh();
             this.isInitialized = true;
-            console.log('La Tanda Web3 Dashboard initialized successfully');
+            console.log('🚀 La Tanda Web3 Dashboard initialized successfully');
         } catch (error) {
-            console.error('Error initializing dashboard:', error);
+            console.error('❌ Error initializing dashboard:', error);
             this.showNotification('Error initializing dashboard', 'error');
         }
+    }
+
+    /**
+     * Initialize API Integration System - Fase 2: Backend Integration
+     */
+    async initializeAPIIntegration() {
+        try {
+            console.log('🔗 Initializing API Integration...');
+            
+            // Wait for API Integration Manager to be available
+            if (window.apiIntegrationManager) {
+                await window.apiIntegrationManager.initialize();
+                this.apiManager = window.apiIntegrationManager;
+                
+                // Setup API event listeners
+                this.setupAPIEventListeners();
+                
+                // Initialize Payment Manager if available
+                if (window.paymentIntegrationManager) {
+                    this.paymentManager = window.paymentIntegrationManager;
+                    await this.paymentManager.initialize();
+                }
+                
+                console.log('✅ API Integration initialized successfully');
+            } else {
+                console.warn('⚠️ API Integration Manager not available, using demo mode');
+            }
+        } catch (error) {
+            console.error('❌ Error initializing API integration:', error);
+            // Continue with demo mode if API integration fails
+        }
+    }
+
+    /**
+     * Setup event listeners for API integration
+     */
+    setupAPIEventListeners() {
+        // Listen for authentication events
+        document.addEventListener('latanda:auth:login', (event) => {
+            const userData = event.detail.user;
+            this.handleUserLogin(userData);
+        });
+
+        document.addEventListener('latanda:auth:logout', () => {
+            this.handleUserLogout();
+        });
+
+        // Listen for connection status changes
+        document.addEventListener('latanda:connection:status', (event) => {
+            this.updateConnectionStatus(event.detail.status);
+        });
+
+        // Listen for payment events
+        document.addEventListener('latanda:payment:success', (event) => {
+            this.handlePaymentSuccess(event.detail);
+        });
+
+        document.addEventListener('latanda:payment:error', (event) => {
+            this.handlePaymentError(event.detail);
+        });
     }
     
     async initializeWeb3() {
@@ -535,23 +603,53 @@ class LaTandaWeb3Dashboard {
     }
     
     // Trading Functions
-    showTrading(type = 'buy') {
-        const modal = document.getElementById('tradingModal');
-        const title = document.getElementById('tradingModalTitle');
-        const confirmBtn = document.getElementById('tradeConfirmBtn');
+    showTrading(type = 'buy', buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
         
-        if (modal && title && confirmBtn) {
-            title.textContent = `${type === 'buy' ? 'Buy' : 'Sell'} LTD`;
-            confirmBtn.textContent = `Confirm ${type === 'buy' ? 'Purchase' : 'Sale'}`;
-            confirmBtn.className = `trade-confirm-btn ${type}`;
-            
-            modal.classList.add('show');
-            
-            // Focus on amount input
+        const currentPrice = this.demoData.trading.currentPrice;
+        const balance = this.demoData.portfolio.ltdBalance;
+        
+        const modalContent = `
+            <div class="modal-header">
+                <h2>${type === 'buy' ? 'Buy' : 'Sell'} LTD Tokens</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="trading-info">
+                    <div class="info-item">
+                        <span>Current Price:</span>
+                        <span class="highlight">$${currentPrice}</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Your Balance:</span>
+                        <span>${balance.toFixed(0)} LTD</span>
+                    </div>
+                    <div class="info-item">
+                        <span>24h Change:</span>
+                        <span class="success">+${this.demoData.trading.percentChange}%</span>
+                    </div>
+                </div>
+                <div class="trading-form">
+                    <label>Amount:</label>
+                    <input type="number" id="trade-amount" placeholder="Enter amount" min="1" ${type === 'sell' ? `max="${balance}"` : ''}>
+                    <div class="trading-buttons">
+                        <button class="trade-btn ${type} btn-with-ripple" onclick="dashboard.executeTrade('${type}')">
+                            ${type === 'buy' ? 'Buy' : 'Sell'} LTD
+                        </button>
+                        <button class="trade-btn cancel" onclick="dashboard.closeModal()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.showModal(modalContent);
+        
+        if (buttonElement) {
             setTimeout(() => {
-                const amountInput = document.getElementById('tradeAmount');
-                if (amountInput) amountInput.focus();
-            }, 100);
+                this.setButtonLoading(buttonElement, false);
+            }, 300);
         }
     }
     
@@ -579,31 +677,399 @@ class LaTandaWeb3Dashboard {
         }
     }
     
-    // Staking Functions
-    showStaking() {
-        this.showNotification('Staking interface opening...', 'info');
-        // Implement staking modal
+    // Enhanced Button Functionality with Loading States
+    async showStaking(buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
+        
+        try {
+            this.showNotification('Loading staking interface...', 'info');
+            
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Create and show staking modal
+            this.createStakingModal();
+            this.showNotification('Staking interface ready!', 'success');
+        } catch (error) {
+            this.showNotification('Failed to load staking interface', 'error');
+        } finally {
+            if (buttonElement) this.setButtonLoading(buttonElement, false);
+        }
     }
     
-    showYieldFarming() {
-        this.showNotification('Yield farming interface opening...', 'info');
-        // Implement yield farming modal
+    async showYieldFarming(buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
+        
+        try {
+            this.showNotification('Loading yield farming...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            this.createYieldFarmingModal();
+            this.showNotification('Yield farming interface ready!', 'success');
+        } catch (error) {
+            this.showNotification('Failed to load yield farming', 'error');
+        } finally {
+            if (buttonElement) this.setButtonLoading(buttonElement, false);
+        }
     }
     
-    showLending() {
-        this.showNotification('Lending interface opening...', 'info');
-        // Implement lending modal
+    async showLending(buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
+        
+        try {
+            this.showNotification('Loading lending interface...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 600));
+            
+            this.createLendingModal();
+            this.showNotification('Lending interface ready!', 'success');
+        } catch (error) {
+            this.showNotification('Failed to load lending interface', 'error');
+        } finally {
+            if (buttonElement) this.setButtonLoading(buttonElement, false);
+        }
     }
     
     // NFT Functions
-    showNFTs() {
-        this.showNotification('NFT collection opening...', 'info');
-        // Implement NFT modal
+    async showNFTs(buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
+        
+        try {
+            this.showNotification('Loading NFT collection...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 700));
+            
+            this.createNFTModal();
+            this.showNotification('NFT collection ready!', 'success');
+        } catch (error) {
+            this.showNotification('Failed to load NFT collection', 'error');
+        } finally {
+            if (buttonElement) this.setButtonLoading(buttonElement, false);
+        }
     }
     
-    showMarketplace() {
-        this.showNotification('NFT marketplace opening...', 'info');
-        // Implement marketplace modal
+    async showMarketplace(buttonElement = null) {
+        if (buttonElement) this.setButtonLoading(buttonElement, true);
+        
+        try {
+            this.showNotification('Loading NFT marketplace...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 900));
+            
+            this.createMarketplaceModal();
+            this.showNotification('NFT marketplace ready!', 'success');
+        } catch (error) {
+            this.showNotification('Failed to load marketplace', 'error');
+        } finally {
+            if (buttonElement) this.setButtonLoading(buttonElement, false);
+        }
+    }
+
+    // Button State Management
+    setButtonLoading(buttonElement, isLoading) {
+        if (!buttonElement) return;
+        
+        if (isLoading) {
+            buttonElement.setAttribute('data-loading', 'true');
+            buttonElement.disabled = true;
+            buttonElement.classList.add('btn-with-ripple');
+        } else {
+            buttonElement.removeAttribute('data-loading');
+            buttonElement.disabled = false;
+            // Keep ripple class for better UX
+        }
+    }
+
+    // Modal Creation Functions
+    createStakingModal() {
+        const modalContent = `
+            <div class="modal-header">
+                <h2>Stake LTD Tokens</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="staking-info">
+                    <div class="info-item">
+                        <span>Current APY:</span>
+                        <span class="highlight">24.5%</span>
+                    </div>
+                    <div class="info-item">
+                        <span>Your Balance:</span>
+                        <span>${this.demoData.portfolio.ltdBalance} LTD</span>
+                    </div>
+                </div>
+                <div class="staking-form">
+                    <label>Amount to Stake:</label>
+                    <input type="number" id="stake-amount" placeholder="Enter amount" max="${this.demoData.portfolio.ltdBalance}">
+                    <button class="trade-confirm-btn" onclick="dashboard.confirmStaking()">Stake Tokens</button>
+                </div>
+            </div>
+        `;
+        this.showModal(modalContent);
+    }
+
+    createYieldFarmingModal() {
+        const modalContent = `
+            <div class="modal-header">
+                <h2>Yield Farming</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Select a liquidity pool to start yield farming:</p>
+                <div class="pools-list">
+                    ${this.demoData.pools.map(pool => `
+                        <div class="pool-item">
+                            <h4>${pool.name}</h4>
+                            <p>APY: ${pool.apy}%</p>
+                            <button class="pool-btn" onclick="dashboard.joinPool(${pool.id})">Join Pool</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        this.showModal(modalContent);
+    }
+
+    createLendingModal() {
+        const modalContent = `
+            <div class="modal-header">
+                <h2>Lend Assets</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Earn interest by lending your assets to the protocol.</p>
+                <div class="lending-options">
+                    <div class="lending-option">
+                        <h4>LTD Lending</h4>
+                        <p>APY: 18.5%</p>
+                        <button class="trade-confirm-btn">Lend LTD</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.showModal(modalContent);
+    }
+
+    createNFTModal() {
+        const modalContent = `
+            <div class="modal-header">
+                <h2>NFT Collection</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="nft-collection">
+                    ${this.demoData.nfts.map(nft => `
+                        <div class="nft-modal-item ${nft.rarity}">
+                            <h4>${nft.name}</h4>
+                            <p>${nft.description}</p>
+                            <span class="nft-value">Value: ${nft.value} LTD</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        this.showModal(modalContent);
+    }
+
+    createMarketplaceModal() {
+        const modalContent = `
+            <div class="modal-header">
+                <h2>NFT Marketplace</h2>
+                <button class="close-btn" onclick="dashboard.closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Buy, sell, and trade NFTs with other community members.</p>
+                <div class="marketplace-features">
+                    <button class="marketplace-btn">Browse NFTs</button>
+                    <button class="marketplace-btn">Sell NFT</button>
+                    <button class="marketplace-btn">My Listings</button>
+                </div>
+            </div>
+        `;
+        this.showModal(modalContent);
+    }
+
+    // Functional Implementations
+    async confirmStaking() {
+        const amount = parseFloat(document.getElementById('stake-amount').value);
+        if (!amount || amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
+        }
+        if (amount > this.demoData.portfolio.ltdBalance) {
+            this.showNotification('Insufficient balance', 'error');
+            return;
+        }
+
+        const button = document.querySelector('.trade-confirm-btn');
+        this.setButtonLoading(button, true);
+
+        try {
+            this.showNotification('Processing stake transaction...', 'info');
+            
+            // Simulate blockchain transaction
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Update portfolio data
+            this.demoData.portfolio.ltdBalance -= amount;
+            this.demoData.portfolio.stakingRewards += amount * 0.245; // 24.5% APY simulation
+            
+            this.updatePortfolioDisplay();
+            this.showNotification(`Successfully staked ${amount} LTD tokens!`, 'success');
+            this.closeModal();
+            
+        } catch (error) {
+            this.showNotification('Transaction failed. Please try again.', 'error');
+        } finally {
+            this.setButtonLoading(button, false);
+        }
+    }
+
+    async joinPool(poolId) {
+        const pool = this.demoData.pools.find(p => p.id === poolId);
+        if (!pool) return;
+
+        try {
+            this.showNotification(`Joining ${pool.name} pool...`, 'info');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            this.showNotification(`Successfully joined ${pool.name} pool!`, 'success');
+            this.closeModal();
+            
+        } catch (error) {
+            this.showNotification('Failed to join pool', 'error');
+        }
+    }
+
+    // Trading Functions
+    async executeTrade(type) {
+        const amountInput = document.getElementById('trade-amount');
+        const amount = parseFloat(amountInput?.value || 0);
+        
+        if (!amount || amount <= 0) {
+            this.showNotification('Please enter a valid amount', 'error');
+            return;
+        }
+
+        const button = document.querySelector(`.trade-btn.${type}`);
+        this.setButtonLoading(button, true);
+
+        try {
+            const action = type === 'buy' ? 'Buying' : 'Selling';
+            this.showNotification(`${action} ${amount} LTD...`, 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            
+            // Update balances (demo simulation)
+            if (type === 'buy') {
+                this.demoData.portfolio.ltdBalance += amount;
+                this.demoData.portfolio.totalValue += amount * this.demoData.trading.currentPrice;
+            } else {
+                this.demoData.portfolio.ltdBalance -= amount;
+                this.demoData.portfolio.totalValue -= amount * this.demoData.trading.currentPrice;
+            }
+            
+            this.updatePortfolioDisplay();
+            this.showNotification(`Successfully ${type === 'buy' ? 'bought' : 'sold'} ${amount} LTD!`, 'success');
+            
+        } catch (error) {
+            this.showNotification('Trade failed. Please try again.', 'error');
+        } finally {
+            this.setButtonLoading(button, false);
+        }
+    }
+
+    // Portfolio Display Update
+    updatePortfolioDisplay() {
+        // Update portfolio values in the UI
+        const elements = {
+            totalValue: document.querySelector('.portfolio-value'),
+            ltdBalance: document.querySelector('.ltd-balance'),
+            stakingRewards: document.querySelector('.staking-rewards')
+        };
+
+        if (elements.totalValue) {
+            elements.totalValue.textContent = `$${this.demoData.portfolio.totalValue.toFixed(2)}`;
+        }
+        if (elements.ltdBalance) {
+            elements.ltdBalance.textContent = `${this.demoData.portfolio.ltdBalance.toFixed(0)} LTD`;
+        }
+        if (elements.stakingRewards) {
+            elements.stakingRewards.textContent = `${this.demoData.portfolio.stakingRewards.toFixed(1)} LTD`;
+        }
+    }
+
+    // Navigation System
+    navigateToSection(sectionName) {
+        // Remove active class from all nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Add active class to clicked link
+        const activeLink = Array.from(document.querySelectorAll('.nav-link'))
+            .find(link => link.textContent.toLowerCase() === sectionName.toLowerCase());
+        if (activeLink) {
+            activeLink.classList.add('active');
+        }
+
+        // Hide all sections
+        document.querySelectorAll('.dashboard-grid > section').forEach(section => {
+            section.style.display = 'none';
+        });
+
+        // Show relevant sections based on navigation
+        switch(sectionName.toLowerCase()) {
+            case 'dashboard':
+                this.showDashboardSections();
+                break;
+            case 'trading':
+                this.showTradingSection();
+                break;
+            case 'staking':
+                this.showStakingSection();
+                break;
+            case 'nfts':
+                this.showNFTSection();
+                break;
+            case 'dao':
+                this.showDAOSection();
+                break;
+            default:
+                this.showDashboardSections();
+        }
+
+        this.showNotification(`Navigated to ${sectionName}`, 'info');
+    }
+
+    showDashboardSections() {
+        // Show main dashboard sections
+        const sectionsToShow = ['.portfolio-stats', '.trading-interface', '.quick-actions', '.liquidity-pools', '.activity-feed'];
+        sectionsToShow.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) element.style.display = 'block';
+        });
+    }
+
+    showTradingSection() {
+        const element = document.querySelector('.trading-interface');
+        if (element) element.style.display = 'block';
+        // Auto-open trading modal for better UX
+        setTimeout(() => this.showTrading('buy'), 500);
+    }
+
+    showStakingSection() {
+        const element = document.querySelector('.quick-actions');
+        if (element) element.style.display = 'block';
+        // Auto-open staking modal
+        setTimeout(() => this.showStaking(), 500);
+    }
+
+    showNFTSection() {
+        const element = document.querySelector('.nft-card');
+        if (element) element.style.display = 'block';
+    }
+
+    showDAOSection() {
+        const element = document.querySelector('.governance-card');
+        if (element) element.style.display = 'block';
     }
     
     // Liquidity Pool Functions
@@ -666,10 +1132,46 @@ class LaTandaWeb3Dashboard {
     }
     
     // Modal Functions
+    // Modal Management
+    showModal(content, modalId = 'dynamic-modal') {
+        // Remove existing modal if present
+        this.closeModal();
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = modalId;
+        modal.innerHTML = `
+            <div class="modal-content">
+                ${content}
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal with animation
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+        
+        // Close modal on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeModal();
+            }
+        });
+        
+        return modal;
+    }
+
     closeModal() {
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
             modal.classList.remove('show');
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            }, 300);
         });
     }
     
@@ -819,6 +1321,232 @@ class LaTandaWeb3Dashboard {
             console.error('Error swapping tokens:', error);
             this.showNotification('Error swapping tokens', 'error');
         }
+    }
+
+    /**
+     * API Integration Event Handlers - Fase 2: Backend Integration
+     */
+    
+    /**
+     * Handle successful user login
+     */
+    handleUserLogin(userData) {
+        console.log('🔐 User logged in:', userData);
+        
+        // Update wallet info with user data
+        const walletAddress = document.querySelector('.wallet-address');
+        const walletBalance = document.querySelector('.wallet-balance');
+        
+        if (walletAddress && userData.wallet_address) {
+            walletAddress.textContent = userData.wallet_address;
+        }
+        
+        if (walletBalance && userData.balance) {
+            walletBalance.textContent = `${userData.balance} LTD`;
+        }
+
+        // Show welcome notification
+        if (this.apiManager) {
+            this.apiManager.showNotification(
+                'Welcome Back!',
+                `Hello ${userData.name}, your dashboard is ready`,
+                'success'
+            );
+        }
+
+        // Refresh data with authenticated user context
+        this.refreshData();
+    }
+
+    /**
+     * Handle user logout
+     */
+    handleUserLogout() {
+        console.log('🚪 User logged out');
+        
+        // Reset to demo/default values
+        const walletAddress = document.querySelector('.wallet-address');
+        const walletBalance = document.querySelector('.wallet-balance');
+        
+        if (walletAddress) walletAddress.textContent = '0x742d35...8b2f';
+        if (walletBalance) walletBalance.textContent = '2,500 LTD';
+
+        // Show logout notification
+        if (this.apiManager) {
+            this.apiManager.showNotification(
+                'Logged Out',
+                'You have been logged out successfully',
+                'info'
+            );
+        }
+    }
+
+    /**
+     * Update connection status indicator
+     */
+    updateConnectionStatus(status) {
+        const indicator = document.getElementById('connectionStatus');
+        if (!indicator) return;
+
+        indicator.className = `connection-status ${status}`;
+        
+        const statusText = {
+            connected: '🟢 Connected',
+            disconnected: '🟡 Offline',
+            error: '🔴 Connection Error'
+        };
+        
+        indicator.textContent = statusText[status] || status;
+    }
+
+    /**
+     * Handle successful payment/transaction
+     */
+    handlePaymentSuccess(paymentData) {
+        console.log('💰 Payment successful:', paymentData);
+        
+        // Show success notification
+        if (this.apiManager) {
+            this.apiManager.showNotification(
+                'Transaction Successful',
+                `${paymentData.type}: ${paymentData.amount} ${paymentData.currency}`,
+                'success'
+            );
+        }
+
+        // Refresh balance and data
+        this.refreshData();
+    }
+
+    /**
+     * Handle payment/transaction error
+     */
+    handlePaymentError(errorData) {
+        console.error('💥 Payment error:', errorData);
+        
+        // Show error notification
+        if (this.apiManager) {
+            this.apiManager.showNotification(
+                'Transaction Failed',
+                errorData.message || 'Unknown payment error',
+                'error'
+            );
+        }
+    }
+
+    /**
+     * Enhanced trading with API integration
+     */
+    async showTrading(type) {
+        if (!this.apiManager) {
+            // Fallback to demo mode
+            return this.showTradingDemo(type);
+        }
+
+        try {
+            // Check authentication
+            if (!this.apiManager.isAuthenticated) {
+                this.apiManager.showNotification(
+                    'Authentication Required',
+                    'Please log in to access trading features',
+                    'warning'
+                );
+                return;
+            }
+
+            // Show trading modal with API integration
+            const modal = document.getElementById('tradingModal');
+            const title = document.getElementById('tradingModalTitle');
+            
+            title.textContent = type === 'buy' ? 'Buy LTD' : 'Sell LTD';
+            modal.style.display = 'flex';
+
+            // Setup API-integrated trading
+            this.setupAPITrading(type);
+            
+        } catch (error) {
+            console.error('Error showing trading interface:', error);
+            this.apiManager.showNotification(
+                'Trading Error',
+                'Could not load trading interface',
+                'error'
+            );
+        }
+    }
+
+    /**
+     * Setup API-integrated trading
+     */
+    setupAPITrading(type) {
+        const confirmBtn = document.getElementById('tradeConfirmBtn');
+        const amountInput = document.getElementById('tradeAmount');
+        const priceInput = document.getElementById('tradePrice');
+
+        // Remove existing listeners
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+        // Add new API-integrated listener
+        newBtn.addEventListener('click', async () => {
+            const amount = parseFloat(amountInput.value);
+            const price = parseFloat(priceInput.value);
+
+            if (!amount || !price) {
+                this.apiManager.showNotification(
+                    'Invalid Input',
+                    'Please enter valid amount and price',
+                    'warning'
+                );
+                return;
+            }
+
+            try {
+                // Show loading state
+                newBtn.setAttribute('data-loading', 'true');
+                newBtn.textContent = 'Processing...';
+
+                // Process trade through API
+                const tradeData = {
+                    type: type,
+                    amount: amount,
+                    price: price,
+                    total: amount * price,
+                    currency: 'LTD'
+                };
+
+                // Use payment manager for transaction
+                if (this.paymentManager) {
+                    await this.paymentManager.processPayment(tradeData);
+                }
+
+                // Close modal on success
+                this.closeModal();
+                
+            } catch (error) {
+                console.error('Trading error:', error);
+                this.apiManager.showNotification(
+                    'Trade Failed',
+                    error.message || 'Could not process trade',
+                    'error'
+                );
+            } finally {
+                // Reset button state
+                newBtn.removeAttribute('data-loading');
+                newBtn.textContent = 'Confirm Trade';
+            }
+        });
+    }
+
+    /**
+     * Demo trading fallback
+     */
+    showTradingDemo(type) {
+        console.log(`Demo ${type} trading`);
+        const modal = document.getElementById('tradingModal');
+        const title = document.getElementById('tradingModalTitle');
+        
+        title.textContent = type === 'buy' ? 'Buy LTD (Demo)' : 'Sell LTD (Demo)';
+        modal.style.display = 'flex';
     }
 }
 

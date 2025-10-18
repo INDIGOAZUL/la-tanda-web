@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marketplace & Sistema Social - La Tanda</title>
     <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #a78bfa;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-accent: rgba(15, 23, 42, 0.8);
+            --border-primary: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,11 +25,13 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #0a0f1c 100%);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
             overflow-x: hidden;
+            font-weight: 400;
+            line-height: 1.6;
         }
         
         .container {
@@ -27,55 +42,94 @@
         
         .header {
             text-align: center;
-            padding: 40px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 20px;
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
             margin-bottom: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .header:hover {
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
         }
         
         .header h1 {
             font-size: 36px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            letter-spacing: -0.02em;
         }
         
         .header p {
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
             max-width: 600px;
             margin: 0 auto;
             line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         /* Navigation Tabs */
         .nav-tabs {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
             margin-bottom: 40px;
             flex-wrap: wrap;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--border-primary);
         }
         
         .nav-tab {
-            padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
         }
         
-        .nav-tab:hover,
+        .nav-tab:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--border-accent);
+            transform: translateY(-1px);
+        }
+        
         .nav-tab.active {
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
-            color: white;
-            border-color: #8B5CF6;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
+            color: var(--text-primary);
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.2);
             transform: translateY(-2px);
+        }
+        
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--tanda-cyan);
         }
         
         /* Content Sections */
@@ -95,33 +149,44 @@
         
         /* Card Styles */
         .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .card:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
         }
         
         .card-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .card-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: -0.01em;
         }
         
         .card-subtitle {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 400;
         }
         
         /* Grid Layout */
@@ -328,40 +393,45 @@
         
         /* Stats Card */
         .stat-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-primary);
             border-radius: 16px;
             padding: 25px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
+            border-color: var(--border-accent);
         }
         
         .stat-icon {
             width: 60px;
             height: 60px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             margin: 0 auto 15px;
+            color: var(--bg-primary);
         }
         
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #8B5CF6;
+            color: var(--tanda-cyan);
             margin-bottom: 5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .stat-label {
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
             font-weight: 600;
         }
         
@@ -380,23 +450,28 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
-            color: white;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--bg-primary);
+            font-weight: 600;
+            text-shadow: none;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
         }
         
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
         }
         
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--border-accent);
+            transform: translateY(-1px);
         }
         
         .btn-success {
@@ -416,10 +491,11 @@
         
         .form-group label {
             display: block;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text-primary);
             font-weight: 600;
             margin-bottom: 8px;
             font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .form-group input,
@@ -427,20 +503,21 @@
         .form-group textarea {
             width: 100%;
             padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
             font-size: 16px;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #8B5CF6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
         }
         
         .form-grid {
@@ -460,59 +537,73 @@
         .search-input {
             flex: 1;
             padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
             font-size: 16px;
         }
         
         .search-input:focus {
             outline: none;
-            border-color: #8B5CF6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
         }
         
         .filter-select {
             padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-primary);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
             font-size: 16px;
             min-width: 150px;
         }
         
         /* Profile Card */
         .profile-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-primary);
             border-radius: 16px;
             padding: 25px;
             text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .profile-card:hover {
+            border-color: var(--border-accent);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
         }
         
         .profile-avatar {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 32px;
             font-weight: bold;
             margin: 0 auto 15px;
+            color: var(--bg-primary);
         }
         
         .profile-name {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 5px;
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .profile-role {
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
             margin-bottom: 15px;
         }
         
@@ -530,12 +621,13 @@
         .profile-stat-value {
             font-size: 18px;
             font-weight: 700;
-            color: #8B5CF6;
+            color: var(--tanda-cyan);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .profile-stat-label {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
         }
         
         /* Modal Styles */
@@ -557,43 +649,49 @@
         }
         
         .modal-content {
-            background: rgba(26, 54, 93, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-primary);
             border-radius: 20px;
             padding: 40px;
             max-width: 600px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.5);
         }
         
         .modal-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .modal-title {
             font-size: 24px;
             font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .close-btn {
             background: none;
             border: none;
-            color: white;
+            color: var(--text-primary);
             font-size: 24px;
             cursor: pointer;
-            padding: 5px;
-            border-radius: 6px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .close-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--tanda-cyan);
+            transform: scale(1.1);
         }
         
         /* Responsive Design */
@@ -660,6 +758,24 @@
     </style>
 </head>
 <body>
+    <!-- Navigation Menu -->
+    <nav class="main-nav" style="background: rgba(0,0,0,0.9); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,255,255,0.1);">
+        <div class="nav-left" style="display: flex; align-items: center; gap: 20px;">
+            <button onclick="window.location.href='home-dashboard.html'" style="background: linear-gradient(135deg, #00FFFF, #7FFFD8); color: #0f172a; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                🏠 Dashboard
+            </button>
+            <div class="nav-links" style="display: flex; gap: 15px;">
+                <a href="tanda-wallet.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">💰 Wallet</a>
+                <a href="kyc-registration.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">📋 KYC</a>
+                <a href="groups-advanced-system.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">👥 Grupos</a>
+                <a href="web3-dashboard.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">📊 Trading</a>
+            </div>
+        </div>
+        <div class="nav-right">
+            <span style="color: white; font-weight: 500;">🛍️ Marketplace & Social</span>
+        </div>
+    </nav>
+
     <div class="container">
         <!-- Header -->
         <div class="header">
