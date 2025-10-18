@@ -86,7 +86,7 @@ module.exports = {
             chainId: 80002,
             accounts: PRIVATE_KEY !== '0x0000000000000000000000000000000000000000000000000000000000000000' ? [PRIVATE_KEY] : [],
             gas: 6000000,
-            gasPrice: 10000000000, // 10 gwei
+            gasPrice: 30000000000, // 30 gwei (minimum required by Amoy)
             timeout: 60000
         },
         
