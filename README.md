@@ -248,6 +248,8 @@ MIT License - See [LICENSE](./LICENSE) for details
 - **Website:** [https://latanda.online](https://latanda.online)
 - **API:** [https://api.latanda.online](https://api.latanda.online)
 - **GitHub:** [https://github.com/INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
+- **Twitter/X:** [https://x.com/TandaWeb3](https://x.com/TandaWeb3)
+- **YouTube:** [https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
 - **Roadmap:** [ROADMAP-TRACKER.html](./ROADMAP-TRACKER.html)
 
 ---
@@ -255,8 +257,9 @@ MIT License - See [LICENSE](./LICENSE) for details
 ## 💬 Community
 
 - **GitHub Discussions:** [Ask questions & share ideas](https://github.com/INDIGOAZUL/la-tanda-web/discussions)
+- **Twitter/X:** [@TandaWeb3](https://x.com/TandaWeb3)
+- **YouTube:** [La Tanda Channel](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
 - **Discord:** Coming soon
-- **Twitter:** Coming soon
 
 ---
 
