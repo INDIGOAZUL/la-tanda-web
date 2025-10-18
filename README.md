@@ -69,11 +69,11 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 |-----------|--------|----------|
 | **Web Platform** | ✅ LIVE | 100% |
 | **API Backend** | ✅ ONLINE | 100% (85 endpoints) |
-| **Smart Contracts** | ⏳ DEPLOYING | 95% (Oct 18, 2025) |
+| **Smart Contracts** | ✅ DEPLOYED | 100% (Polygon Amoy) |
 | **Mobile PWA** | ✅ READY | 100% |
 | **Documentation** | ✅ COMPLETE | 100% |
 
-**Overall:** 🟢 95% Production Ready
+**Overall:** 🟢 97% Production Ready
 
 🔗 **Live Platform:** [https://latanda.online](https://latanda.online)
 
@@ -107,27 +107,33 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 
 ## 🪙 Smart Contracts (Tokenomics V2.0)
 
-Deploying to **Polygon Amoy Testnet** on October 18, 2025
+**Deployed to Polygon Amoy Testnet** ✅ October 18, 2025
 
-### Contracts
+### Contract Addresses
 
 1. **LTDToken.sol V2.0**
+   - **Address:** `0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc`
+   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc)
    - Total Supply: 1,000,000,000 LTD
    - ERC20 with vesting support
    - Governance integration
-   - **Status:** ✅ 92% tested (21/21 core tests passing)
+   - **Status:** ✅ Deployed & Verified
 
 2. **RoyalOwnershipVesting.sol**
+   - **Address:** `0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F`
+   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F)
    - 4-year linear vesting
    - 1-year cliff
    - Anti-dump protection (2% monthly limit)
-   - **Status:** ✅ 90% tested (27/30 tests passing)
+   - **Status:** ✅ Deployed (100M LTD allocated)
 
 3. **FutureReserve.sol**
+   - **Address:** `0xF136C790da0D76d75d36207d954A6E114A9c0bA2`
+   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0xF136C790da0D76d75d36207d954A6E114A9c0bA2)
    - DAO-controlled governance
    - 7-day timelock
    - Community proposals
-   - **Status:** ✅ 94% tested (34/36 tests passing)
+   - **Status:** ✅ Deployed (50M LTD allocated)
 
 ### Token Distribution
 
