@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda - Acceso Completo</title>
+    <meta name="description" content="Sistema de autenticación completo La Tanda - Multiple opciones de acceso">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --tanda-cyan: #00D4AA;
+            --tanda-cyan-light: #1DD3A7;
+            --tanda-cyan-dark: #00B08C;
+            --tanda-black: #000000;
+            --tanda-dark: #0A0A0A;
+            --tanda-gray: #1A1A1A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-accent: #00F5D4;
+            --bg-glass: rgba(0, 0, 0, 0.6);
+            --border-primary: rgba(0, 212, 170, 0.1);
+            --error-color: #FF6B6B;
+            --success-color: #4ECDC4;
+            --warning-color: #FFD93D;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(29, 211, 167, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--tanda-black) 0%, var(--tanda-dark) 30%, var(--tanda-black) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(0, 212, 170, 0.1) 0%, transparent 70%),
+                radial-gradient(circle at 75% 75%, rgba(29, 211, 167, 0.05) 0%, transparent 70%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+        
+        @keyframes backgroundPulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+        
+        .auth-container {
+            background: var(--bg-glass);
+            backdrop-filter: blur(24px);
+            border-radius: 24px;
+            border: 1px solid var(--border-primary);
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(0, 212, 170, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--tanda-cyan), transparent);
+            animation: shimmer 2s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
+        }
+        
+        .brand-name {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--text-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .brand-tagline {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .tab-btn.active {
+            background: var(--tanda-cyan);
+            color: var(--tanda-black);
+            font-weight: 600;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .form-section {
+            display: none;
+        }
+        
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .form-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .social-login {
+            margin-bottom: 24px;
+        }
+        
+        .social-buttons {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .social-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--tanda-cyan);
+            transform: translateY(-1px);
+        }
+        
+        .social-btn.google:hover {
+            border-color: #4285f4;
+            box-shadow: 0 0 20px rgba(66, 133, 244, 0.2);
+        }
+        
+        .social-btn.apple:hover {
+            border-color: #000;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        .social-btn.telegram:hover {
+            border-color: #0088cc;
+            box-shadow: 0 0 20px rgba(0, 136, 204, 0.2);
+        }
+        
+        .social-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 24px 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .divider span {
+            padding: 0 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            display: block;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .input-field::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .password-toggle {
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: var(--tanda-cyan);
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 24px;
+        }
+        
+        .forgot-link {
+            color: var(--tanda-cyan);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-link:hover {
+            color: var(--text-accent);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            border: none;
+            border-radius: 12px;
+            color: var(--tanda-black);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .demo-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .demo-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .demo-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-color: var(--tanda-cyan);
+        }
+        
+        .demo-btn.demo {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .demo-btn.test {
+            border-color: var(--tanda-cyan);
+            color: var(--tanda-cyan);
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        
+        .success-message {
+            color: var(--success-color);
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 24px;
+                margin: 10px;
+                border-radius: 16px;
+            }
+            
+            .demo-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Include API Proxy -->
+    <script src="api-proxy.js"></script>
+    <div class="auth-container">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <img src="Darkfield 2 new latanda logo.jpg" alt="La Tanda" class="logo">
+            <h1 class="brand-name">La Tanda</h1>
+            <p class="brand-tagline">Ecosistema Financiero Web3</p>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="auth-tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+            <button class="tab-btn" onclick="switchTab('register')">Crear Cuenta</button>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="form-section active">
+            <div class="form-header">
+                <h2 class="form-title">Bienvenido de vuelta</h2>
+                <p class="form-subtitle">Accede a tu cuenta La Tanda</p>
+            </div>
+            
+            <!-- Social Login Options -->
+            <div class="social-login">
+                <div class="social-buttons">
+                    <button class="social-btn google" onclick="loginWithProvider('google')">
+                        <svg class="social-icon" viewBox="0 0 24 24">
+                            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continuar con Google
+                    </button>
+                    
+                    <button class="social-btn apple" onclick="loginWithProvider('apple')">
+                        <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Continuar con Apple
+                    </button>
+                    
+                    <button class="social-btn telegram" onclick="loginWithProvider('telegram')">
+                        <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                        Continuar con Telegram
+                    </button>
+                </div>
+                
+                <div class="divider">
+                    <span>o continúa con email</span>
+                </div>
+            </div>
+            
+            <!-- Email Login Form -->
+            <form id="loginFormElement" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="loginEmail" 
+                            class="input-field" 
+                            placeholder="admin@latanda.online"
+                            value="admin@latanda.online"
+                            required
+                        >
+                        <div class="input-icon">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-message" id="loginEmailError"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Contraseña</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            class="input-field" 
+                            placeholder="••••••••"
+                            value="Admin123!"
+                            required
+                        >
+                        <div class="input-icon password-toggle" onclick="togglePassword('loginPassword')">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-message" id="loginPasswordError"></div>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#" class="forgot-link" onclick="forgotPassword()">¿Olvidaste tu contraseña?</a>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="loginSubmitBtn">
+                    Iniciar Sesión
+                </button>
+            </form>
+            
+            <!-- Demo Access Section -->
+            <div class="demo-section">
+                <div class="demo-buttons">
+                    <button class="demo-btn admin" onclick="adminAccess()" style="background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light)); color: var(--tanda-black);">
+                        🔧 Admin Access
+                    </button>
+                    <button class="demo-btn demo" onclick="demoAccess()">
+                        🎮 Acceso Demo
+                    </button>
+                </div>
+                <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <button class="demo-btn test" onclick="testDirectAccess()">
+                        🔍 Test Directo
+                    </button>
+                    <button class="demo-btn test" onclick="openTestPage()">
+                        🧪 Test Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="registerForm" class="form-section">
+            <div class="form-header">
+                <h2 class="form-title">Crear Cuenta</h2>
+                <p class="form-subtitle">Únete al ecosistema financiero descentralizado</p>
+            </div>
+            
+            <!-- Social Registration -->
+            <div class="social-login">
+                <div class="social-buttons">
+                    <button class="social-btn google" onclick="registerWithProvider('google')">
+                        <svg class="social-icon" viewBox="0 0 24 24">
+                            <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Crear con Google
+                    </button>
+                    
+                    <button class="social-btn apple" onclick="registerWithProvider('apple')">
+                        <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                        Crear con Apple
+                    </button>
+                    
+                    <button class="social-btn telegram" onclick="registerWithProvider('telegram')">
+                        <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                        Crear con Telegram
+                    </button>
+                </div>
+                
+                <div class="divider">
+                    <span>o crea con email</span>
+                </div>
+            </div>
+            
+            <!-- Email Registration Form -->
+            <form id="registerFormElement" onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <label class="input-label">Nombre completo</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="registerName" 
+                            class="input-field" 
+                            placeholder="Tu nombre completo"
+                            required
+                        >
+                        <div class="input-icon">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-message" id="registerNameError"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Email</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="registerEmail" 
+                            class="input-field" 
+                            placeholder="tu@email.com"
+                            required
+                        >
+                        <div class="input-icon">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-message" id="registerEmailError"></div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Contraseña</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="registerPassword" 
+                            class="input-field" 
+                            placeholder="Mínimo 8 caracteres"
+                            required
+                        >
+                        <div class="input-icon password-toggle" onclick="togglePassword('registerPassword')">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="error-message" id="registerPasswordError"></div>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="registerSubmitBtn">
+                    Crear Cuenta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Authentication System
+        class EnhancedAuth {
+            constructor() {
+                this.apiBaseURL = 'https://api.latanda.online/api';
+                this.isLoading = false;
+                this.init();
+            }
+
+            init() {
+                // Check if user is already authenticated
+                this.checkAuthStatus();
+                
+                // Setup form validators
+                this.setupValidators();
+                
+                console.log('🔐 Enhanced Auth System initialized');
+            }
+
+            checkAuthStatus() {
+                const token = localStorage.getItem('latanda_auth_token');
+                if (token && this.isValidToken(token)) {
+                    // Redirect to main system
+                    this.redirectToSystem();
+                }
+            }
+
+            isValidToken(token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.exp > Date.now() / 1000;
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            setupValidators() {
+                // Email validation
+                const emailInputs = document.querySelectorAll('input[type="email"]');
+                emailInputs.forEach(input => {
+                    input.addEventListener('blur', () => this.validateEmail(input));
+                });
+
+                // Password validation
+                const passwordInputs = document.querySelectorAll('input[type="password"]');
+                passwordInputs.forEach(input => {
+                    input.addEventListener('blur', () => this.validatePassword(input));
+                });
+            }
+
+            validateEmail(input) {
+                const email = input.value.trim();
+                const errorElement = document.getElementById(input.id + 'Error');
+                
+                if (!email) {
+                    this.showError(errorElement, 'Email es requerido');
+                    return false;
+                }
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showError(errorElement, 'Email no válido');
+                    return false;
+                }
+                
+                this.hideError(errorElement);
+                return true;
+            }
+
+            validatePassword(input) {
+                const password = input.value;
+                const errorElement = document.getElementById(input.id + 'Error');
+                
+                if (!password) {
+                    this.showError(errorElement, 'Contraseña es requerida');
+                    return false;
+                }
+                
+                if (password.length < 6) {
+                    this.showError(errorElement, 'Mínimo 6 caracteres');
+                    return false;
+                }
+                
+                this.hideError(errorElement);
+                return true;
+            }
+
+            showError(element, message) {
+                if (element) {
+                    element.textContent = message;
+                    element.style.display = 'block';
+                }
+            }
+
+            hideError(element) {
+                if (element) {
+                    element.style.display = 'none';
+                }
+            }
+
+            async handleLogin(formData) {
+                try {
+                    this.setLoading(true);
+                    
+                    // Use API proxy for reliable connection
+                    const data = await window.apiProxy.makeRequest('/auth/login', {
+                        method: 'POST',
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (data.success) {
+                        // Store user data and token
+                        localStorage.setItem('latanda_auth_token', data.data.auth_token);
+                        localStorage.setItem('latanda_user', JSON.stringify(data.data.user));
+                        
+                        this.showSuccess(data.data.message);
+                        
+                        // Show user role and permissions
+                        console.log('🔐 Login exitoso:', data.data.user.role);
+                        console.log('🔑 Permisos:', data.data.user.permissions);
+                        
+                        setTimeout(() => this.redirectToSystem(), 1500);
+                    } else {
+                        throw new Error(data.error?.message || 'Credenciales inválidas');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showError(document.getElementById('loginError'), error.message || 'Error de conexión');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            async handleRegister(formData) {
+                try {
+                    this.setLoading(true);
+                    
+                    // Using real API
+                    
+                    const response = await fetch(`${this.apiBaseURL}/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.handleRegisterSuccess(data);
+                    } else {
+                        throw new Error('Error en el registro');
+                    }
+                } catch (error) {
+                    console.error('Register error:', error);
+                    this.showError(document.getElementById('registerError'), error.message || 'Error en el registro');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            handleLoginSuccess(data) {
+                // API returns: { success: true, data: { auth_token, user, next_step } }
+                const authData = data.data || data;
+                localStorage.setItem('latanda_auth_token', authData.auth_token || authData.token);
+                localStorage.setItem('latanda_user', JSON.stringify(authData.user));
+                
+                this.showSuccess('¡Bienvenido de vuelta!');
+                setTimeout(() => this.redirectToSystem(), 1500);
+            }
+
+            handleRegisterSuccess(data) {
+                // API returns: { success: true, data: { auth_token, user, next_step } }
+                const authData = data.data || data;
+                localStorage.setItem('latanda_auth_token', authData.auth_token || authData.token);
+                localStorage.setItem('latanda_user', JSON.stringify(authData.user));
+                
+                this.showSuccess('¡Cuenta creada exitosamente!');
+                setTimeout(() => this.redirectToSystem(), 1500);
+            }
+
+            handleDemoLogin(formData) {
+                // Demo mode
+                const demoToken = this.generateDemoToken(formData.email);
+                const demoUser = {
+                    id: 'demo-user',
+                    email: formData.email,
+                    name: 'Usuario Demo',
+                    role: 'demo'
+                };
+
+                localStorage.setItem('latanda_auth_token', demoToken);
+                localStorage.setItem('latanda_user', JSON.stringify(demoUser));
+                
+                this.showSuccess('¡Acceso demo exitoso!');
+                setTimeout(() => this.redirectToSystem(), 1500);
+            }
+
+            handleDemoRegister(formData) {
+                // Demo mode
+                const demoToken = this.generateDemoToken(formData.email);
+                const demoUser = {
+                    id: 'new-demo-user',
+                    email: formData.email,
+                    name: formData.name,
+                    role: 'demo'
+                };
+
+                localStorage.setItem('latanda_auth_token', demoToken);
+                localStorage.setItem('latanda_user', JSON.stringify(demoUser));
+                
+                this.showSuccess('¡Registro demo exitoso!');
+                setTimeout(() => this.redirectToSystem(), 1500);
+            }
+
+            generateDemoToken(email) {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const payload = btoa(JSON.stringify({
+                    email: email,
+                    exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+                    iat: Math.floor(Date.now() / 1000),
+                    demo: true
+                }));
+                return `${header}.${payload}.demo-signature`;
+            }
+
+            async simulateAPICall() {
+                return new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            setLoading(loading) {
+                this.isLoading = loading;
+                const submitBtns = document.querySelectorAll('.submit-btn');
+                submitBtns.forEach(btn => {
+                    if (loading) {
+                        btn.classList.add('loading');
+                        btn.textContent = 'Procesando...';
+                        btn.disabled = true;
+                    } else {
+                        btn.classList.remove('loading');
+                        btn.textContent = btn.id.includes('login') ? 'Iniciar Sesión' : 'Crear Cuenta';
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            showSuccess(message) {
+                // Create temporary success message
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.style.display = 'block';
+                successDiv.style.textAlign = 'center';
+                successDiv.style.marginTop = '16px';
+                successDiv.style.padding = '12px';
+                successDiv.style.background = 'rgba(78, 205, 196, 0.1)';
+                successDiv.style.border = '1px solid var(--success-color)';
+                successDiv.style.borderRadius = '8px';
+                successDiv.textContent = message;
+                
+                const activeForm = document.querySelector('.form-section.active');
+                activeForm.appendChild(successDiv);
+                
+                setTimeout(() => successDiv.remove(), 3000);
+            }
+
+            redirectToSystem() {
+                // Always redirect to standalone home dashboard, regardless of iframe context
+                window.top.location.href = '/home-dashboard.html';
+            }
+
+            // Social login handlers
+            async loginWithProvider(provider) {
+                console.log(`Iniciando login con ${provider}`);
+                this.showSuccess(`Redirigiendo a ${provider}...`);
+                
+                // Simulate social login
+                setTimeout(() => {
+                    const socialUser = {
+                        id: `${provider}-user`,
+                        email: `user@${provider}.com`,
+                        name: `Usuario ${provider}`,
+                        provider: provider
+                    };
+                    
+                    const token = this.generateDemoToken(socialUser.email);
+                    localStorage.setItem('latanda_auth_token', token);
+                    localStorage.setItem('latanda_user', JSON.stringify(socialUser));
+                    
+                    this.redirectToSystem();
+                }, 2000);
+            }
+
+            async registerWithProvider(provider) {
+                console.log(`Iniciando registro con ${provider}`);
+                this.loginWithProvider(provider); // Same flow for demo
+            }
+
+            // Demo access methods
+            demoAccess() {
+                const demoCredentials = {
+                    email: 'demo@latanda.online',
+                    password: 'demo123'
+                };
+                
+                document.getElementById('loginEmail').value = demoCredentials.email;
+                document.getElementById('loginPassword').value = demoCredentials.password;
+                
+                this.handleDemoLogin(demoCredentials);
+            }
+
+            testDirectAccess() {
+                const testUser = {
+                    id: 'test-user',
+                    email: 'test@latanda.online',
+                    name: 'Usuario Test',
+                    role: 'tester'
+                };
+                
+                const token = this.generateDemoToken(testUser.email);
+                localStorage.setItem('latanda_auth_token', token);
+                localStorage.setItem('latanda_user', JSON.stringify(testUser));
+                
+                this.showSuccess('¡Acceso directo de prueba!');
+                setTimeout(() => this.redirectToSystem(), 1000);
+            }
+
+            forgotPassword() {
+                this.showSuccess('Instrucciones enviadas a tu email (Demo mode)');
+            }
+        }
+
+        // Initialize auth system
+        const authSystem = new EnhancedAuth();
+
+        // Global functions
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            // Update form sections
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling.querySelector('svg path');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                // Update icon to "hide" state
+            } else {
+                input.type = 'password';
+                // Update icon to "show" state
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const formData = {
+                email: document.getElementById('loginEmail').value.trim(),
+                password: document.getElementById('loginPassword').value
+            };
+            
+            // Validate inputs
+            const emailValid = authSystem.validateEmail(document.getElementById('loginEmail'));
+            const passwordValid = authSystem.validatePassword(document.getElementById('loginPassword'));
+            
+            if (emailValid && passwordValid) {
+                authSystem.handleLogin(formData);
+            }
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('registerName').value.trim(),
+                email: document.getElementById('registerEmail').value.trim(),
+                password: document.getElementById('registerPassword').value
+            };
+            
+            // Validate inputs
+            const nameValid = formData.name.length > 0;
+            const emailValid = authSystem.validateEmail(document.getElementById('registerEmail'));
+            const passwordValid = authSystem.validatePassword(document.getElementById('registerPassword'));
+            
+            if (nameValid && emailValid && passwordValid) {
+                authSystem.handleRegister(formData);
+            }
+        }
+
+        function loginWithProvider(provider) {
+            authSystem.loginWithProvider(provider);
+        }
+
+        function registerWithProvider(provider) {
+            authSystem.registerWithProvider(provider);
+        }
+
+        function adminAccess() {
+            const adminCredentials = {
+                email: 'admin@latanda.online',
+                password: 'Admin123!'
+            };
+            
+            document.getElementById('loginEmail').value = adminCredentials.email;
+            document.getElementById('loginPassword').value = adminCredentials.password;
+            
+            // Auto-login with admin credentials
+            authSystem.handleLogin(adminCredentials);
+        }
+
+        function demoAccess() {
+            authSystem.demoAccess();
+        }
+
+        function testDirectAccess() {
+            authSystem.testDirectAccess();
+        }
+
+        function openTestPage() {
+            window.open('test-admin-login.html', '_blank');
+        }
+
+        function forgotPassword() {
+            authSystem.forgotPassword();
+        }
+
+        // Listen for messages from parent window
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'latanda:auth:request') {
+                // Parent is requesting authentication
+                console.log('Authentication requested by parent window');
+            }
+        });
+
+        // Check for auto-login credentials from index page
+        if (sessionStorage.getItem('admin_auto_login')) {
+            sessionStorage.removeItem('admin_auto_login');
+            console.log('🔧 Auto-login admin detected');
+            setTimeout(() => adminAccess(), 500);
+        } else if (sessionStorage.getItem('demo_auto_login')) {
+            sessionStorage.removeItem('demo_auto_login');
+            console.log('🎮 Auto-login demo detected');
+            setTimeout(() => demoAccess(), 500);
+        }
+
+        console.log('🚀 Enhanced Auth System loaded and ready');
+    </script>
+</body>
+</html>

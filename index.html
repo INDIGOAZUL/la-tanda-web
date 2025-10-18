@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Tanda - Ecosistema Financiero Completo</title>
-    <meta name="description" content="Plataforma completa La Tanda - Autenticación, KYC, Wallet Web3 y Gestión de Grupos">
+    <title>La Tanda Web3 Ecosystem</title>
+    <meta name="description" content="Plataforma Web3 para Tandas Tradicionales Hondureñas">
     <link rel="manifest" href="manifest.json">
     <style>
         * {
@@ -13,1093 +13,185 @@
             box-sizing: border-box;
         }
         
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&family=JetBrains+Mono:wght@100;200;300;400;500&display=swap');
+        :root {
+            --tanda-cyan: #00D4AA;
+            --tanda-cyan-light: #1DD3A7;
+            --tanda-black: #000000;
+            --tanda-dark: #0A0A0A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --bg-glass: rgba(0, 0, 0, 0.6);
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-weight: 300;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(120, 219, 226, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, #0f172a 0%, #1e293b 30%, #0f172a 100%);
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 170, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(29, 211, 167, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--tanda-black) 0%, var(--tanda-dark) 30%, var(--tanda-black) 100%);
             min-height: 100vh;
-            color: #f1f5f9;
-            overflow-x: hidden;
-            position: relative;
-        }
-        
-        /* Animated background elements */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
-            animation: backgroundShift 20s ease-in-out infinite;
-            pointer-events: none;
-            z-index: -1;
-        }
-        
-        @keyframes backgroundShift {
-            0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
-            50% { opacity: 0.8; transform: scale(1.1) rotate(2deg); }
-        }
-        
-        /* Layout principal */
-        .app-container {
+            color: var(--text-primary);
             display: flex;
-            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
         
-        /* Sidebar de navegación */
-        .sidebar {
-            width: 280px;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(24px);
-            border-right: 1px solid rgba(148, 163, 184, 0.1);
-            padding: 24px 16px;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 1000;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.25),
-                inset 1px 0 0 rgba(148, 163, 184, 0.05);
-        }
-        
-        /* Estado no autenticado - ocultar sidebar */
-        .sidebar.landing-mode {
-            transform: translateX(-100%);
-        }
-        
-        /* Estado autenticado - mostrar sidebar */
-        .sidebar.platform-mode {
-            transform: translateX(0);
-        }
-        
-        .sidebar.hidden {
-            transform: translateX(-100%);
-        }
-        
-        .logo-section {
+        .welcome-container {
             text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-            position: relative;
+            max-width: 800px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         
         .logo {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
-        }
-        
-        .logo:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 12px 24px rgba(99, 102, 241, 0.4));
-        }
-        
-        .logo-text {
-            font-size: 20px;
-            font-weight: 200;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 8s ease-in-out infinite;
-        }
-        
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
-        /* Navegación */
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .nav-item {
-            margin-bottom: 4px;
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: rgba(248, 250, 252, 0.6);
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            font-weight: 300;
-            font-size: 14px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background: linear-gradient(135deg, #a855f7, #3b82f6);
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-            border-radius: 0 2px 2px 0;
-        }
-        
-        .nav-link:hover,
-        .nav-link.active {
-            background: rgba(148, 163, 184, 0.08);
-            color: rgba(248, 250, 252, 0.95);
-            transform: translateX(2px);
-        }
-        
-        .nav-link:hover::before,
-        .nav-link.active::before {
-            transform: scaleY(1);
-        }
-        
-        .nav-icon {
-            font-size: 18px;
-            width: 20px;
-            text-align: center;
-            opacity: 0.8;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-link:hover .nav-icon,
-        .nav-link.active .nav-icon {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-        
-        /* Contenido principal */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 20px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Estado landing - sin sidebar */
-        .main-content.landing-mode {
-            margin-left: 0;
-            padding: 0;
-        }
-        
-        /* Estado plataforma - con sidebar */
-        .main-content.platform-mode {
-            margin-left: 280px;
-            padding: 20px;
-        }
-        
-        .main-content.expanded {
-            margin-left: 0;
-        }
-        
-        /* Header */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
-            padding: 20px 24px;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 16px;
-            transition: all 0.4s ease;
-        }
-        
-        /* Ocultar header en modo landing */
-        .app-header.landing-mode {
-            display: none;
-        }
-        
-        /* Mostrar header en modo plataforma */
-        .app-header.platform-mode {
-            display: flex;
-            background: rgba(248, 250, 252, 0.02);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            box-shadow: 
-                0 1px 3px 0 rgba(0, 0, 0, 0.1),
-                0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .menu-toggle {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: background 0.3s ease;
-        }
-        
-        .menu-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .page-title {
-            font-size: 24px;
-            font-weight: 300;
-            letter-spacing: -0.01em;
-            color: rgba(248, 250, 252, 0.9);
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 8px 16px;
-            background: rgba(248, 250, 252, 0.05);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            position: relative;
-        }
-        
-        .user-balance {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            padding-right: 16px;
-            border-right: 1px solid rgba(148, 163, 184, 0.1);
-        }
-        
-        .balance-amount {
-            font-size: 16px;
-            font-weight: 500;
-            color: #22c55e;
-        }
-        
-        .balance-label {
-            font-size: 11px;
-            color: rgba(248, 250, 252, 0.6);
-            font-weight: 300;
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .user-profile:hover {
-            background: rgba(148, 163, 184, 0.12);
-        }
-        
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .user-status {
-            font-size: 10px;
-            color: #22c55e;
-            font-weight: 400;
-        }
-        
-        .dropdown-arrow {
-            font-size: 10px;
-            color: rgba(248, 250, 252, 0.6);
-            transition: transform 0.3s ease;
-        }
-        
-        .user-profile.active .dropdown-arrow {
-            transform: rotate(180deg);
-        }
-        
-        /* User Menu Dropdown */
-        .user-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 12px;
-            padding: 8px 0;
-            min-width: 200px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            animation: slideInDown 0.3s ease-out;
-        }
-        
-        .user-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: rgba(248, 250, 252, 0.8);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 300;
-        }
-        
-        .user-menu-item:hover {
-            background: rgba(148, 163, 184, 0.1);
-            color: rgba(248, 250, 252, 1);
-        }
-        
-        .user-menu-item.logout {
-            color: #ef4444;
-        }
-        
-        .user-menu-item.logout:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-        
-        .user-menu-divider {
-            height: 1px;
-            background: rgba(148, 163, 184, 0.1);
-            margin: 8px 16px;
-        }
-        
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #a855f7, #3b82f6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            font-size: 14px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* Secciones de contenido */
-        .content-section {
-            display: none;
-        }
-        
-        .content-section.active {
-            display: block;
-            animation: fadeIn 0.5s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Auth Landing - Binance Style */
-        .auth-landing-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            min-height: calc(100vh - 120px);
-            gap: 60px;
-            padding: 40px;
-            align-items: center;
-        }
-        
-        /* Auth Branding - Left Side */
-        .auth-branding {
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .brand-hero {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-        
-        .logo-large {
             width: 120px;
             height: 120px;
-            border-radius: 24px;
-            margin-bottom: 24px;
-            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
-            transition: all 0.3s ease;
-        }
-        
-        .logo-large:hover {
-            transform: scale(1.05);
-            filter: drop-shadow(0 25px 50px rgba(99, 102, 241, 0.4));
-        }
-        
-        .brand-title {
-            font-size: 48px;
-            font-weight: 200;
-            letter-spacing: -0.02em;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 8s ease-in-out infinite;
-        }
-        
-        .brand-subtitle {
-            font-size: 18px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.7);
-            line-height: 1.6;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        .brand-features {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: rgba(248, 250, 252, 0.02);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        
-        .feature-item:hover {
-            background: rgba(248, 250, 252, 0.04);
-            border-color: rgba(148, 163, 184, 0.2);
-            transform: translateX(4px);
-        }
-        
-        .feature-icon {
-            font-size: 24px;
-            opacity: 0.8;
-        }
-        
-        .feature-item span:last-child {
-            font-size: 14px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.8);
-            line-height: 1.4;
-        }
-        
-        /* Auth Forms - Right Side */
-        .auth-forms {
-            background: rgba(248, 250, 252, 0.02);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             border-radius: 20px;
-            padding: 32px;
-            backdrop-filter: blur(20px);
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.25),
-                inset 1px 1px 0 rgba(255, 255, 255, 0.05);
-        }
-        
-        .auth-tabs {
-            display: flex;
-            background: rgba(148, 163, 184, 0.05);
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 32px;
-        }
-        
-        .auth-tab {
-            flex: 1;
-            padding: 12px 24px;
-            border: none;
-            background: none;
-            color: rgba(248, 250, 252, 0.6);
-            font-weight: 400;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .auth-tab.active {
-            background: rgba(168, 85, 247, 0.1);
-            color: rgba(248, 250, 252, 0.9);
-            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.2);
-        }
-        
-        .auth-form {
-            display: none;
-        }
-        
-        .auth-form.active {
-            display: block;
-            animation: fadeInUp 0.4s ease-out;
-        }
-        
-        .form-title {
-            font-size: 24px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.9);
-            margin-bottom: 8px;
-        }
-        
-        .form-subtitle {
-            font-size: 14px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.6);
-            margin-bottom: 32px;
-        }
-        
-        /* Social Login Buttons */
-        .social-login {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        
-        .social-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            background: rgba(248, 250, 252, 0.02);
-            color: rgba(248, 250, 252, 0.8);
-            font-weight: 400;
-            font-size: 14px;
+            margin: 0 auto 30px;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--tanda-black);
+            box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+        }
+        
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        
-        .social-btn:hover {
-            background: rgba(248, 250, 252, 0.05);
-            border-color: rgba(148, 163, 184, 0.3);
-            transform: translateY(-1px);
-        }
-        
-        .google-btn:hover { border-color: #4285F4; }
-        .apple-btn:hover { border-color: #000; }
-        .telegram-btn:hover { border-color: #0088cc; }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 24px 0;
-            text-align: center;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(148, 163, 184, 0.2);
-        }
-        
-        .divider span {
-            padding: 0 16px;
-            font-size: 12px;
-            color: rgba(248, 250, 252, 0.5);
-            font-weight: 300;
-        }
-        
-        /* Form Elements */
-        .email-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            background: rgba(248, 250, 252, 0.02);
-            color: rgba(248, 250, 252, 0.9);
-            font-size: 14px;
-            font-weight: 300;
-            transition: all 0.3s ease;
-        }
-        
-        .form-group input::placeholder {
-            color: rgba(248, 250, 252, 0.4);
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #a855f7;
-            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
-        }
-        
-        .form-checkbox {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin: 8px 0;
-        }
-        
-        .form-checkbox input[type="checkbox"] {
-            margin-top: 2px;
-        }
-        
-        .form-checkbox label {
-            font-size: 12px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.7);
-            line-height: 1.4;
-        }
-        
-        .form-checkbox a {
-            color: #a855f7;
             text-decoration: none;
-        }
-        
-        .form-checkbox a:hover {
-            text-decoration: underline;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            min-width: 200px;
+            justify-content: center;
         }
         
         .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 14px 24px;
-            background: linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #06b6d4 100%);
-            background-size: 200% 200%;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 400;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            box-shadow: 0 8px 20px rgba(0, 212, 170, 0.4);
         }
         
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);
-            background-position: 100% 50%;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 212, 170, 0.6);
         }
         
-        .full-width {
-            width: 100%;
+        .btn-secondary {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--tanda-cyan);
+            border: 2px solid var(--tanda-cyan);
         }
         
-        .form-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        .btn-secondary:hover {
+            background: rgba(0, 212, 170, 0.2);
+            transform: translateY(-2px);
         }
         
-        .form-footer a {
-            color: #a855f7;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 300;
-        }
-        
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-        
-        .demo-btn {
-            padding: 8px 16px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            border-radius: 6px;
-            color: #22c55e;
-            font-size: 12px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .demo-btn:hover {
-            background: rgba(34, 197, 94, 0.15);
-            transform: translateY(-1px);
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .auth-landing-container {
-                grid-template-columns: 1fr;
-                gap: 40px;
-                padding: 20px;
-            }
-            
-            .brand-title {
-                font-size: 36px;
-            }
-            
-            .logo-large {
-                width: 100px;
-                height: 100px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 100%;
-                max-width: 320px;
-            }
-            
-            .sidebar.visible {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 16px;
-            }
-            
-            .app-header {
-                padding: 16px 20px;
-                margin-bottom: 24px;
-            }
-            
-            .page-title {
-                font-size: 20px;
-                font-weight: 300;
-            }
-            
-            .user-info {
-                padding: 6px 12px;
-            }
-            
-            .user-avatar {
-                width: 28px;
-                height: 28px;
-                font-size: 12px;
-            }
-            
-            /* Welcome section mobile */
-            .welcome-container {
-                padding: 24px 16px;
-                min-height: calc(100vh - 100px);
-            }
-            
-            .welcome-title {
-                font-size: clamp(2rem, 8vw, 3rem);
-                margin-bottom: 20px;
-            }
-            
-            .welcome-subtitle {
-                font-size: 18px;
-                margin-bottom: 28px;
-            }
-            
-            .welcome-features {
-                grid-template-columns: 1fr;
-                gap: 16px;
-                margin-top: 48px;
-            }
-            
-            .feature-card {
-                padding: 20px 16px;
-            }
-            
-            .feature-title {
-                font-size: 15px;
-            }
-            
-            .feature-description {
-                font-size: 13px;
-            }
-            
-            .btn-primary {
-                padding: 14px 28px;
-                font-size: 15px;
-            }
-            
-            /* Navigation mobile improvements */
-            .nav-link {
-                padding: 14px 16px;
-                font-size: 15px;
-            }
-            
-            .nav-icon {
-                font-size: 20px;
-            }
-            
-            /* Auth forms mobile responsive */
-            .auth-landing-container {
-                padding: 16px;
-                gap: 20px;
-            }
-            
-            .auth-branding {
-                text-align: center;
-                padding: 20px 16px;
-            }
-            
-            .brand-title {
-                font-size: 28px;
-                line-height: 1.2;
-            }
-            
-            .brand-subtitle {
-                font-size: 16px;
-                margin-bottom: 20px;
-            }
-            
-            .brand-features {
-                grid-template-columns: 1fr;
-                gap: 12px;
-                margin-top: 20px;
-            }
-            
-            .auth-forms {
-                padding: 20px 16px;
-                margin: 0;
-            }
-            
-            .form-title {
-                font-size: 22px;
-                margin-bottom: 8px;
-            }
-            
-            .form-subtitle {
-                font-size: 14px;
-                margin-bottom: 20px;
-            }
-            
-            .social-login {
-                gap: 10px;
-                margin-bottom: 16px;
-            }
-            
-            .social-btn {
-                padding: 12px 16px;
-                font-size: 14px;
-            }
-            
-            .email-form {
-                gap: 14px;
-            }
-            
-            .form-group input {
-                padding: 14px 16px;
-                font-size: 16px; /* Prevents zoom on iOS */
-            }
-            
-            .form-row {
-                flex-direction: column;
-                gap: 14px;
-            }
-            
-            .form-checkbox {
-                margin: 12px 0;
-            }
-            
-            .form-checkbox label {
-                font-size: 13px;
-                line-height: 1.4;
-            }
-            
-            .btn-primary.full-width {
-                padding: 16px;
-                font-size: 16px;
-                font-weight: 500;
-            }
-            
-            .demo-btn {
-                padding: 10px 16px;
-                font-size: 14px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .brand-title {
-                font-size: 24px;
-            }
-            
-            .auth-forms {
-                padding: 16px 12px;
-            }
-            
-            .form-group input {
-                padding: 12px 14px;
-            }
-        }
-        
-        /* Auth Section for Existing Users */
-        .auth-existing-container {
-            padding: 40px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .auth-existing-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .auth-existing-title {
-            font-size: 36px;
-            font-weight: 200;
-            color: #f1f5f9;
-            margin-bottom: 8px;
-        }
-        
-        .auth-existing-subtitle {
-            font-size: 18px;
-            color: #cbd5e1;
-            font-weight: 300;
-        }
-        
-        .auth-methods-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-        
-        .auth-method-card {
-            background: rgba(248, 250, 252, 0.02);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .auth-method-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(168, 85, 247, 0.3);
-            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.1);
-        }
-        
-        .auth-method-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .auth-method-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 12px;
-            padding: 16px;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1));
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #a855f7;
-        }
-        
-        .auth-method-card h3 {
-            font-size: 20px;
-            font-weight: 500;
-            color: #f1f5f9;
-            margin-bottom: 4px;
-        }
-        
-        .auth-method-card p {
-            font-size: 14px;
-            color: #94a3b8;
-            font-weight: 300;
-        }
-        
-        /* QR Code Styles */
-        .qr-code-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .qr-code {
-            width: 180px;
-            height: 180px;
-            margin: 0 auto 16px;
-            background: #ffffff;
+        .demo-section {
+            background: rgba(0, 212, 170, 0.05);
+            border: 1px solid rgba(0, 212, 170, 0.2);
             border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-top: 30px;
         }
         
-        .qr-placeholder {
-            width: 160px;
-            height: 160px;
-            background: linear-gradient(45deg, #f8fafc, #e2e8f0);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .demo-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tanda-cyan);
+            margin-bottom: 15px;
+        }
+        
+        .demo-info {
             font-size: 14px;
-            color: #64748b;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
         
-        .qr-loading {
+        .quick-access {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .quick-btn {
+            padding: 12px 16px;
+            background: rgba(0, 212, 170, 0.08);
+            border: 1px solid rgba(0, 212, 170, 0.15);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .quick-btn:hover {
+            background: rgba(0, 212, 170, 0.15);
+            border-color: var(--tanda-cyan);
+            transform: translateY(-1px);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--tanda-cyan);
+            margin-top: 20px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--tanda-cyan);
+            border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
@@ -1108,1557 +200,115 @@
             50% { opacity: 0.5; }
         }
         
-        .qr-refresh {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        
-        .qr-instructions {
-            font-size: 13px;
-            color: #94a3b8;
-            line-height: 1.6;
-        }
-        
-        .qr-instructions p {
-            margin: 4px 0;
-        }
-        
-        /* Traditional Login Styles */
-        .traditional-login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .form-options {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            color: #cbd5e1;
-        }
-        
-        .checkbox-label input[type="checkbox"] {
-            margin: 0;
-        }
-        
-        .demo-section {
-            margin-top: 16px;
-            text-align: center;
-        }
-        
-        .btn-demo {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            color: #22c55e;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-demo:hover {
-            background: rgba(34, 197, 94, 0.2);
-            border-color: rgba(34, 197, 94, 0.5);
-        }
-        
-        /* Biometric Styles */
-        .biometric-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .biometric-btn {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(248, 250, 252, 0.05);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            color: #f1f5f9;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        .biometric-btn:hover {
-            background: rgba(248, 250, 252, 0.1);
-            border-color: rgba(168, 85, 247, 0.3);
-        }
-        
-        .biometric-icon {
-            font-size: 24px;
-        }
-        
-        .biometric-status {
-            font-size: 12px;
-            color: #94a3b8;
-            text-align: center;
-        }
-        
-        /* Wallet Styles */
-        .wallet-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .wallet-btn {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(248, 250, 252, 0.05);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            color: #f1f5f9;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        .wallet-btn:hover {
-            background: rgba(248, 250, 252, 0.1);
-            border-color: rgba(168, 85, 247, 0.3);
-        }
-        
-        .wallet-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-        }
-        
-        .metamask-bg {
-            background: linear-gradient(45deg, #f6851b, #e2761b);
-        }
-        
-        .walletconnect-bg {
-            background: linear-gradient(45deg, #3b99fc, #1e88e5);
-        }
-        
-        .binance-bg {
-            background: linear-gradient(45deg, #f3ba2f, #f0b90b);
-        }
-        
-        /* Back to Landing */
-        .back-to-landing {
-            text-align: center;
-            padding: 24px;
-            border-top: 1px solid rgba(148, 163, 184, 0.1);
-            margin-top: 20px;
-        }
-        
-        .back-to-landing p {
-            color: #94a3b8;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-        
-        .btn-secondary {
-            background: rgba(148, 163, 184, 0.1);
-            border: 1px solid rgba(148, 163, 184, 0.3);
-            color: #cbd5e1;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(148, 163, 184, 0.2);
-            border-color: rgba(148, 163, 184, 0.5);
-        }
-        
-        /* Responsive Auth Section */
         @media (max-width: 768px) {
-            .auth-existing-container {
-                padding: 20px 16px;
+            .welcome-container {
+                padding: 30px 20px;
             }
             
-            .auth-existing-title {
-                font-size: 28px;
+            h1 {
+                font-size: 32px;
             }
             
-            .auth-existing-subtitle {
-                font-size: 16px;
+            .subtitle {
+                font-size: 18px;
             }
             
-            .auth-methods-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .buttons-container {
+                flex-direction: column;
+                align-items: center;
             }
             
-            .auth-method-card {
-                padding: 20px;
-            }
-            
-            .qr-code {
-                width: 140px;
-                height: 140px;
-            }
-            
-            .qr-placeholder {
-                width: 120px;
-                height: 120px;
-            }
-        }
-        
-        /* Status Indicators */
-        .user-avatar {
-            width: 24px;
-        }
-        
-        .status-indicator {
-                font-size: 10px;
-                padding: 3px 8px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .welcome-badge {
-                font-size: 13px;
-                padding: 6px 12px;
-            }
-            
-            .welcome-title {
-                font-size: clamp(1.8rem, 10vw, 2.5rem);
-            }
-            
-            .welcome-subtitle {
-                font-size: 16px;
-            }
-            
-            .feature-icon {
-                font-size: 28px;
-                margin-bottom: 12px;
-            }
-            
-            .loading-spinner {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .loading-text {
-                font-size: 16px;
-            }
-        }
-        
-        /* High contrast mode support */
-        @media (prefers-contrast: high) {
-            .nav-link {
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            }
-            
-            .feature-card {
-                border: 2px solid rgba(148, 163, 184, 0.3);
-            }
-            
-            .btn-primary {
-                border: 2px solid rgba(255, 255, 255, 0.3);
-            }
-        }
-        
-        /* Reduced motion support */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-            
-            .welcome-container::before,
-            .welcome-container::after {
-                animation: none;
-            }
-        }
-        
-        /* Loading Screen - Modern */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
-                linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(1.1);
-        }
-        
-        .loading-content {
-            text-align: center;
-            position: relative;
-        }
-        
-        .loading-spinner {
-            width: 80px;
-            height: 80px;
-            border: 3px solid transparent;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #a855f7, #3b82f6) padding-box,
-                        linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4) border-box;
-            animation: modernSpin 2s linear infinite;
-            margin: 0 auto 32px;
-            position: relative;
-        }
-        
-        .loading-spinner::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(135deg, #a855f7, #3b82f6);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: innerPulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes modernSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes innerPulse {
-            0%, 100% { 
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-            }
-            50% { 
-                transform: translate(-50%, -50%) scale(0.8);
-                opacity: 0.7;
-            }
-        }
-        
-        .loading-text {
-            font-size: 18px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.8);
-            letter-spacing: 0.5px;
-            animation: textPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes textPulse {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
-        
-        /* Iframe container para componentes */
-        .component-frame {
-            width: 100%;
-            min-height: calc(100vh - 200px);
-            border: none;
-            border-radius: 16px;
-            background: white;
-        }
-        
-        /* Status indicators */
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-        }
-        
-        .status-success {
-            background: rgba(34, 197, 94, 0.12);
-            color: #22c55e;
-            border-color: rgba(34, 197, 94, 0.2);
-        }
-        
-        .status-pending {
-            background: rgba(251, 191, 36, 0.12);
-            color: #fbbf24;
-            border-color: rgba(251, 191, 36, 0.2);
-        }
-        
-        .status-error {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-            border-color: rgba(239, 68, 68, 0.2);
-        }
-        
-        .status-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes statusPulse {
-            0%, 100% { 
-                opacity: 1; 
-                transform: scale(1);
-            }
-            50% { 
-                opacity: 0.6;
-                transform: scale(0.9);
+            .btn {
+                width: 100%;
+                max-width: 300px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Cargando La Tanda...</div>
+    <div class="welcome-container">
+        <div class="logo">🏦</div>
+        
+        <h1>La Tanda Web3</h1>
+        <p class="subtitle">
+            Plataforma digital para tandas tradicionales hondureñas con tecnología Web3, 
+            sorteos justos y gestión transparente
+        </p>
+        
+        <div class="buttons-container">
+            <a href="auth-enhanced.html" class="btn btn-primary">
+                <span>🔐</span> Acceder al Sistema
+            </a>
+            <a href="home-dashboard.html" class="btn btn-secondary">
+                <span>📊</span> Ver Dashboard
+            </a>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">🎯 Acceso Demo Rápido</div>
+            <div class="demo-info">
+                <strong>Credenciales Administrador:</strong><br>
+                Email: <code>admin@latanda.online</code><br>
+                Password: <code>Admin123!</code><br><br>
+                <strong>Credenciales Demo:</strong><br>
+                Email: <code>demo@latanda.online</code><br>
+                Password: <code>demo123</code>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <a href="auth-enhanced.html" class="btn btn-primary" onclick="setAdminCredentials()">
+                    <span>🔧</span> Admin Access
+                </a>
+                <a href="auth-enhanced.html" class="btn btn-secondary" onclick="setDemoCredentials()">
+                    <span>⚡</span> Demo Access
+                </a>
+            </div>
+        </div>
+        
+        <div class="quick-access">
+            <a href="rotatory-tanda-demo.html" class="quick-btn">
+                🎲 Sistema de Sorteos
+            </a>
+            <a href="test-phase3-tanda-functionality.html" class="quick-btn">
+                🧪 Tests Funcionales
+            </a>
+            <a href="groups-advanced-system.html" class="quick-btn">
+                👥 Gestión de Grupos
+            </a>
+            <a href="web3-dashboard.html" class="quick-btn">
+                💎 Dashboard Web3
+            </a>
+            <a href="kyc-registration.html" class="quick-btn">
+                📋 Registro KYC
+            </a>
+            <a href="tanda-wallet.html" class="quick-btn">
+                💰 Wallet Tandas
+            </a>
+        </div>
+        
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Sistema operativo - Fase 3 completada</span>
         </div>
     </div>
 
-    <div class="app-container">
-        <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar">
-            <div class="logo-section">
-                <img src="logo la tanda.png" alt="La Tanda" class="logo">
-                <div class="logo-text">La Tanda</div>
-            </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" data-section="welcome">
-                        <span class="nav-icon">🏠</span>
-                        <span>Inicio</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="auth">
-                        <span class="nav-icon">🔐</span>
-                        <span>Autenticación</span>
-                        <span id="authStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="kyc">
-                        <span class="nav-icon">📋</span>
-                        <span>Registro KYC</span>
-                        <span id="kycStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="wallet">
-                        <span class="nav-icon">💰</span>
-                        <span>Wallet Web3</span>
-                        <span id="walletStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="groups">
-                        <span class="nav-icon">👥</span>
-                        <span>Grupos & Tandas</span>
-                        <span id="groupsStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="commissions">
-                        <span class="nav-icon">💰</span>
-                        <span>Comisiones 90/10</span>
-                        <span id="commissionsStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="tokens">
-                        <span class="nav-icon">🪙</span>
-                        <span>LTD Token</span>
-                        <span id="tokensStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="marketplace">
-                        <span class="nav-icon">🛍️</span>
-                        <span>Marketplace</span>
-                        <span id="marketplaceStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="security">
-                        <span class="nav-icon">🛡️</span>
-                        <span>Seguridad</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="dashboard">
-                        <span class="nav-icon">📊</span>
-                        <span>Dashboard</span>
-                        <span id="dashboardStatus" class="status-indicator status-pending">
-                            <span class="status-dot"></span>
-                            Pendiente
-                        </span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content" id="mainContent">
-            <!-- Header -->
-            <header class="app-header">
-                <div class="header-left">
-                    <button class="menu-toggle" id="menuToggle">☰</button>
-                    <h1 class="page-title" id="pageTitle">Ecosistema La Tanda</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-info" id="userInfo" style="display: none;">
-                        <div class="user-balance" id="userBalance">
-                            <span class="balance-amount">2,500 LTD</span>
-                            <span class="balance-label">Balance</span>
-                        </div>
-                        <div class="user-profile" onclick="toggleUserMenu()">
-                            <div class="user-avatar" id="userAvatar">U</div>
-                            <div class="user-details">
-                                <span id="userName">Usuario</span>
-                                <span class="user-status">Verificado ✓</span>
-                            </div>
-                            <div class="dropdown-arrow">▼</div>
-                        </div>
-                        
-                        <!-- User Menu Dropdown -->
-                        <div class="user-menu" id="userMenu" style="display: none;">
-                            <div class="user-menu-item" onclick="goToProfile()">
-                                <span>👤</span> Mi Perfil
-                            </div>
-                            <div class="user-menu-item" onclick="goToSettings()">
-                                <span>⚙️</span> Configuración
-                            </div>
-                            <div class="user-menu-item" onclick="goToSecurity()">
-                                <span>🔒</span> Seguridad
-                            </div>
-                            <div class="user-menu-divider"></div>
-                            <div class="user-menu-item logout" onclick="handleLogout()">
-                                <span>🚪</span> Cerrar Sesión
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Welcome Section - Direct Login/Register -->
-            <section id="welcome" class="content-section active">
-                <div class="auth-landing-container">
-                    <!-- Left Side - Branding -->
-                    <div class="auth-branding">
-                        <div class="brand-hero">
-                            <div class="brand-logo">
-                                <img src="logo la tanda.png" alt="La Tanda" class="logo-large">
-                            </div>
-                            <h1 class="brand-title">La Tanda</h1>
-                            <p class="brand-subtitle">
-                                Plataforma Web3 para ahorro cooperativo y tokenomics descentralizadas
-                            </p>
-                        </div>
-                        
-                        <div class="brand-features">
-                            <div class="feature-item">
-                                <span class="feature-icon">🏛️</span>
-                                <span>Tandas Inteligentes con Smart Contracts</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">💰</span>
-                                <span>Sistema de Comisiones 90/10</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">🪙</span>
-                                <span>Token LTD con Staking y Governance</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">🛍️</span>
-                                <span>Marketplace Social Integrado</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Right Side - Auth Forms -->
-                    <div class="auth-forms">
-                        <div class="auth-tabs">
-                            <button class="auth-tab active" data-tab="signin" onclick="switchAuthTab('signin')">
-                                Iniciar Sesión
-                            </button>
-                            <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">
-                                Crear Cuenta
-                            </button>
-                        </div>
-                        
-                        <!-- Sign In Form -->
-                        <div id="signin-form" class="auth-form active">
-                            <h2 class="form-title">Bienvenido de vuelta</h2>
-                            <p class="form-subtitle">Accede a tu cuenta La Tanda</p>
-                            
-                            <!-- Social Login Options -->
-                            <div class="social-login">
-                                <button class="social-btn google-btn" onclick="loginWithGoogle()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                                    </svg>
-                                    Continuar con Google
-                                </button>
-                                
-                                <button class="social-btn apple-btn" onclick="loginWithApple()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                                    </svg>
-                                    Continuar con Apple
-                                </button>
-                                
-                                <button class="social-btn telegram-btn" onclick="loginWithTelegram()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.03-.18.27-.36.72-.55 2.84-1.23 4.73-2.04 5.67-2.43 2.7-1.12 3.26-1.32 3.62-1.32.08 0 .26.02.38.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-                                    </svg>
-                                    Continuar con Telegram
-                                </button>
-                            </div>
-                            
-                            <div class="divider">
-                                <span>o continúa con email</span>
-                            </div>
-                            
-                            <!-- Email Login Form -->
-                            <form class="email-form" onsubmit="handleEmailLogin(event)">
-                                <div class="form-group">
-                                    <input type="email" id="signin-email" placeholder="Email" required>
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" id="signin-password" placeholder="Contraseña" required>
-                                </div>
-                                <button type="submit" class="btn-primary full-width">
-                                    Iniciar Sesión
-                                </button>
-                            </form>
-                            
-                            <div class="form-footer">
-                                <a href="#" onclick="showForgotPassword()">¿Olvidaste tu contraseña?</a>
-                                <div class="demo-access">
-                                    <button class="demo-btn" onclick="fillDemoCredentials()">
-                                        🎮 Acceso Demo
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Register Form -->
-                        <div id="register-form" class="auth-form">
-                            <h2 class="form-title">Crear cuenta</h2>
-                            <p class="form-subtitle">Únete a La Tanda y comienza a ahorrar</p>
-                            
-                            <!-- Social Register Options -->
-                            <div class="social-login">
-                                <button class="social-btn google-btn" onclick="registerWithGoogle()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                                    </svg>
-                                    Registrarse con Google
-                                </button>
-                                
-                                <button class="social-btn apple-btn" onclick="registerWithApple()">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                                    </svg>
-                                    Registrarse con Apple
-                                </button>
-                            </div>
-                            
-                            <div class="divider">
-                                <span>o regístrate con email</span>
-                            </div>
-                            
-                            <!-- Email Register Form -->
-                            <form class="email-form" onsubmit="handleEmailRegister(event)">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <input type="text" id="register-firstname" placeholder="Nombre" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="text" id="register-lastname" placeholder="Apellido" required>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <input type="email" id="register-email" placeholder="Email" required>
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" id="register-password" placeholder="Contraseña (mín. 8 caracteres)" required>
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" id="register-confirm" placeholder="Confirmar contraseña" required>
-                                </div>
-                                
-                                <div class="form-checkbox">
-                                    <input type="checkbox" id="terms-check" required>
-                                    <label for="terms-check">
-                                        Acepto los <a href="#" onclick="showTerms()">Términos y Condiciones</a> 
-                                        y la <a href="#" onclick="showPrivacy()">Política de Privacidad</a>
-                                    </label>
-                                </div>
-                                
-                                <button type="submit" class="btn-primary full-width">
-                                    Crear Cuenta
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Authentication Section - For Existing Users -->
-            <section id="auth" class="content-section">
-                <div class="auth-existing-container">
-                    <div class="auth-existing-header">
-                        <h1 class="auth-existing-title">Acceso para Usuarios Existentes</h1>
-                        <p class="auth-existing-subtitle">Múltiples opciones de autenticación para usuarios registrados</p>
-                    </div>
-                    
-                    <div class="auth-methods-grid">
-                        <!-- QR Code Login -->
-                        <div class="auth-method-card qr-card">
-                            <div class="auth-method-header">
-                                <div class="auth-method-icon">
-                                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM19 13h2v2h-2v-2zM13 13h2v2h-2v-2zM15 15h2v2h-2v-2zM13 17h2v2h-2v-2zM15 19h2v2h-2v-2zM17 17h2v2h-2v-2zM17 13h2v2h-2v-2zM19 15h2v2h-2v-2z"/>
-                                    </svg>
-                                </div>
-                                <h3>Código QR</h3>
-                                <p>Escanea para acceso rápido</p>
-                            </div>
-                            <div class="qr-code-container">
-                                <div id="qr-code-display" class="qr-code">
-                                    <div class="qr-placeholder">
-                                        <div class="qr-loading">Generando QR...</div>
-                                    </div>
-                                </div>
-                                <button onclick="generateQRCode()" class="btn-secondary qr-refresh">
-                                    🔄 Nuevo QR
-                                </button>
-                            </div>
-                            <div class="qr-instructions">
-                                <p>1. Abre la app La Tanda en tu móvil</p>
-                                <p>2. Ve a "Configuración" → "Escanear QR"</p>
-                                <p>3. Escanea este código</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Traditional Login -->
-                        <div class="auth-method-card login-card">
-                            <div class="auth-method-header">
-                                <div class="auth-method-icon">
-                                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L12 1L3 7V9C3 14.55 6.84 19.74 12 21C17.16 19.74 21 14.55 21 9Z"/>
-                                    </svg>
-                                </div>
-                                <h3>Acceso Tradicional</h3>
-                                <p>Email y contraseña</p>
-                            </div>
-                            <form class="traditional-login-form" onsubmit="handleTraditionalLogin(event)">
-                                <div class="form-group">
-                                    <input type="email" id="traditional-email" placeholder="Email" required>
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" id="traditional-password" placeholder="Contraseña" required>
-                                </div>
-                                <div class="form-options">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="traditional-remember"> Recordarme
-                                    </label>
-                                    <a href="#" onclick="showPasswordRecovery()">¿Olvidaste tu contraseña?</a>
-                                </div>
-                                <button type="submit" class="btn-primary full-width">Iniciar Sesión</button>
-                            </form>
-                            <div class="demo-section">
-                                <button class="btn-demo" onclick="fillTraditionalDemo()">🎮 Usar Demo</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Biometric Login -->
-                        <div class="auth-method-card biometric-card">
-                            <div class="auth-method-header">
-                                <div class="auth-method-icon">
-                                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25.16.22.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.21-.39.21z"/>
-                                    </svg>
-                                </div>
-                                <h3>Autenticación Biométrica</h3>
-                                <p>Huella digital o reconocimiento facial</p>
-                            </div>
-                            <div class="biometric-options">
-                                <button onclick="authenticateFingerprint()" class="biometric-btn fingerprint-btn">
-                                    <span class="biometric-icon">👆</span>
-                                    Huella Digital
-                                </button>
-                                <button onclick="authenticateFaceID()" class="biometric-btn faceid-btn">
-                                    <span class="biometric-icon">😊</span>
-                                    Face ID
-                                </button>
-                            </div>
-                            <div class="biometric-status" id="biometric-status">
-                                <p>Funcionalidad disponible en dispositivos compatibles</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Web3 Wallet Login -->
-                        <div class="auth-method-card wallet-card">
-                            <div class="auth-method-header">
-                                <div class="auth-method-icon">
-                                    <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                                    </svg>
-                                </div>
-                                <h3>Wallet Web3</h3>
-                                <p>Conecta tu wallet blockchain</p>
-                            </div>
-                            <div class="wallet-options">
-                                <button onclick="connectMetaMaskAuth()" class="wallet-btn metamask-btn">
-                                    <div class="wallet-icon metamask-bg"></div>
-                                    MetaMask
-                                </button>
-                                <button onclick="connectWalletConnectAuth()" class="wallet-btn walletconnect-btn">
-                                    <div class="wallet-icon walletconnect-bg"></div>
-                                    WalletConnect
-                                </button>
-                                <button onclick="connectBinanceAuth()" class="wallet-btn binance-btn">
-                                    <div class="wallet-icon binance-bg"></div>
-                                    Binance Wallet
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Back to Landing -->
-                    <div class="back-to-landing">
-                        <p>¿Nuevo en La Tanda?</p>
-                        <button onclick="goToWelcome()" class="btn-secondary">
-                            ← Volver al Inicio
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- KYC Section -->
-            <section id="kyc" class="content-section">
-                <iframe id="kycFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Wallet Section -->
-            <section id="wallet" class="content-section">
-                <iframe id="walletFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Groups Section -->
-            <section id="groups" class="content-section">
-                <iframe id="groupsFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Commissions Section -->
-            <section id="commissions" class="content-section">
-                <iframe id="commissionsFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Tokens Section -->
-            <section id="tokens" class="content-section">
-                <iframe id="tokensFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Marketplace Section -->
-            <section id="marketplace" class="content-section">
-                <iframe id="marketplaceFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Security Section -->
-            <section id="security" class="content-section">
-                <iframe id="securityFrame" class="component-frame" src=""></iframe>
-            </section>
-
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="content-section">
-                <iframe id="dashboardFrame" class="component-frame" src=""></iframe>
-            </section>
-        </main>
-    </div>
-
-    <!-- API Integration Scripts -->
-    <script src="api-endpoints-config.js"></script>
-    <script src="api-adapter.js"></script>
-    <script src="la-tanda-unified.js"></script>
-    
-    <!-- Binance-style Landing Page Functions -->
     <script>
-        // Tab switching functionality
-        function switchAuthTab(tab) {
-            // Update tab buttons
-            document.querySelectorAll('.auth-tab').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-            
-            // Update forms
-            document.querySelectorAll('.auth-form').forEach(form => {
-                form.classList.remove('active');
-            });
-            document.getElementById(`${tab}-form`).classList.add('active');
+        function setAdminCredentials() {
+            // Store admin credentials for auto-fill
+            sessionStorage.setItem('admin_auto_login', 'true');
         }
-        
-        // Email login handler
-        function handleEmailLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-            
-            console.log('Login attempt:', { email, password });
-            
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Iniciando sesión...';
-            submitBtn.disabled = true;
-            
-            // Simulate login process
-            setTimeout(() => {
-                if (email === 'demo@latanda.online' && password === 'demo123') {
-                    // Demo login success - redirect to auth component for processing
-                    if (window.app) {
-                        window.app.navigateToSection('auth');
-                        // Fill the auth component with demo credentials
-                        setTimeout(() => {
-                            const authFrame = document.getElementById('authFrame');
-                            if (authFrame && authFrame.contentWindow) {
-                                authFrame.contentWindow.postMessage({
-                                    type: 'FILL_DEMO_CREDENTIALS',
-                                    data: { email, password }
-                                }, '*');
-                            }
-                        }, 1000);
-                    }
-                } else {
-                    // Regular login - redirect to auth component
-                    if (window.app) {
-                        window.app.navigateToSection('auth');
-                        setTimeout(() => {
-                            const authFrame = document.getElementById('authFrame');
-                            if (authFrame && authFrame.contentWindow) {
-                                authFrame.contentWindow.postMessage({
-                                    type: 'FILL_CREDENTIALS',
-                                    data: { email, password }
-                                }, '*');
-                            }
-                        }, 1000);
-                    }
-                }
-                
-                // Reset button
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 1500);
+
+        function setDemoCredentials() {
+            // Store demo credentials for auto-fill
+            sessionStorage.setItem('demo_auto_login', 'true');
         }
-        
-        // Email registration handler
-        function handleEmailRegister(event) {
-            event.preventDefault();
-            
-            const formData = {
-                firstName: document.getElementById('register-firstname').value,
-                lastName: document.getElementById('register-lastname').value,
-                email: document.getElementById('register-email').value,
-                password: document.getElementById('register-password').value,
-                confirmPassword: document.getElementById('register-confirm').value,
-                termsAccepted: document.getElementById('terms-check').checked
-            };
-            
-            // Basic validation
-            if (formData.password !== formData.confirmPassword) {
-                alert('Las contraseñas no coinciden');
-                return;
-            }
-            
-            if (!formData.termsAccepted) {
-                alert('Debes aceptar los términos y condiciones');
-                return;
-            }
-            
-            console.log('Registration attempt:', formData);
-            
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Creando cuenta...';
-            submitBtn.disabled = true;
-            
-            // Simulate registration process
-            setTimeout(() => {
-                // Redirect to auth component for registration processing
-                if (window.app) {
-                    window.app.navigateToSection('auth');
-                    setTimeout(() => {
-                        const authFrame = document.getElementById('authFrame');
-                        if (authFrame && authFrame.contentWindow) {
-                            authFrame.contentWindow.postMessage({
-                                type: 'SWITCH_TO_REGISTER',
-                                data: formData
-                            }, '*');
-                        }
-                    }, 1000);
-                }
-                
-                // Reset button
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 1500);
-        }
-        
-        // Social login functions with enhanced UX
-        function loginWithGoogle() {
-            console.log('Google login clicked');
-            showSocialLoginNotification('Google', 'signin');
-            
-            // TODO: Implement Google OAuth
-            // window.location.href = 'https://accounts.google.com/oauth/authorize?...';
-        }
-        
-        function loginWithApple() {
-            console.log('Apple login clicked');
-            showSocialLoginNotification('Apple', 'signin');
-            
-            // TODO: Implement Apple Sign-In
-            // AppleID.auth.signIn();
-        }
-        
-        function loginWithTelegram() {
-            console.log('Telegram login clicked');
-            showSocialLoginNotification('Telegram', 'signin');
-            
-            // TODO: Implement Telegram OAuth
-            // window.open('https://oauth.telegram.org/...', 'telegram_auth', 'width=500,height=600');
-        }
-        
-        function registerWithGoogle() {
-            console.log('Google register clicked');
-            showSocialLoginNotification('Google', 'register');
-        }
-        
-        function registerWithApple() {
-            console.log('Apple register clicked');
-            showSocialLoginNotification('Apple', 'register');
-        }
-        
-        // Enhanced notification for social auth
-        function showSocialLoginNotification(provider, action) {
-            const actionText = action === 'signin' ? 'iniciar sesión' : 'registrarse';
-            const notification = document.createElement('div');
-            notification.className = 'social-auth-notification';
-            notification.innerHTML = `
-                <div class="notification-content">
-                    <div class="provider-icon ${provider.toLowerCase()}-icon"></div>
-                    <div class="notification-text">
-                        <h4>Próximamente disponible</h4>
-                        <p>La opción para ${actionText} con ${provider} será implementada en la siguiente versión.</p>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" class="close-btn">×</button>
-                </div>
-            `;
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: rgba(15, 23, 42, 0.95);
-                border: 1px solid rgba(148, 163, 184, 0.2);
-                border-radius: 12px;
-                padding: 20px;
-                max-width: 350px;
-                z-index: 10000;
-                animation: slideIn 0.3s ease-out;
-                backdrop-filter: blur(20px);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 5000);
-        }
-        
-        // Demo credentials helper
-        function fillDemoCredentials() {
-            document.getElementById('signin-email').value = 'demo@latanda.online';
-            document.getElementById('signin-password').value = 'demo123';
-            
-            // Add visual feedback
-            const demoBtn = event.target;
-            const originalText = demoBtn.textContent;
-            demoBtn.textContent = '✅ Credenciales cargadas';
-            
-            setTimeout(() => {
-                demoBtn.textContent = originalText;
-            }, 2000);
-        }
-        
-        // Terms and privacy functions
-        function showTerms() {
-            alert('Términos y Condiciones - Funcionalidad será implementada próximamente');
-        }
-        
-        function showPrivacy() {
-            alert('Política de Privacidad - Funcionalidad será implementada próximamente');
-        }
-        
-        function showForgotPassword() {
-            alert('Recuperación de contraseña - Funcionalidad será implementada próximamente');
-        }
-        
-        // Add notification animations and styles
-        if (!document.getElementById('socialNotificationStyles')) {
-            const notificationStyles = document.createElement('style');
-            notificationStyles.id = 'socialNotificationStyles';
-            notificationStyles.textContent = `
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(100%);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-                
-                @keyframes slideOut {
-                    from {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                    to {
-                        opacity: 0;
-                        transform: translateX(100%);
-                    }
-                }
-                
-                .social-auth-notification .notification-content {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    color: #f1f5f9;
-                }
-                
-                .social-auth-notification .provider-icon {
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 6px;
-                    flex-shrink: 0;
-                    margin-top: 2px;
-                }
-                
-                .social-auth-notification .google-icon {
-                    background: linear-gradient(45deg, #4285F4, #34A853);
-                }
-                
-                .social-auth-notification .apple-icon {
-                    background: linear-gradient(45deg, #000, #333);
-                }
-                
-                .social-auth-notification .telegram-icon {
-                    background: linear-gradient(45deg, #229ED9, #0088CC);
-                }
-                
-                .social-auth-notification .notification-text h4 {
-                    margin: 0 0 4px 0;
-                    font-size: 14px;
-                    font-weight: 600;
-                }
-                
-                .social-auth-notification .notification-text p {
-                    margin: 0;
-                    font-size: 13px;
-                    color: #cbd5e1;
-                    line-height: 1.4;
-                }
-                
-                .social-auth-notification .close-btn {
-                    background: none;
-                    border: none;
-                    color: #94a3b8;
-                    font-size: 18px;
-                    cursor: pointer;
-                    padding: 0;
-                    width: 20px;
-                    height: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 4px;
-                    transition: all 0.2s ease;
-                }
-                
-                .social-auth-notification .close-btn:hover {
-                    background: rgba(148, 163, 184, 0.1);
-                    color: #f1f5f9;
-                }
-            `;
-            document.head.appendChild(notificationStyles);
-        }
-        
-        // QR Code functionality
-        function generateQRCode() {
-            const qrDisplay = document.getElementById('qr-code-display');
-            qrDisplay.innerHTML = '<div class="qr-placeholder"><div class="qr-loading">Generando QR...</div></div>';
-            
-            // Simulate QR generation
-            setTimeout(() => {
-                const sessionToken = 'latanda_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                qrDisplay.innerHTML = `
-                    <div style="width: 160px; height: 160px; background: url('data:image/svg+xml,${generateQRSVG(sessionToken)}') center/contain no-repeat; border-radius: 8px;"></div>
-                `;
-                
-                // Store QR session for verification
-                localStorage.setItem('qr_session_token', sessionToken);
-                console.log('QR Code generated:', sessionToken);
-                
-                // Auto-refresh QR every 5 minutes
-                setTimeout(() => {
-                    generateQRCode();
-                }, 300000);
-            }, 1500);
-        }
-        
-        function generateQRSVG(data) {
-            // Simple QR code placeholder - in production, use a real QR library
-            return encodeURIComponent(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
-                    <rect width="160" height="160" fill="white"/>
-                    <rect x="10" y="10" width="20" height="20" fill="black"/>
-                    <rect x="40" y="10" width="10" height="10" fill="black"/>
-                    <rect x="60" y="10" width="20" height="20" fill="black"/>
-                    <rect x="90" y="10" width="10" height="10" fill="black"/>
-                    <rect x="110" y="10" width="20" height="20" fill="black"/>
-                    <rect x="140" y="10" width="10" height="10" fill="black"/>
-                    <rect x="10" y="30" width="10" height="10" fill="black"/>
-                    <rect x="30" y="30" width="10" height="10" fill="black"/>
-                    <rect x="50" y="30" width="10" height="10" fill="black"/>
-                    <rect x="70" y="30" width="20" height="20" fill="black"/>
-                    <rect x="100" y="30" width="10" height="10" fill="black"/>
-                    <rect x="120" y="30" width="20" height="20" fill="black"/>
-                    <rect x="150" y="30" width="10" height="10" fill="black"/>
-                    <!-- Pattern continues... -->
-                    <text x="80" y="150" text-anchor="middle" font-family="monospace" font-size="8" fill="black">${data.slice(0, 16)}</text>
-                </svg>
-            `);
-        }
-        
-        // Traditional login handler
-        function handleTraditionalLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('traditional-email').value;
-            const password = document.getElementById('traditional-password').value;
-            const remember = document.getElementById('traditional-remember').checked;
-            
-            console.log('Traditional login:', { email, password, remember });
-            
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Verificando...';
-            submitBtn.disabled = true;
-            
-            // Simulate authentication
-            setTimeout(() => {
-                if (email === 'demo@latanda.online' && password === 'demo123') {
-                    showAuthSuccess('Acceso exitoso con credenciales demo');
-                    if (window.app) {
-                        window.app.handleAuthSuccess({
-                            user: {
-                                id: 'demo_user_001',
-                                email: email,
-                                name: 'Demo User',
-                                isDemo: true
-                            },
-                            kycCompleted: true,
-                            walletConnected: true
-                        });
-                    }
-                } else {
-                    showAuthError('Credenciales incorrectas. Usa demo@latanda.online / demo123');
-                }
-                
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
-        }
-        
-        function fillTraditionalDemo() {
-            document.getElementById('traditional-email').value = 'demo@latanda.online';
-            document.getElementById('traditional-password').value = 'demo123';
-            
-            showNotification('Credenciales demo cargadas', 'success');
-        }
-        
-        // Biometric authentication
-        function authenticateFingerprint() {
-            console.log('Fingerprint authentication requested');
-            
-            if ('credentials' in navigator && 'create' in navigator.credentials) {
-                // WebAuthn API available
-                showBiometricProgress('Coloca tu dedo en el sensor...');
-                
-                setTimeout(() => {
-                    showAuthSuccess('Autenticación biométrica exitosa');
-                    // TODO: Complete biometric auth flow
-                }, 3000);
-            } else {
-                showAuthError('Autenticación biométrica no disponible en este dispositivo');
-            }
-        }
-        
-        function authenticateFaceID() {
-            console.log('Face ID authentication requested');
-            
-            showBiometricProgress('Mirando a la cámara...');
-            
-            setTimeout(() => {
-                showAuthSuccess('Face ID completado exitosamente');
-                // TODO: Complete Face ID auth flow
-            }, 2500);
-        }
-        
-        function showBiometricProgress(message) {
-            const status = document.getElementById('biometric-status');
-            status.innerHTML = `<p style="color: #3b82f6;">${message}</p>`;
-        }
-        
-        // Web3 wallet authentication
-        function connectMetaMaskAuth() {
-            console.log('MetaMask authentication requested');
-            if (typeof window.ethereum !== 'undefined') {
-                showAuthProgress('Conectando con MetaMask...');
-                // TODO: Implement actual MetaMask connection
-                setTimeout(() => {
-                    showAuthSuccess('MetaMask conectado exitosamente');
-                }, 2000);
-            } else {
-                showAuthError('MetaMask no está instalado');
-            }
-        }
-        
-        function connectWalletConnectAuth() {
-            console.log('WalletConnect authentication requested');
-            showAuthProgress('Iniciando WalletConnect...');
-            setTimeout(() => {
-                showNotification('WalletConnect será implementado próximamente', 'info');
-            }, 1000);
-        }
-        
-        function connectBinanceAuth() {
-            console.log('Binance Wallet authentication requested');
-            showAuthProgress('Conectando con Binance Wallet...');
-            setTimeout(() => {
-                showNotification('Binance Wallet será implementado próximamente', 'info');
-            }, 1000);
-        }
-        
-        // Auth feedback functions
-        function showAuthSuccess(message) {
-            showNotification(message, 'success');
-        }
-        
-        function showAuthError(message) {
-            showNotification(message, 'error');
-        }
-        
-        function showAuthProgress(message) {
-            showNotification(message, 'info');
-        }
-        
-        function showPasswordRecovery() {
-            showNotification('Recuperación de contraseña será implementada próximamente', 'info');
-        }
-        
-        function goToWelcome() {
-            if (window.app) {
-                window.app.navigateToSection('welcome');
-            }
-        }
-        
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `auth-notification notification-${type}`;
-            notification.innerHTML = `
-                <div class="notification-content">
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()">×</button>
-                </div>
-            `;
-            
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 16px 20px;
-                border-radius: 12px;
-                z-index: 10001;
-                animation: slideIn 0.3s ease-out;
-                max-width: 400px;
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(148, 163, 184, 0.2);
-                font-weight: 500;
-            `;
-            
-            if (type === 'success') {
-                notification.style.background = 'rgba(16, 185, 129, 0.9)';
-                notification.style.color = 'white';
-            } else if (type === 'error') {
-                notification.style.background = 'rgba(239, 68, 68, 0.9)';
-                notification.style.color = 'white';
-            } else {
-                notification.style.background = 'rgba(99, 102, 241, 0.9)';
-                notification.style.color = 'white';
-            }
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideOut 0.3s ease-in';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, 5000);
-        }
-        
-        // User menu functionality
-        function toggleUserMenu() {
-            const userMenu = document.getElementById('userMenu');
-            const userProfile = document.querySelector('.user-profile');
-            
-            if (userMenu.style.display === 'none' || !userMenu.style.display) {
-                userMenu.style.display = 'block';
-                userProfile.classList.add('active');
-                
-                // Close menu when clicking outside
-                setTimeout(() => {
-                    document.addEventListener('click', closeUserMenuOutside);
-                }, 100);
-            } else {
-                userMenu.style.display = 'none';
-                userProfile.classList.remove('active');
-                document.removeEventListener('click', closeUserMenuOutside);
-            }
-        }
-        
-        function closeUserMenuOutside(event) {
-            const userInfo = document.getElementById('userInfo');
-            if (!userInfo.contains(event.target)) {
-                const userMenu = document.getElementById('userMenu');
-                const userProfile = document.querySelector('.user-profile');
-                
-                userMenu.style.display = 'none';
-                userProfile.classList.remove('active');
-                document.removeEventListener('click', closeUserMenuOutside);
-            }
-        }
-        
-        function goToProfile() {
-            console.log('Going to profile...');
-            closeUserMenuOutside({ target: document.body });
-            if (window.app) {
-                window.app.navigateToSection('dashboard'); // Placeholder
-            }
-            showNotification('Perfil de usuario - Próximamente disponible', 'info');
-        }
-        
-        function goToSettings() {
-            console.log('Going to settings...');
-            closeUserMenuOutside({ target: document.body });
-            showNotification('Configuración - Próximamente disponible', 'info');
-        }
-        
-        function goToSecurity() {
-            console.log('Going to security...');
-            closeUserMenuOutside({ target: document.body });
-            if (window.app) {
-                window.app.navigateToSection('security');
-            }
-        }
-        
-        function handleLogout() {
-            console.log('Logging out...');
-            closeUserMenuOutside({ target: document.body });
-            
-            if (window.app) {
-                window.app.logout();
-            }
-        }
-        
-        // Initialize landing page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎯 Binance-style landing page initialized');
-            
-            // Set demo credentials by default for easy testing
-            if (document.getElementById('signin-email')) {
-                document.getElementById('signin-email').value = 'demo@latanda.online';
-                document.getElementById('signin-password').value = 'demo123';
-            }
-            
-            // Auto-generate QR code when auth section is visited
-            if (document.getElementById('qr-code-display')) {
-                generateQRCode();
-            }
+
+        // Check system status on load
+        window.addEventListener('load', function() {
+            console.log('🏦 La Tanda Web3 Ecosystem - Sistema iniciado');
+            console.log('✅ Fase 1: Arquitectura base - Completada');
+            console.log('✅ Fase 2: Integración API - Completada');  
+            console.log('✅ Fase 3: Sistema de sorteos - Completada');
+            console.log('🎲 Sistema de tandas rotatorias con lottery funcionando');
         });
     </script>
 </body>
