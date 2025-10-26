@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Auth & Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Auth Testing & Debugging</h1>
+    
+    <h2>Step 1: Clear All Auth Data</h2>
+    <button onclick="clearAllAuth()">Clear All Authentication Data</button>
+    <div id="clear-result"></div>
+    
+    <h2>Step 2: Test New JWT Generation</h2>
+    <button onclick="testJWTComplete()">Test Complete JWT with All Required Fields</button>
+    <div id="jwt-result"></div>
+    
+    <h2>Step 3: Test Login Flow</h2>
+    <button onclick="testFullLogin()">Test Admin Login with New JWT</button>
+    <div id="login-result"></div>
+    
+    <h2>Step 4: Navigation Test</h2>
+    <button onclick="goToAuth()">Go to Auth Page</button>
+    <button onclick="goToDashboard()">Go to Dashboard</button>
+    
+    <script src="api-proxy.js"></script>
+    <script>
+        function clearAllAuth() {
+            // Clear all auth-related localStorage items
+            const authKeys = [
+                'latanda_auth_token',
+                'latanda_user',
+                'latanda_session',
+                'latanda_stats',
+                'latanda_tandas',
+                'latanda_ltdData',
+                'latanda_transactions',
+                'latanda_lastApiSync',
+                'latanda_registered_users'
+            ];
+            
+            let cleared = [];
+            authKeys.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    cleared.push(key);
+                }
+            });
+            
+            document.getElementById('clear-result').innerHTML = `
+                <div class="success">✅ Cleared ${cleared.length} auth items:</div>
+                <pre>${cleared.join('\\n')}</pre>
+            `;
+        }
+        
+        function testJWTComplete() {
+            try {
+                const payload = {
+                    user_id: "admin_001",
+                    email: "admin@latanda.online", 
+                    role: "admin", // Correct role name
+                    permissions: ["full_access", "user_management", "system_config"],
+                    iss: "latanda.online", // Required issuer
+                    aud: "latanda-web-app", // Required audience
+                    iat: Math.floor(Date.now() / 1000), // issued at
+                    exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 8 hours
+                };
+                
+                const jwt = window.apiProxy.generateJWT(payload);
+                
+                // Decode and verify
+                const parts = jwt.split('.');
+                const decodedHeader = JSON.parse(atob(parts[0]));
+                const decodedPayload = JSON.parse(atob(parts[1]));
+                
+                // Validate all required fields
+                const validations = {
+                    'Has 3 parts': parts.length === 3,
+                    'Header type JWT': decodedHeader.typ === 'JWT',
+                    'Has algorithm': !!decodedHeader.alg,
+                    'Has user_id': !!decodedPayload.user_id,
+                    'Has iat': !!decodedPayload.iat,
+                    'Has exp': !!decodedPayload.exp,
+                    'Has iss': decodedPayload.iss === 'latanda.online',
+                    'Has aud': decodedPayload.aud === 'latanda-web-app',
+                    'Valid role': ['admin', 'user', 'demo', 'coordinator'].includes(decodedPayload.role),
+                    'Not expired': decodedPayload.exp > Math.floor(Date.now() / 1000)
+                };
+                
+                document.getElementById('jwt-result').innerHTML = `
+                    <div class="success">✅ JWT Generated Successfully</div>
+                    <h4>Validations:</h4>
+                    <pre>${Object.entries(validations).map(([key, val]) => `${val ? '✅' : '❌'} ${key}: ${val}`).join('\\n')}</pre>
+                    <h4>JWT Token:</h4>
+                    <pre style="font-size: 10px; word-break: break-all;">${jwt}</pre>
+                    <h4>Decoded Payload:</h4>
+                    <pre>${JSON.stringify(decodedPayload, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                document.getElementById('jwt-result').innerHTML = `
+                    <div class="error">❌ JWT Test Failed: ${error.message}</div>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+        
+        async function testFullLogin() {
+            try {
+                console.log('🧪 Starting login test...');
+                
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                if (response.success && response.data.auth_token) {
+                    // Decode token
+                    const token = response.data.auth_token;
+                    const parts = token.split('.');
+                    const payload = JSON.parse(atob(parts[1]));
+                    
+                    // Validate token completely
+                    const now = Math.floor(Date.now() / 1000);
+                    const validations = {
+                        'Login Success': response.success,
+                        'Token Present': !!token,
+                        'Token Format': parts.length === 3,
+                        'Has user_id': !!payload.user_id,
+                        'Has iat': !!payload.iat,
+                        'Has exp': !!payload.exp,
+                        'Correct issuer': payload.iss === 'latanda.online',
+                        'Correct audience': payload.aud === 'latanda-web-app',
+                        'Valid role': ['admin', 'user', 'demo', 'coordinator'].includes(payload.role),
+                        'Not expired': payload.exp > now,
+                        'IAT not future': payload.iat <= now + 300,
+                        'User data present': !!response.data.user
+                    };
+                    
+                    // Store in localStorage for testing
+                    localStorage.setItem('latanda_auth_token', token);
+                    localStorage.setItem('latanda_user', JSON.stringify(response.data.user));
+                    
+                    document.getElementById('login-result').innerHTML = `
+                        <div class="success">✅ Login Test Complete</div>
+                        <h4>All Validations:</h4>
+                        <pre>${Object.entries(validations).map(([key, val]) => `${val ? '✅' : '❌'} ${key}: ${val}`).join('\\n')}</pre>
+                        <h4>JWT Payload:</h4>
+                        <pre>${JSON.stringify(payload, null, 2)}</pre>
+                        <h4>User Data:</h4>
+                        <pre>${JSON.stringify(response.data.user, null, 2)}</pre>
+                        <div class="success">📝 Token stored in localStorage. You can now navigate to auth or dashboard.</div>
+                    `;
+                } else {
+                    throw new Error('Login failed: ' + (response.error?.message || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                document.getElementById('login-result').innerHTML = `
+                    <div class="error">❌ Login Test Failed: ${error.message}</div>
+                `;
+            }
+        }
+        
+        function goToAuth() {
+            window.location.href = 'auth-enhanced.html';
+        }
+        
+        function goToDashboard() {
+            window.location.href = 'home-dashboard.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JWT Debug</title>
+</head>
+<body>
+    <script>
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWRtaW5fMDAxIiwiZW1haWwiOiJhZG1pbkBsYXRhbmRhLm9ubGluZSIsInJvbGUiOiJhZG1pbmlzdHJhdG9yIiwicGVybWlzc2lvbnMiOlsiZnVsbF9hY2Nlc3MiLCJ1c2VyX21hbmFnZW1lbnQiLCJzeXN0ZW1fY29uZmlnIl0sImV4cCI6MTc1NTA1Mjc1MH0=.c2lnbmF0dXJlX3hrZGdxb3QxOWQ=";
+        
+        const parts = token.split('.');
+        console.log("Token parts:", parts.length);
+        
+        try {
+            const header = JSON.parse(atob(parts[0]));
+            console.log("Header:", header);
+            
+            const payload = JSON.parse(atob(parts[1]));
+            console.log("Payload:", payload);
+            
+            console.log("Signature:", parts[2]);
+            
+            // Check expiration
+            const now = Math.floor(Date.now() / 1000);
+            console.log("Now:", now);
+            console.log("Expires:", payload.exp);
+            console.log("Is expired?", payload.exp <= now);
+            console.log("Time to expiry:", payload.exp - now, "seconds");
+            
+        } catch (error) {
+            console.error("Decode error:", error);
+        }
+    </script>
+</body>
+</html>

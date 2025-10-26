@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compare API Loading</title>
+</head>
+<body>
+    <h1>Compare API Loading</h1>
+    <div id="output"></div>
+    
+    <script>
+        console.log('🔍 Testing old API proxy...');
+        
+        window.addEventListener('error', function(e) {
+            console.error('❌ JavaScript Error:', e.message);
+            document.getElementById('output').innerHTML += `<p style="color: red;">Error: ${e.message}</p>`;
+        });
+    </script>
+    
+    <!-- Test old API proxy first -->
+    <script src="api-proxy.js"></script>
+    
+    <script>
+        setTimeout(() => {
+            const output = document.getElementById('output');
+            
+            console.log('🔍 Checking old API proxy...');
+            output.innerHTML += '<h2>Old API Proxy (api-proxy.js)</h2>';
+            
+            if (window.apiProxy) {
+                output.innerHTML += '<p style="color: green;">✅ Old apiProxy loaded</p>';
+                output.innerHTML += `<p>Version: ${window.apiProxy.version || 'No version'}</p>`;
+                output.innerHTML += `<p>Base URL: ${window.apiProxy.API_BASE}</p>`;
+                
+                // Test a call
+                window.apiProxy.makeRequest('/system/health').then(response => {
+                    output.innerHTML += `<p>Test call result: ${response.success ? '✅ Success' : '❌ Failed'}</p>`;
+                }).catch(error => {
+                    output.innerHTML += `<p style="color: red;">Test call error: ${error.message}</p>`;
+                });
+            } else {
+                output.innerHTML += '<p style="color: red;">❌ Old apiProxy not found</p>';
+            }
+        }, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Initialization Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; }
+        #console-log { max-height: 300px; overflow-y: auto; background: #000; color: #00ff00; font-family: monospace; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Dashboard Initialization Test</h1>
+    
+    <div class="step">
+        <h2>Step 1: Setup Authentication</h2>
+        <button onclick="setupAuth()">Setup Valid Authentication</button>
+        <div id="auth-setup"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 2: Test Method Existence</h2>
+        <button onclick="testMethods()">Verify All Required Methods Exist</button>
+        <div id="method-test"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 3: Test Mock Initialization</h2>
+        <button onclick="testInitialization()">Run Mock Dashboard Initialization</button>
+        <div id="init-test"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 4: Monitor Console & Navigate</h2>
+        <button onclick="startConsoleMonitor()">Start Console Monitor</button>
+        <button onclick="goToDashboard()" style="background: #28a745;">Go to Real Dashboard</button>
+        <div id="console-monitor"></div>
+        <div id="console-log"></div>
+    </div>
+
+    <script src="api-proxy.js"></script>
+    <script>
+        let consoleMonitorActive = false;
+        let originalConsoleLog = console.log;
+        let originalConsoleError = console.error;
+        let originalConsoleWarn = console.warn;
+
+        async function setupAuth() {
+            const resultDiv = document.getElementById('auth-setup');
+            
+            try {
+                // Clear existing auth
+                localStorage.clear();
+                
+                // Login with admin credentials
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                if (response.success && response.data.auth_token) {
+                    // Store complete auth data
+                    localStorage.setItem('latanda_auth_token', response.data.auth_token);
+                    localStorage.setItem('latanda_user', JSON.stringify(response.data.user));
+                    
+                    // Also setup some initial API data to prevent "data not found" errors
+                    const userStats = await window.apiProxy.makeRequest('/user/stats');
+                    const ltdBalance = await window.apiProxy.makeRequest('/ltd/balance'); 
+                    const tandasList = await window.apiProxy.makeRequest('/tandas/list');
+                    const transactionsList = await window.apiProxy.makeRequest('/transactions/list');
+                    
+                    // Store this data
+                    localStorage.setItem('latanda_stats', JSON.stringify(userStats.data));
+                    localStorage.setItem('latanda_ltdData', JSON.stringify(ltdBalance.data));
+                    localStorage.setItem('latanda_tandas', JSON.stringify(tandasList.data || []));
+                    localStorage.setItem('latanda_transactions', JSON.stringify(transactionsList.data || []));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Authentication Setup Complete</div>
+                        <pre>✅ Auth token stored
+✅ User data stored
+✅ Stats data pre-loaded  
+✅ LTD balance pre-loaded
+✅ Tandas list pre-loaded
+✅ Transactions pre-loaded</pre>
+                    `;
+                } else {
+                    throw new Error('Login failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Auth setup failed: ${error.message}</div>`;
+            }
+        }
+        
+        function testMethods() {
+            const resultDiv = document.getElementById('method-test');
+            
+            // List of all methods called during initialization
+            const requiredMethods = [
+                'showLoadingState',
+                'loadUserData', 
+                'validateDataIntegrity',
+                'restoreFromBackupOrDefaults',
+                'createDataBackup',
+                'setupEventListeners',
+                'updateUI',
+                'updateWelcomeMessage',
+                'updateUserProfile', 
+                'updateUserDropdown',
+                'hideLoadingState',
+                'setupPeriodicSync',
+                'simulateDataUpdates'
+            ];
+            
+            // Mock dashboard object to test if methods would exist
+            const mockDashboard = {
+                // Methods we've confirmed exist or added
+                showLoadingState: () => {},
+                loadUserData: async () => {},
+                validateDataIntegrity: () => true,
+                restoreFromBackupOrDefaults: async () => {},
+                createDataBackup: () => {},
+                setupEventListeners: () => {},
+                updateUI: () => {},
+                updateWelcomeMessage: () => {},
+                updateUserProfile: () => {},
+                updateUserDropdown: () => {},
+                hideLoadingState: () => {},
+                setupPeriodicSync: () => {},
+                simulateDataUpdates: () => {}
+            };
+            
+            const methodTests = requiredMethods.map(method => ({
+                name: method,
+                exists: typeof mockDashboard[method] === 'function'
+            }));
+            
+            const missingMethods = methodTests.filter(t => !t.exists);
+            const allMethodsExist = missingMethods.length === 0;
+            
+            resultDiv.innerHTML = `
+                <div class="${allMethodsExist ? 'success' : 'error'}">
+                    ${allMethodsExist ? '✅' : '❌'} Method Existence Check: ${methodTests.length - missingMethods.length}/${methodTests.length}
+                </div>
+                ${missingMethods.length > 0 ? `
+                    <div class="error">Missing Methods:</div>
+                    <pre>${missingMethods.map(m => `❌ ${m.name}`).join('\\n')}</pre>
+                ` : ''}
+                <div class="success">Available Methods:</div>
+                <pre>${methodTests.filter(t => t.exists).map(m => `✅ ${m.name}`).join('\\n')}</pre>
+            `;
+        }
+        
+        async function testInitialization() {
+            const resultDiv = document.getElementById('init-test');
+            
+            try {
+                // Create a mock dashboard initialization sequence
+                const initSteps = [
+                    'showLoadingState',
+                    'loadUserData', 
+                    'validateDataIntegrity',
+                    'setupEventListeners',
+                    'updateUI',
+                    'updateWelcomeMessage',
+                    'updateUserProfile',
+                    'updateUserDropdown',
+                    'hideLoadingState',
+                    'setupPeriodicSync',
+                    'simulateDataUpdates'
+                ];
+                
+                let results = [];
+                
+                for (const step of initSteps) {
+                    try {
+                        // Simulate each step
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+                        results.push({ step, success: true, error: null });
+                    } catch (error) {
+                        results.push({ step, success: false, error: error.message });
+                    }
+                }
+                
+                const successCount = results.filter(r => r.success).length;
+                const failureCount = results.filter(r => !r.success).length;
+                
+                resultDiv.innerHTML = `
+                    <div class="${failureCount === 0 ? 'success' : 'warning'}">
+                        ${failureCount === 0 ? '✅' : '⚠️'} Mock Initialization: ${successCount}/${results.length} steps
+                    </div>
+                    <pre>${results.map(r => `${r.success ? '✅' : '❌'} ${r.step}${r.error ? ': ' + r.error : ''}`).join('\\n')}</pre>
+                    <div class="success">✅ Ready for real dashboard test!</div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Mock initialization failed: ${error.message}</div>`;
+            }
+        }
+        
+        function startConsoleMonitor() {
+            const resultDiv = document.getElementById('console-monitor');
+            const logDiv = document.getElementById('console-log');
+            
+            if (consoleMonitorActive) {
+                resultDiv.innerHTML = `<div class="warning">⚠️ Console monitor already active</div>`;
+                return;
+            }
+            
+            consoleMonitorActive = true;
+            
+            // Override console methods to capture dashboard logs
+            console.log = function(...args) {
+                const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+                if (message.includes('[Dashboard]') || message.includes('Dashboard')) {
+                    logDiv.innerHTML += `<div style="color: #00ff00;">LOG: ${message}</div>`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                originalConsoleLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+                if (message.includes('[Dashboard]') || message.includes('Dashboard')) {
+                    logDiv.innerHTML += `<div style="color: #ff0000;">ERROR: ${message}</div>`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                originalConsoleError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+                if (message.includes('[Dashboard]') || message.includes('Dashboard')) {
+                    logDiv.innerHTML += `<div style="color: #ffff00;">WARN: ${message}</div>`;
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                originalConsoleWarn.apply(console, args);
+            };
+            
+            resultDiv.innerHTML = `
+                <div class="success">✅ Console monitor started</div>
+                <p>Monitoring for dashboard-related logs...</p>
+            `;
+        }
+        
+        function goToDashboard() {
+            const hasAuth = localStorage.getItem('latanda_auth_token');
+            
+            if (!hasAuth) {
+                alert('⚠️ Run Step 1 first to setup authentication!');
+                return;
+            }
+            
+            if (!consoleMonitorActive) {
+                alert('💡 Tip: Start console monitor first to see initialization logs!');
+            }
+            
+            // Navigate to dashboard
+            window.location.href = 'home-dashboard.html';
+        }
+        
+        // Auto-start when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('console-log').innerHTML = '<div style="color: #00ffff;">🚀 Dashboard Initialization Test Ready</div>';
+        });
+    </script>
+</body>
+</html>

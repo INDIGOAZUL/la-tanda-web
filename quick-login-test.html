@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .test-result { padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f1b0b7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Quick Login System Test</h1>
+    
+    <div id="results"></div>
+    
+    <div>
+        <button onclick="runFullTest()">🚀 Run Complete Test</button>
+        <button onclick="testAPIProxy()">🔍 Test API Proxy</button>
+        <button onclick="testLogin()">🔐 Test Login</button>
+        <button onclick="clearResults()">🧹 Clear</button>
+    </div>
+    
+    <div id="log" class="log">Test results will appear here...\n</div>
+
+    <!-- Load the API proxy first -->
+    <script src="api-proxy.js"></script>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            if (type !== 'info') {
+                const resultsDiv = document.getElementById('results');
+                const div = document.createElement('div');
+                div.className = `test-result ${type}`;
+                div.textContent = message;
+                resultsDiv.appendChild(div);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('log').textContent = 'Logs cleared...\n';
+        }
+
+        function testAPIProxy() {
+            log('🔍 Testing API Proxy...');
+            
+            try {
+                // Check if APIProxy class exists
+                if (typeof APIProxy === 'undefined') {
+                    log('❌ APIProxy class not found', 'error');
+                    return false;
+                } else {
+                    log('✅ APIProxy class found', 'success');
+                }
+                
+                // Check if window.apiProxy instance exists
+                if (typeof window.apiProxy === 'undefined') {
+                    log('❌ window.apiProxy instance not found', 'error');
+                    log('🔧 Creating instance manually...');
+                    window.apiProxy = new APIProxy();
+                    log('✅ Created window.apiProxy instance manually', 'success');
+                } else {
+                    log('✅ window.apiProxy instance found', 'success');
+                }
+                
+                // Test the instance
+                if (window.apiProxy && window.apiProxy.API_BASE) {
+                    log(`✅ API Base URL: ${window.apiProxy.API_BASE}`, 'success');
+                    return true;
+                } else {
+                    log('❌ API proxy instance seems malformed', 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`❌ API Proxy test error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testLogin() {
+            log('🔐 Testing Login System...');
+            
+            // First ensure API proxy works
+            if (!testAPIProxy()) {
+                log('❌ Cannot test login - API Proxy failed', 'error');
+                return;
+            }
+            
+            try {
+                // Test data
+                const loginData = {
+                    email: 'admin@latanda.online',
+                    password: 'Admin123!'
+                };
+                
+                log(`📤 Testing login for: ${loginData.email}`);
+                
+                // Make the API request
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify(loginData)
+                });
+                
+                log('📥 Login response received');
+                log(`Response: ${JSON.stringify(response, null, 2)}`);
+                
+                if (response && response.success) {
+                    log('🎉 LOGIN TEST SUCCESSFUL!', 'success');
+                    log(`✅ User: ${response.data?.user?.email || 'Unknown'}`);
+                    log(`✅ Token received: ${response.data?.auth_token ? 'Yes' : 'No'}`);
+                    
+                    // Test token storage
+                    if (response.data?.auth_token) {
+                        localStorage.setItem('test_token', response.data.auth_token);
+                        log('✅ Token stored successfully');
+                    }
+                    
+                    return true;
+                } else {
+                    log('❌ LOGIN TEST FAILED', 'error');
+                    log(`Error: ${response?.error?.message || 'Unknown error'}`);
+                    return false;
+                }
+                
+            } catch (error) {
+                log(`❌ Login test exception: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function runFullTest() {
+            log('🚀 Running Complete Login System Test...');
+            clearResults();
+            
+            let passed = 0;
+            let total = 0;
+            
+            // Test 1: API Proxy
+            total++;
+            log('\n=== TEST 1: API Proxy ===');
+            if (testAPIProxy()) {
+                passed++;
+                log('✅ Test 1 PASSED: API Proxy working');
+            } else {
+                log('❌ Test 1 FAILED: API Proxy issues');
+            }
+            
+            // Test 2: Login Function
+            total++;
+            log('\n=== TEST 2: Login Function ===');
+            if (await testLogin()) {
+                passed++;
+                log('✅ Test 2 PASSED: Login working');
+            } else {
+                log('❌ Test 2 FAILED: Login issues');
+            }
+            
+            // Test 3: Registration (quick test)
+            total++;
+            log('\n=== TEST 3: Registration Function ===');
+            try {
+                const regResponse = await window.apiProxy.makeRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: 'Test User',
+                        email: 'test@example.com',
+                        password: 'testpass123'
+                    })
+                });
+                
+                if (regResponse && regResponse.success) {
+                    passed++;
+                    log('✅ Test 3 PASSED: Registration working');
+                } else {
+                    log('❌ Test 3 FAILED: Registration issues');
+                }
+            } catch (error) {
+                log(`❌ Test 3 FAILED: ${error.message}`);
+            }
+            
+            // Final Results
+            log(`\n🏁 FINAL RESULTS: ${passed}/${total} tests passed`);
+            
+            if (passed === total) {
+                log('🎉 ALL TESTS PASSED - SYSTEM READY FOR DEPLOYMENT!', 'success');
+            } else if (passed > 0) {
+                log(`⚠️ PARTIAL SUCCESS - ${total - passed} issues need fixing`, 'error');
+            } else {
+                log('❌ ALL TESTS FAILED - SYSTEM NOT READY', 'error');
+            }
+        }
+
+        // Auto-run basic test on load
+        window.addEventListener('load', function() {
+            log('🚀 Quick Login Test initialized');
+            setTimeout(() => {
+                log('Running automatic API proxy test...');
+                testAPIProxy();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

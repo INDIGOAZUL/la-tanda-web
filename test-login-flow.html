@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Flow - La Tanda</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .btn {
+            background: linear-gradient(135deg, #00FFFF 0%, #7FFFD8 100%);
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .success { color: #22d55e; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+        .info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Login Flow - La Tanda</h1>
+        
+        <p>This page tests the complete login flow to identify any issues.</p>
+        
+        <button class="btn" onclick="testJWTGeneration()">🔐 Test JWT Generation</button>
+        <button class="btn" onclick="testAPICall()">🌐 Test API Call</button>
+        <button class="btn" onclick="testCompleteLogin()">🚀 Test Complete Login</button>
+        <button class="btn" onclick="clearAll()">🗑️ Clear All Data</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <!-- Load required scripts -->
+    <script src="api-proxy.js"></script>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearAll() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.getElementById('log').innerHTML = '';
+            log('All data cleared', 'info');
+        }
+
+        function testJWTGeneration() {
+            log('Testing JWT generation...', 'info');
+            
+            if (window.apiProxy && window.apiProxy.generateJWT) {
+                const testPayload = {
+                    user_id: 'test_user',
+                    email: 'test@example.com',
+                    role: 'user',
+                    exp: Math.floor(Date.now() / 1000) + (60 * 60) // 1 hour
+                };
+                
+                const token = window.apiProxy.generateJWT(testPayload);
+                log(`Generated JWT: ${token}`, 'success');
+                
+                // Test JWT validation
+                const parts = token.split('.');
+                log(`JWT parts count: ${parts.length}`, parts.length === 3 ? 'success' : 'error');
+                
+                if (parts.length === 3) {
+                    try {
+                        const header = JSON.parse(atob(parts[0]));
+                        const payload = JSON.parse(atob(parts[1]));
+                        
+                        log(`Header: ${JSON.stringify(header)}`, 'info');
+                        log(`Payload: ${JSON.stringify(payload)}`, 'info');
+                        log('JWT generation working correctly!', 'success');
+                    } catch (e) {
+                        log(`JWT decode error: ${e.message}`, 'error');
+                    }
+                }
+            } else {
+                log('API Proxy not loaded or generateJWT method missing', 'error');
+            }
+        }
+
+        async function testAPICall() {
+            log('Testing API call with admin credentials...', 'info');
+            
+            if (!window.apiProxy) {
+                log('API Proxy not loaded', 'error');
+                return;
+            }
+            
+            try {
+                const result = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                log(`API Response: ${JSON.stringify(result, null, 2)}`, 'info');
+                
+                if (result.success && result.data && result.data.auth_token) {
+                    const token = result.data.auth_token;
+                    log(`Token received: ${token}`, 'success');
+                    
+                    // Validate token structure
+                    const parts = token.split('.');
+                    log(`Token parts: ${parts.length}`, parts.length === 3 ? 'success' : 'error');
+                    
+                    if (parts.length === 3) {
+                        try {
+                            const payload = JSON.parse(atob(parts[1]));
+                            log(`Token payload: ${JSON.stringify(payload, null, 2)}`, 'success');
+                        } catch (e) {
+                            log(`Token decode error: ${e.message}`, 'error');
+                        }
+                    }
+                } else {
+                    log('API call failed or no token returned', 'error');
+                }
+            } catch (error) {
+                log(`API call error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCompleteLogin() {
+            log('Testing complete login flow...', 'info');
+            
+            // Step 1: Clear existing data
+            localStorage.removeItem('latanda_auth_token');
+            localStorage.removeItem('latanda_user');
+            log('Cleared existing auth data', 'info');
+            
+            // Step 2: Make login API call
+            try {
+                const result = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                if (result.success && result.data) {
+                    log('Login API call successful', 'success');
+                    
+                    const authData = result.data;
+                    const token = authData.auth_token;
+                    const user = authData.user;
+                    
+                    // Step 3: Validate token
+                    const parts = token.split('.');
+                    if (parts.length !== 3) {
+                        log('Invalid token format - missing 3 parts', 'error');
+                        return;
+                    }
+                    
+                    // Step 4: Store auth data
+                    localStorage.setItem('latanda_auth_token', token);
+                    localStorage.setItem('latanda_user', JSON.stringify(user));
+                    log('Auth data stored successfully', 'success');
+                    
+                    // Step 5: Verify storage
+                    const storedToken = localStorage.getItem('latanda_auth_token');
+                    const storedUser = localStorage.getItem('latanda_user');
+                    
+                    if (storedToken && storedUser) {
+                        log('✅ Complete login flow successful!', 'success');
+                        log('Ready to redirect to dashboard', 'success');
+                        
+                        // Test dashboard access
+                        setTimeout(() => {
+                            log('Testing dashboard redirect...', 'info');
+                            window.location.href = '/home-dashboard.html';
+                        }, 2000);
+                    } else {
+                        log('Storage verification failed', 'error');
+                    }
+                } else {
+                    log(`Login failed: ${result.error?.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Complete login test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            log('Login Flow Tester loaded', 'info');
+            
+            if (window.apiProxy) {
+                log('API Proxy detected', 'success');
+            } else {
+                log('API Proxy not found', 'warning');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard Fixes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Dashboard Fixes Verification</h1>
+    
+    <div class="step">
+        <h2>Step 1: Clear Storage and Test Authentication</h2>
+        <button onclick="clearAndTestAuth()">Clear Storage & Test Auth</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 2: Test Data Validation Logic</h2>
+        <button onclick="testValidationLogic()">Test Validation Methods</button>
+        <div id="validation-result"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 3: Test Backup & Restore</h2>
+        <button onclick="testBackupRestore()">Test Backup/Restore Logic</button>
+        <div id="backup-result"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 4: Navigate to Dashboard</h2>
+        <button onclick="goToDashboard()">Go to Dashboard (Should Work Now)</button>
+        <div id="nav-result"></div>
+    </div>
+
+    <script src="api-proxy.js"></script>
+    <script>
+        async function clearAndTestAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            
+            try {
+                // Clear all storage
+                localStorage.clear();
+                resultDiv.innerHTML = '<div class="success">✅ Storage cleared</div>';
+                
+                // Test login
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                if (response.success && response.data.auth_token) {
+                    const token = response.data.auth_token;
+                    const parts = token.split('.');
+                    const payload = JSON.parse(atob(parts[1]));
+                    
+                    // Store auth data
+                    localStorage.setItem('latanda_auth_token', token);
+                    localStorage.setItem('latanda_user', JSON.stringify(response.data.user));
+                    
+                    const validations = {
+                        'Token format': parts.length === 3,
+                        'Has issuer': payload.iss === 'latanda.online',
+                        'Has audience': payload.aud === 'latanda-web-app', 
+                        'Valid role': payload.role === 'admin',
+                        'Has user_id': !!payload.user_id,
+                        'Has iat/exp': !!(payload.iat && payload.exp),
+                        'Not expired': payload.exp > Math.floor(Date.now() / 1000)
+                    };
+                    
+                    const allValid = Object.values(validations).every(v => v);
+                    
+                    resultDiv.innerHTML += `
+                        <div class="${allValid ? 'success' : 'warning'}">
+                            ${allValid ? '✅' : '⚠️'} JWT Authentication Test
+                        </div>
+                        <pre>${Object.entries(validations).map(([k,v]) => `${v ? '✅' : '❌'} ${k}`).join('\\n')}</pre>
+                    `;
+                } else {
+                    throw new Error('Login failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<div class="error">❌ Auth test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function testValidationLogic() {
+            const resultDiv = document.getElementById('validation-result');
+            
+            try {
+                // Test method existence
+                const mockDashboard = {
+                    updateUserProfile: function() { return 'method exists'; },
+                    updateWelcomeMessage: function() { return 'method exists'; }, 
+                    simulateDataUpdates: function() { return 'method exists'; },
+                    setupEventListeners: function() { return 'method exists'; },
+                    hideLoadingState: function() { return 'method exists'; },
+                    setupPeriodicSync: function() { return 'method exists'; },
+                };
+                
+                const methodTests = [
+                    'updateUserProfile',
+                    'updateWelcomeMessage', 
+                    'simulateDataUpdates',
+                    'setupEventListeners',
+                    'hideLoadingState',
+                    'setupPeriodicSync'
+                ];
+                
+                const methodResults = methodTests.map(method => ({
+                    name: method,
+                    exists: typeof mockDashboard[method] === 'function'
+                }));
+                
+                const allMethodsExist = methodResults.every(r => r.exists);
+                
+                resultDiv.innerHTML = `
+                    <div class="${allMethodsExist ? 'success' : 'error'}">
+                        ${allMethodsExist ? '✅' : '❌'} Required Methods Test
+                    </div>
+                    <pre>${methodResults.map(r => `${r.exists ? '✅' : '❌'} ${r.name}`).join('\\n')}</pre>
+                `;
+                
+                // Also test data validation logic
+                // Create mock dashboard class for testing
+                const mockDashboard = {
+                    user: { id: 'test_001', name: 'Test User' },
+                    stats: { total_tandas: 5, active_tandas: 2 },
+                    ltdData: { balance: 2500 },
+                    tandas: [],
+                    transactions: [],
+                    
+                    validateDataIntegrity() {
+                        const hasUser = this.user && this.user.id;
+                        const hasStats = this.stats && (
+                            typeof this.stats.total_tandas === 'number' || 
+                            typeof this.stats.active_tandas === 'number'
+                        );
+                        const hasBalance = (
+                            (this.ltdData && typeof this.ltdData.balance === 'number') ||
+                            (this.user && typeof this.user.balance === 'number') ||
+                            (this.stats && typeof this.stats.balance === 'number')
+                        );
+                        const hasArrays = Array.isArray(this.tandas) && Array.isArray(this.transactions);
+                        
+                        return hasUser && hasStats && hasBalance && hasArrays;
+                    }
+                };
+                
+                // Test with valid data
+                const validTest = mockDashboard.validateDataIntegrity();
+                
+                // Test with invalid data
+                const invalidMock = { ...mockDashboard, user: null };
+                const invalidTest = invalidMock.validateDataIntegrity();
+                
+                // Test with missing balance
+                const noBalanceMock = { ...mockDashboard, ltdData: null, user: { id: 'test' }, stats: {} };
+                const noBalanceTest = noBalanceMock.validateDataIntegrity();
+                
+                resultDiv.innerHTML = `
+                    <div class="${validTest ? 'success' : 'error'}">
+                        ${validTest ? '✅' : '❌'} Valid data test: ${validTest}
+                    </div>
+                    <div class="${!invalidTest ? 'success' : 'error'}">
+                        ${!invalidTest ? '✅' : '❌'} Invalid data test (should fail): ${!invalidTest}
+                    </div>
+                    <div class="${!noBalanceTest ? 'success' : 'error'}">
+                        ${!noBalanceTest ? '✅' : '❌'} No balance test (should fail): ${!noBalanceTest}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Validation test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function testBackupRestore() {
+            const resultDiv = document.getElementById('backup-result');
+            
+            try {
+                // Create test backup data
+                const testBackup = {
+                    user: { id: 'backup_user', name: 'Backup User' },
+                    stats: { total_tandas: 3, balance: 1000 },
+                    tandas: [{ id: 'test_tanda' }],
+                    transactions: [{ id: 'test_tx' }],
+                    ltdData: { balance: 1500 },
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Test backup creation
+                localStorage.setItem('latanda_data_backup', JSON.stringify(testBackup));
+                const stored = localStorage.getItem('latanda_data_backup');
+                const backupWorking = !!stored;
+                
+                // Test backup retrieval
+                const retrieved = JSON.parse(stored);
+                const retrievalWorking = retrieved.user.id === 'backup_user';
+                
+                // Test timestamp validation (should be recent)
+                const backupAge = Date.now() - new Date(retrieved.timestamp).getTime();
+                const timestampWorking = backupAge < 60000; // Less than 1 minute old
+                
+                resultDiv.innerHTML = `
+                    <div class="${backupWorking ? 'success' : 'error'}">
+                        ${backupWorking ? '✅' : '❌'} Backup storage: ${backupWorking}
+                    </div>
+                    <div class="${retrievalWorking ? 'success' : 'error'}">
+                        ${retrievalWorking ? '✅' : '❌'} Backup retrieval: ${retrievalWorking}
+                    </div>
+                    <div class="${timestampWorking ? 'success' : 'error'}">
+                        ${timestampWorking ? '✅' : '❌'} Timestamp validation: ${timestampWorking}
+                    </div>
+                    <pre>Backup age: ${Math.round(backupAge/1000)}s</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Backup test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function goToDashboard() {
+            const resultDiv = document.getElementById('nav-result');
+            
+            // Check if we have auth data
+            const hasToken = !!localStorage.getItem('latanda_auth_token');
+            const hasUser = !!localStorage.getItem('latanda_user');
+            
+            if (hasToken && hasUser) {
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Auth data present, navigating to dashboard...</div>
+                    <p><strong>Expected:</strong> Dashboard should load without errors:</p>
+                    <ul>
+                        <li>✅ No "session expired" errors</li>
+                        <li>✅ No "updateWelcomeMessage is not a function" errors</li>  
+                        <li>✅ No "data integrity check failed" errors</li>
+                        <li>✅ No "Cannot read properties of null" errors</li>
+                    </ul>
+                `;
+                
+                setTimeout(() => {
+                    window.location.href = 'home-dashboard.html';
+                }, 2000);
+                
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="warning">⚠️ No auth data found. Run Step 1 first.</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

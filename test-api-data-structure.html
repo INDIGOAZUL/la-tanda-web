@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Data Structure Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #dee2e6; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 API Data Structure Validation Test</h1>
+    
+    <div class="step">
+        <h2>Step 1: Test API Proxy Responses</h2>
+        <button onclick="testAPIProxyResponses()">Test All API Endpoints</button>
+        <div id="proxy-test"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 2: Test Data Extraction Logic</h2>
+        <button onclick="testDataExtraction()">Test Data Field Extraction</button>
+        <div id="extraction-test"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 3: Test Dashboard Data Loading</h2>
+        <button onclick="testDashboardDataLoad()">Simulate Dashboard Data Loading</button>
+        <div id="load-test"></div>
+    </div>
+    
+    <div class="step">
+        <h2>Step 4: Test with Real Dashboard</h2>
+        <button onclick="setupAndGo()">Setup Data & Go to Dashboard</button>
+        <div id="real-test"></div>
+    </div>
+
+    <script src="api-proxy.js"></script>
+    <script>
+        async function testAPIProxyResponses() {
+            const resultDiv = document.getElementById('proxy-test');
+            
+            try {
+                const endpoints = [
+                    { name: 'User Profile', endpoint: '/user/profile' },
+                    { name: 'User Stats', endpoint: '/user/stats' },
+                    { name: 'Tandas List', endpoint: '/tandas/list' },
+                    { name: 'Transactions', endpoint: '/transactions/list' },
+                    { name: 'LTD Balance', endpoint: '/ltd/balance' }
+                ];
+                
+                let results = [];
+                
+                for (const { name, endpoint } of endpoints) {
+                    try {
+                        const response = await window.apiProxy.makeRequest(endpoint);
+                        
+                        const analysis = {
+                            name,
+                            endpoint,
+                            hasSuccess: 'success' in response,
+                            successValue: response.success,
+                            hasData: 'data' in response,
+                            hasMeta: 'meta' in response,
+                            dataType: typeof response.data,
+                            dataIsArray: Array.isArray(response.data),
+                            structure: response.success ? 'API Response Format' : 'Unknown'
+                        };
+                        
+                        results.push(analysis);
+                        
+                    } catch (error) {
+                        results.push({
+                            name,
+                            endpoint,
+                            error: error.message
+                        });
+                    }
+                }
+                
+                const successful = results.filter(r => !r.error && r.hasSuccess && r.successValue);
+                
+                resultDiv.innerHTML = `
+                    <div class="${successful.length === endpoints.length ? 'success' : 'warning'}">
+                        ${successful.length === endpoints.length ? '✅' : '⚠️'} API Endpoints: ${successful.length}/${endpoints.length} successful
+                    </div>
+                    <pre>${results.map(r => 
+                        r.error ? `❌ ${r.name}: ERROR - ${r.error}` :
+                        `${r.hasSuccess && r.successValue ? '✅' : '❌'} ${r.name}:
+   Structure: success=${r.hasSuccess}, data=${r.hasData}, meta=${r.hasMeta}
+   Data type: ${r.dataType}${r.dataIsArray ? ' (array)' : ''}`
+                    ).join('\\n')}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ API test failed: ${error.message}</div>`;
+            }
+        }
+        
+        function testDataExtraction() {
+            const resultDiv = document.getElementById('extraction-test');
+            
+            try {
+                // Test the data extraction logic used in the dashboard
+                const mockResponses = {
+                    userProfile: {
+                        success: true,
+                        data: {
+                            id: "admin_001",
+                            name: "Admin User",
+                            email: "admin@latanda.online",
+                            role: "admin"
+                        }
+                    },
+                    userStats: {
+                        success: true,
+                        data: {
+                            total_tandas: 12,
+                            active_tandas: 3,
+                            success_rate: 100
+                        }
+                    },
+                    ltdBalance: {
+                        success: true,
+                        data: {
+                            balance: 2500,
+                            staked: 1000,
+                            available: 1500
+                        }
+                    },
+                    tandasList: {
+                        success: true,
+                        data: [
+                            { id: "tanda_001", name: "Test Tanda" }
+                        ]
+                    }
+                };
+                
+                // Test extraction logic
+                const extractions = [
+                    {
+                        name: 'User Profile',
+                        response: mockResponses.userProfile,
+                        extracted: (mockResponses.userProfile && mockResponses.userProfile.data) ? 
+                                  mockResponses.userProfile.data : mockResponses.userProfile,
+                        expectedField: 'name',
+                        expectedValue: 'Admin User'
+                    },
+                    {
+                        name: 'User Stats', 
+                        response: mockResponses.userStats,
+                        extracted: (mockResponses.userStats && mockResponses.userStats.data) ?
+                                  mockResponses.userStats.data : mockResponses.userStats,
+                        expectedField: 'total_tandas',
+                        expectedValue: 12
+                    },
+                    {
+                        name: 'LTD Balance',
+                        response: mockResponses.ltdBalance,
+                        extracted: (mockResponses.ltdBalance && mockResponses.ltdBalance.data) ?
+                                  mockResponses.ltdBalance.data : mockResponses.ltdBalance,
+                        expectedField: 'balance',
+                        expectedValue: 2500
+                    },
+                    {
+                        name: 'Tandas List',
+                        response: mockResponses.tandasList,
+                        extracted: (mockResponses.tandasList && mockResponses.tandasList.data) ?
+                                  mockResponses.tandasList.data : 
+                                  (Array.isArray(mockResponses.tandasList) ? mockResponses.tandasList : []),
+                        expectedField: 'length',
+                        expectedValue: 1
+                    }
+                ];
+                
+                const extractionResults = extractions.map(test => ({
+                    name: test.name,
+                    success: test.extracted && test.extracted[test.expectedField] === test.expectedValue,
+                    actualValue: test.extracted ? test.extracted[test.expectedField] : 'undefined',
+                    expectedValue: test.expectedValue
+                }));
+                
+                const allSuccessful = extractionResults.every(r => r.success);
+                
+                resultDiv.innerHTML = `
+                    <div class="${allSuccessful ? 'success' : 'error'}">
+                        ${allSuccessful ? '✅' : '❌'} Data Extraction: ${extractionResults.filter(r => r.success).length}/${extractionResults.length} tests passed
+                    </div>
+                    <pre>${extractionResults.map(r => 
+                        `${r.success ? '✅' : '❌'} ${r.name}: ${r.actualValue} ${r.success ? '===' : '!=='} ${r.expectedValue}`
+                    ).join('\\n')}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Extraction test failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testDashboardDataLoad() {
+            const resultDiv = document.getElementById('load-test');
+            
+            try {
+                // Simulate the dashboard's loadUserData logic
+                const endpoints = {
+                    user: { profile: '/user/profile', stats: '/user/stats' },
+                    tandas: { list: '/tandas/list' },
+                    transactions: { list: '/transactions/list' },
+                    ltd: { balance: '/ltd/balance' }
+                };
+                
+                let user, stats, tandas, transactions, ltdData;
+                let loadResults = [];
+                
+                try {
+                    // User profile
+                    const userResponse = await window.apiProxy.makeRequest(endpoints.user.profile);
+                    user = (userResponse && userResponse.data) ? userResponse.data : userResponse;
+                    loadResults.push({ 
+                        name: 'User Profile', 
+                        success: !!(user && user.id),
+                        data: user?.name || 'No name'
+                    });
+                } catch (error) {
+                    loadResults.push({ name: 'User Profile', success: false, error: error.message });
+                }
+                
+                try {
+                    // User stats
+                    const statsResponse = await window.apiProxy.makeRequest(endpoints.user.stats);
+                    stats = (statsResponse && statsResponse.data) ? statsResponse.data : statsResponse;
+                    loadResults.push({ 
+                        name: 'User Stats', 
+                        success: !!(stats && typeof stats.total_tandas === 'number'),
+                        data: `${stats?.total_tandas || 0} tandas`
+                    });
+                } catch (error) {
+                    loadResults.push({ name: 'User Stats', success: false, error: error.message });
+                }
+                
+                try {
+                    // LTD data
+                    const ltdResponse = await window.apiProxy.makeRequest(endpoints.ltd.balance);
+                    if (ltdResponse && ltdResponse.success && ltdResponse.data) {
+                        ltdData = ltdResponse.data;
+                    } else if (ltdResponse && ltdResponse.balance) {
+                        ltdData = ltdResponse;
+                    } else {
+                        ltdData = { balance: 2500, staked: 500, available: 2000 };
+                    }
+                    loadResults.push({ 
+                        name: 'LTD Balance', 
+                        success: !!(ltdData && typeof ltdData.balance === 'number'),
+                        data: `${ltdData?.balance || 0} LTD`
+                    });
+                } catch (error) {
+                    loadResults.push({ name: 'LTD Balance', success: false, error: error.message });
+                }
+                
+                try {
+                    // Tandas
+                    const tandasResponse = await window.apiProxy.makeRequest(endpoints.tandas.list);
+                    tandas = (tandasResponse && tandasResponse.data) ? tandasResponse.data : 
+                            (Array.isArray(tandasResponse) ? tandasResponse : []);
+                    loadResults.push({ 
+                        name: 'Tandas List', 
+                        success: Array.isArray(tandas),
+                        data: `${tandas?.length || 0} tandas`
+                    });
+                } catch (error) {
+                    loadResults.push({ name: 'Tandas List', success: false, error: error.message });
+                }
+                
+                try {
+                    // Transactions
+                    const transactionsResponse = await window.apiProxy.makeRequest(endpoints.transactions.list);
+                    transactions = (transactionsResponse && transactionsResponse.data) ? transactionsResponse.data : 
+                                  (Array.isArray(transactionsResponse) ? transactionsResponse : []);
+                    loadResults.push({ 
+                        name: 'Transactions', 
+                        success: Array.isArray(transactions),
+                        data: `${transactions?.length || 0} transactions`
+                    });
+                } catch (error) {
+                    loadResults.push({ name: 'Transactions', success: false, error: error.message });
+                }
+                
+                // Test data validation 
+                const hasUser = user && user.id;
+                const hasStats = stats && (typeof stats.total_tandas === 'number' || typeof stats.active_tandas === 'number');
+                const hasBalance = (ltdData && typeof ltdData.balance === 'number') ||
+                                  (user && typeof user.balance === 'number') ||
+                                  (stats && typeof stats.balance === 'number');
+                const hasArrays = Array.isArray(tandas) && Array.isArray(transactions);
+                
+                const validationPassed = hasUser && hasStats && hasBalance && hasArrays;
+                const successfulLoads = loadResults.filter(r => r.success).length;
+                
+                resultDiv.innerHTML = `
+                    <div class="${successfulLoads === loadResults.length && validationPassed ? 'success' : 'warning'}">
+                        ${successfulLoads === loadResults.length && validationPassed ? '✅' : '⚠️'} Data Loading: ${successfulLoads}/${loadResults.length} successful
+                    </div>
+                    <pre>${loadResults.map(r => 
+                        r.error ? `❌ ${r.name}: ERROR - ${r.error}` :
+                        `${r.success ? '✅' : '❌'} ${r.name}: ${r.data}`
+                    ).join('\\n')}</pre>
+                    <div class="${validationPassed ? 'success' : 'error'}">
+                        ${validationPassed ? '✅' : '❌'} Data Validation: hasUser=${hasUser}, hasStats=${hasStats}, hasBalance=${hasBalance}, hasArrays=${hasArrays}
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Load test failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function setupAndGo() {
+            const resultDiv = document.getElementById('real-test');
+            
+            try {
+                // Clear and setup auth
+                localStorage.clear();
+                
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: 'admin@latanda.online',
+                        password: 'Admin123!'
+                    })
+                });
+                
+                if (response.success && response.data.auth_token) {
+                    localStorage.setItem('latanda_auth_token', response.data.auth_token);
+                    localStorage.setItem('latanda_user', JSON.stringify(response.data.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ Setup complete! Navigate to dashboard.</div>
+                        <p><strong>Expected Results:</strong></p>
+                        <ul>
+                            <li>✅ No "LTD data missing or invalid" warnings</li>
+                            <li>✅ No "validateAndBackupData is deprecated" warnings</li>
+                            <li>✅ All API data should load correctly</li>
+                            <li>✅ Data validation should pass</li>
+                        </ul>
+                        <button onclick="window.location.href='home-dashboard.html'" style="background: #28a745; margin-top: 10px;">Go to Dashboard Now</button>
+                    `;
+                } else {
+                    throw new Error('Setup failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Setup failed: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

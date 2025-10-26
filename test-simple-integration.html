@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple API Integration</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            padding: 20px; 
+        }
+        .test-result { 
+            background: rgba(0, 255, 255, 0.1); 
+            border: 1px solid #00FFFF; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+        }
+        .success { border-color: #22d55e; background: rgba(34, 213, 94, 0.1); }
+        .error { border-color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    </style>
+</head>
+<body>
+    <h1>🧪 Simple API Integration Test</h1>
+    
+    <div id="systemInfo" class="test-result">Loading...</div>
+    
+    <button onclick="testAPI()">Test API Calls</button>
+    <div id="results"></div>
+
+    <!-- Load Simple Test API Proxy -->
+    <script src="api-proxy-simple-test.js"></script>
+    
+    <script>
+        console.log('🔍 Page loaded, checking API proxy...');
+        
+        setTimeout(() => {
+            const systemInfo = document.getElementById('systemInfo');
+            const apiProxy = window.apiProxy;
+            
+            if (apiProxy) {
+                systemInfo.innerHTML = `
+                    <strong>✅ API Proxy Loaded Successfully!</strong><br>
+                    Version: ${apiProxy.version}<br>
+                    Base URL: ${apiProxy.API_BASE}<br>
+                    Type: ${apiProxy.constructor.name}
+                `;
+                systemInfo.className = 'test-result success';
+            } else {
+                systemInfo.innerHTML = '❌ API Proxy failed to load';
+                systemInfo.className = 'test-result error';
+            }
+        }, 1000);
+        
+        async function testAPI() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>🧪 Running Tests...</h2>';
+            
+            const tests = [
+                { name: 'System Health', endpoint: '/system/health' },
+                { name: 'User Profile', endpoint: '/user/profile' },
+                { name: 'Authentication', endpoint: '/auth/login' }
+            ];
+            
+            for (const test of tests) {
+                try {
+                    console.log(`🧪 Testing ${test.name}...`);
+                    const response = await window.apiProxy.makeRequest(test.endpoint);
+                    
+                    results.innerHTML += `
+                        <div class="test-result success">
+                            <strong>${test.name}</strong><br>
+                            Status: ✅ ${response.success ? 'Success' : 'Failed'}<br>
+                            Data: ${JSON.stringify(response.data, null, 2)}
+                        </div>
+                    `;
+                } catch (error) {
+                    results.innerHTML += `
+                        <div class="test-result error">
+                            <strong>${test.name}</strong><br>
+                            Status: ❌ Exception<br>
+                            Error: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            results.innerHTML += '<div class="test-result success"><strong>✅ All tests completed!</strong></div>';
+        }
+    </script>
+</body>
+</html>

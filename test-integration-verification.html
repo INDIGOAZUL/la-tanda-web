@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integration Test - La Tanda Web3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        .test-pass {
+            background: rgba(34, 197, 94, 0.1);
+            border-left-color: #22c55e;
+        }
+        .test-fail {
+            background: rgba(248, 113, 113, 0.1);
+            border-left-color: #f87171;
+        }
+        button {
+            background: var(--tanda-cyan, #00FFFF);
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: rgba(0, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 La Tanda Integration Test</h1>
+        <p>Testing all integrated systems...</p>
+        
+        <div id="test-results"></div>
+        
+        <button onclick="runTests()">🚀 Run Integration Tests</button>
+        <button onclick="testLightningDeposit()">⚡ Test Lightning Deposit</button>
+        <button onclick="testCommissionCalculation()">💰 Test Commission Calc</button>
+        <button onclick="testEscrowHold()">🔒 Test Escrow Hold</button>
+    </div>
+
+    <script src="dashboard-integration-fix.js"></script>
+    <script>
+        function addTestResult(name, passed, details) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'test-pass' : 'test-fail'}`;
+            resultDiv.innerHTML = `
+                <strong>${passed ? '✅' : '❌'} ${name}</strong><br>
+                <small>${details}</small>
+            `;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function runTests() {
+            document.getElementById('test-results').innerHTML = '';
+            console.log('🧪 Running integration tests...');
+
+            // Test 1: Lightning Banking System
+            const lightningTest = window.LightningBankingSystem && typeof window.LightningBankingSystem.init === 'function';
+            addTestResult('Lightning Banking System', lightningTest, 
+                lightningTest ? 'Lightning system loaded and functional' : 'Lightning system missing or broken');
+
+            // Test 2: Commission System
+            const commissionTest = window.CommissionSystem && typeof window.CommissionSystem.calculateCommission === 'function';
+            addTestResult('Commission System', commissionTest,
+                commissionTest ? 'Commission system loaded and functional' : 'Commission system missing or broken');
+
+            // Test 3: Escrow System
+            const escrowTest = window.EscrowSystem && typeof window.EscrowSystem.holdCommission === 'function';
+            addTestResult('Escrow System', escrowTest,
+                escrowTest ? 'Escrow system loaded and functional' : 'Escrow system missing or broken');
+
+            // Test 4: Developer Revenue System
+            const devRevenueTest = window.DeveloperRevenueSystem && typeof window.DeveloperRevenueSystem.trackRevenue === 'function';
+            addTestResult('Developer Revenue System', devRevenueTest,
+                devRevenueTest ? 'Developer revenue system loaded and functional' : 'Developer revenue system missing or broken');
+
+            // Test 5: Translation System
+            const translationTest = window.TranslationSystem && typeof window.TranslationSystem.translate === 'function';
+            addTestResult('Translation System', translationTest,
+                translationTest ? 'Translation system loaded and functional' : 'Translation system missing or broken');
+
+            // Test 6: Navigation System
+            const navigationTest = window.NavigationSystem && typeof window.navigateToSection === 'function';
+            addTestResult('Navigation System', navigationTest,
+                navigationTest ? 'Navigation system loaded and functional' : 'Navigation system missing or broken');
+
+            // Test 7: Crypto Ticker Fix
+            const cryptoTickerTest = typeof window.updateCryptoTicker === 'function';
+            addTestResult('Crypto Ticker Fix', cryptoTickerTest,
+                cryptoTickerTest ? 'Crypto ticker function safely installed' : 'Crypto ticker fix not applied');
+
+            console.log('✅ Integration tests completed');
+        }
+
+        function testLightningDeposit() {
+            if (window.LightningBankingSystem) {
+                window.LightningBankingSystem.deposit(100.00).then(result => {
+                    addTestResult('Lightning Deposit Test', result.success, 
+                        result.success ? `Deposit successful: ${result.txId}` : `Deposit failed: ${result.error}`);
+                });
+            } else {
+                addTestResult('Lightning Deposit Test', false, 'Lightning Banking System not available');
+            }
+        }
+
+        function testCommissionCalculation() {
+            if (window.CommissionSystem) {
+                const result = window.CommissionSystem.calculateCommission(10000);
+                const passed = result.amount > 0 && result.percentage;
+                addTestResult('Commission Calculation Test', passed, 
+                    passed ? `Commission for $10,000: $${result.amount.toFixed(2)} (${result.percentage})` : 'Commission calculation failed');
+            } else {
+                addTestResult('Commission Calculation Test', false, 'Commission System not available');
+            }
+        }
+
+        function testEscrowHold() {
+            if (window.EscrowSystem) {
+                const result = window.EscrowSystem.holdCommission('test-tanda-001', 250.00);
+                const passed = result && result.heldAmount > 0;
+                addTestResult('Escrow Hold Test', passed, 
+                    passed ? `Escrow created: $${result.heldAmount.toFixed(2)} held, $${result.releasedAmount.toFixed(2)} released` : 'Escrow hold failed');
+            } else {
+                addTestResult('Escrow Hold Test', false, 'Escrow System not available');
+            }
+        }
+
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTests, 1000);
+        });
+    </script>
+</body>
+</html>
