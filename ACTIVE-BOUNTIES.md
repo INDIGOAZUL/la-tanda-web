@@ -1,9 +1,10 @@
 # 💰 Active Bounties - Earn LTD Tokens
 
-**Last Updated:** October 18, 2025
+**Last Updated:** October 26, 2025
 **Total Bounty Budget:** 250M LTD (Development & Marketing allocation)
-**Active Bounties:** 6
-**Total Rewards Available:** 1,550 LTD (+375 LTD in bonuses)
+**Active Bounties:** 15 (6 Role System IN PROGRESS + 5 Infrastructure OPEN + 4 Marketing OPEN)
+**Total Rewards Available:** 3,150 LTD base (+1,150 LTD in bonuses) = **4,300 LTD total**
+**Recently Completed:** 1 bounty (200 LTD paid to @Sahillather002)
 
 ---
 
@@ -18,7 +19,147 @@
 
 ---
 
-## 🔥 High Priority Bounties
+## 🎭 NEW: Role System Bounties (2,500 LTD Total)
+
+**WHY THESE BOUNTIES ARE SPECIAL:**
+These aren't just tasks—you're building the platform's governance layer. Complete these bounties and you can apply for **moderator** or **coordinator** roles using the system you built!
+
+### 🌟 [Role Application UI](https://github.com/INDIGOAZUL/la-tanda-web/issues/12) - 400 LTD 🔴
+
+**Complexity:** Major
+**Estimated Time:** 8-10 hours
+**Skills Required:** JavaScript, HTML/CSS, Form validation, API integration
+**Priority:** 🔴 High
+
+Build the frontend interface for users to view the 8-level role system and apply for elevated roles.
+
+**Deliverables:**
+- Role browser page displaying all 8 levels (user → super_admin)
+- Application form with eligibility checking
+- Application status dashboard
+- API integration with all role endpoints
+- Notification system (in-app + email)
+- Documentation (ROLE-APPLICATION-USER-GUIDE.md)
+
+**Bonus:** +100 LTD for role comparison tool, +50 LTD for progression visualization, +50 LTD for gamification elements
+
+**Potential Total:** **600 LTD**
+
+---
+
+### 🛡️ [Admin Role Management Panel](https://github.com/INDIGOAZUL/la-tanda-web/issues/13) - 500 LTD 🔴
+
+**Complexity:** Major
+**Estimated Time:** 10-12 hours
+**Skills Required:** JavaScript, Admin UI, Real-time updates, Authorization
+**Priority:** 🔴 High
+
+Create a comprehensive admin interface to review applications, assign roles, and audit changes.
+
+**Deliverables:**
+- Application review dashboard with filters and bulk actions
+- Manual role assignment interface
+- Role change audit log with export
+- Permission matrix UI
+- Real-time updates (polling/WebSockets)
+- Documentation (ADMIN-ROLE-MANAGEMENT-GUIDE.md)
+
+**Bonus:** +100 LTD for advanced analytics, +75 LTD for role scheduling, +75 LTD for admin notifications
+
+**Potential Total:** **750 LTD**
+
+---
+
+### ⚙️ [Auto-Role Assignment Logic](https://github.com/INDIGOAZUL/la-tanda-web/issues/14) - 300 LTD 🟡
+
+**Complexity:** Medium-High
+**Estimated Time:** 6-8 hours
+**Skills Required:** Node.js, Logic implementation, Database operations, Testing
+**Priority:** 🟡 Medium-High
+
+Implement automatic role upgrades based on user achievements (verified_user, active_member, coordinator).
+
+**Deliverables:**
+- Auto-upgrade triggers for 3 roles (KYC, activity, tanda success)
+- Notification system (in-app + email + dashboard)
+- Rollback/demotion logic
+- Complete testing suite
+- Documentation (AUTO-ROLE-ASSIGNMENT-DESIGN.md, ROLE-PROGRESSION-GUIDE.md)
+
+**Bonus:** +50 LTD for smart notifications, +50 LTD for upgrade prediction, +50 LTD for achievement integration
+
+**Potential Total:** **450 LTD**
+
+---
+
+### 🔒 [Role System Security Audit](https://github.com/INDIGOAZUL/la-tanda-web/issues/15) - 200 LTD 🔴
+
+**Complexity:** Medium
+**Estimated Time:** 4-6 hours
+**Skills Required:** Security testing, Authorization review, Penetration testing
+**Priority:** 🔴 High
+
+Comprehensive security review to prevent privilege escalation and role abuse.
+
+**Deliverables:**
+- Authorization testing (all endpoints, permission matrix)
+- Input validation (SQL injection, XSS, CSRF)
+- Edge case testing (concurrent changes, expired sessions)
+- Audit log security verification
+- Vulnerability report with severity levels
+- Recommendations document
+
+**Bonus:** +50 LTD for automated security tests, +50 LTD for security monitoring dashboard
+
+**Potential Total:** **300 LTD**
+
+---
+
+### 🧪 [Role System E2E Testing](https://github.com/INDIGOAZUL/la-tanda-web/issues/16) - 150 LTD 🟡
+
+**Complexity:** Medium
+**Estimated Time:** 4-5 hours
+**Skills Required:** Testing (Playwright/Cypress), JavaScript, Test automation
+**Priority:** 🟡 Medium
+
+Automated end-to-end tests for the complete role system user journey.
+
+**Deliverables:**
+- User journey tests (registration → KYC → application → approval)
+- Role permission tests (access control validation)
+- Edge case tests (duplicate applications, session expiry)
+- Visual regression tests
+- Documentation (E2E-TESTING-GUIDE.md)
+
+**Bonus:** +50 LTD for visual regression testing, +50 LTD for load testing (100 concurrent applications)
+
+**Potential Total:** **250 LTD**
+
+---
+
+### 🔐 [Role-Based Feature Gating](https://github.com/INDIGOAZUL/la-tanda-web/issues/17) - 100 LTD 🟢
+
+**Complexity:** Small-Medium
+**Estimated Time:** 3-4 hours
+**Skills Required:** JavaScript, Frontend logic, UI/UX
+**Priority:** 🟢 Low-Medium
+
+Implement feature access control based on user roles.
+
+**Deliverables:**
+- roleGuard.js utility for feature gating
+- Feature access matrix
+- UI implementation (lock icons, tooltips, upgrade prompts)
+- Backend enforcement verification
+- Documentation (FEATURE-GATING-GUIDE.md)
+
+**Bonus:** +50 LTD for interactive role comparison tool
+
+**Potential Total:** **150 LTD**
+
+---
+
+## 🔥 Infrastructure Bounties
 
 ### 1. [Admin Analytics Dashboard](https://github.com/INDIGOAZUL/la-tanda-web/issues/3) - 500 LTD 🔴
 
@@ -155,20 +296,50 @@ Create automated PostgreSQL database backup system with compression, rotation, a
 
 ---
 
-## 📊 Bounty Summary
+## 📊 Complete Bounty Summary
 
-| Issue # | Title | Reward | Bonus | Complexity | Status |
-|---------|-------|--------|-------|------------|--------|
-| [#3](https://github.com/INDIGOAZUL/la-tanda-web/issues/3) | Admin Analytics Dashboard | 500 LTD | +100 | 🔴 Major | 🟢 Open |
-| [#5](https://github.com/INDIGOAZUL/la-tanda-web/issues/5) | WebSocket Real-time Updates | 350 LTD | +100 | 🔴 Major | 🟢 Open |
-| [#2](https://github.com/INDIGOAZUL/la-tanda-web/issues/2) | API Rate Limiting | 250 LTD | +50 | 🟡 Medium | 🟢 Open |
-| [#4](https://github.com/INDIGOAZUL/la-tanda-web/issues/4) | Transaction Pagination | 200 LTD | +50 | 🟡 Medium | 🟢 Open |
-| [#6](https://github.com/INDIGOAZUL/la-tanda-web/issues/6) | Mobile PWA Optimization | 150 LTD | +50 | 🟡 Medium | 🟢 Open |
-| [#1](https://github.com/INDIGOAZUL/la-tanda-web/issues/1) | Database Backup Automation | 100 LTD | +25 | 🟢 Small | 🟢 Open |
+### Role System Bounties (IN PROGRESS - @ldeong)
+| Issue # | Title | Base | Bonus | Total | Status | Claimed By |
+|---------|-------|------|-------|-------|--------|------------|
+| [#13](https://github.com/INDIGOAZUL/la-tanda-web/issues/13) | Admin Role Panel | 500 LTD | +250 | **750 LTD** | 🟡 Claimed | @ldeong |
+| [#12](https://github.com/INDIGOAZUL/la-tanda-web/issues/12) | Role Application UI | 400 LTD | +200 | **600 LTD** | 🟡 Claimed | @ldeong |
+| [#14](https://github.com/INDIGOAZUL/la-tanda-web/issues/14) | Auto-Role Logic | 300 LTD | +150 | **450 LTD** | 🟡 Claimed | @ldeong |
+| [#15](https://github.com/INDIGOAZUL/la-tanda-web/issues/15) | Security Audit | 200 LTD | +100 | **300 LTD** | 🟡 Claimed | @ldeong |
+| [#16](https://github.com/INDIGOAZUL/la-tanda-web/issues/16) | E2E Testing | 150 LTD | +100 | **250 LTD** | 🟡 Claimed | @ldeong |
+| [#17](https://github.com/INDIGOAZUL/la-tanda-web/issues/17) | Feature Gating | 100 LTD | +50 | **150 LTD** | 🟡 Claimed | @ldeong |
 
-**Total Base Rewards:** 1,550 LTD
-**Total Bonus Potential:** +375 LTD
-**Grand Total:** 1,925 LTD
+**Role System Subtotal:** 1,650 LTD base + 850 LTD bonuses = **2,500 LTD** (All claimed by @ldeong)
+
+### Infrastructure Bounties
+| Issue # | Title | Base | Bonus | Total | Status |
+|---------|-------|------|-------|-------|--------|
+| [#1](https://github.com/INDIGOAZUL/la-tanda-web/issues/1) | Database Backup | 150 LTD | +50 | **200 LTD** | ✅ COMPLETED (@Sahillather002) |
+| [#3](https://github.com/INDIGOAZUL/la-tanda-web/issues/3) | Admin Analytics | 500 LTD | +100 | **600 LTD** | 🟠 On Hold |
+| [#5](https://github.com/INDIGOAZUL/la-tanda-web/issues/5) | WebSocket Updates | 350 LTD | +100 | **450 LTD** | 🟢 Open |
+| [#2](https://github.com/INDIGOAZUL/la-tanda-web/issues/2) | API Rate Limiting | 250 LTD | +50 | **300 LTD** | 🟢 Open |
+| [#4](https://github.com/INDIGOAZUL/la-tanda-web/issues/4) | Transaction Pagination | 200 LTD | +50 | **250 LTD** | 🟢 Open |
+| [#6](https://github.com/INDIGOAZUL/la-tanda-web/issues/6) | Mobile PWA | 150 LTD | +50 | **200 LTD** | 🟢 Open |
+
+**Infrastructure Subtotal:** 1,450 LTD base + 300 LTD bonuses = **1,750 LTD available** (200 LTD paid)
+
+### Marketing & Content Bounties (NEW - All Available!)
+| Issue # | Title | Bounty | Status |
+|---------|-------|--------|--------|
+| [#7](https://github.com/INDIGOAZUL/la-tanda-web/issues/7) | Twitter/X Launch Campaign | TBD (propose) | 🟢 Open |
+| [#8](https://github.com/INDIGOAZUL/la-tanda-web/issues/8) | Instagram Content (10 Posts) | TBD (propose) | 🟢 Open |
+| [#9](https://github.com/INDIGOAZUL/la-tanda-web/issues/9) | Beginner's Guide Article | TBD (propose) | 🟢 Open |
+| [#10](https://github.com/INDIGOAZUL/la-tanda-web/issues/10) | Platform Walkthrough Video | TBD (propose) | 🟢 Open |
+
+**Marketing Subtotal:** TBD - **Propose your rates based on quality & reach!**
+
+---
+
+**GRAND TOTAL AVAILABLE:**
+- **Role System (Claimed):** 1,650 LTD base + 850 bonuses = 2,500 LTD (in progress)
+- **Infrastructure (Open):** 1,450 LTD base + 300 bonuses = 1,750 LTD
+- **Marketing (Open):** TBD (propose your rates)
+- **Completed & Paid:** 200 LTD to @Sahillather002 ✅
+- **Maximum Remaining:** **4,250 LTD** + Marketing TBD 🚀
 
 ---
 
@@ -292,7 +463,20 @@ npm run dev
 
 ## 🎉 Success Stories
 
-*As contributors complete bounties, we'll showcase their work here!*
+### @Sahillather002 - Database Backup Automation (200 LTD) ✅
+**Completed:** October 26, 2025
+**Bounty:** 150 LTD base + 50 LTD bonus = **200 LTD**
+
+Implemented comprehensive PostgreSQL backup automation with:
+- Automated daily backups (cron scheduling)
+- Cloud storage integration (AWS S3 & GCS)
+- 30-day rotation policy
+- Email notifications
+- Complete testing framework
+
+**Bonus earned for:** Multi-cloud support and production-ready implementation
+
+🎉 **First bounty hunter success!** Thank you @Sahillather002!
 
 ---
 
@@ -303,9 +487,12 @@ npm run dev
 3. Comment "I'd like to work on this"
 4. Start building!
 
-**Total available this month:** 1,925 LTD 🚀
+**Total available RIGHT NOW:** 4,425 LTD 🚀
+
+**🎭 NEW: Role System Bounties (2,500 LTD)** - Build the governance layer and become a platform leader!
 
 ---
 
-*Last updated: October 18, 2025*
-*Next bounty refresh: October 25, 2025*
+*Last updated: October 24, 2025*
+*Next bounty refresh: November 1, 2025*
+*Role system backend: ✅ COMPLETE | Frontend bounties: 🟢 OPEN*
