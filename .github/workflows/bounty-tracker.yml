@@ -1,0 +1,283 @@
+name: Bounty Tracker
+
+on:
+  pull_request:
+    types: [opened, closed]
+  issues:
+    types: [opened, closed, labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  track-bounty-claim:
+    name: Track Bounty Claims
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.issue.labels.*.name, 'bounty') &&
+      contains(github.event.comment.body, 'work on this')
+
+    steps:
+    - name: Acknowledge bounty claim
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const issue = context.payload.issue;
+          const commenter = context.payload.comment.user.login;
+
+          const response = `✅ **Bounty Claim Acknowledged** - @${commenter}
+
+Thank you for your interest in this bounty! A maintainer will review your claim and assign the issue to you within 24-48 hours.
+
+### 📋 What to Do While You Wait:
+
+1. **Fork the repository** if you haven't already
+2. **Read the issue description carefully** to understand requirements
+3. **Review our [Contributing Guidelines](https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md)**
+4. **Prepare your development environment**
+
+### 💰 Payment Information:
+
+Once your PR is merged, you'll need to provide:
+- Your **Polygon Amoy wallet address**
+- Confirmation that you can receive ERC20 tokens
+
+### ⏱️ Timeline Expectations:
+
+- **Assignment:** Within 24-48 hours
+- **Development:** As specified in issue (typically 3-10 days)
+- **Review:** 24-48 hours after PR submission
+- **Payment:** 24-48 hours after merge
+
+### 🚨 Important Notes:
+
+- If you don't respond within 48 hours after assignment, the bounty may be reassigned
+- Make sure to reference this issue in your PR (e.g., "Fixes #${issue.number}")
+- Quality work may earn bonus LTD tokens!
+
+Good luck! 🚀
+
+---
+*Automated bounty claim tracking*`;
+
+          await github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: issue.number,
+            body: response
+          });
+
+          console.log(`Bounty claim acknowledged for @${commenter}`);
+
+  track-bounty-completion:
+    name: Track Bounty Completion
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true
+
+    steps:
+    - name: Check if bounty PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr = context.payload.pull_request;
+          const prBody = pr.body || '';
+          const prTitle = pr.title;
+
+          // Extract referenced issues (fixes #123, closes #456, etc.)
+          const issueRefs = prBody.match(/(fixes|closes|resolves)\s+#(\d+)/gi);
+
+          if (!issueRefs) {
+            console.log('No issue references found');
+            return;
+          }
+
+          for (const ref of issueRefs) {
+            const issueNum = parseInt(ref.match(/#(\d+)/)[1]);
+
+            // Get issue details
+            const { data: issue } = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: issueNum
+            });
+
+            // Check if it's a bounty issue
+            const isBounty = issue.labels.some(label => label.name === 'bounty');
+
+            if (!isBounty) continue;
+
+            // Extract bounty amount from issue title/body
+            const bountyMatch = issue.title.match(/(\d+)\s*LTD/i) || issue.body.match(/bounty.*?(\d+)\s*LTD/i);
+            const bountyAmount = bountyMatch ? bountyMatch[1] : 'TBD';
+
+            // Post completion comment
+            const completionMessage = `🎉 **Bounty Completed!**
+
+**Issue:** #${issueNum}
+**Contributor:** @${pr.user.login}
+**Bounty:** ${bountyAmount} LTD
+**PR:** #${pr.number}
+
+### 📋 Next Steps for Payment:
+
+@${pr.user.login}, please provide the following information:
+
+1. **Polygon Amoy Wallet Address:**
+   \`\`\`
+   0x...
+   \`\`\`
+
+2. **Verify you can receive ERC20 tokens** on Polygon Amoy testnet
+
+3. **Confirm total amount:**
+   - Base bounty: ${bountyAmount} LTD
+   - Bonus (if applicable): ___ LTD
+   - **Total: ${bountyAmount} LTD**
+
+### ⏱️ Payment Timeline:
+
+Payment will be processed within **24-48 hours** of receiving your wallet address.
+
+### 🎁 Bonus Opportunities:
+
+You may be eligible for bonus LTD if:
+- ✨ Code quality exceeds expectations
+- 📚 Comprehensive documentation added
+- 🧪 Extra tests implemented
+- 🚀 Additional features beyond requirements
+
+Maintainer @${owner} will review for bonus eligibility.
+
+---
+
+**Thank you for your contribution to La Tanda Web3!** 🚀
+
+Your work helps build the future of decentralized finance in LATAM. 🌎
+
+---
+*Automated bounty completion tracking*`;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNum,
+              body: completionMessage
+            });
+
+            // Add "payment pending" label
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: issueNum,
+              labels: ['payment-pending']
+            });
+
+            console.log(`Bounty completion tracked for issue #${issueNum}`);
+          }
+
+  track-payment-info:
+    name: Track Payment Information
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.issue.labels.*.name, 'payment-pending') &&
+      contains(github.event.comment.body, '0x')
+
+    steps:
+    - name: Acknowledge wallet address
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const issue = context.payload.issue;
+          const comment = context.payload.comment;
+          const commenter = comment.user.login;
+
+          // Extract wallet address
+          const walletMatch = comment.body.match(/0x[a-fA-F0-9]{40}/);
+
+          if (!walletMatch) {
+            console.log('No valid wallet address found');
+            return;
+          }
+
+          const wallet = walletMatch[0];
+
+          const acknowledgment = `✅ **Wallet Address Received**
+
+@${commenter}, we've received your payment information:
+
+**Wallet:** \`${wallet}\`
+
+### 📋 Payment Processing:
+
+- ⏳ Status: Pending
+- 💰 Amount: As specified above
+- 🕐 ETA: Within 24-48 hours
+- 🔍 Network: Polygon Amoy Testnet
+
+### 🔔 You'll Be Notified When:
+
+1. Payment is initiated (with transaction hash)
+2. Transaction is confirmed on-chain
+3. You can verify on [PolygonScan](https://amoy.polygonscan.com/)
+
+### ⚠️ Important:
+
+- Make sure your wallet supports ERC20 tokens
+- Verify you're on Polygon Amoy testnet
+- Keep this issue open until payment is confirmed
+
+Thank you for your patience! 🙏
+
+---
+*Automated payment tracking*`;
+
+          await github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: issue.number,
+            body: acknowledgment
+          });
+
+          // Remove "payment-pending", add "payment-processing"
+          await github.rest.issues.removeLabel({
+            owner,
+            repo,
+            issue_number: issue.number,
+            name: 'payment-pending'
+          });
+
+          await github.rest.issues.addLabels({
+            owner,
+            repo,
+            issue_number: issue.number,
+            labels: ['payment-processing']
+          });
+
+          console.log(`Wallet address received for ${commenter}: ${wallet}`);
+
+  summary:
+    name: Create Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [track-bounty-claim, track-bounty-completion, track-payment-info]
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## 💰 Bounty Tracker Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Automated bounty tracking completed:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Claims acknowledged" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Completions tracked" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Payment info collected" >> $GITHUB_STEP_SUMMARY

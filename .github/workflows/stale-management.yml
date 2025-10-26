@@ -1,0 +1,197 @@
+name: Stale Issues and PRs Management
+
+on:
+  schedule:
+    # Run daily at 1 AM UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Mark stale issues and PRs
+      uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+        # Days before marking as stale
+        days-before-stale: 30
+        days-before-close: 7
+
+        # Stale issue configuration
+        stale-issue-message: |
+          👋 This issue has been inactive for 30 days and will be marked as stale.
+
+          **Why is this marked stale?**
+          - No activity from the assigned contributor or issue creator
+          - Helps keep our issue tracker organized and up-to-date
+
+          **How to prevent closure:**
+          - Comment on this issue with an update
+          - If you're still working on it, let us know!
+          - If you're stuck, ask for help
+
+          **For bounty hunters:**
+          - If you claimed this but can't complete it, please let us know so we can reassign
+          - Other contributors are interested in working on stale bounties
+
+          This issue will close automatically in 7 days if there's no activity.
+
+        close-issue-message: |
+          🔒 This issue has been closed due to inactivity.
+
+          **Why was this closed?**
+          - No response to stale warning after 7 days
+          - Total inactivity period: 37 days
+
+          **Want to reopen?**
+          - Comment on this issue explaining why it should be reopened
+          - A maintainer will review and reopen if appropriate
+
+          **For bounty issues:**
+          - This bounty is now available for other contributors
+          - Feel free to claim it with a new comment
+
+          Thank you for your interest in La Tanda Web3! 🚀
+
+        # Stale PR configuration
+        stale-pr-message: |
+          👋 This pull request has been inactive for 30 days and will be marked as stale.
+
+          **Why is this marked stale?**
+          - No updates from the contributor
+          - Pending review comments not addressed
+          - Helps keep our PR queue manageable
+
+          **How to prevent closure:**
+          - Address any review comments
+          - Rebase with latest main branch
+          - Comment with an update on your progress
+          - Request review if ready
+
+          **For bounty PRs:**
+          - If you can't complete this, please let us know
+          - Payment is only processed for merged PRs
+
+          This PR will close automatically in 7 days if there's no activity.
+
+        close-pr-message: |
+          🔒 This pull request has been closed due to inactivity.
+
+          **Why was this closed?**
+          - No response to stale warning after 7 days
+          - Total inactivity period: 37 days
+
+          **Want to reopen?**
+          - Push new commits addressing review comments
+          - Comment requesting reopening with explanation
+          - A maintainer will review
+
+          **For bounty PRs:**
+          - Bounty will not be paid for closed PRs
+          - You can submit a new PR if you complete the work
+
+          Thank you for your contribution attempt! 🚀
+
+        # Labels
+        stale-issue-label: 'stale'
+        stale-pr-label: 'stale'
+        close-issue-label: 'closed-stale'
+        close-pr-label: 'closed-stale'
+
+        # Issues to exempt from stale process
+        exempt-issue-labels: 'pinned,security,high-priority,in-progress'
+        exempt-pr-labels: 'pinned,security,wip,do-not-close'
+
+        # Don't mark as stale if these labels are present
+        exempt-all-issue-milestones: true
+        exempt-all-pr-milestones: true
+
+        # Operations per run (avoid rate limiting)
+        operations-per-run: 100
+
+        # Remove stale label when activity resumes
+        remove-stale-when-updated: true
+
+        # Enable debug logging
+        debug-only: false
+
+    - name: Notify on bounty reassignment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // Get all recently closed stale bounty issues
+          const { data: closedIssues } = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'closed',
+            labels: 'bounty,closed-stale',
+            since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Last 24 hours
+          });
+
+          for (const issue of closedIssues) {
+            // Post reassignment message
+            const message = `🔄 **Bounty Reassignment Available**
+
+This bounty is now available for new contributors!
+
+**Original Bounty:** ${issue.title}
+**Status:** Reassigned due to inactivity
+
+### 🎯 Want to claim this bounty?
+
+1. Comment "I'd like to work on this"
+2. Provide your estimated timeline
+3. Wait for assignment from maintainers
+
+### 📋 Bounty Details:
+
+See original issue description above for:
+- Bounty amount
+- Requirements
+- Acceptance criteria
+
+First come, first served! 🚀`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: message
+            });
+
+            // Reopen the issue for reassignment
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: 'open'
+            });
+
+            // Remove 'closed-stale' label, keep 'bounty'
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              name: 'closed-stale'
+            });
+
+            console.log(`Reopened bounty issue #${issue.number} for reassignment`);
+          }
+
+    - name: Summary
+      run: |
+        echo "## 🧹 Stale Management Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Automated stale issue and PR management completed:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Stale items marked (30 days inactive)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Old items closed (7 days after stale)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Bounties reopened for reassignment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Exemptions:** pinned, security, high-priority, in-progress" >> $GITHUB_STEP_SUMMARY
