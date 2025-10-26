@@ -21,6 +21,7 @@ const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const crypto = require('crypto');
 const db = require('./database/connection');
+const { ethers } = require('ethers');
 
 // Initialize Express app
 const app = express();
@@ -5505,6 +5506,304 @@ app.post('/api/mobile/analytics/track', authenticateToken, [
         res.status(500).json({
             success: false,
             error: { message: 'Failed to track event', code: 500 }
+        });
+    }
+});
+
+// ====================================
+// 💎 CRYPTO WALLET & LTD TOKEN WITHDRAWAL ENDPOINTS
+// ====================================
+
+// LTD Token Configuration
+const LTD_TOKEN_ADDRESS = '0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc';
+const TREASURY_WALLET_ADDRESS = '0x58EA31ceba1B3DeFacB06A5B7fc7408656b91bf7';
+const AMOY_RPC_URL = process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';
+const TREASURY_PRIVATE_KEY = process.env.PRIVATE_KEY;
+
+// ERC20 ABI (minimal interface for transfers)
+const ERC20_ABI = [
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "function symbol() view returns (string)"
+];
+
+// Withdraw LTD tokens to user's wallet
+app.post('/api/wallet/withdraw/ltd', authenticateToken, [
+    body('amount').isFloat({ min: 0.01 }).withMessage('Valid withdrawal amount required (minimum 0.01 LTD)'),
+    body('destination_address').matches(/^0x[a-fA-F0-9]{40}$/).withMessage('Valid Ethereum address required')
+], handleValidationErrors, async (req, res) => {
+    try {
+        const { amount, destination_address } = req.body;
+        const userId = req.user.id;
+
+        logger.info('LTD withdrawal request', {
+            userId,
+            amount,
+            destination_address
+        });
+
+        // 1. Check user's internal LTD balance
+        const balanceResult = await db.query(`
+            SELECT balance, crypto_balances
+            FROM user_wallets
+            WHERE user_id = $1
+        `, [userId]);
+
+        if (balanceResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: { message: 'Wallet not found', code: 404 }
+            });
+        }
+
+        const wallet = balanceResult.rows[0];
+        const cryptoBalances = wallet.crypto_balances || {};
+        const ltdBalance = parseFloat(cryptoBalances.LTD || 0);
+
+        // 2. Verify sufficient internal balance
+        if (ltdBalance < amount) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    message: `Insufficient LTD balance. Available: ${ltdBalance} LTD, Requested: ${amount} LTD`,
+                    code: 400,
+                    data: {
+                        available: ltdBalance,
+                        requested: amount
+                    }
+                }
+            });
+        }
+
+        // 3. Verify treasury private key is configured
+        if (!TREASURY_PRIVATE_KEY || TREASURY_PRIVATE_KEY === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+            logger.error('Treasury private key not configured');
+            return res.status(500).json({
+                success: false,
+                error: { message: 'Crypto withdrawal system not configured', code: 500 }
+            });
+        }
+
+        // 4. Setup blockchain connection
+        const provider = new ethers.providers.JsonRpcProvider(AMOY_RPC_URL);
+        const treasuryWallet = new ethers.Wallet(TREASURY_PRIVATE_KEY, provider);
+        const ltdToken = new ethers.Contract(LTD_TOKEN_ADDRESS, ERC20_ABI, treasuryWallet);
+
+        // 5. Get token decimals
+        const decimals = await ltdToken.decimals();
+        const amountInWei = ethers.utils.parseUnits(amount.toString(), decimals);
+
+        // 6. Check treasury balance on blockchain
+        const treasuryBalance = await ltdToken.balanceOf(TREASURY_WALLET_ADDRESS);
+        const treasuryBalanceFormatted = parseFloat(ethers.utils.formatUnits(treasuryBalance, decimals));
+
+        if (treasuryBalanceFormatted < amount) {
+            logger.error('Insufficient treasury balance', {
+                available: treasuryBalanceFormatted,
+                requested: amount
+            });
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Treasury has insufficient LTD tokens. Please contact support.',
+                    code: 500
+                }
+            });
+        }
+
+        // 7. Check MATIC balance for gas fees
+        const maticBalance = await provider.getBalance(TREASURY_WALLET_ADDRESS);
+        const maticBalanceFormatted = parseFloat(ethers.utils.formatEther(maticBalance));
+
+        if (maticBalanceFormatted < 0.01) {
+            logger.error('Insufficient MATIC for gas fees', {
+                available: maticBalanceFormatted
+            });
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Insufficient gas funds in treasury. Please contact support.',
+                    code: 500
+                }
+            });
+        }
+
+        logger.info('Executing blockchain transfer', {
+            from: TREASURY_WALLET_ADDRESS,
+            to: destination_address,
+            amount: amount,
+            amountInWei: amountInWei.toString()
+        });
+
+        // 8. Execute blockchain transfer
+        const tx = await ltdToken.transfer(destination_address, amountInWei);
+
+        logger.info('Transaction sent', {
+            hash: tx.hash,
+            from: TREASURY_WALLET_ADDRESS,
+            to: destination_address
+        });
+
+        // 9. Wait for confirmation
+        const receipt = await tx.wait();
+
+        if (receipt.status !== 1) {
+            logger.error('Transaction failed on blockchain', {
+                hash: receipt.transactionHash,
+                status: receipt.status
+            });
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Blockchain transaction failed',
+                    code: 500,
+                    data: {
+                        transaction_hash: receipt.transactionHash
+                    }
+                }
+            });
+        }
+
+        logger.info('Transaction confirmed', {
+            hash: receipt.transactionHash,
+            blockNumber: receipt.blockNumber,
+            gasUsed: receipt.gasUsed.toString()
+        });
+
+        // 10. Update internal database balance
+        const newLtdBalance = ltdBalance - amount;
+        cryptoBalances.LTD = newLtdBalance;
+
+        await db.query(`
+            UPDATE user_wallets
+            SET crypto_balances = $1,
+                updated_at = NOW()
+            WHERE user_id = $2
+        `, [JSON.stringify(cryptoBalances), userId]);
+
+        // 11. Record transaction in database
+        await db.query(`
+            INSERT INTO transactions (
+                user_id, transaction_type, amount, currency, status,
+                transaction_hash, from_address, to_address, blockchain_network,
+                description, metadata
+            ) VALUES (
+                $1, 'withdrawal', $2, 'LTD', 'completed',
+                $3, $4, $5, 'polygon-amoy',
+                $6, $7
+            )
+        `, [
+            userId,
+            amount,
+            receipt.transactionHash,
+            TREASURY_WALLET_ADDRESS,
+            destination_address,
+            `LTD Token withdrawal to MetaMask wallet`,
+            JSON.stringify({
+                blockNumber: receipt.blockNumber,
+                gasUsed: receipt.gasUsed.toString(),
+                effectiveGasPrice: receipt.effectiveGasPrice?.toString()
+            })
+        ]);
+
+        logger.info('LTD withdrawal completed successfully', {
+            userId,
+            amount,
+            transactionHash: receipt.transactionHash,
+            newBalance: newLtdBalance
+        });
+
+        // 12. Return success response
+        res.json({
+            success: true,
+            data: {
+                transaction_hash: receipt.transactionHash,
+                amount: amount,
+                from: TREASURY_WALLET_ADDRESS,
+                to: destination_address,
+                block_number: receipt.blockNumber,
+                gas_used: receipt.gasUsed.toString(),
+                explorer_url: `https://amoy.polygonscan.com/tx/${receipt.transactionHash}`,
+                new_internal_balance: newLtdBalance,
+                confirmation_time: new Date().toISOString()
+            },
+            message: `Successfully withdrew ${amount} LTD to your wallet`
+        });
+
+    } catch (error) {
+        logger.error('LTD withdrawal error:', error);
+
+        // Provide specific error messages
+        let errorMessage = 'Failed to process withdrawal';
+        let errorCode = 500;
+
+        if (error.message?.includes('insufficient funds')) {
+            errorMessage = 'Insufficient MATIC for gas fees in treasury wallet';
+        } else if (error.message?.includes('nonce')) {
+            errorMessage = 'Transaction nonce error. Please try again in a moment.';
+        } else if (error.message?.includes('network')) {
+            errorMessage = 'Blockchain network connection error. Please try again.';
+        } else if (error.code === 'CALL_EXCEPTION') {
+            errorMessage = 'Smart contract error. Please contact support.';
+        }
+
+        res.status(errorCode).json({
+            success: false,
+            error: {
+                message: errorMessage,
+                code: errorCode,
+                details: NODE_ENV === 'development' ? error.message : undefined
+            }
+        });
+    }
+});
+
+// Get user's LTD blockchain balance (read-only, no auth required)
+app.get('/api/wallet/ltd-balance/:address', async (req, res) => {
+    try {
+        const { address } = req.params;
+
+        // Validate address format
+        if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'Invalid Ethereum address', code: 400 }
+            });
+        }
+
+        // Setup blockchain connection (read-only)
+        const provider = new ethers.providers.JsonRpcProvider(AMOY_RPC_URL);
+        const ltdToken = new ethers.Contract(LTD_TOKEN_ADDRESS, ERC20_ABI, provider);
+
+        // Get balance and decimals
+        const [balance, decimals, symbol] = await Promise.all([
+            ltdToken.balanceOf(address),
+            ltdToken.decimals(),
+            ltdToken.symbol()
+        ]);
+
+        const balanceFormatted = ethers.utils.formatUnits(balance, decimals);
+
+        res.json({
+            success: true,
+            data: {
+                address: address,
+                balance: parseFloat(balanceFormatted),
+                balance_raw: balance.toString(),
+                symbol: symbol,
+                decimals: decimals,
+                token_address: LTD_TOKEN_ADDRESS,
+                network: 'polygon-amoy',
+                explorer_url: `https://amoy.polygonscan.com/token/${LTD_TOKEN_ADDRESS}?a=${address}`
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get LTD balance error:', error);
+        res.status(500).json({
+            success: false,
+            error: { message: 'Failed to fetch blockchain balance', code: 500 }
         });
     }
 });
