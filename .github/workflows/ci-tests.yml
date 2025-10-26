@@ -1,0 +1,130 @@
+name: CI - Tests and Quality Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-validate:
+    name: Lint and Validate Code
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        else
+          echo "No package.json, skipping npm install"
+        fi
+
+    - name: Validate HTML files
+      run: |
+        echo "🔍 Validating HTML files..."
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            # Basic HTML validation - check for common issues
+            if grep -q "</head>" "$file" && grep -q "</body>" "$file" && grep -q "</html>" "$file"; then
+              echo "✅ $file - Valid structure"
+            else
+              echo "❌ $file - Missing required tags"
+              exit 1
+            fi
+          fi
+        done
+
+    - name: Check JavaScript syntax
+      run: |
+        echo "🔍 Checking JavaScript syntax..."
+        for file in *.js; do
+          if [ -f "$file" ]; then
+            # Basic syntax check using Node.js
+            node --check "$file" && echo "✅ $file" || (echo "❌ $file has syntax errors" && exit 1)
+          fi
+        done
+
+    - name: Validate JSON files
+      run: |
+        echo "🔍 Validating JSON files..."
+        for file in *.json; do
+          if [ -f "$file" ] && [ "$file" != "package-lock.json" ]; then
+            # Validate JSON syntax
+            if python3 -m json.tool "$file" > /dev/null 2>&1; then
+              echo "✅ $file"
+            else
+              echo "❌ $file - Invalid JSON"
+              exit 1
+            fi
+          fi
+        done
+
+    - name: Check for console.log (production)
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🔍 Checking for debug console.log statements..."
+        if grep -r "console\.log" *.js | grep -v "// DEBUG" | grep -v "node_modules"; then
+          echo "⚠️ Warning: Found console.log statements in production code"
+          echo "Consider removing or wrapping in DEBUG flags"
+        else
+          echo "✅ No console.log found"
+        fi
+
+    - name: Check for hardcoded credentials
+      run: |
+        echo "🔍 Scanning for hardcoded credentials..."
+        PATTERNS=(
+          "password.*=.*['\"][^'\"]{3,}"
+          "api[_-]?key.*=.*['\"][^'\"]{10,}"
+          "secret.*=.*['\"][^'\"]{10,}"
+          "token.*=.*['\"][^'\"]{20,}"
+        )
+
+        FOUND=0
+        for pattern in "${PATTERNS[@]}"; do
+          if grep -riE "$pattern" *.js *.html | grep -v "placeholder" | grep -v "example" | grep -v "TODO"; then
+            echo "⚠️ Potential hardcoded credential found"
+            FOUND=1
+          fi
+        done
+
+        if [ $FOUND -eq 0 ]; then
+          echo "✅ No obvious hardcoded credentials found"
+        else
+          echo "❌ Please remove hardcoded credentials before merging"
+          exit 1
+        fi
+
+    - name: Check file sizes
+      run: |
+        echo "🔍 Checking file sizes..."
+        for file in *.js *.css *.html; do
+          if [ -f "$file" ]; then
+            SIZE=$(wc -c < "$file")
+            if [ $SIZE -gt 500000 ]; then
+              echo "⚠️ $file is large ($SIZE bytes) - consider splitting or minifying"
+            fi
+          fi
+        done
+
+    - name: Summary
+      run: |
+        echo "## ✅ CI Checks Passed!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All quality checks completed successfully:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ HTML structure validated" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ JavaScript syntax checked" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ JSON files validated" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Security scan passed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 Ready to merge!" >> $GITHUB_STEP_SUMMARY

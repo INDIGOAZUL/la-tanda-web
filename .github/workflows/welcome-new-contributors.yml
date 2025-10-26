@@ -1,0 +1,148 @@
+name: Welcome New Contributors
+
+on:
+  pull_request_target:
+    types: [opened]
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Welcome first-time contributors
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const sender = context.payload.sender.login;
+
+          // Check if this is user's first contribution
+          const { data: contributions } = await github.rest.repos.listContributors({
+            owner,
+            repo,
+            per_page: 100
+          });
+
+          const isFirstTime = !contributions.some(c => c.login === sender);
+
+          if (!isFirstTime) {
+            console.log(`${sender} is a returning contributor`);
+            return;
+          }
+
+          // Welcome message for first-time PR
+          if (context.eventName === 'pull_request_target') {
+            const pr = context.payload.pull_request;
+
+            const welcomeMessage = `## 🎉 Welcome to La Tanda Web3, @${sender}!
+
+Thank you for your first contribution! We're excited to have you in our community.
+
+### 📋 Next Steps
+
+Our team will review your pull request soon. In the meantime:
+
+1. ✅ Make sure all CI checks pass
+2. 📝 Update documentation if needed
+3. 🧪 Add tests for new features
+4. 💬 Respond to any review comments
+
+### 💰 Earning LTD Tokens
+
+If this PR is related to a bounty:
+- Make sure you've claimed the issue first
+- Provide your **Polygon Amoy wallet address** in the PR description
+- Reference the issue number (e.g., "Fixes #123")
+- Once merged, you'll receive LTD tokens within 24-48 hours
+
+### 📚 Resources
+
+- [Contributing Guidelines](https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md)
+- [Active Bounties](https://github.com/${owner}/${repo}/blob/main/ACTIVE-BOUNTIES.md)
+- [Developer Quickstart](https://github.com/${owner}/${repo}/blob/main/DEVELOPER-QUICKSTART.md)
+
+### 💬 Need Help?
+
+- Comment on this PR if you have questions
+- Join our community discussions
+- Tag @${owner} for urgent matters
+
+Thanks for contributing to the future of decentralized finance in LATAM! 🚀
+
+---
+*This is an automated message for first-time contributors*`;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: pr.number,
+              body: welcomeMessage
+            });
+
+            // Add "first-time contributor" label
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pr.number,
+              labels: ['first-time contributor']
+            });
+
+            console.log(`Welcomed first-time contributor: ${sender}`);
+          }
+
+          // Welcome message for first-time issue
+          if (context.eventName === 'issues') {
+            const issue = context.payload.issue;
+
+            const welcomeMessage = `## 👋 Hello @${sender}, welcome to La Tanda Web3!
+
+Thank you for opening your first issue! We appreciate your contribution to the project.
+
+### 🔍 What Happens Next?
+
+- A maintainer will review your issue within 24-48 hours
+- If it's a bug, we'll investigate and prioritize
+- If it's a feature request, we'll discuss feasibility
+- If it's a bounty-worthy task, we'll add it to our [Active Bounties](https://github.com/${owner}/${repo}/blob/main/ACTIVE-BOUNTIES.md)
+
+### 💡 Want to Fix This Yourself?
+
+If you'd like to work on this issue:
+1. Comment "I'd like to work on this"
+2. Wait for assignment
+3. Fork the repo and start coding!
+4. Earn LTD tokens when your PR is merged
+
+### 📚 Resources
+
+- [Developer Quickstart](https://github.com/${owner}/${repo}/blob/main/DEVELOPER-QUICKSTART.md) - Get started in 5 minutes
+- [Active Bounties](https://github.com/${owner}/${repo}/blob/main/ACTIVE-BOUNTIES.md) - See available bounties
+- [Contributing Guidelines](https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md) - How to contribute
+
+Thanks for being part of our community! 🌟
+
+---
+*This is an automated message for first-time contributors*`;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: welcomeMessage
+            });
+
+            console.log(`Welcomed first-time issue creator: ${sender}`);
+          }
+
+    - name: Summary
+      run: |
+        echo "## 🎉 New Contributor Welcomed!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Automated welcome message sent to first-time contributor" >> $GITHUB_STEP_SUMMARY
+        echo "Label 'first-time contributor' added (if PR)" >> $GITHUB_STEP_SUMMARY

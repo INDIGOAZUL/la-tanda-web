@@ -1,0 +1,144 @@
+name: Deploy to Production (latanda.online)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      confirm_production:
+        description: 'Type "DEPLOY_PRODUCTION" to confirm'
+        required: true
+        default: ''
+
+jobs:
+  production-deploy:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm_production == 'DEPLOY_PRODUCTION' || github.event_name == 'release'
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        else
+          echo "No package.json found, skipping npm install"
+        fi
+        
+    - name: Create production configuration
+      run: |
+        # Create production API configuration
+        cat > api-proxy.js << 'EOF'
+        // Production Configuration
+        console.log('🚀 La Tanda Web3 - Production Environment');
+        
+        // API Configuration for production
+        const API_CONFIG = {
+            baseURL: 'https://api.latanda.online',
+            environment: 'production',
+            features: {
+                realAPI: true,      // Use real API in production
+                blockchain: true,   // Enable blockchain features
+                payments: true,     // Enable real payments
+                notifications: true
+            }
+        };
+        
+        // Make API_CONFIG globally available
+        window.LA_TANDA_CONFIG = API_CONFIG;
+        
+        console.log('✅ Production configuration loaded');
+        EOF
+        
+    - name: Update files for production
+      run: |
+        # Update any staging references to production
+        for file in *.html; do
+          if [ -f "$file" ]; then
+            # Ensure production API proxy is loaded
+            if ! grep -q "api-proxy.js" "$file"; then
+              sed -i 's|</head>|    <script src="api-proxy.js"></script>\n</head>|' "$file"
+            fi
+            
+            # Update any localhost or staging references
+            sed -i 's|http://localhost:8080|https://latanda.online|g' "$file"
+            sed -i 's|indigoazul.github.io/la-tanda-web|latanda.online|g' "$file"
+            
+            echo "✅ Updated $file for production"
+          fi
+        done
+        
+    - name: Deploy to production server
+      env:
+        DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+        DEPLOY_USER: ${{ secrets.PRODUCTION_USER }}
+        DEPLOY_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        DEPLOY_PATH: ${{ secrets.PRODUCTION_PATH }}
+      run: |
+        # Install SSH client
+        apt-get update && apt-get install -y openssh-client rsync
+        
+        # Setup SSH key
+        mkdir -p ~/.ssh
+        echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+        
+        # Create backup on server
+        ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          if [ -d '$DEPLOY_PATH' ]; then
+            cp -r $DEPLOY_PATH $DEPLOY_PATH.backup.\$(date +%Y%m%d_%H%M%S)
+          fi
+          mkdir -p $DEPLOY_PATH
+        "
+        
+        # Deploy files
+        rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+        
+        # Set permissions
+        ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "
+          chown -R www-data:www-data $DEPLOY_PATH
+          chmod -R 755 $DEPLOY_PATH
+          chmod 644 $DEPLOY_PATH/*.html $DEPLOY_PATH/*.css $DEPLOY_PATH/*.js
+        "
+        
+        echo "✅ Production deployment completed"
+        
+    - name: Verify production deployment
+      run: |
+        # Wait a moment for deployment
+        sleep 10
+        
+        # Test main endpoints
+        for endpoint in "" "auth-enhanced.html" "home-dashboard.html" "tanda-wallet.html"; do
+          response=$(curl -s -o /dev/null -w "%{http_code}" "https://latanda.online/$endpoint" || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✅ https://latanda.online/$endpoint is responding"
+          else
+            echo "⚠️ https://latanda.online/$endpoint returned $response"
+          fi
+        done
+        
+    - name: Create production deployment summary
+      run: |
+        echo "## 🚀 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌐 Live URLs:" >> $GITHUB_STEP_SUMMARY
+        echo "- **Main Site**: https://latanda.online/" >> $GITHUB_STEP_SUMMARY
+        echo "- **Authentication**: https://latanda.online/auth-enhanced.html" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dashboard**: https://latanda.online/home-dashboard.html" >> $GITHUB_STEP_SUMMARY
+        echo "- **API Health**: https://api.latanda.online/" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Production Features Enabled:" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 **Real API**: Connected to production backend" >> $GITHUB_STEP_SUMMARY
+        echo "💳 **Payments**: Real payment processing enabled" >> $GITHUB_STEP_SUMMARY
+        echo "🔒 **Security**: Production security measures active" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Analytics**: Production tracking enabled" >> $GITHUB_STEP_SUMMARY

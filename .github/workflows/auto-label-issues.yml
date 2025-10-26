@@ -1,0 +1,178 @@
+name: Auto-Label Issues and PRs
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Label bounty issues
+      if: github.event_name == 'issues'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const title = issue.title.toLowerCase();
+          const body = issue.body || '';
+          const labels = [];
+
+          // Bounty detection
+          if (title.includes('bounty') || body.includes('LTD')) {
+            labels.push('bounty');
+          }
+
+          // Priority detection
+          if (title.includes('urgent') || title.includes('critical') || body.includes('URGENT')) {
+            labels.push('high-priority');
+          }
+
+          // Type detection
+          if (title.includes('[bug]') || title.includes('fix') || body.includes('error')) {
+            labels.push('bug');
+          }
+
+          if (title.includes('[feature]') || title.includes('[feat]') || title.includes('implement')) {
+            labels.push('enhancement');
+          }
+
+          if (title.includes('[infra]') || title.includes('infrastructure') || title.includes('devops')) {
+            labels.push('infrastructure');
+          }
+
+          if (title.includes('[security]') || body.includes('security') || body.includes('vulnerability')) {
+            labels.push('security');
+          }
+
+          if (title.includes('[content]') || title.includes('[social')) {
+            labels.push('marketing');
+          }
+
+          // Role system related
+          if (body.includes('role') || title.includes('role') || body.includes('permission')) {
+            labels.push('role-system');
+          }
+
+          // Good first issue
+          if (body.includes('good first issue') || title.toLowerCase().includes('beginner')) {
+            labels.push('good first issue');
+          }
+
+          // Add labels if any were detected
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: labels
+            });
+
+            console.log(`Added labels: ${labels.join(', ')}`);
+          }
+
+    - name: Label PRs
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          const title = pr.title.toLowerCase();
+          const body = pr.body || '';
+          const labels = [];
+
+          // Type from conventional commits
+          if (title.startsWith('feat:') || title.startsWith('feature:')) {
+            labels.push('enhancement');
+          }
+
+          if (title.startsWith('fix:')) {
+            labels.push('bug');
+          }
+
+          if (title.startsWith('docs:')) {
+            labels.push('documentation');
+          }
+
+          if (title.startsWith('refactor:')) {
+            labels.push('refactoring');
+          }
+
+          if (title.startsWith('test:')) {
+            labels.push('testing');
+          }
+
+          if (title.startsWith('chore:')) {
+            labels.push('maintenance');
+          }
+
+          // Size estimation based on files changed
+          const filesChanged = pr.changed_files;
+          if (filesChanged <= 3) {
+            labels.push('size: small');
+          } else if (filesChanged <= 10) {
+            labels.push('size: medium');
+          } else {
+            labels.push('size: large');
+          }
+
+          // Bounty PR detection
+          if (body.includes('bounty') || body.includes('fixes #') || body.includes('closes #')) {
+            labels.push('bounty-submission');
+          }
+
+          // Add labels
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: labels
+            });
+
+            console.log(`Added labels: ${labels.join(', ')}`);
+          }
+
+    - name: Comment on bounty issue
+      if: github.event_name == 'issues' && contains(github.event.issue.title, 'bounty')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+
+          // Only comment on newly created bounty issues
+          if (context.payload.action !== 'opened') return;
+
+          const comment = `👋 **Thank you for opening this bounty issue!**
+
+🎯 **To claim this bounty:**
+1. Comment "I'd like to work on this" to claim it
+2. Wait for assignment from maintainers
+3. Fork the repo and create a feature branch
+4. Implement the solution following our [guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
+5. Submit a PR referencing this issue
+6. Receive LTD tokens within 24-48h of merge
+
+💰 **Bounty Payment:**
+- Provide your Polygon Amoy wallet address in the PR
+- Payment confirmed in PR comments with transaction hash
+
+📚 **Resources:**
+- [Developer Quickstart](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/DEVELOPER-QUICKSTART.md)
+- [Active Bounties](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/ACTIVE-BOUNTIES.md)
+
+Good luck! 🚀`;
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            body: comment
+          });
