@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda Web3 Protocol - Decentralized Group Savings & DeFi</title>
+    <meta name="description" content="La Tanda Web3 Protocol - Revolutionary Web3 DeFi protocol for group savings, lending, and financial empowerment on La Tanda Chain.">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="shortcut icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/dist/cryptocurrency-icons.min.css">
+    <!-- Shared Components -->
+    <link rel="stylesheet" href="shared-components.css">
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-purple: #7F00FF;
+            --tanda-pink: #FF007F;
+            --neon-blue: #0080FF;
+            --neon-green: #00FF80;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --bg-primary: #000012;
+            --bg-secondary: #0a0a2e;
+            --bg-glass: rgba(15, 23, 42, 0.8);
+            --border-primary: rgba(0, 255, 255, 0.3);
+            --gradient-web3: linear-gradient(45deg, #00FFFF, #7F00FF, #FF007F);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(127, 0, 255, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(255, 0, 127, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #16213e 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, var(--tanda-cyan), transparent),
+                radial-gradient(2px 2px at 40% 70%, var(--tanda-purple), transparent),
+                radial-gradient(1px 1px at 90% 40%, var(--tanda-pink), transparent);
+            background-repeat: repeat;
+            background-size: 100px 100px, 150px 150px, 80px 80px;
+            opacity: 0.2;
+            animation: network-float 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes network-float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100px, -100px); }
+        }
+
+        @keyframes glow-pulse {
+            0% {
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+                border-color: rgba(0, 255, 255, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+                border-color: rgba(0, 255, 255, 0.8);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 80px 0 60px 0;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--tanda-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .protocol-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 900;
+            background: var(--gradient-web3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+
+        .protocol-subtitle {
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Protocol Stats */
+        .protocol-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+            padding: 40px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--border-primary);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Features Section */
+        .features-section {
+            margin: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+        }
+        
+        .feature-card.expanded {
+            transform: scale(1.02);
+            z-index: 10;
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 20px 50px rgba(0, 255, 255, 0.3);
+        }
+        
+        .feature-details {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-primary);
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-details.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .feature-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .metric-value {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            font-size: 1.1rem;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+        
+        .feature-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .feature-link {
+            padding: 8px 16px;
+            background: linear-gradient(45deg, var(--tanda-cyan), var(--tanda-purple));
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        .expand-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: var(--tanda-cyan);
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card.expanded .expand-indicator {
+            transform: rotate(180deg);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            background: var(--gradient-web3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+        
+        .stat-icon {
+            font-size: 1.2rem;
+            margin-right: 8px;
+            color: var(--tanda-cyan);
+        }
+        
+        .step-icon {
+            font-size: 1.1rem;
+            margin-right: 8px;
+            color: var(--tanda-cyan);
+        }
+        
+        /* Language Selector */
+        .feature-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--tanda-cyan);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* How it Works */
+        .how-it-works {
+            margin: 100px 0;
+            text-align: center;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .step {
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-web3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        .step-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin: 100px 0;
+            padding: 60px 40px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--border-primary);
+        }
+
+        .cta-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .cta-description {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .launch-button {
+            display: inline-block;
+            padding: 18px 40px;
+            background: var(--gradient-web3);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        .launch-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.6);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid var(--border-primary);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 40px 0;
+            }
+            
+            .protocol-stats {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 20px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <!-- PWA Service Worker -->
+    <!-- Global i18n Translation System -->
+    <!-- i18next - Industry Standard i18n Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next/23.7.11/i18next.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next-http-backend/3.0.2/i18nextHttpBackend.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/i18next-browser-languagedetector/8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="i18next-implementation-backend.js?v=1759691163"></script>
+
+    <script src="sw-register.js" defer></script>
+</head>
+<body>
+    <!-- Language Selector -->
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="assets/logo-latanda-latest.png" alt="La Tanda Web3 Protocol" />
+            </div>
+            <h1 class="protocol-title" data-i18n="protocol.title">La Tanda Web3 Protocol</h1>
+            <p class="protocol-subtitle" data-i18n="protocol.subtitle">
+                Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">built on La Tanda Chain</span>. 
+                Empowering communities through Web3 financial innovation.
+            </p>
+            
+            <!-- Developer Recruitment Banner -->
+            <div class="dev-recruitment-banner" style="background: rgba(0, 255, 255, 0.1); border: 1px solid var(--tanda-cyan); border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; animation: glow-pulse 2s ease-in-out infinite alternate;">
+                <h3 style="color: var(--tanda-cyan); margin: 0 0 10px 0; font-family: 'Orbitron', monospace;">🚀 DEVELOPERS: Earn LTD Tokens for Contributing!</h3>
+                <p style="margin: 0 0 15px 0; color: var(--text-secondary);"><span data-i18n="index.hero.dev_subtitle">Join our Web3 revolution - Get paid in tokens for every contribution</span></p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px;">
+                    <span style="background: rgba(0, 255, 255, 0.2); padding: 8px 16px; border-radius: 20px; font-size: 14px; color: white;">Bug Fixes: 25-100 LTD</span>
+                    <span style="background: rgba(0, 255, 255, 0.2); padding: 8px 16px; border-radius: 20px; font-size: 14px; color: white;">Features: 100-500 LTD</span>
+                    <span style="background: rgba(0, 255, 255, 0.2); padding: 8px 16px; border-radius: 20px; font-size: 14px; color: white;">Docs: 25-75 LTD</span>
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/DEVELOPER-QUICKSTART.md" target="_blank" style="background: var(--gradient-web3); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-family: 'Orbitron', monospace; display: flex; align-items: center; gap: 8px;">
+                        ⚡ START NOW (5 min)
+                    </a>
+                    <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/ACTIVE-BOUNTIES.md" target="_blank" style="background: rgba(0, 255, 255, 0.2); color: var(--tanda-cyan); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-family: 'Orbitron', monospace; border: 1px solid var(--tanda-cyan);">
+                        💰 View All Rewards
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Protocol Statistics -->
+        <section class="protocol-stats">
+            <div class="stat-item">
+                <span class="stat-value"><i class="fas fa-lock stat-icon"></i>$2.4M</span>
+                <span class="stat-label" data-i18n="index.stats.tvl">Total Value Locked</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value"><i class="fas fa-wallet stat-icon"></i>15,847</span>
+                <span class="stat-label" data-i18n="index.stats.users">Active Users</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value"><i class="fas fa-link stat-icon"></i>342</span>
+                <span class="stat-label" data-i18n="index.stats.tandas">Active Tandas</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value"><i class="fas fa-chart-line stat-icon"></i>18.5%</span>
+                <span class="stat-label" data-i18n="index.stats.apy">Average APY</span>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <h2 class="section-title"><span data-i18n="index.features.section_title">Protocol Features</span></h2>
+            <p class="section-subtitle">
+                <span data-i18n="index.features.section_subtitle">Combining traditional tanda principles with cutting-edge DeFi technology 
+                to create a new paradigm for community-driven finance.
+            </span></p>
+            
+            <div class="features-grid">
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fas fa-link"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.tandas.title">Decentralized Tandas</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.tandas.desc">Create and participate in trustless rotating savings groups with smart contract automation and transparent fund management.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">342</div>
+                                <div class="metric-label"><span data-i18n="index.features.tandas.active">Active Tandas</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">15,847</div>
+                                <div class="metric-label"><span data-i18n="index.features.tandas.participants">Participants</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">98.5%</div>
+                                <div class="metric-label"><span data-i18n="index.features.tandas.success">Success Rate</span></div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            <span data-i18n="index.features.tandas.learn_more">Smart contracts automate payments, eliminate trust issues, and ensure transparent distribution. Each tanda operates independently with customizable terms and automatic enforcement.
+                        </span></p>
+                        <div class="feature-links">
+                            <a href="groups-advanced-system.html" class="feature-link"><span data-i18n="index.features.tandas.explore">Explore Tandas</span></a>
+                            <a href="home-dashboard.html" class="feature-link"><span data-i18n="index.features.tandas.dashboard">View Dashboard</span></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fab fa-ethereum"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.rewards.title">LTD Token Rewards</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.rewards.desc">Earn native governance tokens through participation, with staking rewards and protocol fee distribution.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">20.0%</div>
+                                <div class="metric-label"><span data-i18n="index.features.rewards.apy">Staking APY</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">67%</div>
+                                <div class="metric-label"><span data-i18n="index.features.rewards.staked">Tokens Staked</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">$0.847</div>
+                                <div class="metric-label"><span data-i18n="index.features.rewards.price">Current Price</span></div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            <span data-i18n="index.features.rewards.learn_more">LTD tokens power the ecosystem with governance rights, fee distribution, and participation rewards. Stake tokens to earn yield and vote on protocol upgrades.
+                        </span></p>
+                        <div class="feature-links">
+                            <a href="ltd-token-economics.html" class="feature-link"><span data-i18n="index.features.rewards.economics">Token Economics</span></a>
+                            <a href="staking.html" class="feature-link"><span data-i18n="index.features.rewards.staking">Start Staking</span></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.security.title">Secure & Audited</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.security.desc">Multi-signature security, time-locked contracts, and comprehensive audits ensure maximum protocol safety.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">3</div>
+                                <div class="metric-label"><span data-i18n="index.features.security.audits">Audit Firms</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">5/7</div>
+                                <div class="metric-label"><span data-i18n="index.features.security.multisig">Multi-sig</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">48h</div>
+                                <div class="metric-label"><span data-i18n="index.features.security.timelock">Time-lock</span></div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            <span data-i18n="index.features.security.learn_more">Protocol security is paramount with formal verification, extensive testing, and continuous monitoring. All critical functions require multi-signature approval and time delays.
+                        </span></p>
+                        <div class="feature-links">
+                            <a href="seguridad.html" class="feature-link"><span data-i18n="index.features.security.details">Security Details</span></a>
+                            <a href="#" class="feature-link"><span data-i18n="index.features.security.reports">Audit Reports</span></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fas fa-swimming-pool"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.liquidity.title">Liquidity Pools</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.liquidity.desc">Automated market makers with yield optimization and impermanent loss protection for enhanced returns.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">$847K</div>
+                                <div class="metric-label"><span data-i18n="index.features.liquidity.tvl">Total TVL</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">18.5%</div>
+                                <div class="metric-label"><span data-i18n="index.features.liquidity.apy">Average APY</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">$156K</div>
+                                <div class="metric-label">24h Volume</div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Provide liquidity to earn trading fees and LTD rewards. Advanced algorithms optimize yields while protecting against impermanent loss through dynamic rebalancing.
+                        </p>
+                        <div class="feature-links">
+                            <a href="staking.html" class="feature-link">Add Liquidity</a>
+                            <a href="analytics.html" class="feature-link">Pool Analytics</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.bridge.title">Cross-Chain Bridge</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.bridge.desc">Seamless asset transfers across La Tanda Chain with minimal slippage and gas optimization.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">0.1%</div>
+                                <div class="metric-label">Bridge Fee</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">5-15min</div>
+                                <div class="metric-label">Transfer Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">4</div>
+                                <div class="metric-label">Networks (2 Live)</div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Move assets between supported blockchains with enterprise-grade security and minimal fees. Our bridge uses advanced routing for optimal paths and lowest costs.
+                        </p>
+                        <div class="feature-links">
+                            <a href="bridge.html" class="feature-link"><span data-i18n="index.features.bridge.use">Use Bridge</span></a>
+                            <a href="#" class="feature-link"><span data-i18n="index.features.bridge.assets">Supported Assets</span></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="feature-card" onclick="toggleFeature(this)">
+                    <div class="expand-indicator">▼</div>
+                    <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3 class="feature-title"><span data-i18n="index.features.analytics.title">Advanced Analytics</span></h3>
+                    <p class="feature-description">
+                        <span data-i18n="index.features.analytics.desc">Real-time protocol metrics, TVL tracking, and comprehensive yield farming performance dashboards.
+                    </span></p>
+                    <div class="feature-details">
+                        <div class="feature-metrics">
+                            <div class="metric">
+                                <div class="metric-value">50+</div>
+                                <div class="metric-label"><span data-i18n="index.features.analytics.datapoints">Data Points</span></div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">Real-time</div>
+                                <div class="metric-label">Updates</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">API</div>
+                                <div class="metric-label">Access</div>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Comprehensive analytics dashboard with real-time protocol metrics, historical data, and predictive insights to optimize your DeFi strategies and track performance.
+                        </p>
+                        <div class="feature-links">
+                            <a href="analytics.html" class="feature-link">View Analytics</a>
+                            <a href="#" class="feature-link">API Documentation</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works -->
+        <section class="how-it-works">
+            <h2 class="section-title"><span data-i18n="index.howto.section_title">How It Works</span></h2>
+            <p class="section-subtitle">
+                <span data-i18n="index.howto.section_subtitle">Simple steps to start participating in the decentralized financial ecosystem
+            </span></p>
+            
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title"><i class="fas fa-wallet step-icon"></i><span data-i18n="index.howto.step1.title">Connect Wallet</span></h3>
+                    <p class="step-description">
+                        <span data-i18n="index.howto.step1.desc">Connect your Web3 wallet and complete KYC verification to access the protocol
+                    </span></p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title"><i class="fas fa-link step-icon"></i><span data-i18n="index.howto.step2.title">Join or Create Tanda</span></h3>
+                    <p class="step-description">
+                        <span data-i18n="index.howto.step2.desc">Participate in existing tandas or create your own with customizable parameters
+                    </span></p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title"><i class="fab fa-ethereum step-icon"></i><span data-i18n="index.howto.step3.title">Earn Rewards</span></h3>
+                    <p class="step-description">
+                        <span data-i18n="index.howto.step3.desc">Receive LTD tokens for participation and access staking rewards and governance rights
+                    </span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action -->
+        <section class="cta-section">
+            <h2 class="cta-title"><i class="fas fa-rocket" style="margin-right: 10px; color: var(--tanda-cyan);"></i><span data-i18n="cta.title">Ready to Start?</span></h2>
+            <p class="cta-description" data-i18n="cta.desc">
+                Join thousands of users already participating in the future of decentralized finance
+            </p>
+            <button class="launch-button" onclick="launchProtocol()">
+                <i class="fas fa-external-link-alt" style="margin-right: 8px;"></i><span data-i18n="cta.button">Launch Protocol</span>
+            </button>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><i class="fas fa-link"></i> <span data-i18n="index.footer.built_on">Built on La Tanda Chain</span> • <i class="fas fa-shield-alt"></i> <span data-i18n="index.footer.audited">Audited Smart Contracts</span> • <i class="fas fa-vote-yea"></i> <span data-i18n="index.footer.governance">Decentralized Governance</span></p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">
+                <span data-i18n="index.footer.copyright">© 2024 La Tanda Web3 Protocol. All rights reserved.</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Shared Components -->
+    <script src="shared-components.js"></script>
+
+    <script>
+        // Simple launch function
+        function launchProtocol() {
+            console.log('🚀 Launching La Tanda Protocol...');
+            window.location.href = 'home-dashboard.html';
+        }
+
+        // Toggle feature card expansion
+        function toggleFeature(card) {
+            const details = card.querySelector('.feature-details');
+            const isExpanded = card.classList.contains('expanded');
+            
+            // Close all other expanded cards
+            document.querySelectorAll('.feature-card.expanded').forEach(otherCard => {
+                if (otherCard !== card) {
+                    otherCard.classList.remove('expanded');
+                    const otherDetails = otherCard.querySelector('.feature-details');
+                    otherDetails.classList.remove('show');
+                    setTimeout(() => {
+                        otherDetails.style.display = 'none';
+                    }, 300);
+                }
+            });
+            
+            if (!isExpanded) {
+                // Expand this card
+                card.classList.add('expanded');
+                details.style.display = 'block';
+                setTimeout(() => {
+                    details.classList.add('show');
+                }, 10);
+            } else {
+                // Collapse this card
+                card.classList.remove('expanded');
+                details.classList.remove('show');
+                setTimeout(() => {
+                    details.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // Add some visual effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate stats on scroll
+            const observerOptions = {
+                threshold: 0.5,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.feature-card, .step').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.6s ease';
+                observer.observe(el);
+            });
+
+            console.log('🌐 La Tanda Protocol Landing Page Loaded');
+        });
+
+        // Language System
+        const translations = {
+            en: {
+                'protocol.title': 'La Tanda Web3 Protocol',
+                'protocol.subtitle': 'Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">built on La Tanda Chain</span>. Empowering communities through Web3 financial innovation.',
+                'cta.title': 'Ready to Start?',
+                'cta.desc': 'Join thousands of users already participating in the future of decentralized finance',
+                'cta.button': 'Launch Protocol'
+            },
+            es: {
+                'protocol.title': 'Protocolo Web3 La Tanda',
+                'protocol.subtitle': 'Protocolo descentralizado de ahorro grupal y préstamos construido en La Tanda Chain. Empoderando comunidades a través de la innovación financiera Web3.',
+                'cta.title': '¿Listo para Comenzar?',
+                'cta.desc': 'Únete a miles de usuarios que ya participan en el futuro de las finanzas descentralizadas',
+                'cta.button': 'Lanzar Protocolo'
+            }
+        };
+
+    </script>
+
+    <!-- La Tanda API Integration -->
+    <script src="api-adapter.js"></script>
+    <script>
+        // Initialize API Adapter
+    </script>
+</body>
+</html>

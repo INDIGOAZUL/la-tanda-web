@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login Flow - La Tanda</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f5f7fa; }
+        .debug-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 10px 0; }
+        .step { padding: 15px; margin: 10px 0; border-left: 4px solid #007bff; background: #f8f9fa; }
+        .success { border-left-color: #28a745; background: #f1f8e9; }
+        .error { border-left-color: #dc3545; background: #ffebee; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .log { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 14px; max-height: 400px; overflow-y: auto; }
+        input { width: 200px; padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Login Flow - La Tanda</h1>
+    
+    <div class="debug-container">
+        <h3>🧪 Step-by-Step Login Test</h3>
+        <input type="email" id="email" value="admin@latanda.online" placeholder="Email">
+        <input type="password" id="password" value="Admin123!" placeholder="Password">
+        <br>
+        <button onclick="runCompleteLoginFlow()">🚀 Test Complete Login Flow</button>
+        <button onclick="testTokenStorage()">💾 Test Token Storage</button>
+        <button onclick="testRedirect()">🔄 Test Redirect</button>
+        <button onclick="checkCurrentAuth()">🔍 Check Current Auth</button>
+        <button onclick="clearAll()">🧹 Clear All</button>
+    </div>
+
+    <div class="debug-container">
+        <h3>📊 Step Results</h3>
+        <div id="steps"></div>
+    </div>
+
+    <div class="debug-container">
+        <h3>📋 Detailed Logs</h3>
+        <div id="logs" class="log">Debug logs will appear here...\n</div>
+    </div>
+
+    <!-- Load API proxy -->
+    <script src="api-proxy.js"></script>
+
+    <script>
+        let stepCounter = 0;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logsDiv = document.getElementById('logs');
+            logsDiv.textContent += `[${timestamp}] ${message}\n`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            
+            if (type !== 'info') {
+                addStep(message, type);
+            }
+        }
+
+        function addStep(message, type = 'info') {
+            const stepsDiv = document.getElementById('steps');
+            const step = document.createElement('div');
+            step.className = `step ${type}`;
+            step.innerHTML = `<strong>Step ${++stepCounter}:</strong> ${message}`;
+            stepsDiv.appendChild(step);
+        }
+
+        function clearAll() {
+            document.getElementById('steps').innerHTML = '';
+            document.getElementById('logs').textContent = 'Logs cleared...\n';
+            stepCounter = 0;
+            localStorage.removeItem('latanda_auth_token');
+            localStorage.removeItem('latanda_user');
+            log('🧹 All data cleared');
+        }
+
+        async function runCompleteLoginFlow() {
+            clearAll();
+            log('🚀 Starting complete login flow test...');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                // Step 1: Check API Proxy
+                log('STEP 1: Testing API Proxy...');
+                if (!window.apiProxy) {
+                    throw new Error('API Proxy not available');
+                }
+                addStep('✅ API Proxy available', 'success');
+                
+                // Step 2: Make Login Request
+                log('STEP 2: Making login API request...');
+                const response = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                log(`Response received: ${JSON.stringify(response, null, 2)}`);
+                
+                if (!response.success) {
+                    throw new Error(`Login failed: ${response.error?.message}`);
+                }
+                addStep('✅ Login API returned success', 'success');
+                
+                // Step 3: Check Response Data
+                log('STEP 3: Validating response data...');
+                if (!response.data) {
+                    throw new Error('Response missing data object');
+                }
+                if (!response.data.auth_token) {
+                    throw new Error('Response missing auth_token');
+                }
+                if (!response.data.user) {
+                    throw new Error('Response missing user data');
+                }
+                addStep('✅ Response data structure valid', 'success');
+                
+                // Step 4: Test Token Validation
+                log('STEP 4: Testing token validation...');
+                const token = response.data.auth_token;
+                log(`Token received: ${token.substring(0, 50)}...`);
+                
+                // Basic JWT format check
+                const tokenParts = token.split('.');
+                if (tokenParts.length !== 3) {
+                    throw new Error(`Invalid JWT format: ${tokenParts.length} parts`);
+                }
+                addStep('✅ JWT token format valid', 'success');
+                
+                // Step 5: Test Token Storage
+                log('STEP 5: Testing localStorage...');
+                try {
+                    localStorage.setItem('latanda_auth_token', token);
+                    localStorage.setItem('latanda_user', JSON.stringify(response.data.user));
+                    
+                    // Verify storage worked
+                    const storedToken = localStorage.getItem('latanda_auth_token');
+                    const storedUser = localStorage.getItem('latanda_user');
+                    
+                    if (storedToken !== token) {
+                        throw new Error('Token storage failed');
+                    }
+                    if (!storedUser) {
+                        throw new Error('User data storage failed');
+                    }
+                    
+                    addStep('✅ Data stored in localStorage successfully', 'success');
+                } catch (storageError) {
+                    throw new Error(`Storage failed: ${storageError.message}`);
+                }
+                
+                // Step 6: Test Redirect URL
+                log('STEP 6: Testing redirect URL...');
+                const redirectUrl = response.data.dashboard_url || '/home-dashboard.html';
+                log(`Redirect URL: ${redirectUrl}`);
+                
+                // Test if redirect URL is accessible
+                try {
+                    const testResponse = await fetch(`http://localhost:8080${redirectUrl}`);
+                    if (testResponse.ok) {
+                        addStep('✅ Redirect URL is accessible', 'success');
+                    } else {
+                        throw new Error(`Redirect URL returned ${testResponse.status}`);
+                    }
+                } catch (urlError) {
+                    addStep(`⚠️ Redirect URL issue: ${urlError.message}`, 'warning');
+                }
+                
+                // Step 7: Final Success
+                log('STEP 7: Login flow completed successfully');
+                addStep('🎉 COMPLETE LOGIN FLOW SUCCESSFUL!', 'success');
+                
+                log('\n=== LOGIN SHOULD WORK ===');
+                log('All steps passed. The issue might be in the actual auth-enhanced.html page.');
+                
+                // Test actual redirect
+                log('\n⚠️ Testing actual redirect in 3 seconds...');
+                setTimeout(() => {
+                    log('🔄 Attempting redirect to home dashboard...');
+                    window.location.href = redirectUrl;
+                }, 3000);
+                
+            } catch (error) {
+                log(`❌ LOGIN FLOW FAILED: ${error.message}`);
+                addStep(`❌ FAILED: ${error.message}`, 'error');
+            }
+        }
+
+        function testTokenStorage() {
+            log('💾 Testing token storage independently...');
+            
+            try {
+                // Test basic localStorage functionality
+                const testKey = 'test_token_' + Date.now();
+                const testValue = 'test_value_' + Math.random();
+                
+                localStorage.setItem(testKey, testValue);
+                const retrieved = localStorage.getItem(testKey);
+                localStorage.removeItem(testKey);
+                
+                if (retrieved === testValue) {
+                    addStep('✅ localStorage working correctly', 'success');
+                } else {
+                    addStep('❌ localStorage not working', 'error');
+                }
+                
+                // Check current auth storage
+                const currentToken = localStorage.getItem('latanda_auth_token');
+                const currentUser = localStorage.getItem('latanda_user');
+                
+                if (currentToken) {
+                    log(`Current token: ${currentToken.substring(0, 50)}...`);
+                    addStep('✅ Auth token found in storage', 'success');
+                } else {
+                    addStep('ℹ️ No auth token in storage', 'warning');
+                }
+                
+                if (currentUser) {
+                    log(`Current user: ${currentUser}`);
+                    addStep('✅ User data found in storage', 'success');
+                } else {
+                    addStep('ℹ️ No user data in storage', 'warning');
+                }
+                
+            } catch (error) {
+                addStep(`❌ Storage test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testRedirect() {
+            log('🔄 Testing redirect functionality...');
+            
+            const redirectUrl = '/home-dashboard.html';
+            
+            // Test URL accessibility
+            fetch(`http://localhost:8080${redirectUrl}`)
+                .then(response => {
+                    if (response.ok) {
+                        addStep('✅ Home dashboard URL is accessible', 'success');
+                        log('🔄 Redirecting in 2 seconds...');
+                        setTimeout(() => {
+                            window.location.href = redirectUrl;
+                        }, 2000);
+                    } else {
+                        addStep(`❌ Home dashboard URL returned ${response.status}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    addStep(`❌ Redirect test failed: ${error.message}`, 'error');
+                });
+        }
+
+        function checkCurrentAuth() {
+            log('🔍 Checking current authentication state...');
+            
+            const token = localStorage.getItem('latanda_auth_token');
+            const user = localStorage.getItem('latanda_user');
+            
+            if (token) {
+                log(`Found token: ${token.substring(0, 50)}...`);
+                try {
+                    // Try to decode token
+                    const parts = token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        log(`Token payload: ${JSON.stringify(payload, null, 2)}`);
+                        
+                        const now = Math.floor(Date.now() / 1000);
+                        const expiry = payload.exp;
+                        const timeLeft = expiry - now;
+                        
+                        if (timeLeft > 0) {
+                            addStep(`✅ Valid token found (expires in ${Math.floor(timeLeft / 60)} minutes)`, 'success');
+                        } else {
+                            addStep('⚠️ Token expired', 'warning');
+                        }
+                    } else {
+                        addStep('⚠️ Token has invalid format', 'warning');
+                    }
+                } catch (decodeError) {
+                    addStep(`⚠️ Could not decode token: ${decodeError.message}`, 'warning');
+                }
+            } else {
+                addStep('ℹ️ No authentication token found', 'warning');
+            }
+            
+            if (user) {
+                log(`Found user data: ${user}`);
+                try {
+                    const userData = JSON.parse(user);
+                    addStep(`✅ User data: ${userData.email} (${userData.role})`, 'success');
+                } catch (parseError) {
+                    addStep('⚠️ Could not parse user data', 'warning');
+                }
+            } else {
+                addStep('ℹ️ No user data found', 'warning');
+            }
+        }
+
+        // Auto-run auth check on page load
+        window.addEventListener('load', function() {
+            log('🔍 Debug Login Flow initialized');
+            setTimeout(checkCurrentAuth, 500);
+        });
+    </script>
+</body>
+</html>

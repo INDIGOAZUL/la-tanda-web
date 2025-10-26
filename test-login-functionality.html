@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test - La Tanda</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+        }
+        .success { border-left: 4px solid #4CAF50; background: #f1f8e9; }
+        .error { border-left: 4px solid #f44336; background: #ffebee; }
+        .info { border-left: 4px solid #2196F3; background: #e3f2fd; }
+        button { 
+            background: #00FFFF; 
+            color: #0f172a; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600;
+            margin: 5px;
+        }
+        button:hover { background: #7FFFD8; }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .log-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 La Tanda Login System Test</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Test Credentials</h3>
+            <p><strong>Demo User:</strong> demo@latanda.online / demo123</p>
+            <p><strong>Admin User:</strong> admin@latanda.online / Admin123!</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Login Test</h3>
+            <input type="email" id="testEmail" placeholder="Email" value="demo@latanda.online">
+            <input type="password" id="testPassword" placeholder="Password" value="demo123">
+            <br>
+            <button onclick="testLogin()">🚀 Test Login</button>
+            <button onclick="testRegistration()">📝 Test Registration</button>
+            <button onclick="clearLogs()">🧹 Clear Logs</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="logOutput" class="log-output">Ready for testing...\n</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 API Status</h3>
+            <button onclick="testAPIProxy()">Test API Proxy</button>
+            <button onclick="checkStoredUsers()">Check Stored Users</button>
+        </div>
+    </div>
+
+    <!-- Include our API proxy -->
+    <script src="api-proxy.js"></script>
+
+    <script>
+        function log(message) {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logOutput').textContent = 'Logs cleared...\n';
+        }
+
+        async function testAPIProxy() {
+            log('🔍 Testing API Proxy initialization...');
+            
+            try {
+                if (typeof APIProxy !== 'undefined') {
+                    log('✅ API Proxy class found');
+                    const proxy = new APIProxy();
+                    log('✅ API Proxy instance created');
+                    log(`   Base URL: ${proxy.API_BASE}`);
+                    log(`   Is Proxy: ${proxy.isProxy}`);
+                } else {
+                    log('❌ API Proxy class not found');
+                }
+            } catch (error) {
+                log(`❌ API Proxy error: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            log(`🔐 Testing login for: ${email}`);
+            
+            try {
+                // Create API proxy instance
+                const apiProxy = new APIProxy();
+                log('✅ API Proxy created');
+                
+                // Prepare login request
+                const loginData = {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                };
+                
+                log('📤 Sending login request...');
+                
+                // Make login request
+                const response = await apiProxy.makeRequest('/auth/login', loginData);
+                
+                log('📥 Login response received:');
+                log(JSON.stringify(response, null, 2));
+                
+                if (response.success) {
+                    log('🎉 LOGIN SUCCESSFUL!');
+                    log(`   User: ${response.data.user?.name || response.data.user?.email}`);
+                    log(`   Token: ${response.data.auth_token?.substring(0, 50)}...`);
+                    log(`   Dashboard: ${response.data.dashboard_url}`);
+                    
+                    // Test token storage
+                    if (response.data.auth_token) {
+                        localStorage.setItem('auth_token', response.data.auth_token);
+                        log('✅ Token stored in localStorage');
+                    }
+                } else {
+                    log('❌ LOGIN FAILED!');
+                    log(`   Error: ${response.error?.message || 'Unknown error'}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Login test error: ${error.message}`);
+                console.error('Login test error:', error);
+            }
+        }
+
+        async function testRegistration() {
+            log('📝 Testing user registration...');
+            
+            try {
+                const apiProxy = new APIProxy();
+                
+                const regData = {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: 'Test User',
+                        email: 'testuser@example.com',
+                        password: 'testpass123'
+                    })
+                };
+                
+                const response = await apiProxy.makeRequest('/auth/register', regData);
+                
+                log('📥 Registration response:');
+                log(JSON.stringify(response, null, 2));
+                
+                if (response.success) {
+                    log('🎉 REGISTRATION SUCCESSFUL!');
+                } else {
+                    log('❌ REGISTRATION FAILED!');
+                }
+                
+            } catch (error) {
+                log(`❌ Registration test error: ${error.message}`);
+            }
+        }
+
+        function checkStoredUsers() {
+            log('👥 Checking stored users in localStorage...');
+            
+            try {
+                const users = localStorage.getItem('demo_users');
+                if (users) {
+                    const parsedUsers = JSON.parse(users);
+                    log(`✅ Found ${Object.keys(parsedUsers).length} stored users:`);
+                    Object.keys(parsedUsers).forEach(email => {
+                        log(`   • ${email}: ${parsedUsers[email].name}`);
+                    });
+                } else {
+                    log('ℹ️  No users found in localStorage');
+                }
+                
+                // Check for auth token
+                const token = localStorage.getItem('auth_token');
+                if (token) {
+                    log(`✅ Auth token found: ${token.substring(0, 50)}...`);
+                } else {
+                    log('ℹ️  No auth token found');
+                }
+                
+            } catch (error) {
+                log(`❌ Error checking stored data: ${error.message}`);
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', function() {
+            log('🚀 La Tanda Login Test initialized');
+            testAPIProxy();
+        });
+    </script>
+</body>
+</html>

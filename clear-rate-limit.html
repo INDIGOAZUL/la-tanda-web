@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Rate Limit - La Tanda</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .btn {
+            background: linear-gradient(135deg, #00FFFF 0%, #7FFFD8 100%);
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        .credentials {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #00FFFF;
+        }
+        .success {
+            color: #22d55e;
+            background: rgba(34, 213, 94, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 La Tanda - Clear Rate Limit</h1>
+        
+        <p>Esta página te ayudará a eliminar las restricciones de rate limiting y acceder al sistema.</p>
+        
+        <div class="credentials">
+            <h3>📋 Credenciales de Demo:</h3>
+            <p><strong>Email:</strong> admin@latanda.online</p>
+            <p><strong>Password:</strong> Admin123!</p>
+        </div>
+        
+        <button class="btn" onclick="clearAllRestrictions()">🗑️ Limpiar Rate Limiting</button>
+        <button class="btn" onclick="goToAuth()">🔐 Ir a Login</button>
+        <button class="btn" onclick="goToDashboard()">🏠 Ir a Dashboard</button>
+        
+        <div id="status"></div>
+        
+        <h3>🛠️ Información Técnica:</h3>
+        <ul>
+            <li><strong>Auth System:</strong> <a href="http://localhost:8080/auth-enhanced.html" target="_blank">auth-enhanced.html</a></li>
+            <li><strong>Dashboard:</strong> <a href="http://localhost:8080/home-dashboard.html" target="_blank">home-dashboard.html</a></li>
+            <li><strong>Landing:</strong> <a href="http://localhost:8080/" target="_blank">index.html</a></li>
+        </ul>
+    </div>
+
+    <script>
+        function clearAllRestrictions() {
+            try {
+                // Clear all La Tanda related localStorage items
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('latanda_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log(`Removed: ${key}`);
+                });
+                
+                // Clear session storage too
+                sessionStorage.clear();
+                
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Rate limiting cleared successfully!<br>
+                        Removed ${keysToRemove.length} localStorage items.<br>
+                        You can now login with the demo credentials.
+                    </div>
+                `;
+                
+                console.log('Rate limiting cleared. Keys removed:', keysToRemove);
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div style="color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 10px; border-radius: 8px;">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function goToAuth() {
+            window.location.href = 'http://localhost:8080/auth-enhanced.html';
+        }
+        
+        function goToDashboard() {
+            window.location.href = 'http://localhost:8080/home-dashboard.html';
+        }
+        
+        // Auto-clear on page load
+        console.log('La Tanda Rate Limit Cleaner loaded');
+    </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Users - La Tanda</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .btn {
+            background: linear-gradient(135deg, #00FFFF 0%, #7FFFD8 100%);
+            color: #000;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        .users-list {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .user-item {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #00FFFF;
+        }
+        .credentials {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #00FFFF;
+        }
+        .test-form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .test-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 4px;
+        }
+        .test-form input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Debug Users - La Tanda</h1>
+        
+        <div class="credentials">
+            <h3>📋 Default Credentials:</h3>
+            <p><strong>Admin:</strong> admin@latanda.online / Admin123!</p>
+            <p><strong>Demo:</strong> demo@latanda.online / demo123</p>
+        </div>
+        
+        <button class="btn" onclick="showRegisteredUsers()">👥 Show Registered Users</button>
+        <button class="btn" onclick="testUserRegistration()">➕ Test User Registration</button>
+        <button class="btn" onclick="clearUsers()">🗑️ Clear All Users</button>
+        <button class="btn" onclick="goToAuth()">🔐 Go to Auth</button>
+        
+        <div class="test-form">
+            <h3>🧪 Test Login with Your Credentials:</h3>
+            <input type="email" id="testEmail" placeholder="Your email">
+            <input type="password" id="testPassword" placeholder="Your password">
+            <button class="btn" onclick="testLogin()">🚀 Test Login</button>
+        </div>
+        
+        <div id="users-display" class="users-list"></div>
+    </div>
+
+    <!-- Load API proxy -->
+    <script src="api-proxy.js"></script>
+    
+    <script>
+        function showRegisteredUsers() {
+            const usersDisplay = document.getElementById('users-display');
+            
+            if (window.apiProxy && window.apiProxy.getRegisteredUsers) {
+                const users = window.apiProxy.getRegisteredUsers();
+                
+                if (Object.keys(users).length === 0) {
+                    usersDisplay.innerHTML = '<div class="user-item">No users registered yet</div>';
+                } else {
+                    let html = '<h3>Registered Users:</h3>';
+                    Object.entries(users).forEach(([email, userData]) => {
+                        html += `
+                            <div class="user-item">
+                                <strong>Email:</strong> ${email}<br>
+                                <strong>Name:</strong> ${userData.userData?.name || 'N/A'}<br>
+                                <strong>Role:</strong> ${userData.userData?.role || 'user'}<br>
+                                <strong>Registered:</strong> ${new Date(userData.registeredAt).toLocaleString()}<br>
+                                <strong>Password:</strong> ${userData.password}
+                            </div>
+                        `;
+                    });
+                    usersDisplay.innerHTML = html;
+                }
+            } else {
+                usersDisplay.innerHTML = '<div class="user-item">API Proxy not loaded</div>';
+            }
+        }
+
+        async function testUserRegistration() {
+            const testEmail = `test${Date.now()}@example.com`;
+            const testPassword = 'Test123!';
+            const testName = 'Test User ' + Date.now();
+            
+            try {
+                const result = await window.apiProxy.makeRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: testEmail,
+                        password: testPassword,
+                        name: testName
+                    })
+                });
+                
+                console.log('Registration result:', result);
+                
+                if (result.success) {
+                    alert(`✅ User registered successfully!\nEmail: ${testEmail}\nPassword: ${testPassword}`);
+                    showRegisteredUsers();
+                } else {
+                    alert('❌ Registration failed: ' + (result.error?.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('❌ Registration error: ' + error.message);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+            
+            try {
+                const result = await window.apiProxy.makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                console.log('Login result:', result);
+                
+                if (result.success) {
+                    alert('✅ Login successful! Check console for details.');
+                    console.log('Auth token:', result.data.auth_token);
+                    console.log('User data:', result.data.user);
+                } else {
+                    alert('❌ Login failed: ' + (result.error?.message || 'Invalid credentials'));
+                }
+            } catch (error) {
+                alert('❌ Login error: ' + error.message);
+            }
+        }
+
+        function clearUsers() {
+            if (confirm('Are you sure you want to clear all registered users?')) {
+                localStorage.removeItem('latanda_registered_users');
+                showRegisteredUsers();
+                alert('All users cleared!');
+            }
+        }
+
+        function goToAuth() {
+            window.location.href = '/auth-enhanced.html';
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            console.log('Debug Users page loaded');
+            showRegisteredUsers();
+        });
+    </script>
+</body>
+</html>

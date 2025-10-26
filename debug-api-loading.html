@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API Loading</title>
+</head>
+<body>
+    <h1>Debug API Loading</h1>
+    <div id="debug-output"></div>
+    
+    <script>
+        console.log('🔍 Starting API proxy loading debug...');
+        
+        window.addEventListener('error', function(e) {
+            console.error('❌ JavaScript Error:', e.message, 'at', e.filename, ':', e.lineno);
+            document.getElementById('debug-output').innerHTML += `<p style="color: red;">Error: ${e.message}</p>`;
+        });
+        
+        console.log('⏳ About to load API proxy script...');
+    </script>
+    
+    <script src="api-proxy-working.js"></script>
+    
+    <script>
+        setTimeout(() => {
+            console.log('🔍 Checking global objects...');
+            console.log('window.apiProxy:', window.apiProxy);
+            console.log('window.enhancedAPIProxy:', window.enhancedAPIProxy);
+            console.log('window.comprehensiveAPIProxy:', window.comprehensiveAPIProxy);
+            
+            const debugDiv = document.getElementById('debug-output');
+            
+            if (window.apiProxy) {
+                debugDiv.innerHTML += '<p style="color: green;">✅ window.apiProxy loaded</p>';
+                debugDiv.innerHTML += `<p>Version: ${window.apiProxy.version}</p>`;
+                debugDiv.innerHTML += `<p>Base URL: ${window.apiProxy.API_BASE}</p>`;
+            } else {
+                debugDiv.innerHTML += '<p style="color: red;">❌ window.apiProxy not found</p>';
+            }
+            
+            if (window.enhancedAPIProxy) {
+                debugDiv.innerHTML += '<p style="color: green;">✅ window.enhancedAPIProxy loaded</p>';
+            } else {
+                debugDiv.innerHTML += '<p style="color: red;">❌ window.enhancedAPIProxy not found</p>';
+            }
+            
+            if (window.comprehensiveAPIProxy) {
+                debugDiv.innerHTML += '<p style="color: green;">✅ window.comprehensiveAPIProxy loaded</p>';
+            } else {
+                debugDiv.innerHTML += '<p style="color: red;">❌ window.comprehensiveAPIProxy not found</p>';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
