@@ -14,7 +14,7 @@
 
 ```bash
 GMAIL_USER=ebanksnigel@gmail.com
-GMAIL_APP_PASSWORD=zbpl ofry vsxx bglv
+GMAIL_APP_PASSWORD=[REDACTED - REGENERATE_NEW_PASSWORD]
 ```
 
 **Status:** ✅ **EXISTS** (not deleted)
@@ -31,7 +31,7 @@ ssh root@168.231.67.201
 # Option 1: Update API to read GMAIL_* vars
 # Option 2: Add SMTP_* aliases to .env
 echo "SMTP_USER=ebanksnigel@gmail.com" >> /root/.env
-echo "SMTP_PASS=zbpl ofry vsxx bglv" >> /root/.env
+echo "SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]" >> /root/.env
 
 # Then load .env in API or use dotenv package
 npm install dotenv
@@ -273,7 +273,7 @@ function require2FAForAdmin(user, session) {  // Add session param
 
 ssh root@168.231.67.201
 echo "SMTP_USER=ebanksnigel@gmail.com" >> /root/.env
-echo "SMTP_PASS=zbpl ofry vsxx bglv" >> /root/.env
+echo "SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]" >> /root/.env
 
 # Install dotenv if not present
 cd /root && npm install dotenv
@@ -640,7 +640,7 @@ function trackParticipation(userId, action) {
    # Fix SMTP email
    ssh root@168.231.67.201
    echo "SMTP_USER=ebanksnigel@gmail.com" >> /root/.env
-   echo "SMTP_PASS=zbpl ofry vsxx bglv" >> /root/.env
+   echo "SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]" >> /root/.env
    npm install dotenv
    # Then I'll fix the API code to load it
    ```

@@ -74,7 +74,7 @@ function require2FAForAdmin(user) {
 **Found:**
 ```bash
 GMAIL_USER=ebanksnigel@gmail.com
-GMAIL_APP_PASSWORD=zbpl ofry vsxx bglv
+GMAIL_APP_PASSWORD=[REDACTED - REGENERATE_NEW_PASSWORD]
 ```
 
 **Problem:** API looks for `SMTP_USER` and `SMTP_PASS`, but .env had `GMAIL_*`
@@ -82,7 +82,7 @@ GMAIL_APP_PASSWORD=zbpl ofry vsxx bglv
 **Solution:** Added aliases to .env
 ```bash
 SMTP_USER=ebanksnigel@gmail.com
-SMTP_PASS=zbpl ofry vsxx bglv
+SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]
 ```
 
 **Verification:**
@@ -429,9 +429,9 @@ Permissions: 8 (all admin functions)
 ```bash
 # In /root/.env:
 GMAIL_USER=ebanksnigel@gmail.com
-GMAIL_APP_PASSWORD=zbpl ofry vsxx bglv
+GMAIL_APP_PASSWORD=[REDACTED - REGENERATE_NEW_PASSWORD]
 SMTP_USER=ebanksnigel@gmail.com
-SMTP_PASS=zbpl ofry vsxx bglv
+SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]
 ```
 
 ### Test Commands
