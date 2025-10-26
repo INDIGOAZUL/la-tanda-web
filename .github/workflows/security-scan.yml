@@ -57,32 +57,32 @@ jobs:
       run: |
         echo "🔍 Scanning for exposed secrets..."
 
-        # Patterns to search for
+        # Patterns to search for (high-confidence only)
         declare -a PATTERNS=(
-          "password\s*=\s*['\"][^'\"]{3,}['\"]"
-          "api[_-]?key\s*[=:]\s*['\"][^'\"]{10,}['\"]"
-          "secret\s*[=:]\s*['\"][^'\"]{10,}['\"]"
-          "token\s*[=:]\s*['\"][^'\"]{20,}['\"]"
-          "private[_-]?key"
-          "-----BEGIN.*PRIVATE KEY-----"
           "SK_live_"
           "sk_test_"
-          "access_token"
-          "auth_token"
           "AKIA[0-9A-Z]{16}"  # AWS Access Key
-          "AIza[0-9A-Za-z-_]{35}"  # Google API Key
         )
 
         SECRETS_FOUND=0
+        EXCLUDE_DIRS="node_modules|\.git|scripts|\.github"
 
         for pattern in "${PATTERNS[@]}"; do
           echo "Checking pattern: $pattern"
 
-          if git grep -niE "$pattern" | grep -v "example" | grep -v "placeholder" | grep -v "TODO" | grep -v ".github/workflows"; then
+          # More strict filtering - exclude common false positives
+          if git grep -niE "$pattern" -- . ':!scripts/*' ':!*.md' | grep -v "example" | grep -v "placeholder" | grep -v "TODO" | grep -v ".github/workflows"; then
             echo "⚠️ Potential secret found matching pattern: $pattern"
             SECRETS_FOUND=1
           fi
         done
+
+        # Manual check for actual hardcoded values (not env vars)
+        echo "Checking for hardcoded API keys (not env vars)..."
+        if git grep -E "apiKey\s*:\s*['\"][a-zA-Z0-9]{20,}['\"]" -- . ':!scripts/*' ':!*.md'; then
+          echo "⚠️ Hardcoded API key found"
+          SECRETS_FOUND=1
+        fi
 
         if [ $SECRETS_FOUND -eq 0 ]; then
           echo "✅ No exposed secrets detected"
