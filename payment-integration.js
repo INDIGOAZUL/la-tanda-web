@@ -302,7 +302,8 @@ class PaymentIntegrationManager {
                         result = await this.processStripePayment(transaction, method);
                         break;
                     default:
-                    throw new Error(`Unsupported payment provider: ${method.provider}`);
+                        throw new Error(`Unsupported payment provider: ${method.provider}`);
+                }
             }
 
             // Actualizar estado de la transacción
