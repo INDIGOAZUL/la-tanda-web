@@ -128,6 +128,40 @@ Follow the technical approach in the issue.
 
 ---
 
+## 🔧 Recommended Development Tools
+
+### Chrome DevTools 141+ (NEW! ✨)
+
+**Why:** Latest Chrome has AI-powered debugging features
+
+**Install:** [Chrome 141+ or Chrome Dev/Canary](https://www.google.com/chrome/dev/)
+
+**Features:**
+1. **🤖 AI Insight** - Debug network performance with Gemini AI
+   - Performance panel → Record → Network tree → "Debug with AI"
+   - Ask: "Why is this page slow?" or "Optimize loading order"
+
+2. **💬 AI Chat Export** - Document debugging sessions
+   - Export entire AI conversation
+   - Share insights with team on GitHub issues
+
+3. **⚙️ Performance Track Config** - Save your setup
+   - Configure once, use forever
+   - Consistent metrics across team
+
+**Quick Start:**
+```bash
+# 1. Open DevTools (F12)
+# 2. Go to Performance tab
+# 3. Record page load
+# 4. Click "Debug with AI" in Network tree
+# 5. Ask AI for optimization suggestions
+```
+
+**Learn more:** [Chrome DevTools 141 Release Notes](https://developer.chrome.com/blog/new-in-devtools-141/)
+
+---
+
 ## 🧪 Testing Your Changes
 
 ### Frontend Testing
@@ -141,6 +175,12 @@ Follow the technical approach in the issue.
    - Click all buttons
    - Fill out forms
    - Test navigation
+
+3. **Performance Testing (Chrome 141+):**
+   - Open DevTools (F12) → Performance tab
+   - Record page load
+   - Use "Debug with AI" for optimization tips
+   - Export findings to share with team
 
 ### Smart Contract Testing
 
