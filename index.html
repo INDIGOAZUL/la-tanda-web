@@ -2,9 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Performance Optimization Hints -->
+    <!-- Preload critical CSS for faster render -->
+    <link rel="preload" href="latanda-ux-bundle.css" as="style">
+    
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//unpkg.com">
+    
+    <!-- Preconnect to critical domains for faster HTTPS handshake -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <meta name="theme-color" content="#00FFFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>La Tanda Web3 Protocol - Decentralized Group Savings & DeFi</title>
-    <meta name="description" content="La Tanda Web3 Protocol - Revolutionary Web3 DeFi protocol for group savings, lending, and financial empowerment on La Tanda Chain.">
+    <meta name="description" content="La Tanda Web3 Protocol - Revolutionary Web3 DeFi protocol for group savings, lending, and financial empowerment on Polygon blockchain.">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/">
+    <meta property="og:title" content="La Tanda Web3 - Beta Testing Now Open | Earn up to 1,000 LTD Tokens">
+    <meta property="og:description" content="Join our DeFi savings platform beta on Polygon. Test tandas, find bugs, earn tokens. 50 beta tester spots available - Q2 2026 mainnet launch.">
+    <meta property="og:image" content="https://latanda.online/assets/logo-latanda-latest.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="La Tanda Web3 Protocol">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://latanda.online/">
+    <meta name="twitter:title" content="La Tanda Web3 - Beta Testing Now Open">
+    <meta name="twitter:description" content="Join our DeFi savings platform beta. Earn up to 1,000 LTD tokens for testing.">
+    <meta name="twitter:image" content="https://latanda.online/assets/logo-latanda-latest.png">
+    <meta name="twitter:creator" content="@TandaWeb3">
+    <meta name="twitter:site" content="@TandaWeb3">
+
+    <!-- Additional Meta Tags -->
+    <meta name="keywords" content="DeFi, Web3, Polygon, Savings, Tandas, Beta Testing, Cryptocurrency, Blockchain, Financial Inclusion, Honduras">
+    <meta name="author" content="La Tanda Web3 Team">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://latanda.online/">
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="shortcut icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
@@ -13,6 +56,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/dist/cryptocurrency-icons.min.css">
     <!-- Shared Components -->
     <link rel="stylesheet" href="shared-components.css">
+    <!-- Week 2: Error Handling System -->
+    <!-- Week 3: Switched to bundled version (31% smaller) -->
+    <link rel="stylesheet" href="latanda-ux-bundle.css">
+    <link rel="stylesheet" href="pwa-styles.css">
     <style>
         :root {
             --tanda-cyan: #00FFFF;
@@ -467,6 +514,34 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .header { padding: 40px 20px; }
+            .header h1 { font-size: 2rem !important; }
+            .header p { font-size: 1rem !important; }
+            .protocol-stats { grid-template-columns: repeat(2, 1fr); padding: 20px; gap: 15px; }
+            .stat-item { padding: 15px; }
+            .stat-value { font-size: 1.5rem !important; }
+            .features-grid { grid-template-columns: 1fr; gap: 20px; padding: 20px; }
+            .feature-card { padding: 20px; }
+            .feature-icon { font-size: 2rem; width: 60px; height: 60px; }
+            .feature-title { font-size: 1.3rem !important; }
+            .feature-description { font-size: 0.95rem; }
+            .developer-banner { padding: 20px !important; margin: 20px 10px !important; }
+            .developer-banner h3 { font-size: 1.2rem !important; }
+            .developer-banner p { font-size: 0.9rem !important; }
+            .developer-banner a { padding: 10px 20px !important; font-size: 0.9rem !important; }
+            .steps-grid { grid-template-columns: 1fr; gap: 20px; padding: 20px; }
+            footer { padding: 30px 20px !important; }
+            .action-btn, .feature-link { padding: 10px 20px !important; font-size: 0.9rem !important; }
+        }
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.5rem !important; }
+            .protocol-stats { grid-template-columns: 1fr; gap: 10px; }
+            .stat-value { font-size: 1.2rem !important; }
+            .feature-title { font-size: 1.1rem !important; }
+        }
     </style>
     <!-- PWA Service Worker -->
     <!-- Global i18n Translation System -->
@@ -479,6 +554,101 @@
     <script src="sw-register.js" defer></script>
 </head>
 <body>
+<!-- TESTNET DISCLAIMER BANNER -->
+<div id="testnet-banner" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.95) 0%, rgba(255, 69, 0, 0.95) 100%);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    font-family: 'Exo 2', sans-serif;
+    animation: slideDown 0.5s ease-out;
+">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">⚠️</span>
+            <strong style="font-size: 16px; font-family: 'Orbitron', monospace;">TESTNET BETA</strong>
+        </div>
+        <span style="font-size: 14px;">
+            You're using <strong>Polygon Amoy Testnet</strong> - Test tokens have <strong>NO monetary value</strong>
+        </span>
+        <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/BETA-TESTING-PROGRAM.md" 
+           target="_blank"
+           style="
+               background: white;
+               color: #ff4500;
+               padding: 6px 16px;
+               border-radius: 20px;
+               text-decoration: none;
+               font-weight: bold;
+               font-size: 13px;
+               transition: transform 0.2s;
+               white-space: nowrap;
+           "
+           onmouseover="this.style.transform='scale(1.05)'"
+           onmouseout="this.style.transform='scale(1)'">
+            📖 Learn More
+        </a>
+        <button onclick="document.getElementById('testnet-banner').style.display='none'; document.body.style.paddingTop='0'" 
+                style="
+                    background: transparent;
+                    border: 1px solid rgba(255, 255, 255, 0.5);
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    transition: all 0.2s;
+                "
+                onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+                onmouseout="this.style.background='transparent'">
+            ✕ Dismiss
+        </button>
+    </div>
+</div>
+
+<style>
+    @keyframes slideDown {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    body {
+        padding-top: 60px !important;
+    }
+    
+    @media (max-width: 768px) {
+        #testnet-banner {
+            padding: 10px 15px;
+            font-size: 13px;
+        }
+        body {
+            padding-top: 80px !important;
+        }
+    }
+</style>
+
+<script>
+    // Show banner for 10 seconds, then allow dismiss
+    setTimeout(function() {
+        const banner = document.getElementById("testnet-banner");
+        if (banner) {
+            banner.style.animation = "pulse 2s ease-in-out infinite";
+        }
+    }, 10000);
+</script>
     <!-- Language Selector -->
 
     <div class="container">
@@ -489,7 +659,7 @@
             </div>
             <h1 class="protocol-title" data-i18n="protocol.title">La Tanda Web3 Protocol</h1>
             <p class="protocol-subtitle" data-i18n="protocol.subtitle">
-                Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">built on La Tanda Chain</span>. 
+                Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">on Polygon blockchain (Amoy testnet)</span>. 
                 Empowering communities through Web3 financial innovation.
             </p>
             
@@ -506,35 +676,32 @@
                     <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/DEVELOPER-QUICKSTART.md" target="_blank" style="background: var(--gradient-web3); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-family: 'Orbitron', monospace; display: flex; align-items: center; gap: 8px;">
                         ⚡ START NOW (5 min)
                     </a>
-                    <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/ACTIVE-BOUNTIES.md" target="_blank" style="background: rgba(0, 255, 255, 0.2); color: var(--tanda-cyan); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-family: 'Orbitron', monospace; border: 1px solid var(--tanda-cyan);">
+                    <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/CONTRIBUTING.md#bounty-system" target="_blank" style="background: rgba(0, 255, 255, 0.2); color: var(--tanda-cyan); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-family: 'Orbitron', monospace; border: 1px solid var(--tanda-cyan);">
                         💰 View All Rewards
                     </a>
                 </div>
             </div>
         </header>
 
-        <!-- Protocol Statistics -->
+        <!-- Beta Testing Statistics -->
         <section class="protocol-stats">
             <div class="stat-item">
-                <span class="stat-value"><i class="fas fa-lock stat-icon"></i>$2.4M</span>
-                <span class="stat-label" data-i18n="index.stats.tvl">Total Value Locked</span>
+                <span class="stat-value"><i class="fas fa-flask stat-icon"></i>BETA</span>
+                <span class="stat-label">Testnet Phase</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value"><i class="fas fa-wallet stat-icon"></i>15,847</span>
-                <span class="stat-label" data-i18n="index.stats.users">Active Users</span>
+                <span class="stat-value"><i class="fas fa-users stat-icon"></i>50</span>
+                <span class="stat-label">Beta Tester Spots</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value"><i class="fas fa-link stat-icon"></i>342</span>
-                <span class="stat-label" data-i18n="index.stats.tandas">Active Tandas</span>
+                <span class="stat-value"><i class="fas fa-code stat-icon"></i>4</span>
+                <span class="stat-label">Active Contributors</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value"><i class="fas fa-chart-line stat-icon"></i>18.5%</span>
-                <span class="stat-label" data-i18n="index.stats.apy">Average APY</span>
+                <span class="stat-value"><i class="fas fa-calendar stat-icon"></i>Q2 2026</span>
+                <span class="stat-label">Mainnet Launch</span>
             </div>
         </section>
-
-        <!-- Features Section -->
-        <section class="features-section">
             <h2 class="section-title"><span data-i18n="index.features.section_title">Protocol Features</span></h2>
             <p class="section-subtitle">
                 <span data-i18n="index.features.section_subtitle">Combining traditional tanda principles with cutting-edge DeFi technology 
@@ -606,28 +773,37 @@
                     </div>
                 </div>
                 
-                <div class="feature-card" onclick="toggleFeature(this)">
+                                <div class="feature-card" onclick="toggleFeature(this)">
                     <div class="expand-indicator">▼</div>
-                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                    <h3 class="feature-title"><span data-i18n="index.features.security.title">Secure & Audited</span></h3>
+                    <div class="feature-icon"><i class="fas fa-flask"></i></div>
+                    <h3 class="feature-title">🧪 Beta Testing Security</h3>
                     <p class="feature-description">
-                        <span data-i18n="index.features.security.desc">Multi-signature security, time-locked contracts, and comprehensive audits ensure maximum protocol safety.
-                    </span></p>
+                        Testing on Polygon Amoy testnet with test funds only. Security audit planned Q1 2026 before mainnet launch.
+                    </p>
                     <div class="feature-details">
                         <div class="feature-metrics">
                             <div class="metric">
-                                <div class="metric-value">3</div>
-                                <div class="metric-label"><span data-i18n="index.features.security.audits">Audit Firms</span></div>
+                                <div class="metric-value">Testnet</div>
+                                <div class="metric-label">Test Funds Only</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-value">5/7</div>
-                                <div class="metric-label"><span data-i18n="index.features.security.multisig">Multi-sig</span></div>
+                                <div class="metric-value">Q1 2026</div>
+                                <div class="metric-label">Planned Audit</div>
                             </div>
                             <div class="metric">
-                                <div class="metric-value">48h</div>
-                                <div class="metric-label"><span data-i18n="index.features.security.timelock">Time-lock</span></div>
+                                <div class="metric-value">Active</div>
+                                <div class="metric-label">Bug Bounty</div>
                             </div>
                         </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                            Currently in beta testing phase on Polygon Amoy testnet. All transactions use test tokens with no monetary value. Professional security audit scheduled before mainnet launch.
+                        </p>
+                        <div class="feature-links">
+                            <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/BETA-TESTING-PROGRAM.md" target="_blank" class="feature-link">Beta Program</a>
+                            <a href="mailto:security@latanda.online" class="feature-link">Report Security Issue</a>
+                        </div>
+                    </div>
+                </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px;">
                             <span data-i18n="index.features.security.learn_more">Protocol security is paramount with formal verification, extensive testing, and continuous monitoring. All critical functions require multi-signature approval and time delays.
                         </span></p>
@@ -638,29 +814,7 @@
                     </div>
                 </div>
                 
-                <div class="feature-card" onclick="toggleFeature(this)">
-                    <div class="expand-indicator">▼</div>
-                    <div class="feature-icon"><i class="fas fa-swimming-pool"></i></div>
-                    <h3 class="feature-title"><span data-i18n="index.features.liquidity.title">Liquidity Pools</span></h3>
-                    <p class="feature-description">
-                        <span data-i18n="index.features.liquidity.desc">Automated market makers with yield optimization and impermanent loss protection for enhanced returns.
-                    </span></p>
-                    <div class="feature-details">
-                        <div class="feature-metrics">
-                            <div class="metric">
-                                <div class="metric-value">$847K</div>
-                                <div class="metric-label"><span data-i18n="index.features.liquidity.tvl">Total TVL</span></div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">18.5%</div>
-                                <div class="metric-label"><span data-i18n="index.features.liquidity.apy">Average APY</span></div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">$156K</div>
-                                <div class="metric-label">24h Volume</div>
-                            </div>
-                        </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
                             Provide liquidity to earn trading fees and LTD rewards. Advanced algorithms optimize yields while protecting against impermanent loss through dynamic rebalancing.
                         </p>
                         <div class="feature-links">
@@ -670,29 +824,7 @@
                     </div>
                 </div>
                 
-                <div class="feature-card" onclick="toggleFeature(this)">
-                    <div class="expand-indicator">▼</div>
-                    <div class="feature-icon"><i class="fas fa-exchange-alt"></i></div>
-                    <h3 class="feature-title"><span data-i18n="index.features.bridge.title">Cross-Chain Bridge</span></h3>
-                    <p class="feature-description">
-                        <span data-i18n="index.features.bridge.desc">Seamless asset transfers across La Tanda Chain with minimal slippage and gas optimization.
-                    </span></p>
-                    <div class="feature-details">
-                        <div class="feature-metrics">
-                            <div class="metric">
-                                <div class="metric-value">0.1%</div>
-                                <div class="metric-label">Bridge Fee</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">5-15min</div>
-                                <div class="metric-label">Transfer Time</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value">4</div>
-                                <div class="metric-label">Networks (2 Live)</div>
-                            </div>
-                        </div>
-                        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
                             Move assets between supported blockchains with enterprise-grade security and minimal fees. Our bridge uses advanced routing for optimal paths and lowest costs.
                         </p>
                         <div class="feature-links">
@@ -783,7 +915,38 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p><i class="fas fa-link"></i> <span data-i18n="index.footer.built_on">Built on La Tanda Chain</span> • <i class="fas fa-shield-alt"></i> <span data-i18n="index.footer.audited">Audited Smart Contracts</span> • <i class="fas fa-vote-yea"></i> <span data-i18n="index.footer.governance">Decentralized Governance</span></p>
+            <p><i class="fas fa-link"></i> <span data-i18n="index.footer.built_on">Built on Polygon blockchain</span> • <i class="fas fa-shield-alt"></i> <span data-i18n="index.footer.audited">Beta Testing Phase</span> • <i class="fas fa-vote-yea"></i> <span data-i18n="index.footer.governance">Open Source Project</span></p>
+            <div style="margin-top: 20px; display: flex; gap: 20px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">Join our community:</span>
+                <a href="https://x.com/TandaWeb3" target="_blank" rel="noopener noreferrer" 
+                   style="color: var(--tanda-cyan); text-decoration: none; transition: all 0.3s; display: flex; align-items: center; gap: 8px;"
+                   onmouseover="this.style.color='#ffffff'"
+                   onmouseout="this.style.color='var(--tanda-cyan)'">
+                    <i class="fab fa-twitter" style="font-size: 1.2rem;"></i>
+                    <span>Twitter</span>
+                </a>
+                <a href="https://discord.gg/Jk65X9yg" target="_blank" rel="noopener noreferrer"
+                   style="color: var(--tanda-cyan); text-decoration: none; transition: all 0.3s; display: flex; align-items: center; gap: 8px;"
+                   onmouseover="this.style.color='#ffffff'"
+                   onmouseout="this.style.color='var(--tanda-cyan)'">
+                    <i class="fab fa-discord" style="font-size: 1.2rem;"></i>
+                    <span>Discord</span>
+                </a>
+                <a href="https://www.reddit.com/user/Valuable-Skin-7182/" target="_blank" rel="noopener noreferrer"
+                   style="color: var(--tanda-cyan); text-decoration: none; transition: all 0.3s; display: flex; align-items: center; gap: 8px;"
+                   onmouseover="this.style.color='#ffffff'"
+                   onmouseout="this.style.color='var(--tanda-cyan)'">
+                    <i class="fab fa-reddit" style="font-size: 1.2rem;"></i>
+                    <span>Reddit</span>
+                </a>
+                <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer"
+                   style="color: var(--tanda-cyan); text-decoration: none; transition: all 0.3s; display: flex; align-items: center; gap: 8px;"
+                   onmouseover="this.style.color='#ffffff'"
+                   onmouseout="this.style.color='var(--tanda-cyan)'">
+                    <i class="fab fa-github" style="font-size: 1.2rem;"></i>
+                    <span>GitHub</span>
+                </a>
+            </div>
             <p style="margin-top: 10px; font-size: 0.8rem;">
                 <span data-i18n="index.footer.copyright">© 2024 La Tanda Web3 Protocol. All rights reserved.</span>
             </p>
@@ -792,12 +955,15 @@
 
     <!-- Shared Components -->
     <script src="shared-components.js"></script>
+    <!-- Week 2: Error Handling System -->
+    <!-- Week 3: Switched to bundled version (31% smaller) -->
+    <script src="latanda-ux-bundle.js"></script>
+    <script src="pwa-manager.js"></script>
 
     <script>
-        // Launch function - redirect to authentication
+        // Simple launch function
         function launchProtocol() {
             console.log('🚀 Launching La Tanda Protocol...');
-            // Redirect to login/register page - users must create account
             window.location.href = 'auth-enhanced.html';
         }
 
@@ -837,6 +1003,7 @@
 
         // Add some visual effects
         document.addEventListener('DOMContentLoaded', function() {
+// 🔒 AUTO-REDIRECT FOR LOGGED IN USERS (Plan C - Day 1, Task 1)            // Check if user is already logged in and redirect to dashboard            const authToken = localStorage.getItem(auth_token);            const userId = localStorage.getItem(user_id);            if (authToken && userId && authToken !== null && userId !== null) {                console.log(✅ User already logged in, redirecting to dashboard...);                window.location.replace(/home-dashboard.html);                return; // Stop execution            }
             // Animate stats on scroll
             const observerOptions = {
                 threshold: 0.5,
@@ -866,14 +1033,14 @@
         const translations = {
             en: {
                 'protocol.title': 'La Tanda Web3 Protocol',
-                'protocol.subtitle': 'Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">built on La Tanda Chain</span>. Empowering communities through Web3 financial innovation.',
+                'protocol.subtitle': 'Decentralized group savings and lending protocol <span data-i18n="index.footer.built_on">on Polygon blockchain (Amoy testnet)</span>. Empowering communities through Web3 financial innovation.',
                 'cta.title': 'Ready to Start?',
                 'cta.desc': 'Join thousands of users already participating in the future of decentralized finance',
                 'cta.button': 'Launch Protocol'
             },
             es: {
                 'protocol.title': 'Protocolo Web3 La Tanda',
-                'protocol.subtitle': 'Protocolo descentralizado de ahorro grupal y préstamos construido en La Tanda Chain. Empoderando comunidades a través de la innovación financiera Web3.',
+                'protocol.subtitle': 'Protocolo descentralizado de ahorro grupal y préstamos construido en blockchain Polygon. Empoderando comunidades a través de la innovación financiera Web3.',
                 'cta.title': '¿Listo para Comenzar?',
                 'cta.desc': 'Únete a miles de usuarios que ya participan en el futuro de las finanzas descentralizadas',
                 'cta.button': 'Lanzar Protocolo'
