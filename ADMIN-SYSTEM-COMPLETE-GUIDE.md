@@ -34,7 +34,7 @@ https://latanda.online/admin-panel-v2.html
      ```json
      {
        "username": "admin",
-       "password": "@Fullnow123"
+       "password": "[REDACTED-ROTATE-PASSWORD]"
      }
      ```
 
@@ -56,7 +56,7 @@ JavaScript checks localStorage for auth_token
     ↓
 [NO TOKEN] → Redirect to /auth-enhanced.html
     ↓
-User enters: username=admin, password=@Fullnow123
+User enters: username=admin, password=[REDACTED-ROTATE-PASSWORD]
     ↓
 POST /api/admin/login
     ↓
@@ -337,7 +337,7 @@ sendPasswordResetEmail(email, resetLink, userName)
 
 ```
 🔑 Username: admin
-🔒 Password: @Fullnow123
+🔒 Password: [REDACTED-ROTATE-PASSWORD]
 📧 Email: ebanksnigel@gmail.com
 👑 Role: super_admin
 ```
@@ -348,7 +348,7 @@ sendPasswordResetEmail(email, resetLink, userName)
 
 1. Go to: `https://latanda.online/admin-panel-v2.html`
 2. You'll be redirected to login page
-3. Enter: `username: admin, password: @Fullnow123`
+3. Enter: `username: admin, password: [REDACTED-ROTATE-PASSWORD]`
 4. Admin panel loads with your permissions
 
 **Method 2: Direct API Call (Testing)**
@@ -356,7 +356,7 @@ sendPasswordResetEmail(email, resetLink, userName)
 ```bash
 curl -X POST https://api.latanda.online/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 ```
 
 **Response:**
@@ -436,7 +436,7 @@ Use `/api/admin/users/:id/assign-role` to assign roles
 
 2. **Test Admin Panel Access**
    - Visit https://latanda.online/admin-panel-v2.html
-   - Login with admin/@Fullnow123
+   - Login with admin/[REDACTED-ROTATE-PASSWORD]
    - Verify dashboard loads
 
 ### Short-term (Email System)
@@ -576,7 +576,7 @@ curl -X POST https://api.latanda.online/api/admin/users/user_abc123/assign-role 
 ```
 URL: https://latanda.online/admin-panel-v2.html
 Username: admin
-Password: @Fullnow123
+Password: [REDACTED-ROTATE-PASSWORD]
 Role: super_admin
 Permissions: 8 (all admin functions)
 ```

@@ -17,7 +17,8 @@ Siempre lee estos archivos PRIMERO:
 ### Step 2: Verificar PostgreSQL
 ```bash
 # Check PostgreSQL connection and data
-PGPASSWORD='latanda123' psql -U latanda_user -d latanda_production -h localhost -c "
+# Note: Set PGPASSWORD in your environment or use .pgpass file for security
+PGPASSWORD='[REDACTED-USE-ENV-VAR]' psql -U latanda_user -d latanda_production -h localhost -c "
 SELECT
   'users' as table_name, COUNT(*) as count FROM users
 UNION ALL SELECT 'groups', COUNT(*) FROM groups
@@ -25,6 +26,12 @@ UNION ALL SELECT 'contributions', COUNT(*) FROM contributions
 UNION ALL SELECT 'transactions', COUNT(*) FROM transactions
 UNION ALL SELECT 'user_wallets', COUNT(*) FROM user_wallets;
 "
+```
+
+**Security Note:** The actual password has been redacted. Set it in your environment:
+```bash
+export PGPASSWORD='your-actual-password'
+# Or create ~/.pgpass file with: localhost:5432:latanda_production:latanda_user:your-password
 ```
 
 ### Step 3: Verificar APIs Corriendo

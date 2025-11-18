@@ -596,7 +596,7 @@ function trackParticipation(userId, action) {
 **Your Access:**
 - ✅ Super admin role
 - ✅ 8 permissions
-- ✅ Working login (admin / @Fullnow123)
+- ✅ Working login (admin / [REDACTED-ROTATE-PASSWORD])
 
 ---
 
