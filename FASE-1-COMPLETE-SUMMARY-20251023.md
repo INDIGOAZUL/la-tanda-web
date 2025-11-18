@@ -335,7 +335,7 @@ server-timing: auth;dur=0;desc="Authentication",
 1. Click en "¿Olvidaste tu contraseña?"
 2. Email: ebanksnigel@gmail.com
 3. Código recibido: 224183
-4. Nueva contraseña: @Fullnow123
+4. Nueva contraseña: [REDACTED-ROTATE-PASSWORD]
 5. Login exitoso
 
 **Resultado:** ✅ PASS

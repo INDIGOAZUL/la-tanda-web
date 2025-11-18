@@ -97,7 +97,7 @@ const adminUser = database.users.find(u =>
 ```bash
 curl -X POST http://localhost:3002/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 ```
 
 **Response:**
@@ -135,7 +135,7 @@ curl -X POST http://localhost:3002/api/admin/login \
 
 ```
 Username: admin
-Password: @Fullnow123
+Password: [REDACTED-ROTATE-PASSWORD]
 Email: ebanksnigel@gmail.com
 Role: super_admin
 ```
@@ -354,7 +354,7 @@ const emailConfig = {
 **Mission Accomplished:** Admin authentication fully restored and operational.
 
 **Core Achievement:**
-Successfully diagnosed and fixed corrupted user record that prevented admin login. Admin can now login with `username: admin, password: @Fullnow123` and has full super_admin access with 8 permissions.
+Successfully diagnosed and fixed corrupted user record that prevented admin login. Admin can now login with `username: admin, password: [REDACTED-ROTATE-PASSWORD]` and has full super_admin access with 8 permissions.
 
 **Blocking Issues Resolved:**
 - ✅ No admin users in database → Fixed (admin user created)
@@ -389,7 +389,7 @@ Successfully diagnosed and fixed corrupted user record that prevented admin logi
 ```bash
 curl -X POST http://localhost:3002/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 ```
 
 **Test Admin Endpoint:**

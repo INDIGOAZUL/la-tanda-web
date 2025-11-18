@@ -74,7 +74,7 @@ pm2 restart latanda-api
 ✅ Username: admin
 ✅ Email: ebanksnigel@gmail.com
 ✅ Role: super_admin
-✅ Password: SET (@Fullnow123)
+✅ Password: SET ([REDACTED-ROTATE-PASSWORD])
 ✅ Permissions: 8 (confirm_deposits, reject_deposits, view_all_transactions,
                manage_users, manage_kyc, view_audit_logs, manage_groups,
                platform_admin)
@@ -127,7 +127,7 @@ pm2 restart latanda-api
 - ✅ Fixed corrupted user record (ebanksnigel@gmail.com)
 - ✅ Set username: admin
 - ✅ Set role: super_admin
-- ✅ Set password: @Fullnow123 (bcrypt hashed)
+- ✅ Set password: [REDACTED-ROTATE-PASSWORD] (bcrypt hashed)
 - ✅ Granted 8 permissions
 - ✅ Restarted API
 - ✅ Tested login - SUCCESS
@@ -137,7 +137,7 @@ pm2 restart latanda-api
 # Login successful
 curl -X POST http://localhost:3002/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 # Returns: {"success":true, "token":"..."}
 ```
 

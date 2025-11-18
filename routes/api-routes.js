@@ -11,8 +11,11 @@ const db = require('../database/connection');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
-// JWT secret (should be in environment variables)
-const JWT_SECRET = process.env.JWT_SECRET || 'latanda-super-secret-key-change-in-production';
+// JWT secret (MUST be set in environment variables)
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable must be set. Application cannot start without it.');
+}
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {

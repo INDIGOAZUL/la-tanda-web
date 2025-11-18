@@ -35,7 +35,7 @@ Successfully fixed admin authentication, configured email system, and created co
 **Test:** ✅ Admin login successful
 ```bash
 curl -X POST https://api.latanda.online/api/admin/login \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 # Returns: {"success":true, "token":"..."}
 ```
 
@@ -335,7 +335,7 @@ if (path === '/api/admin/kyc/pending' && method === 'GET') {
 ### ✅ **WORKING (Production-Ready)**
 
 **Authentication:**
-- ✅ Admin login (`username: admin, password: @Fullnow123`)
+- ✅ Admin login (`username: admin, password: [REDACTED-ROTATE-PASSWORD]`)
 - ✅ Session management (8-hour tokens)
 - ✅ Role-based access control
 - ✅ 8 permissions granted to super_admin
@@ -419,7 +419,7 @@ if (path === '/api/admin/kyc/pending' && method === 'GET') {
 ### Admin Login
 ```bash
 Username: admin
-Password: @Fullnow123
+Password: [REDACTED-ROTATE-PASSWORD]
 Email: ebanksnigel@gmail.com
 Role: super_admin
 Permissions: 8 (all admin functions)
@@ -439,7 +439,7 @@ SMTP_PASS=[REDACTED - REGENERATE_NEW_PASSWORD]
 # Test admin login
 curl -X POST https://api.latanda.online/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"@Fullnow123"}'
+  -d '{"username":"admin","password":"[REDACTED-ROTATE-PASSWORD]"}'
 
 # Test admin endpoint (after fixing routing)
 TOKEN="[from-login]"
@@ -466,7 +466,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 1. **Login to Admin Panel**
    - URL: https://latanda.online/admin-panel-v2.html
-   - Credentials: admin / @Fullnow123
+   - Credentials: admin / [REDACTED-ROTATE-PASSWORD]
    - Access: Full super_admin permissions
 
 2. **Review Architecture Plan**
