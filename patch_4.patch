@@ -1,0 +1,27 @@
+--- a/src/components/MyComponent.js
++++ b/src/components/MyComponent.js
+@@ -10,8 +10,12 @@ const MyComponent = () => {
+   const [data, setData] = useState(null);
+   const [error, setError] = useState(null);
+ 
+-  useEffect(() => {
+-    fetch('https://api.example.com/data')
++  const fetchData = useCallback(async () => {
++    try {
++      const response = await fetch('https://api.example.com/data');
++      if (!response.ok) throw new Error('Network response was not ok');
++      const responseData = await response.json();
++      setData(responseData);
++    } catch (err) {
++      setError(err.message);
++    }
+   }, []);
+ 
+-  return (
+-    <div>{data ? JSON.stringify(data) : 'Loading...'}</div>
+-  );
++  if (error) return <div>Error: {error}</div>;
++  if (!data) return <div>Loading...</div>;
++
++  return <div>{JSON.stringify(data)}</div>;
+ };
