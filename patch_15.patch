@@ -1,0 +1,45 @@
+diff --git a/src/components/Calendar/DayPicker.js b/src/components/Calendar/DayPicker.js
+index abcdef1..1234567 100644
+--- a/src/components/Calendar/DayPicker.js
++++ b/src/components/Calendar/DayPicker.js
+@@ -1,6 +1,8 @@
+ import React from 'react';
+ import PropTypes from 'prop-types';
++import { format } from 'date-fns';
+ 
+ const DayPicker = ({ days, selectedDate, setSelectedDate }) => {
+   const handleDateClick = (day) => {
+@@ -9,14 +11,13 @@ const DayPicker = ({ days, selectedDate, setSelectedDate }) => {
+     }
+   };
+ 
+-  const formattedDays = days.map(day => {
+-    const isSelected = day.date === selectedDate;
++  const formatDay = (day) => ({
++    date: format(day, 'yyyy-MM-dd'),
++    display: format(day, 'dd MMMM yyyy'),
++    isSelected: day.date === selectedDate,
+   });
+ 
+-  return (
+-    <div className="calendar-grid">
+-      {days.map((day, index) => (
++  const formattedDays = days.map(formatDay);
++
++  return (
++    <div className="calendar-grid">
++      {formattedDays.map((day, index) => (
+         <button
+           key={index}
+           onClick={() => handleDateClick(day.date)}
+@@ -24,10 +25,6 @@ const DayPicker = ({ days, selectedDate, setSelectedDate }) => {
+           className={`calendar-day ${isSelected ? 'selected' : ''}`}
+         >
+           {day.display}
+-        </button>
+-      ))}
+-    </div>
+-  );
+ });
+ 
+ DayPicker.propTypes = {
