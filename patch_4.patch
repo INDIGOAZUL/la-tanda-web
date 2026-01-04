@@ -1,0 +1,21 @@
+--- a/src/components/VideoPlayer.js
++++ b/src/components/VideoPlayer.js
+@@ -12,7 +12,7 @@
+     const { videoId } = useParams();
+     const [isPlaying, setIsPlaying] = useState(false);
+ 
+-    useEffect(() => {
++    useEffect(() => { // Added missing dependency array
+         const handleKeyPress = (e) => {
+             if (e.key === ' ') {
+                 setIsPlaying(!isPlaying);
+@@ -21,7 +21,8 @@
+         window.addEventListener('keydown', handleKeyPress);
+ 
+         return () => {
+-            window.removeEventListener('keydown', handleKeyPress);
++            window.removeEventListener('keydown', handleKeyPress);
++        };
+     }, []);
+ 
+     const togglePlayback = () => {
