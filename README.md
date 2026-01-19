@@ -1,10 +1,11 @@
 # 🚀 La Tanda Web3 Platform
 
 [![Live Platform](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
-[![API Status](https://img.shields.io/badge/API-85%20endpoints-00FF80)](https://api.latanda.online)
+[![API Status](https://img.shields.io/badge/API-135%2B%20endpoints-00FF80)](https://latanda.online/docs)
+[![Version](https://img.shields.io/badge/Version-3.41.0-blue)](https://latanda.online)
 [![Smart Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
 [![Open Source](https://img.shields.io/badge/Open%20Source-MIT-blue)](./LICENSE)
-[![Bounties](https://img.shields.io/badge/Bounties-ACTIVE-FFD700)](./ACTIVE-BOUNTIES.md)
+[![Developer Portal](https://img.shields.io/badge/Dev%20Portal-LIVE-FFD700)](https://latanda.online/dev-dashboard.html)
 
 **Cooperativa de Ahorro Inteligente + Web3 DeFi Platform**
 
@@ -20,6 +21,8 @@
 | ✨ **Features** | 100-500 LTD | Major features = 500 LTD |
 | 📚 **Documentation** | 25-75 LTD | Comprehensive docs = 75 LTD |
 | 🧪 **Testing** | 50-200 LTD | Full test suites = 200 LTD |
+
+> **Important:** LTD tokens are currently on **Polygon Amoy testnet**. All rewards will be **exchangeable 1:1 for mainnet LTD** when we launch!
 
 ### 🚀 Quick Start (5 minutes)
 
@@ -68,7 +71,7 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 | Component | Status | Progress |
 |-----------|--------|----------|
 | **Web Platform** | ✅ LIVE | 100% |
-| **API Backend** | ✅ ONLINE | 100% (85 endpoints) |
+| **API Backend** | ✅ ONLINE | 100% (135+ endpoints) |
 | **Smart Contracts** | ✅ DEPLOYED | 100% (Polygon Amoy) |
 | **Mobile PWA** | ✅ READY | 100% |
 | **Documentation** | ✅ COMPLETE | 100% |
@@ -77,7 +80,7 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 
 🔗 **Live Platform:** [https://latanda.online](https://latanda.online)
 
-🔗 **API Documentation:** [https://api.latanda.online/docs](https://api.latanda.online/docs)
+🔗 **API Documentation:** [https://latanda.online/docs](https://latanda.online/docs)
 
 📈 **Roadmap:** [ROADMAP-TRACKER.html](./ROADMAP-TRACKER.html)
 
@@ -92,7 +95,7 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 - **Responsive** - Mobile-first design
 
 ### Backend
-- **Node.js + Express** - REST API (85 endpoints)
+- **Node.js (native http)** - REST API (135+ endpoints)
 - **PostgreSQL** - Primary database (23 tables)
 - **PM2** - Process management
 - **Nginx** - Reverse proxy & load balancing
@@ -176,24 +179,31 @@ la-tanda-web/
 
 ## 🎯 Active Bounties (Updated Daily)
 
-### 🔥 High Priority
+### 🔥 High Priority - New Opportunities
 
-1. **[Database Backup Automation](https://github.com/INDIGOAZUL/la-tanda-web/issues/XX)** - 100 LTD 🔴
-   - Automated PostgreSQL backups
-   - Compression & rotation
-   - Cloud upload integration
+1. **JavaScript/TypeScript SDK** - 300 LTD
+   - Wrapper for La Tanda API
+   - TypeScript definitions
+   - NPM package ready
 
-2. **[API Rate Limiting](https://github.com/INDIGOAZUL/la-tanda-web/issues/XX)** - 250 LTD 🟡
-   - Implement express-rate-limit
-   - Prevent DDoS attacks
-   - Custom error messages
+2. **Mobile PWA Enhancements** - 200 LTD
+   - Offline functionality improvements
+   - Push notification optimization
+   - Performance tuning
 
-3. **[Admin Analytics Dashboard](https://github.com/INDIGOAZUL/la-tanda-web/issues/XX)** - 500 LTD 🔴
-   - Real-time metrics
-   - User & tanda statistics
-   - Financial reporting
+3. **Integration Examples** - 150 LTD
+   - React, Vue, Node.js examples
+   - Authentication flow demos
+   - Marketplace integration guides
+
+4. **Documentation & Tutorials** - 100 LTD
+   - Video tutorials
+   - Blog posts
+   - Translation to other languages
 
 📋 **[View All Bounties](./ACTIVE-BOUNTIES.md)**
+
+> **Note:** LTD tokens are currently on Polygon Amoy testnet. All earned tokens will be exchangeable 1:1 for mainnet LTD at launch!
 
 ---
 
@@ -225,7 +235,7 @@ We welcome all contributors! Whether you're fixing bugs, adding features, or imp
 ## 📚 Documentation
 
 - **[Developer Quickstart](./DEVELOPER-QUICKSTART.md)** - Get started in 5 minutes
-- **[API Documentation](https://api.latanda.online/docs)** - Complete API reference
+- **[API Documentation](https://latanda.online/docs)** - Complete API reference (Swagger UI)
 - **[Smart Contract Docs](./smart-contracts/README.md)** - Solidity documentation
 - **[Deployment Guide](./DEPLOYMENT-GUIDE.md)** - How to deploy
 - **[Tokenomics](./DEVELOPER-TOKENOMICS-REWARDS.md)** - LTD token economics
@@ -252,7 +262,8 @@ MIT License - See [LICENSE](./LICENSE) for details
 ## 🌐 Links
 
 - **Website:** [https://latanda.online](https://latanda.online)
-- **API:** [https://api.latanda.online](https://api.latanda.online)
+- **API Docs:** [https://latanda.online/docs](https://latanda.online/docs)
+- **Developer Portal:** [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
 - **GitHub:** [https://github.com/INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
 - **Twitter/X:** [https://x.com/TandaWeb3](https://x.com/TandaWeb3)
 - **YouTube:** [https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
@@ -285,4 +296,4 @@ Special thanks to all contributors who help make Web3 finance accessible to ever
 ---
 
 *Generated: October 17, 2025*
-*Last Updated: October 17, 2025*
+*Last Updated: January 19, 2026*
