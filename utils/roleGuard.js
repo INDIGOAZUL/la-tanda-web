@@ -1,12 +1,25 @@
 /**
  * Role-Based Feature Gating System
  * Bounty #17 Implementation - La Tanda Web
+ * XSS Fix Applied: 2026-01-29
  *
  * This utility manages access control for features based on user roles.
  * Integrates with existing auth system (localStorage.getItem('auth_token'))
  */
 
 class RoleGuard {
+    /**
+     * Escape HTML to prevent XSS attacks
+     * @param {string} str - String to escape
+     * @returns {string}
+     */
+    static escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
     constructor() {
         this.API_BASE = 'https://api.latanda.online';
         this.currentUser = null;
@@ -225,12 +238,17 @@ class RoleGuard {
                     <div class="lock-icon">🔒</div>
                     <div class="lock-message">
                         <strong>Función bloqueada</strong>
-                        <p>Requiere rol: ${roleDisplayName}</p>
-                        <button class="upgrade-button" onclick="window.roleGuard.showUpgradePrompt('${featureName}', '${requiredRole}')">
+                        <p>Requiere rol: ${RoleGuard.escapeHtml(roleDisplayName)}</p>
+                        <button class="upgrade-button" data-feature="${RoleGuard.escapeHtml(featureName)}" data-role="${RoleGuard.escapeHtml(requiredRole)}">
                             Ver cómo desbloquear
                         </button>
                     </div>
                 `;
+
+                // Safe event listener instead of inline onclick
+                overlay.querySelector('.upgrade-button').addEventListener('click', () => {
+                    window.roleGuard.showUpgradePrompt(featureName, requiredRole);
+                });
 
                 // Position overlay
                 const elementPosition = window.getComputedStyle(element).position;
@@ -252,13 +270,22 @@ class RoleGuard {
         const roleDisplayName = this.ROLE_NAMES[requiredRole] || requiredRole;
         const currentRoleDisplay = this.ROLE_NAMES[this.currentRole] || this.currentRole;
 
-        // Create modal
+        // Create modal with XSS-safe content
         const modal = document.createElement('div');
         modal.className = 'role-upgrade-modal';
+
+        // Escape all dynamic values
+        const safeCurrentRole = RoleGuard.escapeHtml(currentRoleDisplay);
+        const safeRequiredRole = RoleGuard.escapeHtml(roleDisplayName);
+        const safeFeatureName = RoleGuard.escapeHtml(this.getFeatureDisplayName(featureName));
+        const safeRoleParam = encodeURIComponent(requiredRole);
+        const requirementsList = this.getUpgradeRequirements(requiredRole)
+            .map(req => `<li>${RoleGuard.escapeHtml(req)}</li>`).join('');
+
         modal.innerHTML = `
-            <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="modal-overlay"></div>
             <div class="modal-content">
-                <button class="modal-close" onclick="this.closest('.role-upgrade-modal').remove()">×</button>
+                <button class="modal-close">×</button>
                 <div class="modal-header">
                     <h2>🎯 Desbloquear Función</h2>
                 </div>
@@ -266,33 +293,35 @@ class RoleGuard {
                     <div class="role-comparison">
                         <div class="current-role">
                             <span class="label">Tu rol actual</span>
-                            <span class="role-badge">${currentRoleDisplay}</span>
+                            <span class="role-badge">${safeCurrentRole}</span>
                         </div>
                         <div class="role-arrow">→</div>
                         <div class="required-role">
                             <span class="label">Rol requerido</span>
-                            <span class="role-badge required">${roleDisplayName}</span>
+                            <span class="role-badge required">${safeRequiredRole}</span>
                         </div>
                     </div>
 
                     <div class="feature-info">
-                        <p><strong>Función bloqueada:</strong> ${this.getFeatureDisplayName(featureName)}</p>
+                        <p><strong>Función bloqueada:</strong> ${safeFeatureName}</p>
                     </div>
 
                     <div class="upgrade-path">
                         <h3>¿Cómo obtener este rol?</h3>
-                        <ul>
-                            ${this.getUpgradeRequirements(requiredRole).map(req => `<li>${req}</li>`).join('')}
-                        </ul>
+                        <ul>${requirementsList}</ul>
                     </div>
 
                     <div class="modal-actions">
                         <a href="/role-system.html" class="btn btn-primary">Ver todos los roles</a>
-                        <a href="/role-application.html?role=${requiredRole}" class="btn btn-success">Solicitar rol</a>
+                        <a href="/role-application.html?role=${safeRoleParam}" class="btn btn-success">Solicitar rol</a>
                     </div>
                 </div>
             </div>
         `;
+
+        // Safe event listeners instead of inline onclick
+        modal.querySelector('.modal-overlay').addEventListener('click', () => modal.remove());
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
 
         document.body.appendChild(modal);
     }
