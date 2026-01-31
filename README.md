@@ -1,11 +1,12 @@
 # 🚀 La Tanda Web3 Platform
 
 [![Live Platform](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
-[![API Status](https://img.shields.io/badge/API-135%2B%20endpoints-00FF80)](https://latanda.online/docs)
-[![Version](https://img.shields.io/badge/Version-3.41.0-blue)](https://latanda.online)
+[![API Status](https://img.shields.io/badge/API-140%2B%20endpoints-00FF80)](https://latanda.online/docs)
+[![Version](https://img.shields.io/badge/Version-3.52.0-blue)](https://latanda.online)
 [![Smart Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
 [![Open Source](https://img.shields.io/badge/Open%20Source-MIT-blue)](./LICENSE)
 [![Developer Portal](https://img.shields.io/badge/Dev%20Portal-LIVE-FFD700)](https://latanda.online/dev-dashboard.html)
+[![Blockchain Strategy](https://img.shields.io/badge/Blockchain-Strategy-purple)](https://latanda.online/docs/BLOCKCHAIN-STRATEGY.md)
 
 **Cooperativa de Ahorro Inteligente + Web3 DeFi Platform**
 
@@ -71,7 +72,7 @@ La Tanda is a revolutionary **Web3 financial platform** combining traditional ta
 | Component | Status | Progress |
 |-----------|--------|----------|
 | **Web Platform** | ✅ LIVE | 100% |
-| **API Backend** | ✅ ONLINE | 100% (135+ endpoints) |
+| **API Backend** | ✅ ONLINE | 100% (140+ endpoints) |
 | **Smart Contracts** | ✅ DEPLOYED | 100% (Polygon Amoy) |
 | **Mobile PWA** | ✅ READY | 100% |
 | **Documentation** | ✅ COMPLETE | 100% |
