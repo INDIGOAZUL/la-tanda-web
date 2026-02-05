@@ -1,5 +1,5 @@
 // La Tanda Smart Contracts ABIs
-export const CONTRACT_ABIS = {
+const CONTRACT_ABIS = {
   "contracts": {
     "LTDToken": [
       {
@@ -2874,3 +2874,5 @@ export const CONTRACT_ABIS = {
     }
   }
 };
+
+module.exports = { CONTRACT_ABIS };
