@@ -21,7 +21,7 @@ const SMART_CONTRACTS_CONFIG = {
   }
 };
 
-export const CHAIN_CONFIG = {
+const CHAIN_CONFIG = {
     chainId: '0x7a69',
     chainName: 'Honduras Chain',
     nativeCurrency: {
@@ -31,4 +31,6 @@ export const CHAIN_CONFIG = {
     },
     rpcUrls: ['http://localhost:8545'],
     blockExplorerUrls: ['https://explorer.honduras-chain.org']
-};module.exports = { SMART_CONTRACTS_CONFIG };
+};
+
+module.exports = { SMART_CONTRACTS_CONFIG, CHAIN_CONFIG };
