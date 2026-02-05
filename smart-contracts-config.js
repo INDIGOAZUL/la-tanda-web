@@ -1,5 +1,5 @@
 // La Tanda Smart Contracts Configuration
-export const SMART_CONTRACTS_CONFIG = {
+const SMART_CONTRACTS_CONFIG = {
   "contracts": {
     "LTDToken": {
       "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
@@ -31,4 +31,4 @@ export const CHAIN_CONFIG = {
     },
     rpcUrls: ['http://localhost:8545'],
     blockExplorerUrls: ['https://explorer.honduras-chain.org']
-};
+};module.exports = { SMART_CONTRACTS_CONFIG };
