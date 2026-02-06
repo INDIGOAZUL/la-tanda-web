@@ -1,0 +1,25 @@
+diff --git a/src/components/EventList.js b/src/components/EventList.js
+--- a/src/components/EventList.js
++++ b/src/components/EventList.js
+@@ -12,7 +12,8 @@
+   const { events } = useSelector(state => state.events);
+ 
+   const handleDeleteEvent = (eventId) => {
+-    dispatch(deleteEvent(eventId));
++    // Fix: Ensure that the event is properly removed from the list
++    dispatch(deleteEvent(eventId)).then(() => window.location.reload());
+   };
+ 
+   return (
+diff --git a/src/store/actions/eventActions.js b/src/store/actions/eventActions.js
+--- a/src/store/actions/eventActions.js
++++ b/src/store/actions/eventActions.js
+@@ -18,7 +18,7 @@
+ export const deleteEvent = (eventId) => async (dispatch) => {
+   try {
+     dispatch({ type: DELETE_EVENT_REQUEST });
+-    await axios.post(`${API_URL}/events/${eventId}/delete`);
++    await axios.delete(`${API_URL}/events/${eventId}`);
+     dispatch({
+       type: DELETE_EVENT_SUCCESS,
+       payload: eventId
