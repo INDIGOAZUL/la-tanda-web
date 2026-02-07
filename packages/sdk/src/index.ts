@@ -30,3 +30,17 @@ export {
 
 export type { JwtPayload } from './utils/jwt'
 export type { HttpClient, RequestOptions, ApiResponse } from './utils/http'
+
+// auth module exports
+export { AuthModule } from './modules/auth'
+export type {
+    LoginCredentials,
+    RegisterData,
+    AuthResponse,
+    UserInfo,
+    TokenValidation,
+    TwoFactorSetup,
+    TwoFactorVerify,
+    SocialAuthData,
+    SessionInfo
+} from './types/auth'
