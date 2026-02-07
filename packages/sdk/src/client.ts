@@ -1,18 +1,10 @@
-// main sdk client - this is what users import
+// main sdk client
 
 import { LaTandaConfig, DEFAULT_CONFIG, MemoryTokenStorage, TokenStorage } from './config'
 import { HttpClient } from './utils/http'
-import { shouldRefreshToken } from './utils/jwt'
+import { AuthModule } from './modules/auth'
 
-// module types - we'll flesh these out as we build each one
-
-interface AuthModule {
-    login: (creds: { email: string; password: string }) => Promise<unknown>
-    register: (data: { name: string; email: string; password: string }) => Promise<unknown>
-    logout: () => Promise<void>
-    refreshToken: () => Promise<string | null>
-    isAuthenticated: () => Promise<boolean>
-}
+// placeholder interfaces for modules not yet implemented
 
 interface WalletModule {
     getBalance: () => Promise<unknown>
@@ -42,15 +34,14 @@ export class LaTandaClient {
     private _http: HttpClient
     private _storage: TokenStorage
 
-    // public modules
-    auth!: AuthModule
+    // modules
+    auth: AuthModule
     wallet!: WalletModule
     tandas!: TandasModule
     marketplace!: MarketplaceModule
     lottery!: LotteryModule
 
     constructor(cfg: LaTandaConfig = {}) {
-        // merge with defaults
         this._config = {
             baseUrl: cfg.baseUrl || DEFAULT_CONFIG.baseUrl,
             timeout: cfg.timeout || DEFAULT_CONFIG.timeout,
@@ -62,7 +53,6 @@ export class LaTandaClient {
 
         this._storage = this._config.tokenStorage!
 
-        // set up http client
         this._http = new HttpClient(
             this._config.baseUrl!,
             this._config.timeout,
@@ -70,88 +60,42 @@ export class LaTandaClient {
             () => this._storage.getToken()
         )
 
+        // set up token refresh
         if (this._config.autoRefreshToken) {
-            this._http.setTokenRefreshHandler(() => this._doRefresh())
+            this._http.setTokenRefreshHandler(() => this.auth.refreshToken())
         }
 
-        this._initModules()
+        // init modules
+        this.auth = new AuthModule(this._http, this._storage, this._config.refreshThreshold)
+        this._initPlaceholderModules()
     }
 
-    private _initModules() {
-        // auth endpoints
-        this.auth = {
-            login: async (creds) => {
-                const res = await this._http.post<{ auth_token: string; user: unknown }>('/auth/login', creds)
-                if (res.auth_token) {
-                    await this._storage.setToken(res.auth_token)
-                }
-                return res
-            },
-
-            register: async (data) => {
-                const res = await this._http.post<{ auth_token: string; user: unknown }>('/auth/register', data)
-                if (res.auth_token) {
-                    await this._storage.setToken(res.auth_token)
-                }
-                return res
-            },
-
-            logout: async () => {
-                try {
-                    await this._http.post('/auth/logout')
-                } finally {
-                    await this._storage.removeToken()
-                }
-            },
-
-            refreshToken: () => this._doRefresh(),
-
-            isAuthenticated: async () => {
-                const tok = await this._storage.getToken()
-                if (!tok) return false
-                return !shouldRefreshToken(tok, 0)
-            }
-        }
-
-        // wallet endpoints
+    private _initPlaceholderModules() {
+        // wallet - to be implemented
         this.wallet = {
             getBalance: () => this._http.get('/wallet/balance'),
             getTransactions: (o) => this._http.get('/wallet/transactions', { body: o }),
             send: (d) => this._http.post('/wallet/send', d)
         }
 
-        // tandas/groups endpoints
+        // tandas - to be implemented
         this.tandas = {
             listGroups: (f) => this._http.get('/groups/list', { body: f }),
             createGroup: (d) => this._http.post('/groups/create', d),
             listTandas: (f) => this._http.get('/tandas/list', { body: f })
         }
 
-        // marketplace endpoints
+        // marketplace - to be implemented
         this.marketplace = {
             listProducts: (f) => this._http.get('/marketplace/products', { body: f }),
             getCategories: () => this._http.get('/marketplace/categories'),
             search: (q) => this._http.get(`/marketplace/search?q=${encodeURIComponent(q)}`)
         }
 
-        // lottery endpoints
+        // lottery - to be implemented
         this.lottery = {
             conduct: (gid, members) => this._http.post('/lottery/conduct', { group_id: gid, members }),
             getStatus: (gid) => this._http.get(`/lottery/status?group_id=${gid}`)
-        }
-    }
-
-    private async _doRefresh(): Promise<string | null> {
-        try {
-            const res = await this._http.post<{ auth_token: string }>('/auth/refresh')
-            if (res.auth_token) {
-                await this._storage.setToken(res.auth_token)
-                return res.auth_token
-            }
-            return null
-        } catch {
-            await this._storage.removeToken()
-            return null
         }
     }
 
