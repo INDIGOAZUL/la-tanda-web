@@ -124,14 +124,28 @@ export class InsufficientFundsError extends LaTandaError {
 
 // parse api errors into typed exceptions
 export function parseApiError(status: number, data: unknown): LaTandaError {
-    const d = data as { message?: string; error?: string; details?: ErrorDetails }
-    const msg = d?.message || d?.error || 'Request failed'
+    const d = data as any
+    let msg = 'Request failed'
+
+    if (d && typeof d === 'object') {
+        if (typeof d.message === 'string') {
+            msg = d.message
+        } else if (typeof d.error === 'string') {
+            msg = d.error
+        } else if (d.error && typeof d.error === 'object' && typeof d.error.message === 'string') {
+            msg = d.error.message
+        }
+    } else if (typeof data === 'string') {
+        msg = data
+    }
+
+    const lowMsg = String(msg).toLowerCase()
 
     switch (status) {
         case 400:
-            return new ValidationError(msg, d?.details?.fields as Record<string, string[]>)
+            return new ValidationError(msg, d?.details?.fields)
         case 401:
-            if (msg.toLowerCase().includes('expired')) {
+            if (lowMsg.includes('expired') || lowMsg.includes('token')) {
                 return new TokenExpiredError(msg)
             }
             return new AuthenticationError(msg, d?.details)
@@ -140,7 +154,7 @@ export function parseApiError(status: number, data: unknown): LaTandaError {
         case 404:
             return new NotFoundError('Resource', msg)
         case 429:
-            return new RateLimitError(msg, d?.details?.retryAfter as number)
+            return new RateLimitError(msg, d?.details?.retryAfter)
         default:
             if (status >= 500) return new ServerError(msg, status)
             return new LaTandaError(msg, 'API_ERROR', status, d?.details)

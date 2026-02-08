@@ -3,20 +3,11 @@
 import { LaTandaConfig, DEFAULT_CONFIG, MemoryTokenStorage, TokenStorage } from './config'
 import { HttpClient } from './utils/http'
 import { AuthModule } from './modules/auth'
+import { WalletModule } from './modules/wallet'
+import { FeedModule } from './modules/feed'
+import { TandasModule } from './modules/tandas'
 
 // placeholder interfaces for modules not yet implemented
-
-interface WalletModule {
-    getBalance: () => Promise<unknown>
-    getTransactions: (opts?: unknown) => Promise<unknown>
-    send: (data: unknown) => Promise<unknown>
-}
-
-interface TandasModule {
-    listGroups: (filters?: unknown) => Promise<unknown>
-    createGroup: (data: unknown) => Promise<unknown>
-    listTandas: (filters?: unknown) => Promise<unknown>
-}
 
 interface MarketplaceModule {
     listProducts: (filters?: unknown) => Promise<unknown>
@@ -29,6 +20,22 @@ interface LotteryModule {
     getStatus: (groupId: string) => Promise<unknown>
 }
 
+// Stubs for specialized modules requested by INDIGOAZUL
+interface AdminModule {
+    getStats: () => Promise<unknown>
+    manageUsers: (action: string) => Promise<unknown>
+}
+
+interface MiningModule {
+    getStatus: () => Promise<unknown>
+    startMining: () => Promise<unknown>
+}
+
+interface MIAModule {
+    getBalance: () => Promise<unknown>
+    stake: (amount: string) => Promise<unknown>
+}
+
 export class LaTandaClient {
     private _config: LaTandaConfig
     private _http: HttpClient
@@ -36,10 +43,14 @@ export class LaTandaClient {
 
     // modules
     auth: AuthModule
-    wallet!: WalletModule
+    wallet: WalletModule
+    feed: FeedModule
     tandas!: TandasModule
     marketplace!: MarketplaceModule
     lottery!: LotteryModule
+    admin!: AdminModule
+    mining!: MiningModule
+    mia!: MIAModule
 
     constructor(cfg: LaTandaConfig = {}) {
         this._config = {
@@ -67,35 +78,42 @@ export class LaTandaClient {
 
         // init modules
         this.auth = new AuthModule(this._http, this._storage, this._config.refreshThreshold)
+        this.wallet = new WalletModule(this._http)
+        this.feed = new FeedModule(this._http)
+        this.tandas = new TandasModule(this._http)
         this._initPlaceholderModules()
     }
 
     private _initPlaceholderModules() {
-        // wallet - to be implemented
-        this.wallet = {
-            getBalance: () => this._http.get('/wallet/balance'),
-            getTransactions: (o) => this._http.get('/wallet/transactions', { body: o }),
-            send: (d) => this._http.post('/wallet/send', d)
-        }
-
-        // tandas - to be implemented
-        this.tandas = {
-            listGroups: (f) => this._http.get('/groups/list', { body: f }),
-            createGroup: (d) => this._http.post('/groups/create', d),
-            listTandas: (f) => this._http.get('/tandas/list', { body: f })
-        }
-
         // marketplace - to be implemented
         this.marketplace = {
-            listProducts: (f) => this._http.get('/marketplace/products', { body: f }),
+            listProducts: (f) => this._http.get('/marketplace/products', f),
             getCategories: () => this._http.get('/marketplace/categories'),
-            search: (q) => this._http.get(`/marketplace/search?q=${encodeURIComponent(q)}`)
+            search: (q) => this._http.get('/marketplace/search', { q })
         }
 
         // lottery - to be implemented
         this.lottery = {
             conduct: (gid, members) => this._http.post('/lottery/conduct', { group_id: gid, members }),
-            getStatus: (gid) => this._http.get(`/lottery/status?group_id=${gid}`)
+            getStatus: (gid) => this._http.get('/lottery/status', { group_id: gid })
+        }
+
+        // admin stub
+        this.admin = {
+            getStats: () => this._http.get('/admin/stats'),
+            manageUsers: (a) => this._http.post('/admin/users', { action: a })
+        }
+
+        // mining stub
+        this.mining = {
+            getStatus: () => this._http.get('/mining/status'),
+            startMining: () => this._http.post('/mining/start')
+        }
+
+        // mia stub
+        this.mia = {
+            getBalance: () => this._http.get('/mia/balance'),
+            stake: (amt) => this._http.post('/mia/stake', { amount: amt })
         }
     }
 

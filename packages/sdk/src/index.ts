@@ -44,3 +44,40 @@ export type {
     SocialAuthData,
     SessionInfo
 } from './types/auth'
+
+// wallet module exports
+export { WalletModule } from './modules/wallet'
+export type {
+    AssetType,
+    BalanceInfo,
+    WalletBalances,
+    Transaction,
+    TransactionType,
+    TransactionStatus,
+    TransactionFilters,
+    SendFundsRequest,
+    LockFundsRequest,
+    GasEstimate
+} from './types/wallet'
+
+// feed module exports
+export { FeedModule } from './modules/feed'
+export type {
+    Post,
+    Comment,
+    CreatePostData,
+    SocialFeedFilters,
+    ReputationInfo
+} from './types/feed'
+
+// tandas module exports
+export { TandasModule } from './modules/tandas'
+export type {
+    TandaGroup,
+    TandaMember,
+    TandaStatus,
+    MemberRole,
+    CreateGroupData,
+    GroupFilters,
+    PayoutStats
+} from './types/tandas'

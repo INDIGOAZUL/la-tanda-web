@@ -1,27 +1,25 @@
-// http wrapper for all api calls
+// http utility for making api calls correctly
 
 import { LaTandaError, NetworkError, parseApiError, TokenExpiredError } from '../errors'
 
 export interface RequestOptions {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
     headers?: Record<string, string>
-    body?: unknown
+    body?: any
     timeout?: number
 }
 
-export interface ApiResponse<T = unknown> {
+// internal options for retry tracking
+interface InternalRequestOptions extends RequestOptions {
+    _isRetry?: boolean
+}
+
+export interface ApiResponse<T = any> {
     success: boolean
     data: T
-    meta?: {
-        timestamp: string
-        version: string
-        server?: string
-        environment?: string
-    }
     error?: {
         code: number
         message: string
-        details?: string
     }
 }
 
@@ -34,7 +32,7 @@ export class HttpClient {
     private _getToken: () => Promise<string | null>
     private _onRefresh?: TokenRefreshHandler
     private _isRefreshing = false
-    private _refreshPromise: Promise<string | null> | null = null
+    private _isRefreshRequest = false // guard for recursion
 
     constructor(
         baseUrl: string,
@@ -42,7 +40,7 @@ export class HttpClient {
         headers: Record<string, string> = {},
         tokenFn: () => Promise<string | null> = async () => null
     ) {
-        this._baseUrl = baseUrl.replace(/\/$/, '') // strip trailing slash
+        this._baseUrl = baseUrl.replace(/\/$/, '')
         this._timeout = timeout
         this._headers = { 'Content-Type': 'application/json', ...headers }
         this._getToken = tokenFn
@@ -52,95 +50,109 @@ export class HttpClient {
         this._onRefresh = fn
     }
 
-    async request<T>(path: string, opts: RequestOptions): Promise<T> {
-        const url = this._baseUrl + (path[0] === '/' ? path : '/' + path)
-        const token = await this._getToken()
+    async request<T>(path: string, opts: InternalRequestOptions): Promise<T> {
+        // always prefix with /api
+        const cleanPath = path.startsWith('/') ? path : `/${path}`
+        const apiPath = cleanPath.startsWith('/api') ? cleanPath : `/api${cleanPath}`
 
+        let url = this._baseUrl + apiPath
+
+        // fix: GET with body bug
+        if (opts.method === 'GET' && opts.body && typeof opts.body === 'object') {
+            const params = new URLSearchParams()
+            Object.entries(opts.body).forEach(([k, v]) => {
+                if (v !== undefined && v !== null) params.append(k, String(v))
+            })
+            const qs = params.toString()
+            if (qs) url += (url.includes('?') ? '&' : '?') + qs
+            opts.body = undefined
+        }
+
+        const token = await this._getToken()
         const hdrs: Record<string, string> = { ...this._headers, ...opts.headers }
         if (token) hdrs['Authorization'] = `Bearer ${token}`
 
-        const ctrl = new AbortController()
-        const t = setTimeout(() => ctrl.abort(), opts.timeout || this._timeout)
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), opts.timeout || this._timeout)
 
         try {
-            const resp = await fetch(url, {
+            const response = await fetch(url, {
                 method: opts.method,
                 headers: hdrs,
                 body: opts.body ? JSON.stringify(opts.body) : undefined,
-                signal: ctrl.signal
+                signal: controller.signal
             })
-            clearTimeout(t)
+            clearTimeout(timer)
 
-            // parse response
-            let json: ApiResponse<T>
-            const ct = resp.headers.get('content-type') || ''
-            if (ct.includes('application/json')) {
-                json = (await resp.json()) as ApiResponse<T>
+            let result: ApiResponse<T>
+            const type = response.headers.get('content-type') || ''
+
+            if (type.includes('application/json')) {
+                result = await response.json()
             } else {
-                const txt = await resp.text()
-                json = { success: resp.ok, data: txt as unknown as T }
+                const text = await response.text()
+                result = { success: response.ok, data: text as unknown as T }
             }
 
-            // handle failures
-            if (!resp.ok) {
-                const err = parseApiError(resp.status, json)
-                // try refresh on token expiry
-                if (err instanceof TokenExpiredError && this._onRefresh) {
-                    const newTok = await this._tryRefresh()
-                    if (newTok) return this.request<T>(path, opts)
+            if (!response.ok) {
+                const error = parseApiError(response.status, result)
+
+                // PR FIX: Better recursion guard. 
+                // 1. Don't retry if this is the refresh request itself.
+                // 2. Don't retry more than once per user-initiated request.
+                if (error instanceof TokenExpiredError && this._onRefresh && !this._isRefreshRequest && !opts._isRetry) {
+                    const newToken = await this._handleRefresh()
+                    if (newToken) {
+                        return this.request<T>(path, { ...opts, _isRetry: true })
+                    }
                 }
-                throw err
+                throw error
             }
 
-            if (json.success === false && json.error) {
-                throw new LaTandaError(json.error.message, String(json.error.code), resp.status)
+            if (result.success === false && result.error) {
+                throw new LaTandaError(result.error.message, String(result.error.code), response.status)
             }
 
-            return json.data
-
+            return result.data
         } catch (e) {
-            clearTimeout(t)
+            clearTimeout(timer)
             if (e instanceof LaTandaError) throw e
-            if (e instanceof Error) {
-                if (e.name === 'AbortError') throw new NetworkError('Request timed out')
-                throw new NetworkError(e.message)
-            }
-            throw new NetworkError('Unknown error')
+            throw new NetworkError(e instanceof Error ? e.message : 'Request failed')
         }
     }
 
-    private async _tryRefresh(): Promise<string | null> {
-        if (this._isRefreshing && this._refreshPromise) {
-            return this._refreshPromise
-        }
+    private async _handleRefresh(): Promise<string | null> {
+        if (this._isRefreshing) return null
+
         this._isRefreshing = true
-        this._refreshPromise = this._onRefresh!()
+        this._isRefreshRequest = true
+
         try {
-            return await this._refreshPromise
+            const token = await this._onRefresh!()
+            return token
         } finally {
             this._isRefreshing = false
-            this._refreshPromise = null
+            this._isRefreshRequest = false
         }
     }
 
-    // convenience wrappers
-    get<T>(path: string, o?: Partial<RequestOptions>) {
-        return this.request<T>(path, { method: 'GET', ...o })
+    async get<T>(path: string, body?: any, o?: Partial<RequestOptions>) {
+        return this.request<T>(path, { method: 'GET', body, ...o })
     }
 
-    post<T>(path: string, body?: unknown, o?: Partial<RequestOptions>) {
+    async post<T>(path: string, body?: any, o?: Partial<RequestOptions>) {
         return this.request<T>(path, { method: 'POST', body, ...o })
     }
 
-    put<T>(path: string, body?: unknown, o?: Partial<RequestOptions>) {
+    async put<T>(path: string, body?: any, o?: Partial<RequestOptions>) {
         return this.request<T>(path, { method: 'PUT', body, ...o })
     }
 
-    patch<T>(path: string, body?: unknown, o?: Partial<RequestOptions>) {
+    async patch<T>(path: string, body?: any, o?: Partial<RequestOptions>) {
         return this.request<T>(path, { method: 'PATCH', body, ...o })
     }
 
-    delete<T>(path: string, o?: Partial<RequestOptions>) {
+    async delete<T>(path: string, o?: Partial<RequestOptions>) {
         return this.request<T>(path, { method: 'DELETE', ...o })
     }
 }
