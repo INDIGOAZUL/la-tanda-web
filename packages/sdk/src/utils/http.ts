@@ -88,7 +88,7 @@ export class HttpClient {
             const type = response.headers.get('content-type') || ''
 
             if (type.includes('application/json')) {
-                result = await response.json()
+                result = await response.json() as ApiResponse<T>
             } else {
                 const text = await response.text()
                 result = { success: response.ok, data: text as unknown as T }
