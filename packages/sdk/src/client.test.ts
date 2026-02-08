@@ -65,7 +65,7 @@ describe('LaTandaClient', () => {
     describe('tandas module', () => {
         test('has listGroups', () => expect(typeof client.tandas.listGroups).toBe('function'))
         test('has createGroup', () => expect(typeof client.tandas.createGroup).toBe('function'))
-        test('has listTandas', () => expect(typeof client.tandas.listTandas).toBe('function'))
+        test('has listTandas', () => expect(typeof client.tandas.listMyTandas).toBe('function'))
     })
 })
 

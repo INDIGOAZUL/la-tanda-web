@@ -33,7 +33,7 @@ export class MemoryTokenStorage implements TokenStorage {
 }
 
 export const DEFAULT_CONFIG = {
-    baseUrl: 'https://api.latanda.online',
+    baseUrl: 'https://latanda.online',
     timeout: 30000,
     headers: { 'Content-Type': 'application/json' },
     autoRefreshToken: true,
