@@ -1,56 +1,28 @@
-// main sdk client
+// main client class for la tanda sdk
 
-import { LaTandaConfig, DEFAULT_CONFIG, MemoryTokenStorage, TokenStorage } from './config'
 import { HttpClient } from './utils/http'
 import { AuthModule } from './modules/auth'
 import { WalletModule } from './modules/wallet'
 import { FeedModule } from './modules/feed'
 import { TandasModule } from './modules/tandas'
-
-// placeholder interfaces for modules not yet implemented
-
-interface MarketplaceModule {
-    listProducts: (filters?: unknown) => Promise<unknown>
-    getCategories: () => Promise<unknown>
-    search: (query: string) => Promise<unknown>
-}
-
-interface LotteryModule {
-    conduct: (groupId: string, members: string[]) => Promise<unknown>
-    getStatus: (groupId: string) => Promise<unknown>
-}
-
-// Stubs for specialized modules requested by INDIGOAZUL
-interface AdminModule {
-    getStats: () => Promise<unknown>
-    manageUsers: (action: string) => Promise<unknown>
-}
-
-interface MiningModule {
-    getStatus: () => Promise<unknown>
-    startMining: () => Promise<unknown>
-}
-
-interface MIAModule {
-    getBalance: () => Promise<unknown>
-    stake: (amount: string) => Promise<unknown>
-}
+import { MarketplaceModule } from './modules/marketplace'
+import { LaTandaConfig, DEFAULT_CONFIG, TokenStorage, MemoryTokenStorage } from './config'
+import type { AdminModule, MiningModule, MIAModule, LotteryModule } from './types'
 
 export class LaTandaClient {
-    private _config: LaTandaConfig
     private _http: HttpClient
+    private _config: LaTandaConfig
     private _storage: TokenStorage
 
-    // modules
     auth: AuthModule
     wallet: WalletModule
     feed: FeedModule
-    tandas!: TandasModule
-    marketplace!: MarketplaceModule
-    lottery!: LotteryModule
-    admin!: AdminModule
-    mining!: MiningModule
-    mia!: MIAModule
+    tandas: TandasModule
+    marketplace: MarketplaceModule
+    admin!: AdminModule // stub
+    mining!: MiningModule // stub
+    mia!: MIAModule // stub
+    lottery!: LotteryModule // stub
 
     constructor(cfg: LaTandaConfig = {}) {
         this._config = {
@@ -63,7 +35,6 @@ export class LaTandaClient {
         }
 
         this._storage = this._config.tokenStorage!
-
         this._http = new HttpClient(
             this._config.baseUrl!,
             this._config.timeout,
@@ -77,46 +48,52 @@ export class LaTandaClient {
         }
 
         // init modules
-        this.auth = new AuthModule(this._http, this._storage, this._config.refreshThreshold)
+        this.auth = new AuthModule(this._http, this._storage)
         this.wallet = new WalletModule(this._http)
         this.feed = new FeedModule(this._http)
         this.tandas = new TandasModule(this._http)
+        this.marketplace = new MarketplaceModule(this._http)
         this._initPlaceholderModules()
     }
 
     private _initPlaceholderModules() {
-        // marketplace - to be implemented
-        this.marketplace = {
-            listProducts: (f) => this._http.get('/marketplace/products', f),
-            getCategories: () => this._http.get('/marketplace/categories'),
-            search: (q) => this._http.get('/marketplace/search', { q })
-        }
-
-        // lottery - to be implemented
+        // lottery stub
         this.lottery = {
-            conduct: (gid, members) => this._http.post('/lottery/conduct', { group_id: gid, members }),
-            getStatus: (gid) => this._http.get('/lottery/status', { group_id: gid })
-        }
+            getDraws: () => this._http.get('/lottery/draws'),
+            buyTicket: (drawId: string) => this._http.post(`/lottery/draws/${drawId}/buy`),
+            getMyTickets: () => this._http.get('/lottery/my-tickets'),
+            getResults: (drawId: string) => this._http.get(`/lottery/draws/${drawId}/results`)
+        } as any
 
         // admin stub
         this.admin = {
             getStats: () => this._http.get('/admin/stats'),
-            manageUsers: (a) => this._http.post('/admin/users', { action: a })
-        }
+            listUsers: (params: any) => this._http.get('/admin/users', params),
+            updateUser: (uid: string, data: any) => this._http.patch(`/admin/users/${uid}`, data)
+        } as any
 
         // mining stub
         this.mining = {
-            getStatus: () => this._http.get('/mining/status'),
-            startMining: () => this._http.post('/mining/start')
-        }
+            getStats: () => this._http.get('/mining/stats'),
+            startMiner: () => this._http.post('/mining/start'),
+            stopMiner: () => this._http.post('/mining/stop'),
+            getRewards: () => this._http.get('/mining/rewards')
+        } as any
 
         // mia stub
         this.mia = {
-            getBalance: () => this._http.get('/mia/balance'),
-            stake: (amt) => this._http.post('/mia/stake', { amount: amt })
-        }
+            getPredictions: () => this._http.get('/mia/predictions'),
+            analyzeMarket: (data: any) => this._http.post('/mia/analyze', data)
+        } as any
     }
 
-    getHttpClient() { return this._http }
-    getConfig() { return { ...this._config } }
+    // helper to get the config
+    getConfig(): LaTandaConfig {
+        return this._config
+    }
+
+    // helper to get the raw http client for custom requests
+    getHttpClient(): HttpClient {
+        return this._http
+    }
 }
