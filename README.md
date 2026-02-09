@@ -1,300 +1,247 @@
-# 🚀 La Tanda Web3 Platform
+# La Tanda — Cooperativa de Ahorro Digital
 
-[![Live Platform](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
-[![API Status](https://img.shields.io/badge/API-140%2B%20endpoints-00FF80)](https://latanda.online/docs)
-[![Version](https://img.shields.io/badge/Version-3.52.0-blue)](https://latanda.online)
-[![Smart Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
-[![Open Source](https://img.shields.io/badge/Open%20Source-MIT-blue)](./LICENSE)
-[![Developer Portal](https://img.shields.io/badge/Dev%20Portal-LIVE-FFD700)](https://latanda.online/dev-dashboard.html)
-[![Blockchain Strategy](https://img.shields.io/badge/Blockchain-Strategy-purple)](https://latanda.online/docs/BLOCKCHAIN-STRATEGY.md)
+[![Live](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
+[![Version](https://img.shields.io/badge/Version-3.92.0-blue)](https://latanda.online)
+[![API](https://img.shields.io/badge/API-140%2B%20endpoints-00FF80)](https://latanda.online/docs)
+[![Security](https://img.shields.io/badge/Security-17%20audit%20rounds-red)](https://latanda.online)
+[![Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
+[![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
 
-**Cooperativa de Ahorro Inteligente + Web3 DeFi Platform**
+**Plataforma fintech de ahorro cooperativo (tandas/ROSCAs) para comunidades en Honduras.**
+
+La Tanda digitaliza las tandas tradicionales — grupos de ahorro rotativo donde cada miembro contribuye periodicamente y recibe el fondo completo en su turno. La plataforma agrega gestion automatizada, billetera digital, marketplace comunitario, red social, y prediccion de loteria.
+
+**[latanda.online](https://latanda.online)** — En produccion con usuarios reales.
 
 ---
 
-## 💰 DEVELOPERS: Earn LTD Tokens for Contributing!
+## Que es una Tanda?
 
-🎉 **Join our Web3 revolution - Get paid in tokens for every contribution!**
+Una **tanda** (ROSCA — Rotating Savings and Credit Association) es un sistema de ahorro comunitario tradicional en Latinoamerica. Un grupo de personas acuerda contribuir una cantidad fija de dinero periodicamente. En cada ronda, un miembro recibe el fondo completo. Es banca sin banco — confianza comunitaria como infraestructura financiera.
 
-| Contribution Type | Reward Range | Examples |
-|-------------------|--------------|----------|
-| 🐛 **Bug Fixes** | 25-100 LTD | Critical bugs = 100 LTD |
-| ✨ **Features** | 100-500 LTD | Major features = 500 LTD |
-| 📚 **Documentation** | 25-75 LTD | Comprehensive docs = 75 LTD |
-| 🧪 **Testing** | 50-200 LTD | Full test suites = 200 LTD |
+La Tanda lleva este concepto a una plataforma digital con:
+- Turnos automatizados y sorteo justo (tombola)
+- Billetera con control de contribuciones y retiros
+- Pagos verificados con comprobantes y OCR
+- Penalizaciones y periodos de gracia configurables
+- Historial transparente para todos los miembros
 
-> **Important:** LTD tokens are currently on **Polygon Amoy testnet**. All rewards will be **exchangeable 1:1 for mainnet LTD** when we launch!
+---
 
-### 🚀 Quick Start (5 minutes)
+## Funcionalidades
+
+### Cooperativa de Ahorro
+- **Grupos y Tandas** — Crear, administrar, unirse. Sorteo de turnos, ciclos automaticos, contribuciones rastreadas
+- **Billetera Digital** — Balance en Lempiras (HNL), contribuciones, retiros a cuenta bancaria, historial de transacciones
+- **Marketplace** — Compra/venta de productos y servicios entre miembros de la comunidad
+- **Red Social** — Feed con posts, media, GIFs, encuestas, ubicacion, modo incognito, mentions, hashtags
+- **MIA** — Asistente IA (Groq Llama 3.3 70B) integrado en la plataforma
+- **Predictor de Loteria** — Analisis de frecuencia y cadenas de Markov para La Diaria de Honduras
+- **Mineria de Tokens** — Gana LTD por actividad diaria en la plataforma
+- **KYC** — Verificacion de identidad con upload de documentos
+
+### Seguridad (17 rondas de auditoria)
+- JWT con rotacion de refresh tokens y blacklisting
+- Zero `SELECT *`, `RETURNING *`, `Math.random()`, `body.user_id` IDOR en todo el codebase
+- Rate limiting por zona (auth, API, general), CSP, SRI en CDN scripts
+- bcrypt 12 rounds, `crypto.timingSafeEqual` para comparaciones sensibles
+- WebSocket con autenticacion JWT
+- API solo accesible via Nginx (127.0.0.1:3002)
+- Usuario de DB dedicado (DML-only, sin superuser)
+- Autovacuum tunado, timeouts de conexion, logging de queries lentas
+
+---
+
+## Stack Tecnico
+
+| Capa | Tecnologia |
+|------|------------|
+| **Frontend** | Vanilla JS, HTML5, CSS3 (Glassmorphism), PWA con Service Worker (Workbox) |
+| **Backend** | Node.js (native http), 140+ endpoints REST |
+| **Base de Datos** | PostgreSQL 16 (30+ tablas, usuario `latanda_app` DML-only) |
+| **Cache/Sessions** | Redis (rate limiting, token blacklist) |
+| **Proceso** | PM2 cluster mode (2 instancias, max 384MB heap) |
+| **Proxy** | Nginx (SSL, gzip_static, WebSocket proxy, security headers) |
+| **IA** | Groq Llama 3.3 70B (asistente MIA) |
+| **Blockchain** | Solidity, Hardhat, Polygon Amoy testnet (LTD ERC20) |
+
+---
+
+## Arquitectura
+
+```
+                    ┌─────────────┐
+                    │   Browser   │
+                    │  (PWA/SW)   │
+                    └──────┬──────┘
+                           │ HTTPS
+                    ┌──────┴──────┐
+                    │    Nginx    │
+                    │  SSL/gzip   │
+                    │ rate limits │
+                    └──┬───┬───┬──┘
+                       │   │   │
+              ┌────────┘   │   └────────┐
+              ▼            ▼            ▼
+        ┌──────────┐ ┌──────────┐ ┌──────────┐
+        │  Static  │ │ API x2   │ │ WebSocket│
+        │  Files   │ │ (PM2)    │ │ Lottery  │
+        │ /main/   │ │ :3002    │ │ :3002/ws │
+        └──────────┘ └────┬─────┘ └──────────┘
+                          │
+                ┌─────────┼─────────┐
+                ▼         ▼         ▼
+          ┌──────────┐ ┌─────┐ ┌──────┐
+          │PostgreSQL│ │Redis│ │ Groq │
+          │  16      │ │     │ │ LLM  │
+          └──────────┘ └─────┘ └──────┘
+```
+
+---
+
+## Smart Contracts
+
+Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
+
+| Contrato | Address | Funcion |
+|----------|---------|---------|
+| **LTDToken V2.0** | [`0x863321...d9cFc`](https://amoy.polygonscan.com/address/0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc) | ERC20, 1B supply, vesting, governance |
+| **RoyalOwnershipVesting** | [`0x7F21EC...082F`](https://amoy.polygonscan.com/address/0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F) | 4-year linear vesting, 1-year cliff, 2% monthly limit |
+| **FutureReserve** | [`0xF136C7...0bA2`](https://amoy.polygonscan.com/address/0xF136C790da0D76d75d36207d954A6E114A9c0bA2) | DAO governance, 7-day timelock |
+
+**Distribucion de tokens:** Participation 20% | Staking & Governance 30% | Development 25% | Liquidity 10% | Vesting 10% | DAO Reserve 5%
+
+> Los tokens LTD estan en testnet. Seran intercambiables 1:1 por mainnet LTD al lanzamiento.
+
+---
+
+## API
+
+140+ endpoints organizados en modulos:
+
+| Modulo | Endpoints | Descripcion |
+|--------|-----------|-------------|
+| Auth | `/api/auth/*` | Login, registro, refresh, 2FA, verificacion |
+| Groups | `/api/groups/*` | CRUD grupos, miembros, contribuciones, sorteo |
+| Tandas | `/api/tandas/*` | Ciclos, turnos, pagos, coordinador |
+| Wallet | `/api/wallet/*` | Balance, transacciones, retiros |
+| Marketplace | `/api/marketplace/*` | Productos, categorias, proveedores |
+| Social Feed | `/api/feed/social/*` | Posts, likes, comments, follow, trending |
+| Admin | `/api/admin/*` | Dashboard, usuarios, auditoria, compliance |
+| Lottery | `/api/lottery/*` | Predicciones, scraping, estadisticas |
+| MIA | `/api/mia/*` | Chat con asistente IA |
+| Uploads | `/api/upload/*` | Imagenes, videos, comprobantes |
+
+**Documentacion interactiva:** [latanda.online/docs](https://latanda.online/docs) (Swagger UI)
+
+---
+
+## Desarrollo Local
 
 ```bash
-# 1. Fork & Clone
-git clone https://github.com/YOUR_USERNAME/la-tanda-web.git
+# Clonar
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
 cd la-tanda-web
 
-# 2. Install dependencies
+# Frontend (archivos estaticos)
+# Abrir cualquier .html en el navegador o servir con:
+npx serve .
+
+# Smart contracts
+cd smart-contracts
 npm install
-
-# 3. Run local development
-npm run dev
-
-# 4. Check active bounties
-cat ACTIVE-BOUNTIES.md
+npx hardhat compile
+npx hardhat test
 ```
 
-📋 **[View Active Bounties](./ACTIVE-BOUNTIES.md)** - See what you can work on today!
-
-⚡ **[Developer Quickstart](./DEVELOPER-QUICKSTART.md)** - Complete setup guide
-
-💰 **[Rewards System](./DEVELOPER-TOKENOMICS-REWARDS.md)** - Full tokenomics details
+> **Nota:** El backend (API + DB) corre en el servidor de produccion. Para desarrollo backend se requiere acceso SSH al servidor.
 
 ---
 
-## 🌟 Platform Overview
-
-La Tanda is a revolutionary **Web3 financial platform** combining traditional tandas (rotating savings groups) with DeFi features.
-
-### ✨ Key Features
-
-- **🏦 Traditional Tandas** - Rotating savings groups with smart automation
-- **💳 DeFi Integration** - Staking, lending, yield farming
-- **🪙 LTD Token** - Native ERC20 token with vesting & governance
-- **👥 Group Management** - Advanced tanda creation & administration
-- **📊 Real-time Analytics** - Live dashboards and reporting
-- **🔐 KYC/Compliance** - Built-in identity verification
-- **💼 Multi-wallet Support** - Web3, Blink Lightning, traditional banking
-- **📱 PWA Ready** - Works offline, installable on mobile
-
----
-
-## 📊 Current Status
-
-| Component | Status | Progress |
-|-----------|--------|----------|
-| **Web Platform** | ✅ LIVE | 100% |
-| **API Backend** | ✅ ONLINE | 100% (140+ endpoints) |
-| **Smart Contracts** | ✅ DEPLOYED | 100% (Polygon Amoy) |
-| **Mobile PWA** | ✅ READY | 100% |
-| **Documentation** | ✅ COMPLETE | 100% |
-
-**Overall:** 🟢 97% Production Ready
-
-🔗 **Live Platform:** [https://latanda.online](https://latanda.online)
-
-🔗 **API Documentation:** [https://latanda.online/docs](https://latanda.online/docs)
-
-📈 **Roadmap:** [ROADMAP-TRACKER.html](./ROADMAP-TRACKER.html)
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **HTML5/CSS3/JavaScript** - Modern vanilla JS
-- **Glassmorphism UI** - Beautiful, modern design
-- **PWA** - Progressive Web App features
-- **Responsive** - Mobile-first design
-
-### Backend
-- **Node.js (native http)** - REST API (135+ endpoints)
-- **PostgreSQL** - Primary database (23 tables)
-- **PM2** - Process management
-- **Nginx** - Reverse proxy & load balancing
-
-### Blockchain
-- **Solidity** - Smart contracts
-- **Hardhat** - Development environment
-- **Polygon Amoy** - Testnet deployment
-- **ERC20** - LTD token standard
-
----
-
-## 🪙 Smart Contracts (Tokenomics V2.0)
-
-**Deployed to Polygon Amoy Testnet** ✅ October 18, 2025
-
-### Contract Addresses
-
-1. **LTDToken.sol V2.0**
-   - **Address:** `0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc`
-   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc)
-   - Total Supply: 1,000,000,000 LTD
-   - ERC20 with vesting support
-   - Governance integration
-   - **Status:** ✅ Deployed & Verified
-
-2. **RoyalOwnershipVesting.sol**
-   - **Address:** `0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F`
-   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F)
-   - 4-year linear vesting
-   - 1-year cliff
-   - Anti-dump protection (2% monthly limit)
-   - **Status:** ✅ Deployed (100M LTD allocated)
-
-3. **FutureReserve.sol**
-   - **Address:** `0xF136C790da0D76d75d36207d954A6E114A9c0bA2`
-   - **PolygonScan:** [View Contract](https://amoy.polygonscan.com/address/0xF136C790da0D76d75d36207d954A6E114A9c0bA2)
-   - DAO-controlled governance
-   - 7-day timelock
-   - Community proposals
-   - **Status:** ✅ Deployed (50M LTD allocated)
-
-### Token Distribution
-
-```javascript
-{
-  "Participation": "20% (200M LTD)",
-  "Staking & Governance": "30% (300M LTD)",
-  "Development & Marketing": "25% (250M LTD)", // ← Bounty Budget
-  "Liquidity": "10% (100M LTD)",
-  "Royal Ownership (Vesting)": "10% (100M LTD)",
-  "Future Reserve (DAO)": "5% (50M LTD)"
-}
-```
-
-**Developer Bounty Budget:** 250M LTD (~2,000+ years sustainability) 🚀
-
----
-
-## 📁 Project Structure
+## Estructura del Proyecto
 
 ```
 la-tanda-web/
-├── smart-contracts/         # Solidity contracts + tests
-│   ├── contracts/          # Smart contract source
-│   ├── scripts/            # Deployment scripts
-│   ├── test/              # Contract tests
-│   └── hardhat.config.js  # Hardhat configuration
-├── .github/                # GitHub workflows & templates
-│   ├── workflows/         # CI/CD pipelines
-│   └── ISSUE_TEMPLATE/    # Bounty issue templates
-├── *.html                 # Frontend pages (9 sections)
-├── *.css                  # Styling files
-├── *.js                   # Frontend logic
-├── ACTIVE-BOUNTIES.md     # Current bounties
-├── DEVELOPER-QUICKSTART.md # Quick setup guide
-└── ROADMAP-TRACKER.html   # Visual roadmap
+├── *.html                    # 40+ paginas frontend (dashboard, wallet, marketplace, etc.)
+├── css/                      # Estilos (dashboard-layout, mobile-drawer, hub/)
+├── js/
+│   ├── hub/                  # Modulos JS principales (social-feed, sidebar, contextual)
+│   ├── lib/                  # Librerias (ethers.js)
+│   └── components-loader.js  # Carga dinamica de componentes
+├── smart-contracts/
+│   ├── contracts/            # LTDToken, Vesting, Reserve (Solidity)
+│   ├── scripts/              # Deploy scripts
+│   └── test/                 # Contract tests (Hardhat)
+├── packages/
+│   └── sdk/                  # TypeScript SDK (en desarrollo)
+├── .github/
+│   ├── workflows/            # CI/CD (tests, deploy, bounty tracker)
+│   └── ISSUE_TEMPLATE/       # Templates para bounties
+└── docs/                     # Documentacion adicional
 ```
 
 ---
 
-## 🎯 Active Bounties (Updated Daily)
+## Contribuir
 
-### 🔥 High Priority - New Opportunities
+### Bounties Activos
 
-1. **JavaScript/TypeScript SDK** - 300 LTD
-   - Wrapper for La Tanda API
-   - TypeScript definitions
-   - NPM package ready
+| Bounty | Recompensa | Estado |
+|--------|------------|--------|
+| TypeScript SDK | 300 LTD | [PR #29](https://github.com/INDIGOAZUL/la-tanda-web/pull/29) — En review |
+| Transaction Pagination | 200 LTD | [Issue #4](https://github.com/INDIGOAZUL/la-tanda-web/issues/4) — Abierto |
+| Admin Role Management | 500 LTD | [Issue #13](https://github.com/INDIGOAZUL/la-tanda-web/issues/13) — Abierto |
+| Role Application UI | 400 LTD | [Issue #12](https://github.com/INDIGOAZUL/la-tanda-web/issues/12) — Abierto |
 
-2. **Mobile PWA Enhancements** - 200 LTD
-   - Offline functionality improvements
-   - Push notification optimization
-   - Performance tuning
+Ver todos: **[Issues con label `bounty`](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)**
 
-3. **Integration Examples** - 150 LTD
-   - React, Vue, Node.js examples
-   - Authentication flow demos
-   - Marketplace integration guides
+### Como Contribuir
 
-4. **Documentation & Tutorials** - 100 LTD
-   - Video tutorials
-   - Blog posts
-   - Translation to other languages
+1. Revisa los [issues abiertos](https://github.com/INDIGOAZUL/la-tanda-web/issues) o [bounties](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=label%3Abounty)
+2. Comenta en el issue que te interesa
+3. Fork, trabaja en tu branch, abre PR referenciando el issue
+4. Review por maintainers
+5. Merge y recompensa en LTD tokens
 
-📋 **[View All Bounties](./ACTIVE-BOUNTIES.md)**
+### Guias
 
-> **Note:** LTD tokens are currently on Polygon Amoy testnet. All earned tokens will be exchangeable 1:1 for mainnet LTD at launch!
-
----
-
-## 🤝 Contributing
-
-We welcome all contributors! Whether you're fixing bugs, adding features, or improving docs - there's a bounty for you.
-
-### How to Contribute
-
-1. **Check Active Bounties** - [ACTIVE-BOUNTIES.md](./ACTIVE-BOUNTIES.md)
-2. **Claim an Issue** - Comment "I'd like to work on this"
-3. **Fork & Clone** - Start working on your changes
-4. **Submit PR** - Reference the issue number
-5. **Get Reviewed** - Maintainers will review
-6. **Merge & Earn** - Receive LTD tokens within 24h
-
-### Contribution Guidelines
-
-- Follow existing code style
-- Add tests for new features
-- Update documentation
-- Reference issue numbers in commits
-- Be respectful and collaborative
-
-📖 **[Full Contributing Guide](./CONTRIBUTING.md)**
+- [Developer Quickstart](./DEVELOPER-QUICKSTART.md)
+- [API Docs (Swagger)](https://latanda.online/docs)
+- [Smart Contract Docs](./smart-contracts/README.md)
+- [Tokenomics & Rewards](./DEVELOPER-TOKENOMICS-REWARDS.md)
 
 ---
 
-## 📚 Documentation
+## Seguridad
 
-- **[Developer Quickstart](./DEVELOPER-QUICKSTART.md)** - Get started in 5 minutes
-- **[API Documentation](https://latanda.online/docs)** - Complete API reference (Swagger UI)
-- **[Smart Contract Docs](./smart-contracts/README.md)** - Solidity documentation
-- **[Deployment Guide](./DEPLOYMENT-GUIDE.md)** - How to deploy
-- **[Tokenomics](./DEVELOPER-TOKENOMICS-REWARDS.md)** - LTD token economics
+Si descubres una vulnerabilidad de seguridad:
 
----
-
-## 🔐 Security
-
-We take security seriously. If you discover a security vulnerability:
-
-1. **DO NOT** open a public issue
-2. Email: security@latanda.online
-3. Include detailed description
-4. Receive priority bounty (up to 500 LTD)
+1. **NO** abras un issue publico
+2. Contacta: security@latanda.online
+3. Incluye descripcion detallada y pasos para reproducir
+4. Bounty prioritario (hasta 500 LTD)
 
 ---
 
-## 📄 License
+## Links
 
-MIT License - See [LICENSE](./LICENSE) for details
-
----
-
-## 🌐 Links
-
-- **Website:** [https://latanda.online](https://latanda.online)
-- **API Docs:** [https://latanda.online/docs](https://latanda.online/docs)
-- **Developer Portal:** [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
-- **GitHub:** [https://github.com/INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
-- **Twitter/X:** [https://x.com/TandaWeb3](https://x.com/TandaWeb3)
-- **YouTube:** [https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
-- **Roadmap:** [ROADMAP-TRACKER.html](./ROADMAP-TRACKER.html)
+| | |
+|---|---|
+| **Plataforma** | [latanda.online](https://latanda.online) |
+| **API Docs** | [latanda.online/docs](https://latanda.online/docs) |
+| **GitHub** | [github.com/INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web) |
+| **Twitter/X** | [@TandaWeb3](https://x.com/TandaWeb3) |
+| **YouTube** | [La Tanda Channel](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw) |
+| **Discussions** | [GitHub Discussions](https://github.com/INDIGOAZUL/la-tanda-web/discussions) |
 
 ---
 
-## 💬 Community
+## Licencia
 
-- **GitHub Discussions:** [Ask questions & share ideas](https://github.com/INDIGOAZUL/la-tanda-web/discussions)
-- **Twitter/X:** [@TandaWeb3](https://x.com/TandaWeb3)
-- **YouTube:** [La Tanda Channel](https://www.youtube.com/channel/UCQitNp79J1-DvJKi334_8qw)
-- **Reddit:** [u/Valuable-Skin-7182](https://www.reddit.com/user/Valuable-Skin-7182/)
-- **Discord:** Coming soon
+MIT — Ver [LICENSE](./LICENSE)
 
 ---
 
-## 🙏 Acknowledgments
+Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
-Built with ❤️ by the La Tanda community
-
-Special thanks to all contributors who help make Web3 finance accessible to everyone!
-
----
-
-**⭐ Star this repo if you find it useful!**
-
-**🪙 Start contributing and earn LTD tokens today!**
-
----
-
-*Generated: October 17, 2025*
-*Last Updated: January 19, 2026*
+*Ultima actualizacion: Febrero 9, 2026*
