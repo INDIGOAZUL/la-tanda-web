@@ -67,13 +67,24 @@ describe('TandasModule', () => {
         expect(http.get).toHaveBeenCalledWith('/tandas/my-tandas', {})
     })
 
-    test('joinGroup calls specific endpoint', async () => {
+    test('joinGroup uses registration namespace', async () => {
         await tandas.joinGroup('abc')
-        expect(http.post).toHaveBeenCalledWith('/groups/abc/join')
+        expect(http.post).toHaveBeenCalledWith('/registration/groups/join/abc')
     })
 
-    test('contribute calls correct group endpoint', async () => {
+    test('contribute uses group-specific endpoint', async () => {
         await tandas.contribute('g1', '100')
-        expect(http.post).toHaveBeenCalledWith('/groups/g1/contribute', { amount: '100' })
+        expect(http.post).toHaveBeenCalledWith('/groups/g1/contribute', {
+            amount: '100'
+        })
+    })
+
+    test('getMembers uses details endpoint', async () => {
+        const post = http.post as jest.Mock
+        post.mockResolvedValue({ members: [{ user_id: 'u1', name: 'User 1' }] })
+
+        const members = await tandas.getMembers('g1')
+        expect(post).toHaveBeenCalledWith('/registration/groups/details', { groupId: 'g1' })
+        expect(members.length).toBe(1)
     })
 })

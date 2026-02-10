@@ -1,12 +1,16 @@
-// social feed module - for getting the latest gossip and sharing updates
-// aligned with La Tanda v3.92.0
+// feed module - handles social interactions (posts, likes, comments)
+// aligned with La Tanda v3.92.0 social feed specs
 
 import { HttpClient } from '../utils/http'
-import type { Post, Comment, CreatePostData, SocialFeedFilters } from '../types/feed'
+import type {
+    FeedPost,
+    FeedComment,
+    CreatePostData,
+    FeedFilters
+} from '../types/feed'
 
 /**
- * Social Feed Module
- * Handles interactions with the La Tanda community feed.
+ * Handles social interactions like posts, likes, and comments.
  */
 export class FeedModule {
     private _http: HttpClient
@@ -16,37 +20,37 @@ export class FeedModule {
     }
 
     /**
-     * Get the global social feed
+     * Fetches posts from the social feed.
      */
-    async getPosts(filters: SocialFeedFilters = {}): Promise<Post[]> {
-        return this._http.get<Post[]>('/feed/social/posts', filters)
+    async getPosts(filters: FeedFilters = {}): Promise<FeedPost[]> {
+        return this._http.get<FeedPost[]>('/feed/social/posts', filters)
     }
 
     /**
-     * Post something new to the community
+     * Creates a new social post.
      */
-    async createPost(data: CreatePostData): Promise<Post> {
-        return this._http.post<Post>('/feed/social/posts', data)
+    async createPost(data: CreatePostData): Promise<FeedPost> {
+        return this._http.post<FeedPost>('/feed/social/posts', data)
     }
 
     /**
-     * Like or unlike a post
+     * Toggles a like on a post.
      */
-    async toggleLike(postId: string): Promise<{ liked: boolean; count: number }> {
-        return this._http.post(`/feed/social/posts/${postId}/like`)
+    async toggleLike(postId: string): Promise<{ liked: boolean }> {
+        return this._http.post<{ liked: boolean }>(`/feed/social/posts/${postId}/like`)
     }
 
     /**
-     * Get comments for a specific post
+     * Fetches comments for a specific post.
      */
-    async getComments(postId: string): Promise<Comment[]> {
-        return this._http.get<Comment[]>(`/feed/social/posts/${postId}/comments`)
+    async getComments(postId: string): Promise<FeedComment[]> {
+        return this._http.get<FeedComment[]>(`/feed/social/posts/${postId}/comments`)
     }
 
     /**
-     * Add a comment to a post
+     * Adds a comment to a post.
      */
-    async addComment(postId: string, text: string): Promise<Comment> {
-        return this._http.post(`/feed/social/posts/${postId}/comment`, { text })
+    async addComment(postId: string, text: string): Promise<FeedComment> {
+        return this._http.post<FeedComment>(`/feed/social/posts/${postId}/comment`, { text })
     }
 }

@@ -20,24 +20,44 @@ export class AuthModule {
     private _storage: TokenStorage
     private _threshold: number
 
+    /**
+     * @param http - The shared HttpClient instance.
+     * @param storage - TokenStorage implementation for session persistence.
+     * @param threshold - Buffer in seconds for token refresh checks (default: 300s).
+     */
     constructor(http: HttpClient, storage: TokenStorage, threshold = 300) {
         this._http = http
         this._storage = storage
         this._threshold = threshold
     }
 
+    /**
+     * Authenticates a user and persists the session.
+     * @param creds - Email and password credentials.
+     * @returns AuthResponse containing the user profile and tokens.
+     * @throws AuthenticationError if credentials are invalid.
+     */
     async login(creds: LoginCredentials): Promise<AuthResponse> {
         const r = await this._http.post<AuthResponse>('/auth/login', creds)
         if (r.auth_token) await this._storage.setToken(r.auth_token)
         return r
     }
 
+    /**
+     * Registers a new user account.
+     * @param data - User profile data (name, email, password, etc).
+     * @returns AuthResponse containing the new user profile and tokens.
+     */
     async register(data: RegisterData): Promise<AuthResponse> {
         const r = await this._http.post<AuthResponse>('/auth/register', data)
         if (r.auth_token) await this._storage.setToken(r.auth_token)
         return r
     }
 
+    /**
+     * Proactively refreshes the current session token.
+     * @returns The new auth token string, or null if refresh failed.
+     */
     async refreshToken(): Promise<string | null> {
         try {
             const r = await this._http.post<{ auth_token: string }>('/auth/refresh')
@@ -60,67 +80,11 @@ export class AuthModule {
         }
     }
 
-    async validateToken(): Promise<TokenValidation> {
-        return this._http.post<TokenValidation>('/auth/validate')
-    }
-
-    async validateSession(): Promise<SessionInfo> {
-        return this._http.post<SessionInfo>('/auth/session/validate')
-    }
-
-    async forgotPassword(email: string) {
-        return this._http.post<{ success: boolean; message: string }>(
-            '/auth/forgot-password',
-            { email }
-        )
-    }
-
-    async resetPassword(token: string, pwd: string) {
-        return this._http.post<{ success: boolean }>(
-            '/auth/reset-password',
-            { token, new_password: pwd }
-        )
-    }
-
-    async setup2FA(): Promise<TwoFactorSetup> {
-        return this._http.post<TwoFactorSetup>('/auth/2fa/setup')
-    }
-
-    async verify2FA(code: string): Promise<TwoFactorVerify> {
-        return this._http.post<TwoFactorVerify>('/auth/2fa/verify', { code })
-    }
-
-    async disable2FA(code: string) {
-        return this._http.post<{ success: boolean }>('/auth/2fa/disable', { code })
-    }
-
-    async loginWithGoogle(token: string): Promise<AuthResponse> {
-        const r = await this._http.post<AuthResponse>('/auth/social/google', { token })
-        if (r.auth_token) await this._storage.setToken(r.auth_token)
-        return r
-    }
-
-    async loginWithSocial(data: SocialAuthData): Promise<AuthResponse> {
-        const url = `/auth/social/${data.provider}`
-        const r = await this._http.post<AuthResponse>(url, {
-            token: data.token,
-            email: data.email
-        })
-        if (r.auth_token) await this._storage.setToken(r.auth_token)
-        return r
-    }
-
-    async isAuthenticated(): Promise<boolean> {
-        const tok = await this._storage.getToken()
-        if (!tok) return false
-        return !shouldRefreshToken(tok, 0)
-    }
-
     /**
      * Extracts partial user info from the current JWT token locally.
-     * Use getCurrentUser() for a full verified profile from the API.
+     * Does NOT make an API call.
      */
-    async getCurrentUserFromToken(): Promise<UserInfo | null> {
+    async getUserFromToken(): Promise<UserInfo | null> {
         const tok = await this._storage.getToken()
         if (!tok) return null
 
@@ -149,9 +113,9 @@ export class AuthModule {
         return this._storage.getToken()
     }
 
-    async shouldRefresh(): Promise<boolean> {
+    async isAuthenticated(): Promise<boolean> {
         const tok = await this._storage.getToken()
         if (!tok) return false
-        return shouldRefreshToken(tok, this._threshold)
+        return !shouldRefreshToken(tok, 0)
     }
 }

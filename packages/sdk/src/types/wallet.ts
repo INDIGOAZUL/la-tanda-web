@@ -1,51 +1,47 @@
-// wallet types - balances, history and withdrawals
+// wallet type definitions
 // aligned with La Tanda v3.92.0 (HNL / Bank based system)
 
-export type AssetType = 'HNL' | 'LTD' // LTD is internal points, HNL is main currency
+export type AssetSymbol = 'HNL' | 'LMP' | 'USD'
+export type AssetType = AssetSymbol // for compatibility
 
-export interface BalanceInfo {
-    asset: AssetType
+export interface WalletBalance {
+    symbol: AssetSymbol
+    asset: AssetSymbol // compatibility
     amount: string
-    formatted: string
-}
-
-export interface WalletBalances {
     total_hnl: string
-    assets: BalanceInfo[]
+    available: string
+    locked: string
 }
-
-export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
-export type TransactionType = 'deposit' | 'withdrawal' | 'contribution' | 'payout'
 
 export interface Transaction {
     id: string
-    type: TransactionType
-    status: TransactionStatus
-    asset: AssetType
+    type: 'deposit' | 'withdrawal' | 'contribution' | 'payout' | 'transfer'
+    symbol: AssetSymbol
     amount: string
-    fee?: string
+    status: 'pending' | 'completed' | 'failed' | 'cancelled'
     timestamp: string
     description?: string
-    metadata?: Record<string, any>
+    fee?: string
+}
+
+export interface PaymentProcessRequest {
+    symbol: AssetSymbol
+    amount: string
+    destination: string
+    type: 'transfer' | 'withdrawal' | 'contribution'
+    description?: string
+}
+
+export interface PaymentResponse {
+    success: boolean
+    transaction_id: string
+    status: string
 }
 
 export interface TransactionFilters {
-    asset?: AssetType
-    type?: TransactionType
+    type?: string
+    symbol?: string
+    status?: string
     limit?: number
     offset?: number
-}
-
-export interface WithdrawalRequest {
-    bank_name: string
-    account_number: string
-    account_holder: string
-    amount: string
-    memo?: string
-}
-
-export interface WithdrawalResponse {
-    id: string
-    status: TransactionStatus
-    estimated_arrival?: string
 }

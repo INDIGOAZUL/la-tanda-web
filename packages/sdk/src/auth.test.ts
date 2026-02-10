@@ -1,4 +1,5 @@
 // tests for auth module
+// aligned with La Tanda v3.92.0
 
 import { AuthModule } from './modules/auth'
 import { MemoryTokenStorage } from './config'
@@ -98,61 +99,6 @@ describe('AuthModule', () => {
         })
     })
 
-    describe('2FA', () => {
-        test('setup returns qr code', async () => {
-            const post = http.post as jest.Mock
-            post.mockResolvedValue({ secret: 'abc', qr_code: 'data:image', backup_codes: [] })
-
-            const r = await auth.setup2FA()
-
-            expect(post).toHaveBeenCalledWith('/auth/2fa/setup')
-            expect(r.qr_code).toBe('data:image')
-        })
-
-        test('verify sends code', async () => {
-            const post = http.post as jest.Mock
-            post.mockResolvedValue({ success: true })
-
-            const r = await auth.verify2FA('123456')
-
-            expect(post).toHaveBeenCalledWith('/auth/2fa/verify', { code: '123456' })
-            expect(r.success).toBe(true)
-        })
-    })
-
-    describe('forgotPassword', () => {
-        test('sends reset email', async () => {
-            const post = http.post as jest.Mock
-            post.mockResolvedValue({ success: true, message: 'sent' })
-
-            const r = await auth.forgotPassword('user@test.com')
-
-            expect(post).toHaveBeenCalledWith('/auth/forgot-password', { email: 'user@test.com' })
-            expect(r.success).toBe(true)
-        })
-    })
-
-    describe('social login', () => {
-        test('google login works', async () => {
-            const post = http.post as jest.Mock
-            post.mockResolvedValue({ auth_token: 'google', user: {} })
-
-            await auth.loginWithGoogle('gtoken')
-
-            expect(post).toHaveBeenCalledWith('/auth/social/google', { token: 'gtoken' })
-            expect(await storage.getToken()).toBe('google')
-        })
-
-        test('any provider works', async () => {
-            const post = http.post as jest.Mock
-            post.mockResolvedValue({ auth_token: 'fb', user: {} })
-
-            await auth.loginWithSocial({ provider: 'facebook', token: 'fbtoken' })
-
-            expect(post).toHaveBeenCalledWith('/auth/social/facebook', { token: 'fbtoken', email: undefined })
-        })
-    })
-
     describe('helpers', () => {
         test('isAuthenticated false when empty', async () => {
             expect(await auth.isAuthenticated()).toBe(false)
@@ -161,6 +107,15 @@ describe('AuthModule', () => {
         test('getToken returns stored value', async () => {
             await storage.setToken('mytok')
             expect(await auth.getToken()).toBe('mytok')
+        })
+
+        test('getCurrentUser calls /auth/me', async () => {
+            const get = http.get as jest.Mock
+            get.mockResolvedValue({ id: '123', email: 'test@me.com' })
+
+            const u = await auth.getCurrentUser()
+            expect(get).toHaveBeenCalledWith('/auth/me')
+            expect(u.id).toBe('123')
         })
     })
 })

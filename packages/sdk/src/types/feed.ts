@@ -1,40 +1,34 @@
-// social feed types - posts, comments, likes
+// feed type definitions
+// aligned with La Tanda v3.92.0
 
-export interface Post {
+export interface FeedPost {
     id: string
-    user_id: string
-    user_name: string
+    author_id: string
+    author_name: string
     content: string
-    image_url?: string
+    media_url?: string
     likes_count: number
     comments_count: number
-    is_liked: boolean
+    has_liked?: boolean
     created_at: string
 }
 
-export interface Comment {
+export interface FeedComment {
     id: string
     post_id: string
-    user_id: string
-    user_name: string
+    author_id: string
+    author_name: string
     text: string
     created_at: string
 }
 
 export interface CreatePostData {
     content: string
-    image_url?: string
+    media_url?: string
 }
 
-export interface SocialFeedFilters {
+export interface FeedFilters {
     limit?: number
     offset?: number
-    user_id?: string
-}
-
-export interface ReputationInfo {
-    score: number
-    rank: string
-    verified: boolean
-    total_tandas: number
+    author_id?: string
 }

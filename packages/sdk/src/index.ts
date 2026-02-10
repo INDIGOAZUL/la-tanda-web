@@ -38,6 +38,7 @@ export * from './modules/wallet'
 export * from './modules/tandas'
 export * from './modules/feed'
 export * from './modules/marketplace'
+export * from './modules/lottery'
 
 // type exports
 export * from './types/auth'
@@ -45,3 +46,4 @@ export * from './types/wallet'
 export * from './types/tandas'
 export * from './types/feed'
 export * from './types/marketplace'
+export * from './types/lottery'

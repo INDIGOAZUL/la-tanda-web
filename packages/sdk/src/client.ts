@@ -1,4 +1,5 @@
 // main client class for la tanda sdk
+// aligned with La Tanda v3.92.0
 
 import { HttpClient } from './utils/http'
 import { AuthModule } from './modules/auth'
@@ -6,8 +7,9 @@ import { WalletModule } from './modules/wallet'
 import { FeedModule } from './modules/feed'
 import { TandasModule } from './modules/tandas'
 import { MarketplaceModule } from './modules/marketplace'
+import { LotteryModule } from './modules/lottery'
 import { LaTandaConfig, DEFAULT_CONFIG, TokenStorage, MemoryTokenStorage } from './config'
-import type { AdminModule, MiningModule, MIAModule, LotteryModule } from './types'
+import type { AdminModule, MiningModule, MIAModule } from './types'
 
 export class LaTandaClient {
     private _http: HttpClient
@@ -19,10 +21,10 @@ export class LaTandaClient {
     feed: FeedModule
     tandas: TandasModule
     marketplace: MarketplaceModule
-    admin!: AdminModule // stub
-    mining!: MiningModule // stub
-    mia!: MIAModule // stub
-    lottery!: LotteryModule // stub
+    lottery: LotteryModule
+    admin!: AdminModule
+    mining!: MiningModule
+    mia!: MIAModule
 
     constructor(cfg: LaTandaConfig = {}) {
         this._config = {
@@ -53,18 +55,11 @@ export class LaTandaClient {
         this.feed = new FeedModule(this._http)
         this.tandas = new TandasModule(this._http)
         this.marketplace = new MarketplaceModule(this._http)
+        this.lottery = new LotteryModule(this._http)
         this._initPlaceholderModules()
     }
 
     private _initPlaceholderModules() {
-        // lottery stub
-        this.lottery = {
-            getDraws: () => this._http.get('/lottery/draws'),
-            buyTicket: (drawId: string) => this._http.post(`/lottery/draws/${drawId}/buy`),
-            getMyTickets: () => this._http.get('/lottery/my-tickets'),
-            getResults: (drawId: string) => this._http.get(`/lottery/draws/${drawId}/results`)
-        } as any
-
         // admin stub
         this.admin = {
             getStats: () => this._http.get('/admin/stats'),
@@ -80,7 +75,7 @@ export class LaTandaClient {
             getRewards: () => this._http.get('/mining/rewards')
         } as any
 
-        // mia stub - chatbot based
+        // mia stub - chatbot based in v3.92.0
         this.mia = {
             chat: (message: string) => this._http.post('/mia/chat', { message }),
             getStats: () => this._http.get('/mia/stats')

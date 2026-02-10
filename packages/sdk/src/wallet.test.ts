@@ -26,27 +26,24 @@ describe('WalletModule', () => {
 
     describe('balances', () => {
         test('gets all asset balances', async () => {
-            const mockResult = {
-                total_hnl: '1500.00',
-                assets: [
-                    { asset: 'HNL', amount: '1000', formatted: 'L 1,000.00' },
-                    { asset: 'LTD', amount: '500', formatted: '500 LTD' }
-                ]
-            }
+            const mockResult = [
+                { symbol: 'HNL', asset: 'HNL', amount: '1000', total_hnl: '1000', available: '1000', locked: '0' },
+                { symbol: 'USD', asset: 'USD', amount: '50', total_hnl: '1200', available: '50', locked: '0' }
+            ]
             const get = http.get as jest.Mock
             get.mockResolvedValue(mockResult)
 
             const bal = await wallet.getBalances()
 
             expect(get).toHaveBeenCalledWith('/wallet/balance')
-            expect(bal.total_hnl).toBe('1500.00')
-            expect(bal.assets.length).toBe(2)
+            expect(bal.length).toBe(2)
+            expect(bal[0].symbol).toBe('HNL')
         })
 
         test('gets specific asset balance', async () => {
-            const mockResult = {
-                assets: [{ asset: 'HNL', amount: '123' }]
-            }
+            const mockResult = [
+                { symbol: 'HNL', asset: 'HNL', amount: '123' }
+            ]
             const get = http.get as jest.Mock
             get.mockResolvedValue(mockResult)
 
@@ -55,37 +52,58 @@ describe('WalletModule', () => {
         })
     })
 
-    describe('transactions', () => {
-        test('returns list of transactions with filters', async () => {
-            const mockTx = [{ id: 'tx_1', asset: 'HNL', amount: '10' }]
-            const get = http.get as jest.Mock
-            get.mockResolvedValue(mockTx)
+    describe('history', () => {
+        test('returns list of transactions with filters using POST', async () => {
+            const mockTx = [{ id: 'tx_1', symbol: 'HNL', amount: '10' }]
+            const post = http.post as jest.Mock
+            post.mockResolvedValue(mockTx)
 
-            const res = await wallet.getTransactions({ limit: 10 })
+            const res = await wallet.getHistory({ limit: 10 })
 
-            // Test that filters are passed directly (not wrapped in {body})
-            expect(get).toHaveBeenCalledWith('/wallet/transactions', { limit: 10 })
+            expect(post).toHaveBeenCalledWith('/payments/history', { limit: 10 })
             expect(res[0].id).toBe('tx_1')
         })
     })
 
-    describe('withdrawals', () => {
-        test('posts to withdraw endpoint', async () => {
-            const mockRes = { id: 'with_123', status: 'pending' }
+    describe('payments', () => {
+        test('posts to process endpoint', async () => {
+            const mockRes = { transaction_id: 'pay_123', status: 'completed', success: true }
             const post = http.post as jest.Mock
             post.mockResolvedValue(mockRes)
 
             const req = {
-                bank_name: 'Banco Atlántida',
-                account_number: '123456',
-                account_holder: 'Juan Perez',
-                amount: '500'
+                symbol: 'HNL' as const,
+                amount: '500',
+                destination: 'dest_123',
+                type: 'transfer' as const
             }
-            const r = await wallet.withdraw(req)
+            const r = await wallet.processPayment(req)
 
-            expect(post).toHaveBeenCalledWith('/wallet/withdraw', req)
-            expect(r.id).toBe('with_123')
-            expect(r.status).toBe('pending')
+            expect(post).toHaveBeenCalledWith('/payments/process', req)
+            expect(r.transaction_id).toBe('pay_123')
+            expect(r.success).toBe(true)
+        })
+    })
+
+    describe('legacy compatibility', () => {
+        test('getTransactions redirects to getHistory', async () => {
+            const post = http.post as jest.Mock
+            post.mockResolvedValue([])
+
+            await wallet.getTransactions({ limit: 5 })
+            expect(post).toHaveBeenCalledWith('/payments/history', { limit: 5 })
+        })
+
+        test('withdraw redirects to processPayment', async () => {
+            const post = http.post as jest.Mock
+            post.mockResolvedValue({ success: true })
+
+            await wallet.withdraw('100', 'bank_abc')
+            expect(post).toHaveBeenCalledWith('/payments/process', expect.objectContaining({
+                type: 'withdrawal',
+                amount: '100',
+                destination: 'bank_abc'
+            }))
         })
     })
 })
