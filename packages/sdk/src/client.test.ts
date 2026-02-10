@@ -58,8 +58,8 @@ describe('LaTandaClient', () => {
 
     describe('wallet module', () => {
         test('has getBalances', () => expect(typeof client.wallet.getBalances).toBe('function'))
-        test('has getTransactions', () => expect(typeof client.wallet.getTransactions).toBe('function'))
-        test('has withdraw', () => expect(typeof client.wallet.withdraw).toBe('function'))
+        test('has getHistory', () => expect(typeof client.wallet.getHistory).toBe('function'))
+        test('has processPayment', () => expect(typeof client.wallet.processPayment).toBe('function'))
     })
 
     describe('tandas module', () => {

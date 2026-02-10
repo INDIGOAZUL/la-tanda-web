@@ -1,51 +1,56 @@
-// tandas/groups types - for managing community saving circles
+// tandas type definitions
+// aligned with La Tanda v3.92.0
 
-export type TandaStatus = 'recruiting' | 'active' | 'payout_phase' | 'completed' | 'cancelled'
-export type MemberRole = 'leader' | 'member' | 'observer'
+export type TandaStatus = 'pending' | 'active' | 'completed' | 'recruiting' | 'cancelled' | 'closed'
+export type MemberStatus = 'pending' | 'active' | 'payout_received' | 'defaulted'
+export type MemberRole = 'admin' | 'member' | 'auditor'
 
 export interface TandaGroup {
     id: string
     name: string
     description?: string
-    creator_id: string
-    status: TandaStatus
-    max_members: number
-    member_count: number
     contribution_amount: string
     currency: string
-    frequency: 'daily' | 'weekly' | 'monthly'
-    next_payout_date?: string
-    created_at: string
+    frequency: 'weekly' | 'biweekly' | 'monthly'
+    max_members: number
+    current_members: number
+    status: TandaStatus
+    start_date?: string
+    is_private: boolean
+    admin_id?: string
 }
 
 export interface TandaMember {
     user_id: string
-    user_name: string
+    name: string
+    status: MemberStatus
     role: MemberRole
     joined_at: string
-    contribution_status: 'paid' | 'pending' | 'late'
-    payout_turn?: number
+    payout_order?: number
+    total_contributed: string
 }
 
 export interface CreateGroupData {
     name: string
     description?: string
-    max_members: number
     contribution_amount: string
-    currency?: string
-    frequency: 'daily' | 'weekly' | 'monthly'
+    frequency: 'weekly' | 'biweekly' | 'monthly'
+    max_members: number
+    is_private?: boolean
 }
 
 export interface GroupFilters {
     status?: TandaStatus
-    search?: string
+    min_amount?: string
+    max_amount?: string
     limit?: number
     offset?: number
 }
 
 export interface PayoutStats {
-    total_payout: string
-    next_payout_amount: string
-    my_turn?: number
-    current_turn: number
+    total_pool: string
+    next_payout_date: string
+    next_receiver_name: string
+    current_round: number
+    total_rounds: number
 }

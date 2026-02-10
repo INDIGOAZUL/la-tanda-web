@@ -1,13 +1,13 @@
 // wallet module - handles balances, history, and bank withdrawals
-// aligned with La Tanda v3.92.0 (HNL / Bank based system)
+// optimized for HNL / Lempira based community banking
 
 import { HttpClient } from '../utils/http'
 import type {
-    WalletBalances,
+    WalletBalance,
     Transaction,
     TransactionFilters,
-    WithdrawalRequest,
-    WithdrawalResponse,
+    PaymentProcessRequest,
+    PaymentResponse,
     AssetType
 } from '../types/wallet'
 
@@ -18,26 +18,54 @@ export class WalletModule {
         this._http = http
     }
 
-    // get all balances for the current user (HNL, LTD)
-    async getBalances(): Promise<WalletBalances> {
-        return this._http.get<WalletBalances>('/wallet/balance')
+    /**
+     * Retrieves all asset balances for the currently authenticated user.
+     * Typically includes HNL (Lempiras) and LMP/USD if configured.
+     */
+    async getBalances(): Promise<WalletBalance[]> {
+        return this._http.get<WalletBalance[]>('/wallet/balance')
+    }
+
+    /**
+     * Fetches transaction history using the Payments API.
+     * Replaces legacy /wallet/transactions.
+     */
+    async getHistory(filters: TransactionFilters = {}): Promise<Transaction[]> {
+        return this._http.post<Transaction[]>('/payments/history', filters)
+    }
+
+    /**
+     * Processes a payment (transfer, withdrawal, or contribution).
+     * Replaces legacy /wallet/withdraw.
+     */
+    async processPayment(req: PaymentProcessRequest): Promise<PaymentResponse> {
+        return this._http.post<PaymentResponse>('/payments/process', req)
+    }
+
+    async getAvailableMethods(): Promise<any> {
+        return this._http.get('/payments/methods/available')
     }
 
     // get a specific asset balance
     async getBalance(asset: AssetType = 'HNL'): Promise<string> {
         const res = await this.getBalances()
-        const item = res.assets.find(a => a.asset === asset)
+        const item = res.find(a => a.symbol === asset || a.asset === asset)
         return item ? item.amount : '0'
     }
 
-    // list recent wallet activity (deposits, withdrawals, contributions, payouts)
+    // Legacy method maintained for compatibility but using new API
     async getTransactions(filters: TransactionFilters = {}): Promise<Transaction[]> {
-        // Fix: pass filters directly to avoid double-wrapping bug
-        return this._http.get<Transaction[]>('/wallet/transactions', filters)
+        return this.getHistory(filters)
     }
 
-    // withdraw funds to a bank account
-    async withdraw(data: WithdrawalRequest): Promise<WithdrawalResponse> {
-        return this._http.post<WithdrawalResponse>('/wallet/withdraw', data)
+    // Legacy method maintained for compatibility but using new API
+    async withdraw(amount: string, destination: string, description?: string): Promise<PaymentResponse> {
+        return this.processPayment({
+            symbol: 'HNL',
+            amount,
+            destination,
+            type: 'withdrawal',
+            description
+        })
     }
 }

@@ -14,7 +14,6 @@ npm install @latanda/sdk
 import { LaTandaClient } from '@latanda/sdk';
 
 const client = new LaTandaClient({
-const client = new LaTandaClient({
   baseUrl: 'https://latanda.online',
 });
 
@@ -33,11 +32,38 @@ const groups = await client.tandas.listGroups();
 
 ## Modules
 
-- **auth** - Login, register, token management
-- **wallet** - Balance, transactions, send funds
-- **tandas** - Group management, cycles
-- **marketplace** - Products, search, orders
-- **lottery** - Fair member selection
+### 🔐 Authentication (`auth`)
+Hardened login, registration, and session management.
+- `login(creds)`: Secure login with placeholder-ready creds.
+- `getCurrentUser()`: Fetches full profile from `/auth/me`.
+- `refreshToken()`: Automatic session extension with recursion guard.
+
+### 💰 Wallet (`wallet`)
+Lempira (HNL) centric balance and payment processing. **No crypto required.**
+- `getBalances()`: List all asset balances (HNL, USD).
+- `getHistory(filters)`: POST-based transaction history.
+- `processPayment(req)`: Withdrawals, transfers, and contributions.
+
+### 👥 Groups (`tandas`)
+Rotating savings circles with role-based participation.
+- `listGroups(filters)`: Find public recruitment groups.
+- `createGroup(data)`: Start a new circle with custom frequency.
+- `joinGroup(id)` / `contribute(id, amt)`: Simple participation flow.
+
+### 🏪 Marketplace (`marketplace`)
+Community-driven product listings.
+- `listProducts(filters)`: Search by category, price, or seller.
+- `createProduct(data)`: List items for sale.
+
+### 🎭 Social Feed (`feed`)
+Interaction layer for community engagement.
+- `getPosts()`: Fetch social updates.
+- `toggleLike(id)` / `addComment(id, text)`: Native social interactions.
+
+### 🎲 Lottery (`lottery`)
+Fair member selection using backend-secured entropy.
+- `listDraws()`: Track upcoming and past lottery results.
+- `performDraw(groupId)`: Trigger automated, fair winner selection.
 
 ## Error Handling
 

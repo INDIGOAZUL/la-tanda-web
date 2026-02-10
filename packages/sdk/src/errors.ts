@@ -8,6 +8,10 @@ export interface ErrorDetails {
     [key: string]: unknown
 }
 
+/**
+ * Base error class for all La Tanda SDK exceptions.
+ * Includes status codes, internal error codes, and audit timestamps.
+ */
 export class LaTandaError extends Error {
     readonly code: string
     readonly status: number
@@ -40,6 +44,9 @@ export class LaTandaError extends Error {
     }
 }
 
+/**
+ * Thrown when credentials are invalid or a session has been terminated.
+ */
 export class AuthenticationError extends LaTandaError {
     constructor(msg = 'Authentication failed', details?: ErrorDetails) {
         super(msg, 'AUTH_ERROR', 401, details)
@@ -71,6 +78,9 @@ export class RateLimitError extends LaTandaError {
     }
 }
 
+/**
+ * Thrown when a request contains invalid data or fails server-side validation.
+ */
 export class ValidationError extends LaTandaError {
     readonly fields: Record<string, string[]>
 

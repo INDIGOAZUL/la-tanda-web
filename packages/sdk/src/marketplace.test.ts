@@ -14,23 +14,28 @@ describe('MarketplaceModule', () => {
                 ok: true,
                 status: 200,
                 headers: new Headers({ 'content-type': 'application/json' }),
-                json: () => Promise.resolve({ data: [] }),
+                json: () => Promise.resolve({ success: true, data: [] }),
             })
         ) as jest.Mock
     })
 
-    test('gets categories', async () => {
-        await client.marketplace.getCategories()
+    test('lists products with filters', async () => {
+        await client.marketplace.listProducts({ category: 'home', limit: 10 })
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/marketplace/categories'),
+            expect.stringContaining('/marketplace/products?category=home&limit=10'),
             expect.any(Object)
         )
     })
 
-    test('gets products with filters', async () => {
-        await client.marketplace.getProducts({ category_id: 'cat_123', limit: 10 })
+
+    test('lists products with advanced filters', async () => {
+        await client.marketplace.listProducts({ category: 'home', min_price: '50', limit: 20 })
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/marketplace/products?category_id=cat_123&limit=10'),
+            expect.stringContaining('category=home'),
+            expect.any(Object)
+        )
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('min_price=50'),
             expect.any(Object)
         )
     })
@@ -40,12 +45,11 @@ describe('MarketplaceModule', () => {
             name: 'Test Product',
             description: 'Cool stuff',
             price: '100',
-            category_id: 'cat_1',
-            stock: 10
+            category: 'home'
         }
         await client.marketplace.createProduct(productData)
         expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/marketplace/products'),
+            expect.stringContaining('/marketplace/create-product'),
             expect.objectContaining({
                 method: 'POST',
                 body: JSON.stringify(productData)
@@ -53,14 +57,17 @@ describe('MarketplaceModule', () => {
         )
     })
 
-    test('posts a review', async () => {
-        await client.marketplace.createReview('prod_1', 5, 'Great!')
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/marketplace/products/prod_1/reviews'),
-            expect.objectContaining({
-                method: 'POST',
-                body: JSON.stringify({ rating: 5, comment: 'Great!' })
+    test('handles api failure during listing', async () => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: false,
+                status: 400,
+                headers: new Headers({ 'content-type': 'application/json' }),
+                json: () => Promise.resolve({ error: 'Invalid category' })
             })
-        )
+        ) as jest.Mock
+
+        await expect(client.marketplace.listProducts({ category: 'invalid' }))
+            .rejects.toThrow('Invalid category')
     })
 })
