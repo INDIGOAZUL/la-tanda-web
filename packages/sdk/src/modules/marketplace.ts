@@ -1,14 +1,13 @@
-// marketplace module - for product listings, orders and reputation
+// marketplace module - for product listings and categories
+// aligned with La Tanda v3.92.0
 
 import { HttpClient } from '../utils/http'
 import type {
     Product,
     Category,
-    Order,
     Review,
     ProductFilters,
-    CreateProductData,
-    CreateOrderData
+    CreateProductData
 } from '../types/marketplace'
 
 export class MarketplaceModule {
@@ -36,16 +35,6 @@ export class MarketplaceModule {
     // create a new product listing
     async createProduct(data: CreateProductData): Promise<Product> {
         return this._http.post<Product>('/marketplace/products', data)
-    }
-
-    // place an order
-    async createOrder(data: CreateOrderData): Promise<Order> {
-        return this._http.post<Order>('/marketplace/orders', data)
-    }
-
-    // list my orders
-    async getMyOrders(): Promise<Order[]> {
-        return this._http.get<Order[]>('/marketplace/my-orders')
     }
 
     // get product reviews

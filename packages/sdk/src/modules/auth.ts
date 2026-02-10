@@ -116,14 +116,17 @@ export class AuthModule {
         return !shouldRefreshToken(tok, 0)
     }
 
-    async getCurrentUser(): Promise<UserInfo | null> {
+    /**
+     * Extracts partial user info from the current JWT token locally.
+     * Use getCurrentUser() for a full verified profile from the API.
+     */
+    async getCurrentUserFromToken(): Promise<UserInfo | null> {
         const tok = await this._storage.getToken()
         if (!tok) return null
 
         const u = getUserFromToken(tok)
         if (!u) return null
 
-        // basic info from jwt, rest needs api call
         return {
             id: u.userId,
             email: u.email,
@@ -133,6 +136,13 @@ export class AuthModule {
             verified: true,
             createdAt: ''
         }
+    }
+
+    /**
+     * Fetches the full authenticated user profile from the La Tanda API.
+     */
+    async getCurrentUser(): Promise<UserInfo> {
+        return this._http.get<UserInfo>('/auth/me')
     }
 
     async getToken() {

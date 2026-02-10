@@ -14,13 +14,14 @@ npm install @latanda/sdk
 import { LaTandaClient } from '@latanda/sdk';
 
 const client = new LaTandaClient({
-  baseUrl: 'https://api.latanda.online',
+const client = new LaTandaClient({
+  baseUrl: 'https://latanda.online',
 });
 
 // Login
 const { user, auth_token } = await client.auth.login({
-  email: 'demo@latanda.online',
-  password: 'LaTandaDemo2026!',
+  email: 'your-email@example.com',
+  password: 'your-password',
 });
 
 // Get wallet balance

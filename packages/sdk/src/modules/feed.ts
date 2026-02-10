@@ -1,8 +1,13 @@
 // social feed module - for getting the latest gossip and sharing updates
+// aligned with La Tanda v3.92.0
 
 import { HttpClient } from '../utils/http'
-import type { Post, Comment, CreatePostData, SocialFeedFilters, ReputationInfo } from '../types/feed'
+import type { Post, Comment, CreatePostData, SocialFeedFilters } from '../types/feed'
 
+/**
+ * Social Feed Module
+ * Handles interactions with the La Tanda community feed.
+ */
 export class FeedModule {
     private _http: HttpClient
 
@@ -10,34 +15,38 @@ export class FeedModule {
         this._http = http
     }
 
-    // get the global social feed
+    /**
+     * Get the global social feed
+     */
     async getPosts(filters: SocialFeedFilters = {}): Promise<Post[]> {
-        return this._http.get<Post[]>('/social/posts', filters)
+        return this._http.get<Post[]>('/feed/social/posts', filters)
     }
 
-    // post something new
+    /**
+     * Post something new to the community
+     */
     async createPost(data: CreatePostData): Promise<Post> {
-        return this._http.post<Post>('/social/create-post', data)
+        return this._http.post<Post>('/feed/social/posts', data)
     }
 
-    // like or unlike a post
+    /**
+     * Like or unlike a post
+     */
     async toggleLike(postId: string): Promise<{ liked: boolean; count: number }> {
-        return this._http.post(`/social/posts/${postId}/like`)
+        return this._http.post(`/feed/social/posts/${postId}/like`)
     }
 
-    // get comments for a specific post
+    /**
+     * Get comments for a specific post
+     */
     async getComments(postId: string): Promise<Comment[]> {
-        return this._http.get<Comment[]>(`/social/posts/${postId}/comments`)
+        return this._http.get<Comment[]>(`/feed/social/posts/${postId}/comments`)
     }
 
-    // add a comment
+    /**
+     * Add a comment to a post
+     */
     async addComment(postId: string, text: string): Promise<Comment> {
-        return this._http.post(`/social/posts/${postId}/comment`, { text })
-    }
-
-    // check user reputation score
-    async getReputation(userId?: string): Promise<ReputationInfo> {
-        const path = userId ? `/reputation/score?userId=${userId}` : '/reputation/score'
-        return this._http.get<ReputationInfo>(path)
+        return this._http.post(`/feed/social/posts/${postId}/comment`, { text })
     }
 }

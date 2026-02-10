@@ -143,7 +143,12 @@ export function parseApiError(status: number, data: unknown): LaTandaError {
 
     switch (status) {
         case 400:
-            return new ValidationError(msg, d?.details?.fields)
+            if (lowMsg.includes('insufficient') || lowMsg.includes('funds')) {
+                const required = d?.details?.required || 0
+                const available = d?.details?.available || 0
+                return new InsufficientFundsError(required, available)
+            }
+            return new ValidationError(msg, d?.details?.fields || d?.details)
         case 401:
             if (lowMsg.includes('expired') || lowMsg.includes('token')) {
                 return new TokenExpiredError(msg)

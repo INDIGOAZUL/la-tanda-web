@@ -1,4 +1,5 @@
 // tandas module - for joining circles, making contributions and getting paid
+// aligned with La Tanda v3.92.0
 
 import { HttpClient } from '../utils/http'
 import type {
@@ -16,9 +17,14 @@ export class TandasModule {
         this._http = http
     }
 
-    // list available groups with optional filters
+    // list available public groups
     async listGroups(filters: GroupFilters = {}): Promise<TandaGroup[]> {
-        return this._http.get<TandaGroup[]>('/groups/list', filters)
+        return this._http.get<TandaGroup[]>('/groups/public', filters)
+    }
+
+    // list my personal tandas
+    async listMyTandas(filters: GroupFilters = {}): Promise<TandaGroup[]> {
+        return this._http.get<TandaGroup[]>('/tandas/my-tandas', filters)
     }
 
     // create a new tanda circle
@@ -31,7 +37,7 @@ export class TandasModule {
         return this._http.post(`/groups/${groupId}/join`)
     }
 
-    // leave a group (only if allowed by status)
+    // leave a group
     async leaveGroup(groupId: string): Promise<{ success: boolean }> {
         return this._http.post(`/groups/${groupId}/leave`)
     }
@@ -48,11 +54,6 @@ export class TandasModule {
 
     // contribute funds to the current round
     async contribute(groupId: string, amount: string): Promise<{ success: boolean; tx_id: string }> {
-        return this._http.post(`/tandas/${groupId}/contribute`, { amount })
-    }
-
-    // list my personal tandas
-    async listMyTandas(filters: GroupFilters = {}): Promise<TandaGroup[]> {
-        return this._http.get<TandaGroup[]>('/tandas/list', filters)
+        return this._http.post(`/groups/${groupId}/contribute`, { amount })
     }
 }

@@ -1,33 +1,31 @@
-// wallet types - balances, history and transfers
+// wallet types - balances, history and withdrawals
+// aligned with La Tanda v3.92.0 (HNL / Bank based system)
 
-export type AssetType = 'LTD' | 'USDT' | 'ETH' | 'POL'
+export type AssetType = 'HNL' | 'LTD' // LTD is internal points, HNL is main currency
 
 export interface BalanceInfo {
     asset: AssetType
     amount: string
     formatted: string
-    usd_value?: number
 }
 
 export interface WalletBalances {
-    total_usd: number
+    total_hnl: string
     assets: BalanceInfo[]
 }
 
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
-export type TransactionType = 'deposit' | 'withdrawal' | 'transfer' | 'tanda_lock' | 'tanda_payout'
+export type TransactionType = 'deposit' | 'withdrawal' | 'contribution' | 'payout'
 
 export interface Transaction {
     id: string
-    hash?: string
     type: TransactionType
     status: TransactionStatus
     asset: AssetType
     amount: string
     fee?: string
-    from_address?: string
-    to_address?: string
     timestamp: string
+    description?: string
     metadata?: Record<string, any>
 }
 
@@ -38,21 +36,16 @@ export interface TransactionFilters {
     offset?: number
 }
 
-export interface SendFundsRequest {
-    to_address: string
-    asset: AssetType
+export interface WithdrawalRequest {
+    bank_name: string
+    account_number: string
+    account_holder: string
     amount: string
     memo?: string
 }
 
-export interface LockFundsRequest {
-    group_id: string
-    tanda_id: string
-    amount: string
-}
-
-export interface GasEstimate {
-    gas_price: string
-    estimated_fee: string
-    asset: AssetType
+export interface WithdrawalResponse {
+    id: string
+    status: TransactionStatus
+    estimated_arrival?: string
 }
