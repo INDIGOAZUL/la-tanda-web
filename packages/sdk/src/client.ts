@@ -80,10 +80,10 @@ export class LaTandaClient {
             getRewards: () => this._http.get('/mining/rewards')
         } as any
 
-        // mia stub
+        // mia stub - chatbot based
         this.mia = {
-            getPredictions: () => this._http.get('/mia/predictions'),
-            analyzeMarket: (data: any) => this._http.post('/mia/analyze', data)
+            chat: (message: string) => this._http.post('/mia/chat', { message }),
+            getStats: () => this._http.get('/mia/stats')
         } as any
     }
 

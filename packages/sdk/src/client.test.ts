@@ -10,7 +10,7 @@ describe('LaTandaClient', () => {
 
     beforeEach(() => {
         client = new LaTandaClient({
-            baseUrl: 'https://api.latanda.online',
+            baseUrl: 'https://latanda.online',
             timeout: 5000
         })
     })
@@ -57,15 +57,15 @@ describe('LaTandaClient', () => {
     })
 
     describe('wallet module', () => {
-        test('has getBalance', () => expect(typeof client.wallet.getBalance).toBe('function'))
+        test('has getBalances', () => expect(typeof client.wallet.getBalances).toBe('function'))
         test('has getTransactions', () => expect(typeof client.wallet.getTransactions).toBe('function'))
-        test('has send', () => expect(typeof client.wallet.send).toBe('function'))
+        test('has withdraw', () => expect(typeof client.wallet.withdraw).toBe('function'))
     })
 
     describe('tandas module', () => {
         test('has listGroups', () => expect(typeof client.tandas.listGroups).toBe('function'))
         test('has createGroup', () => expect(typeof client.tandas.createGroup).toBe('function'))
-        test('has listTandas', () => expect(typeof client.tandas.listMyTandas).toBe('function'))
+        test('has listMyTandas', () => expect(typeof client.tandas.listMyTandas).toBe('function'))
     })
 })
 

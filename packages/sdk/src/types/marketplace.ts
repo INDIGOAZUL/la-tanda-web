@@ -1,6 +1,5 @@
-// marketplace types - for products, orders and reviews
-
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+// marketplace types - for products and categories
+// aligned with La Tanda v3.92.0
 
 export interface Category {
     id: string
@@ -24,20 +23,6 @@ export interface Product {
     review_count: number
     created_at: string
     updated_at: string
-}
-
-export interface Order {
-    id: string
-    buyer_id: string
-    seller_id: string
-    product_id: string
-    quantity: number
-    total_price: string
-    currency: string
-    status: OrderStatus
-    shipping_address?: string
-    tx_hash?: string
-    created_at: string
 }
 
 export interface Review {
@@ -68,10 +53,4 @@ export interface CreateProductData {
     category_id: string
     stock: number
     images?: string[]
-}
-
-export interface CreateOrderData {
-    product_id: string
-    quantity: number
-    shipping_address?: string
 }

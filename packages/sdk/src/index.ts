@@ -29,7 +29,8 @@ export {
 } from './utils/jwt'
 
 export type { JwtPayload } from './utils/jwt'
-export type { HttpClient, RequestOptions, ApiResponse } from './utils/http'
+export { HttpClient } from './utils/http'
+export type { RequestOptions, ApiResponse } from './utils/http'
 
 // module exports
 export * from './modules/auth'

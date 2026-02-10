@@ -1,4 +1,5 @@
 // tests for marketplace module
+// aligned with La Tanda v3.92.0
 
 import { LaTandaClient } from './client'
 
@@ -48,18 +49,6 @@ describe('MarketplaceModule', () => {
             expect.objectContaining({
                 method: 'POST',
                 body: JSON.stringify(productData)
-            })
-        )
-    })
-
-    test('creates an order', async () => {
-        const orderData = { product_id: 'prod_1', quantity: 2 }
-        await client.marketplace.createOrder(orderData)
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining('/marketplace/orders'),
-            expect.objectContaining({
-                method: 'POST',
-                body: JSON.stringify(orderData)
             })
         )
     })
