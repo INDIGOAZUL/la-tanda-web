@@ -1,9 +1,9 @@
 # La Tanda — Cooperativa de Ahorro Digital
 
 [![Live](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
-[![Version](https://img.shields.io/badge/Version-3.92.0-blue)](https://latanda.online)
+[![Version](https://img.shields.io/badge/Version-3.95.0-blue)](https://latanda.online)
 [![API](https://img.shields.io/badge/API-140%2B%20endpoints-00FF80)](https://latanda.online/docs)
-[![Security](https://img.shields.io/badge/Security-17%20audit%20rounds-red)](https://latanda.online)
+[![Security](https://img.shields.io/badge/Security-20%20audit%20rounds-red)](https://latanda.online)
 [![Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
 [![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
 
