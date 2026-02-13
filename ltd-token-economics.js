@@ -6,7 +6,7 @@
 
 class LTDTokenEconomics {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.currentUser = this.getCurrentUser();
         
         // Token configuration
@@ -49,6 +49,9 @@ class LTDTokenEconomics {
             totalEarned: 0,
             totalBurned: 1250
         };
+
+        // Active staking positions
+        this.stakingPositions = [];
         
         // Token market data
         this.marketData = {
@@ -69,6 +72,7 @@ class LTDTokenEconomics {
         try {
             this.setupEventListeners();
             await this.loadTokenData();
+            this.loadStakingPositions();
             this.updateAllDisplays();
             this.setupStakingCalculator();
             this.setupBurnForm();
@@ -182,6 +186,23 @@ class LTDTokenEconomics {
             console.error('Error loading token data:', error);
         }
     }
+
+    loadStakingPositions() {
+        try {
+            const savedPositions = localStorage.getItem('ltd_staking_positions');
+            if (savedPositions) {
+                this.stakingPositions = JSON.parse(savedPositions).map(position => ({
+                    ...position,
+                    startDate: new Date(position.startDate),
+                    endDate: new Date(position.endDate)
+                }));
+                console.log(`Loaded ${this.stakingPositions.length} staking positions`);
+            }
+        } catch (error) {
+            console.error('Error loading staking positions:', error);
+            this.stakingPositions = [];
+        }
+    }
     
     updateAllDisplays() {
         this.updateTokenStats();
@@ -258,8 +279,15 @@ class LTDTokenEconomics {
                 apy: this.stakingAPY[stakePeriod],
                 startDate: new Date(),
                 endDate: new Date(Date.now() + stakePeriod * 24 * 60 * 60 * 1000),
+                estimatedReward: (stakeAmount * this.stakingAPY[stakePeriod] * stakePeriod) / 365,
                 status: 'active'
             };
+
+            // Add to staking positions
+            this.stakingPositions.push(stakingPosition);
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('ltd_staking_positions', JSON.stringify(this.stakingPositions));
             
             this.updateWalletDisplay();
             this.updateStakingDisplay();
@@ -276,9 +304,231 @@ class LTDTokenEconomics {
     }
     
     updateStakingDisplay() {
-        // Update staking positions display
-        // This would show real staking positions in a real implementation
-        console.log('Staking display updated');
+        const stakingContainer = document.getElementById('activeStakingPositions');
+        if (!stakingContainer) return;
+
+        if (this.stakingPositions.length === 0) {
+            stakingContainer.innerHTML = `
+                <div class="no-staking-message">
+                    <div class="staking-icon">🪙</div>
+                    <h3>No tienes posiciones de staking activas</h3>
+                    <p>Comienza a hacer staking para ganar recompensas pasivas</p>
+                </div>
+            `;
+            return;
+        }
+
+        stakingContainer.innerHTML = this.stakingPositions.map(position => {
+            const now = new Date();
+            const timeRemaining = position.endDate - now;
+            const daysRemaining = Math.max(0, Math.ceil(timeRemaining / (24 * 60 * 60 * 1000)));
+            const progress = Math.min(100, ((position.period * 24 * 60 * 60 * 1000 - timeRemaining) / (position.period * 24 * 60 * 60 * 1000)) * 100);
+            
+            const canUnstake = timeRemaining <= 0;
+            const currentReward = this.calculateCurrentReward(position);
+
+            return `
+                <div class="staking-position-card">
+                    <div class="position-header">
+                        <div class="position-id">
+                            <span class="position-label">Posición #${position.id.slice(-4)}</span>
+                            <span class="position-status ${canUnstake ? 'completed' : 'active'}">${canUnstake ? 'Completado' : 'Activo'}</span>
+                        </div>
+                        <div class="position-amount">
+                            <span class="amount-value">${position.amount.toLocaleString()} LTD</span>
+                            <span class="amount-usd">~$${(position.amount * this.marketData.price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="position-details">
+                        <div class="detail-row">
+                            <span>APY:</span>
+                            <span class="apy-value">${(position.apy * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Período:</span>
+                            <span>${position.period} días</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Recompensa acumulada:</span>
+                            <span class="reward-earned">${currentReward.toFixed(2)} LTD</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Tiempo restante:</span>
+                            <span class="time-remaining">${daysRemaining} días</span>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-section">
+                        <div class="progress-label">Progreso: ${progress.toFixed(1)}%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="position-actions">
+                        ${canUnstake ? 
+                            `<button class="btn btn-primary" onclick="window.ltdTokenSystem.unstakeTokens('${position.id}')">
+                                ✅ Retirar + Recompensas
+                            </button>` : 
+                            `<button class="btn btn-secondary" disabled>
+                                ⏳ Staking en progreso
+                            </button>`
+                        }
+                        <button class="btn btn-outline" onclick="window.ltdTokenSystem.showPositionDetails('${position.id}')">
+                            📊 Detalles
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    calculateCurrentReward(position) {
+        const now = new Date();
+        const timeElapsed = Math.min(now - position.startDate, position.endDate - position.startDate);
+        const daysElapsed = timeElapsed / (24 * 60 * 60 * 1000);
+        
+        return (position.amount * position.apy * daysElapsed) / 365;
+    }
+
+    async unstakeTokens(positionId) {
+        try {
+            const position = this.stakingPositions.find(p => p.id === positionId);
+            if (!position) {
+                this.showNotification('Posición de staking no encontrada', 'error');
+                return;
+            }
+
+            const now = new Date();
+            if (now < position.endDate) {
+                const confirmed = confirm('¿Estás seguro de que quieres retirar antes de tiempo? Perderás el 50% de las recompensas.');
+                if (!confirmed) return;
+            }
+
+            this.showNotification('🔄 Procesando retiro de staking...', 'info');
+            await this.delay(2000);
+
+            // Calculate final reward
+            const currentReward = this.calculateCurrentReward(position);
+            const penalty = now < position.endDate ? 0.5 : 0;
+            const finalReward = currentReward * (1 - penalty);
+
+            // Update user balances
+            this.userTokens.balance += position.amount + finalReward;
+            this.userTokens.staked -= position.amount;
+            this.userTokens.totalEarned += finalReward;
+
+            // Remove position
+            this.stakingPositions = this.stakingPositions.filter(p => p.id !== positionId);
+            localStorage.setItem('ltd_staking_positions', JSON.stringify(this.stakingPositions));
+
+            // Update displays
+            this.updateWalletDisplay();
+            this.updateStakingDisplay();
+            this.updateTokenStats();
+
+            const penaltyMessage = penalty > 0 ? ` (penalización del ${penalty * 100}% aplicada)` : '';
+            this.showNotification(`✅ Staking retirado: ${position.amount} LTD + ${finalReward.toFixed(2)} LTD de recompensas${penaltyMessage}`, 'success');
+
+        } catch (error) {
+            console.error('Error unstaking tokens:', error);
+            this.showNotification('Error al retirar el staking', 'error');
+        }
+    }
+
+    showPositionDetails(positionId) {
+        const position = this.stakingPositions.find(p => p.id === positionId);
+        if (!position) return;
+
+        const currentReward = this.calculateCurrentReward(position);
+        const totalReturn = position.amount + currentReward;
+        const roi = ((totalReturn - position.amount) / position.amount) * 100;
+
+        const modal = document.createElement('div');
+        modal.className = 'staking-detail-modal';
+        modal.innerHTML = `
+            <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📊 Detalles de Staking</h2>
+                    <button class="close-modal" onclick="this.parentElement.parentElement.remove()">✕</button>
+                </div>
+                <div class="staking-details">
+                    <div class="detail-section">
+                        <h3>Información General</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span>ID de Posición:</span>
+                                <span>${position.id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Cantidad Stakeada:</span>
+                                <span>${position.amount.toLocaleString()} LTD</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Período:</span>
+                                <span>${position.period} días</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>APY:</span>
+                                <span>${(position.apy * 100).toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Rendimiento</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span>Recompensa Acumulada:</span>
+                                <span class="positive">${currentReward.toFixed(4)} LTD</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Retorno Total:</span>
+                                <span>${totalReturn.toFixed(2)} LTD</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>ROI Actual:</span>
+                                <span class="positive">${roi.toFixed(2)}%</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Valor en USD:</span>
+                                <span>$${(totalReturn * this.marketData.price).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Fechas</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span>Inicio:</span>
+                                <span>${position.startDate.toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span>Finalización:</span>
+                                <span>${position.endDate.toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+
+        document.body.appendChild(modal);
     }
     
     setupBurnForm() {
@@ -598,7 +848,7 @@ document.head.appendChild(style);
 
 // Initialize the system when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.tokenSystem = new LTDTokenEconomics();
+    window.ltdTokenSystem = new LTDTokenEconomics();
 });
 
 // Export for other modules

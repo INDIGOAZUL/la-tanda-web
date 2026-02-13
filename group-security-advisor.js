@@ -9,7 +9,7 @@
 
 class GroupSecurityAdvisor {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.currentUser = null;
         
         // Tipos de advertencias

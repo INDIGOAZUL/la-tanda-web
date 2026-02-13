@@ -6,7 +6,7 @@
 
 class LaTandaAPIConfig {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         
         // Mapeo de endpoints reales encontrados
         this.ENDPOINTS = {

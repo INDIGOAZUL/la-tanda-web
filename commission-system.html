@@ -1,10 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
+
     <meta charset="UTF-8">
+    <!-- Resource Optimization -->
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Comisiones Descendentes 90/10 - La Tanda</title>
     <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #a78bfa;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-accent: rgba(15, 23, 42, 0.8);
+            --border-primary: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --commission-gold: #fbbf24;
+            --commission-gold-dark: #f59e0b;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,11 +40,13 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #0a0f1c 100%);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
             overflow-x: hidden;
+            font-weight: 400;
+            line-height: 1.6;
         }
         
         .container {
@@ -27,55 +57,91 @@
         
         .header {
             text-align: center;
-            padding: 40px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
             margin-bottom: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         
         .header h1 {
             font-size: 36px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #F59E0B, #D97706);
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+        
+        .header .highlight {
+            background: linear-gradient(135deg, var(--commission-gold), var(--commission-gold-dark));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 15px;
         }
         
         .header p {
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-secondary);
             max-width: 600px;
             margin: 0 auto;
             line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         /* Navigation Tabs */
         .nav-tabs {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
             margin-bottom: 40px;
             flex-wrap: wrap;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid var(--border-primary);
         }
         
         .nav-tab {
-            padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 24px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
         }
         
-        .nav-tab:hover,
+        .nav-tab:hover {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--text-primary);
+            border-color: rgba(251, 191, 36, 0.3);
+            transform: translateY(-1px);
+        }
+        
         .nav-tab.active {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white;
-            border-color: #F59E0B;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+            color: var(--text-primary);
+            border-color: var(--commission-gold);
+            box-shadow: 0 8px 16px rgba(251, 191, 36, 0.2);
             transform: translateY(-2px);
+        }
+        
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--commission-gold);
         }
         
         /* Content Sections */
@@ -95,33 +161,44 @@
         
         /* Card Styles */
         .card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
+            background: var(--bg-accent);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .card:hover {
+            border-color: rgba(251, 191, 36, 0.3);
+            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
         }
         
         .card-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-primary);
         }
         
         .card-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: -0.01em;
         }
         
         .card-subtitle {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-top: 5px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 400;
         }
         
         /* Grid Layout */
@@ -190,29 +267,34 @@
         
         .flow-amount {
             font-size: 18px;
-            color: #F59E0B;
+            color: var(--commission-gold);
             font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .flow-description {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
             margin-top: 5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         /* Stats Cards */
         .stat-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(251, 191, 36, 0.2);
             border-radius: 16px;
-            padding: 25px;
+            padding: 24px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
         
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.4);
         }
         
         .stat-icon {
@@ -230,30 +312,36 @@
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #F59E0B;
+            color: var(--commission-gold);
             margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
         }
         
         .stat-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 600;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .stat-change {
             font-size: 14px;
             margin-top: 8px;
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
         }
         
         .positive {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10B981;
+            background: rgba(34, 213, 94, 0.2);
+            color: #22d55e;
+            border: 1px solid rgba(34, 213, 94, 0.3);
         }
         
         .negative {
-            background: rgba(239, 68, 68, 0.2);
-            color: #EF4444;
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
         }
         
         /* Commission Tree */
@@ -349,36 +437,44 @@
         
         /* Button Styles */
         .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
+            padding: 12px 24px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 14px;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            color: white;
+            background: linear-gradient(135deg, var(--commission-gold), var(--commission-gold-dark));
+            color: var(--bg-primary);
+            border-color: var(--commission-gold);
+            font-weight: 600;
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+            box-shadow: 0 12px 20px rgba(251, 191, 36, 0.4);
+            background: linear-gradient(135deg, #fcd34d, var(--commission-gold));
         }
         
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            color: var(--text-primary);
+            border-color: var(--border-accent);
         }
         
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.6);
+            border-color: var(--commission-gold);
+            box-shadow: 0 8px 16px rgba(251, 191, 36, 0.1);
+            transform: translateY(-1px);
         }
         
         /* Form Styles */
@@ -388,46 +484,56 @@
         
         .form-group label {
             display: block;
-            color: rgba(255, 255, 255, 0.8);
-            font-weight: 600;
+            color: var(--text-primary);
+            font-weight: 500;
             margin-bottom: 8px;
             font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            padding: 12px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
         }
         
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #F59E0B;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+            border-color: var(--commission-gold);
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        .form-group input::placeholder {
+            color: var(--text-secondary);
         }
         
         /* Progress Bar */
         .progress-bar {
             width: 100%;
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 4px;
             overflow: hidden;
-            margin: 15px 0;
+            margin: 12px 0;
+            backdrop-filter: blur(10px);
         }
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #F59E0B, #D97706);
-            border-radius: 6px;
-            transition: width 0.3s ease;
+            background: linear-gradient(135deg, var(--commission-gold), var(--commission-gold-dark));
+            border-radius: 4px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
         }
         
         /* Responsive Design */
@@ -502,12 +608,35 @@
             }
         }
     </style>
+  <script type="module" crossorigin src="/assets/js/commissionSystem-DMxnNyZ-.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
+  <link rel="modulepreload" crossorigin href="/assets/js/commission-chunk-l0sNRNKZ.js">
+  <link rel="modulepreload" crossorigin href="/assets/js/api-proxy-chunk-l0sNRNKZ.js">
+  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script>    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/commission-system.html">
+    <meta property="og:title" content="Comisiones | La Tanda">
+    <meta property="og:description" content="Sistema de comisiones y referidos de La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Comisiones | La Tanda">
+    <meta name="twitter:description" content="Sistema de comisiones y referidos de La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
 </head>
 <body>
+    <!-- Global Header Component -->
+    <div id="global-header"></div>
+
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>💰 Sistema de Comisiones Descendentes 90/10</h1>
+            <h1>Sistema de <span class="highlight">Comisiones 90/10</span> Descendentes</h1>
             <p>Sistema de distribución de comisiones con estructura piramidal de beneficios. 90% para participantes, 10% para coordinadores en múltiples niveles.</p>
         </div>
 
@@ -1034,6 +1163,13 @@
         </div>
     </div>
 
-    <script src="commission-system.js"></script>
+    <!-- Enhanced API Proxy -->
+    
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/commissionSystem-legacy-CZngcX5f.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/header.js"></script>
+    <script src="shared-components.js?v=7.18"></script>
 </body>
 </html>
