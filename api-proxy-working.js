@@ -209,7 +209,7 @@ class EnhancedAPIProxy {
         }
 
         // Admin credentials
-        if (email === 'admin@latanda.online' && password === 'Admin123!') {
+        if (email === 'admin@latanda.online' && password === 'REMOVED_CREDENTIAL') {
             return {
                 success: true,
                 data: {
@@ -244,7 +244,7 @@ class EnhancedAPIProxy {
         }
 
         // Demo credentials
-        if (email === 'demo@latanda.online' && password === 'demo123') {
+        if (email === 'user@example.com' && password === 'REMOVED_CREDENTIAL') {
             return {
                 success: true,
                 data: {

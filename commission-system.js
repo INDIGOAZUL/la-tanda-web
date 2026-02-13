@@ -431,7 +431,7 @@ class CommissionSystem {
         return {
             id: 'demo_user_001',
             name: 'Usuario Demo',
-            email: 'demo@latanda.online'
+            email: 'user@example.com'
         };
     }
     

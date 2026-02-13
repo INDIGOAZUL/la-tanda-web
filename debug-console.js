@@ -48,7 +48,7 @@ function debugMIAResponse(message) {
 // Debug authentication
 function debugAuth() {
     console.log('🔐 Testing authentication flow...');
-    console.log('Demo credentials: demo@latanda.online / demo123');
+    console.log('Demo credentials: user@example.com / REMOVED_CREDENTIAL');
     
     // Simulate auth process
     setTimeout(() => {

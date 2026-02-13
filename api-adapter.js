@@ -207,7 +207,7 @@ class LaTandaAPIAdapter {
                 user: {
                     id: 'mock_user_' + Date.now(),
                     name: 'Usuario Demo',
-                    email: 'demo@latanda.online'
+                    email: 'user@example.com'
                 },
                 auth_token: 'mock_token_' + Date.now()
             };

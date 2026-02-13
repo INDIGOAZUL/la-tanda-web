@@ -172,7 +172,7 @@ class APIProxy {
                     }
                     
                     // Admin credentials
-                    if (userEmail === 'admin@latanda.online' && userPassword === 'Admin123!') {
+                    if (userEmail === 'admin@latanda.online' && userPassword === 'REMOVED_CREDENTIAL') {
                         return {
                             success: true,
                             data: {
@@ -217,7 +217,7 @@ class APIProxy {
                     }
                     
                     // Demo credentials
-                    if (userEmail === 'demo@latanda.online' && userPassword === 'demo123') {
+                    if (userEmail === 'user@example.com' && userPassword === 'REMOVED_CREDENTIAL') {
                         return {
                             success: true,
                             data: {

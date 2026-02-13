@@ -160,7 +160,7 @@ class LaTandaWeb3Auth {
         this.setButtonLoading('loginFormElement', true);
         
         try {
-            if (email === 'demo@latanda.online' && password === 'demo123') {
+            if (email === 'user@example.com' && password === 'REMOVED_CREDENTIAL') {
                 await this.loginDemoUser(email, rememberMe);
             } else {
                 await this.loginRealUser(email, password, rememberMe);
@@ -636,7 +636,7 @@ class LaTandaWeb3Auth {
     
     async checkEmailExists(email) {
         await this.delay(500);
-        return email === 'demo@latanda.online';
+        return email === 'user@example.com';
     }
     
     async loginUser(user, rememberMe = false) {
@@ -802,8 +802,8 @@ class LaTandaWeb3Auth {
     }
     
     fillDemoCredentials() {
-        document.getElementById('loginEmail').value = 'demo@latanda.online';
-        document.getElementById('loginPassword').value = 'demo123';
+        document.getElementById('loginEmail').value = 'user@example.com';
+        document.getElementById('loginPassword').value = 'REMOVED_CREDENTIAL';
         
         this.switchTab('login');
         this.showNotification('Demo credentials loaded. Ready to sign in!', 'info');
