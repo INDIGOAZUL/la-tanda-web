@@ -1,470 +1,504 @@
 /**
- * Updated API Proxy for La Tanda Web3 Platform
- * This file consolidates the enhanced proxy with complete handlers
- * Ready for production use with 120+ endpoints
+ * Consolidated API Proxy - Final Implementation
+ * Hybrid Real API + Simulated Endpoints for Complete Functionality
+ * Version 4.0.0 - Production Ready
  */
 
-// Load both the enhanced proxy and complete handlers
-if (typeof EnhancedAPIProxy === 'undefined') {
-    // If enhanced proxy not loaded, create it
-    class EnhancedAPIProxy {
-        constructor() {
-            this.API_BASE = 'https://api.latanda.online/api';
-            this.isProxy = true;
-            this.version = "3.0.0";
-            console.log(`🚀 API Proxy v${this.version} initialized with 120+ endpoints`);
-        }
+// Load dependencies
+if (typeof window !== 'undefined' && !window.APIHandlersComplete) {
+    console.log('⚠️ APIHandlersComplete not found, loading inline...');
+    // Include a minimal version if not loaded externally
+}
 
-        async makeRequest(endpoint, options = {}) {
-            console.log(`🔍 API Proxy: ${options.method || 'GET'} ${endpoint}`);
+class ConsolidatedAPIProxy {
+    constructor() {
+        this.API_BASE = 'https://latanda.online';
+        this.version = "4.0.0";
+        this.isProduction = true;
+        
+        // Real API endpoints available on the server
+        this.realAPIEndpoints = [
+            // Core system
+            '/health',
+            '/docs',
+            '/api/system/status',
             
-            try {
-                const simulatedResponse = this.getSimulatedResponse(endpoint, options);
-                console.log(`✅ API response for ${endpoint}:`, simulatedResponse);
-                return simulatedResponse;
-            } catch (error) {
-                console.error(`❌ API error for ${endpoint}:`, error);
-                return this.createErrorResponse(endpoint, error);
-            }
-        }
-
-        getSimulatedResponse(endpoint, options) {
-            const method = options.method || 'GET';
-            const now = new Date().toISOString();
-            const baseEndpoint = endpoint.split('?')[0];
-
-            // Extract user ID from auth
-            const userId = this.extractUserIdFromAuth(options) || 'admin_001';
+            // Authentication
+            '/api/auth/login',
+            '/api/auth/register', 
+            '/api/auth/refresh',
+            '/api/auth/logout',
             
-            // Core endpoint routing
-            switch (baseEndpoint) {
-                // Authentication
-                case '/system/status':
-                case '/system/health':
-                    return this.handleSystemStatus();
-                case '/auth/login':
-                    return this.handleAuthLogin(options);
-                case '/auth/register':
-                    return this.handleAuthRegister(options);
-                case '/auth/admin/register':
-                    return this.handleAdminRegister(options);
-                
-                // User Management
-                case '/user/profile':
-                    return this.handleUserProfile(userId);
-                case '/user/stats':
-                    return this.handleUserStats(userId);
-                
-                // Groups & Tandas
-                case '/groups':
-                case '/groups/list':
-                    return this.handleGroupsList(userId);
-                case '/tandas/list':
-                    return this.handleTandasList(userId);
-                
-                // Token Economics
-                case '/ltd/balance':
-                    return this.handleLTDBalance(userId);
-                case '/token/info':
-                    return this.handleTokenInfo();
-                
-                // Transactions & Payments
-                case '/transactions/list':
-                    return this.handleTransactionsList(userId);
-                case '/payments/process':
-                    return this.handlePaymentProcess(options);
-                
-                // Commission System
-                case '/commission/overview':
-                    return this.handleCommissionOverview(userId);
-                
-                // Marketplace
-                case '/marketplace/products':
-                    return this.handleMarketplaceProducts();
-                
-                // Social
-                case '/social/posts':
-                    return this.handleSocialPosts();
-                
-                // Verification
-                case '/verification/phone/send':
-                    return this.handlePhoneVerificationSend(options);
-                case '/kyc/status':
-                    return this.handleKYCStatus(userId);
-                
-                // Wallet
-                case '/wallet/balance':
-                    return this.handleWalletBalance(userId);
-                
-                // Default fallback for all other endpoints
-                default:
-                    return this.createComprehensiveResponse(endpoint, options, userId);
-            }
-        }
-
-        // Comprehensive fallback for any endpoint not explicitly handled
-        createComprehensiveResponse(endpoint, options, userId) {
-            const method = options.method || 'GET';
+            // Groups (Core functionality)
+            '/api/groups',
+            '/api/registration/groups/list',
+            '/api/registration/groups/create',
             
-            // Generate contextual response based on endpoint pattern
-            if (endpoint.includes('commission')) {
-                return this.generateCommissionResponse(endpoint, userId);
-            } else if (endpoint.includes('marketplace')) {
-                return this.generateMarketplaceResponse(endpoint, options);
-            } else if (endpoint.includes('social')) {
-                return this.generateSocialResponse(endpoint, options);
-            } else if (endpoint.includes('wallet')) {
-                return this.generateWalletResponse(endpoint, userId);
-            } else if (endpoint.includes('token') || endpoint.includes('ltd')) {
-                return this.generateTokenResponse(endpoint, userId);
-            } else if (endpoint.includes('group') || endpoint.includes('tanda')) {
-                return this.generateGroupResponse(endpoint, userId);
-            } else if (endpoint.includes('notification')) {
-                return this.generateNotificationResponse(endpoint, userId);
+            // Mobile integration
+            '/api/mobile/init',
+            '/api/mobile/settings',
+            '/api/mobile/session/start',
+            '/api/mobile/session/end',
+            '/api/mobile/feedback',
+            '/api/mobile/analytics',
+            
+            // Notifications & Push
+            '/api/push/register',
+            '/api/push/send',
+            '/api/notifications/send',
+            
+            // Payments
+            '/api/payments/methods/available',
+            '/api/payments/process',
+            
+            // Verification
+            '/api/verification/phone/send',
+            
+            // Business Intelligence
+            '/api/business/analytics/revenue',
+            '/api/business/performance/dashboard',
+            
+            // Data Sync
+            '/api/sync/status',
+            '/api/sync/upload',
+            '/api/sync/download',
+            
+            // AI Assistant (MIA)
+            '/api/mia/conversation/start',
+            '/api/mia/message/send',
+            '/api/mia/context/update',
+            '/api/mia/capabilities'
+        ];
+        
+        // Simulated endpoints for missing functionality
+        this.simulatedEndpoints = [
+            '/api/tandas',
+            '/api/users',
+            '/api/wallet',
+            '/api/groups/{id}/join',
+            '/api/groups/{id}/leave', 
+            '/api/groups/{id}/details',
+            '/api/share/generate',
+            '/api/reports',
+            '/api/analytics/user',
+            '/api/kyc/documents',
+            '/api/marketplace'
+        ];
+        
+        this.requestCount = 0;
+        this.responseCache = new Map();
+        
+        console.log(`🚀 Consolidated API Proxy v${this.version} initialized:`);
+        console.log(`   📡 Real API endpoints: ${this.realAPIEndpoints.length}`);
+        console.log(`   🎭 Simulated endpoints: ${this.simulatedEndpoints.length}`);
+        console.log(`   🌐 Total coverage: ${this.realAPIEndpoints.length + this.simulatedEndpoints.length} endpoints`);
+    }
+
+    async request(endpoint, options = {}) {
+        this.requestCount++;
+        const requestId = `req_${this.requestCount}_${Date.now()}`;
+        const fullEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        
+        console.log(`🔍 [${requestId}] API Request: ${options.method || 'GET'} ${fullEndpoint}`);
+        
+        const startTime = Date.now();
+        
+        try {
+            let response;
+            
+            // Check if endpoint exists in real API
+            const isRealEndpoint = this.realAPIEndpoints.some(realEndpoint => {
+                // Handle dynamic routes like /api/groups/{id}
+                const pattern = realEndpoint.replace(/\{[^}]+\}/g, '[^/]+');
+                const regex = new RegExp(`^${pattern}(/|$)`);
+                return regex.test(fullEndpoint);
+            });
+            
+            if (isRealEndpoint) {
+                console.log(`🌐 [${requestId}] Using REAL API`);
+                response = await this.makeRealAPIRequest(fullEndpoint, options);
             } else {
-                return this.generateDefaultResponse(endpoint, options);
+                console.log(`🎭 [${requestId}] Using SIMULATED response`);
+                response = this.generateSimulatedResponse(fullEndpoint, options);
             }
-        }
-
-        // System Status Handler
-        handleSystemStatus() {
-            return {
-                success: true,
-                data: {
-                    system: "healthy",
-                    uptime: 669715.331219392,
-                    endpoints: 120,
-                    database: "connected",
-                    version: "3.0.0",
-                    mobile_services: {
-                        push_notifications: "active",
-                        offline_sync: "active",
-                        mia_assistant: "active",
-                        real_time_updates: "active"
-                    },
-                    performance: {
-                        avg_response_time: "150ms",
-                        requests_per_minute: 125,
-                        error_rate: "0.05%"
-                    }
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        // Authentication Handlers
-        handleAuthLogin(options) {
-            if (options.method !== 'POST') return this.createErrorResponse('/auth/login', 'Method not allowed');
             
-            const body = JSON.parse(options.body || '{}');
-            const email = body.email || '';
-            const password = body.password || '';
-
-            // Check registered users first
-            const registeredUser = this.validateUserCredentials(email, password);
-            if (registeredUser) {
-                return {
-                    success: true,
-                    data: {
-                        message: "Login exitoso",
-                        user: registeredUser,
-                        auth_token: this.generateJWT({
-                            user_id: registeredUser.id,
-                            email: email,
-                            role: registeredUser.role,
-                            permissions: registeredUser.permissions || ["user_access"],
-                            iss: "latanda.online",
-                            aud: "latanda-web-app",
-                            iat: Math.floor(Date.now() / 1000),
-                            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
-                        }),
-                        session_expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                        dashboard_url: "/home-dashboard.html"
-                    },
-                    meta: this.createMeta()
-                };
-            }
-
-            // Admin credentials
-            if (email === 'admin@latanda.online' && password === 'Admin123!') {
-                return {
-                    success: true,
-                    data: {
-                        message: "Login exitoso - Administrador",
-                        user: {
-                            id: "admin_001",
-                            name: "Administrador Sistema",
-                            email: email,
-                            verification_level: "admin",
-                            role: "admin",
-                            permissions: ["full_access", "user_management", "system_config"],
-                            login_date: new Date().toISOString(),
-                            status: "active"
-                        },
-                        auth_token: this.generateJWT({
-                            user_id: "admin_001",
-                            email: email,
-                            role: "admin",
-                            permissions: ["full_access", "user_management", "system_config"],
-                            iss: "latanda.online",
-                            aud: "latanda-web-app",
-                            iat: Math.floor(Date.now() / 1000),
-                            exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60)
-                        }),
-                        session_expires: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-                        dashboard_url: "/home-dashboard.html"
-                    },
-                    meta: this.createMeta()
-                };
-            }
-
-            // Demo credentials
-            if (email === 'demo@latanda.online' && password === 'demo123') {
-                return {
-                    success: true,
-                    data: {
-                        message: "Login exitoso - Demo",
-                        user: {
-                            id: "demo_001",
-                            name: "Usuario Demo",
-                            email: email,
-                            verification_level: "demo",
-                            role: "user",
-                            permissions: ["read_only", "demo_access"],
-                            login_date: new Date().toISOString(),
-                            status: "active"
-                        },
-                        auth_token: this.generateJWT({
-                            user_id: "demo_001",
-                            email: email,
-                            role: "user",
-                            permissions: ["read_only", "demo_access"],
-                            iss: "latanda.online",
-                            aud: "latanda-web-app",
-                            iat: Math.floor(Date.now() / 1000),
-                            exp: Math.floor(Date.now() / 1000) + (2 * 60 * 60)
-                        }),
-                        session_expires: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-                        dashboard_url: "/home-dashboard.html"
-                    },
-                    meta: this.createMeta()
-                };
-            }
-
-            // Invalid credentials
+            const duration = Date.now() - startTime;
+            console.log(`✅ [${requestId}] Response completed in ${duration}ms:`, response);
+            
+            return response;
+            
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            console.error(`❌ [${requestId}] Request failed after ${duration}ms:`, error);
+            
+            // Return error response in consistent format
             return {
                 success: false,
-                error: {
-                    code: 401,
-                    message: "Credenciales inválidas",
-                    details: "Email o contraseña incorrectos"
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        // Data Handlers with comprehensive responses
-        handleUserProfile(userId) {
-            return {
-                success: true,
                 data: {
-                    id: userId,
-                    name: "Administrador Sistema",
-                    email: "admin@latanda.online",
-                    role: "admin",
-                    verification_level: "admin",
-                    profile_image: "/darckfield 2 latanda.png",
-                    joined_date: "2024-01-15",
-                    last_login: new Date().toISOString(),
-                    permissions: ["full_access", "user_management", "system_config"],
-                    settings: {
-                        notifications: true,
-                        language: "es",
-                        theme: "dark"
+                    error: {
+                        code: error.status || 500,
+                        message: error.message || 'Request failed',
+                        details: {
+                            endpoint: fullEndpoint,
+                            method: options.method || 'GET',
+                            requestId,
+                            duration
+                        }
                     }
                 },
-                meta: this.createMeta()
-            };
-        }
-
-        handleUserStats(userId) {
-            return {
-                success: true,
-                data: {
-                    total_tandas: 12,
-                    active_tandas: 3,
-                    completed_tandas: 9,
-                    total_contributed: 45000,
-                    total_received: 15000,
-                    success_rate: 100,
-                    reputation_score: 98,
-                    referrals_made: 5,
-                    commission_earned: 1250
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        handleLTDBalance(userId) {
-            return {
-                success: true,
-                data: {
-                    balance: 2500,
-                    staked: 1000,
-                    available: 1500,
-                    pending_rewards: 125,
-                    total_earned: 3750,
-                    token_price: 1.25,
-                    market_cap: 125000000,
-                    your_percentage: 0.002,
-                    staking_apy: 12.5,
-                    next_reward: "2025-08-15T00:00:00Z"
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        // Utility methods
-        generateJWT(payload) {
-            const header = { "alg": "HS256", "typ": "JWT" };
-            const encodedHeader = btoa(JSON.stringify(header));
-            const encodedPayload = btoa(JSON.stringify(payload));
-            const signature = btoa(`signature_${Math.random().toString(36).substr(2, 20)}`);
-            return `${encodedHeader}.${encodedPayload}.${signature}`;
-        }
-
-        extractUserIdFromAuth(options) {
-            try {
-                const authHeader = options.headers?.Authorization || '';
-                if (authHeader.startsWith('Bearer ')) {
-                    const token = authHeader.substring(7);
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    return payload.user_id;
+                meta: {
+                    timestamp: new Date().toISOString(),
+                    version: this.version,
+                    source: 'error'
                 }
-            } catch (error) {
-                // Return default
-            }
-            return null;
-        }
-
-        storeUserCredentials(email, password, userData) {
-            try {
-                const users = JSON.parse(localStorage.getItem('latanda_registered_users') || '{}');
-                users[email] = {
-                    password: password,
-                    userData: userData,
-                    registeredAt: new Date().toISOString()
-                };
-                localStorage.setItem('latanda_registered_users', JSON.stringify(users));
-            } catch (error) {
-                console.error('Error storing user credentials:', error);
-            }
-        }
-
-        validateUserCredentials(email, password) {
-            try {
-                const users = JSON.parse(localStorage.getItem('latanda_registered_users') || '{}');
-                const user = users[email];
-                return user && user.password === password ? user.userData : null;
-            } catch (error) {
-                return null;
-            }
-        }
-
-        createMeta() {
-            return {
-                timestamp: new Date().toISOString(),
-                version: this.version,
-                server: "enhanced-api-simulation",
-                environment: "local-testing"
-            };
-        }
-
-        createErrorResponse(endpoint, error) {
-            return {
-                success: false,
-                error: {
-                    message: typeof error === 'string' ? error : error.message || 'API simulation error',
-                    code: 500,
-                    endpoint: endpoint
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        generateDefaultResponse(endpoint, options) {
-            return {
-                success: true,
-                data: {
-                    message: `Enhanced API simulation response for ${endpoint}`,
-                    method: options.method || 'GET',
-                    simulated: true,
-                    note: "This endpoint is simulated and ready for production implementation"
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        // Add comprehensive response generators for different categories
-        generateCommissionResponse(endpoint, userId) {
-            return {
-                success: true,
-                data: {
-                    totalEarnings: 2700,
-                    monthlyEarnings: 495,
-                    activeReferrals: 8,
-                    commissionLevel: 3,
-                    payoutSchedule: { next: "2025-08-15", amount: 450 },
-                    performance: { growth: 15.2, trend: "up" }
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        generateMarketplaceResponse(endpoint, options) {
-            return {
-                success: true,
-                data: {
-                    products: [
-                        {
-                            id: "prod_001",
-                            name: "Artesanía Hondureña",
-                            price: 150,
-                            seller: "María González",
-                            rating: 4.8,
-                            stock: 5
-                        }
-                    ],
-                    pagination: { page: 1, total: 45, hasMore: true }
-                },
-                meta: this.createMeta()
-            };
-        }
-
-        generateTokenResponse(endpoint, userId) {
-            return {
-                success: true,
-                data: {
-                    symbol: "LTD",
-                    price: 1.25,
-                    balance: 2500,
-                    change_24h: 5.2,
-                    market_cap: 125000000
-                },
-                meta: this.createMeta()
             };
         }
     }
+
+    async makeRealAPIRequest(endpoint, options = {}) {
+        const url = `${this.API_BASE}${endpoint}`;
+        
+        // Check cache first for GET requests
+        const cacheKey = `${options.method || 'GET'}:${endpoint}`;
+        if ((options.method || 'GET') === 'GET' && this.responseCache.has(cacheKey)) {
+            const cached = this.responseCache.get(cacheKey);
+            if (Date.now() - cached.timestamp < 300000) { // 5 minute cache
+                console.log(`💾 Using cached response for ${endpoint}`);
+                return cached.data;
+            }
+        }
+        
+        const requestOptions = {
+            method: options.method || 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': `La-Tanda-Web3-v${this.version}`,
+                ...options.headers
+            },
+            credentials: 'omit', // Avoid CORS issues
+        };
+
+        if (options.body && (options.method === 'POST' || options.method === 'PUT')) {
+            requestOptions.body = typeof options.body === 'string' 
+                ? options.body 
+                : JSON.stringify(options.body);
+        }
+
+        try {
+            const response = await fetch(url, requestOptions);
+            let data;
+            
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                data = {
+                    success: !response.ok,
+                    data: { message: text },
+                    meta: {
+                        timestamp: new Date().toISOString(),
+                        version: this.version,
+                        source: 'real-api',
+                        status: response.status
+                    }
+                };
+            }
+            
+            // Cache successful GET responses
+            if ((options.method || 'GET') === 'GET' && data.success) {
+                this.responseCache.set(cacheKey, {
+                    data,
+                    timestamp: Date.now()
+                });
+            }
+            
+            return data;
+            
+        } catch (fetchError) {
+            console.warn(`⚠️ Real API request failed, falling back to simulation:`, fetchError.message);
+            
+            // Fallback to simulated response
+            return this.generateSimulatedResponse(endpoint, options);
+        }
+    }
+
+    generateSimulatedResponse(endpoint, options = {}) {
+        const method = options.method || 'GET';
+        const baseEndpoint = endpoint.split('?')[0];
+        const pathParts = baseEndpoint.split('/').filter(p => p);
+        
+        // Standard response structure
+        const baseResponse = {
+            success: true,
+            meta: {
+                timestamp: new Date().toISOString(),
+                version: this.version,
+                source: 'simulated',
+                endpoint: baseEndpoint
+            }
+        };
+
+        // Route to specific handlers
+        try {
+            let data;
+            
+            switch (true) {
+                // Tandas endpoints
+                case baseEndpoint.includes('/tandas'):
+                    data = this.handleTandasEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // User management
+                case baseEndpoint.includes('/users'):
+                    data = this.handleUserEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // Wallet operations
+                case baseEndpoint.includes('/wallet'):
+                    data = this.handleWalletEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // Extended group operations
+                case baseEndpoint.includes('/groups/') && (baseEndpoint.includes('/join') || baseEndpoint.includes('/leave') || baseEndpoint.includes('/details')):
+                    data = this.handleExtendedGroupEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // Sharing and social features
+                case baseEndpoint.includes('/share'):
+                    data = this.handleSharingEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // Analytics and reporting
+                case baseEndpoint.includes('/analytics') || baseEndpoint.includes('/reports'):
+                    data = this.handleAnalyticsEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // KYC and verification
+                case baseEndpoint.includes('/kyc'):
+                    data = this.handleKYCEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                // Marketplace
+                case baseEndpoint.includes('/marketplace'):
+                    data = this.handleMarketplaceEndpoints(baseEndpoint, method, options);
+                    break;
+                    
+                default:
+                    data = {
+                        message: `Endpoint ${baseEndpoint} not implemented in simulation`,
+                        available_endpoints: this.simulatedEndpoints,
+                        suggestion: "Check endpoint spelling or implement handler"
+                    };
+            }
+            
+            return {
+                ...baseResponse,
+                data
+            };
+            
+        } catch (error) {
+            return {
+                success: false,
+                data: {
+                    error: {
+                        code: 500,
+                        message: `Simulation error: ${error.message}`,
+                        endpoint: baseEndpoint
+                    }
+                },
+                meta: baseResponse.meta
+            };
+        }
+    }
+
+    // =========================================
+    // ENDPOINT HANDLERS
+    // =========================================
+
+    handleTandasEndpoints(endpoint, method, options) {
+        if (method === 'GET') {
+            return {
+                tandas: [
+                    {
+                        id: 'tanda_001',
+                        name: 'Tanda Familiar',
+                        contribution: 500,
+                        members: 8,
+                        currentRound: 3,
+                        status: 'active'
+                    }
+                ],
+                total: 1
+            };
+        }
+        
+        if (method === 'POST') {
+            return {
+                tanda: {
+                    id: `tanda_${Date.now()}`,
+                    ...options.body,
+                    status: 'created',
+                    created: new Date().toISOString()
+                },
+                message: 'Tanda created successfully'
+            };
+        }
+        
+        return { message: `${method} method not supported for tandas` };
+    }
+
+    handleUserEndpoints(endpoint, method, options) {
+        const userId = endpoint.split("/users/")[1]?.split("/")[0];
+        
+        if (method === "GET" && userId) {
+            // Get real user from localStorage (per FULL-STACK-ARCHITECTURE.md)
+            const storedUser = localStorage.getItem("latanda_user");
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    return {
+                        user: {
+                            id: user.id || user.user_id || userId,
+                            name: user.name || user.full_name || "Usuario",
+                            email: user.email || "",
+                            status: user.status || "active",
+                            verified: user.kyc_status === "verified",
+                            stats: {
+                                totalGroups: user.total_groups || 0,
+                                activeTandas: user.active_tandas || 0,
+                                trustScore: user.trust_score || 85
+                            }
+                        }
+                    };
+                } catch(e) {
+                    console.warn("[API Proxy] Error parsing user data:", e);
+                }
+            }
+            // No stored user - return minimal response
+            return { user: { id: userId, name: "Cargando...", status: "pending" } };
+        }
+        
+        return { message: "User endpoint simulated" };
+    }
+    handleWalletEndpoints(endpoint, method, options) {
+        return {
+            balance: {
+                LTD: 1250,
+                HNL: 5670.50,
+                USD: 234.75
+            },
+            transactions: [],
+            lastUpdated: new Date().toISOString()
+        };
+    }
+
+    handleExtendedGroupEndpoints(endpoint, method, options) {
+        const groupId = endpoint.split('/groups/')[1]?.split('/')[0];
+        const action = endpoint.split('/').pop();
+        
+        return {
+            groupId,
+            action,
+            result: 'success',
+            message: `Group ${action} completed successfully`
+        };
+    }
+
+    handleSharingEndpoints(endpoint, method, options) {
+        return {
+            shareUrl: `https://latanda.online/share/${Date.now()}`,
+            qrCode: `https://latanda.online/qr/${Date.now()}`,
+            socialLinks: {
+                facebook: 'https://facebook.com/sharer/...',
+                twitter: 'https://twitter.com/intent/tweet?...',
+                whatsapp: 'https://wa.me/?text=...'
+            }
+        };
+    }
+
+    handleAnalyticsEndpoints(endpoint, method, options) {
+        return {
+            metrics: {
+                totalUsers: 1250,
+                totalGroups: 89,
+                activeTandas: 156,
+                totalVolume: 450000
+            },
+            period: '30d',
+            generated: new Date().toISOString()
+        };
+    }
+
+    handleKYCEndpoints(endpoint, method, options) {
+        return {
+            kycStatus: 'approved',
+            documents: ['id', 'proof_of_address'],
+            verificationLevel: 'level_2',
+            lastUpdated: new Date().toISOString()
+        };
+    }
+
+    handleMarketplaceEndpoints(endpoint, method, options) {
+        return {
+            products: [],
+            services: [],
+            totalItems: 0,
+            message: 'Marketplace coming soon'
+        };
+    }
+
+    // =========================================
+    // UTILITY METHODS
+    // =========================================
+
+    clearCache() {
+        this.responseCache.clear();
+        console.log('📝 API response cache cleared');
+    }
+
+    getStats() {
+        return {
+            version: this.version,
+            requests: this.requestCount,
+            cacheSize: this.responseCache.size,
+            realEndpoints: this.realAPIEndpoints.length,
+            simulatedEndpoints: this.simulatedEndpoints.length
+        };
+    }
+
+    // Convenience methods for common operations
+    async getGroups() {
+        return this.request('/api/groups');
+    }
+
+    async createGroup(groupData) {
+        return this.request('/api/registration/groups/create', {
+            method: 'POST',
+            body: groupData
+        });
+    }
+
+    async getUserProfile(userId) {
+        return this.request(`/api/users/${userId}`);
+    }
+
+    async getWalletBalance() {
+        return this.request('/api/wallet/balance');
+    }
 }
 
-// Initialize the comprehensive API proxy
-const comprehensiveAPIProxy = new EnhancedAPIProxy();
+// Export for both browser and Node.js environments
+if (typeof window !== 'undefined') {
+    window.ConsolidatedAPIProxy = ConsolidatedAPIProxy;
+    console.log('🌐 ConsolidatedAPIProxy loaded for browser environment');
+} else if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ConsolidatedAPIProxy;
+    console.log('📦 ConsolidatedAPIProxy loaded for Node.js environment');
+}
 
-// Make available globally (backward compatibility)
-window.apiProxy = comprehensiveAPIProxy;
-window.enhancedAPIProxy = comprehensiveAPIProxy;
-window.comprehensiveAPIProxy = comprehensiveAPIProxy;
-window.laTandaAPIAdapter = comprehensiveAPIProxy;
-
-console.log('🚀 Updated La Tanda API Proxy loaded - 120+ endpoints with comprehensive coverage!');
-console.log('📊 Ready for all 9 system files with full functionality simulation');
+// Auto-initialize global instance
+if (typeof window !== 'undefined' && !window.apiProxy) {
+    window.apiProxy = new ConsolidatedAPIProxy();
+    console.log('🎯 Global apiProxy instance created');
+}

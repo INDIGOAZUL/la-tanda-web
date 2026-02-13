@@ -2,9 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marketplace & Sistema Social - La Tanda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/loading-states.css?v=22.2">
     <style>
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         :root {
             --tanda-cyan: #00FFFF;
             --tanda-cyan-light: #7FFFD8;
@@ -530,7 +534,8 @@
         .search-bar {
             display: flex;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
             align-items: center;
         }
         
@@ -551,6 +556,24 @@
             box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
         }
         
+        .search-btn {
+            background: linear-gradient(135deg, var(--tanda-cyan), #00cccc);
+            border: none;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
         .filter-select {
             padding: 15px;
             border: 1px solid var(--border-primary);
@@ -726,6 +749,24 @@
             }
             
             .search-input,
+        .search-btn {
+            background: linear-gradient(135deg, var(--tanda-cyan), #00cccc);
+            border: none;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
             .filter-select {
                 width: 100%;
             }
@@ -755,98 +796,1788 @@
                 transform: translateX(0);
             }
         }
+
+        /* Guest Banner */
+        .guest-banner {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .guest-banner-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .guest-restricted {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Tier Progress Banner - Collapsible */
+        .tier-progress-banner {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .tier-progress-banner.tanda-active {
+            border-color: rgba(0, 255, 255, 0.4);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(0, 255, 255, 0.05));
+        }
+
+        .tier-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            gap: 12px;
+            transition: background 0.2s;
+        }
+
+        .tier-header:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .tier-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .tier-avatar.tanda {
+            background: linear-gradient(135deg, #00FFFF, #06B6D4);
+            color: #0f172a;
+        }
+
+        .tier-user-summary {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tier-user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tier-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .tier-badge.tanda {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00FFFF;
+        }
+
+        .tier-badge.premium {
+            background: rgba(139, 92, 246, 0.2);
+            color: #A78BFA;
+        }
+
+        .tier-user-desc {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .tier-progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .tier-progress-bar {
+            width: 80px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .tier-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .tier-progress-fill.low { background: #EF4444; }
+        .tier-progress-fill.mid { background: #F59E0B; }
+        .tier-progress-fill.high { background: #10B981; }
+        .tier-progress-fill.max { background: linear-gradient(90deg, #00FFFF, #8B5CF6); }
+
+        .tier-progress-pct {
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            min-width: 36px;
+        }
+
+        .tier-toggle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            transition: transform 0.3s;
+        }
+
+        .tier-progress-banner.expanded .tier-toggle {
+            transform: rotate(180deg);
+        }
+
+        .tier-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            border-top: 1px solid transparent;
+        }
+
+        .tier-progress-banner.expanded .tier-details {
+            max-height: 300px;
+            border-top-color: rgba(255,255,255,0.1);
+        }
+
+        .tier-details-content {
+            padding: 12px 16px;
+        }
+
+        .tier-current-benefits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tier-benefit-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            color: #10B981;
+        }
+
+        .tier-benefit-tag.locked {
+            background: rgba(100, 116, 139, 0.1);
+            border-color: rgba(100, 116, 139, 0.2);
+            color: rgba(255,255,255,0.4);
+        }
+
+        .tier-next-steps {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .tier-next-title {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tier-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tier-step:last-child {
+            border-bottom: none;
+        }
+
+        .tier-step-icon {
+            font-size: 18px;
+        }
+
+        .tier-step-info {
+            flex: 1;
+        }
+
+        .tier-step-name {
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .tier-step-desc {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .tier-step-action {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tier-step-action.primary {
+            background: linear-gradient(135deg, #00FFFF, #06B6D4);
+            color: #0f172a;
+        }
+
+        .tier-step-action.secondary {
+            background: rgba(139, 92, 246, 0.2);
+            color: #A78BFA;
+        }
+
+        .tier-step-action:hover {
+            transform: scale(1.05);
+        }
+
+        .tier-step.completed .tier-step-name {
+            color: rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 768px) {
+            .tier-progress-bar {
+                width: 60px;
+            }
+            .tier-progress-pct {
+                display: none;
+            }
+        }
+
+        /* Service Card Styles */
+        .service-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border-color: #10B981;
+        }
+
+        .service-image {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+        }
+
+        .service-badge {
+            position: absolute;
+            top: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .service-badge.verified {
+            right: 10px;
+            background: rgba(16, 185, 129, 0.9);
+        }
+
+        .service-badge.featured {
+            left: 10px;
+            background: rgba(139, 92, 246, 0.9);
+        }
+
+        .service-info {
+            padding: 20px;
+        }
+
+        .service-category {
+            font-size: 12px;
+            color: #10B981;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .service-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .service-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .service-provider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .provider-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10B981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .provider-info {
+            flex: 1;
+        }
+
+        .provider-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .provider-rating {
+            font-size: 12px;
+            color: #F59E0B;
+        }
+
+        .service-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .service-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10B981;
+        }
+
+        .service-duration {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .service-availability,
+        .service-areas {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 6px;
+        }
+
+        /* Responsive adjustments for service cards */
+        @media (max-width: 768px) {
+            .tier-info-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .tier-feature {
+                font-size: 13px;
+            }
+
+            .guest-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+/* Product Card Skeleton */        .product-card-skeleton {            background: var(--bg-accent);            border: 1px solid var(--border-primary);            border-radius: 16px;            padding: 20px;            display: flex;            flex-direction: column;            gap: 12px;        }        .product-card-skeleton .skeleton-image {            height: 120px;            border-radius: 12px;            background: linear-gradient(90deg,                rgba(255,255,255,0.03) 25%,                rgba(255,255,255,0.08) 50%,                rgba(255,255,255,0.03) 75%            );            background-size: 200% 100%;            animation: shimmer 1.5s infinite;            display: flex;            align-items: center;            justify-content: center;            font-size: 32px;            opacity: 0.3;        }        .product-card-skeleton .skeleton-title {            height: 20px;            width: 75%;            background: linear-gradient(90deg,                rgba(255,255,255,0.03) 25%,                rgba(255,255,255,0.08) 50%,                rgba(255,255,255,0.03) 75%            );            background-size: 200% 100%;            animation: shimmer 1.5s infinite;            border-radius: 6px;        }        .product-card-skeleton .skeleton-price {            height: 24px;            width: 40%;            background: linear-gradient(90deg,                rgba(0,255,255,0.05) 25%,                rgba(0,255,255,0.1) 50%,                rgba(0,255,255,0.05) 75%            );            background-size: 200% 100%;            animation: shimmer 1.5s infinite;            border-radius: 6px;        }        .product-card-skeleton .skeleton-meta {            display: flex;            gap: 10px;        }        .product-card-skeleton .skeleton-badge {            height: 16px;            width: 60px;            background: linear-gradient(90deg,                rgba(255,255,255,0.03) 25%,                rgba(255,255,255,0.08) 50%,                rgba(255,255,255,0.03) 75%            );            background-size: 200% 100%;            animation: shimmer 1.5s infinite;            border-radius: 4px;        }        .product-card-skeleton .skeleton-button {            height: 40px;            width: 100%;            background: linear-gradient(90deg,                rgba(0,255,255,0.05) 25%,                rgba(0,255,255,0.1) 50%,                rgba(0,255,255,0.05) 75%            );            background-size: 200% 100%;            animation: shimmer 1.5s infinite;            border-radius: 8px;            margin-top: 8px;        }
+
+        /* Messaging Styles */
+        .messages-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            min-height: 500px;
+        }
+
+        .conversations-panel,
+        .chat-panel {
+            height: 600px;
+        }
+
+        .conversations-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .conversation-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .conversation-item.unread {
+            background: rgba(0, 255, 255, 0.08);
+        }
+        .conversation-item.has-unread {
+            background: rgba(0, 255, 255, 0.08);
+            border-left: 3px solid var(--tanda-cyan);
+        }
+
+        .conv-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .conv-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conv-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .conv-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .conv-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .conv-product {
+            font-size: 12px;
+            color: var(--tanda-cyan);
+            margin-bottom: 4px;
+        }
+
+        .conv-preview {
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conv-unread-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--tanda-cyan);
+            flex-shrink: 0;
+        }
+
+        /* Chat messages styling */
+        .chat-message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            max-width: 75%;
+        }
+
+        .chat-message.sent {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .chat-message.received {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 16px;
+            word-wrap: break-word;
+        }
+
+        .chat-message.sent .message-bubble {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.received .message-bubble {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .conversations-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .conversations-loading .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+
+        .conversation-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .conversation-preview {
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-product {
+            font-size: 12px;
+            color: var(--tanda-cyan);
+            margin-top: 4px;
+        }
+
+        .conversation-meta {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .conversation-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .conversation-unread {
+            background: var(--tanda-cyan);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        /* Chat Panel */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .chat-user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-product {
+            font-size: 12px;
+            color: var(--tanda-cyan);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message-bubble.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-bubble.received {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .message-bubble.sent .message-time {
+            text-align: right;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--tanda-cyan);
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            border-radius: 24px;
+        }
+
+        .back-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .conversations-loading,
+        .chat-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-conversations {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-conversations .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .unread-badge {
+            background: var(--tanda-cyan);
+            color: #000;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .messages-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .conversation-item {
+                padding: 12px;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        /* ============================================
+           MOBILE RESPONSIVE STYLES
+           ============================================ */
+        
+        /* Tablet - 768px */
+        @media (max-width: 768px) {
+            /* Nav tabs - horizontal scroll */
+            .nav-tabs {
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                gap: 8px;
+                padding: 10px 5px;
+                margin: 0 -15px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .nav-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .nav-tab {
+                flex-shrink: 0;
+                padding: 10px 16px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+            
+            /* Stats grid - 2x2 */
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            /* Product grid - 2 columns */
+            .products-grid,
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px;
+            }
+            
+            .product-card {
+                padding: 12px;
+            }
+            
+            .product-image {
+                height: 100px;
+            }
+            
+            .product-title {
+                font-size: 13px;
+            }
+            
+            .product-description {
+                font-size: 11px;
+                -webkit-line-clamp: 2;
+            }
+            
+            .price-ltd {
+                font-size: 14px;
+            }
+            
+            .price-usd {
+                font-size: 10px;
+            }
+            
+            /* Filters - stack vertically */
+            .search-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .filters-row {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .filter-select {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 120px;
+                font-size: 13px;
+                padding: 10px 12px;
+            }
+            
+            /* Cards */
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .card-title {
+                font-size: 16px;
+            }
+        }
+        
+        /* Mobile - 480px */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            /* Header */
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .header p {
+                font-size: 12px;
+            }
+            
+            /* Nav tabs - smaller */
+            .nav-tab {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            /* Product grid - 1 column on very small screens */
+            .products-grid,
+            .services-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .product-card {
+                padding: 15px;
+            }
+            
+            .product-image {
+                height: 120px;
+            }
+            
+            /* Product actions - stack buttons */
+            .product-actions {
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            
+            .product-actions .btn {
+                width: 100% !important;
+                justify-content: center;
+            }
+            
+            /* Filters - full width */
+            .filter-select {
+                flex: 1 1 100%;
+            }
+            
+            /* Stats - smaller */
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-icon {
+                font-size: 20px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
+            /* Seller info */
+            .seller-avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .seller-name {
+                font-size: 12px;
+            }
+            
+            .seller-rating {
+                font-size: 10px;
+            }
+            
+            /* Hide commission hint on mobile */
+            .commission-hint {
+                display: none;
+            }
+            
+            /* Messages - full screen chat */
+            .chat-panel {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+                z-index: 1000 !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .chat-header {
+                padding: 15px;
+                border-radius: 0;
+            }
+            
+            .chat-messages {
+                height: calc(100vh - 140px) !important;
+            }
+            
+            .chat-input-area {
+                padding: 10px 15px;
+                border-radius: 0;
+            }
+            
+            .chat-input-area input {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            /* Conversation items */
+            .conversation-item {
+                padding: 12px;
+            }
+            
+            .conv-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .conv-name {
+                font-size: 13px;
+            }
+            
+            .conv-preview {
+                font-size: 11px;
+            }
+            
+            /* Modals - full width */
+            .modal-content {
+                width: 95% !important;
+                max-width: none !important;
+                margin: 10px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            /* Social posts */
+            .social-post {
+                padding: 15px;
+            }
+            
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .post-content {
+                font-size: 13px;
+            }
+            
+            /* Touch-friendly buttons */
+            .btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+            
+            .action-btn {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            
+            /* Form elements */
+            input, select, textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px;
+            }
+        }
+        
+        /* Small phones - 360px */
+        @media (max-width: 360px) {
+            .nav-tab {
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .grid-4 {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            
+            .stat-value {
+                font-size: 16px;
+            }
+            
+            .product-title {
+                font-size: 12px;
+            }
+            
+            .price-ltd {
+                font-size: 13px;
+            }
+        }
+        
+        /* Collapsible filters toggle */
+        .filters-toggle {
+            display: none;
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .filters-toggle::after {
+            content: " ▼";
+            font-size: 10px;
+        }
+        
+        .filters-toggle.active::after {
+            content: " ▲";
+        }
+        
+        @media (max-width: 768px) {
+            .filters-toggle {
+                display: block;
+            }
+            
+            .filters-row {
+                display: none;
+                margin-top: 10px;
+            }
+            
+            .filters-row.show {
+                display: flex;
+            }
+        }
+/* ==========================================
+   NEW MARKETPLACE HEADER & SIDEBAR
+   ========================================== */
+
+/* Header */
+.mp-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.mp-menu-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.mp-menu-btn:hover {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.mp-menu-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s;
+}
+
+.mp-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mp-logo {
+    font-size: 24px;
+}
+
+.mp-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--tanda-cyan), #7FFFD8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.mp-search-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.mp-search-btn:hover {
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.mp-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mp-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mp-action-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: var(--tanda-cyan);
+    transform: translateY(-1px);
+}
+
+.mp-action-icon {
+    font-size: 16px;
+}
+
+.mp-action-icon-only {
+    padding: 8px 12px;
+}
+
+.mp-action-icon-only .mp-action-text {
+    display: none;
+}
+
+/* Search Bar */
+.mp-search-bar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.98);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    z-index: 999;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mp-search-bar.active {
+    display: flex;
+}
+
+.mp-search-container {
+    display: flex;
+    gap: 8px;
+}
+
+.mp-search-container input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.mp-search-container input:focus {
+    outline: none;
+    border-color: var(--tanda-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+}
+
+.mp-search-container button {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--tanda-cyan), #00cccc);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mp-search-container button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+}
+
+.mp-search-close {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    padding: 12px 14px !important;
+}
+
+.mp-quick-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mp-quick-filters select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Sidebar */
+.mp-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.mp-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mp-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    z-index: 1002;
+    transition: left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.mp-sidebar.active {
+    left: 0;
+}
+
+.mp-sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mp-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mp-user-avatar {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, var(--tanda-cyan), #7FFFD8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.mp-user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.mp-user-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 14px;
+}
+
+.mp-user-balance {
+    font-size: 12px;
+    color: var(--tanda-cyan);
+}
+
+.mp-sidebar-close {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.mp-sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mp-sidebar-nav {
+    flex: 1;
+    padding: 15px 0;
+    overflow-y: auto;
+}
+
+.mp-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.mp-nav-item:hover {
+    background: rgba(0, 255, 255, 0.05);
+    color: #fff;
+}
+
+.mp-nav-item.active {
+    background: rgba(0, 255, 255, 0.1);
+    color: var(--tanda-cyan);
+    border-left: 3px solid var(--tanda-cyan);
+}
+
+.mp-nav-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+.mp-nav-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.mp-nav-badge {
+    margin-left: auto;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.mp-nav-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 10px 20px;
+}
+
+/* Main Content */
+.mp-main {
+    margin-top: 60px;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+}
+
+.mp-main.search-open {
+    margin-top: 140px;
+}
+
+/* Remove old container padding */
+.mp-main > .container {
+    padding: 0;
+    max-width: 100%;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .mp-header-center {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .mp-action-text {
+        display: none;
+    }
+    
+    .mp-action-btn {
+        padding: 8px 10px;
+    }
+    
+}
+
+/* Header V2 Layout */
+.mp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mp-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mp-header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mp-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.mp-logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.mp-logo-img {
+    height: 36px;
+    width: auto;
+    border-radius: 8px;
+}
+
+.mp-logo-fallback {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--tanda-cyan), #7FFFD8);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.mp-search-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mp-search-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    border-color: var(--tanda-cyan);
+}
+
+@media (max-width: 640px) {
+    .mp-header-center {
+        display: flex;
+        gap: 6px;
+    }
+    
+    .mp-action-text {
+        display: none;
+    }
+    
+    .mp-action-btn {
+        padding: 8px 10px;
+    }
+    
+    
+    .mp-brand .mp-title {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .mp-logo-img {
+        height: 28px;
+    }
+}
     </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/marketplace-social.html">
+    <meta property="og:title" content="Marketplace | La Tanda">
+    <meta property="og:description" content="Compra y vende productos en el marketplace de la comunidad La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Marketplace | La Tanda">
+    <meta name="twitter:description" content="Compra y vende productos en el marketplace de la comunidad La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
 </head>
 <body>
-    <!-- Navigation Menu -->
-    <nav class="main-nav" style="background: rgba(0,0,0,0.9); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0,255,255,0.1);">
-        <div class="nav-left" style="display: flex; align-items: center; gap: 20px;">
-            <button onclick="window.location.href='home-dashboard.html'" style="background: linear-gradient(135deg, #00FFFF, #7FFFD8); color: #0f172a; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600;">
-                🏠 Dashboard
+    <!-- NEW MARKETPLACE HEADER -->
+    <header class="mp-header">
+        <div class="mp-header-left">
+            <button class="mp-menu-btn" onclick="toggleMarketplaceSidebar()">
+                <span></span><span></span><span></span>
             </button>
-            <div class="nav-links" style="display: flex; gap: 15px;">
-                <a href="tanda-wallet.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">💰 Wallet</a>
-                <a href="kyc-registration.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">📋 KYC</a>
-                <a href="groups-advanced-system.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">👥 Grupos</a>
-                <a href="web3-dashboard.html" style="color: #ccc; text-decoration: none; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">📊 Trading</a>
+            <a href="home-dashboard.html" class="mp-logo-link">
+                <img loading="lazy" src="La Tanda logos (3).png" alt="La Tanda" class="mp-logo-img">
+                <span class="mp-logo-fallback" style="display:none;">🏛️</span>
+            </a>
+            <div class="mp-brand">
+                <span class="mp-logo">🛍️</span>
+                <span class="mp-title">Marketplace</span>
             </div>
         </div>
-        <div class="nav-right">
-            <span style="color: white; font-weight: 500;">🛍️ Marketplace & Social</span>
+        <div class="mp-header-center">
+            <button class="mp-action-btn" onclick="showCreateProductModal()">
+                <span class="mp-action-icon">📦</span>
+                <span class="mp-action-text">Publicar</span>
+            </button>
+            <button class="mp-action-btn" onclick="showCreateServiceModal()">
+                <span class="mp-action-icon">🛠️</span>
+                <span class="mp-action-text">Ofrecer</span>
+            </button>
+            <button class="mp-action-btn" onclick="switchToMyStore()" title="Mi Tienda">
+                <span class="mp-action-icon">🏪</span>
+                <span class="mp-action-text">Mi Tienda</span>
+            </button>
         </div>
-    </nav>
-
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🛍️ Marketplace & Sistema Social</h1>
-            <p>Plataforma social integrada con marketplace descentralizado. Conecta, comparte y comercia usando tokens LTD con la comunidad La Tanda.</p>
+        <div class="mp-header-right">
+            <button class="mp-search-btn" onclick="toggleMarketplaceSearch()">🔍</button>
         </div>
-
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <div class="nav-tab active" data-tab="marketplace">🛍️ Marketplace</div>
-            <div class="nav-tab" data-tab="social">👥 Social</div>
-            <div class="nav-tab" data-tab="my-store">🏪 Mi Tienda</div>
-            <div class="nav-tab" data-tab="orders">📦 Pedidos</div>
-            <div class="nav-tab" data-tab="community">🌐 Comunidad</div>
-            <div class="nav-tab" data-tab="reputation">⭐ Reputación</div>
+    </header>
+    <!-- SEARCH BAR (hidden by default) -->
+    <div class="mp-search-bar" id="mpSearchBar">
+        <div class="mp-search-container">
+            <input type="text" id="mpSearchInput" placeholder="Buscar productos, servicios..." onkeyup="if(event.key==='Enter') window.ms.searchProducts()">
+            <button onclick="window.ms.searchProducts()">Buscar</button>
+            <button class="mp-search-close" onclick="toggleMarketplaceSearch()">✕</button>
         </div>
+        <div class="mp-quick-filters">
+            <select id="categoryFilter" onchange="window.ms.searchProducts()">
+                <option value="">Categoría</option>
+                <option value="electronics">📱 Electrónicos</option>
+                <option value="clothing">👕 Ropa</option>
+                <option value="home">🏠 Hogar</option>
+                <option value="food">🍕 Comida</option>
+                <option value="services">🔧 Servicios</option>
+            </select>
+            <select id="locationFilter" onchange="window.ms.searchProducts()">
+                <option value="">Ubicación</option>
+                <option value="Tegucigalpa">Tegucigalpa</option>
+                <option value="San Pedro Sula">San Pedro Sula</option>
+                <option value="La Ceiba">La Ceiba</option>
+            </select>
+            <select id="priceFilter" onchange="window.ms.searchProducts()">
+                <option value="">Precio</option>
+                <option value="0-50">0-50 LTD</option>
+                <option value="50-100">50-100 LTD</option>
+                <option value="100-500">100-500 LTD</option>
+                <option value="500-9999">500+ LTD</option>
+            </select>
+        </div>
+    </div>
 
+    <!-- SIDEBAR MENU -->
+    <div class="mp-sidebar-overlay" id="mpSidebarOverlay" onclick="toggleMarketplaceSidebar()"></div>
+    <aside class="mp-sidebar" id="mpSidebar">
+        <div class="mp-sidebar-header">
+            <div class="mp-user-info">
+                <div class="mp-user-avatar" id="mpUserAvatar">👤</div>
+                <div class="mp-user-details">
+                    <span class="mp-user-name" id="mpUserName">Usuario</span>
+                    <span class="mp-user-balance" id="mpUserBalance">0 LTD</span>
+                </div>
+            </div>
+            <button class="mp-sidebar-close" onclick="toggleMarketplaceSidebar()">✕</button>
+        </div>
+        <nav class="mp-sidebar-nav">
+            <a href="#" class="mp-nav-item active" onclick="navigateToSection('marketplace'); return false;">
+                <span class="mp-nav-icon">🛍️</span>
+                <span class="mp-nav-text">Explorar</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('services'); return false;">
+                <span class="mp-nav-icon">🛠️</span>
+                <span class="mp-nav-text">Servicios</span>
+            </a>
+            <div class="mp-nav-divider"></div>
+            <a href="#" class="mp-nav-item" onclick="switchToMyStore(); return false;">
+                <span class="mp-nav-icon">🏪</span>
+                <span class="mp-nav-text">Mi Tienda</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('orders'); return false;">
+                <span class="mp-nav-icon">🛒</span>
+                <span class="mp-nav-text">Mis Pedidos</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('bookings'); return false;">
+                <span class="mp-nav-icon">📅</span>
+                <span class="mp-nav-text">Mis Reservas</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('messages'); return false;">
+                <span class="mp-nav-icon">💬</span>
+                <span class="mp-nav-text">Mensajes</span>
+                <span class="mp-nav-badge" id="mpMessagesBadge" style="display:none;">0</span>
+            </a>
+            <div class="mp-nav-divider"></div>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('social'); return false;">
+                <span class="mp-nav-icon">👥</span>
+                <span class="mp-nav-text">Social</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('community'); return false;">
+                <span class="mp-nav-icon">🌐</span>
+                <span class="mp-nav-text">Comunidad</span>
+            </a>
+            <a href="#" class="mp-nav-item" onclick="navigateToSection('reputation'); return false;">
+                <span class="mp-nav-icon">⭐</span>
+                <span class="mp-nav-text">Mi Reputación</span>
+            </a>
+            <div class="mp-nav-divider"></div>
+            <a href="#" class="mp-nav-item" onclick="showUpgradeModal(); return false;">
+                <span class="mp-nav-icon">💎</span>
+                <span class="mp-nav-text">Mejorar Plan</span>
+            </a>
+            <a href="home-dashboard.html" class="mp-nav-item">
+                <span class="mp-nav-icon">🏠</span>
+                <span class="mp-nav-text">Ir al Dashboard</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="mp-main">
+        <!-- Guest Banner -->
+        <div id="guestBanner" class="guest-banner" style="display: none;">
+            <div class="guest-banner-content">
+                <span>👋 Estás navegando como invitado. </span>
+                <strong>Inicia sesión</strong> para acceder a todas las funciones.
+            </div>
+            <button class="btn btn-primary" onclick="goToLogin()">Iniciar Sesión</button>
+        </div>
         <!-- Marketplace Section -->
         <div id="marketplace" class="content-section active">
-            <!-- Search and Filters -->
-            <div class="card">
-                <div class="search-bar">
-                    <input type="text" class="search-input" placeholder="Buscar productos, servicios o usuarios..." id="searchInput">
-                    <select class="filter-select" id="categoryFilter">
-                        <option value="">Todas las categorías</option>
-                        <option value="electronics">Electrónicos</option>
-                        <option value="clothing">Ropa y Moda</option>
-                        <option value="home">Hogar y Jardín</option>
-                        <option value="services">Servicios</option>
-                        <option value="food">Comida y Bebidas</option>
-                        <option value="digital">Productos Digitales</option>
-                    </select>
-                    <select class="filter-select" id="priceFilter">
-                        <option value="">Cualquier precio</option>
-                        <option value="0-100">0-100 LTD</option>
-                        <option value="100-500">100-500 LTD</option>
-                        <option value="500-1000">500-1000 LTD</option>
-                        <option value="1000+">1000+ LTD</option>
-                    </select>
-                    <select class="filter-select" id="locationFilter">
-                        <option value="">Cualquier ubicación</option>
-                        <option value="local">Local</option>
-                        <option value="national">Nacional</option>
-                        <option value="international">Internacional</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Marketplace Stats -->
-            <div class="grid grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon">🛍️</div>
-                    <div class="stat-value" id="totalProducts">1,247</div>
-                    <div class="stat-label">Productos Activos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="totalSellers">342</div>
-                    <div class="stat-label">Vendedores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📦</div>
-                    <div class="stat-value" id="totalTransactions">5,673</div>
-                    <div class="stat-label">Transacciones</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-value" id="totalVolume">89.2K</div>
-                    <div class="stat-label">LTD Volumen</div>
-                </div>
-            </div>
 
             <!-- Featured Products -->
             <div class="card">
@@ -859,6 +2590,99 @@
                 
                 <div class="grid grid-3" id="featuredProducts">
                     <!-- Products will be loaded here -->
+                </div>
+            </div>
+
+
+            <!-- Featured Sellers -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">🏪 Tiendas Destacadas</h2>
+                        <p class="card-subtitle">Vendedores verificados con mejor reputación</p>
+                    </div>
+                    <a href="#" onclick="navigateToSection('community'); return false;" class="btn btn-secondary" style="font-size: 13px;">Ver todas</a>
+                </div>
+                <div class="sellers-grid" id="featuredSellers" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                    <!-- Sellers loaded dynamically -->
+                    <div class="seller-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10B981, #059669); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">M</div>
+                        <h3 style="font-size: 14px; margin-bottom: 4px;">TechStore HN</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Electrónicos</p>
+                        <div style="display: flex; justify-content: center; gap: 15px; font-size: 11px; color: var(--text-secondary);">
+                            <span>⭐ 4.9</span>
+                            <span>📦 234</span>
+                        </div>
+                    </div>
+                    <div class="seller-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #8B5CF6, #7C3AED); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">A</div>
+                        <h3 style="font-size: 14px; margin-bottom: 4px;">Artesanías Maya</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Artesanías</p>
+                        <div style="display: flex; justify-content: center; gap: 15px; font-size: 11px; color: var(--text-secondary);">
+                            <span>⭐ 4.8</span>
+                            <span>📦 156</span>
+                        </div>
+                    </div>
+                    <div class="seller-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #F59E0B, #D97706); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">C</div>
+                        <h3 style="font-size: 14px; margin-bottom: 4px;">Comidas Típicas</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Comida</p>
+                        <div style="display: flex; justify-content: center; gap: 15px; font-size: 11px; color: var(--text-secondary);">
+                            <span>⭐ 4.7</span>
+                            <span>📦 89</span>
+                        </div>
+                    </div>
+                    <div class="seller-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.3s;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #EC4899, #DB2777); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">B</div>
+                        <h3 style="font-size: 14px; margin-bottom: 4px;">Beauty Corner</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">Belleza</p>
+                        <div style="display: flex; justify-content: center; gap: 15px; font-size: 11px; color: var(--text-secondary);">
+                            <span>⭐ 4.9</span>
+                            <span>📦 312</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Services -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">🛠️ Servicios Populares</h2>
+                        <p class="card-subtitle">Profesionales listos para ayudarte</p>
+                    </div>
+                    <a href="#" onclick="navigateToSection('services'); return false;" class="btn btn-secondary" style="font-size: 13px;">Ver todos</a>
+                </div>
+                <div class="services-preview-grid" id="popularServices" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Services loaded dynamically -->
+                    <div class="service-preview-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 16px; display: flex; gap: 15px; align-items: center; transition: all 0.3s;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🧹</div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; margin-bottom: 4px;">Limpieza de Hogar</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary);">Desde 150 LTD • ⭐ 4.8</p>
+                        </div>
+                    </div>
+                    <div class="service-preview-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 16px; display: flex; gap: 15px; align-items: center; transition: all 0.3s;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔧</div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; margin-bottom: 4px;">Reparaciones</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary);">Desde 100 LTD • ⭐ 4.7</p>
+                        </div>
+                    </div>
+                    <div class="service-preview-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 16px; display: flex; gap: 15px; align-items: center; transition: all 0.3s;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">💻</div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; margin-bottom: 4px;">Soporte Técnico</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary);">Desde 75 LTD • ⭐ 4.9</p>
+                        </div>
+                    </div>
+                    <div class="service-preview-card" style="background: var(--bg-accent); border: 1px solid var(--border-primary); border-radius: 12px; padding: 16px; display: flex; gap: 15px; align-items: center; transition: all 0.3s;">
+                        <div style="width: 50px; height: 50px; background: rgba(0,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📚</div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 14px; margin-bottom: 4px;">Clases Particulares</h4>
+                            <p style="font-size: 12px; color: var(--text-secondary);">Desde 50 LTD • ⭐ 4.8</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -880,6 +2704,128 @@
             </div>
         </div>
 
+        <!-- Services Section -->
+        <div id="services" class="content-section">
+            <!-- Tier Progress Banner - Collapsible -->
+            <div class="tier-progress-banner" id="servicesTierBanner">
+                <div class="tier-header" onclick="toggleTierDetails()">
+                    <div class="tier-avatar" id="tierAvatar">U</div>
+                    <div class="tier-user-summary">
+                        <div class="tier-user-name">
+                            <span id="tierUserName">Usuario</span>
+                            <span class="tier-badge" id="tierBadge">Free</span>
+                        </div>
+                        <div class="tier-user-desc" id="tierDesc">Miembro de La Tanda</div>
+                    </div>
+                    <div class="tier-progress-wrap">
+                        <div class="tier-progress-bar">
+                            <div class="tier-progress-fill mid" id="tierProgressFill" style="width: 25%"></div>
+                        </div>
+                        <span class="tier-progress-pct" id="tierProgressPct">25%</span>
+                    </div>
+                    <span class="tier-toggle">▼</span>
+                </div>
+                <div class="tier-details">
+                    <div class="tier-details-content">
+                        <div class="tier-current-benefits" id="tierBenefits">
+                            <span class="tier-benefit-tag">✓ Comprar productos</span>
+                            <span class="tier-benefit-tag">✓ Ver servicios</span>
+                            <span class="tier-benefit-tag locked">🔒 Vender productos</span>
+                            <span class="tier-benefit-tag locked">🔒 Ofrecer servicios</span>
+                        </div>
+                        <div class="tier-next-steps">
+                            <div class="tier-next-title">Próximos pasos</div>
+                            <div class="tier-step" id="tierStep1">
+                                <span class="tier-step-icon">👥</span>
+                                <div class="tier-step-info">
+                                    <div class="tier-step-name">Únete a una Tanda</div>
+                                    <div class="tier-step-desc">Desbloquea venta de productos</div>
+                                </div>
+                                <button class="tier-step-action primary" onclick="window.location.href='my-tandas.html'">Unirme</button>
+                            </div>
+                            <div class="tier-step" id="tierStep2">
+                                <span class="tier-step-icon">💎</span>
+                                <div class="tier-step-info">
+                                    <div class="tier-step-name">Plan Premium</div>
+                                    <div class="tier-step-desc">Acceso completo al marketplace</div>
+                                </div>
+                                <button class="tier-step-action secondary" onclick="showUpgradeModal()">Ver planes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters for Services -->
+            <div class="card">
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="Buscar servicios, proveedores..." id="serviceSearchInput" onkeyup="filterServices()">
+                    <select class="filter-select" id="serviceCategoryFilter" onchange="filterServices()">
+                        <option value="">Todas las categorías</option>
+                        <option value="cleaning">🧹 Limpieza del Hogar</option>
+                        <option value="repairs">🔧 Reparaciones</option>
+                        <option value="gardening">🌱 Jardinería</option>
+                        <option value="tutoring">📚 Tutorías</option>
+                        <option value="beauty">💅 Belleza</option>
+                        <option value="moving">📦 Mudanzas</option>
+                        <option value="other_services">⚙️ Otros Servicios</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Services Stats -->
+            <div class="grid grid-4">
+                <div class="stat-card">
+                    <div class="stat-icon">🧹</div>
+                    <div class="stat-value" id="servicesActiveCount">--</div>
+                    <div class="stat-label">Servicios Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍🔧</div>
+                    <div class="stat-value" id="servicesProvidersCount">--</div>
+                    <div class="stat-label">Proveedores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="servicesBookingsCount">--</div>
+                    <div class="stat-label">Reservas Completadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="servicesAvgRating">--</div>
+                    <div class="stat-label">Rating Promedio</div>
+                </div>
+            </div>
+
+            <!-- Featured Services -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Servicios Destacados</h2>
+                        <p class="card-subtitle">Los más solicitados por la comunidad</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-3" id="featuredServices">
+                    <!-- Featured services will be loaded here -->
+                </div>
+            </div>
+
+            <!-- All Services -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Todos los Servicios</h2>
+                        <p class="card-subtitle">Encuentra el servicio que necesitas</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-3" id="recentServices">
+                    <!-- Services will be loaded here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Social Section -->
         <div id="social" class="content-section">
             <div class="grid grid-2">
@@ -894,7 +2840,7 @@
                             <span>✍️</span> Crear Post
                         </button>
                     </div>
-                    
+
                     <div id="socialFeed">
                         <!-- Posts will be loaded here -->
                     </div>
@@ -1009,6 +2955,90 @@
             </div>
         </div>
 
+        <!-- Bookings Section -->
+        <div id="bookings" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Mis Reservas</h2>
+                        <p class="card-subtitle">Servicios reservados y citas programadas</p>
+                    </div>
+                </div>
+
+                <div id="bookingsContent">
+                    <!-- Bookings will be loaded here -->
+                    <div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.6);">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
+                        <h3>No tienes reservas</h3>
+                        <p>Explora la sección de servicios para reservar tu primera cita</p>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="document.querySelector('[data-tab=services]').click()">
+                            Ver Servicios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Messages Section -->
+        <div id="messages" class="content-section">
+            <div class="messages-container">
+                <!-- Conversations List -->
+                <div class="conversations-panel" id="conversationsPanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">💬 Mensajes</h2>
+                                <p class="card-subtitle">Conversaciones con vendedores y compradores</p>
+                            </div>
+                            <div class="unread-badge" id="totalUnreadBadge" style="display: none;">0</div>
+                        </div>
+                        
+                        <div id="conversationsList" class="conversations-list">
+                            <!-- Conversations will be loaded here -->
+                            <div class="conversations-loading">
+                                <div class="pulse" style="font-size: 32px;">💬</div>
+                                <p>Cargando conversaciones...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Panel -->
+                <div class="chat-panel" id="chatPanel" style="display: none;">
+                    <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                        <!-- Chat Header -->
+                        <div class="chat-header">
+                            <button class="btn btn-ghost back-btn" onclick="window.ms.closeChatPanel()">
+                                ← Volver
+                            </button>
+                            <div class="chat-user-info">
+                                <div class="chat-avatar" id="chatAvatar">U</div>
+                                <div>
+                                    <div class="chat-user-name" id="chatUserName">Usuario</div>
+                                    <div class="chat-product" id="chatProduct"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages Area -->
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be loaded here -->
+                        </div>
+
+                        <!-- Message Input -->
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="messageInput" 
+                                   placeholder="Escribe un mensaje..." 
+                                   onkeyup="if(event.key==='Enter') window.ms.sendChatMessage()">
+                            <button class="btn btn-primary send-btn" onclick="window.ms.sendChatMessage()">
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Community Section -->
         <div id="community" class="content-section">
             <div class="grid grid-2">
@@ -1143,55 +3173,134 @@
     </div>
 
     <!-- Create Product Modal -->
+    </main>
     <div id="createProductModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h2 class="modal-title">Crear Nuevo Producto</h2>
+                <h2 class="modal-title">Vender Producto</h2>
                 <button class="close-btn" onclick="closeCreateProductModal()">&times;</button>
             </div>
-            
+
             <form id="createProductForm">
+                <!-- Basic Info -->
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>Nombre del Producto</label>
-                        <input type="text" id="productName" required>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Nombre del Producto *</label>
+                        <input type="text" id="productName" placeholder="Ej: iPhone 14 Pro Max 256GB" required>
                     </div>
                     <div class="form-group">
-                        <label>Categoría</label>
+                        <label>Categoria *</label>
                         <select id="productCategory" required>
-                            <option value="">Seleccionar categoría</option>
-                            <option value="electronics">Electrónicos</option>
+                            <option value="">Seleccionar...</option>
+                            <option value="electronics">Electronicos</option>
                             <option value="clothing">Ropa y Moda</option>
-                            <option value="home">Hogar y Jardín</option>
+                            <option value="home">Hogar y Jardin</option>
+                            <option value="vehicles">Vehiculos</option>
                             <option value="services">Servicios</option>
                             <option value="food">Comida y Bebidas</option>
-                            <option value="digital">Productos Digitales</option>
+                            <option value="beauty">Belleza y Salud</option>
+                            <option value="sports">Deportes</option>
+                            <option value="other">Otros</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Precio (LTD)</label>
-                        <input type="number" id="productPrice" min="1" step="0.01" required>
+                        <label>Condicion *</label>
+                        <select id="productCondition" required>
+                            <option value="new">Nuevo</option>
+                            <option value="like_new">Como Nuevo</option>
+                            <option value="used">Usado</option>
+                            <option value="refurbished">Reacondicionado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="form-grid" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Precio (LTD) *</label>
+                        <input type="number" id="productPrice" min="1" step="0.01" placeholder="0.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Cantidad Disponible</label>
-                        <input type="number" id="productQuantity" min="1" required>
+                        <label>Cantidad *</label>
+                        <input type="number" id="productQuantity" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicacion</label>
+                        <input type="text" id="productLocation" placeholder="Ej: Tegucigalpa">
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <textarea id="productDescription" rows="4" required></textarea>
+
+                <!-- Description -->
+
+                <!-- Image Upload -->
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Fotos del Producto (máx. 5)</label>
+                    <div id="imageUploadArea" style="border: 2px dashed rgba(0,255,255,0.3); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('productImages').click()">
+                        <input type="file" id="productImages" accept="image/*" multiple style="display: none;" onchange="handleImageSelect(event)">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                        <div style="color: var(--text-primary);">Haz clic o arrastra imágenes aquí</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px;">JPG, PNG, WebP o GIF - Máx 5MB cada una</div>
+                    </div>
+                    <div id="imagePreviewContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    <input type="hidden" id="uploadedImagesData" value="[]">
                 </div>
-                
-                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Descripcion *</label>
+                    <textarea id="productDescription" rows="3" placeholder="Describe tu producto: caracteristicas, estado, incluye..." required></textarea>
+                </div>
+
+                <!-- Shipping -->
+                <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="productShipping" style="width: 18px; height: 18px;">
+                        <span>Ofrezco envio a domicilio</span>
+                    </label>
+                    <div id="shippingPriceGroup" style="display: none; margin-top: 10px;">
+                        <label>Costo de envio (LTD)</label>
+                        <input type="number" id="productShippingPrice" min="0" step="0.01" placeholder="0.00" style="width: 150px;">
+                    </div>
+                </div>
+
+                <!-- Referral Commission -->
+                <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(16,185,129,0.1)); border: 1px solid rgba(0,255,255,0.2); border-radius: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-size: 20px;">💰</span>
+                        <span style="font-weight: 500;">Programa de Referidos</span>
+                    </div>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">
+                        Otros usuarios pueden compartir tu producto y ganar comision por cada venta.
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label>Comision:</label>
+                        <select id="productCommission" style="width: 100px;">
+                            <option value="2">2%</option>
+                            <option value="3">3%</option>
+                            <option value="5" selected>5%</option>
+                            <option value="8">8%</option>
+                            <option value="10">10%</option>
+                            <option value="15">15%</option>
+                        </select>
+                        <span style="font-size: 12px; color: rgba(255,255,255,0.5);">del precio de venta</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateProductModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <span>✅</span> Crear Producto
+                    <button type="submit" class="btn btn-primary" id="createProductBtn">
+                        <span>📦</span> Publicar Producto
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <script>
+    // Toggle shipping price field
+    document.getElementById('productShipping')?.addEventListener('change', function() {
+        document.getElementById('shippingPriceGroup').style.display = this.checked ? 'block' : 'none';
+    });
+    </script>
 
     <!-- Create Post Modal -->
     <div id="createPostModal" class="modal">
@@ -1200,13 +3309,13 @@
                 <h2 class="modal-title">Crear Nuevo Post</h2>
                 <button class="close-btn" onclick="closeCreatePostModal()">&times;</button>
             </div>
-            
+
             <form id="createPostForm">
                 <div class="form-group">
                     <label>¿Qué quieres compartir?</label>
                     <textarea id="postContent" rows="4" placeholder="Comparte tus pensamientos con la comunidad..." required></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Tipo de Post</label>
                     <select id="postType">
@@ -1217,7 +3326,7 @@
                         <option value="announcement">Anuncio</option>
                     </select>
                 </div>
-                
+
                 <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
                     <button type="button" class="btn btn-secondary" onclick="closeCreatePostModal()">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
@@ -1228,6 +3337,968 @@
         </div>
     </div>
 
-    <script src="marketplace-social.js"></script>
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📅 Reservar Servicio</h2>
+                <button class="close-btn" onclick="closeBookingModal()">&times;</button>
+            </div>
+
+            <form id="bookingForm" onsubmit="event.preventDefault(); submitBooking();">
+                <input type="hidden" id="bookingServiceId">
+
+                <div class="booking-service-info" style="background: rgba(139, 92, 246, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;" id="bookingServiceName">Nombre del Servicio</div>
+                    <div style="color: rgba(255,255,255,0.7); margin-bottom: 4px;">Proveedor: <span id="bookingProviderName">Nombre del Proveedor</span></div>
+                    <div style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 8px;" id="bookingProviderRating"></div>
+                    <div style="color: #10B981; font-weight: 600;" id="bookingPrice">L.0</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>📅 Fecha</label>
+                        <input type="date" id="bookingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🕐 Hora</label>
+                        <select id="bookingTime" required>
+                            <option value="">Seleccionar hora</option>
+                            <option value="08:00">8:00 AM</option>
+                            <option value="09:00">9:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:00">1:00 PM</option>
+                            <option value="14:00">2:00 PM</option>
+                            <option value="15:00">3:00 PM</option>
+                            <option value="16:00">4:00 PM</option>
+                            <option value="17:00">5:00 PM</option>
+                            <option value="18:00">6:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>📍 Dirección del servicio</label>
+                    <input type="text" id="bookingAddress" placeholder="Colonia, calle, número de casa...">
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Notas adicionales (opcional)</label>
+                    <textarea id="bookingNotes" rows="3" placeholder="Instrucciones especiales, puntos de referencia, etc."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <span>✅</span> Confirmar Reserva
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Prompt Modal -->
+    <div id="loginPromptModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: flex-end; border: none;">
+                <button class="close-btn" onclick="closeLoginPromptModal()">&times;</button>
+            </div>
+
+            <div style="padding: 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">🔐</div>
+                <h2 style="margin-bottom: 15px;">Inicia Sesión</h2>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 25px;">
+                    Necesitas iniciar sesión para <span id="loginAction">realizar esta acción</span>
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn btn-primary" onclick="goToLogin()" style="width: 100%;">
+                        <span>🚀</span> Iniciar Sesión
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeLoginPromptModal()" style="width: 100%;">
+                        Seguir explorando
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 class="modal-title">⬆️ Mejora tu Plan</h2>
+                <button class="close-btn" onclick="closeUpgradeModal()">&times;</button>
+            </div>
+
+            <div style="text-align: center; padding: 20px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🌟</div>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
+                    Necesitas el plan <strong id="upgradeRequiredTier">Plan</strong> (<span id="upgradePrice">L.99/mes</span>) para <span id="upgradeAction">realizar esta acción</span>
+                </p>
+
+                <div style="background: rgba(139, 92, 246, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                    <div style="font-weight: 600; margin-bottom: 10px;">Incluye:</div>
+                    <ul id="upgradeFeatures" style="list-style: none; padding: 0; margin: 0; color: rgba(255,255,255,0.8);">
+                        <!-- Features will be loaded here -->
+                    </ul>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="closeUpgradeModal()" style="flex: 1;">
+                        Más tarde
+                    </button>
+                    <button class="btn btn-primary" onclick="showUpgradeModal(); closeUpgradeModal();" style="flex: 1;">
+                        <span>⬆️</span> Ver Planes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div id="subscriptionModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">💎 Planes de Suscripción</h2>
+                <button class="close-btn" onclick="closeSubscriptionModal()">&times;</button>
+            </div>
+
+            <div class="subscription-plans" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 20px;">
+                <!-- Free Plan -->
+                <div class="plan-card" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">🆓</div>
+                    <h3 style="color: #10B981; margin-bottom: 5px;">Gratis</h3>
+                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.0<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
+                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
+                        <li style="margin-bottom: 8px;">✅ Crear cuenta</li>
+                        <li style="margin-bottom: 8px;">✅ Guardar favoritos</li>
+                        <li style="margin-bottom: 8px;">✅ Mensajería limitada</li>
+                        <li style="margin-bottom: 8px;">❌ Reservar servicios</li>
+                        <li style="margin-bottom: 8px;">❌ Publicar reseñas</li>
+                    </ul>
+                    <button class="btn btn-secondary" style="width: 100%;" disabled>Plan Actual</button>
+                </div>
+
+                <!-- Plan -->
+                <div class="plan-card" style="background: rgba(139, 92, 246, 0.15); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 16px; padding: 24px; text-align: center; transform: scale(1.02); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);">
+                    <div style="background: #8B5CF6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; margin-bottom: 10px;">RECOMENDADO</div>
+                    <div style="font-size: 32px; margin-bottom: 10px;">⭐</div>
+                    <h3 style="color: #8B5CF6; margin-bottom: 5px;">Plan</h3>
+                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.99<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
+                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
+                        <li style="margin-bottom: 8px;">✅ Todo de Gratis</li>
+                        <li style="margin-bottom: 8px;">✅ Reservar servicios</li>
+                        <li style="margin-bottom: 8px;">✅ Mensajería ilimitada</li>
+                        <li style="margin-bottom: 8px;">✅ Publicar reseñas</li>
+                        <li style="margin-bottom: 8px;">✅ Soporte prioritario</li>
+                    </ul>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="selectPlan('plan')">Elegir Plan</button>
+                </div>
+
+                <!-- Premium -->
+                <div class="plan-card" style="background: rgba(245, 158, 11, 0.1); border: 2px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">👑</div>
+                    <h3 style="color: #F59E0B; margin-bottom: 5px;">Premium</h3>
+                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.299<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
+                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
+                        <li style="margin-bottom: 8px;">✅ Todo de Plan</li>
+                        <li style="margin-bottom: 8px;">✅ Reservas prioritarias</li>
+                        <li style="margin-bottom: 8px;">✅ Citas recurrentes</li>
+                        <li style="margin-bottom: 8px;">✅ 10% descuento</li>
+                        <li style="margin-bottom: 8px;">✅ Listados destacados</li>
+                    </ul>
+                    <button class="btn btn-success" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706);" onclick="selectPlan('premium')">Elegir Premium</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="marketplace-social.js?v=27.1"></script>
+    <script src="pwa-manager.js"></script>
+    <script>
+
+// Image upload state
+let selectedImages = [];
+const MAX_IMAGES = 5;
+
+// Handle image selection
+async function handleImageSelect(event) {
+    const files = Array.from(event.target.files);
+    
+    if (selectedImages.length + files.length > MAX_IMAGES) {
+        window.marketplaceSystem?.showNotification(`Máximo ${MAX_IMAGES} imágenes permitidas`, "error");
+        return;
+    }
+    
+    for (const file of files) {
+        if (selectedImages.length >= MAX_IMAGES) break;
+        
+        if (!file.type.startsWith("image/")) {
+            window.marketplaceSystem?.showNotification("Solo se permiten imágenes", "error");
+            continue;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            window.marketplaceSystem?.showNotification(`${file.name} excede 5MB`, "error");
+            continue;
+        }
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageId = Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            selectedImages.push({
+                id: imageId,
+                file: file,
+                preview: e.target.result
+            });
+            renderImagePreviews();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Render image previews
+function renderImagePreviews() {
+    const container = document.getElementById("imagePreviewContainer");
+    if (!container) return;
+    
+    container.innerHTML = selectedImages.map((img, index) => `
+        <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(0,255,255,0.3);">
+            <img loading="lazy" src="${img.preview}" style="width: 100%; height: 100%; object-fit: cover;" alt=>
+            <button type="button" onclick="removeImage(${img.id})" style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; background: rgba(239,68,68,0.9); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">×</button>
+            ${index === 0 ? `<span style="position: absolute; bottom: 2px; left: 2px; background: rgba(0,255,255,0.9); color: #000; font-size: 8px; padding: 2px 4px; border-radius: 4px;">Principal</span>` : ""}
+        </div>
+    `).join("");
+    
+    // Update upload area text
+    const uploadArea = document.getElementById("imageUploadArea");
+    if (uploadArea) {
+        const remaining = MAX_IMAGES - selectedImages.length;
+        if (remaining > 0) {
+            uploadArea.querySelector("div:nth-child(2)").textContent = `${selectedImages.length} imagen(es) - Puedes agregar ${remaining} más`;
+        } else {
+            uploadArea.querySelector("div:nth-child(2)").textContent = "Máximo de imágenes alcanzado";
+        }
+    }
+}
+
+// Remove image from selection
+function removeImage(imageId) {
+    selectedImages = selectedImages.filter(img => img.id !== imageId);
+    renderImagePreviews();
+    
+    // Reset upload area text if empty
+    if (selectedImages.length === 0) {
+        const uploadArea = document.getElementById("imageUploadArea");
+        if (uploadArea) {
+            uploadArea.querySelector("div:nth-child(2)").textContent = "Haz clic o arrastra imágenes aquí";
+        }
+    }
+}
+
+// Upload images to server
+// Compress image on client side before upload
+async function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+                
+                // Calculate new dimensions
+                if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to blob
+                canvas.toBlob(function(blob) {
+                    if (blob) {
+                        const compressedFile = new File([blob], file.name, {
+                            type: "image/jpeg",
+                            lastModified: Date.now()
+                        });
+                        console.log(`📸 Compressed: ${(file.size/1024).toFixed(0)}KB → ${(blob.size/1024).toFixed(0)}KB`);
+                        resolve(compressedFile);
+                    } else {
+                        resolve(file);
+                    }
+                }, "image/jpeg", quality);
+            };
+            img.onerror = () => resolve(file);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadProductImages() {
+    if (selectedImages.length === 0) {
+        return { success: true, images: [] };
+    }
+    
+    const formData = new FormData();
+    
+    // Compress images before upload
+    for (let i = 0; i < selectedImages.length; i++) {
+        const img = selectedImages[i];
+        const compressedFile = await compressImage(img.file);
+        formData.append("images", compressedFile, compressedFile.name);
+    }
+    
+    const token = localStorage.getItem("auth_token");
+    
+    try {
+        const response = await fetch("/api/marketplace/products/upload-images", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Image upload error:", error);
+        return { success: false, error: error.message };
+    }
+}
+function resetImageUpload() {
+    selectedImages = [];
+    const container = document.getElementById("imagePreviewContainer");
+    if (container) container.innerHTML = "";
+    const uploadArea = document.getElementById("imageUploadArea");
+    if (uploadArea) {
+        uploadArea.querySelector("div:nth-child(2)").textContent = "Haz clic o arrastra imágenes aquí";
+    }
+    const input = document.getElementById("productImages");
+    if (input) input.value = "";
+}
+
+// Add drag and drop support
+document.addEventListener("DOMContentLoaded", () => {
+    const uploadArea = document.getElementById("imageUploadArea");
+    if (uploadArea) {
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = "rgba(0,255,255,0.8)";
+            uploadArea.style.background = "rgba(0,255,255,0.1)";
+        });
+        
+        uploadArea.addEventListener("dragleave", (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = "rgba(0,255,255,0.3)";
+            uploadArea.style.background = "transparent";
+        });
+        
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = "rgba(0,255,255,0.3)";
+            uploadArea.style.background = "transparent";
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById("productImages").files = files;
+                handleImageSelect({ target: { files: files } });
+            }
+        });
+    }
+});
+    </script>
+</script>
+    <script>
+// ==========================================
+// MARKETPLACE HEADER & SIDEBAR FUNCTIONS
+// ==========================================
+
+// Toggle Tier Progress Banner details
+function toggleTierDetails() {
+    const banner = document.getElementById("servicesTierBanner");
+    if (banner) {
+        banner.classList.toggle("expanded");
+    }
+}
+
+function toggleMarketplaceSidebar() {
+    const sidebar = document.getElementById("mpSidebar");
+    const overlay = document.getElementById("mpSidebarOverlay");
+    sidebar.classList.toggle("active");
+    overlay.classList.toggle("active");
+    document.body.style.overflow = sidebar.classList.contains("active") ? "hidden" : "";
+}
+
+function toggleMarketplaceSearch() {
+    const searchBar = document.getElementById("mpSearchBar");
+    const main = document.querySelector(".mp-main");
+    searchBar.classList.toggle("active");
+    if (main) {
+        main.classList.toggle("search-open");
+    }
+    if (searchBar.classList.contains("active")) {
+        document.getElementById("mpSearchInput").focus();
+    }
+}
+
+function navigateToSection(sectionId) {
+    // Only close sidebar if it's open (don't toggle)
+    const sidebar = document.getElementById("mpSidebar");
+    const overlay = document.getElementById("mpSidebarOverlay");
+    if (sidebar && sidebar.classList.contains("active")) {
+        sidebar.classList.remove("active");
+        if (overlay) overlay.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
+    // Update active nav item
+    document.querySelectorAll(".mp-nav-item").forEach(item => {
+        item.classList.remove("active");
+    });
+    const navItem = document.querySelector(`.mp-nav-item[onclick*="'${sectionId}'"]`);
+    if (navItem) navItem.classList.add("active");
+
+    // Switch section using existing marketplace system
+    if (window.marketplaceSystem) {
+        window.marketplaceSystem.switchTab(sectionId);
+    } else if (window.ms) {
+        window.ms.switchTab(sectionId);
+    }
+}
+
+function switchToMyStore() {
+    if (window.marketplaceSystem?.isGuest) {
+        window.marketplaceSystem.showLoginPrompt("ver tu tienda");
+        return;
+    }
+    
+    // Hide all sections
+    document.querySelectorAll(".content-section").forEach(section => {
+        section.classList.remove("active");
+    });
+    
+    // Show my-store section
+    const myStoreSection = document.getElementById("my-store");
+    if (myStoreSection) {
+        myStoreSection.classList.add("active");
+    }
+    
+    // Update sidebar nav (remove active from all)
+    document.querySelectorAll(".mp-nav-item").forEach(item => {
+        item.classList.remove("active");
+    });
+    
+    // Load my products
+    if (window.marketplaceSystem) {
+        window.marketplaceSystem.loadMyProducts();
+    }
+    
+    // Close sidebar if open on mobile
+    const sidebar = document.querySelector(".mp-sidebar");
+    if (sidebar?.classList.contains("active")) {
+        toggleMarketplaceSidebar();
+    }
+}
+function showCreateServiceModal() {
+    if (window.marketplaceSystem?.isGuest) {
+        window.marketplaceSystem.showLoginPrompt('ofrecer servicios');
+        return;
+    }
+    
+    // Check if user is already a provider
+    checkProviderStatus().then(isProvider => {
+        const modal = document.getElementById('createServiceModal');
+        const providerStep = document.getElementById('providerRegistrationStep');
+        const serviceForm = document.getElementById('createServiceForm');
+        const title = document.getElementById('serviceModalTitle');
+        
+        if (isProvider) {
+            providerStep.style.display = 'none';
+            serviceForm.style.display = 'block';
+            title.textContent = 'Ofrecer Servicio';
+        } else {
+            providerStep.style.display = 'block';
+            serviceForm.style.display = 'none';
+            title.textContent = 'Registro de Proveedor';
+        }
+        
+        modal.classList.add('active');
+    });
+}
+
+function closeCreateServiceModal() {
+    document.getElementById('createServiceModal').classList.remove('active');
+    document.getElementById('providerRegistrationForm')?.reset();
+    document.getElementById('createServiceForm')?.reset();
+}
+
+async function checkProviderStatus() {
+    try {
+        const token = localStorage.getItem('latanda_token');
+        if (!token) return false;
+        
+        const response = await fetch('/api/marketplace/providers/me', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await response.json();
+        return data.success && data.data?.provider?.status === 'active';
+    } catch (e) {
+        console.error('Error checking provider status:', e);
+        return false;
+    }
+}
+
+// Provider registration form handler
+document.getElementById('providerRegistrationForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('registerProviderBtn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Registrando...';
+        
+        const token = localStorage.getItem('latanda_token');
+        const response = await fetch('/api/marketplace/providers/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                business_name: document.getElementById('providerBusinessName').value,
+                description: document.getElementById('providerDescription').value,
+                phone: document.getElementById('providerPhone').value,
+                location: document.getElementById('providerLocation').value
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.marketplaceSystem?.showNotification('¡Registro exitoso! Ahora puedes ofrecer servicios.', 'success');
+            // Switch to service form
+            document.getElementById('providerRegistrationStep').style.display = 'none';
+            document.getElementById('createServiceForm').style.display = 'block';
+            document.getElementById('serviceModalTitle').textContent = 'Ofrecer Servicio';
+        } else {
+            throw new Error(data.data?.error?.message || 'Error al registrar');
+        }
+    } catch (error) {
+        window.marketplaceSystem?.showNotification(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+});
+
+// Service creation form handler
+document.getElementById('createServiceForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('createServiceBtn');
+    const originalText = btn.innerHTML;
+    
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Publicando...';
+        
+        const priceType = document.getElementById('servicePriceType').value;
+        const tags = document.getElementById('serviceTags').value
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t);
+        
+        const token = localStorage.getItem('latanda_token');
+        const response = await fetch('/api/marketplace/services', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                title: document.getElementById('serviceName').value,
+                category_id: document.getElementById('serviceCategory').value,
+                price_type: priceType,
+                price: priceType !== 'quote' ? parseFloat(document.getElementById('servicePrice').value) : null,
+                price_max: document.getElementById('servicePriceMax').value ? parseFloat(document.getElementById('servicePriceMax').value) : null,
+                duration_hours: parseFloat(document.getElementById('serviceDuration').value) || 1,
+                short_description: document.getElementById('serviceShortDesc').value,
+                description: document.getElementById('serviceDescription').value,
+                tags: tags
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.marketplaceSystem?.showNotification('¡Servicio publicado exitosamente!', 'success');
+            closeCreateServiceModal();
+            // Refresh services section if visible
+            if (window.marketplaceSystem) {
+                window.marketplaceSystem.loadServicesSection?.();
+            }
+        } else {
+            throw new Error(data.data?.error?.message || 'Error al crear servicio');
+        }
+    } catch (error) {
+        window.marketplaceSystem?.showNotification(error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+});
+
+// Update user info in sidebar
+// Update Tier Progress Banner with user info
+// Update Tier Banner from subscription API data
+function updateTierBannerFromSubscription(tier, subscriptionData) {
+    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
+    const avatarEl = document.getElementById("tierAvatar");
+    const nameEl = document.getElementById("tierUserName");
+    const badgeEl = document.getElementById("tierBadge");
+    const descEl = document.getElementById("tierDesc");
+    const progressFill = document.getElementById("tierProgressFill");
+    const progressPct = document.getElementById("tierProgressPct");
+    const banner = document.getElementById("servicesTierBanner");
+    const benefitsEl = document.getElementById("tierBenefits");
+    const step1 = document.getElementById("tierStep1");
+    const step2 = document.getElementById("tierStep2");
+
+    // Update user info
+    if (user.name) {
+        if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
+        if (nameEl) nameEl.textContent = user.name;
+    }
+
+    const isTandaMember = tier === "tanda_member" || subscriptionData?.is_tanda_benefit;
+    const isPremium = tier === "premium";
+    const tandaDetails = subscriptionData?.tanda_status?.details;
+    const currentTandaStatus = tandaDetails?.current_tanda_status;
+    const pausedCount = parseInt(tandaDetails?.paused_memberships || 0);
+    const activeCount = parseInt(tandaDetails?.active_memberships || 0);
+    const isPaused = currentTandaStatus === "paused" || (pausedCount > 0 && activeCount === 0);
+
+    let badgeText = "Free";
+    let progress = 50;
+    let progressClass = "mid";
+    let desc = "Cuenta verificada";
+
+    if (isPremium) {
+        badgeText = "Premium";
+        progress = 100;
+        progressClass = "max";
+        desc = "Acceso completo al marketplace";
+        if (banner) banner.classList.add("tanda-active");
+    } else if (isTandaMember) {
+        badgeText = "Tanda";
+        progress = 75;
+        progressClass = "high";
+        if (isPaused) {
+            desc = "Miembro de tanda (pausada)";
+        } else if (activeCount > 0) {
+            desc = "Miembro activo de " + activeCount + " tanda(s)";
+        } else {
+            desc = "Miembro de tanda";
+        }
+        if (banner) banner.classList.add("tanda-active");
+        if (badgeEl) badgeEl.classList.add("tanda");
+    }
+
+    if (badgeEl) badgeEl.textContent = badgeText;
+    if (descEl) descEl.textContent = desc;
+    if (progressFill) {
+        progressFill.style.width = progress + "%";
+        progressFill.className = "tier-progress-fill " + progressClass;
+    }
+    if (progressPct) progressPct.textContent = progress + "%";
+
+    // Update benefits
+    if (benefitsEl) {
+        benefitsEl.innerHTML =
+            "<span class=\"tier-benefit-tag\">✓ Comprar productos</span>" +
+            "<span class=\"tier-benefit-tag\">✓ Ver servicios</span>" +
+            (isTandaMember || isPremium ? "<span class=\"tier-benefit-tag\">✓ Vender productos</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Vender productos</span>") +
+            (isPremium ? "<span class=\"tier-benefit-tag\">✓ Ofrecer servicios</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Ofrecer servicios</span>");
+    }
+
+    // Update next steps based on tier
+    if (step1 && step2) {
+        if (isPremium) {
+            // Premium user - all done
+            step1.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Miembro de Tanda</div><div class="tier-step-desc">Completado</div></div>';
+            step2.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Plan Premium</div><div class="tier-step-desc">Activo</div></div>';
+        } else if (isTandaMember) {
+            // Tanda member - show tanda status and premium option
+            if (isPaused) {
+                step1.innerHTML = '<span class="tier-step-icon">⏸️</span><div class="tier-step-info"><div class="tier-step-name">Tu Tanda está pausada</div><div class="tier-step-desc">Espera la reactivación</div></div><button class="tier-step-action secondary" onclick="window.location.href=\'my-tandas.html\'">Ver estado</button>';
+            } else {
+                step1.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Miembro de Tanda</div><div class="tier-step-desc">¡Ya puedes vender!</div></div><button class="tier-step-action secondary" onclick="window.location.href=\'my-tandas.html\'">Ver tanda</button>';
+            }
+            step2.innerHTML = '<span class="tier-step-icon">💎</span><div class="tier-step-info"><div class="tier-step-name">Plan Premium</div><div class="tier-step-desc">Ofrece servicios</div></div><button class="tier-step-action primary" onclick="showUpgradeModal()">Mejorar</button>';
+        }
+        // Free users keep the default steps
+    }
+
+    console.log("✅ Tier Banner updated:", badgeText, progress + "%", desc, "isPaused:", isPaused);
+}
+
+
+function updateTierBanner() {
+    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
+    const avatarEl = document.getElementById("tierAvatar");
+    const nameEl = document.getElementById("tierUserName");
+    const badgeEl = document.getElementById("tierBadge");
+    const descEl = document.getElementById("tierDesc");
+    const progressFill = document.getElementById("tierProgressFill");
+    const progressPct = document.getElementById("tierProgressPct");
+    const banner = document.getElementById("servicesTierBanner");
+    const benefitsEl = document.getElementById("tierBenefits");
+    
+    if (!user || !user.name) return;
+    
+    // Update user info
+    if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
+    if (nameEl) nameEl.textContent = user.name;
+    
+    // Determine tier and progress
+    const isTandaMember = user.active_tandas > 0 || user.total_tandas > 0 || user.tandas_count > 0 || user.role === "tanda_member" || user.is_tanda_member;
+    const isPremium = user.subscription === "premium" || user.role === "premium";
+    
+    let tier = "Free";
+    let progress = 25;
+    let progressClass = "low";
+    let desc = "Miembro de La Tanda";
+    
+    if (isPremium) {
+        tier = "Premium";
+        progress = 100;
+        progressClass = "max";
+        desc = "Acceso completo al marketplace";
+        if (banner) banner.classList.add("tanda-active");
+    } else if (isTandaMember) {
+        tier = "Tanda";
+        progress = 75;
+        progressClass = "high";
+        desc = user.active_tandas > 0 ? "Miembro activo de " + user.active_tandas + " tanda(s)" : "Miembro de tanda (pausada)";
+        if (banner) banner.classList.add("tanda-active");
+        if (badgeEl) badgeEl.classList.add("tanda");
+    } else if (user.email_verified) {
+        progress = 50;
+        progressClass = "mid";
+        desc = "Cuenta verificada";
+    }
+    
+    if (badgeEl) badgeEl.textContent = tier;
+    if (descEl) descEl.textContent = desc;
+    if (progressFill) {
+        progressFill.style.width = progress + "%";
+        progressFill.className = "tier-progress-fill " + progressClass;
+    }
+    if (progressPct) progressPct.textContent = progress + "%";
+    
+    // Update benefits
+    if (benefitsEl && (isTandaMember || isPremium)) {
+        benefitsEl.innerHTML = 
+            "<span class=\"tier-benefit-tag\">✓ Comprar productos</span>" +
+            "<span class=\"tier-benefit-tag\">✓ Ver servicios</span>" +
+            (isTandaMember || isPremium ? "<span class=\"tier-benefit-tag\">✓ Vender productos</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Vender productos</span>") +
+            (isPremium ? "<span class=\"tier-benefit-tag\">✓ Ofrecer servicios</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Ofrecer servicios</span>");
+    }
+}
+
+
+function updateSidebarUserInfo() {
+    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
+    const nameEl = document.getElementById("mpUserName");
+    const avatarEl = document.getElementById("mpUserAvatar");
+    const balanceEl = document.getElementById("mpUserBalance");
+    
+    if (user && user.name) {
+        if (nameEl) nameEl.textContent = user.name;
+        if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
+    }
+    
+    // Get balance from wallet if available
+    if (window.marketplaceSystem && window.marketplaceSystem.userBalance) {
+        if (balanceEl) balanceEl.textContent = window.marketplaceSystem.userBalance + " LTD";
+    }
+}
+
+// Update messages badge
+function updateMessagesBadge(count) {
+    const badge = document.getElementById("mpMessagesBadge");
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? "99+" : count;
+            badge.style.display = "inline";
+        } else {
+            badge.style.display = "none";
+        }
+    }
+}
+
+// Initialize on load
+document.addEventListener("DOMContentLoaded", function() {
+    updateSidebarUserInfo();
+    updateTierBanner();
+    
+    // Close sidebar on escape key
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            const sidebar = document.getElementById("mpSidebar");
+            if (sidebar && sidebar.classList.contains("active")) {
+                toggleMarketplaceSidebar();
+            }
+            const searchBar = document.getElementById("mpSearchBar");
+            if (searchBar && searchBar.classList.contains("active")) {
+                toggleMarketplaceSearch();
+            }
+        }
+    });
+});
+    </script>
 </body>
 </html>
+
+    <!-- Create Service Modal -->
+    <div id="createServiceModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="serviceModalTitle">Ofrecer Servicio</h2>
+                <button class="close-btn" onclick="closeCreateServiceModal()">&times;</button>
+            </div>
+
+            <!-- Provider Registration Step (if not provider) -->
+            <div id="providerRegistrationStep" style="display: none;">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 64px; margin-bottom: 15px;">👷</div>
+                    <h3 style="margin-bottom: 10px;">Conviértete en Proveedor</h3>
+                    <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">Para ofrecer servicios, primero debes registrarte como proveedor.</p>
+                </div>
+                <form id="providerRegistrationForm">
+                    <div class="form-group">
+                        <label>Nombre de tu Negocio *</label>
+                        <input type="text" id="providerBusinessName" placeholder="Ej: Servicios Técnicos Pro" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción de tus servicios *</label>
+                        <textarea id="providerDescription" rows="3" placeholder="Describe qué servicios ofreces y tu experiencia..." required></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Teléfono de contacto</label>
+                            <input type="tel" id="providerPhone" placeholder="+504 0000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label>Ciudad/Zona</label>
+                            <input type="text" id="providerLocation" placeholder="Ej: Tegucigalpa">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeCreateServiceModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="registerProviderBtn">
+                            <span>✅</span> Registrarme como Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Service Creation Form (if already provider) -->
+            <form id="createServiceForm" style="display: none;">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Título del Servicio *</label>
+                        <input type="text" id="serviceName" placeholder="Ej: Reparación de computadoras a domicilio" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría *</label>
+                        <select id="serviceCategory" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="cleaning">🧹 Limpieza del Hogar</option>
+                            <option value="repairs">🔧 Reparaciones</option>
+                            <option value="gardening">🌱 Jardinería</option>
+                            <option value="tutoring">📚 Tutorías</option>
+                            <option value="beauty">💅 Belleza</option>
+                            <option value="moving">📦 Mudanzas</option>
+                            <option value="technology">💻 Tecnología</option>
+                            <option value="health">🏥 Salud</option>
+                            <option value="legal">⚖️ Legal</option>
+                            <option value="other">⚙️ Otros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Precio *</label>
+                        <select id="servicePriceType" required onchange="toggleServicePriceFields()">
+                            <option value="fixed">Precio Fijo</option>
+                            <option value="hourly">Por Hora</option>
+                            <option value="quote">Cotizar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top: 15px;" id="servicePriceFields">
+                    <div class="form-group">
+                        <label>Precio (LTD) *</label>
+                        <input type="number" id="servicePrice" min="1" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Máximo (opcional)</label>
+                        <input type="number" id="servicePriceMax" min="0" step="0.01" placeholder="Para rangos">
+                    </div>
+                    <div class="form-group">
+                        <label>Duración (horas)</label>
+                        <input type="number" id="serviceDuration" min="0.5" step="0.5" value="1" placeholder="1">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Descripción Corta *</label>
+                    <input type="text" id="serviceShortDesc" maxlength="150" placeholder="Resumen en una línea (máx 150 caracteres)" required>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Descripción Completa *</label>
+                    <textarea id="serviceDescription" rows="4" placeholder="Describe tu servicio en detalle: qué incluye, experiencia, garantías..." required></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Etiquetas (separadas por coma)</label>
+                    <input type="text" id="serviceTags" placeholder="Ej: rápido, profesional, garantizado">
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateServiceModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="createServiceBtn">
+                        <span>🛠️</span> Publicar Servicio
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // Toggle price fields based on price type
+    function toggleServicePriceFields() {
+        const priceType = document.getElementById('servicePriceType').value;
+        const priceFields = document.getElementById('servicePriceFields');
+        if (priceType === 'quote') {
+            priceFields.style.display = 'none';
+            document.getElementById('servicePrice').removeAttribute('required');
+        } else {
+            priceFields.style.display = 'grid';
+            document.getElementById('servicePrice').setAttribute('required', 'required');
+        }
+    }
+    </script>

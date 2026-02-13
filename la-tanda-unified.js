@@ -1,1084 +1,483 @@
 /**
- * La Tanda - Aplicación Unificada
- * Sistema integrado completo con todos los componentes
- * Versión: 2.0.0
+ * 🔗 LA TANDA UNIFIED SYSTEM
+ * Integrates all La Tanda components including Web3 wallet, API connections, and system management
  */
 
-class LaTandaUnifiedApp {
+class LaTandaUnifiedSystem {
     constructor() {
-        this.currentSection = 'welcome';
-        this.userState = {
-            authenticated: false,
-            kycCompleted: false,
-            walletConnected: false,
-            hasGroups: false,
-            userData: null
-        };
+        this.web3Wallet = null;
+        this.web3UI = null;
+        this.apiConnector = null;
+        this.bridge = null;
+        this.isInitialized = false;
         
-        // URLs de los componentes con API adapter - Phase 1 Complete
-        this.componentUrls = {
-            auth: 'auth-modern.html',
-            kyc: 'kyc-registration.html',
-            wallet: 'tanda-wallet.html',
-            groups: 'groups-advanced-system.html',
-            commissions: 'commission-system.html',
-            tokens: 'ltd-token-economics.html',
-            marketplace: 'marketplace-social.html',
-            security: 'group-security-demo.html',
-            dashboard: 'web3-dashboard.html'
-        };
-        
-        // Asegurar que API adapter esté disponible
-        this.ensureAPIAdapter();
-        
-        // Estado de carga de componentes
-        this.loadedComponents = new Set();
-        
-        this.init();
+        this.initialize();
     }
     
-    async init() {
+    async initialize() {
+        console.log('🔗 Initializing La Tanda Unified System...');
+        
         try {
-            this.initializeStatusIndicators();
-            await this.setupEventListeners();
-            await this.loadUserState();
-            await this.hideLoadingScreen();
+            // Wait for all dependencies to load (non-blocking)
+            const dependenciesLoaded = await this.waitForDependencies();
             
-            console.log('🚀 La Tanda Unified App initialized');
+            // Initialize Web3 wallet integration
+            await this.initializeWeb3();
+            
+            // Initialize API connections
+            await this.initializeAPI();
+            
+            // Setup event listeners
+            this.setupEventListeners();
+            
+            // Connect wallet linking to backend
+            this.setupWalletBackendIntegration();
+            
+            this.isInitialized = true;
+            console.log('✅ La Tanda Unified System initialized successfully!');
+            
+            // Dispatch ready event
+            window.dispatchEvent(new CustomEvent('latanda:unified:ready', {
+                detail: { system: this }
+            }));
+            
         } catch (error) {
-            console.error('❌ Error initializing app:', error);
-            this.showError('Error inicializando la aplicación');
+            console.error('❌ Failed to initialize La Tanda Unified System:', error);
         }
     }
     
-    initializeStatusIndicators() {
-        // Initialize all status indicators to pending state
-        console.log('🔄 Initializing status indicators...');
+    async waitForDependencies() {
+        const dependencies = [
+            () => typeof window.Web3WalletManager !== 'undefined',
+            () => typeof window.Web3WalletUI !== 'undefined',
+            () => typeof window.LaTandaAPI !== 'undefined',
+            () => typeof window.bridge !== 'undefined'
+        ];
         
-        const statusElements = ['authStatus', 'kycStatus', 'walletStatus', 'groupsStatus', 
-                               'commissionsStatus', 'tokensStatus', 'marketplaceStatus', 'dashboardStatus'];
+        const timeout = 2000; // 2 seconds - reduced timeout
+        const interval = 100; // Check every 100ms
+        let elapsed = 0;
         
-        statusElements.forEach(elementId => {
-            this.updateStatusIndicator(elementId, 'pending');
-        });
+        while (elapsed < timeout) {
+            const allLoaded = dependencies.every(check => check());
+            if (allLoaded) {
+                return true;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, interval));
+            elapsed += interval;
+        }
         
-        console.log('✅ Status indicators initialized');
+        console.warn('⚠️ Some dependencies not loaded within timeout - continuing with available features');
+        return false; // Continue anyway
+    }
+    
+    async initializeWeb3() {
+        try {
+            // Web3 wallet manager should already be initialized via web3-wallet-integration.js
+            this.web3Wallet = window.web3Wallet;
+            this.web3UI = window.web3UI;
+            
+            if (!this.web3Wallet || !this.web3UI) {
+                console.warn('⚠️ Web3 wallet components not available');
+                return;
+            }
+            
+            console.log('✅ Web3 wallet integration connected');
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize Web3:', error);
+        }
+    }
+    
+    async initializeAPI() {
+        try {
+            this.apiConnector = window.LaTandaAPI;
+            this.bridge = window.bridge;
+            
+            if (!this.apiConnector) {
+                console.warn('⚠️ API connector not available');
+                return;
+            }
+            
+            // Test API connection
+            const health = await this.apiConnector.getHealth();
+            console.log('✅ API connection verified:', health);
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize API:', error);
+        }
     }
     
     setupEventListeners() {
-        // Use setTimeout to ensure DOM is fully loaded
-        setTimeout(() => {
-            // Navigation links
-            const navLinks = document.querySelectorAll('.nav-link');
-            console.log(`🔗 Setting up ${navLinks.length} navigation links`);
-            
-            navLinks.forEach(link => {
-                // Remove existing listeners to avoid duplicates
-                link.removeEventListener('click', this.handleNavClick);
-                
-                // Add new listener with proper context
-                this.handleNavClick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const section = link.dataset.section;
-                    console.log(`🔍 Navigation clicked: ${section}`);
-                    
-                    if (section) {
-                        // Check if link is disabled
-                        if (link.classList.contains('disabled') || link.style.pointerEvents === 'none') {
-                            console.log(`⚠️ Navigation disabled for section: ${section}`);
-                            this.showAccessDenied(section);
-                            return;
-                        }
-                        
-                        this.navigateToSection(section);
-                    }
-                };
-                
-                link.addEventListener('click', this.handleNavClick);
+        // Listen for Web3 wallet events
+        if (this.web3Wallet) {
+            this.web3Wallet.addEventListener('wallet:connected', (data) => {
+                console.log('🔗 Wallet connected:', data);
+                this.onWalletConnected(data);
             });
             
-            // Menu toggle for mobile
-            const menuToggle = document.getElementById('menuToggle');
-            if (menuToggle) {
-                menuToggle.addEventListener('click', () => {
-                    this.toggleSidebar();
-                });
-            }
-        }, 100);
+            this.web3Wallet.addEventListener('wallet:disconnected', (data) => {
+                console.log('🔗 Wallet disconnected:', data);
+                this.onWalletDisconnected(data);
+            });
+            
+            this.web3Wallet.addEventListener('wallet:linked', (data) => {
+                console.log('🔗 Wallet linked to backend:', data);
+                this.onWalletLinked(data);
+            });
+            
+            this.web3Wallet.addEventListener('wallet:chainChanged', (data) => {
+                console.log('🔗 Wallet chain changed:', data);
+                this.onChainChanged(data);
+            });
+        }
         
-        // Listen for iframe messages
-        window.addEventListener('message', (event) => {
-            this.handleComponentMessage(event);
+        // Listen for API authentication events
+        window.addEventListener('latanda:auth:success', (event) => {
+            console.log('🔐 Authentication successful:', event.detail);
+            this.onAuthSuccess(event.detail);
         });
         
-        // Listen for auth state changes
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'laTandaWeb3Auth' || event.key === 'laTandaKYCData') {
-                console.log('🔄 Storage change detected, reloading user state');
-                this.handleAuthStateChange();
-            }
-        });
-        
-        // Handle browser back/forward
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.section) {
-                this.navigateToSection(event.state.section, false);
-            }
+        // Listen for system events
+        window.addEventListener('latanda:system:ready', (event) => {
+            console.log('🚀 System ready:', event.detail);
         });
     }
     
-    async loadUserState() {
-        try {
-            console.log('🔄 Loading user state...');
-            
-            // Reset state first
-            this.userState = {
-                authenticated: false,
-                kycCompleted: false,
-                walletConnected: false,
-                hasGroups: false,
-                userData: null
+    setupWalletBackendIntegration() {
+        if (!this.web3Wallet || !this.apiConnector) {
+            console.warn('⚠️ Cannot setup wallet-backend integration: missing dependencies');
+            return;
+        }
+        
+        // Override the linkWalletToAccount method to use our API
+        const originalLinkMethod = this.web3Wallet.linkWalletToAccount.bind(this.web3Wallet);
+        
+        this.web3Wallet.linkWalletToAccount = async () => {
+            try {
+                if (!this.web3Wallet.isConnected) {
+                    throw new Error('Wallet not connected');
+                }
+                
+                if (!this.apiConnector.isAuthenticated()) {
+                    throw new Error('User not authenticated with La Tanda backend');
+                }
+                
+                // Sign a message to prove wallet ownership
+                const message = `Link wallet ${this.web3Wallet.currentAccount} to La Tanda account. Timestamp: ${Date.now()}`;
+                const signature = await this.web3Wallet.signMessage(message);
+                
+                // Send to backend API using our connector
+                const result = await this.apiConnector.apiCall('/api/users/link-wallet', {
+                    wallet_address: this.web3Wallet.currentAccount,
+                    message,
+                    signature,
+                    chain_id: this.web3Wallet.currentChainId,
+                    wallet_type: this.web3Wallet.currentWallet
+                }, { method: 'POST' });
+                
+                if (result.success) {
+                    this.web3Wallet.dispatchEvent('wallet:linked', { 
+                        address: this.web3Wallet.currentAccount,
+                        user: result.data.user 
+                    });
+                    
+                    // Update UI to show linked status
+                    this.updateWalletLinkedStatus(true, result.data.user);
+                    
+                    return result;
+                } else {
+                    throw new Error(result.error?.message || 'Failed to link wallet');
+                }
+                
+            } catch (error) {
+                console.error('Wallet linking failed:', error);
+                this.web3Wallet.dispatchEvent('wallet:linkError', { error: error.message });
+                throw error;
+            }
+        };
+    }
+    
+    // Event handlers
+    onWalletConnected(data) {
+        console.log('🔗 Processing wallet connection:', data);
+        
+        // Update connection status in UI
+        this.updateConnectionStatus('wallet', 'connected');
+        
+        // Check if user is authenticated to enable linking
+        if (this.apiConnector && this.apiConnector.isAuthenticated()) {
+            // Show option to link wallet
+            this.showWalletLinkingOption();
+        }
+        
+        // Dispatch system event
+        window.dispatchEvent(new CustomEvent('latanda:wallet:connected', {
+            detail: data
+        }));
+    }
+    
+    onWalletDisconnected(data) {
+        console.log('🔗 Processing wallet disconnection:', data);
+        
+        // Update connection status in UI
+        this.updateConnectionStatus('wallet', 'disconnected');
+        
+        // Hide wallet linking options
+        this.hideWalletLinkingOption();
+        
+        // Update linked status
+        this.updateWalletLinkedStatus(false);
+        
+        // Dispatch system event
+        window.dispatchEvent(new CustomEvent('latanda:wallet:disconnected', {
+            detail: data
+        }));
+    }
+    
+    onWalletLinked(data) {
+        console.log('🔗 Wallet successfully linked:', data);
+        
+        // Update UI to show successful linking
+        this.updateWalletLinkedStatus(true, data.user);
+        
+        // Show success notification
+        this.showNotification('Wallet linked successfully!', 'success');
+        
+        // Dispatch system event
+        window.dispatchEvent(new CustomEvent('latanda:wallet:linked', {
+            detail: data
+        }));
+    }
+    
+    onChainChanged(data) {
+        console.log('🔗 Processing chain change:', data);
+        
+        // Update chain info in UI
+        this.updateChainInfo(data.chainId);
+        
+        // Check if on supported chain
+        const isSupported = this.web3Wallet.isOnSupportedChain();
+        if (!isSupported) {
+            this.showNotification('Please switch to a supported network', 'warning');
+        }
+        
+        // Dispatch system event
+        window.dispatchEvent(new CustomEvent('latanda:wallet:chainChanged', {
+            detail: data
+        }));
+    }
+    
+    onAuthSuccess(data) {
+        console.log('🔐 Processing authentication success:', data);
+        
+        // If wallet is connected, show linking option
+        if (this.web3Wallet && this.web3Wallet.isConnected) {
+            this.showWalletLinkingOption();
+        }
+    }
+    
+    // UI Update methods
+    updateConnectionStatus(type, status) {
+        const indicators = document.querySelectorAll(`[data-connection-type="${type}"]`);
+        indicators.forEach(indicator => {
+            indicator.className = `connection-status ${status}`;
+            const statusText = {
+                connected: '🟢 Connected',
+                disconnected: '🟡 Disconnected',
+                error: '🔴 Error'
             };
-            
-            // Check both localStorage and sessionStorage for existing auth
-            const authData = localStorage.getItem('laTandaWeb3Auth') || sessionStorage.getItem('laTandaWeb3Auth');
-            if (authData) {
-                const parsed = JSON.parse(authData);
-                this.userState.authenticated = true;
-                this.userState.userData = parsed.user;
-                this.updateAuthStatus('success');
-                this.updateUserInfo(parsed.user);
-                console.log('✅ Authentication found in storage:', parsed.user);
-                
-                // Also store in localStorage for consistency across components
-                if (!localStorage.getItem('laTandaWeb3Auth')) {
-                    localStorage.setItem('laTandaWeb3Auth', authData);
-                    console.log('📦 Auth data synchronized to localStorage');
-                }
-            }
-            
-            // Check KYC completion with multiple patterns
-            let kycCompleted = false;
-            
-            // Pattern 1: General KYC data (check both storage types)
-            const kycData = localStorage.getItem('laTandaKYCData') || sessionStorage.getItem('laTandaKYCData');
-            if (kycData) {
-                const parsed = JSON.parse(kycData);
-                if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
-                    kycCompleted = true;
-                    console.log('✅ KYC completed (general pattern):', parsed);
-                    
-                    // Sync to localStorage for consistency
-                    if (!localStorage.getItem('laTandaKYCData')) {
-                        localStorage.setItem('laTandaKYCData', kycData);
-                        console.log('📦 KYC data synchronized to localStorage');
-                    }
-                }
-            }
-            
-            // Pattern 2: User-specific KYC data
-            if (this.userState.userData) {
-                const userKycKey = `kyc_status_${this.userState.userData.id}`;
-                const userKycData = localStorage.getItem(userKycKey);
-                if (userKycData) {
-                    const parsed = JSON.parse(userKycData);
-                    if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
-                        kycCompleted = true;
-                        console.log('✅ KYC completed (user-specific pattern):', parsed);
-                    }
-                }
-            }
-            
-            // Pattern 3: Check all localStorage keys for KYC
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.includes('kyc') || key.includes('KYC')) {
-                    const data = localStorage.getItem(key);
-                    try {
-                        const parsed = JSON.parse(data);
-                        if (parsed.completed || parsed.verification_level >= 1 || parsed.status === 'completed') {
-                            kycCompleted = true;
-                            console.log('✅ KYC completed (pattern search):', key, parsed);
-                            break;
-                        }
-                    } catch (e) {
-                        // Skip non-JSON data
-                    }
-                }
-            }
-            
-            this.userState.kycCompleted = kycCompleted;
-            if (kycCompleted) {
-                this.updateKYCStatus('success');
-            }
-            
-            // Check wallet connection (check both storage types)
-            const walletData = localStorage.getItem('laTandaWalletData') || sessionStorage.getItem('laTandaWalletData');
-            if (walletData) {
-                this.userState.walletConnected = true;
-                this.updateWalletStatus('success');
-                console.log('✅ Wallet connected');
-                
-                // Sync to localStorage for consistency
-                if (!localStorage.getItem('laTandaWalletData')) {
-                    localStorage.setItem('laTandaWalletData', walletData);
-                    console.log('📦 Wallet data synchronized to localStorage');
-                }
-            }
-            
-            // Update status for new components based on KYC completion
-            if (this.userState.kycCompleted) {
-                this.updateCommissionsStatus('success');
-                this.updateTokensStatus('success');
-                this.updateMarketplaceStatus('success');
-                this.updateGroupsStatus('success');
-                console.log('✅ Advanced features unlocked');
-            } else {
-                // Ensure these are pending if KYC not completed
-                this.updateCommissionsStatus('pending');
-                this.updateTokensStatus('pending');
-                this.updateMarketplaceStatus('pending');
-                this.updateGroupsStatus('pending');
-            }
-            
-            // Update dashboard status based on full completion
-            if (this.userState.authenticated && this.userState.kycCompleted && this.userState.walletConnected) {
-                this.updateDashboardStatus('success');
-            } else {
-                this.updateDashboardStatus('pending');
-            }
-            
-            // Update navigation based on state
-            this.updateNavigationState();
-            this.updateWelcomeButton();
-            
-            // Update UI mode based on authentication status
-            this.updateUIMode();
-            
-            console.log('📊 Final user state:', this.userState);
-            
-        } catch (error) {
-            console.error('❌ Error loading user state:', error);
-        }
-    }
-    
-    async hideLoadingScreen() {
-        setTimeout(() => {
-            const loadingScreen = document.getElementById('loadingScreen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('hidden');
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                }, 500);
-            }
-        }, 1500);
-    }
-    
-    navigateToSection(section, pushState = true) {
-        // Check if user can access this section
-        if (!this.canAccessSection(section)) {
-            this.showAccessDenied(section);
-            return;
-        }
-        
-        // Hide current section
-        const currentSection = document.getElementById(this.currentSection);
-        if (currentSection) {
-            currentSection.classList.remove('active');
-        }
-        
-        // Show new section
-        const newSection = document.getElementById(section);
-        if (newSection) {
-            newSection.classList.add('active');
-        }
-        
-        // Update navigation
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
+            indicator.textContent = statusText[status] || status;
         });
-        
-        const activeLink = document.querySelector(`[data-section="${section}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-        
-        // Update page title
-        this.updatePageTitle(section);
-        
-        // Load component if needed
-        this.loadComponentIfNeeded(section);
-        
-        // Update URL
-        if (pushState) {
-            history.pushState({ section }, '', `#${section}`);
-        }
-        
-        this.currentSection = section;
     }
     
-    canAccessSection(section) {
-        const result = (() => {
-            switch (section) {
-                case 'welcome':
-                    return true;
-                case 'auth':
-                    return true;
-                case 'kyc':
-                    return this.userState.authenticated;
-                case 'wallet':
-                    return this.userState.authenticated && this.userState.kycCompleted;
-                case 'groups':
-                    return this.userState.authenticated && this.userState.kycCompleted;
-                case 'commissions':
-                    return this.userState.authenticated && this.userState.kycCompleted;
-                case 'tokens':
-                    return this.userState.authenticated && this.userState.kycCompleted;
-                case 'marketplace':
-                    return this.userState.authenticated && this.userState.kycCompleted;
-                case 'security':
-                    return this.userState.authenticated;
-                case 'dashboard':
-                    return this.userState.authenticated && this.userState.kycCompleted && this.userState.walletConnected;
-                default:
-                    return false;
-            }
-        })();
-        
-        console.log(`🔐 Access check for ${section}: ${result} (auth: ${this.userState.authenticated}, kyc: ${this.userState.kycCompleted}, wallet: ${this.userState.walletConnected})`);
-        return result;
-    }
-    
-    showAccessDenied(section) {
-        const messages = {
-            kyc: 'Debes autenticarte primero para acceder al registro KYC',
-            wallet: 'Completa tu registro KYC para acceder a la wallet',
-            groups: 'Completa tu registro KYC para acceder a los grupos',
-            commissions: 'Completa tu registro KYC para acceder al sistema de comisiones',
-            tokens: 'Completa tu registro KYC para acceder al sistema de tokens',
-            marketplace: 'Completa tu registro KYC para acceder al marketplace',
-            dashboard: 'Completa la autenticación, KYC y conexión de wallet para acceder al dashboard'
-        };
-        
-        this.showNotification(messages[section] || 'Acceso denegado', 'warning');
-        
-        // Redirect to appropriate section
-        if (!this.userState.authenticated) {
-            this.navigateToSection('auth');
-        } else if (!this.userState.kycCompleted) {
-            this.navigateToSection('kyc');
-        }
-    }
-    
-    updatePageTitle(section) {
-        const titles = {
-            welcome: 'Ecosistema La Tanda',
-            auth: 'Autenticación',
-            kyc: 'Registro KYC',
-            wallet: 'Wallet Web3',
-            groups: 'Grupos & Tandas Avanzado',
-            commissions: 'Sistema de Comisiones 90/10',
-            tokens: 'LTD Token Economics',
-            marketplace: 'Marketplace & Social',
-            security: 'Seguridad',
-            dashboard: 'Dashboard Principal'
-        };
-        
-        const pageTitle = document.getElementById('pageTitle');
-        if (pageTitle) {
-            pageTitle.textContent = titles[section] || 'La Tanda';
-        }
-    }
-    
-    loadComponentIfNeeded(section) {
-        if (this.loadedComponents.has(section) || section === 'welcome') {
-            return;
-        }
-        
-        const frameId = `${section}Frame`;
-        const frame = document.getElementById(frameId);
-        
-        if (frame && this.componentUrls[section]) {
-            frame.src = this.componentUrls[section];
-            this.loadedComponents.add(section);
-            
-            // Add load event listener
-            frame.addEventListener('load', () => {
-                this.onComponentLoaded(section);
-                this.injectAPIAdapter(frame);
-            });
-        }
-    }
-    
-    onComponentLoaded(section) {
-        console.log(`✅ Component loaded: ${section}`);
-        
-        // Post initial state to component
-        const frame = document.getElementById(`${section}Frame`);
-        if (frame && frame.contentWindow) {
-            frame.contentWindow.postMessage({
-                type: 'USER_STATE_UPDATE',
-                userState: this.userState
-            }, '*');
-        }
-    }
-    
-    handleComponentMessage(event) {
-        const { type, data } = event.data;
-        
-        switch (type) {
-            case 'AUTH_SUCCESS':
-                this.handleAuthSuccess(data);
-                break;
-            case 'AUTH_ERROR':
-                this.handleAuthError(data);
-                break;
-            case 'KYC_COMPLETED':
-                this.handleKYCCompleted(data);
-                break;
-            case 'WALLET_CONNECTED':
-                this.handleWalletConnected(data);
-                break;
-            case 'GROUP_JOINED':
-                this.handleGroupJoined(data);
-                break;
-            case 'NAVIGATE_TO':
-                this.navigateToSection(data.section);
-                break;
-            case 'SHOW_NOTIFICATION':
-                this.showNotification(data.message, data.type);
-                break;
-        }
-    }
-    
-    handleAuthSuccess(data) {
-        console.log('🎉 Auth Success received:', data);
-        
-        this.userState.authenticated = true;
-        this.userState.userData = data.user;
-        this.updateAuthStatus('success');
-        this.updateUserInfo(data.user);
-        
-        // Handle KYC status from auth component
-        if (data.kycCompleted) {
-            this.userState.kycCompleted = true;
-            this.updateKYCStatus('success');
-            
-            // Update all component statuses since KYC unlocks advanced features
-            this.updateCommissionsStatus('success');
-            this.updateTokensStatus('success');
-            this.updateMarketplaceStatus('success');
-            this.updateGroupsStatus('success');
-            
-            console.log('✅ KYC already completed for user');
-        }
-        
-        // Handle wallet status from auth component
-        if (data.walletConnected) {
-            this.userState.walletConnected = true;
-            this.updateWalletStatus('success');
-            console.log('✅ Wallet already connected for user');
-        }
-        
-        this.updateNavigationState();
-        this.updateWelcomeButton();
-        
-        // Store auth data in both storage types for consistency
-        const authData = {
-            user: data.user,
-            loginTime: Date.now(),
-            kycCompleted: data.kycCompleted || false,
-            kycLevel: data.kycLevel || 0,
-            walletConnected: data.walletConnected || false
-        };
-        
-        localStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
-        sessionStorage.setItem('laTandaWeb3Auth', JSON.stringify(authData));
-        
-        this.showNotification('¡Autenticación exitosa! 🎉', 'success');
-        
-        // Switch to platform mode
-        this.switchToPlatformMode();
-        
-        // Navigate based on completion status
-        setTimeout(() => {
-            if (!data.kycCompleted) {
-                this.navigateToSection('kyc');
-            } else if (!data.walletConnected) {
-                this.navigateToSection('wallet');
+    updateWalletLinkedStatus(isLinked, userData = null) {
+        const linkStatus = document.querySelectorAll('[data-wallet-link-status]');
+        linkStatus.forEach(element => {
+            if (isLinked) {
+                element.textContent = `🔗 Linked to ${userData?.name || 'account'}`;
+                element.className = 'wallet-link-status linked';
             } else {
-                this.navigateToSection('dashboard');
-            }
-        }, 2000);
-    }
-    
-    handleAuthError(data) {
-        console.error('❌ Auth Error received:', data);
-        this.showNotification('Error en la autenticación: ' + (data.error || 'Error desconocido'), 'error');
-    }
-    
-    handleKYCCompleted(data) {
-        console.log('🎉 KYC Completed!', data);
-        
-        this.userState.kycCompleted = true;
-        this.updateKYCStatus('success');
-        
-        // Store KYC data with multiple patterns for reliability
-        localStorage.setItem('laTandaKYCData', JSON.stringify({...data, completed: true, status: 'completed'}));
-        
-        if (this.userState.userData) {
-            const userKycKey = `kyc_status_${this.userState.userData.id}`;
-            localStorage.setItem(userKycKey, JSON.stringify({...data, completed: true, status: 'completed'}));
-        }
-        
-        // Update all component statuses since KYC unlocks advanced features
-        this.updateCommissionsStatus('success');
-        this.updateTokensStatus('success');
-        this.updateMarketplaceStatus('success');
-        
-        // Force navigation state update
-        this.updateNavigationState();
-        this.updateWelcomeButton();
-        
-        this.showNotification('¡Registro KYC completado! 🎉 Funciones avanzadas desbloqueadas', 'success');
-        
-        // Auto-navigate to wallet with a longer delay to show the success state
-        setTimeout(() => {
-            this.navigateToSection('wallet');
-        }, 3000);
-    }
-    
-    handleWalletConnected(data) {
-        this.userState.walletConnected = true;
-        this.updateWalletStatus('success');
-        this.updateNavigationState();
-        this.updateWelcomeButton();
-        
-        // Store wallet data
-        localStorage.setItem('laTandaWalletData', JSON.stringify(data));
-        
-        this.showNotification('¡Wallet conectada exitosamente! 🎉', 'success');
-        
-        // Auto-navigate to dashboard
-        setTimeout(() => {
-            this.navigateToSection('dashboard');
-        }, 2000);
-    }
-    
-    handleGroupJoined(data) {
-        this.userState.hasGroups = true;
-        this.updateGroupsStatus('success');
-        
-        this.showNotification('¡Te uniste al grupo exitosamente! 🎉', 'success');
-    }
-    
-    handleAuthStateChange() {
-        // Reload user state when auth changes
-        this.loadUserState();
-    }
-    
-    updateAuthStatus(status) {
-        this.updateStatusIndicator('authStatus', status);
-    }
-    
-    updateKYCStatus(status) {
-        this.updateStatusIndicator('kycStatus', status);
-    }
-    
-    updateWalletStatus(status) {
-        this.updateStatusIndicator('walletStatus', status);
-    }
-    
-    updateGroupsStatus(status) {
-        this.updateStatusIndicator('groupsStatus', status);
-    }
-    
-    updateDashboardStatus(status) {
-        this.updateStatusIndicator('dashboardStatus', status);
-    }
-    
-    updateCommissionsStatus(status) {
-        this.updateStatusIndicator('commissionsStatus', status);
-    }
-    
-    updateTokensStatus(status) {
-        this.updateStatusIndicator('tokensStatus', status);
-    }
-    
-    updateMarketplaceStatus(status) {
-        this.updateStatusIndicator('marketplaceStatus', status);
-    }
-    
-    updateStatusIndicator(elementId, status) {
-        const element = document.getElementById(elementId);
-        if (!element) return;
-        
-        // Remove existing status classes
-        element.classList.remove('status-pending', 'status-success', 'status-error');
-        
-        // Add new status class
-        element.classList.add(`status-${status}`);
-        
-        // Update text and icon
-        const statusMap = {
-            pending: { text: 'Pendiente', icon: '⏳' },
-            success: { text: 'Completado', icon: '✅' },
-            error: { text: 'Error', icon: '❌' }
-        };
-        
-        const statusInfo = statusMap[status];
-        if (statusInfo) {
-            element.innerHTML = `
-                <span class="status-dot"></span>
-                ${statusInfo.text}
-            `;
-        }
-    }
-    
-    updateUserInfo(user) {
-        console.log('👤 Updating user info:', user);
-        
-        const userInfo = document.getElementById('userInfo');
-        const userAvatar = document.getElementById('userAvatar');
-        const userName = document.getElementById('userName');
-        
-        if (userInfo && user) {
-            // Make sure user info is visible
-            userInfo.style.display = 'flex';
-            userInfo.style.visibility = 'visible';
-            
-            if (userAvatar) {
-                const avatarText = user.name ? user.name.charAt(0).toUpperCase() : 
-                                 user.email ? user.email.charAt(0).toUpperCase() : 'U';
-                userAvatar.textContent = avatarText;
-                console.log('✅ Avatar updated:', avatarText);
-            }
-            
-            if (userName) {
-                const displayName = user.name || user.email || 'Usuario';
-                userName.textContent = displayName;
-                console.log('✅ Username updated:', displayName);
-            }
-            
-            console.log('✅ User info display updated');
-        } else {
-            console.log('❌ Cannot update user info - missing elements or user data');
-            if (!userInfo) console.log('❌ userInfo element not found');
-            if (!user) console.log('❌ user data not provided');
-        }
-    }
-    
-    updateNavigationState() {
-        console.log('🔄 Updating navigation state...');
-        
-        // Update navigation link states based on user progress
-        const navLinks = document.querySelectorAll('.nav-link');
-        console.log(`🔗 Found ${navLinks.length} navigation links`);
-        
-        navLinks.forEach(link => {
-            const section = link.dataset.section;
-            const canAccess = this.canAccessSection(section);
-            
-            console.log(`🔍 Section: ${section}, Can Access: ${canAccess}`);
-            
-            if (canAccess) {
-                link.classList.remove('disabled');
-                link.style.opacity = '1';
-                link.style.pointerEvents = 'auto';
-                link.style.cursor = 'pointer';
-                
-                // Remove any disabled attributes
-                link.removeAttribute('disabled');
-            } else {
-                link.classList.add('disabled');
-                link.style.opacity = '0.5';
-                link.style.pointerEvents = 'none';
-                link.style.cursor = 'not-allowed';
-            }
-        });
-        
-        console.log('✅ Navigation state updated');
-    }
-    
-    refreshNavigationListeners() {
-        // Only refresh the navigation click listeners without full setup
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            // Only add listener if it's not disabled and doesn't already have one
-            if (!link.classList.contains('disabled') && !link.hasAttribute('data-listener-added')) {
-                const handleClick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const section = link.dataset.section;
-                    console.log(`🔍 Navigation clicked: ${section}`);
-                    
-                    if (section && this.canAccessSection(section)) {
-                        this.navigateToSection(section);
-                    } else {
-                        this.showAccessDenied(section);
-                    }
-                };
-                
-                link.addEventListener('click', handleClick);
-                link.setAttribute('data-listener-added', 'true');
+                element.textContent = '🔗 Not linked';
+                element.className = 'wallet-link-status not-linked';
             }
         });
     }
     
-    toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
+    updateChainInfo(chainId) {
+        const chainInfo = document.querySelectorAll('[data-chain-info]');
+        const network = this.web3Wallet ? this.web3Wallet.getCurrentNetwork() : null;
         
-        if (window.innerWidth <= 768) {
-            sidebar.classList.toggle('visible');
-        } else {
-            sidebar.classList.toggle('hidden');
-            mainContent.classList.toggle('expanded');
-        }
+        chainInfo.forEach(element => {
+            element.textContent = network ? network.chainName : 'Unknown Network';
+        });
+    }
+    
+    showWalletLinkingOption() {
+        const linkButtons = document.querySelectorAll('[data-wallet-link-button]');
+        linkButtons.forEach(button => {
+            button.style.display = 'block';
+            button.onclick = () => this.linkWalletToAccount();
+        });
+    }
+    
+    hideWalletLinkingOption() {
+        const linkButtons = document.querySelectorAll('[data-wallet-link-button]');
+        linkButtons.forEach(button => {
+            button.style.display = 'none';
+        });
     }
     
     showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-            color: white;
-            padding: 16px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-            z-index: 10001;
-            font-weight: 500;
-            max-width: 400px;
-            animation: slideInRight 0.3s ease-out;
-        `;
+        // Create or update notification element
+        let notification = document.getElementById('laTandaNotification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'laTandaNotification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                transform: translateX(400px);
+                transition: transform 0.3s ease;
+            `;
+            document.body.appendChild(notification);
+        }
         
+        // Set message and style based on type
         notification.textContent = message;
-        document.body.appendChild(notification);
+        const styles = {
+            success: 'background: #10B981; border: 1px solid #059669;',
+            error: 'background: #EF4444; border: 1px solid #DC2626;',
+            warning: 'background: #F59E0B; border: 1px solid #D97706;',
+            info: 'background: #3B82F6; border: 1px solid #2563EB;'
+        };
+        notification.style.cssText += styles[type] || styles.info;
         
-        // Auto-remove after 5 seconds
+        // Show notification
         setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Hide after 5 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
         }, 5000);
     }
     
-    showError(message) {
-        this.showNotification(message, 'error');
-    }
-    
-    // Public methods for components to call
-    goToAuth() {
-        this.navigateToSection('auth');
-    }
-    
-    goToKYC() {
-        this.navigateToSection('kyc');
-    }
-    
-    goToWallet() {
-        this.navigateToSection('wallet');
-    }
-    
-    goToDashboard() {
-        this.navigateToSection('dashboard');
-    }
-    
-    handleWelcomeAction() {
-        console.log('🎯 Welcome action triggered, current state:', this.userState);
-        
-        // Navigate based on user progress
-        if (!this.userState.authenticated) {
-            this.navigateToSection('auth');
-        } else if (!this.userState.kycCompleted) {
-            this.navigateToSection('kyc');
-        } else if (!this.userState.walletConnected) {
-            this.navigateToSection('wallet');
-        } else {
-            this.navigateToSection('dashboard');
-        }
-    }
-    
-    updateWelcomeButton() {
-        const welcomeBtn = document.getElementById('welcomeActionBtn');
-        if (!welcomeBtn) return;
-        
-        if (!this.userState.authenticated) {
-            welcomeBtn.textContent = 'Comenzar';
-        } else if (!this.userState.kycCompleted) {
-            welcomeBtn.textContent = 'Completar KYC';
-        } else if (!this.userState.walletConnected) {
-            welcomeBtn.textContent = 'Conectar Wallet';
-        } else {
-            welcomeBtn.textContent = 'Ir al Dashboard';
-        }
-    }
-    
-    // Method to reset app state (for logout)
-    logout() {
-        // Clear all stored data
-        localStorage.removeItem('laTandaWeb3Auth');
-        localStorage.removeItem('laTandaKYCData');
-        localStorage.removeItem('laTandaWalletData');
-        
-        // Reset user state
-        this.userState = {
-            authenticated: false,
-            kycCompleted: false,
-            walletConnected: false,
-            hasGroups: false,
-            userData: null
-        };
-        
-        // Update UI
-        this.updateAuthStatus('pending');
-        this.updateKYCStatus('pending');
-        this.updateWalletStatus('pending');
-        this.updateGroupsStatus('pending');
-        this.updateDashboardStatus('pending');
-        
-        // Hide user info
-        const userInfo = document.getElementById('userInfo');
-        if (userInfo) {
-            userInfo.style.display = 'none';
-        }
-        
-        // Navigate to welcome
-        this.navigateToSection('welcome');
-        
-        this.showNotification('Sesión cerrada exitosamente', 'info');
-    }
-    
-    // API Adapter Integration Methods
-    ensureAPIAdapter() {
-        // Ensure API adapter scripts are loaded
-        if (typeof window.laTandaAPIAdapter === 'undefined') {
-            this.loadAPIAdapterScripts();
-        }
-    }
-    
-    loadAPIAdapterScripts() {
-        // Load API endpoints config
-        const configScript = document.createElement('script');
-        configScript.src = 'api-endpoints-config.js';
-        configScript.onload = () => {
-            // Load API adapter after config
-            const adapterScript = document.createElement('script');
-            adapterScript.src = 'api-adapter.js';
-            document.head.appendChild(adapterScript);
-        };
-        document.head.appendChild(configScript);
-    }
-    
-    injectAPIAdapter(iframe) {
-        // Inject API adapter into iframe when it loads
+    // Public methods
+    async linkWalletToAccount() {
         try {
-            iframe.addEventListener('load', () => {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                
-                // Inject API adapter scripts into iframe
-                const configScript = iframeDoc.createElement('script');
-                configScript.src = '../api-endpoints-config.js';
-                
-                const adapterScript = iframeDoc.createElement('script');
-                adapterScript.src = '../api-adapter.js';
-                
-                iframeDoc.head.appendChild(configScript);
-                
-                configScript.onload = () => {
-                    iframeDoc.head.appendChild(adapterScript);
-                };
-                
-                console.log(`🔄 API Adapter injected into ${iframe.id}`);
-            });
-        } catch (error) {
-            console.warn('Cannot inject API adapter into iframe:', error);
-        }
-    }
-    
-    // Test API connectivity
-    async testAPIConnectivity() {
-        try {
-            if (window.laTandaAPIAdapter) {
-                const results = await window.laTandaAPIAdapter.testRealEndpoints();
-                console.table(results);
-                return results;
-            } else {
-                console.warn('API Adapter not available');
-                return null;
+            if (!this.web3Wallet) {
+                throw new Error('Web3 wallet not available');
             }
+            
+            const result = await this.web3Wallet.linkWalletToAccount();
+            this.showNotification('Wallet linked successfully!', 'success');
+            return result;
+            
         } catch (error) {
-            console.error('API connectivity test failed:', error);
+            this.showNotification(`Failed to link wallet: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+    
+    async connectWallet(type = 'metamask') {
+        try {
+            if (!this.web3Wallet) {
+                throw new Error('Web3 wallet not available');
+            }
+            
+            let result;
+            if (type === 'metamask') {
+                result = await this.web3Wallet.connectMetaMask();
+            } else if (type === 'walletconnect') {
+                result = await this.web3Wallet.connectWalletConnect();
+            }
+            
+            this.showNotification(`${type} connected successfully!`, 'success');
+            return result;
+            
+        } catch (error) {
+            this.showNotification(`Failed to connect ${type}: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+    
+    disconnectWallet() {
+        if (this.web3Wallet) {
+            this.web3Wallet.disconnect();
+            this.showNotification('Wallet disconnected', 'info');
+        }
+    }
+    
+    getWalletInfo() {
+        if (!this.web3Wallet || !this.web3Wallet.isConnected) {
+            return null;
+        }
+        
+        return {
+            wallet: this.web3Wallet.currentWallet,
+            account: this.web3Wallet.currentAccount,
+            chainId: this.web3Wallet.currentChainId,
+            network: this.web3Wallet.getCurrentNetwork(),
+            isConnected: this.web3Wallet.isConnected,
+            isOnSupportedChain: this.web3Wallet.isOnSupportedChain()
+        };
+    }
+    
+    async getWalletBalance() {
+        if (!this.web3Wallet || !this.web3Wallet.isConnected) {
+            return null;
+        }
+        
+        try {
+            return await this.web3Wallet.getBalance();
+        } catch (error) {
+            console.error('Failed to get wallet balance:', error);
             return null;
         }
     }
     
-    // UI Mode Management
-    switchToLandingMode() {
-        console.log('🎯 Switching to Landing Mode');
-        
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const appHeader = document.querySelector('.app-header');
-        
-        if (sidebar) {
-            sidebar.className = 'sidebar landing-mode';
-        }
-        
-        if (mainContent) {
-            mainContent.className = 'main-content landing-mode';
-        }
-        
-        if (appHeader) {
-            appHeader.className = 'app-header landing-mode';
-        }
-        
-        // Hide current section and show welcome
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        const welcomeSection = document.getElementById('welcome');
-        if (welcomeSection) {
-            welcomeSection.classList.add('active');
-        }
-        
-        this.currentSection = 'welcome';
-        
-        console.log('✅ Landing Mode activated');
-    }
-    
-    switchToPlatformMode() {
-        console.log('🚀 Switching to Platform Mode');
-        
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const appHeader = document.querySelector('.app-header');
-        
-        if (sidebar) {
-            sidebar.className = 'sidebar platform-mode';
-        }
-        
-        if (mainContent) {
-            mainContent.className = 'main-content platform-mode';
-        }
-        
-        if (appHeader) {
-            appHeader.className = 'app-header platform-mode';
-        }
-        
-        // Update page title to show current section
-        this.updatePageTitle(this.currentSection);
-        
-        console.log('✅ Platform Mode activated');
-    }
-    
-    // Method to determine which mode should be active
-    updateUIMode() {
-        if (this.userState.authenticated) {
-            this.switchToPlatformMode();
-        } else {
-            this.switchToLandingMode();
-        }
-    }
-    
-    // Enhanced logout method
-    logout() {
-        // Clear all stored data
-        localStorage.removeItem('laTandaWeb3Auth');
-        localStorage.removeItem('laTandaKYCData');
-        localStorage.removeItem('laTandaWalletData');
-        
-        // Reset user state
-        this.userState = {
-            authenticated: false,
-            kycCompleted: false,
-            walletConnected: false,
-            hasGroups: false,
-            userData: null
+    // System status
+    getSystemStatus() {
+        return {
+            isInitialized: this.isInitialized,
+            web3: {
+                available: !!this.web3Wallet,
+                connected: this.web3Wallet ? this.web3Wallet.isConnected : false,
+                wallet: this.getWalletInfo()
+            },
+            api: {
+                available: !!this.apiConnector,
+                connected: this.apiConnector ? this.apiConnector.isAuthenticated() : false
+            },
+            bridge: {
+                available: !!this.bridge,
+                connected: this.bridge ? this.bridge.isConnected : false
+            }
         };
-        
-        // Update UI
-        this.updateAuthStatus('pending');
-        this.updateKYCStatus('pending');
-        this.updateWalletStatus('pending');
-        this.updateGroupsStatus('pending');
-        this.updateDashboardStatus('pending');
-        
-        // Hide user info
-        const userInfo = document.getElementById('userInfo');
-        if (userInfo) {
-            userInfo.style.display = 'none';
-        }
-        
-        // Switch back to landing mode
-        this.switchToLandingMode();
-        
-        this.showNotification('Sesión cerrada exitosamente', 'info');
-    }
-    
-    // Cleanup method for troubleshooting
-    cleanupEventListeners() {
-        console.log('🧹 Cleaning up event listeners...');
-        
-        // Remove all existing navigation event listeners
-        document.querySelectorAll('.nav-link').forEach(link => {
-            // Clone and replace to remove all event listeners
-            const newLink = link.cloneNode(true);
-            link.parentNode.replaceChild(newLink, link);
-        });
-        
-        // Re-setup clean event listeners
-        this.setupEventListeners();
-        
-        console.log('✅ Event listeners cleaned up and re-setup');
     }
 }
 
-// CSS for animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    @keyframes slideOutRight {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// Initialize app when DOM is loaded
+// Initialize the unified system when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new LaTandaUnifiedApp();
+    console.log('🚀 Starting La Tanda Unified System initialization...');
+    window.laTandaUnified = new LaTandaUnifiedSystem();
 });
 
 // Export for global access
-window.LaTandaUnifiedApp = LaTandaUnifiedApp;
+window.LaTandaUnifiedSystem = LaTandaUnifiedSystem;
 
-// Add global method for troubleshooting
-window.cleanupApp = function() {
-    if (window.app && window.app.cleanupEventListeners) {
-        window.app.cleanupEventListeners();
-    }
-};
+console.log('🔗 La Tanda Unified System loaded!');
