@@ -713,8 +713,8 @@ function initializeDemoData() {
     const demoUser = {
         id: demoUserId,
         name: 'Usuario Demo',
-        email: 'demo@latanda.com',
-        password: bcrypt.hashSync('demo123', 10),
+        email: 'user@example.com',
+        password: bcrypt.hashSync('REMOVED_CREDENTIAL', 10),
         role: 'member',
         kycStatus: 'verified',
         walletAddress: 'LTD1x' + Math.random().toString(36).substr(2, 9),

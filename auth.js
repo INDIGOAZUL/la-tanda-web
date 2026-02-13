@@ -140,7 +140,7 @@ class LaTandaAuth {
         
         try {
             // Check for demo account
-            if (email === 'demo@latanda.online' && password === 'demo123') {
+            if (email === 'user@example.com' && password === 'REMOVED_CREDENTIAL') {
                 await this.loginDemoUser(email, rememberMe);
             } else {
                 await this.loginRealUser(email, password, rememberMe);
@@ -494,7 +494,7 @@ class LaTandaAuth {
         await this.delay(500);
         
         // For demo purposes, assume demo email exists
-        return email === 'demo@latanda.online';
+        return email === 'user@example.com';
     }
     
     async loginUser(user, rememberMe = false) {
@@ -547,8 +547,8 @@ class LaTandaAuth {
     }
     
     fillDemoCredentials() {
-        document.getElementById('loginEmail').value = 'demo@latanda.online';
-        document.getElementById('loginPassword').value = 'demo123';
+        document.getElementById('loginEmail').value = 'user@example.com';
+        document.getElementById('loginPassword').value = 'REMOVED_CREDENTIAL';
         
         // Switch to login tab if on register
         this.switchTab('login');

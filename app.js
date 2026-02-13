@@ -132,7 +132,7 @@ class LaTandaApp {
         
         try {
             // Demo authentication
-            if (email === 'demo@latanda.online' && password === 'demo123') {
+            if (email === 'user@example.com' && password === 'REMOVED_CREDENTIAL') {
                 await this.simulateLogin(email);
             } else {
                 // Real API authentication
@@ -583,7 +583,7 @@ class LaTandaApp {
     
     quickDemoLogin() {
         // Quick demo access without full authentication
-        this.simulateLogin('demo@latanda.online');
+        this.simulateLogin('user@example.com');
     }
     
     showTransactionHistory() {

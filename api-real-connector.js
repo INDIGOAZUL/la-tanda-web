@@ -102,7 +102,7 @@ class RealAPIConnector {
                 method: 'POST',
                 body: JSON.stringify({
                     email: 'admin@latanda.online',
-                    password: 'Admin123!'
+                    password: 'REMOVED_CREDENTIAL'
                 })
             },
             {
@@ -110,8 +110,8 @@ class RealAPIConnector {
                 endpoint: '/auth/login',
                 method: 'POST',
                 body: JSON.stringify({
-                    email: 'demo@latanda.online',
-                    password: 'demo123'
+                    email: 'user@example.com',
+                    password: 'REMOVED_CREDENTIAL'
                 })
             }
         ];

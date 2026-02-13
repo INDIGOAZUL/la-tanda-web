@@ -385,7 +385,7 @@ app.post('/api/auth/login', [
         const user = Array.from(db.users.values()).find(u => u.email === email);
         
         // Admin credentials check (maintaining compatibility)
-        if (email === 'admin@latanda.online' && password === 'Admin123!') {
+        if (email === 'admin@latanda.online' && password === 'REMOVED_CREDENTIAL') {
             const adminToken = jwt.sign(
                 { userId: 'admin_001', email, role: 'administrator' },
                 JWT_SECRET,
@@ -426,7 +426,7 @@ app.post('/api/auth/login', [
         }
 
         // Demo credentials check (maintaining compatibility)
-        if (email === 'demo@latanda.online' && password === 'demo123') {
+        if (email === 'user@example.com' && password === 'REMOVED_CREDENTIAL') {
             const demoToken = jwt.sign(
                 { userId: 'demo_001', email, role: 'demo_user' },
                 JWT_SECRET,
@@ -609,7 +609,7 @@ function initializeDemoData() {
     db.users.set(adminId, {
         id: adminId,
         name: 'Demo Administrator',
-        email: 'admin.demo@latanda.online',
+        email: 'admin.user@example.com',
         password_hash: '$2a$12$demohashedpassword', // Demo hash
         role: 'administrator',
         verification_level: 'admin',
