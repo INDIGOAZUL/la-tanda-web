@@ -1,5 +1,5 @@
 // tandas type definitions
-// aligned with La Tanda v3.92.0
+// aligned with La Tanda v4.3.1
 
 export type TandaStatus = 'pending' | 'active' | 'completed' | 'recruiting' | 'cancelled' | 'closed'
 export type MemberStatus = 'pending' | 'active' | 'payout_received' | 'defaulted'
@@ -47,10 +47,11 @@ export interface GroupFilters {
     offset?: number
 }
 
-export interface PayoutStats {
+export interface GroupStats {
     total_pool: string
     next_payout_date: string
     next_receiver_name: string
     current_round: number
     total_rounds: number
+    participation_rate?: number
 }

@@ -1,26 +1,18 @@
-// stub types for modules not yet implemented
+// stub types for modules not yet fully implemented
+// aligned with La Tanda v4.3.1
 
 export interface AdminModule {
     getStats(): Promise<any>
     listUsers(params?: any): Promise<any[]>
-    updateUser(uid: string, data: any): Promise<any>
+    updateUserStatus(uid: string, status: string): Promise<any>
 }
 
 export interface MiningModule {
-    getStats(): Promise<any>
-    startMiner(): Promise<{ success: boolean }>
-    stopMiner(): Promise<{ success: boolean }>
-    getRewards(): Promise<any>
+    getStatus(): Promise<any>
+    claim(): Promise<{ success: boolean }>
 }
 
 export interface MIAModule {
-    getPredictions(): Promise<any[]>
-    analyzeMarket(data: any): Promise<any>
-}
-
-export interface LotteryModule {
-    getDraws(): Promise<any[]>
-    buyTicket(drawId: string): Promise<{ success: boolean }>
-    getMyTickets(): Promise<any[]>
-    getResults(drawId: string): Promise<any>
+    chat(message: string): Promise<any>
+    getStatus(): Promise<any>
 }

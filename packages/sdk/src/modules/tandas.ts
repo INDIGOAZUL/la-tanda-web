@@ -1,13 +1,14 @@
-// tandas module - handles savings circles, member roles, and community contributions
-// fully aligned with the v3.92.0 registration namespace
+// tandas module - handles savings circles, group management, and contributions
+// aligned with La Tanda v4.3.1
 
 import { HttpClient } from '../utils/http'
+import { validateId } from '../utils/validation'
 import type {
     TandaGroup,
     TandaMember,
     CreateGroupData,
     GroupFilters,
-    PayoutStats,
+    GroupStats,
     TandaStatus,
     MemberRole
 } from '../types/tandas'
@@ -20,79 +21,107 @@ export class TandasModule {
     }
 
     /**
-     * Retrieves a list of available public groups for recruitment.
-     * @param filters - Optional filters like status, min/max amount, and pagination.
-     * @returns A list of TandaGroup objects.
+     * Lists publicly available groups for recruitment.
      */
     async listGroups(filters: GroupFilters = {}): Promise<TandaGroup[]> {
-        return this._http.get<TandaGroup[]>('/groups/public', filters)
+        return this._http.get<TandaGroup[]>('/groups/public-pg', filters)
     }
 
     /**
-     * Lists my personal tandas.
+     * Lists the authenticated user's personal tandas.
      */
     async listMyTandas(): Promise<TandaGroup[]> {
-        return this._http.get<TandaGroup[]>('/tandas/my-tandas', {})
+        return this._http.get<TandaGroup[]>('/tandas/my-tandas')
     }
 
     /**
      * Creates a new Tanda savings circle.
-     * @param data - The configuration for the new group (name, amount, frequency, etc).
-     * @returns The newly created TandaGroup.
      */
     async createGroup(data: CreateGroupData): Promise<TandaGroup> {
         return this._http.post<TandaGroup>('/registration/groups/create', data)
     }
 
     /**
-     * Join an existing group.
+     * Gets full details for a specific group.
+     */
+    async getGroupDetails(groupId: string): Promise<TandaGroup> {
+        validateId(groupId, 'groupId')
+        return this._http.get<TandaGroup>(`/groups/${groupId}`)
+    }
+
+    /**
+     * Joins an existing group.
      */
     async joinGroup(groupId: string): Promise<{ success: boolean }> {
-        return this._http.post<{ success: boolean }>(`/registration/groups/join/${groupId}`)
+        validateId(groupId, 'groupId')
+        return this._http.post<{ success: boolean }>(`/groups/${groupId}/join`)
     }
 
     /**
-     * Leave a group.
+     * Removes a member from a group (also used to leave a group).
+     * To leave: pass your own userId.
      */
-    async leaveGroup(groupId: string): Promise<{ success: boolean }> {
-        return this._http.post<{ success: boolean }>(`/registration/groups/leave/${groupId}`)
+    async removeMember(groupId: string, userId: string): Promise<{ success: boolean }> {
+        validateId(groupId, 'groupId')
+        validateId(userId, 'userId')
+        return this._http.delete<{ success: boolean }>(`/groups/${groupId}/members/${userId}`)
     }
 
     /**
-     * Get list of members in a group.
+     * Gets the list of members in a group.
      */
     async getMembers(groupId: string): Promise<TandaMember[]> {
-        const res = await this._http.post<any>('/registration/groups/details', { groupId })
-        return res.members || []
+        validateId(groupId, 'groupId')
+        return this._http.get<TandaMember[]>(`/groups/${groupId}/members`)
     }
 
     /**
-     * Get payout schedule and stats.
-     */
-    async getPayoutStats(groupId: string): Promise<PayoutStats> {
-        const res = await this._http.post<any>('/registration/groups/details', { groupId })
-        return res.payout_stats
-    }
-
-    /**
-     * Contribute funds to the current round.
-     * v3.92.0 uses /groups/:id/contribute.
+     * Contributes funds to the current tanda round.
+     * Uses the /tandas/pay endpoint.
      */
     async contribute(groupId: string, amount: string): Promise<{ success: boolean; transaction_id: string }> {
-        return this._http.post(`/groups/${groupId}/contribute`, { amount })
+        return this._http.post('/tandas/pay', { group_id: groupId, amount })
     }
 
     /**
-     * Update group status (Admin only).
+     * Gets contribution history for a group.
      */
-    async updateStatus(groupId: string, status: TandaStatus): Promise<TandaGroup> {
-        return this._http.patch<TandaGroup>(`/registration/groups/${groupId}/status`, { status })
+    async getContributions(groupId: string): Promise<any[]> {
+        validateId(groupId, 'groupId')
+        return this._http.get(`/groups/${groupId}/contributions`)
     }
 
     /**
-     * Update a member's role (Admin only).
+     * Gets group statistics (totals, participation rate, etc).
+     */
+    async getStats(groupId: string): Promise<GroupStats> {
+        validateId(groupId, 'groupId')
+        return this._http.get<GroupStats>(`/groups/${groupId}/stats`)
+    }
+
+    /**
+     * Gets the payment calendar for a group.
+     */
+    async getCalendar(groupId: string): Promise<any> {
+        validateId(groupId, 'groupId')
+        return this._http.get(`/groups/${groupId}/calendar`)
+    }
+
+    /**
+     * Runs the Tombola — randomizes turns for a group.
+     * This is the tanda-specific lottery (not the national lottery).
+     */
+    async runTombola(groupId: string): Promise<any> {
+        validateId(groupId, 'groupId')
+        return this._http.post(`/groups/${groupId}/lottery-live`)
+    }
+
+    /**
+     * Updates a member's role within a group (Admin only).
      */
     async updateMemberRole(groupId: string, userId: string, role: MemberRole): Promise<{ success: boolean }> {
-        return this._http.patch<{ success: boolean }>(`/registration/groups/${groupId}/members/${userId}/role`, { role })
+        validateId(groupId, 'groupId')
+        validateId(userId, 'userId')
+        return this._http.patch<{ success: boolean }>(`/groups/${groupId}/members/${userId}/role`, { role })
     }
 }

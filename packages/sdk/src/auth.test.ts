@@ -1,5 +1,5 @@
 // tests for auth module
-// aligned with La Tanda v3.92.0
+// aligned with La Tanda v4.3.1
 
 import { AuthModule } from './modules/auth'
 import { MemoryTokenStorage } from './config'
@@ -109,12 +109,12 @@ describe('AuthModule', () => {
             expect(await auth.getToken()).toBe('mytok')
         })
 
-        test('getCurrentUser calls /auth/me', async () => {
+        test('getCurrentUser calls /user/profile', async () => {
             const get = http.get as jest.Mock
             get.mockResolvedValue({ id: '123', email: 'test@me.com' })
 
             const u = await auth.getCurrentUser()
-            expect(get).toHaveBeenCalledWith('/auth/me')
+            expect(get).toHaveBeenCalledWith('/user/profile')
             expect(u.id).toBe('123')
         })
     })

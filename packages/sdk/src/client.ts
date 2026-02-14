@@ -1,5 +1,5 @@
 // main client class for la tanda sdk
-// aligned with La Tanda v3.92.0
+// aligned with La Tanda v4.3.1
 
 import { HttpClient } from './utils/http'
 import { AuthModule } from './modules/auth'
@@ -60,26 +60,25 @@ export class LaTandaClient {
     }
 
     private _initPlaceholderModules() {
-        // admin stub
+        // admin stub — v4.3.1 corrected paths
         this.admin = {
-            getStats: () => this._http.get('/admin/stats'),
+            getStats: () => this._http.get('/admin/dashboard/stats'),
             listUsers: (params: any) => this._http.get('/admin/users', params),
-            updateUser: (uid: string, data: any) => this._http.patch(`/admin/users/${uid}`, data)
-        } as any
+            updateUserStatus: (uid: string, status: string) =>
+                this._http.put(`/admin/users/${uid}/status`, { status })
+        } as AdminModule
 
-        // mining stub
+        // mining stub — only status + claim in v4.3.1
         this.mining = {
-            getStats: () => this._http.get('/mining/stats'),
-            startMiner: () => this._http.post('/mining/start'),
-            stopMiner: () => this._http.post('/mining/stop'),
-            getRewards: () => this._http.get('/mining/rewards')
-        } as any
+            getStatus: () => this._http.get('/mining/status'),
+            claim: () => this._http.post('/mining/claim')
+        } as MiningModule
 
-        // mia stub - chatbot based in v3.92.0
+        // mia stub — chatbot
         this.mia = {
             chat: (message: string) => this._http.post('/mia/chat', { message }),
-            getStats: () => this._http.get('/mia/stats')
-        } as any
+            getStatus: () => this._http.get('/mia/status')
+        } as MIAModule
     }
 
     // helper to get the config

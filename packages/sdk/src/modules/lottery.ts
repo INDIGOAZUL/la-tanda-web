@@ -1,11 +1,18 @@
-// lottery module - handles fair member selection using cryptographically secure entropy
-// aligned with La Tanda v3.92.0
+// lottery module - Honduras national lottery number prediction engine
+// aligned with La Tanda v4.3.1
+// NOTE: This is NOT a tanda draw system. Tanda turn selection (tombola)
+// lives under Groups: POST /groups/:id/lottery-live
 
 import { HttpClient } from '../utils/http'
 import type {
-    LotteryDraw,
-    DrawFilters,
-    ParticipantSelection
+    LotteryStats,
+    SpinResult,
+    SpinHistory,
+    LotteryResult,
+    LeaderboardEntry,
+    Achievement,
+    Jalador,
+    SharePredictionData
 } from '../types/lottery'
 
 export class LotteryModule {
@@ -16,33 +23,72 @@ export class LotteryModule {
     }
 
     /**
-     * Lists recent and upcoming lottery draws for saving circles.
-     * @param filters - Optional filters like status and group_id.
+     * Gets prediction statistics for the current user.
      */
-    async listDraws(filters: DrawFilters = {}): Promise<LotteryDraw[]> {
-        return this._http.get<LotteryDraw[]>('/lottery/draws', filters)
+    async getStats(): Promise<LotteryStats> {
+        return this._http.get<LotteryStats>('/lottery/stats')
     }
 
     /**
-     * Triggers a fair selection draw for a group to determine the payout order.
-     * v3.92.0 uses crypto.randomInt on the backend for this.
-     * @param groupId - The ID of the Tanda group.
+     * Executes a paid prediction spin.
      */
-    async performDraw(groupId: string): Promise<LotteryDraw> {
-        return this._http.post<LotteryDraw>(`/lottery/draws/perform`, { group_id: groupId })
+    async spin(): Promise<SpinResult> {
+        return this._http.post<SpinResult>('/lottery/spin')
     }
 
     /**
-     * Gets the current selection weights for a group.
+     * Executes a free trial prediction spin.
      */
-    async getWeights(groupId: string): Promise<ParticipantSelection[]> {
-        return this._http.get<ParticipantSelection[]>(`/lottery/groups/${groupId}/weights`)
+    async trialSpin(): Promise<SpinResult> {
+        return this._http.post<SpinResult>('/lottery/trial-spin')
     }
 
     /**
-     * Get details of a specific draw.
+     * Gets the user's spin history.
      */
-    async getDrawDetails(drawId: string): Promise<LotteryDraw> {
-        return this._http.get<LotteryDraw>(`/lottery/draws/${drawId}`)
+    async getHistory(): Promise<SpinHistory[]> {
+        return this._http.get<SpinHistory[]>('/lottery/history')
+    }
+
+    /**
+     * Gets the latest real Honduras national lottery results.
+     */
+    async getResults(): Promise<LotteryResult[]> {
+        return this._http.get<LotteryResult[]>('/lottery/results')
+    }
+
+    /**
+     * Gets the prediction leaderboard.
+     */
+    async getLeaderboard(): Promise<LeaderboardEntry[]> {
+        return this._http.get<LeaderboardEntry[]>('/lottery/leaderboard')
+    }
+
+    /**
+     * Gets user achievements in the prediction game.
+     */
+    async getAchievements(): Promise<Achievement[]> {
+        return this._http.get<Achievement[]>('/lottery/achievements')
+    }
+
+    /**
+     * Gets "jaladores" — popular pulling numbers lookup.
+     */
+    async getJaladores(): Promise<Jalador[]> {
+        return this._http.get<Jalador[]>('/lottery/jaladores')
+    }
+
+    /**
+     * Gets the lottery-specific social feed.
+     */
+    async getSocialFeed(): Promise<any[]> {
+        return this._http.get('/lottery/social-feed')
+    }
+
+    /**
+     * Shares a prediction to the lottery social feed.
+     */
+    async sharePrediction(data: SharePredictionData): Promise<{ success: boolean }> {
+        return this._http.post<{ success: boolean }>('/lottery/share-prediction', data)
     }
 }
