@@ -1,4 +1,5 @@
-// auth module - login, register, 2fa, all that stuff
+// auth module - login, register, session management
+// aligned with La Tanda v4.3.1
 
 import { HttpClient } from '../utils/http'
 import { TokenStorage } from '../config'
@@ -82,9 +83,9 @@ export class AuthModule {
 
     /**
      * Extracts partial user info from the current JWT token locally.
-     * Does NOT make an API call.
+     * Does NOT make an API call — returns only what the token contains.
      */
-    async getUserFromToken(): Promise<UserInfo | null> {
+    async getUserFromToken(): Promise<Partial<UserInfo> | null> {
         const tok = await this._storage.getToken()
         if (!tok) return null
 
@@ -94,11 +95,8 @@ export class AuthModule {
         return {
             id: u.userId,
             email: u.email,
-            name: '',
             role: u.role,
-            permissions: u.permissions,
-            verified: true,
-            createdAt: ''
+            permissions: u.permissions
         }
     }
 
@@ -106,7 +104,7 @@ export class AuthModule {
      * Fetches the full authenticated user profile from the La Tanda API.
      */
     async getCurrentUser(): Promise<UserInfo> {
-        return this._http.get<UserInfo>('/auth/me')
+        return this._http.get<UserInfo>('/user/profile')
     }
 
     async getToken() {

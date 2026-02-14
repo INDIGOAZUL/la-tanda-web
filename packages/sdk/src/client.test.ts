@@ -57,15 +57,27 @@ describe('LaTandaClient', () => {
     })
 
     describe('wallet module', () => {
+        test('has getBalance', () => expect(typeof client.wallet.getBalance).toBe('function'))
         test('has getBalances', () => expect(typeof client.wallet.getBalances).toBe('function'))
         test('has getHistory', () => expect(typeof client.wallet.getHistory).toBe('function'))
         test('has processPayment', () => expect(typeof client.wallet.processPayment).toBe('function'))
+        test('has setPin', () => expect(typeof client.wallet.setPin).toBe('function'))
+        test('has withdrawToBank', () => expect(typeof client.wallet.withdrawToBank).toBe('function'))
     })
 
     describe('tandas module', () => {
         test('has listGroups', () => expect(typeof client.tandas.listGroups).toBe('function'))
         test('has createGroup', () => expect(typeof client.tandas.createGroup).toBe('function'))
         test('has listMyTandas', () => expect(typeof client.tandas.listMyTandas).toBe('function'))
+        test('has runTombola', () => expect(typeof client.tandas.runTombola).toBe('function'))
+    })
+
+    describe('lottery module (prediction engine)', () => {
+        test('has spin', () => expect(typeof client.lottery.spin).toBe('function'))
+        test('has trialSpin', () => expect(typeof client.lottery.trialSpin).toBe('function'))
+        test('has getStats', () => expect(typeof client.lottery.getStats).toBe('function'))
+        test('has getResults', () => expect(typeof client.lottery.getResults).toBe('function'))
+        test('has getLeaderboard', () => expect(typeof client.lottery.getLeaderboard).toBe('function'))
     })
 })
 

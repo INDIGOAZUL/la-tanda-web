@@ -1,22 +1,16 @@
 // wallet type definitions
-// aligned with La Tanda v3.92.0 (HNL / Bank based system)
-
-export type AssetSymbol = 'HNL' | 'LMP' | 'USD'
-export type AssetType = AssetSymbol // for compatibility
+// aligned with La Tanda v4.3.1 (HNL single-currency system)
 
 export interface WalletBalance {
-    symbol: AssetSymbol
-    asset: AssetSymbol // compatibility
     amount: string
-    total_hnl: string
     available: string
     locked: string
+    currency: string
 }
 
 export interface Transaction {
     id: string
     type: 'deposit' | 'withdrawal' | 'contribution' | 'payout' | 'transfer'
-    symbol: AssetSymbol
     amount: string
     status: 'pending' | 'completed' | 'failed' | 'cancelled'
     timestamp: string
@@ -25,7 +19,6 @@ export interface Transaction {
 }
 
 export interface PaymentProcessRequest {
-    symbol: AssetSymbol
     amount: string
     destination: string
     type: 'transfer' | 'withdrawal' | 'contribution'
@@ -40,8 +33,36 @@ export interface PaymentResponse {
 
 export interface TransactionFilters {
     type?: string
-    symbol?: string
     status?: string
     limit?: number
     offset?: number
+}
+
+export interface BankWithdrawRequest {
+    amount: string
+    bank_name: string
+    account_number: string
+    account_holder: string
+    description?: string
+}
+
+export interface MobileWithdrawRequest {
+    amount: string
+    phone_number: string
+    provider: string
+    description?: string
+}
+
+export interface WithdrawalRecord {
+    id: string
+    amount: string
+    method: 'bank' | 'mobile'
+    status: 'pending' | 'completed' | 'failed'
+    created_at: string
+    details: Record<string, any>
+}
+
+export interface PinStatus {
+    has_pin: boolean
+    last_changed?: string
 }

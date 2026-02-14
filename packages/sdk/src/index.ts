@@ -31,6 +31,7 @@ export {
 export type { JwtPayload } from './utils/jwt'
 export { HttpClient } from './utils/http'
 export type { RequestOptions, ApiResponse } from './utils/http'
+export { validateId } from './utils/validation'
 
 // module exports
 export * from './modules/auth'

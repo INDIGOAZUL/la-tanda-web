@@ -1,5 +1,5 @@
 // feed type definitions
-// aligned with La Tanda v3.92.0
+// aligned with La Tanda v4.3.1
 
 export interface FeedPost {
     id: string
