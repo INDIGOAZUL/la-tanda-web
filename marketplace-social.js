@@ -1,7 +1,7 @@
 /**
  * La Tanda - Marketplace & Social System
  * Sistema integrado de marketplace y red social con tokens LTD
- * Versión: 4.2.0 - Search, Filters & Skeletons
+ * Versión: 4.0.0
  *
  * Features:
  * - Guest access (browse without login)
@@ -25,6 +25,12 @@ class MarketplaceSocialSystem {
         this.reviews = [];
         this.badges = [];
         this.bookings = [];
+
+        // Messaging state
+        this.conversations = [];
+        this.currentConversation = null;
+        this.messages = [];
+        this.unreadCount = 0;
 
         // Subscription tiers
         this.subscriptionTiers = {
@@ -115,16 +121,8 @@ class MarketplaceSocialSystem {
         this.init();
     }
     
-    // XSS prevention helper (v3.97.0 - Audit Round 22)
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = String(text != null ? text : '');
-        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
     async init() {
-        // Show skeletons immediately while loading
-        this.showAllSkeletons();
+        setupMarketplaceDelegatedListeners();
         try {
             this.setupEventListeners();
 
@@ -152,15 +150,14 @@ class MarketplaceSocialSystem {
     async loadCategories() {
         try {
             const response = await this.apiRequest('/api/marketplace/categories');
-            const categories = response.data?.categories || response.categories;
 
-            if (response.success && categories) {
+            if (response.success && response.categories) {
                 // Store as both array and object
-                this.categoriesData = categories;
+                this.categoriesData = response.categories;
 
                 // Convert to the frontend format (object with id: label)
                 this.serviceCategories = {};
-                categories.forEach(cat => {
+                response.categories.forEach(cat => {
                     this.serviceCategories[cat.category_id] = `${cat.icon} ${cat.name_es}`;
                 });
 
@@ -174,17 +171,15 @@ class MarketplaceSocialSystem {
     async loadMarketplaceStats() {
         try {
             const response = await this.apiRequest('/api/marketplace/stats');
-            const stats = response.data?.stats || response.stats;
 
-            if (response.success && stats) {
+            if (response.success && response.stats) {
                 this.marketStats = {
-                    totalProducts: parseInt(stats.total_products) || this.marketStats.totalProducts,
-                    totalSellers: parseInt(stats.total_providers) || this.marketStats.totalSellers,
-                    totalTransactions: parseInt(stats.total_bookings) || this.marketStats.totalTransactions,
-                    totalVolume: parseFloat(stats.total_volume) || this.marketStats.totalVolume,
-                    totalServices: parseInt(stats.total_services) || this.marketStats.totalServices,
-                    totalProviders: parseInt(stats.total_providers) || this.marketStats.totalProviders,
-                    avgRating: parseFloat(stats.avg_rating) || 4.8
+                    totalProducts: parseInt(response.stats.total_products) || this.marketStats.totalProducts,
+                    totalSellers: parseInt(response.stats.total_providers) || this.marketStats.totalSellers,
+                    totalTransactions: parseInt(response.stats.total_bookings) || this.marketStats.totalTransactions,
+                    totalVolume: parseFloat(response.stats.total_volume) || this.marketStats.totalVolume,
+                    totalServices: parseInt(response.stats.total_services) || this.marketStats.totalServices,
+                    totalProviders: parseInt(response.stats.total_providers) || this.marketStats.totalProviders
                 };
             }
         } catch (error) {
@@ -197,21 +192,15 @@ class MarketplaceSocialSystem {
 
         try {
             const response = await this.apiRequest('/api/marketplace/subscription');
-            const subscription = response.data?.subscription || response.subscription;
 
-            if (response.success && subscription) {
-                this.subscriptionData = subscription;
-                this.userSubscription = subscription.tier || 'free';
+            if (response.success && response.subscription) {
+                this.subscriptionData = response.subscription;
+                this.userSubscription = response.subscription.tier || 'free';
 
                 // Log tanda member status
-                if (subscription.is_tanda_benefit) {
+                if (response.subscription.is_tanda_benefit) {
                 }
 
-
-                // Update Tier Banner with subscription data
-                if (typeof updateTierBannerFromSubscription === "function") {
-                    updateTierBannerFromSubscription(this.userSubscription, subscription);
-                }
             }
         } catch (error) {
             this.userSubscription = 'free';
@@ -268,7 +257,7 @@ class MarketplaceSocialSystem {
             if (this.userSubscription === 'tanda_member') {
                 tierBadge.innerHTML = `
                     <span style="background: linear-gradient(135deg, #00FFFF, #7FFFD8); color: #0f172a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(0, 255, 255, 0.3);">
-                        🎯 ${tier.name} <span style="font-size: 10px; opacity: 0.8;">GRATIS</span>
+                        🎯 ${this.escapeHtml(tier.name)} <span style="font-size: 10px; opacity: 0.8;">GRATIS</span>
                     </span>
                 `;
 
@@ -277,132 +266,11 @@ class MarketplaceSocialSystem {
             } else {
                 tierBadge.innerHTML = `
                     <span style="background: ${tierColors[this.userSubscription]}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                        ${tier.name}${this.userSubscription !== 'guest' && tier.price > 0 ? ` - L.${tier.price}/mes` : ''}
+                        ${this.escapeHtml(tier.name)}${this.userSubscription !== 'guest' && tier.price > 0 ? ` - L.${tier.price}/mes` : ''}
                     </span>
                 `;
             }
         }
-
-        // Update services tier banner
-        this.updateServicesTierBanner();
-    }
-
-    // Update the tier info banner in Services section - Layered Model
-    // Layers: Visitor -> Registered User -> Bonuses (Plan Paid + Tanda Member)
-    updateServicesTierBanner() {
-        const container = document.getElementById('tierInfoContent');
-        if (!container) return;
-
-        // Determine user layers
-        const isGuest = this.isGuest;
-        const isRegistered = !isGuest;
-        const hasPaidPlan = ['plan', 'premium'].includes(this.userSubscription);
-        const isTandaMember = this.userSubscription === 'tanda_member' || this.subscriptionData?.is_tanda_benefit;
-        const paidTier = hasPaidPlan ? this.userSubscription : null;
-
-        // Get user display info
-        const userName = this.currentUser?.name || this.currentUser?.username || 'Usuario';
-        const userInitial = userName.charAt(0).toUpperCase();
-
-        // Build badges based on active layers
-        let badgesHTML = '';
-
-        if (isGuest) {
-            badgesHTML = `<span class="tier-badge visitor">👁️ Visitante</span>`;
-        } else {
-            badgesHTML = `<span class="tier-badge registered">👤 Usuario</span>`;
-
-            if (isTandaMember) {
-                badgesHTML += `<span class="tier-badge tanda-member">🎯 Miembro Tanda</span>`;
-            }
-
-            if (hasPaidPlan) {
-                const planLabel = paidTier === 'premium' ? '👑 Premium' : '⭐ Plan';
-                badgesHTML += `<span class="tier-badge plan-paid">${planLabel}</span>`;
-            }
-        }
-
-        // Determine benefits based on combined layers
-        let benefits = [];
-        let lockedBenefits = [];
-
-        // Layer 1: Everyone (Visitors)
-        benefits.push({ text: '👀 Explorar' });
-        benefits.push({ text: '🛒 Comprar' });
-
-        if (isGuest) {
-            // Visitors can browse and buy, but need to register for more
-            lockedBenefits.push({ text: '💬 Mensajes' });
-            lockedBenefits.push({ text: '📅 Reservar' });
-        } else {
-            // Layer 2: Registered Users
-            const msgLimit = isTandaMember || hasPaidPlan ? '💬 Mensajes ∞' : '💬 Mensajes (5/día)';
-            benefits.push({ text: msgLimit });
-            benefits.push({ text: '⭐ Favoritos' });
-
-            if (isTandaMember || hasPaidPlan) {
-                // Layer 3: Tanda Member OR Paid Plan benefits
-                benefits.push({ text: '📅 Reservar' });
-                benefits.push({ text: '✍️ Reseñas' });
-
-                if (isTandaMember || paidTier === 'premium') {
-                    benefits.push({ text: '🚀 Prioridad' });
-                }
-
-                if (isTandaMember) {
-                    benefits.push({ text: '💵 Comisiones' });
-                }
-
-                if (paidTier === 'premium') {
-                    benefits.push({ text: '💰 10% desc.' });
-                }
-            } else {
-                // Free registered user - show what they could unlock
-                lockedBenefits.push({ text: '📅 Reservar' });
-                lockedBenefits.push({ text: '🚀 Prioridad' });
-            }
-        }
-
-        // Build benefits HTML
-        const benefitsHTML = benefits.map(b => `<span class="tier-benefit">✅ ${b.text}</span>`).join('');
-        const lockedHTML = lockedBenefits.map(b => `<span class="tier-benefit locked">🔒 ${b.text}</span>`).join('');
-
-        // Determine upgrade action
-        let upgradeHTML = '';
-        if (isGuest) {
-            upgradeHTML = `
-                <div class="tier-actions">
-                    <button class="tier-upgrade-btn" onclick="goToLogin()">🚀 Crear Cuenta</button>
-                </div>`;
-        } else if (!isTandaMember && !hasPaidPlan) {
-            upgradeHTML = `
-                <div class="tier-actions">
-                    <button class="tier-upgrade-btn tanda" onclick="window.location.href='grupos.html'" title="Únete a una tanda y obtén beneficios gratis">🎯 Unirse a Tanda</button>
-                </div>`;
-        }
-
-        // Build status message
-        let statusMsg = isGuest ? 'Regístrate para más beneficios' :
-                        isTandaMember ? '¡Beneficios por ser miembro activo!' :
-                        hasPaidPlan ? (paidTier === 'premium' ? 'Plan Premium' : 'Plan activo') :
-                        'Cuenta gratuita';
-
-        // Apply special styling for tanda members
-        container.parentElement.style.cssText = isTandaMember ?
-            'background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(0, 255, 255, 0.3);' : '';
-
-        container.innerHTML = `
-            <div class="tier-user-level">
-                <div class="tier-user-avatar">${isGuest ? '👁️' : userInitial}</div>
-                <div class="tier-user-info">
-                    <span class="tier-user-name">${isGuest ? 'Visitante' : userName}</span>
-                    <span class="tier-user-status">${statusMsg}</span>
-                </div>
-            </div>
-            <div class="tier-badges">${badgesHTML}</div>
-            <div class="tier-benefits">${benefitsHTML}${lockedHTML}</div>
-            ${upgradeHTML}
-        `;
     }
 
     // Show special banner for tanda members
@@ -490,7 +358,7 @@ class MarketplaceSocialSystem {
             document.getElementById('upgradeFeatures').innerHTML = tier.features.map(f => `<li>✅ ${f}</li>`).join('');
             modal.classList.add('active');
         } else {
-            this.showNotification(`Necesitas ${tier.name} (L.${tier.price}/mes) para ${action}`, 'info');
+            this.showNotification(`Necesitas ${this.escapeHtml(tier.name)} (L.${tier.price}/mes) para ${action}`, 'info');
         }
     }
 
@@ -558,68 +426,6 @@ class MarketplaceSocialSystem {
                 this.handleCreatePost();
             });
         }
-
-        // Delegated click handler for data-action buttons (v3.97.0 - Audit Round 22)
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            const action = btn.dataset.action;
-            const serviceId = btn.dataset.serviceId;
-            const productId = btn.dataset.productId;
-            const postId = btn.dataset.postId;
-            const bookingId = btn.dataset.bookingId;
-
-            e.stopPropagation();
-            switch (action) {
-                // Service actions
-                case 'book': if (serviceId) bookService(serviceId); break;
-                case 'share': if (serviceId) showShareModal(serviceId); else if (productId) showShareModal(productId, 'product'); break;
-                // Product actions
-                case 'buy': if (productId) buyProduct(productId); break;
-                case 'contact-seller': {
-                    const sellerId = btn.dataset.sellerId;
-                    const sellerName = btn.dataset.sellerName;
-                    const prodName = btn.dataset.productName;
-                    if (productId) window.ms?.contactSeller(productId, sellerId, sellerName, prodName);
-                    break;
-                }
-                case 'edit': if (productId) editProduct(productId); break;
-                case 'delete': if (productId) deleteProduct(productId); break;
-                // Post actions
-                case 'like': if (postId) toggleLike(postId); break;
-                case 'comments': if (postId) showComments(postId); break;
-                case 'share-post': if (postId) sharePost(postId); break;
-                // Booking actions
-                case 'cancel-booking': if (bookingId) cancelBooking(bookingId); break;
-                case 'contact-provider': if (bookingId) contactProvider(bookingId); break;
-                case 'reschedule': if (bookingId) rescheduleBooking(bookingId); break;
-                case 'leave-review': if (bookingId) leaveReview(bookingId); break;
-                case 'rebook': if (bookingId) rebookService(bookingId); break;
-            }
-
-            // Conversation open-chat
-            const chatItem = e.target.closest('[data-action="open-chat"]');
-            if (chatItem) {
-                const userId = chatItem.dataset.userId;
-                const userName = chatItem.dataset.userName;
-                const prodId = chatItem.dataset.productId || null;
-                const prodTitle = chatItem.dataset.productTitle || '';
-                window.ms?.openChat(userId, userName, prodId, prodTitle);
-            }
-        });
-
-        // Delegated click for service/product cards (view detail)
-        document.addEventListener('click', (e) => {
-            const serviceCard = e.target.closest('.service-card[data-service-id]');
-            if (serviceCard && !e.target.closest('[data-action]')) {
-                viewService(serviceCard.dataset.serviceId);
-                return;
-            }
-            const productCard = e.target.closest('.product-card[data-product-id]');
-            if (productCard && !e.target.closest('[data-action]')) {
-                viewProduct(productCard.dataset.productId);
-            }
-        });
     }
     
     switchTab(tabName) {
@@ -629,23 +435,14 @@ class MarketplaceSocialSystem {
                 tab.classList.remove('active');
             }
         });
-        const tabBtn = document.querySelector(`[data-tab="${tabName}"]`);
-        if (tabBtn) tabBtn.classList.add('active');
-
-        // Sync sidebar nav items
-        document.querySelectorAll('.mp-nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        const sidebarItem = document.querySelector(`.mp-nav-item[onclick*="'${tabName}'"]`);
-        if (sidebarItem) sidebarItem.classList.add('active');
-
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
         // Update content sections
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
-        const section = document.getElementById(tabName);
-        if (section) section.classList.add('active');
-
+        document.getElementById(tabName).classList.add('active');
+        
         // Load section-specific data
         this.loadSectionData(tabName);
     }
@@ -673,7 +470,7 @@ class MarketplaceSocialSystem {
                 this.loadSocialFeed();
                 break;
             case 'my-store':
-                this.loadMyProducts();
+                this.loadMyStore();
                 break;
             case 'orders':
                 this.loadOrdersData('purchases');
@@ -684,34 +481,29 @@ class MarketplaceSocialSystem {
             case 'community':
                 this.loadCommunityData();
                 break;
-            case 'messages':
-                this.loadConversations();
-                break;
             case 'reputation':
                 this.loadReputationData();
+                break;
+            case 'messages':
+                this.loadConversations();
+        // v4.2.0: Delegated listener for conversation items
+        document.addEventListener('click', (e) => {
+            const convItem = e.target.closest('[data-action="open-conv"]');
+            if (convItem) {
+                const otherId = convItem.dataset.otherId;
+                const productId = convItem.dataset.productId || null;
+                const otherName = convItem.dataset.otherName;
+                this.openConversation(otherId, productId, otherName);
+            }
+        });
                 break;
         }
     }
 
     // Services section
     loadServicesSection() {
-        this.updateServicesTierBanner();
-        this.updateServicesStats();
         this.loadFeaturedServices();
         this.loadRecentServices();
-    }
-
-    // Update services stats in UI
-    updateServicesStats() {
-        const activeCount = document.getElementById('servicesActiveCount');
-        const providersCount = document.getElementById('servicesProvidersCount');
-        const bookingsCount = document.getElementById('servicesBookingsCount');
-        const avgRating = document.getElementById('servicesAvgRating');
-
-        if (activeCount) activeCount.textContent = this.marketStats.totalServices.toLocaleString();
-        if (providersCount) providersCount.textContent = this.marketStats.totalProviders.toLocaleString();
-        if (bookingsCount) bookingsCount.textContent = this.marketStats.totalTransactions.toLocaleString();
-        if (avgRating) avgRating.textContent = (this.marketStats.avgRating || 4.8).toFixed(1);
     }
 
     loadFeaturedServices() {
@@ -729,10 +521,17 @@ class MarketplaceSocialSystem {
         container.innerHTML = this.services.map(service => this.createServiceCard(service)).join('');
     }
 
+    formatPrice(price, currency, suffix) {
+        const sym = currency === 'USD' ? '$' : 'L.';
+        const formatted = currency === 'USD' ? price.toLocaleString('en-US') : price.toLocaleString();
+        return suffix ? `${sym}${formatted}${suffix}` : `${sym}${formatted}`;
+    }
+
     createServiceCard(service) {
         const categoryLabel = this.serviceCategories[service.category] || service.category;
-        const priceLabel = service.priceType === 'hourly' ? `L.${service.price}/hora` :
-                          service.priceType === 'fixed' ? `L.${service.price}` : 'Cotizar';
+        const cur = service.currency || 'HNL';
+        const priceLabel = service.priceType === 'hourly' ? this.formatPrice(service.price, cur, '/hora') :
+                          service.priceType === 'fixed' ? this.formatPrice(service.price, cur) : 'Cotizar';
 
         // Calculate potential commission (5% default)
         const commissionPercent = service.referralCommission || 5;
@@ -741,9 +540,9 @@ class MarketplaceSocialSystem {
             : (service.price * commissionPercent / 100).toFixed(0);
 
         return `
-            <div class="service-card" data-service-id="${this.escapeHtml(service.id)}">
+            <div class="service-card" data-action="view-service" data-id="${this.escapeHtml(service.id)}">
                 <div class="service-image">
-                    <span>${this.escapeHtml(service.image)}</span>
+                    <span>${service.image}</span>
                     ${service.provider.verified ? '<div class="service-badge verified">Verificado</div>' : ''}
                     ${service.featured ? '<div class="service-badge featured">Destacado</div>' : ''}
                 </div>
@@ -752,33 +551,33 @@ class MarketplaceSocialSystem {
                     <div class="service-title">${this.escapeHtml(service.title)}</div>
                     <div class="service-description">${this.escapeHtml(service.description)}</div>
                     <div class="service-provider">
-                        <div class="provider-avatar">${this.escapeHtml(service.provider.avatar)}</div>
+                        <div class="provider-avatar">${service.provider.avatar}</div>
                         <div class="provider-info">
                             <div class="provider-name">${this.escapeHtml(service.provider.name)}</div>
                             <div class="provider-rating">⭐ ${this.escapeHtml(service.provider.rating)} (${this.escapeHtml(service.provider.completedJobs)} trabajos)</div>
                         </div>
                     </div>
                     <div class="service-details">
-                        <div class="service-price">${this.escapeHtml(priceLabel)}</div>
-                        <div class="service-duration">⏱️ ~${this.escapeHtml(service.duration)}h</div>
+                        <div class="service-price">${priceLabel}</div>
+                        <div class="service-duration">⏱️ ~${service.duration}h</div>
                     </div>
                     <div class="service-availability">
-                        📅 ${(service.availability || []).map(a => this.escapeHtml(a)).join(' | ')}
+                        📅 ${service.availability.join(' | ')}
                     </div>
                     <div class="service-areas">
-                        📍 ${(service.serviceAreas || []).map(a => this.escapeHtml(a)).join(', ')}
+                        📍 ${service.serviceAreas.join(', ')}
                     </div>
                     <div class="service-actions" style="display: flex; gap: 8px; margin-top: 12px;">
-                        <button class="btn btn-primary" style="flex: 1;" data-action="book" data-service-id="${this.escapeHtml(service.id)}">
+                        <button class="btn btn-primary" style="flex: 1;" data-action="book-service" data-id="${this.escapeHtml(service.id)}">
                             <span>📅</span> Reservar
                         </button>
-                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share" data-service-id="${this.escapeHtml(service.id)}" title="Compartir y ganar L.${this.escapeHtml(estimatedCommission)}">
+                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share-service" data-id="${this.escapeHtml(service.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
                             <span>💰</span>
                         </button>
                     </div>
                     ${!this.isGuest ? `
                     <div class="commission-hint" style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(0,255,255,0.7);">
-                        💰 Gana L.${estimatedCommission} por cada reserva referida
+                        💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada reserva referida
                     </div>
                     ` : ''}
                 </div>
@@ -848,11 +647,9 @@ class MarketplaceSocialSystem {
             }
 
             const response = await this.apiRequest('/api/marketplace/bookings');
-            const bookings = response.data?.bookings || response.bookings;
 
-            if (response.success) {
-                // Handle both array and empty response
-                this.bookings = (bookings || []).map(b => ({
+            if (response.success && response.bookings) {
+                this.bookings = response.bookings.map(b => ({
                     id: b.booking_id,
                     bookingCode: b.booking_code,
                     serviceId: b.service_id,
@@ -863,6 +660,7 @@ class MarketplaceSocialSystem {
                     duration: parseFloat(b.duration_hours) || 1,
                     status: b.status,
                     price: parseFloat(b.quoted_price) || 0,
+                    currency: b.currency || 'HNL',
                     finalPrice: b.final_price ? parseFloat(b.final_price) : null,
                     paymentStatus: b.payment_status,
                     address: b.service_address,
@@ -883,14 +681,14 @@ class MarketplaceSocialSystem {
 
                 this.renderBookings(container);
             } else {
-                throw new Error(response.message || 'Error al cargar reservas');
+                throw new Error('No bookings data returned');
             }
         } catch (error) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
                     <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
                     <h3>Error cargando reservas</h3>
-                    <p>Intenta de nuevo más tarde</p>
+                    <p>${error.message || 'Intenta de nuevo más tarde'}</p>
                     <button class="btn btn-secondary" style="margin-top: 15px;" onclick="window.marketplaceSystem.loadBookingsData()">Reintentar</button>
                 </div>
             `;
@@ -912,34 +710,34 @@ class MarketplaceSocialSystem {
             return `
                 <div class="social-post">
                     <div class="post-header">
-                        <div class="user-avatar">${this.escapeHtml(booking.service.charAt(0))}</div>
+                        <div class="user-avatar">${booking.service.charAt(0)}</div>
                         <div class="user-info">
-                            <div class="user-name">${this.escapeHtml(booking.service)}</div>
-                            <div class="post-time">Proveedor: ${this.escapeHtml(booking.provider)} • ${this.escapeHtml(booking.bookingCode || '')}</div>
+                            <div class="user-name">${booking.service}</div>
+                            <div class="post-time">Proveedor: ${booking.provider} • ${booking.bookingCode || ''}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 700; color: #10B981;">L.${this.escapeHtml(booking.price.toLocaleString())}</div>
-                            <div style="font-size: 12px; color: ${this.escapeHtml(status.color)};">${this.escapeHtml(status.label)}</div>
+                            <div style="font-weight: 700; color: #10B981;">${this.formatPrice(booking.price, booking.currency || 'HNL')}</div>
+                            <div style="font-size: 12px; color: ${status.color};">${status.label}</div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 20px; margin-top: 10px; color: rgba(255,255,255,0.7); font-size: 14px; flex-wrap: wrap;">
-                        <span>📅 ${this.escapeHtml(booking.scheduledAt.toLocaleDateString('es-HN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))}</span>
-                        <span>🕐 ${this.escapeHtml(booking.scheduledAt.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' }))}</span>
-                        <span>⏱️ ${this.escapeHtml(booking.duration)}h</span>
+                        <span>📅 ${booking.scheduledAt.toLocaleDateString('es-HN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        <span>🕐 ${booking.scheduledAt.toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>⏱️ ${booking.duration}h</span>
                     </div>
-                    ${booking.address ? `<div style="margin-top: 8px; color: rgba(255,255,255,0.6); font-size: 13px;">📍 ${this.escapeHtml(booking.address)}</div>` : ''}
+                    ${booking.address ? `<div style="margin-top: 8px; color: rgba(255,255,255,0.6); font-size: 13px;">📍 ${booking.address}</div>` : ''}
                     <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                         ${booking.status === 'pending' ? `
-                            <button class="btn btn-danger" data-action="cancel-booking" data-booking-id="${this.escapeHtml(booking.id)}">Cancelar</button>
-                            <button class="btn btn-secondary" data-action="contact-provider" data-booking-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-danger" data-action="cancel-booking" data-id="${this.escapeHtml(booking.id)}">Cancelar</button>
+                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         ` : booking.status === 'confirmed' ? `
-                            <button class="btn btn-secondary" data-action="reschedule" data-booking-id="${this.escapeHtml(booking.id)}">Reprogramar</button>
-                            <button class="btn btn-secondary" data-action="contact-provider" data-booking-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-secondary" data-action="reschedule-booking" data-id="${this.escapeHtml(booking.id)}">Reprogramar</button>
+                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         ` : booking.status === 'completed' ? `
-                            <button class="btn btn-primary" data-action="leave-review" data-booking-id="${this.escapeHtml(booking.id)}">Dejar Reseña</button>
-                            <button class="btn btn-secondary" data-action="rebook" data-booking-id="${this.escapeHtml(booking.id)}">Reservar de Nuevo</button>
+                            <button class="btn btn-primary" data-action="leave-review" data-id="${this.escapeHtml(booking.id)}">Dejar Reseña</button>
+                            <button class="btn btn-secondary" data-action="rebook-service" data-id="${this.escapeHtml(booking.id)}">Reservar de Nuevo</button>
                         ` : `
-                            <button class="btn btn-secondary" data-action="contact-provider" data-booking-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         `}
                     </div>
                 </div>
@@ -968,14 +766,15 @@ class MarketplaceSocialSystem {
             document.getElementById('bookingProviderName').textContent = service.provider.name;
 
             // Calculate and display price
+            const cur = service.currency || 'HNL';
             const estimatedPrice = service.priceType === 'hourly'
                 ? service.price * service.duration
                 : service.price;
             const priceText = service.priceType === 'hourly'
-                ? `L.${service.price}/hora × ${service.duration}h = L.${estimatedPrice}`
+                ? `${this.formatPrice(service.price, cur, '/hora')} × ${service.duration}h = ${this.formatPrice(estimatedPrice, cur)}`
                 : service.priceType === 'quote'
-                    ? `Precio estimado: L.${service.price}+ (cotizar)`
-                    : `L.${service.price}`;
+                    ? `Precio estimado: ${this.formatPrice(service.price, cur)}+ (cotizar)`
+                    : this.formatPrice(service.price, cur);
 
             document.getElementById('bookingPrice').textContent = priceText;
             document.getElementById('bookingServiceId').value = serviceId;
@@ -983,7 +782,7 @@ class MarketplaceSocialSystem {
             // Show provider rating if available
             const ratingEl = document.getElementById('bookingProviderRating');
             if (ratingEl) {
-                ratingEl.innerHTML = `⭐ ${service.provider.rating} (${service.provider.completedJobs} trabajos)`;
+                ratingEl.innerHTML = `⭐ ${this.escapeHtml(service.provider.rating)} (${this.escapeHtml(service.provider.completedJobs)} trabajos)`;
             }
 
             // Set min date to tomorrow
@@ -1074,52 +873,15 @@ class MarketplaceSocialSystem {
             }
         }
     }
-    // =====================================================
-    // SKELETON LOADING STATES
-    // =====================================================
-    
-    createProductSkeleton() {
-        return `
-            <div class="product-card-skeleton">
-                <div class="skeleton-image">📦</div>
-                <div class="skeleton-title"></div>
-                <div class="skeleton-price"></div>
-                <div class="skeleton-meta">
-                    <div class="skeleton-badge"></div>
-                    <div class="skeleton-badge"></div>
-                </div>
-                <div class="skeleton-button"></div>
-            </div>
-        `;
-    }
-
-    showProductSkeletons(containerId, count = 4) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        const skeletons = Array(count).fill(null).map(() => this.createProductSkeleton()).join("");
-        container.innerHTML = skeletons;
-    }
-
-    showAllSkeletons() {
-        this.showProductSkeletons("featuredProducts", 3);
-        this.showProductSkeletons("recentProducts", 8);
-        this.showProductSkeletons("featuredServices", 3);
-        this.showProductSkeletons("recentServices", 6);
-    }
-
     
     async loadMarketplaceData() {
         try {
             // Fetch products from real API
             const response = await this.apiRequest('/api/marketplace/products');
 
-            // API returns { success, data: { products } }
-            const products = response.data?.products || response.products;
-
-            if (response.success && products && products.length > 0) {
+            if (response.success && response.products) {
                 // Transform API response to frontend format
-                this.products = products.map(p => ({
+                this.products = response.products.map(p => ({
                     id: `prod_${p.id}`,
                     productId: p.id,  // For referrals API
                     name: p.title,
@@ -1193,11 +955,10 @@ class MarketplaceSocialSystem {
         try {
             // Fetch services from real API
             const response = await this.apiRequest('/api/marketplace/services');
-            const services = response.data?.services || response.services;
 
-            if (response.success && services) {
+            if (response.success && response.services) {
                 // Transform API response to frontend format
-                this.services = services.map(s => ({
+                this.services = response.services.map(s => ({
                     id: `srv_${s.service_id}`,
                     serviceId: s.service_id,
                     title: s.title,
@@ -1206,6 +967,7 @@ class MarketplaceSocialSystem {
                     priceType: s.price_type,
                     price: parseFloat(s.price),
                     priceMax: s.price_max ? parseFloat(s.price_max) : null,
+                    currency: s.currency || 'HNL',
                     duration: parseFloat(s.duration_hours) || 1,
                     image: s.category_icon || this.getCategoryIcon(s.category_id),
                     images: s.images || [],
@@ -1353,16 +1115,15 @@ class MarketplaceSocialSystem {
     }
     
     updateMarketStats() {
-        const el1 = document.getElementById('totalProducts'); if(el1) el1.textContent = this.marketStats.totalProducts.toLocaleString();
-        const el2 = document.getElementById('totalSellers'); if(el2) el2.textContent = this.marketStats.totalSellers.toLocaleString();
-        const el3 = document.getElementById('totalTransactions'); if(el3) el3.textContent = this.marketStats.totalTransactions.toLocaleString();
-        const el4 = document.getElementById('totalVolume'); if(el4) el4.textContent = `${(this.marketStats.totalVolume / 1000).toFixed(1)}K`;
+        document.getElementById('totalProducts').textContent = this.marketStats.totalProducts.toLocaleString();
+        document.getElementById('totalSellers').textContent = this.marketStats.totalSellers.toLocaleString();
+        document.getElementById('totalTransactions').textContent = this.marketStats.totalTransactions.toLocaleString();
+        document.getElementById('totalVolume').textContent = `${(this.marketStats.totalVolume / 1000).toFixed(1)}K`;
     }
     
     loadMarketplaceProducts() {
         this.loadFeaturedProducts();
         this.loadRecentProducts();
-                this.loadMyProducts();
     }
     
     loadFeaturedProducts() {
@@ -1393,38 +1154,35 @@ class MarketplaceSocialSystem {
         const estimatedCommission = (product.price * commissionPercent / 100).toFixed(0);
 
         return `
-            <div class="product-card" data-product-id="${this.escapeHtml(product.id)}">
-                <div class="product-image" style="overflow: hidden;">
-                    ${product.images && product.images.length > 0 && product.images[0].url ? `<img src="${this.escapeHtml(product.images[0].thumbnail || product.images[0].url)}" style="width: 100%; height: 100%; object-fit: cover;" alt="${this.escapeHtml(product.name)}">` : `<span>${this.escapeHtml(product.image || "📦")}</span>`}
+            <div class="product-card" data-action="view-product" data-id="${this.escapeHtml(product.id)}">
+                <div class="product-image">
+                    <span>${product.image}</span>
                     ${product.featured ? '<div class="product-badge">Destacado</div>' : ''}
                 </div>
                 <div class="product-info">
-                    <div class="product-title">${this.escapeHtml(product.name)}</div>
+                    <div class="product-title">${product.name}</div>
                     <div class="product-description">${this.escapeHtml(product.description)}</div>
                     <div class="product-price">
                         <div>
-                            <div class="price-ltd">${this.escapeHtml(product.price)} LTD</div>
-                            <div class="price-usd">≈ $${this.escapeHtml(priceUSD)} USD</div>
+                            <div class="price-ltd">${product.price} LTD</div>
+                            <div class="price-usd">≈ $${priceUSD} USD</div>
                         </div>
                         <div style="text-align: right; color: ${product.quantity > 0 ? '#10B981' : '#EF4444'}; font-size: 12px;">
-                            ${product.quantity > 0 ? `${this.escapeHtml(product.quantity)} disponibles` : 'Agotado'}
+                            ${product.quantity > 0 ? `${product.quantity} disponibles` : 'Agotado'}
                         </div>
                     </div>
                     <div class="product-seller">
-                        <div class="seller-avatar">${this.escapeHtml(product.seller.avatar)}</div>
+                        <div class="seller-avatar">${product.seller.avatar}</div>
                         <div class="seller-info">
                             <div class="seller-name">${this.escapeHtml(product.seller.name)}</div>
-                            <div class="seller-rating">⭐ ${this.escapeHtml(product.seller.rating)}/5.0</div>
+                            <div class="seller-rating">⭐ ${product.seller.rating}/5.0</div>
                         </div>
                     </div>
                     <div class="product-actions" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <button class="btn btn-primary" style="flex: 1;" data-action="buy" data-product-id="${this.escapeHtml(product.id)}">
+                        <button class="btn btn-primary" style="flex: 1;" data-action="buy-product" data-id="${this.escapeHtml(product.id)}">
                             <span>🛒</span> Comprar
                         </button>
-                        <button class="btn btn-secondary" style="padding: 10px 14px;" data-action="contact-seller" data-product-id="${this.escapeHtml(product.id)}" data-seller-id="${this.escapeHtml(product.seller_id || product.seller?.id)}" data-seller-name="${this.escapeHtml(product.seller?.name)}" data-product-name="${this.escapeHtml(product.name)}" title="Contactar vendedor">
-                            <span>💬</span>
-                        </button>
-                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share" data-product-id="${this.escapeHtml(product.id)}" title="Compartir y ganar L.${this.escapeHtml(estimatedCommission)}">
+                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share-product" data-id="${this.escapeHtml(product.id)}" title="Compartir y ganar L.${estimatedCommission}">
                             <span>💰</span>
                         </button>
                     </div>
@@ -1460,22 +1218,22 @@ class MarketplaceSocialSystem {
         return `
             <div class="social-post">
                 <div class="post-header">
-                    <div class="user-avatar">${this.escapeHtml(post.user.avatar)}</div>
+                    <div class="user-avatar">${post.user.avatar}</div>
                     <div class="user-info">
-                        <div class="user-name">${this.escapeHtml(post.user.name)} ${typeIcons[post.type] || ''}</div>
-                        <div class="post-time">${this.escapeHtml(timeAgo)}</div>
+                        <div class="user-name">${post.user.name} ${typeIcons[post.type] || ''}</div>
+                        <div class="post-time">${timeAgo}</div>
                     </div>
                 </div>
                 <div class="post-content">${this.escapeHtml(post.content)}</div>
                 <div class="post-actions">
-                    <button class="action-btn ${post.liked ? 'active' : ''}" data-action="like" data-post-id="${this.escapeHtml(post.id)}">
+                    <button class="action-btn ${post.liked ? 'active' : ''}" data-action="toggle-like" data-id="${this.escapeHtml(post.id)}">
                         <span>👍</span> ${this.escapeHtml(post.likes)}
                     </button>
-                    <button class="action-btn" data-action="comments" data-post-id="${this.escapeHtml(post.id)}">
+                    <button class="action-btn" data-action="show-comments" data-id="${this.escapeHtml(post.id)}">
                         <span>💬</span> ${this.escapeHtml(post.comments)}
                     </button>
-                    <button class="action-btn" data-action="share-post" data-post-id="${this.escapeHtml(post.id)}">
-                        <span>📤</span> ${this.escapeHtml(post.shares)}
+                    <button class="action-btn" data-action="share-post" data-id="${this.escapeHtml(post.id)}">
+                        <span>📤</span> ${post.shares}
                     </button>
                 </div>
             </div>
@@ -1529,476 +1287,1432 @@ class MarketplaceSocialSystem {
         
         container.innerHTML = products.map(product => this.createProductCard(product)).join('');
     }
-
-    // =====================================================
-    // SEARCH PRODUCTS WITH API FILTERS
-    // =====================================================
-    async searchProducts() {
-        const searchTerm = document.getElementById("searchInput")?.value || "";
-        const categoryFilter = document.getElementById("categoryFilter")?.value || "";
-        const priceFilter = document.getElementById("priceFilter")?.value || "";
-        const locationFilter = document.getElementById("locationFilter")?.value || "";
-
-        // Build query params
-        const params = new URLSearchParams();
-        if (searchTerm) params.append("search", searchTerm);
-        if (categoryFilter) params.append("category", categoryFilter);
-        if (locationFilter) params.append("location", locationFilter);
-        
-        // Parse price range
-        if (priceFilter) {
-            const [min, max] = priceFilter.split("-").map(Number);
-            if (min) params.append("minPrice", min);
-            if (max) params.append("maxPrice", max);
-        }
-
-        // Show loading state
-        const recentContainer = document.getElementById("recentProducts");
-        const featuredContainer = document.getElementById("featuredProducts");
-        
-        if (recentContainer) {
-            this.showProductSkeletons("recentProducts", 4);
-        }
-
-        try {
-            const url = `/api/marketplace/products?${params.toString()}`;
-            
-            const response = await this.apiRequest(url);
-            const products = response.data?.products || response.products || [];
-
-            // Map API response
-            const mappedProducts = products.map(p => ({
-                id: `prod_${p.id}`,
-                productId: p.id,
-                name: p.title,
-                description: p.description || "",
-                price: parseFloat(p.price) || 0,
-                category: p.category_id,
-                seller: p.seller_name || "Vendedor",
-                rating: 4.5,
-                sales: p.views_count || 0,
-                featured: p.is_featured,
-                image: this.getProductIcon(p.category_id, p.images),
-                location: p.location || "Honduras"
-            }));
-
-            // Update results count
-            const total = response.data?.total || mappedProducts.length;
-            this.updateSearchResultsHeader(searchTerm, total);
-
-            // Display results
-            if (mappedProducts.length === 0) {
-                if (recentContainer) {
-                    this.showProductSkeletons("recentProducts", 4);
-                }
-                if (featuredContainer) featuredContainer.innerHTML = "";
-                return;
-            }
-
-            // Split into featured and recent
-            const featured = mappedProducts.filter(p => p.featured);
-            const recent = mappedProducts;
-
-            if (featuredContainer && featured.length > 0) {
-                featuredContainer.innerHTML = featured.map(p => this.createProductCard(p)).join("");
-            } else if (featuredContainer) {
-                featuredContainer.innerHTML = "";
-            }
-
-            if (recentContainer) {
-                recentContainer.innerHTML = recent.map(p => this.createProductCard(p)).join("");
-            }
-
-
-        } catch (error) {
-            if (recentContainer) {
-                this.showProductSkeletons("recentProducts", 4);
-            }
-        }
-    }
-
-    updateSearchResultsHeader(searchTerm, total) {
-        // Update the card header to show search results
-        const header = document.querySelector("#marketplace .card-title");
-        const subtitle = document.querySelector("#marketplace .card-subtitle");
-        
-        if (searchTerm && header) {
-            header.textContent = `Resultados para "${searchTerm}"`;
-            if (subtitle) subtitle.textContent = `${total} producto${total !== 1 ? "s" : ""} encontrado${total !== 1 ? "s" : ""}`;
-        }
-    }
-
-    clearFilters() {
-        document.getElementById("searchInput").value = "";
-        document.getElementById("categoryFilter").value = "";
-        document.getElementById("priceFilter").value = "";
-        document.getElementById("locationFilter").value = "";
-        
-        // Reset headers
-        const header = document.querySelector("#marketplace .card:last-of-type .card-title");
-        const subtitle = document.querySelector("#marketplace .card:last-of-type .card-subtitle");
-        if (header) header.textContent = "Últimos Productos";
-        if (subtitle) subtitle.textContent = "Recién agregados al marketplace";
-        
-        // Reload all products
-        this.loadMarketplaceProducts();
-    }
     
-
-    // =====================================================
-    // MESSAGING METHODS
-    // =====================================================
-
-    currentChat = {
-        otherUserId: null,
-        otherUserName: null,
-        productId: null,
-        productTitle: null
-    };
-
-    async loadConversations() {
-        const container = document.getElementById('conversationsList');
+    async loadMyStore() {
+        const container = document.getElementById('myStoreContent');
         if (!container) return;
 
-        container.innerHTML = `
-            <div class="conversations-loading">
-                <div class="pulse" style="font-size: 32px;">💬</div>
-                <p>Cargando conversaciones...</p>
-            </div>
-        `;
-
-        try {
-            const response = await this.apiRequest('/api/marketplace/messages/conversations');
-            const conversations = response.data?.conversations || response.conversations || [];
-
-            if (conversations.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-conversations">
-                        <div class="icon">💬</div>
-                        <h3>No tienes conversaciones</h3>
-                        <p>Cuando contactes a un vendedor o recibas mensajes, aparecerán aquí</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = conversations.map(conv => this.createConversationItem(conv)).join('');
-
-            // Update unread badge
-            const totalUnread = conversations.reduce((sum, c) => sum + (c.has_unread ? 1 : 0), 0);
-            this.updateUnreadBadge(totalUnread);
-
-        } catch (error) {
-            container.innerHTML = `
-                <div class="empty-conversations">
-                    <div class="icon">❌</div>
-                    <h3>Error al cargar</h3>
-                    <p>Intenta de nuevo más tarde</p>
-                    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="window.ms.loadConversations()">
-                        Reintentar
-                    </button>
-                </div>
-            `;
-        }
-    }
-
-    createConversationItem(conv) {
-        const initial = (conv.other_user_name || 'U').charAt(0).toUpperCase();
-        const time = this.formatMessageTime(conv.created_at);
-        const preview = conv.message ? (conv.message.length > 40 ? conv.message.substring(0, 40) + '...' : conv.message) : '';
-
-        return `
-            <div class="conversation-item ${conv.has_unread ? 'unread' : ''}"
-                 data-action="open-chat" data-user-id="${this.escapeHtml(conv.other_user_id)}" data-user-name="${this.escapeHtml(conv.other_user_name || 'Usuario')}" data-product-id="${this.escapeHtml(conv.product_id || '')}" data-product-title="${this.escapeHtml(conv.product_title || '')}">
-                <div class="conversation-avatar">${this.escapeHtml(initial)}</div>
-                <div class="conversation-info">
-                    <div class="conversation-name">${this.escapeHtml(conv.other_user_name || 'Usuario')}</div>
-                    <div class="conversation-preview">${this.escapeHtml(preview)}</div>
-                    ${conv.product_title ? `<div class="conversation-product">📦 ${this.escapeHtml(conv.product_title)}</div>` : ''}
-                </div>
-                <div class="conversation-meta">
-                    <div class="conversation-time">${this.escapeHtml(time)}</div>
-                    ${conv.has_unread ? '<div class="conversation-unread">Nuevo</div>' : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    formatMessageTime(timestamp) {
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diff = now - date;
-        
-        if (diff < 60000) return 'Ahora';
-        if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
-        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
-        if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
-        
-        return date.toLocaleDateString('es-HN', { month: 'short', day: 'numeric' });
-    }
-
-    async openChat(otherUserId, otherUserName, productId, productTitle) {
-        this.currentChat = { otherUserId, otherUserName, productId, productTitle };
-
-        // Update chat header
-        document.getElementById('chatUserName').textContent = otherUserName;
-        document.getElementById('chatAvatar').textContent = otherUserName.charAt(0).toUpperCase();
-        document.getElementById('chatProduct').textContent = productTitle ? '📦 ' + productTitle : '';
-
-        // Show chat panel, hide conversations
-        document.getElementById('conversationsPanel').style.display = 'none';
-        document.getElementById('chatPanel').style.display = 'block';
-
-        // Load messages
-        await this.loadChatMessages();
-    }
-
-    closeChatPanel() {
-        document.getElementById('chatPanel').style.display = 'none';
-        document.getElementById('conversationsPanel').style.display = 'block';
-        this.loadConversations(); // Refresh conversations
-    }
-
-    async loadChatMessages() {
-        const container = document.getElementById('chatMessages');
-        if (!container) return;
-
-        container.innerHTML = '<div class="chat-loading"><div class="pulse">💬</div></div>';
-
-        try {
-            let url = `/api/marketplace/messages/${this.currentChat.otherUserId}`;
-            if (this.currentChat.productId) {
-                url += `?product_id=${this.currentChat.productId}`;
-            }
-
-            const response = await this.apiRequest(url);
-            const messages = response.data?.messages || response.messages || [];
-
-            if (messages.length === 0) {
-                container.innerHTML = `
-                    <div class="chat-loading">
-                        <p>No hay mensajes aún. ¡Envía el primero!</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = messages.map(msg => this.createMessageBubble(msg)).join('');
-
-            // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
-
-        } catch (error) {
-            container.innerHTML = `<div class="chat-loading">Error al cargar mensajes</div>`;
-        }
-    }
-
-    createMessageBubble(msg) {
-        const isSent = msg.sender_id === this.currentUser?.id;
-        const time = this.formatMessageTime(msg.created_at);
-
-        return `
-            <div class="message-bubble ${isSent ? 'sent' : 'received'}">
-                <div class="message-text">${this.escapeHtml(msg.message)}</div>
-                <div class="message-time">${this.escapeHtml(time)}</div>
-            </div>
-        `;
-    }
-
-    async sendChatMessage() {
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-
-        if (!message || !this.currentChat.otherUserId) return;
-
-        input.value = '';
-        input.disabled = true;
-
-        try {
-            await this.apiRequest('/api/marketplace/messages', {
-                method: 'POST',
-                body: JSON.stringify({
-                    recipient_id: this.currentChat.otherUserId,
-                    message: message,
-                    product_id: this.currentChat.productId
-                })
-            });
-
-            // Reload messages
-            await this.loadChatMessages();
-
-        } catch (error) {
-            this.showNotification('Error al enviar mensaje: ' + error.message, 'error');
-            input.value = message; // Restore message
-        } finally {
-            input.disabled = false;
-            input.focus();
-        }
-    }
-
-    updateUnreadBadge(count) {
-        const badge = document.getElementById('totalUnreadBadge');
-        if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'inline-block' : 'none';
-        }
-
-        // Also update tab badge
-        const tab = document.querySelector('[data-tab="messages"]');
-        if (tab) {
-            if (count > 0) {
-                tab.innerHTML = `💬 Mensajes <span class="tab-badge">${count}</span>`;
-            } else {
-                tab.innerHTML = '💬 Mensajes';
-            }
-        }
-    }
-
-    // Start a new conversation from a product
-    async contactSeller(productId, sellerId, sellerName, productTitle) {
-        if (this.isGuest) {
-            this.showLoginPrompt('enviar mensajes');
+        const token = this.getAuthToken();
+        if (!token) {
+            container.innerHTML = `<div class="store-login-prompt">
+                <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+                <h3 style="color: #fff; margin-bottom: 8px;">Inicia sesion</h3>
+                <p>Necesitas una cuenta para crear tu tienda.</p>
+            </div>`;
             return;
         }
 
-        this.currentChat = {
-            otherUserId: sellerId,
-            otherUserName: sellerName,
-            productId: productId,
-            productTitle: productTitle
-        };
-
-        // Switch to messages tab
-        this.switchTab('messages');
-
-        // Open chat directly
-        setTimeout(() => {
-            this.openChat(sellerId, sellerName, productId, productTitle);
-        }, 100);
-    }
-
-    async loadMyProducts() {
-        const container = document.getElementById('myProducts');
-        if (!container) return;
-
-        // Show loading state
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                <div class="pulse" style="font-size: 48px;">📦</div>
-                <p style="color: rgba(255,255,255,0.6); margin-top: 15px;">Cargando tus productos...</p>
-            </div>
-        `;
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Cargando...</div>';
 
         try {
-            const response = await this.apiRequest('/api/marketplace/products/my');
-            const products = response.data?.products || response.products || [];
-
-            if (products.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                        <div style="font-size: 64px; margin-bottom: 20px;">🏪</div>
-                        <h3 style="margin-bottom: 10px;">No tienes productos</h3>
-                        <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">Empieza a vender y gana LTD tokens</p>
-                        <button class="btn btn-primary" onclick="showCreateProductModal()">
-                            <span>➕</span> Publicar Producto
-                        </button>
-                    </div>
-                `;
-                return;
+            const res = await this.apiRequest('/api/marketplace/providers/me');
+            if (res.success && res.data?.provider) {
+                this.renderStoreDashboard(res.data.provider);
+            } else {
+                this.renderStoreOnboarding();
             }
-
-            // Map API response to display format
-            this.myProducts = products.map(p => ({
-                id: `prod_${p.id}`,
-                productId: p.id,
-                name: p.title,
-                description: p.description || '',
-                price: parseFloat(p.price) || 0,
-                quantity: p.quantity || 0,
-                category: p.category_id || 'other',
-                condition: p.condition || 'new',
-                location: p.location || '',
-                image: this.getCategoryIcon(p.category_id),
-                images: p.images || [],
-                featured: p.is_featured,
-                views: p.views_count || 0,
-                shippingAvailable: p.shipping_available,
-                shippingPrice: parseFloat(p.shipping_price) || 0,
-                referralCommission: parseFloat(p.referral_commission_percent) || 5,
-                created: p.created_at
-            }));
-
-            container.innerHTML = this.myProducts.map(product => this.createMyProductCard(product)).join('');
-
-        } catch (error) {
-            container.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
-                    <h3 style="color: #EF4444;">Error al cargar productos</h3>
-                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 15px;">Intenta de nuevo</p>
-                    <button class="btn btn-secondary" onclick="marketplace.loadMyProducts()">
-                        Reintentar
-                    </button>
-                </div>
-            `;
+        } catch (err) {
+            this.renderStoreOnboarding();
         }
     }
 
-    createMyProductCard(product) {
-        const priceUSD = (product.price * 0.0847).toFixed(2);
-        const conditionLabels = {
-            'new': 'Nuevo',
-            'like_new': 'Como Nuevo',
-            'used': 'Usado',
-            'refurbished': 'Reacondicionado'
-        };
+    async renderStoreOnboarding() {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
 
-        return `
-            <div class="product-card" style="position: relative;">
-                <div class="product-image" style="overflow: hidden;">
-                    ${product.images && product.images.length > 0 && product.images[0].url ? `<img src="${this.escapeHtml(product.images[0].thumbnail || product.images[0].url)}" style="width: 100%; height: 100%; object-fit: cover;" alt="${this.escapeHtml(product.name)}">` : `<span>${this.escapeHtml(product.image || "📦")}</span>`}
-                    ${product.featured ? '<div class="product-badge">Destacado</div>' : ''}
-                    <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 12px; font-size: 11px;">
-                        👁️ ${this.escapeHtml(product.views)} vistas
-                    </div>
+        // Fetch total provider count for early adopter banner
+        let totalProviders = 0;
+        try {
+            const res = await this.apiRequest('/api/marketplace/providers?limit=1&offset=0');
+            if (res.success && res.data?.providers) {
+                const countRes = await this.apiRequest('/api/marketplace/providers?limit=100&offset=0');
+                totalProviders = countRes.data?.providers?.length || 0;
+            }
+        } catch (e) { /* proceed without count */ }
+
+        let earlyBannerHtml = '';
+        if (totalProviders < 50) {
+            const remaining = 50 - totalProviders;
+            const pct = Math.round((totalProviders / 50) * 100);
+            earlyBannerHtml = `<div class="early-adopter-banner">
+                <div class="ea-title">Sorteo Early Seller</div>
+                <div class="ea-desc">Los primeros 50 vendedores participan en un sorteo exclusivo de 1,000 LTD tokens</div>
+                <div class="early-adopter-progress"><div class="early-adopter-progress-bar" style="width: ${pct}%;"></div></div>
+                <div class="early-adopter-spots">${this.escapeHtml(String(totalProviders))}/50 registrados &mdash; Quedan ${this.escapeHtml(String(remaining))} lugares</div>
+            </div>`;
+        } else {
+            earlyBannerHtml = `<div style="text-align:center;color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:16px;">Ya somos ${this.escapeHtml(String(totalProviders))} vendedores en La Tanda</div>`;
+        }
+
+        this._earlyBannerHtml = earlyBannerHtml;
+
+        container.innerHTML = `<div class="store-onboarding">
+            ${earlyBannerHtml}
+            <div class="store-onboarding-icon">🏪</div>
+            <h2>Crea tu Tienda</h2>
+            <div class="store-subtitle">Selecciona que vas a ofrecer. Esta eleccion no se puede cambiar despues.</div>
+            <div class="store-type-grid">
+                <div class="store-type-card" data-action="select-shop-type" data-id="services">
+                    <div class="store-type-icon">🔧</div>
+                    <div class="store-type-name">Servicios</div>
+                    <div class="store-type-desc">Freelance, consultorias, reparaciones</div>
                 </div>
-                <div class="product-info">
-                    <div class="product-title">${this.escapeHtml(product.name)}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <div>
-                            <div class="price-ltd">${this.escapeHtml(product.price)} LTD</div>
-                            <div class="price-usd">≈ $${this.escapeHtml(priceUSD)} USD</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 12px; color: ${product.quantity > 0 ? '#10B981' : '#EF4444'};">
-                                ${product.quantity > 0 ? `${this.escapeHtml(product.quantity)} disponibles` : 'Agotado'}
-                            </div>
-                            <div style="font-size: 11px; color: rgba(255,255,255,0.5);">
-                                ${this.escapeHtml(conditionLabels[product.condition] || 'Nuevo')}
-                            </div>
-                        </div>
-                    </div>
-                    ${product.location ? `
-                    <div style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 10px;">
-                        📍 ${this.escapeHtml(product.location)}
-                    </div>
-                    ` : ''}
-                    <div class="product-actions" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <button class="btn btn-secondary" style="flex: 1;" data-action="edit" data-product-id="${this.escapeHtml(product.productId)}">
-                            <span>✏️</span> Editar
-                        </button>
-                        <button class="btn btn-secondary" style="padding: 10px 14px; background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.3);" data-action="delete" data-product-id="${this.escapeHtml(product.productId)}" title="Eliminar producto">
-                            <span>🗑️</span>
-                        </button>
-                    </div>
-                    <div style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(0,255,255,0.7);">
-                        💰 Comisión referidos: ${product.referralCommission}%
-                    </div>
+                <div class="store-type-card" data-action="select-shop-type" data-id="products">
+                    <div class="store-type-icon">📦</div>
+                    <div class="store-type-name">Productos</div>
+                    <div class="store-type-desc">Productos fisicos, inventario, ventas</div>
+                </div>
+                <div class="store-type-card store-type-locked" data-action="select-shop-type" data-id="mixed">
+                    <div class="store-type-lock">🔒</div>
+                    <div class="store-type-icon">🏬</div>
+                    <div class="store-type-name">Mixta</div>
+                    <div class="store-type-desc">Servicios y productos</div>
+                    <div class="store-type-premium">Premium</div>
                 </div>
             </div>
-        `;
+        </div>`;
     }
-    
+
+    // ===================== LAYOUT PICKER (Onboarding Step 2) =====================
+    renderStoreLayoutPicker() {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
+        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+        container.innerHTML = `<div class="store-onboarding">
+            ${this._earlyBannerHtml || ''}
+            <div class="store-type-selected">
+                <span class="store-type-chip">${typeLabel}</span>
+                <button class="store-type-change" data-action="change-shop-type">Cambiar</button>
+            </div>
+            <div class="store-onboarding-icon">🎨</div>
+            <h2>Elige el estilo de tu tienda</h2>
+            <div class="store-subtitle">Puedes cambiarlo despues.</div>
+            <div class="store-layout-grid">
+                <div class="store-layout-card" data-action="select-layout" data-id="classic">
+                    <div class="store-layout-preview">
+                        <div class="slp-header"><div class="slp-avatar"></div><div class="slp-lines"><div class="slp-line w60"></div><div class="slp-line w40"></div></div></div>
+                        <div class="slp-stats"><span></span><span></span><span></span><span></span></div>
+                        <div class="slp-section"><div class="slp-line w80"></div><div class="slp-line w50"></div></div>
+                    </div>
+                    <div class="store-layout-name">Clasica</div>
+                    <div class="store-layout-desc">Header, estadisticas, secciones</div>
+                </div>
+                <div class="store-layout-card" data-action="select-layout" data-id="showcase">
+                    <div class="store-layout-preview">
+                        <div class="slp-banner"><div class="slp-line w60" style="background:rgba(6,182,212,0.4);"></div></div>
+                        <div class="slp-gallery"><span></span><span></span><span></span><span></span></div>
+                        <div class="slp-section"><div class="slp-line w40"></div></div>
+                    </div>
+                    <div class="store-layout-name">Escaparate</div>
+                    <div class="store-layout-desc">Banner, galeria, testimonios</div>
+                </div>
+                <div class="store-layout-card" data-action="select-layout" data-id="compact">
+                    <div class="store-layout-preview slp-compact-prev">
+                        <div class="slp-avatar-lg"></div>
+                        <div class="slp-line w40" style="margin:0 auto;"></div>
+                        <div class="slp-mini-stats"><span></span><span></span><span></span></div>
+                        <div class="slp-btns"><span></span><span></span></div>
+                    </div>
+                    <div class="store-layout-name">Tarjeta</div>
+                    <div class="store-layout-desc">Compacta, tipo red social</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ===================== THEME PICKER (Onboarding Step 3) =====================
+    renderStoreThemePicker() {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
+        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+        const layoutLabels = { classic: 'Clasica', showcase: 'Escaparate', compact: 'Tarjeta' };
+        const layoutLabel = layoutLabels[this._selectedLayout] || 'Clasica';
+        container.innerHTML = `<div class="store-onboarding">
+            ${this._earlyBannerHtml || ''}
+            <div class="store-type-selected">
+                <span class="store-type-chip">${typeLabel}</span>
+                <span class="store-type-chip">🎨 ${this.escapeHtml(layoutLabel)}</span>
+                <button class="store-type-change" data-action="change-layout">Cambiar</button>
+            </div>
+            <div class="store-onboarding-icon">🎨</div>
+            <h2>Elige tu tema de color</h2>
+            <div class="store-subtitle">Puedes cambiarlo despues.</div>
+            <div class="store-theme-grid">
+                <div class="store-theme-card" data-action="select-theme" data-id="dark">
+                    <div class="store-theme-swatch"><span style="background:#8B5CF6;"></span><span style="background:#06B6D4;"></span></div>
+                    <div class="store-theme-name">Oscuro</div>
+                </div>
+                <div class="store-theme-card" data-action="select-theme" data-id="cyan">
+                    <div class="store-theme-swatch"><span style="background:#06B6D4;"></span><span style="background:#14B8A6;"></span></div>
+                    <div class="store-theme-name">Cyan / Tech</div>
+                </div>
+                <div class="store-theme-card" data-action="select-theme" data-id="gold">
+                    <div class="store-theme-swatch"><span style="background:#F59E0B;"></span><span style="background:#D97706;"></span></div>
+                    <div class="store-theme-name">Dorado</div>
+                </div>
+                <div class="store-theme-card" data-action="select-theme" data-id="green">
+                    <div class="store-theme-swatch"><span style="background:#10B981;"></span><span style="background:#059669;"></span></div>
+                    <div class="store-theme-name">Verde / Eco</div>
+                </div>
+                <div class="store-theme-card" data-action="select-theme" data-id="coral">
+                    <div class="store-theme-swatch"><span style="background:#EF4444;"></span><span style="background:#F97316;"></span></div>
+                    <div class="store-theme-name">Rojo / Coral</div>
+                </div>
+                <div class="store-theme-card" data-action="select-theme" data-id="purple">
+                    <div class="store-theme-swatch"><span style="background:#A855F7;"></span><span style="background:#7C3AED;"></span></div>
+                    <div class="store-theme-name">Purpura</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ===================== ONBOARDING FORM (Step 4) =====================
+    renderStoreOnboardingForm() {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
+
+        const shopType = this._selectedShopType;
+        const typeLabel = shopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+        const layoutLabels = { classic: 'Clasica', showcase: 'Escaparate', compact: 'Tarjeta' };
+        const layoutLabel = layoutLabels[this._selectedLayout] || 'Clasica';
+        const themeLabels = { dark: 'Oscuro', cyan: 'Cyan', gold: 'Dorado', green: 'Verde', coral: 'Coral', purple: 'Purpura' };
+        const themeLabel = themeLabels[this._selectedTheme] || 'Oscuro';
+
+        container.innerHTML = `<div class="store-onboarding">
+            ${this._earlyBannerHtml || ''}
+            <div class="store-type-selected">
+                <span class="store-type-chip">${typeLabel}</span>
+                <span class="store-type-chip">🎨 ${this.escapeHtml(layoutLabel)}</span>
+                <span class="store-type-chip">🎨 ${this.escapeHtml(themeLabel)}</span>
+                <button class="store-type-change" data-action="change-theme">Cambiar</button>
+            </div>
+            <form id="storeOnboardingForm">
+                <div class="store-form-group">
+                    <label>Nombre del negocio *</label>
+                    <input type="text" id="storeNameInput" required maxlength="255" placeholder="Ej: TechStore Honduras">
+                </div>
+                <div class="store-form-group">
+                    <label>Descripcion *</label>
+                    <textarea id="storeDescInput" required maxlength="2000" placeholder="Describe tu negocio, productos o servicios..."></textarea>
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="storePhoneInput" maxlength="20" placeholder="+504 9999-9999">
+                    </div>
+                    <div class="store-form-group">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="storeWhatsappInput" maxlength="20" placeholder="+504 9999-9999">
+                    </div>
+                </div>
+                <div class="store-form-group">
+                    <label>Email de contacto</label>
+                    <input type="email" id="storeEmailInput" maxlength="255" placeholder="contacto@minegocio.com">
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="storeCityInput" maxlength="100" placeholder="Tegucigalpa" value="Tegucigalpa">
+                    </div>
+                    <div class="store-form-group">
+                        <label>Barrio / Zona</label>
+                        <input type="text" id="storeNeighborhoodInput" maxlength="100" placeholder="Ej: Col. Kennedy">
+                    </div>
+                </div>
+                <div class="store-form-group">
+                    <label>Areas de servicio (separadas por coma)</label>
+                    <input type="text" id="storeAreasInput" placeholder="Tegucigalpa, SPS, Comayagua">
+                </div>
+                <div class="store-form-section">Links sociales (opcional)</div>
+                <div class="store-form-group">
+                    <label>Sitio Web</label>
+                    <input type="url" id="storeLinkWebsite" maxlength="500" placeholder="https://mi-sitio.com">
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>GitHub</label>
+                        <input type="url" id="storeLinkGithub" maxlength="500" placeholder="https://github.com/user">
+                    </div>
+                    <div class="store-form-group">
+                        <label>LinkedIn</label>
+                        <input type="url" id="storeLinkLinkedin" maxlength="500" placeholder="https://linkedin.com/in/user">
+                    </div>
+                </div>
+                <button type="submit" class="store-btn-create" id="storeCreateBtn">Crear mi Tienda</button>
+            </form>
+        </div>`;
+
+        const form = document.getElementById('storeOnboardingForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('storeCreateBtn');
+                btn.disabled = true;
+                btn.textContent = 'Creando...';
+
+                const serviceAreas = document.getElementById('storeAreasInput').value
+                    .split(',').map(s => s.trim()).filter(Boolean);
+
+                const socialLinks = {};
+                const website = document.getElementById('storeLinkWebsite').value.trim();
+                const github = document.getElementById('storeLinkGithub').value.trim();
+                const linkedin = document.getElementById('storeLinkLinkedin').value.trim();
+                if (website) socialLinks.website = website;
+                if (github) socialLinks.github = github;
+                if (linkedin) socialLinks.linkedin = linkedin;
+
+                try {
+                    const res = await this.apiRequest('/api/marketplace/providers/register', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            business_name: document.getElementById('storeNameInput').value.trim(),
+                            description: document.getElementById('storeDescInput').value.trim(),
+                            phone: document.getElementById('storePhoneInput').value.trim() || undefined,
+                            whatsapp: document.getElementById('storeWhatsappInput').value.trim() || undefined,
+                            email: document.getElementById('storeEmailInput').value.trim() || undefined,
+                            city: document.getElementById('storeCityInput').value.trim() || 'Tegucigalpa',
+                            neighborhood: document.getElementById('storeNeighborhoodInput').value.trim() || undefined,
+                            service_areas: serviceAreas.length ? serviceAreas : undefined,
+                            social_links: Object.keys(socialLinks).length ? socialLinks : undefined,
+                            shop_type: this._selectedShopType,
+                            store_layout: this._selectedLayout || 'classic',
+                            store_theme: this._selectedTheme || 'dark'
+                        })
+                    });
+
+                    if (res.success) {
+                        const providerId = res.data?.provider?.provider_id;
+                        const isEarly = providerId && providerId <= 50;
+                        const typeLabel2 = this._selectedShopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+                        container.innerHTML = `<div class="store-success">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+                            <h2 style="color: #fff; margin-bottom: 8px;">Tu tienda esta lista</h2>
+                            <p style="color: rgba(255,255,255,0.6); margin-bottom: 8px;">Tu perfil de vendedor fue creado exitosamente.</p>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 16px;">Tipo: ${typeLabel2}</p>
+                            ${isEarly ? `<div class="store-success-badge">🎁 Eres el vendedor #${this.escapeHtml(String(providerId))} &mdash; Inscrito en el sorteo Early Seller de 1,000 LTD</div>` : ''}
+                            <button class="store-btn-create" data-action="view-my-store" style="max-width: 280px; margin: 20px auto 0;">Ver mi Tienda</button>
+                        </div>`;
+                    } else {
+                        this.showNotification('Error al crear la tienda', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Crear mi Tienda';
+                    }
+                } catch (err) {
+                    this.showNotification('Error al crear la tienda', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Crear mi Tienda';
+                }
+            });
+        }
+    }
+
+    // ===================== DASHBOARD HELPERS =====================
+    async _fetchStoreData(provider) {
+        const shopType = provider.shop_type || 'services';
+        const showServices = shopType === 'services' || shopType === 'mixed';
+        const showProducts = shopType === 'products' || shopType === 'mixed';
+        let services = [];
+        let products = [];
+        let reviews = [];
+
+        if (showServices) {
+            try {
+                const providerDetail = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}`);
+                if (providerDetail.success && providerDetail.data?.provider?.services) {
+                    services = providerDetail.data.provider.services;
+                }
+            } catch (e) { /* ok */ }
+        }
+
+        if (showProducts) {
+            try {
+                const prodRes = await this.apiRequest(`/api/marketplace/products?sellerId=${provider.user_id}&limit=20`);
+                if (prodRes.success && prodRes.data?.products) {
+                    products = prodRes.data.products;
+                }
+            } catch (e) { /* ok */ }
+        }
+
+        try {
+            const revRes = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}/reviews?limit=5`);
+            if (revRes.success && revRes.data?.reviews) {
+                reviews = revRes.data.reviews;
+            }
+        } catch (e) { /* ok */ }
+
+        return { services, products, reviews, showServices, showProducts };
+    }
+
+    _buildStoreItemCards(items, type) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        if (items.length === 0) {
+            return `<div class="store-empty">No tienes ${type === 'services' ? 'servicios' : 'productos'} aun. Agrega uno para empezar.</div>`;
+        }
+        return items.map((item, index) => {
+            const icon = type === 'services' ? '🔧' : '📦';
+            const img = item.images && item.images[0] ? `<img src="${esc(item.images[0])}" alt="">` : icon;
+            const meta = type === 'services'
+                ? `${item.price_type === 'fixed' ? `L. ${esc(item.price)}` : esc(item.price_type)} · ${esc(item.booking_count || 0)} reservas`
+                : `L. ${esc(item.price)} · ${esc(item.quantity || 0)} en stock`;
+            const itemId = type === 'services' ? item.service_id : item.id;
+            const featuredClass = item.featured ? ' featured-active' : '';
+            return `<div class="store-item-card">
+                <div class="store-item-img">${img}</div>
+                <div class="store-item-info">
+                    <div class="store-item-title">${esc(item.title)}</div>
+                    <div class="store-item-meta">${meta}</div>
+                </div>
+                <div class="store-item-actions">
+                    <button class="store-item-action-btn${featuredClass}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(itemId)}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar">\u2605</button>
+                    <button class="store-item-action-btn" data-action="move-item-up" data-type="${esc(type)}" data-id="${esc(itemId)}" data-order="${esc(item.display_order || 0)}" title="Subir">\u2191</button>
+                    <button class="store-item-action-btn" data-action="move-item-down" data-type="${esc(type)}" data-id="${esc(itemId)}" data-order="${esc(item.display_order || 0)}" title="Bajar">\u2193</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    _buildContactItems(provider) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const socialLinks = provider.social_links || {};
+        let items = '';
+        if (provider.phone) items += `<div class="store-contact-item"><span class="store-contact-icon">📞</span> ${esc(provider.phone)}</div>`;
+        if (provider.whatsapp) items += `<div class="store-contact-item"><span class="store-contact-icon">💬</span> ${esc(provider.whatsapp)}</div>`;
+        if (provider.email) items += `<div class="store-contact-item"><span class="store-contact-icon">📧</span> ${esc(provider.email)}</div>`;
+        if (socialLinks.website) items += `<div class="store-contact-item"><span class="store-contact-icon">🌐</span> ${esc(socialLinks.website)}</div>`;
+        if (socialLinks.github) items += `<div class="store-contact-item"><span class="store-contact-icon">🐙</span> ${esc(socialLinks.github)}</div>`;
+        if (socialLinks.linkedin) items += `<div class="store-contact-item"><span class="store-contact-icon">💼</span> ${esc(socialLinks.linkedin)}</div>`;
+        return items || '<div class="store-empty">No hay informacion de contacto.</div>';
+    }
+
+    _buildBadgesHtml(provider) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const shopType = provider.shop_type || 'services';
+        const typeIcon = shopType === 'products' ? '📦' : shopType === 'mixed' ? '🏬' : '🔧';
+        const typeLabel = shopType === 'products' ? 'Productos' : shopType === 'mixed' ? 'Mixta' : 'Servicios';
+        let badges = '';
+        if (provider.is_verified) badges += '<span class="store-badge-verified">✓ Verificado</span>';
+        if (provider.provider_id <= 50) badges += '<span class="store-badge-early">🎁 Early Seller</span>';
+        badges += `<span class="store-badge-type">${typeIcon} ${esc(typeLabel)}</span>`;
+        return badges;
+    }
+
+    // ===================== DASHBOARD DISPATCHER =====================
+    async renderStoreDashboard(provider) {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
+        this._currentProvider = provider;
+        const layout = provider.store_layout || 'classic';
+        const theme = provider.store_theme || 'dark';
+        const storeData = await this._fetchStoreData(provider);
+        switch (layout) {
+            case 'showcase': this._renderDashboardShowcase(container, provider, storeData, theme); break;
+            case 'compact':  this._renderDashboardCompact(container, provider, storeData, theme); break;
+            default:         this._renderDashboardClassic(container, provider, storeData, theme); break;
+        }
+        // Portfolio banner (v4.5.0)
+        const handle = provider.handle;
+        if (handle) {
+            const esc = (v) => this.escapeHtml(String(v ?? ''));
+            const dashboard = container.querySelector('.store-dashboard');
+            if (dashboard) {
+                const banner = document.createElement('div');
+                banner.className = 'store-portfolio-banner';
+                banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/negocio/${esc(handle)}" target="_blank">latanda.online/negocio/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/negocio/${esc(handle)}">Copiar</button>`;
+                dashboard.insertBefore(banner, dashboard.firstChild);
+            }
+        }
+        // Portfolio / CV CTA (v4.6.0)
+        try {
+            const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+            this._currentPortfolio = cvRes.data?.portfolio || null;
+        } catch { this._currentPortfolio = null; }
+        const dashboard2 = container.querySelector('.store-dashboard');
+        if (dashboard2) {
+            const cta = document.createElement('div');
+            cta.className = 'store-portfolio-cta';
+            cta.innerHTML = `<button class="store-btn-portfolio" data-action="open-portfolio-maker">${this._currentPortfolio ? 'Editar Portafolio / CV' : 'Crear Portafolio / CV'}</button>`;
+            const banner2 = dashboard2.querySelector('.store-portfolio-banner');
+            if (banner2) { banner2.after(cta); } else { dashboard2.insertBefore(cta, dashboard2.firstChild); }
+        }
+    }
+
+    // ===================== PORTFOLIO / CV MAKER (v4.6.0) =====================
+
+    async openPortfolioMaker() {
+        const container = document.getElementById('myStoreContent');
+        if (!container) return;
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+
+        // Fetch user identity + portfolio
+        let portfolio = this._currentPortfolio || null;
+        let userName = '', userEmail = '';
+        try {
+            const res = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+            portfolio = res.data?.portfolio || null;
+            userName = portfolio?.full_name || '';
+            userEmail = portfolio?.email || '';
+        } catch { /* use defaults */ }
+
+        // If no name/email from portfolio, fetch from provider
+        if (!userName && this._currentProvider) {
+            userName = this._currentProvider.user_name || this._currentProvider.business_name || '';
+        }
+
+        this._portfolioData = {
+            professional_title: portfolio?.professional_title || '',
+            summary: portfolio?.summary || '',
+            experience: portfolio?.experience || [],
+            education: portfolio?.education || [],
+            skills: portfolio?.skills || [],
+            certifications: portfolio?.certifications || [],
+            projects: portfolio?.projects || [],
+            languages: portfolio?.languages || [],
+            allow_downloads: portfolio?.allow_downloads || false,
+            is_public: portfolio?.is_public !== false
+        };
+
+        const pd = this._portfolioData;
+        this._cvFile = null;
+        container.innerHTML = `
+        <div class="portfolio-maker">
+            <div class="portfolio-maker-header">
+                <button class="portfolio-back-btn" data-action="back-to-store">&larr; Volver a Mi Tienda</button>
+                <h2>Mi Portafolio Profesional</h2>
+            </div>
+            <div class="cv-import-section">
+                <h3>Importar CV existente</h3>
+                <div class="cv-upload-zone" id="cvUploadZone" data-action="import-cv-file">
+                    <div class="cv-upload-zone-text">Arrastra tu CV aqui o haz click para seleccionar<br><small>PDF, max 5MB</small></div>
+                </div>
+                <input type="file" id="cvFileInput" accept="application/pdf" style="display:none">
+                <div class="cv-file-preview" id="cvFilePreview" style="display:none"></div>
+                <button class="cv-upload-btn" id="cvUploadBtn" data-action="process-cv-upload" disabled>Importar y extraer datos</button>
+                <div class="cv-ai-spinner" id="cvParseSpinner" style="display:none"><span class="cv-spinner-dot"></span> Analizando CV con IA...</div>
+                <div class="cv-import-result" id="cvImportResult" style="display:none"></div>
+            </div>
+            <div class="portfolio-identity">
+                <div class="portfolio-identity-row"><span class="portfolio-id-label">Nombre:</span> <span class="portfolio-id-value">${esc(userName)}</span></div>
+                <div class="portfolio-identity-row"><span class="portfolio-id-label">Email:</span> <span class="portfolio-id-value">${esc(userEmail)}</span></div>
+                <div class="portfolio-identity-note">Datos vinculados a tu cuenta (no editables)</div>
+            </div>
+            <div class="portfolio-field">
+                <label>Titulo profesional</label>
+                <input type="text" id="cvTitle" maxlength="255" placeholder="Ej: Desarrollador Full Stack, Disenadora Grafica..." value="${esc(pd.professional_title)}">
+            </div>
+            <div class="portfolio-field">
+                <label>Resumen profesional</label>
+                <textarea id="cvSummary" maxlength="2000" rows="4" placeholder="Describe tu perfil profesional, experiencia y objetivos...">${esc(pd.summary)}</textarea>
+                <button class="cv-ai-btn" data-action="generate-cv-summary" title="Generar resumen con IA">Generar con IA</button>
+                <div class="cv-ai-spinner" id="cvSummarySpinner" style="display:none"><span class="cv-spinner-dot"></span> Generando resumen...</div>
+            </div>
+            <div id="cvSections">
+                ${this._renderCvSection('experience', 'Experiencia', pd.experience)}
+                ${this._renderCvSection('education', 'Educacion', pd.education)}
+                ${this._renderCvSection('skills', 'Habilidades', pd.skills)}
+                ${this._renderCvSection('certifications', 'Certificaciones', pd.certifications)}
+                ${this._renderCvSection('projects', 'Proyectos', pd.projects)}
+                ${this._renderCvSection('languages', 'Idiomas', pd.languages)}
+            </div>
+            <div class="portfolio-config">
+                <label class="portfolio-toggle"><input type="checkbox" id="cvPublic" ${pd.is_public ? 'checked' : ''}> Portafolio publico</label>
+                <label class="portfolio-toggle"><input type="checkbox" id="cvDownloads" ${pd.allow_downloads ? 'checked' : ''}> Permitir descargas de CV</label>
+            </div>
+            <div class="portfolio-actions">
+                <button class="portfolio-btn-cancel" data-action="back-to-store">Cancelar</button>
+                <button class="portfolio-btn-save" data-action="save-portfolio">Guardar</button>
+            </div>
+        </div>`;
+        this._setupCvDropzone();
+    }
+
+    _setupCvDropzone() {
+        const zone = document.getElementById('cvUploadZone');
+        const fileInput = document.getElementById('cvFileInput');
+        if (!zone || !fileInput) return;
+
+        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => { zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const file = e.dataTransfer?.files?.[0];
+            if (file) this._handleCvFileSelect(file);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files?.[0]) this._handleCvFileSelect(fileInput.files[0]);
+        });
+    }
+
+    _handleCvFileSelect(file) {
+        const preview = document.getElementById('cvFilePreview');
+        const uploadBtn = document.getElementById('cvUploadBtn');
+        const result = document.getElementById('cvImportResult');
+        if (!preview || !uploadBtn) return;
+
+        if (file.type !== 'application/pdf') {
+            this.showNotification('Solo se aceptan archivos PDF', 'error');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            this.showNotification('El archivo es muy grande. Maximo 5MB.', 'error');
+            return;
+        }
+
+        this._cvFile = file;
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        preview.innerHTML = `<span class="cv-file-name">${esc(file.name)}</span> <small>(${(file.size / 1024).toFixed(0)} KB)</small>`;
+        preview.style.display = 'block';
+        uploadBtn.disabled = false;
+        if (result) { result.style.display = 'none'; result.textContent = ''; }
+    }
+
+    async processCvUpload() {
+        if (!this._cvFile) return;
+        const spinner = document.getElementById('cvParseSpinner');
+        const uploadBtn = document.getElementById('cvUploadBtn');
+        const result = document.getElementById('cvImportResult');
+        if (spinner) spinner.style.display = 'flex';
+        if (uploadBtn) uploadBtn.disabled = true;
+        if (result) { result.style.display = 'none'; result.className = 'cv-import-result'; }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', this._cvFile);
+
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            const response = await fetch(`${this.API_BASE}/api/marketplace/portfolio/cv/parse`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Error al procesar');
+
+            const parsed = data.data?.portfolio || {};
+            // Merge parsed data into current portfolio
+            if (parsed.professional_title) { this._portfolioData.professional_title = parsed.professional_title; const el = document.getElementById('cvTitle'); if (el) el.value = parsed.professional_title; }
+            if (parsed.summary) { this._portfolioData.summary = parsed.summary; const el = document.getElementById('cvSummary'); if (el) el.value = parsed.summary; }
+            const sections = ['experience', 'education', 'skills', 'certifications', 'projects', 'languages'];
+            sections.forEach(key => {
+                if (Array.isArray(parsed[key]) && parsed[key].length) {
+                    this._portfolioData[key] = parsed[key];
+                    const listEl = document.getElementById('cvItems-' + key);
+                    if (listEl) listEl.innerHTML = this._renderCvItems(key, parsed[key]);
+                    // Update count in section header
+                    const header = document.querySelector(`.portfolio-section[data-section="${key}"] .portfolio-section-label`);
+                    if (header) {
+                        const labels = { experience: 'Experiencia', education: 'Educacion', skills: 'Habilidades', certifications: 'Certificaciones', projects: 'Proyectos', languages: 'Idiomas' };
+                        header.textContent = `${labels[key] || key} (${parsed[key].length})`;
+                    }
+                }
+            });
+
+            if (result) { result.textContent = 'Datos extraidos exitosamente'; result.className = 'cv-import-result cv-import-success'; result.style.display = 'block'; }
+            this.showNotification('CV importado exitosamente', 'success');
+        } catch (err) {
+            if (result) { result.textContent = 'Error al analizar el CV. Intenta con otro archivo.'; result.className = 'cv-import-result cv-import-error'; result.style.display = 'block'; }
+            this.showNotification('Error al importar CV', 'error');
+        } finally {
+            if (spinner) spinner.style.display = 'none';
+            if (uploadBtn) uploadBtn.disabled = false;
+        }
+    }
+
+    async generateAISummary() {
+        const spinner = document.getElementById('cvSummarySpinner');
+        const summaryEl = document.getElementById('cvSummary');
+        const btn = document.querySelector('[data-action="generate-cv-summary"]');
+        if (spinner) spinner.style.display = 'flex';
+        if (btn) btn.disabled = true;
+
+        try {
+            // Collect current data from fields
+            const title = document.getElementById('cvTitle')?.value || '';
+            const pd = this._portfolioData;
+            const response = await this.apiRequest('/api/marketplace/portfolio/cv/generate-summary', {
+                method: 'POST',
+                body: JSON.stringify({
+                    professional_title: title,
+                    experience: pd.experience || [],
+                    skills: pd.skills || [],
+                    education: pd.education || []
+                })
+            });
+
+            const summary = response.data?.summary || '';
+            if (summary && summaryEl) {
+                summaryEl.value = summary;
+                this._portfolioData.summary = summary;
+            }
+            this.showNotification('Resumen generado', 'success');
+        } catch {
+            this.showNotification('Error al generar resumen', 'error');
+        } finally {
+            if (spinner) spinner.style.display = 'none';
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    _renderCvSection(key, label, items) {
+        const count = Array.isArray(items) ? items.length : 0;
+        return `
+        <div class="portfolio-section" data-section="${key}">
+            <div class="portfolio-section-header" data-action="toggle-cv-section" data-section="${key}">
+                <span class="portfolio-section-arrow">&#9654;</span>
+                <span class="portfolio-section-label">${label} (${count})</span>
+            </div>
+            <div class="portfolio-section-body" style="display:none">
+                <div class="cv-items-list" id="cvItems-${key}">
+                    ${this._renderCvItems(key, items)}
+                </div>
+                <button class="cv-add-btn" data-action="add-cv-item" data-section="${key}">+ Agregar</button>
+            </div>
+        </div>`;
+    }
+
+    _renderCvItems(key, items) {
+        if (!Array.isArray(items) || !items.length) return '<div class="cv-empty">Sin elementos</div>';
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        return items.map((item, i) => {
+            switch (key) {
+                case 'experience': return `<div class="cv-item"><div class="cv-item-main"><strong>${esc(item.position)}</strong> en ${esc(item.company)}<br><small>${esc(item.start_date || '')} - ${item.current ? 'Presente' : esc(item.end_date || '')}</small>${item.description ? `<p class="cv-item-desc">${esc(item.description)}</p>` : ''}</div><div class="cv-item-actions"><button data-action="edit-cv-item" data-section="${key}" data-index="${i}" title="Editar">&#9998;</button><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div></div>`;
+                case 'education': return `<div class="cv-item"><div class="cv-item-main"><strong>${esc(item.degree)}</strong> - ${esc(item.field || '')}<br><small>${esc(item.institution)} | ${item.start_year || ''}${item.end_year ? ' - ' + item.end_year : ''}</small></div><div class="cv-item-actions"><button data-action="edit-cv-item" data-section="${key}" data-index="${i}" title="Editar">&#9998;</button><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div></div>`;
+                case 'skills': return `<div class="cv-item cv-skill-chip"><span>${esc(item.name)}</span><span class="cv-skill-level cv-level-${esc(item.level)}">${esc(item.level)}</span><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div>`;
+                case 'certifications': return `<div class="cv-item"><div class="cv-item-main"><strong>${esc(item.name)}</strong><br><small>${esc(item.issuer)}${item.year ? ' (' + item.year + ')' : ''}</small>${item.url ? `<br><a href="${esc(item.url)}" target="_blank" rel="noopener">Ver certificado</a>` : ''}</div><div class="cv-item-actions"><button data-action="edit-cv-item" data-section="${key}" data-index="${i}" title="Editar">&#9998;</button><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div></div>`;
+                case 'projects': return `<div class="cv-item"><div class="cv-item-main"><strong>${esc(item.title)}</strong>${item.description ? `<p class="cv-item-desc">${esc(item.description)}</p>` : ''}${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener">Ver proyecto</a>` : ''}</div><div class="cv-item-actions"><button data-action="edit-cv-item" data-section="${key}" data-index="${i}" title="Editar">&#9998;</button><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div></div>`;
+                case 'languages': return `<div class="cv-item cv-skill-chip"><span>${esc(item.language)}</span><span class="cv-skill-level cv-level-${esc(item.level)}">${esc(item.level)}</span><button data-action="remove-cv-item" data-section="${key}" data-index="${i}" title="Eliminar">&times;</button></div>`;
+                default: return '';
+            }
+        }).join('');
+    }
+
+    _getCvInlineForm(key, item) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const val = (k) => item ? esc(item[k] || '') : '';
+        switch (key) {
+            case 'experience': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="company" placeholder="Empresa" maxlength="255" value="${val('company')}">
+                    <input type="text" data-field="position" placeholder="Puesto" maxlength="255" value="${val('position')}">
+                    <div class="cv-form-row"><input type="month" data-field="start_date" value="${val('start_date')}"><input type="month" data-field="end_date" value="${val('end_date')}" ${item?.current ? 'disabled' : ''}></div>
+                    <label class="cv-form-check"><input type="checkbox" data-field="current" ${item?.current ? 'checked' : ''}> Trabajo actual</label>
+                    <textarea data-field="description" placeholder="Descripcion (opcional)" maxlength="1000" rows="2">${val('description')}</textarea>
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            case 'education': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="institution" placeholder="Institucion" maxlength="255" value="${val('institution')}">
+                    <input type="text" data-field="degree" placeholder="Titulo/Grado" maxlength="255" value="${val('degree')}">
+                    <input type="text" data-field="field" placeholder="Campo de estudio" maxlength="255" value="${val('field')}">
+                    <div class="cv-form-row"><input type="number" data-field="start_year" placeholder="Inicio" min="1950" max="2050" value="${item?.start_year || ''}"><input type="number" data-field="end_year" placeholder="Fin" min="1950" max="2050" value="${item?.end_year || ''}"></div>
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            case 'skills': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="name" placeholder="Habilidad" maxlength="100" value="${val('name')}">
+                    <select data-field="level"><option value="basico" ${item?.level === 'basico' ? 'selected' : ''}>Basico</option><option value="intermedio" ${(!item || item?.level === 'intermedio') ? 'selected' : ''}>Intermedio</option><option value="avanzado" ${item?.level === 'avanzado' ? 'selected' : ''}>Avanzado</option><option value="experto" ${item?.level === 'experto' ? 'selected' : ''}>Experto</option></select>
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            case 'certifications': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="name" placeholder="Nombre del certificado" maxlength="255" value="${val('name')}">
+                    <input type="text" data-field="issuer" placeholder="Emisor" maxlength="255" value="${val('issuer')}">
+                    <input type="number" data-field="year" placeholder="Ano" min="1950" max="2050" value="${item?.year || ''}">
+                    <input type="url" data-field="url" placeholder="URL del certificado (opcional)" maxlength="500" value="${val('url')}">
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            case 'projects': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="title" placeholder="Titulo del proyecto" maxlength="255" value="${val('title')}">
+                    <textarea data-field="description" placeholder="Descripcion" maxlength="1000" rows="2">${val('description')}</textarea>
+                    <input type="url" data-field="url" placeholder="URL del proyecto (opcional)" maxlength="500" value="${val('url')}">
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            case 'languages': return `
+                <div class="cv-inline-form" data-section="${key}">
+                    <input type="text" data-field="language" placeholder="Idioma" maxlength="100" value="${val('language')}">
+                    <select data-field="level"><option value="basico" ${item?.level === 'basico' ? 'selected' : ''}>Basico</option><option value="intermedio" ${(!item || item?.level === 'intermedio') ? 'selected' : ''}>Intermedio</option><option value="avanzado" ${item?.level === 'avanzado' ? 'selected' : ''}>Avanzado</option><option value="nativo" ${item?.level === 'nativo' ? 'selected' : ''}>Nativo</option></select>
+                    <div class="cv-form-btns"><button data-action="confirm-cv-item" data-section="${key}">Guardar</button><button data-action="cancel-cv-form" data-section="${key}">Cancelar</button></div>
+                </div>`;
+            default: return '';
+        }
+    }
+
+    _collectCvFormData(form, key) {
+        const get = (f) => { const el = form.querySelector(`[data-field="${f}"]`); return el ? (el.type === 'checkbox' ? el.checked : el.value.trim()) : ''; };
+        switch (key) {
+            case 'experience': return { company: get('company'), position: get('position'), start_date: get('start_date'), end_date: get('end_date'), current: get('current'), description: get('description') };
+            case 'education': return { institution: get('institution'), degree: get('degree'), field: get('field'), start_year: parseInt(get('start_year')) || null, end_year: parseInt(get('end_year')) || null };
+            case 'skills': return { name: get('name'), level: get('level') };
+            case 'certifications': return { name: get('name'), issuer: get('issuer'), year: parseInt(get('year')) || null, url: get('url') || null };
+            case 'projects': return { title: get('title'), description: get('description'), url: get('url') || null };
+            case 'languages': return { language: get('language'), level: get('level') };
+            default: return {};
+        }
+    }
+
+    _refreshCvSection(key) {
+        const listEl = document.getElementById(`cvItems-${key}`);
+        if (!listEl) return;
+        listEl.innerHTML = this._renderCvItems(key, this._portfolioData[key]);
+        // Update count in header
+        const sec = listEl.closest('.portfolio-section');
+        if (sec) {
+            const label = sec.querySelector('.portfolio-section-label');
+            const count = (this._portfolioData[key] || []).length;
+            const names = { experience: 'Experiencia', education: 'Educacion', skills: 'Habilidades', certifications: 'Certificaciones', projects: 'Proyectos', languages: 'Idiomas' };
+            if (label) label.textContent = `${names[key] || key} (${count})`;
+        }
+    }
+
+    handleToggleCvSection(sectionKey) {
+        const sec = document.querySelector(`.portfolio-section[data-section="${sectionKey}"]`);
+        if (!sec) return;
+        const body = sec.querySelector('.portfolio-section-body');
+        const arrow = sec.querySelector('.portfolio-section-arrow');
+        if (body) {
+            const open = body.style.display !== 'none';
+            body.style.display = open ? 'none' : 'block';
+            if (arrow) arrow.innerHTML = open ? '&#9654;' : '&#9660;';
+        }
+    }
+
+    handleAddCvItem(sectionKey) {
+        const listEl = document.getElementById(`cvItems-${sectionKey}`);
+        if (!listEl) return;
+        // Remove existing inline form
+        const existing = listEl.parentElement.querySelector('.cv-inline-form');
+        if (existing) existing.remove();
+        this._cvEditIndex = null;
+        const formHtml = this._getCvInlineForm(sectionKey, null);
+        listEl.insertAdjacentHTML('afterend', formHtml);
+        // Disable end_date when "current" is checked (experience)
+        if (sectionKey === 'experience') {
+            const form = listEl.parentElement.querySelector('.cv-inline-form');
+            const chk = form?.querySelector('[data-field="current"]');
+            const endDate = form?.querySelector('[data-field="end_date"]');
+            if (chk && endDate) chk.addEventListener('change', () => { endDate.disabled = chk.checked; if (chk.checked) endDate.value = ''; });
+        }
+    }
+
+    handleEditCvItem(sectionKey, index) {
+        const items = this._portfolioData[sectionKey];
+        if (!items || !items[index]) return;
+        const listEl = document.getElementById(`cvItems-${sectionKey}`);
+        if (!listEl) return;
+        const existing = listEl.parentElement.querySelector('.cv-inline-form');
+        if (existing) existing.remove();
+        this._cvEditIndex = index;
+        const formHtml = this._getCvInlineForm(sectionKey, items[index]);
+        listEl.insertAdjacentHTML('afterend', formHtml);
+        if (sectionKey === 'experience') {
+            const form = listEl.parentElement.querySelector('.cv-inline-form');
+            const chk = form?.querySelector('[data-field="current"]');
+            const endDate = form?.querySelector('[data-field="end_date"]');
+            if (chk && endDate) chk.addEventListener('change', () => { endDate.disabled = chk.checked; if (chk.checked) endDate.value = ''; });
+        }
+    }
+
+    handleConfirmCvItem(sectionKey) {
+        const sec = document.querySelector(`.portfolio-section[data-section="${sectionKey}"]`);
+        if (!sec) return;
+        const form = sec.querySelector('.cv-inline-form');
+        if (!form) return;
+        const data = this._collectCvFormData(form, sectionKey);
+        // Basic validation
+        const required = { experience: ['company', 'position'], education: ['institution', 'degree'], skills: ['name'], certifications: ['name', 'issuer'], projects: ['title'], languages: ['language'] };
+        const missing = (required[sectionKey] || []).some(f => !data[f]);
+        if (missing) { this.showNotification('Completa los campos obligatorios', 'error'); return; }
+        if (!this._portfolioData[sectionKey]) this._portfolioData[sectionKey] = [];
+        if (this._cvEditIndex != null) {
+            this._portfolioData[sectionKey][this._cvEditIndex] = data;
+        } else {
+            this._portfolioData[sectionKey].push(data);
+        }
+        this._cvEditIndex = null;
+        form.remove();
+        this._refreshCvSection(sectionKey);
+    }
+
+    handleCancelCvForm(sectionKey) {
+        const sec = document.querySelector(`.portfolio-section[data-section="${sectionKey}"]`);
+        if (!sec) return;
+        const form = sec.querySelector('.cv-inline-form');
+        if (form) form.remove();
+        this._cvEditIndex = null;
+    }
+
+    handleRemoveCvItem(sectionKey, index) {
+        if (!this._portfolioData[sectionKey]) return;
+        this._portfolioData[sectionKey].splice(index, 1);
+        this._refreshCvSection(sectionKey);
+    }
+
+    async savePortfolio() {
+        const title = document.getElementById('cvTitle');
+        const summary = document.getElementById('cvSummary');
+        const isPublic = document.getElementById('cvPublic');
+        const allowDl = document.getElementById('cvDownloads');
+        if (!title || !summary) return;
+        const body = {
+            professional_title: title.value.trim(),
+            summary: summary.value.trim(),
+            experience: this._portfolioData.experience || [],
+            education: this._portfolioData.education || [],
+            skills: this._portfolioData.skills || [],
+            certifications: this._portfolioData.certifications || [],
+            projects: this._portfolioData.projects || [],
+            languages: this._portfolioData.languages || [],
+            is_public: isPublic?.checked ?? true,
+            allow_downloads: allowDl?.checked ?? false
+        };
+        try {
+            await this.apiRequest('/api/marketplace/portfolio/cv/me', { method: 'PUT', body: JSON.stringify(body) });
+            this.showNotification('Portafolio guardado', 'success');
+            this.loadMyStore();
+        } catch {
+            this.showNotification('Error al guardar el portafolio', 'error');
+        }
+    }
+
+    async downloadPortfolioPDF() {
+        if (typeof window.jspdf === 'undefined') { this.showNotification('jsPDF no disponible', 'error'); return; }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pd = this._portfolioData;
+        const provider = this._currentProvider;
+        const name = provider?.user_name || provider?.business_name || 'Portafolio';
+        const pageW = doc.internal.pageSize.getWidth();
+        let y = 20;
+
+        const checkPage = (need) => { if (y + need > 275) { doc.addPage(); y = 20; } };
+        const addSection = (title, content) => {
+            if (!content || (Array.isArray(content) && !content.length)) return;
+            checkPage(15);
+            doc.setFontSize(13); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 200, 200);
+            doc.text(title, 15, y); y += 2;
+            doc.setDrawColor(0, 200, 200); doc.line(15, y, pageW - 15, y); y += 6;
+            doc.setTextColor(50, 50, 50); doc.setFont(undefined, 'normal'); doc.setFontSize(10);
+        };
+
+        // Header with avatar
+        let avatarDataUrl = null;
+        const avatarUrl = provider?.profile_image;
+        if (avatarUrl && (avatarUrl.startsWith('/uploads/') || avatarUrl.startsWith('https://'))) {
+            try {
+                const fullUrl = avatarUrl.startsWith('/') ? `${location.origin}${avatarUrl}` : avatarUrl;
+                const resp = await fetch(fullUrl);
+                const blob = await resp.blob();
+                avatarDataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => resolve(null);
+                    reader.readAsDataURL(blob);
+                });
+            } catch { /* no avatar in PDF */ }
+        }
+
+        let textX = 15;
+        if (avatarDataUrl) {
+            try { doc.addImage(avatarDataUrl, 'JPEG', 15, y - 5, 25, 25); textX = 45; } catch { /* skip avatar */ }
+        }
+
+        doc.setFontSize(22); doc.setFont(undefined, 'bold'); doc.setTextColor(30, 30, 30);
+        doc.text(name, textX, y); y += 8;
+        if (pd.professional_title) { doc.setFontSize(12); doc.setFont(undefined, 'normal'); doc.setTextColor(100, 100, 100); doc.text(pd.professional_title, textX, y); y += 8; }
+        if (avatarDataUrl) y = Math.max(y, 45);
+        doc.setDrawColor(0, 200, 200); doc.setLineWidth(0.5); doc.line(15, y, pageW - 15, y); y += 8;
+
+        // Summary
+        if (pd.summary) { addSection('Resumen Profesional'); const lines = doc.splitTextToSize(pd.summary, pageW - 30); checkPage(lines.length * 5); doc.text(lines, 15, y); y += lines.length * 5 + 5; }
+
+        // Experience
+        if (pd.experience?.length) {
+            addSection('Experiencia Laboral');
+            pd.experience.forEach(e => {
+                checkPage(20);
+                doc.setFont(undefined, 'bold'); doc.text(`${e.position} - ${e.company}`, 15, y); y += 5;
+                doc.setFont(undefined, 'normal'); doc.setTextColor(120, 120, 120); doc.text(`${e.start_date || ''} - ${e.current ? 'Presente' : (e.end_date || '')}`, 15, y); y += 5;
+                if (e.description) { doc.setTextColor(50, 50, 50); const dl = doc.splitTextToSize(e.description, pageW - 30); checkPage(dl.length * 4.5); doc.text(dl, 15, y); y += dl.length * 4.5; }
+                y += 3;
+            });
+        }
+
+        // Education
+        if (pd.education?.length) {
+            addSection('Educacion');
+            pd.education.forEach(e => {
+                checkPage(12);
+                doc.setFont(undefined, 'bold'); doc.text(`${e.degree}${e.field ? ' - ' + e.field : ''}`, 15, y); y += 5;
+                doc.setFont(undefined, 'normal'); doc.text(`${e.institution} | ${e.start_year || ''}${e.end_year ? ' - ' + e.end_year : ''}`, 15, y); y += 7;
+            });
+        }
+
+        // Skills
+        if (pd.skills?.length) {
+            addSection('Habilidades');
+            const skillText = pd.skills.map(s => `${s.name} (${s.level})`).join('  |  ');
+            const sl = doc.splitTextToSize(skillText, pageW - 30);
+            checkPage(sl.length * 5);
+            doc.text(sl, 15, y); y += sl.length * 5 + 3;
+        }
+
+        // Certifications
+        if (pd.certifications?.length) {
+            addSection('Certificaciones');
+            pd.certifications.forEach(c => {
+                checkPage(8);
+                doc.setFont(undefined, 'bold'); doc.text(`${c.name} - ${c.issuer}${c.year ? ' (' + c.year + ')' : ''}`, 15, y); y += 6;
+                doc.setFont(undefined, 'normal');
+            });
+        }
+
+        // Projects
+        if (pd.projects?.length) {
+            addSection('Proyectos');
+            pd.projects.forEach(p => {
+                checkPage(15);
+                doc.setFont(undefined, 'bold'); doc.text(p.title, 15, y); y += 5;
+                doc.setFont(undefined, 'normal');
+                if (p.description) { const pl = doc.splitTextToSize(p.description, pageW - 30); checkPage(pl.length * 4.5); doc.text(pl, 15, y); y += pl.length * 4.5; }
+                if (p.url) { doc.setTextColor(0, 100, 200); doc.text(p.url, 15, y); y += 5; doc.setTextColor(50, 50, 50); }
+                y += 3;
+            });
+        }
+
+        // Languages
+        if (pd.languages?.length) {
+            addSection('Idiomas');
+            const langText = pd.languages.map(l => `${l.language} (${l.level})`).join('  |  ');
+            doc.text(langText, 15, y); y += 7;
+        }
+
+        // Footer
+        const handle = this._currentProvider?.handle;
+        const footerY = 285;
+        doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+        doc.text('Documento para uso profesional unicamente. Prohibida su redistribucion sin autorizacion.', 15, footerY);
+        if (handle) doc.text(`Generado desde latanda.online/negocio/${handle} - ${new Date().toLocaleDateString('es-HN')}`, 15, footerY + 4);
+
+        doc.save(`CV-${name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+        this.showNotification('CV descargado', 'success');
+    }
+
+    // ===================== CLASSIC LAYOUT =====================
+    _renderDashboardClassic(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
+        const avatarHtml = provider.profile_image
+            ? `<img src="${esc(provider.profile_image)}" alt="">`
+            : esc(initial);
+        const badges = this._buildBadgesHtml(provider);
+        const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
+        const contactItems = this._buildContactItems(provider);
+        const { services, products, showServices, showProducts } = storeData;
+        const servicesHtml = this._buildStoreItemCards(services, 'services');
+        const productsHtml = this._buildStoreItemCards(products, 'products');
+
+        container.innerHTML = `<div class="store-dashboard" data-layout="classic" data-theme="${esc(theme)}">
+            <div class="store-header">
+                <div class="store-avatar">${avatarHtml}</div>
+                <div class="store-info">
+                    <div class="store-name">${esc(provider.business_name || 'Mi Tienda')} ${badges}</div>
+                    ${loc ? `<div class="store-location">📍 ${esc(loc)}</div>` : ''}
+                </div>
+                <div class="store-actions">
+                    <button class="store-btn-edit" data-action="edit-store">✏️ Editar Tienda</button>
+                </div>
+            </div>
+
+            <div class="store-stats-grid">
+                <div class="store-stat-card">
+                    <div class="store-stat-value store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</div>
+                    <div class="store-stat-label">Rating</div>
+                </div>
+                <div class="store-stat-card">
+                    <div class="store-stat-value store-stat-jobs">${esc(provider.completed_jobs || 0)}</div>
+                    <div class="store-stat-label">Trabajos</div>
+                </div>
+                <div class="store-stat-card">
+                    <div class="store-stat-value store-stat-reviews">${esc(provider.total_reviews || 0)}</div>
+                    <div class="store-stat-label">Resenas</div>
+                </div>
+                <div class="store-stat-card">
+                    <div class="store-stat-value store-stat-response">${esc(provider.response_rate || 100)}%</div>
+                    <div class="store-stat-label">Respuesta</div>
+                </div>
+            </div>
+
+            ${showServices ? `<div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Mis Servicios (${services.length})</div>
+                    <button class="store-section-btn" data-action="add-service">+ Agregar</button>
+                </div>
+                ${servicesHtml}
+            </div>` : ''}
+
+            ${showProducts ? `<div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Mis Productos (${products.length})</div>
+                    <button class="store-section-btn" data-action="add-product">+ Agregar</button>
+                </div>
+                ${productsHtml}
+            </div>` : ''}
+
+            <div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Informacion de Contacto</div>
+                    <button class="store-section-btn" data-action="edit-store">Editar</button>
+                </div>
+                <div class="store-contact-grid">${contactItems}</div>
+            </div>
+        </div>`;
+    }
+
+    // ===================== SHOWCASE LAYOUT =====================
+    _renderDashboardShowcase(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const badges = this._buildBadgesHtml(provider);
+        const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
+        const contactItems = this._buildContactItems(provider);
+        const { services, products, reviews, showServices, showProducts } = storeData;
+        const servicesHtml = this._buildStoreItemCards(services, 'services');
+        const productsHtml = this._buildStoreItemCards(products, 'products');
+
+        // Collect images for gallery from services + products
+        const allImages = [];
+        services.forEach(s => { if (s.images) s.images.forEach(img => allImages.push({ url: img, title: s.title })); });
+        products.forEach(p => { if (p.images) p.images.forEach(img => allImages.push({ url: img, title: p.title })); });
+        const galleryItems = allImages.slice(0, 6);
+
+        let galleryHtml = '';
+        if (galleryItems.length > 0) {
+            galleryHtml = `<div class="store-section">
+                <div class="store-section-header"><div class="store-section-title">Galeria (${galleryItems.length})</div></div>
+                <div class="store-gallery-grid">
+                    ${galleryItems.map(g => `<div class="store-gallery-item">
+                        <img src="${esc(g.url)}" alt="${esc(g.title)}">
+                        <div class="store-gallery-overlay"><span>${esc(g.title)}</span></div>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        let testimonialsHtml = '';
+        if (reviews.length > 0) {
+            testimonialsHtml = `<div class="store-section">
+                <div class="store-section-header"><div class="store-section-title">Testimonios (${reviews.length})</div></div>
+                <div class="store-testimonials-list">
+                    ${reviews.map(r => `<div class="store-testimonial-card">
+                        <div class="store-testimonial-header">
+                            <div class="store-testimonial-avatar">${r.reviewer_avatar ? `<img src="${esc(r.reviewer_avatar)}" alt="">` : esc((r.reviewer_name || '?').charAt(0))}</div>
+                            <div class="store-testimonial-info">
+                                <div class="store-testimonial-name">${esc(r.reviewer_name)}</div>
+                                <div class="store-testimonial-rating">${'⭐'.repeat(Math.min(Math.max(Math.round(r.overall_rating || 0), 0), 5))}</div>
+                            </div>
+                        </div>
+                        ${r.comment ? `<div class="store-testimonial-text">${esc(r.comment)}</div>` : ''}
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        } else {
+            testimonialsHtml = `<div class="store-section">
+                <div class="store-section-header"><div class="store-section-title">Testimonios</div></div>
+                <div class="store-empty">Aun no hay resenas. Tus clientes podran dejar testimonios aqui.</div>
+            </div>`;
+        }
+
+        container.innerHTML = `<div class="store-dashboard" data-layout="showcase" data-theme="${esc(theme)}">
+            <div class="store-showcase-hero">
+                <div class="store-showcase-hero-content">
+                    <div class="store-name">${esc(provider.business_name || 'Mi Tienda')} ${badges}</div>
+                    ${loc ? `<div class="store-location" style="margin-top:4px;">📍 ${esc(loc)}</div>` : ''}
+                    <div class="store-showcase-mini-stats">
+                        <span class="store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</span>
+                        <span class="store-stat-jobs">${esc(provider.completed_jobs || 0)} trabajos</span>
+                        <span class="store-stat-reviews">${esc(provider.total_reviews || 0)} resenas</span>
+                    </div>
+                </div>
+                <div class="store-actions">
+                    <button class="store-btn-edit" data-action="edit-store">✏️ Editar</button>
+                </div>
+            </div>
+
+            ${galleryHtml}
+            ${testimonialsHtml}
+
+            ${showServices ? `<div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Servicios (${services.length})</div>
+                    <button class="store-section-btn" data-action="add-service">+ Agregar</button>
+                </div>
+                ${servicesHtml}
+            </div>` : ''}
+
+            ${showProducts ? `<div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Productos (${products.length})</div>
+                    <button class="store-section-btn" data-action="add-product">+ Agregar</button>
+                </div>
+                ${productsHtml}
+            </div>` : ''}
+
+            <div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Contacto</div>
+                    <button class="store-section-btn" data-action="edit-store">Editar</button>
+                </div>
+                <div class="store-contact-grid">${contactItems}</div>
+            </div>
+        </div>`;
+    }
+
+    // ===================== COMPACT LAYOUT =====================
+    _renderDashboardCompact(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
+        const avatarHtml = provider.profile_image
+            ? `<img src="${esc(provider.profile_image)}" alt="">`
+            : esc(initial);
+        const badges = this._buildBadgesHtml(provider);
+        const contactItems = this._buildContactItems(provider);
+        const { services, products, showServices, showProducts } = storeData;
+
+        // Unified items list
+        const allItems = [];
+        if (showServices) services.forEach(s => allItems.push({ ...s, _type: 'service' }));
+        if (showProducts) products.forEach(p => allItems.push({ ...p, _type: 'product' }));
+        const itemsHtml = allItems.length > 0
+            ? allItems.map(item => {
+                const icon = item._type === 'service' ? '🔧' : '📦';
+                const img = item.images && item.images[0] ? `<img src="${esc(item.images[0])}" alt="">` : icon;
+                const meta = item._type === 'service'
+                    ? `${item.price_type === 'fixed' ? `L. ${esc(item.price)}` : esc(item.price_type)}`
+                    : `L. ${esc(item.price)}`;
+                return `<div class="store-item-card">
+                    <div class="store-item-img">${img}</div>
+                    <div class="store-item-info">
+                        <div class="store-item-title">${esc(item.title)}</div>
+                        <div class="store-item-meta">${meta}</div>
+                    </div>
+                </div>`;
+            }).join('')
+            : '<div class="store-empty">No tienes listados aun.</div>';
+
+        // Action buttons
+        const actionBtns = [];
+        actionBtns.push('<button class="store-compact-action-btn" data-action="edit-store">✏️ Editar</button>');
+        if (showServices) actionBtns.push('<button class="store-compact-action-btn" data-action="add-service">+ Servicio</button>');
+        if (showProducts) actionBtns.push('<button class="store-compact-action-btn" data-action="add-product">+ Producto</button>');
+
+        container.innerHTML = `<div class="store-dashboard" data-layout="compact" data-theme="${esc(theme)}">
+            <div class="store-compact-card">
+                <div class="store-compact-avatar">${avatarHtml}</div>
+                <div class="store-compact-name">${esc(provider.business_name || 'Mi Tienda')}</div>
+                <div class="store-compact-badges">${badges}</div>
+                ${provider.description ? `<div class="store-compact-desc">${esc(provider.description.length > 120 ? provider.description.slice(0, 120) + '...' : provider.description)}</div>` : ''}
+                <div class="store-compact-stats">
+                    <div class="store-compact-stat"><span class="store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</span><small>Rating</small></div>
+                    <div class="store-compact-stat"><span class="store-stat-jobs">${esc(provider.completed_jobs || 0)}</span><small>Trabajos</small></div>
+                    <div class="store-compact-stat"><span class="store-stat-reviews">${esc(provider.total_reviews || 0)}</span><small>Listados</small></div>
+                </div>
+                <div class="store-compact-actions">${actionBtns.join('')}</div>
+            </div>
+
+            <div class="store-section">
+                <div class="store-section-header"><div class="store-section-title">Listados (${allItems.length})</div></div>
+                ${itemsHtml}
+            </div>
+
+            <div class="store-section">
+                <div class="store-section-header">
+                    <div class="store-section-title">Contacto</div>
+                </div>
+                <div class="store-contact-grid">${contactItems}</div>
+            </div>
+        </div>`;
+    }
+
+    // ===================== EDIT STORE MODAL =====================
+    openEditStoreModal() {
+        const provider = this._currentProvider;
+        if (!provider) return;
+
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const socialLinks = provider.social_links || {};
+        const serviceAreas = Array.isArray(provider.service_areas) ? provider.service_areas.join(', ') : '';
+        const currentLayout = provider.store_layout || 'classic';
+        const currentTheme = provider.store_theme || 'dark';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'store-edit-overlay';
+        overlay.id = 'storeEditOverlay';
+        const editTypeIcon = (provider.shop_type || 'services') === 'products' ? '📦' : (provider.shop_type || 'services') === 'mixed' ? '🏬' : '🔧';
+        const editTypeLabel = (provider.shop_type || 'services') === 'products' ? 'Productos' : (provider.shop_type || 'services') === 'mixed' ? 'Mixta' : 'Servicios';
+
+        const layouts = [
+            { id: 'classic', label: 'Clasica' },
+            { id: 'showcase', label: 'Escaparate' },
+            { id: 'compact', label: 'Tarjeta' }
+        ];
+        const themes = [
+            { id: 'dark', label: 'Oscuro', c1: '#8B5CF6', c2: '#06B6D4' },
+            { id: 'cyan', label: 'Cyan', c1: '#06B6D4', c2: '#14B8A6' },
+            { id: 'gold', label: 'Dorado', c1: '#F59E0B', c2: '#D97706' },
+            { id: 'green', label: 'Verde', c1: '#10B981', c2: '#059669' },
+            { id: 'coral', label: 'Coral', c1: '#EF4444', c2: '#F97316' },
+            { id: 'purple', label: 'Purpura', c1: '#A855F7', c2: '#7C3AED' }
+        ];
+
+        const layoutPickerHtml = layouts.map(l =>
+            `<button type="button" class="store-edit-layout-opt${l.id === currentLayout ? ' active' : ''}" data-action="pick-edit-layout" data-id="${l.id}">${esc(l.label)}</button>`
+        ).join('');
+
+        const themePickerHtml = themes.map(t =>
+            `<button type="button" class="store-edit-theme-opt${t.id === currentTheme ? ' active' : ''}" data-action="pick-edit-theme" data-id="${t.id}"><span class="store-edit-swatch" style="background:${t.c1};"></span> ${esc(t.label)}</button>`
+        ).join('');
+
+        overlay.innerHTML = `<div class="store-edit-modal">
+            <h3>Editar Tienda</h3>
+            <div class="store-edit-type-info">${editTypeIcon} Tipo: ${esc(editTypeLabel)} &mdash; No se puede cambiar</div>
+
+            <div class="store-edit-picker-section">
+                <label>Layout</label>
+                <div class="store-edit-layout-picker">${layoutPickerHtml}</div>
+            </div>
+            <div class="store-edit-picker-section">
+                <label>Tema de color</label>
+                <div class="store-edit-theme-picker">${themePickerHtml}</div>
+            </div>
+
+            <form id="storeEditForm">
+                <div class="store-form-group">
+                    <label>Nombre del negocio *</label>
+                    <input type="text" id="editStoreName" required maxlength="255" value="${esc(provider.business_name || '')}">
+                </div>
+                <div class="store-form-group">
+                    <label>Descripcion</label>
+                    <textarea id="editStoreDesc" maxlength="2000">${esc(provider.description || '')}</textarea>
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>Telefono</label>
+                        <input type="tel" id="editStorePhone" maxlength="20" value="${esc(provider.phone || '')}">
+                    </div>
+                    <div class="store-form-group">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="editStoreWhatsapp" maxlength="20" value="${esc(provider.whatsapp || '')}">
+                    </div>
+                </div>
+                <div class="store-form-group">
+                    <label>Email de contacto</label>
+                    <input type="email" id="editStoreEmail" maxlength="255" value="${esc(provider.email || '')}">
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="editStoreCity" maxlength="100" value="${esc(provider.city || '')}">
+                    </div>
+                    <div class="store-form-group">
+                        <label>Barrio / Zona</label>
+                        <input type="text" id="editStoreNeighborhood" maxlength="100" value="${esc(provider.neighborhood || '')}">
+                    </div>
+                </div>
+                <div class="store-form-group">
+                    <label>Areas de servicio (separadas por coma)</label>
+                    <input type="text" id="editStoreAreas" value="${esc(serviceAreas)}">
+                </div>
+                <div class="store-form-section">Links sociales</div>
+                <div class="store-form-group">
+                    <label>Sitio Web</label>
+                    <input type="url" id="editStoreWebsite" maxlength="500" value="${esc(socialLinks.website || '')}">
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group">
+                        <label>GitHub</label>
+                        <input type="url" id="editStoreGithub" maxlength="500" value="${esc(socialLinks.github || '')}">
+                    </div>
+                    <div class="store-form-group">
+                        <label>LinkedIn</label>
+                        <input type="url" id="editStoreLnkdin" maxlength="500" value="${esc(socialLinks.linkedin || '')}">
+                    </div>
+                </div>
+                <div class="store-edit-actions">
+                    <button type="button" class="store-btn-cancel" data-action="close-edit-store">Cancelar</button>
+                    <button type="submit" class="store-btn-save" id="editStoreSaveBtn">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>`;
+
+        document.body.appendChild(overlay);
+
+        // Close on overlay click (outside modal)
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        const editForm = document.getElementById('storeEditForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const saveBtn = document.getElementById('editStoreSaveBtn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Guardando...';
+
+                const areas = document.getElementById('editStoreAreas').value
+                    .split(',').map(s => s.trim()).filter(Boolean);
+
+                const newSocialLinks = {};
+                const website = document.getElementById('editStoreWebsite').value.trim();
+                const github = document.getElementById('editStoreGithub').value.trim();
+                const linkedin = document.getElementById('editStoreLnkdin').value.trim();
+                if (website) newSocialLinks.website = website;
+                if (github) newSocialLinks.github = github;
+                if (linkedin) newSocialLinks.linkedin = linkedin;
+
+                // Get selected layout and theme from active buttons
+                const activeLayout = overlay.querySelector('.store-edit-layout-opt.active');
+                const activeTheme = overlay.querySelector('.store-edit-theme-opt.active');
+                const selectedLayout = activeLayout ? activeLayout.dataset.id : currentLayout;
+                const selectedTheme = activeTheme ? activeTheme.dataset.id : currentTheme;
+
+                try {
+                    const res = await this.apiRequest('/api/marketplace/providers/me', {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            business_name: document.getElementById('editStoreName').value.trim(),
+                            description: document.getElementById('editStoreDesc').value.trim(),
+                            phone: document.getElementById('editStorePhone').value.trim() || null,
+                            whatsapp: document.getElementById('editStoreWhatsapp').value.trim() || null,
+                            email: document.getElementById('editStoreEmail').value.trim() || null,
+                            city: document.getElementById('editStoreCity').value.trim() || null,
+                            neighborhood: document.getElementById('editStoreNeighborhood').value.trim() || null,
+                            service_areas: areas.length ? areas : null,
+                            social_links: Object.keys(newSocialLinks).length ? newSocialLinks : {},
+                            store_layout: selectedLayout,
+                            store_theme: selectedTheme
+                        })
+                    });
+
+                    if (res.success) {
+                        overlay.remove();
+                        this.showNotification('Tienda actualizada', 'success');
+                        this.loadMyStore();
+                    } else {
+                        this.showNotification('Error al guardar', 'error');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Guardar Cambios';
+                    }
+                } catch (err) {
+                    this.showNotification('Error al guardar', 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Guardar Cambios';
+                }
+            });
+        }
+    }
+
     loadOrdersData(type = 'purchases') {
         const container = document.getElementById('ordersContent');
         if (!container) return;
@@ -2034,10 +2748,10 @@ class MarketplaceSocialSystem {
         container.innerHTML = filteredOrders.map(order => `
             <div class="social-post">
                 <div class="post-header">
-                    <div class="user-avatar">${this.escapeHtml(order.product.charAt(0))}</div>
+                    <div class="user-avatar">${order.product.charAt(0)}</div>
                     <div class="user-info">
-                        <div class="user-name">${this.escapeHtml(order.product)}</div>
-                        <div class="post-time">${type === 'purchases' ? 'Vendido por' : 'Comprado por'} ${this.escapeHtml(type === 'purchases' ? order.seller : order.buyer)}</div>
+                        <div class="user-name">${order.product}</div>
+                        <div class="post-time">${type === 'purchases' ? 'Vendido por' : 'Comprado por'} ${type === 'purchases' ? order.seller : order.buyer}</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="font-weight: 700; color: #10B981;">${order.amount} LTD</div>
@@ -2119,152 +2833,87 @@ class MarketplaceSocialSystem {
                             ${'⭐'.repeat(review.rating)}
                         </div>
                     </div>
-                    <div class="post-content">${review.comment}</div>
+                    <div class="post-content">${this.escapeHtml(review.comment)}</div>
                 </div>
             `).join('');
         }
     }
     
     async handleCreateProduct() {
-        const submitBtn = document.getElementById('createProductBtn');
+        const overlay = document.getElementById('productCreateOverlay');
+        if (!overlay) return;
+        const submitBtn = overlay.querySelector('[data-action="submit-product"]');
+        if (!submitBtn) return;
         const originalText = submitBtn.innerHTML;
 
         try {
-            // Disable button and show loading
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span>⏳</span> Publicando...';
+            submitBtn.innerHTML = '<span>&#9203;</span> Publicando...';
 
-            // Collect form data
+            const getVal = (id) => (overlay.querySelector('#' + id)?.value || '').trim();
             const formData = {
-                title: document.getElementById('productName').value.trim(),
-                category_id: document.getElementById('productCategory').value,
-                condition: document.getElementById('productCondition').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                quantity: parseInt(document.getElementById('productQuantity').value),
-                location: document.getElementById('productLocation').value.trim() || 'Honduras',
-                description: document.getElementById('productDescription').value.trim(),
-                shipping_available: document.getElementById('productShipping').checked,
-                shipping_price: parseFloat(document.getElementById('productShippingPrice')?.value) || 0,
-                referral_commission_percent: parseInt(document.getElementById('productCommission').value)
+                title: getVal('cpTitle'),
+                category_id: getVal('cpCategory'),
+                condition: getVal('cpCondition'),
+                price: parseFloat(getVal('cpPrice')) || 0,
+                currency: getVal('cpCurrency') || 'HNL',
+                quantity: parseInt(getVal('cpQuantity')) || 1,
+                location: getVal('cpLocation') || 'Honduras',
+                description: getVal('cpDescription'),
+                shipping_available: overlay.querySelector('#cpShipping')?.checked || false,
+                shipping_price: parseFloat(getVal('cpShippingPrice')) || 0,
+                referral_commission_percent: parseInt(getVal('cpCommission')) || 5
             };
 
-            // Validate required fields
-            if (!formData.title || !formData.category_id || !formData.price || !formData.description) {
+            if (!formData.title || !formData.category_id || !formData.description) {
                 this.showNotification('Por favor completa todos los campos requeridos', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 return;
             }
-
-            if (formData.price < 1) {
-                this.showNotification('El precio debe ser mayor a 0', 'error');
+            if (formData.title.length > 200) {
+                this.showNotification('El titulo no puede exceder 200 caracteres', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                return;
+            }
+            if (formData.price < 0 || formData.price > 1000000) {
+                this.showNotification('Precio invalido (0 - 1,000,000)', 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 return;
             }
 
-            // Check seller's LTD balance for commission capacity
-            try {
-                const balanceCheck = await this.apiRequest('/api/marketplace/wallet/check-commission', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        price: formData.price,
-                        commission_percent: formData.referral_commission_percent
-                    })
-                });
-
-                if (balanceCheck.success && balanceCheck.data?.warning) {
-                    // Show warning but allow to continue
-                    const proceed = confirm(
-                        `⚠️ Aviso de Balance LTD\n\n${balanceCheck.data.warning}\n\n` +
-                        `Balance actual: ${balanceCheck.data.balance} LTD\n` +
-                        `Comision maxima: ${balanceCheck.data.maxCommission.toFixed(2)} LTD\n\n` +
-                        `¿Deseas continuar de todas formas?`
-                    );
-                    if (!proceed) {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                        return;
-                    }
-                }
-            } catch (balanceError) {
-                // Continue anyway if balance check fails
-            }
-
-
             // Upload images first if any
-            let uploadedImages = [];
-            if (typeof selectedImages !== "undefined" && selectedImages.length > 0) {
-                submitBtn.innerHTML = "<span>📷</span> Subiendo imágenes...";
-                const uploadResult = await uploadProductImages();
-                if (uploadResult.success && uploadResult.data?.images) {
-                    uploadedImages = uploadResult.data.images;
-                } else if (uploadResult.images) {
-                    uploadedImages = uploadResult.images;
-                } else if (!uploadResult.success) {
-                    this.showNotification("Error subiendo imágenes: " + (uploadResult.data?.error?.message || "Intenta de nuevo"), "error");
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                    return;
+            let imageUrls = [];
+            if (this._images?.product?.length) {
+                const uploadResult = await this._uploadImages('product');
+                if (uploadResult && uploadResult.success && uploadResult.data?.images) {
+                    imageUrls = uploadResult.data.images.map(img => img.url);
+                    formData.images = imageUrls;
                 }
-                submitBtn.innerHTML = "<span>⏳</span> Publicando...";
             }
 
-            // Add images to form data
-            formData.images = uploadedImages.map(img => ({
-                url: img.url,
-                thumbnail: img.thumbnail
-            }));
-
-            // Call API to create product
             const response = await this.apiRequest('/api/marketplace/products', {
                 method: 'POST',
                 body: JSON.stringify(formData)
             });
 
-            const product = response.product || response.data?.product;
-            if (response.success && product) {
-                // Add to local products array with frontend format
-                const newProduct = {
-                    id: `prod_${product.id}`,
-                    productId: product.id,
-                    name: product.title,
-                    description: product.description,
-                    category: product.category_id,
-                    price: parseFloat(product.price),
-                    quantity: product.quantity,
-                    image: this.getProductIcon(product.category_id),
-                    images: uploadedImages,
-                    condition: product.condition,
-                    location: product.location,
-                    seller: {
-                        id: this.currentUser?.id || product.seller_id,
-                        name: this.currentUser?.name || 'Vendedor',
-                        avatar: (this.currentUser?.name || 'V').charAt(0).toUpperCase(),
-                        rating: 4.5
-                    },
-                    featured: false,
-                    referralCommission: product.referral_commission_percent,
-                    created: new Date()
-                };
-
-                this.products.unshift(newProduct);
-
-                this.closeCreateProductModal();
-                this.loadFeaturedProducts();
-                this.loadRecentProducts();
-                this.loadMyProducts();
-
-                this.showNotification('¡Producto publicado exitosamente!', 'success');
+            if (response.success) {
+                overlay.remove();
+                this._images.product = [];
+                this.showNotification('Producto publicado exitosamente', 'success');
+                this.loadMyStore();
             } else {
-                throw new Error(response.error || 'Error al crear el producto');
+                this.showNotification('Error al publicar el producto', 'error');
             }
-
         } catch (error) {
-            this.showNotification(error.message || 'Error al publicar el producto', 'error');
+            this.showNotification('Error al publicar el producto', 'error');
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
     }
     
@@ -2319,9 +2968,7 @@ class MarketplaceSocialSystem {
     }
     
     closeCreateProductModal() {
-        document.getElementById('createProductModal').classList.remove('active');
-        document.getElementById('createProductForm').reset();
-        if (typeof resetImageUpload === 'function') resetImageUpload();
+        document.getElementById('productCreateOverlay')?.remove();
     }
     
     closeCreatePostModal() {
@@ -2335,6 +2982,15 @@ class MarketplaceSocialSystem {
     }
     
     // Utility methods
+
+    // XSS prevention helper (v4.0.0)
+    escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     getCurrentUser() {
         // Check multiple auth storage keys for compatibility
         const authData = localStorage.getItem('latanda_user') ||
@@ -2430,6 +3086,844 @@ class MarketplaceSocialSystem {
         }, 5000);
     }
     
+
+    // =====================================================
+    // MESSAGING SYSTEM
+    // =====================================================
+
+    /**
+     * Load all conversations for the current user
+     */
+    async loadConversations() {
+        if (this.isGuest) {
+            this.renderGuestMessagesPrompt();
+            return;
+        }
+
+        const container = document.getElementById("conversationsList");
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="conversations-loading">
+                <div class="pulse" style="font-size: 32px;">💬</div>
+                <p>Cargando conversaciones...</p>
+            </div>
+        `;
+
+        try {
+            const response = await this.apiRequest("/api/marketplace/messages/conversations");
+            this.conversations = response.conversations || [];
+
+            // Also fetch unread count
+            await this.updateUnreadBadge();
+
+            this.renderConversations();
+        } catch (error) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                    <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h3>Error al cargar mensajes</h3>
+                    <p>${error.message || "Intenta de nuevo más tarde"}</p>
+                    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="window.marketplaceSystem.loadConversations()">
+                        Reintentar
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Render conversations list
+     */
+    renderConversations() {
+        const container = document.getElementById("conversationsList");
+        if (!container) return;
+
+        if (this.conversations.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                    <div style="font-size: 48px; margin-bottom: 20px;">💬</div>
+                    <h3>Sin conversaciones</h3>
+                    <p>Cuando contactes a un vendedor o alguien te escriba, aparecerá aquí</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.conversations.map(conv => this.createConversationItem(conv)).join("");
+    }
+
+    /**
+     * Create a conversation list item
+     */
+    createConversationItem(conv) {
+        const initial = (conv.other_user_name || "U").charAt(0).toUpperCase();
+        const timeAgo = this.getTimeAgo(conv.created_at);
+        const unreadClass = conv.has_unread ? "has-unread" : "";
+        const safeProductTitle = conv.product_title ? this.escapeHtml(conv.product_title) : "";
+        const productInfo = safeProductTitle ? `<div class="conv-product">📦 ${safeProductTitle}</div>` : "";
+        const safeName = this.escapeHtml(conv.other_user_name || "Usuario");
+        const safeMsg = this.escapeHtml(this.truncateText(conv.message, 50));
+        const safeOtherId = this.escapeHtml(conv.other_user_id || "");
+
+        return `
+            <div class="conversation-item ${unreadClass}" data-action="open-conv" data-other-id="${safeOtherId}" data-product-id="${conv.product_id || ""}" data-other-name="${safeName}">
+                <div class="conv-avatar">${initial}</div>
+                <div class="conv-content">
+                    <div class="conv-header">
+                        <span class="conv-name">${safeName}</span>
+                        <span class="conv-time">${this.escapeHtml(timeAgo)}</span>
+                    </div>
+                    ${productInfo}
+                    <div class="conv-preview">${safeMsg}</div>
+                </div>
+                ${conv.has_unread ? '<div class="conv-unread-dot"></div>' : ""}
+            </div>
+        `;
+    }
+
+    /**
+     * Open a conversation and load messages
+     */
+    async openConversation(otherUserId, productId, otherUserName) {
+        this.currentConversation = {
+            otherUserId,
+            productId,
+            otherUserName
+        };
+
+        // Show chat panel, hide conversations list on mobile
+        const chatPanel = document.getElementById("chatPanel");
+        const convPanel = document.getElementById("conversationsPanel");
+        if (chatPanel) chatPanel.style.display = "flex";
+        if (convPanel && window.innerWidth < 768) convPanel.style.display = "none";
+
+        // Update chat header
+        document.getElementById("chatAvatar").textContent = (otherUserName || "U").charAt(0).toUpperCase();
+        document.getElementById("chatUserName").textContent = otherUserName || "Usuario";
+
+        const productEl = document.getElementById("chatProduct");
+        if (productEl) {
+            const conv = this.conversations.find(c => c.other_user_id === otherUserId && c.product_id === productId);
+            productEl.textContent = conv?.product_title ? `📦 ${conv.product_title}` : "";
+        }
+
+        // Load messages
+        await this.loadMessages(otherUserId, productId);
+    }
+
+    /**
+     * Load messages for a conversation
+     */
+    async loadMessages(otherUserId, productId) {
+        const container = document.getElementById("chatMessages");
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="chat-loading">
+                <div class="pulse">💬</div>
+                <p>Cargando mensajes...</p>
+            </div>
+        `;
+
+        try {
+            let url = `/api/marketplace/messages/${otherUserId}`;
+            if (productId) url += `?product_id=${productId}`;
+
+            const response = await this.apiRequest(url);
+            this.messages = response.messages || [];
+
+            this.renderMessages();
+
+            // Mark messages as read
+            await this.markMessagesRead(otherUserId, productId);
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        } catch (error) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                    <p>Error al cargar mensajes</p>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Render messages in chat panel
+     */
+    renderMessages() {
+        const container = document.getElementById("chatMessages");
+        if (!container) return;
+
+        if (this.messages.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                    <div style="font-size: 32px; margin-bottom: 10px;">👋</div>
+                    <p>Inicia la conversación</p>
+                </div>
+            `;
+            return;
+        }
+
+        const currentUserId = this.currentUser?.user_id || this.currentUser?.id;
+        container.innerHTML = this.messages.map(msg => {
+            const isMine = msg.sender_id === currentUserId;
+            const timeAgo = this.getTimeAgo(msg.created_at);
+
+            return `
+                <div class="chat-message ${isMine ? "sent" : "received"}">
+                    <div class="message-bubble">
+                        ${msg.message}
+                    </div>
+                    <div class="message-time">${timeAgo}</div>
+                </div>
+            `;
+        }).join("");
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    /**
+     * Send a chat message
+     */
+    async sendChatMessage() {
+        if (!this.currentConversation) {
+            this.showNotification("No hay conversación activa", "error");
+            return;
+        }
+
+        const input = document.getElementById("messageInput");
+        const message = input?.value?.trim();
+
+        if (!message) return;
+
+        // Disable input while sending
+        if (input) {
+            input.disabled = true;
+            input.value = "";
+        }
+
+        try {
+            const response = await this.apiRequest("/api/marketplace/messages", {
+                method: "POST",
+                body: JSON.stringify({
+                    recipient_id: this.currentConversation.otherUserId,
+                    message: message,
+                    product_id: this.currentConversation.productId || null
+                })
+            });
+
+            // Add message to list
+            this.messages.push(response.message);
+            this.renderMessages();
+
+            // Scroll to bottom
+            const container = document.getElementById("chatMessages");
+            if (container) container.scrollTop = container.scrollHeight;
+
+        } catch (error) {
+            this.showNotification("Error al enviar mensaje", "error");
+            // Restore the message to input
+            if (input) input.value = message;
+        } finally {
+            if (input) input.disabled = false;
+            input?.focus();
+        }
+    }
+
+    /**
+     * Close chat panel and return to conversations list
+     */
+    closeChatPanel() {
+        const chatPanel = document.getElementById("chatPanel");
+        const convPanel = document.getElementById("conversationsPanel");
+
+        if (chatPanel) chatPanel.style.display = "none";
+        if (convPanel) convPanel.style.display = "block";
+
+        this.currentConversation = null;
+
+        // Refresh conversations to update unread status
+        this.loadConversations();
+    }
+
+    /**
+     * Mark messages as read
+     */
+    async markMessagesRead(otherUserId, productId) {
+        try {
+            await this.apiRequest("/api/marketplace/messages/read", {
+                method: "PUT",
+                body: JSON.stringify({
+                    other_user_id: otherUserId,
+                    product_id: productId || null
+                })
+            });
+            await this.updateUnreadBadge();
+        } catch (error) {
+        }
+    }
+
+    /**
+     * Update unread message badge
+     */
+    async updateUnreadBadge() {
+        try {
+            const response = await this.apiRequest("/api/marketplace/messages/unread");
+            this.unreadCount = response.unread_count || 0;
+
+            const badge = document.getElementById("totalUnreadBadge");
+            if (badge) {
+                badge.textContent = this.unreadCount;
+                badge.style.display = this.unreadCount > 0 ? "flex" : "none";
+            }
+
+            // Also update nav badge if exists
+            const navBadge = document.querySelector('.mp-nav-item[onclick*="messages"] .nav-badge');
+            if (navBadge) {
+                navBadge.textContent = this.unreadCount;
+                navBadge.style.display = this.unreadCount > 0 ? "flex" : "none";
+            }
+        } catch (error) {
+        }
+    }
+
+    /**
+     * Start a new conversation with a seller (from product page)
+     */
+    async startConversation(sellerId, productId, sellerName) {
+        if (this.isGuest) {
+            this.showLoginPrompt("enviar mensajes");
+            return;
+        }
+
+        // Navigate to messages section
+        this.switchTab("messages");
+
+        // Wait for section to load, then open the conversation
+        setTimeout(() => {
+            this.openConversation(sellerId, productId, sellerName);
+        }, 300);
+    }
+
+    /**
+     * Render guest prompt for messages section
+     */
+    renderGuestMessagesPrompt() {
+        const container = document.getElementById("conversationsList");
+        if (!container) return;
+
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
+                <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+                <h3>Inicia sesión para ver tus mensajes</h3>
+                <p style="margin-bottom: 20px;">Crea una cuenta o inicia sesión para contactar vendedores y ver tus conversaciones</p>
+                <button class="btn btn-primary" onclick="goToLogin()">
+                    Iniciar Sesión
+                </button>
+            </div>
+        `;
+    }
+
+    /**
+     * Truncate text helper
+     */
+    truncateText(text, maxLength) {
+        if (!text) return "";
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + "...";
+    }
+
+    // =============================================
+    // Image helpers (shared for products & services)
+    // =============================================
+
+    _compressImage(file, maxWidth = 1200, quality = 0.8) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = () => resolve(file);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    _handleImageSelect(files, contextKey) {
+        if (!this._images) this._images = {};
+        if (!this._images[contextKey]) this._images[contextKey] = [];
+        const MAX = 5;
+        const arr = Array.from(files);
+
+        if (this._images[contextKey].length + arr.length > MAX) {
+            this.showNotification('Maximo ' + MAX + ' imagenes permitidas', 'error');
+            return;
+        }
+
+        for (const file of arr) {
+            if (this._images[contextKey].length >= MAX) break;
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                this.showNotification('Solo se permiten JPEG, PNG, WebP o GIF', 'error');
+                continue;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                this.showNotification('La imagen excede 5MB', 'error');
+                continue;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this._images[contextKey].push({ file, preview: e.target.result });
+                this._renderImagePreviews(contextKey);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    _renderImagePreviews(contextKey) {
+        const container = document.getElementById(contextKey + 'ImagePreviews');
+        if (!container) return;
+        const imgs = this._images?.[contextKey] || [];
+        container.innerHTML = imgs.map((img, i) =>
+            '<div class="store-image-preview">' +
+                '<img loading="lazy" src="' + img.preview + '" alt="">' +
+                '<button type="button" class="store-image-preview-remove" data-action="remove-' + this.escapeHtml(contextKey) + '-image" data-index="' + i + '">&times;</button>' +
+            '</div>'
+        ).join('');
+
+        // Update dropzone text
+        const dropzone = document.getElementById(contextKey + 'Dropzone');
+        if (dropzone) {
+            const textEl = dropzone.querySelector('.store-image-dropzone-text');
+            const remaining = 5 - imgs.length;
+            if (textEl) {
+                textEl.textContent = imgs.length > 0
+                    ? imgs.length + ' imagen(es) - Puedes agregar ' + remaining + ' mas'
+                    : 'Haz clic o arrastra imagenes aqui';
+            }
+        }
+    }
+
+    _removeImage(contextKey, index) {
+        if (!this._images?.[contextKey]) return;
+        this._images[contextKey].splice(index, 1);
+        this._renderImagePreviews(contextKey);
+    }
+
+    async _uploadImages(contextKey) {
+        const imgs = this._images?.[contextKey];
+        if (!imgs || imgs.length === 0) return { success: true, data: { images: [] } };
+
+        const formData = new FormData();
+        for (const img of imgs) {
+            const compressed = await this._compressImage(img.file);
+            formData.append('images', compressed, compressed.name);
+        }
+
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        const endpoint = contextKey === 'service'
+            ? '/api/marketplace/services/upload-images'
+            : '/api/marketplace/products/upload-images';
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+        return await response.json();
+    }
+
+    async _loadCategories(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        try {
+            const data = await this.apiRequest('/api/marketplace/categories');
+            if (data.success && data.data?.categories?.length) {
+                select.innerHTML = '<option value="">Seleccionar...</option>' +
+                    data.data.categories
+                        .filter(c => c.is_active)
+                        .sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99))
+                        .map(c => '<option value="' + this.escapeHtml(c.category_id) + '">' +
+                            this.escapeHtml((c.icon || '') + ' ' + (c.name_es || c.name)) + '</option>')
+                        .join('');
+            }
+        } catch {
+            // Keep fallback options if API fails
+        }
+    }
+
+    _setupDropzone(dropzoneId, fileInputId, contextKey) {
+        const dropzone = document.getElementById(dropzoneId);
+        const fileInput = document.getElementById(fileInputId);
+        if (!dropzone || !fileInput) return;
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            this._handleImageSelect(e.target.files, contextKey);
+            fileInput.value = '';
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                this._handleImageSelect(e.dataTransfer.files, contextKey);
+            }
+        });
+    }
+
+    // =============================================
+    // Create Service Modal
+    // =============================================
+
+    openCreateServiceModal() {
+        document.getElementById('serviceCreateOverlay')?.remove();
+        if (!this._images) this._images = {};
+        this._images.service = [];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'store-edit-overlay';
+        overlay.id = 'serviceCreateOverlay';
+        overlay.innerHTML = `
+            <div class="store-edit-modal">
+                <div class="store-edit-header">
+                    <h3>Nuevo Servicio</h3>
+                    <button data-action="close-create-service">&times;</button>
+                </div>
+                <div class="store-create-form">
+                    <div class="store-form-group">
+                        <label>Categoria *</label>
+                        <select id="csCategory"></select>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Titulo del Servicio *</label>
+                        <input type="text" id="csTitle" maxlength="200" placeholder="Ej: Reparacion de computadoras a domicilio">
+                    </div>
+                    <div class="store-form-group">
+                        <label>Descripcion Corta</label>
+                        <input type="text" id="csShortDesc" maxlength="160" placeholder="Resumen en una linea (max 160 caracteres)">
+                    </div>
+                    <div class="store-form-row">
+                        <div class="store-form-group">
+                            <label>Tipo de Precio *</label>
+                            <select id="csPriceType">
+                                <option value="fixed">Precio Fijo</option>
+                                <option value="hourly">Por Hora</option>
+                                <option value="quote">Negociable</option>
+                                <option value="free">Gratis</option>
+                            </select>
+                        </div>
+                        <div class="store-form-group" id="csCurrencyGroup">
+                            <label>Moneda</label>
+                            <select id="csCurrency">
+                                <option value="HNL" selected>HNL (Lempiras)</option>
+                                <option value="USD">USD (Dolares)</option>
+                                <option value="LTD">LTD (Tokens)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="store-form-row" id="csPriceRow">
+                        <div class="store-form-group">
+                            <label>Precio *</label>
+                            <input type="number" id="csPrice" min="0" max="1000000" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="store-form-group">
+                            <label>Precio Maximo (opcional)</label>
+                            <input type="number" id="csPriceMax" min="0" max="1000000" step="0.01" placeholder="Para rangos">
+                        </div>
+                        <div class="store-form-group">
+                            <label>Duracion (hrs)</label>
+                            <input type="number" id="csDuration" min="0.5" max="720" step="0.5" value="1">
+                        </div>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Descripcion Completa *</label>
+                        <textarea id="csDescription" rows="4" maxlength="2000" placeholder="Describe tu servicio en detalle: que incluye, experiencia, garantias..."></textarea>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Imagenes (max. 5)</label>
+                        <div class="store-image-dropzone" id="serviceDropzone">
+                            <input type="file" id="serviceFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none">
+                            <div class="store-image-dropzone-icon">&#128247;</div>
+                            <div class="store-image-dropzone-text">Haz clic o arrastra imagenes aqui</div>
+                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF - Max 5MB cada una</div>
+                        </div>
+                        <div class="store-image-previews" id="serviceImagePreviews"></div>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Etiquetas (separadas por coma)</label>
+                        <input type="text" id="csTags" placeholder="Ej: rapido, profesional, garantizado">
+                    </div>
+                    <div class="store-form-actions">
+                        <button class="btn btn-secondary" data-action="close-create-service">Cancelar</button>
+                        <button class="btn btn-primary" data-action="submit-service">&#128736; Publicar Servicio</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        this._loadCategories('csCategory');
+        this._setupDropzone('serviceDropzone', 'serviceFileInput', 'service');
+
+        // Price type toggle
+        const priceTypeSelect = overlay.querySelector('#csPriceType');
+        if (priceTypeSelect) {
+            priceTypeSelect.addEventListener('change', () => {
+                const hidden = (priceTypeSelect.value === 'quote' || priceTypeSelect.value === 'free');
+                const priceRow = document.getElementById('csPriceRow');
+                const currencyGroup = document.getElementById('csCurrencyGroup');
+                if (priceRow) priceRow.style.display = hidden ? 'none' : '';
+                if (currencyGroup) currencyGroup.style.display = hidden ? 'none' : '';
+            });
+        }
+
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+    }
+
+    async handleCreateService() {
+        const overlay = document.getElementById('serviceCreateOverlay');
+        if (!overlay) return;
+        const submitBtn = overlay.querySelector('[data-action="submit-service"]');
+        if (!submitBtn) return;
+        const originalText = submitBtn.innerHTML;
+
+        try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>&#9203;</span> Publicando...';
+
+            const getVal = (id) => (overlay.querySelector('#' + id)?.value || '').trim();
+            const priceType = getVal('csPriceType');
+            const tags = getVal('csTags').split(',').map(t => t.trim()).filter(t => t);
+
+            const formData = {
+                title: getVal('csTitle'),
+                category_id: getVal('csCategory'),
+                price_type: priceType,
+                price: (priceType === 'quote' || priceType === 'free') ? null : (parseFloat(getVal('csPrice')) || null),
+                price_max: parseFloat(getVal('csPriceMax')) || null,
+                currency: getVal('csCurrency') || 'HNL',
+                duration_hours: parseFloat(getVal('csDuration')) || 1,
+                short_description: getVal('csShortDesc'),
+                description: getVal('csDescription'),
+                tags: tags
+            };
+
+            if (!formData.title || !formData.category_id || !formData.description) {
+                this.showNotification('Por favor completa todos los campos requeridos', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                return;
+            }
+            if (formData.title.length > 200) {
+                this.showNotification('El titulo no puede exceder 200 caracteres', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                return;
+            }
+            if ((priceType === 'fixed' || priceType === 'hourly') && (!formData.price || formData.price <= 0)) {
+                this.showNotification('Ingresa un precio valido', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                return;
+            }
+            if (formData.price && (formData.price < 0 || formData.price > 1000000)) {
+                this.showNotification('Precio invalido (0 - 1,000,000)', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                return;
+            }
+
+            // Upload images if any
+            if (this._images?.service?.length) {
+                const uploadResult = await this._uploadImages('service');
+                if (uploadResult && uploadResult.success && uploadResult.data?.images) {
+                    formData.images = uploadResult.data.images.map(img => img.url);
+                }
+            }
+
+            const response = await this.apiRequest('/api/marketplace/services', {
+                method: 'POST',
+                body: JSON.stringify(formData)
+            });
+
+            if (response.success) {
+                overlay.remove();
+                this._images.service = [];
+                this.showNotification('Servicio publicado exitosamente', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al crear servicio', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error al crear servicio', 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    }
+
+    // =============================================
+    // Create Product Modal
+    // =============================================
+
+    openCreateProductModal() {
+        document.getElementById('productCreateOverlay')?.remove();
+        if (!this._images) this._images = {};
+        this._images.product = [];
+
+        const overlay = document.createElement('div');
+        overlay.className = 'store-edit-overlay';
+        overlay.id = 'productCreateOverlay';
+        overlay.innerHTML = `
+            <div class="store-edit-modal">
+                <div class="store-edit-header">
+                    <h3>Nuevo Producto</h3>
+                    <button data-action="close-create-product">&times;</button>
+                </div>
+                <div class="store-create-form">
+                    <div class="store-form-row">
+                        <div class="store-form-group">
+                            <label>Categoria *</label>
+                            <select id="cpCategory"></select>
+                        </div>
+                        <div class="store-form-group">
+                            <label>Condicion *</label>
+                            <select id="cpCondition">
+                                <option value="new">Nuevo</option>
+                                <option value="like_new">Como Nuevo</option>
+                                <option value="used">Usado</option>
+                                <option value="refurbished">Regular</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Nombre del Producto *</label>
+                        <input type="text" id="cpTitle" maxlength="200" placeholder="Ej: iPhone 14 Pro Max 256GB">
+                    </div>
+                    <div class="store-form-row">
+                        <div class="store-form-group">
+                            <label>Precio *</label>
+                            <input type="number" id="cpPrice" min="0" max="1000000" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="store-form-group">
+                            <label>Moneda</label>
+                            <select id="cpCurrency">
+                                <option value="HNL" selected>HNL</option>
+                                <option value="USD">USD</option>
+                                <option value="LTD">LTD</option>
+                            </select>
+                        </div>
+                        <div class="store-form-group">
+                            <label>Cantidad *</label>
+                            <input type="number" id="cpQuantity" min="1" max="10000" value="1">
+                        </div>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Ubicacion</label>
+                        <input type="text" id="cpLocation" placeholder="Ej: Tegucigalpa">
+                    </div>
+                    <div class="store-form-group">
+                        <label>Descripcion *</label>
+                        <textarea id="cpDescription" rows="3" maxlength="2000" placeholder="Describe tu producto: caracteristicas, estado, incluye..."></textarea>
+                    </div>
+                    <div class="store-form-group">
+                        <label>Imagenes (max. 5)</label>
+                        <div class="store-image-dropzone" id="productDropzone">
+                            <input type="file" id="productFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none">
+                            <div class="store-image-dropzone-icon">&#128247;</div>
+                            <div class="store-image-dropzone-text">Haz clic o arrastra imagenes aqui</div>
+                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF - Max 5MB cada una</div>
+                        </div>
+                        <div class="store-image-previews" id="productImagePreviews"></div>
+                    </div>
+                    <div class="store-form-toggle">
+                        <label>
+                            <input type="checkbox" id="cpShipping" style="width:18px;height:18px;">
+                            <span>Ofrezco envio a domicilio</span>
+                        </label>
+                        <div id="cpShippingPriceGroup" style="display:none;margin-top:10px;">
+                            <label style="font-size:13px;color:#94a3b8;">Costo de envio</label>
+                            <input type="number" id="cpShippingPrice" min="0" step="0.01" placeholder="0.00" style="width:150px;">
+                        </div>
+                    </div>
+                    <div class="store-form-referral">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                            <span style="font-size:18px;">&#128176;</span>
+                            <span style="font-weight:500;font-size:14px;">Programa de Referidos</span>
+                        </div>
+                        <p style="font-size:12px;color:#94a3b8;margin:0 0 10px;">
+                            Otros usuarios ganan comision por cada venta que refieran.
+                        </p>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <label style="margin:0;font-size:13px;">Comision:</label>
+                            <select id="cpCommission" style="width:90px;">
+                                <option value="2">2%</option>
+                                <option value="3">3%</option>
+                                <option value="5" selected>5%</option>
+                                <option value="8">8%</option>
+                                <option value="10">10%</option>
+                                <option value="15">15%</option>
+                            </select>
+                            <span style="font-size:11px;color:#64748b;">del precio de venta</span>
+                        </div>
+                    </div>
+                    <div class="store-form-actions">
+                        <button class="btn btn-secondary" data-action="close-create-product">Cancelar</button>
+                        <button class="btn btn-primary" data-action="submit-product">&#128230; Publicar Producto</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        this._loadCategories('cpCategory');
+        this._setupDropzone('productDropzone', 'productFileInput', 'product');
+
+        // Shipping toggle
+        const shippingCheckbox = overlay.querySelector('#cpShipping');
+        if (shippingCheckbox) {
+            shippingCheckbox.addEventListener('change', () => {
+                const group = document.getElementById('cpShippingPriceGroup');
+                if (group) group.style.display = shippingCheckbox.checked ? 'block' : 'none';
+            });
+        }
+
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+    }
+
     debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -2449,13 +3943,27 @@ function showCreateProductModal() {
         window.marketplaceSystem.showLoginPrompt('publicar productos');
         return;
     }
-    document.getElementById('createProductModal').classList.add('active');
+    if (window.marketplaceSystem) {
+        window.marketplaceSystem.openCreateProductModal();
+    }
 }
 
 function closeCreateProductModal() {
-    if (window.marketplaceSystem) {
-        window.marketplaceSystem.closeCreateProductModal();
+    document.getElementById('productCreateOverlay')?.remove();
+}
+
+function showCreateServiceModal() {
+    if (window.marketplaceSystem?.isGuest) {
+        window.marketplaceSystem.showLoginPrompt('ofrecer servicios');
+        return;
     }
+    if (window.marketplaceSystem) {
+        window.marketplaceSystem.openCreateServiceModal();
+    }
+}
+
+function closeCreateServiceModal() {
+    document.getElementById('serviceCreateOverlay')?.remove();
 }
 
 function showCreatePostModal() {
@@ -2481,250 +3989,7 @@ function buyProduct(productId) {
         window.marketplaceSystem.showLoginPrompt('comprar productos');
         return;
     }
-
-    const ms = window.marketplaceSystem;
-    const product = ms.products.find(p => p.id === productId);
-    if (!product) {
-        ms.showNotification('Producto no encontrado', 'error');
-        return;
-    }
-
-    // Create purchase modal
-    const existingModal = document.getElementById('purchaseModal');
-    if (existingModal) existingModal.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'purchaseModal';
-    modal.className = 'modal active';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2 class="modal-title">Comprar Producto</h2>
-                <button class="close-btn" onclick="closePurchaseModal()">&times;</button>
-            </div>
-            <div style="padding: 20px;">
-                <!-- Product Info -->
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;">
-                    <div style="font-size: 48px;">${product.image}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 16px;">${product.name}</div>
-                        <div style="color: rgba(255,255,255,0.7); font-size: 13px;">${product.seller?.name || 'Vendedor'}</div>
-                        <div style="color: #00FFFF; font-size: 20px; font-weight: 700; margin-top: 5px;">${product.price} LTD</div>
-                        <div style="color: rgba(255,255,255,0.5); font-size: 12px;">≈ $${(product.price * 0.0847).toFixed(2)} USD</div>
-                    </div>
-                </div>
-
-                <!-- Quantity -->
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label>Cantidad</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <button type="button" onclick="adjustQuantity(-1)" class="btn btn-secondary" style="padding: 8px 15px;">-</button>
-                        <input type="number" id="purchaseQuantity" value="1" min="1" max="${product.quantity}" style="width: 60px; text-align: center; padding: 8px;">
-                        <button type="button" onclick="adjustQuantity(1)" class="btn btn-secondary" style="padding: 8px 15px;">+</button>
-                        <span style="color: rgba(255,255,255,0.5); font-size: 12px;">(${product.quantity} disponibles)</span>
-                    </div>
-                </div>
-
-                <!-- Payment Method -->
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label>Metodo de Pago *</label>
-                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
-                        <label class="payment-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer; border: 2px solid transparent;" onclick="selectPayment('efectivo')">
-                            <input type="radio" name="paymentMethod" value="efectivo" style="width: 18px; height: 18px;">
-                            <span style="font-size: 24px;">💵</span>
-                            <div>
-                                <div style="font-weight: 500;">Efectivo</div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Pago al recibir el producto</div>
-                            </div>
-                        </label>
-                        <label class="payment-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer; border: 2px solid transparent;" onclick="selectPayment('transferencia')">
-                            <input type="radio" name="paymentMethod" value="transferencia" style="width: 18px; height: 18px;">
-                            <span style="font-size: 24px;">🏦</span>
-                            <div>
-                                <div style="font-weight: 500;">Transferencia Bancaria</div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.5);">BAC, Atlantida, Ficohsa, etc.</div>
-                            </div>
-                        </label>
-                        <label class="payment-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer; border: 2px solid transparent;" onclick="selectPayment('tigo_money')">
-                            <input type="radio" name="paymentMethod" value="tigo_money" style="width: 18px; height: 18px;">
-                            <span style="font-size: 24px;">📱</span>
-                            <div>
-                                <div style="font-weight: 500;">Tigo Money</div>
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Pago movil instantaneo</div>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Shipping/Pickup -->
-                ${product.shippingAvailable ? `
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label>Entrega</label>
-                    <div style="display: flex; gap: 10px; margin-top: 8px;">
-                        <label style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer;">
-                            <input type="radio" name="deliveryMethod" value="pickup" checked>
-                            <span>Recoger (Gratis)</span>
-                        </label>
-                        <label style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; cursor: pointer;">
-                            <input type="radio" name="deliveryMethod" value="shipping">
-                            <span>Envio (+${product.shippingPrice} LTD)</span>
-                        </label>
-                    </div>
-                </div>
-                ` : `
-                <div style="padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 15px;">
-                    <span style="color: rgba(255,255,255,0.7);">📍 Recoger en: ${product.location || 'Acordar con vendedor'}</span>
-                </div>
-                `}
-
-                <!-- Notes -->
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Notas para el vendedor (opcional)</label>
-                    <textarea id="purchaseNotes" rows="2" placeholder="Ej: Horario de entrega preferido..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; resize: none;"></textarea>
-                </div>
-
-                <!-- Total -->
-                <div style="padding: 15px; background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(16,185,129,0.1)); border: 1px solid rgba(0,255,255,0.3); border-radius: 10px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>Subtotal:</span>
-                        <span id="purchaseSubtotal">${product.price} LTD</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span>Envio:</span>
-                        <span id="purchaseShipping">Gratis</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: #00FFFF; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px;">
-                        <span>Total:</span>
-                        <span id="purchaseTotal">${product.price} LTD</span>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closePurchaseModal()">Cancelar</button>
-                    <button type="button" class="btn btn-primary" style="flex: 2;" onclick="confirmPurchase('${productId}')" id="confirmPurchaseBtn">
-                        <span>✅</span> Confirmar Compra
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Store product data for later use
-    window.currentPurchaseProduct = product;
-}
-
-function closePurchaseModal() {
-    document.getElementById('purchaseModal')?.remove();
-    window.currentPurchaseProduct = null;
-}
-
-function selectPayment(method) {
-    document.querySelectorAll('.payment-option').forEach(opt => {
-        opt.style.borderColor = 'transparent';
-    });
-    const selected = document.querySelector(`input[value="${method}"]`);
-    if (selected) {
-        selected.checked = true;
-        selected.closest('.payment-option').style.borderColor = '#00FFFF';
-    }
-}
-
-function adjustQuantity(delta) {
-    const input = document.getElementById('purchaseQuantity');
-    const product = window.currentPurchaseProduct;
-    if (!input || !product) return;
-
-    let newVal = parseInt(input.value) + delta;
-    newVal = Math.max(1, Math.min(newVal, product.quantity));
-    input.value = newVal;
-
-    // Update totals
-    updatePurchaseTotal();
-}
-
-function updatePurchaseTotal() {
-    const product = window.currentPurchaseProduct;
-    if (!product) return;
-
-    const quantity = parseInt(document.getElementById('purchaseQuantity')?.value) || 1;
-    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'pickup';
-
-    const subtotal = product.price * quantity;
-    const shipping = (deliveryMethod === 'shipping' && product.shippingAvailable) ? product.shippingPrice : 0;
-    const total = subtotal + shipping;
-
-    document.getElementById('purchaseSubtotal').textContent = `${subtotal.toFixed(2)} LTD`;
-    document.getElementById('purchaseShipping').textContent = shipping > 0 ? `${shipping.toFixed(2)} LTD` : 'Gratis';
-    document.getElementById('purchaseTotal').textContent = `${total.toFixed(2)} LTD`;
-}
-
-async function confirmPurchase(productId) {
-    const ms = window.marketplaceSystem;
-    const product = window.currentPurchaseProduct;
-    if (!ms || !product) return;
-
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-    if (!paymentMethod) {
-        ms.showNotification('Selecciona un metodo de pago', 'error');
-        return;
-    }
-
-    const quantity = parseInt(document.getElementById('purchaseQuantity')?.value) || 1;
-    const deliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'pickup';
-    const notes = document.getElementById('purchaseNotes')?.value || '';
-
-    // Get referral code from URL if present
-    const urlParams = new URLSearchParams(window.location.search);
-    const referralCode = urlParams.get('ref') || null;
-
-    const btn = document.getElementById('confirmPurchaseBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Procesando...';
-
-    try {
-        // Call API to create order (includes referral code if present)
-        const response = await ms.apiRequest(`/api/marketplace/products/${product.productId}/buy`, {
-            method: 'POST',
-            body: JSON.stringify({
-                quantity,
-                payment_method: paymentMethod,
-                delivery_method: deliveryMethod,
-                referral_code: referralCode,
-                notes
-            })
-        });
-
-        if (response.success) {
-            closePurchaseModal();
-
-            // Show success with payment instructions
-            const paymentInstructions = {
-                efectivo: '💵 Coordina con el vendedor para el pago en efectivo al momento de la entrega.',
-                transferencia: '🏦 El vendedor te contactara con los datos bancarios para realizar la transferencia.',
-                tigo_money: '📱 El vendedor te enviara su numero de Tigo Money para completar el pago.'
-            };
-
-            ms.showNotification('¡Orden creada exitosamente!', 'success');
-
-            // Show payment instructions modal
-            setTimeout(() => {
-                alert(`✅ Orden #${response.data?.order?.id || 'Nueva'} creada!\n\n${paymentInstructions[paymentMethod]}\n\nEl vendedor sera notificado y te contactara pronto.`);
-            }, 500);
-
-            // Reload products to update quantities
-            ms.loadMarketplaceData();
-        } else {
-            throw new Error(response.error || 'Error al crear la orden');
-        }
-    } catch (error) {
-        ms.showNotification(error.message || 'Error al procesar la compra', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>✅</span> Confirmar Compra';
-    }
+    window.marketplaceSystem?.showNotification('¡Producto agregado al carrito!', 'success');
 }
 
 function toggleLike(postId) {
@@ -2747,7 +4012,7 @@ function sharePost(postId) {
 function viewService(serviceId) {
     const service = window.marketplaceSystem?.services.find(s => s.id === serviceId);
     if (service) {
-        window.marketplaceSystem?.showNotification(`${service.title} - ${service.provider.name}`, 'info');
+        window.marketplaceSystem?.showNotification(`${this.escapeHtml(service.title)} - ${this.escapeHtml(service.provider.name)}`, 'info');
     }
 }
 
@@ -2800,14 +4065,91 @@ function rescheduleBooking(bookingId) {
     window.marketplaceSystem?.showNotification('Función de reprogramar en desarrollo', 'info');
 }
 
-function contactProvider(bookingId) {
-    // Find booking to get provider info
-    const booking = window.marketplaceSystem?.bookings?.find(b => b.id === bookingId);
-    if (booking) {
-        window.marketplaceSystem?.showNotification(`Contactando a ${booking.provider}...`, 'info');
-        // In future: open messaging modal
-    } else {
-        window.marketplaceSystem?.showNotification('Función de contacto en desarrollo', 'info');
+async function contactProvider(bookingId) {
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+
+    const booking = ms.bookings?.find(b => String(b.id) === String(bookingId));
+    if (!booking || !booking.providerId) {
+        ms.showNotification('No se encontró información del proveedor', 'error');
+        return;
+    }
+
+    try {
+        const response = await ms.apiRequest(`/api/marketplace/providers/${encodeURIComponent(booking.providerId)}`);
+        if (!response.success || !response.data?.provider) {
+            ms.showNotification('No se pudo cargar el proveedor', 'error');
+            return;
+        }
+
+        const provider = response.data.provider;
+        const socialLinks = provider.social_links || {};
+
+        // Build contact links
+        const links = [];
+        if (provider.whatsapp) {
+            const phone = provider.whatsapp.replace(/[^0-9+]/g, '');
+            const msg = encodeURIComponent(`Hola, te contacto desde La Tanda sobre mi reserva #${booking.bookingCode || bookingId}`);
+            links.push(`<a href="https://wa.me/${phone}?text=${msg}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(37,211,102,0.15); border: 1px solid rgba(37,211,102,0.3); border-radius: 10px; color: #25D366; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">💬</span> WhatsApp</a>`);
+        }
+        if (provider.email) {
+            const subject = encodeURIComponent(`Consulta - Reserva #${booking.bookingCode || bookingId}`);
+            links.push(`<a href="mailto:${ms.escapeHtml(provider.email)}?subject=${subject}" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); border-radius: 10px; color: #3B82F6; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">📧</span> ${ms.escapeHtml(provider.email)}</a>`);
+        }
+        if (socialLinks.github) {
+            links.push(`<a href="${ms.escapeHtml(socialLinks.github)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #E6EDF3; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">🐙</span> GitHub</a>`);
+        }
+        if (socialLinks.linkedin) {
+            links.push(`<a href="${ms.escapeHtml(socialLinks.linkedin)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(10,102,194,0.15); border: 1px solid rgba(10,102,194,0.3); border-radius: 10px; color: #0A66C2; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">💼</span> LinkedIn</a>`);
+        }
+        if (socialLinks.website) {
+            links.push(`<a href="${ms.escapeHtml(socialLinks.website)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.25); border-radius: 10px; color: #00FFFF; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">🌐</span> ${ms.escapeHtml(new URL(socialLinks.website).hostname)}</a>`);
+        }
+
+        if (links.length === 0) {
+            ms.showNotification('Este proveedor no tiene información de contacto disponible', 'info');
+            return;
+        }
+
+        // Remove existing modal if any
+        const existing = document.getElementById('contactProviderModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'contactProviderModal';
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 440px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Contactar Proveedor</h2>
+                    <button class="close-btn" data-action="close-contact-modal">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #00FFFF, #10B981); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 22px; font-weight: 700; color: #0f172a;">
+                            ${ms.escapeHtml((provider.business_name || 'P').charAt(0))}
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700;">${ms.escapeHtml(provider.business_name || provider.user_name || 'Proveedor')}</div>
+                        ${provider.is_verified ? '<div style="color: #10B981; font-size: 13px; margin-top: 4px;">✅ Verificado</div>' : ''}
+                        <div style="color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 4px;">⭐ ${ms.escapeHtml(String(provider.avg_rating || 0))} · ${ms.escapeHtml(String(provider.completed_jobs || 0))} trabajos</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${links.join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close handlers
+        const closeModal = () => modal.remove();
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.closest('[data-action="close-contact-modal"]')) {
+                closeModal();
+            }
+        });
+    } catch (err) {
+        ms.showNotification('Error al cargar información del proveedor', 'error');
     }
 }
 
@@ -2826,196 +4168,6 @@ function rebookService(bookingId) {
         }
     }
     window.marketplaceSystem?.showNotification('Error al encontrar el servicio', 'error');
-}
-
-// ===== PRODUCT MANAGEMENT FUNCTIONS =====
-
-function editProduct(productId) {
-    const ms = window.marketplaceSystem;
-    if (!ms) return;
-
-    // Find the product in myProducts array
-    const product = ms.myProducts?.find(p => p.productId == productId);
-    if (!product) {
-        ms.showNotification('Producto no encontrado', 'error');
-        return;
-    }
-
-    // Remove existing modal if any
-    document.getElementById('editProductModal')?.remove();
-
-    // Create edit modal
-    const modal = document.createElement('div');
-    modal.id = 'editProductModal';
-    modal.className = 'modal active';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2 class="modal-title">Editar Producto</h2>
-                <button class="close-btn" onclick="closeEditProductModal()">&times;</button>
-            </div>
-            <form id="editProductForm" onsubmit="event.preventDefault(); saveProductChanges(${productId});">
-                <div class="form-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label>Nombre del Producto *</label>
-                        <input type="text" id="editProductName" value="${product.name}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Categoria *</label>
-                        <select id="editProductCategory" required>
-                            <option value="electronics" ${product.category === 'electronics' ? 'selected' : ''}>Electronicos</option>
-                            <option value="clothing" ${product.category === 'clothing' ? 'selected' : ''}>Ropa y Moda</option>
-                            <option value="home" ${product.category === 'home' ? 'selected' : ''}>Hogar y Jardin</option>
-                            <option value="vehicles" ${product.category === 'vehicles' ? 'selected' : ''}>Vehiculos</option>
-                            <option value="food" ${product.category === 'food' ? 'selected' : ''}>Comida y Bebidas</option>
-                            <option value="beauty" ${product.category === 'beauty' ? 'selected' : ''}>Belleza y Salud</option>
-                            <option value="sports" ${product.category === 'sports' ? 'selected' : ''}>Deportes</option>
-                            <option value="other" ${product.category === 'other' ? 'selected' : ''}>Otros</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Condicion *</label>
-                        <select id="editProductCondition" required>
-                            <option value="new" ${product.condition === 'new' ? 'selected' : ''}>Nuevo</option>
-                            <option value="like_new" ${product.condition === 'like_new' ? 'selected' : ''}>Como Nuevo</option>
-                            <option value="used" ${product.condition === 'used' ? 'selected' : ''}>Usado</option>
-                            <option value="refurbished" ${product.condition === 'refurbished' ? 'selected' : ''}>Reacondicionado</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-grid" style="margin-top: 15px;">
-                    <div class="form-group">
-                        <label>Precio (LTD) *</label>
-                        <input type="number" id="editProductPrice" min="1" step="0.01" value="${product.price}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Cantidad *</label>
-                        <input type="number" id="editProductQuantity" min="0" value="${product.quantity}" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ubicacion</label>
-                        <input type="text" id="editProductLocation" value="${product.location || ''}" placeholder="Ej: Tegucigalpa">
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 15px;">
-                    <label>Descripcion</label>
-                    <textarea id="editProductDescription" rows="3" placeholder="Describe tu producto...">${product.description || ''}</textarea>
-                </div>
-
-                <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="editProductShipping" ${product.shippingAvailable ? 'checked' : ''} style="width: 18px; height: 18px;" onchange="document.getElementById('editShippingPriceGroup').style.display = this.checked ? 'block' : 'none'">
-                        <span>Ofrezco envio a domicilio</span>
-                    </label>
-                    <div id="editShippingPriceGroup" style="display: ${product.shippingAvailable ? 'block' : 'none'}; margin-top: 10px;">
-                        <label>Costo de envio (LTD)</label>
-                        <input type="number" id="editProductShippingPrice" min="0" step="0.01" value="${product.shippingPrice || 0}" style="width: 150px;">
-                    </div>
-                </div>
-
-                <div style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(16,185,129,0.1)); border: 1px solid rgba(0,255,255,0.2); border-radius: 10px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <label>Comision Referidos:</label>
-                        <select id="editProductCommission" style="width: 100px;">
-                            <option value="3" ${product.referralCommission == 3 ? 'selected' : ''}>3%</option>
-                            <option value="5" ${product.referralCommission == 5 ? 'selected' : ''}>5%</option>
-                            <option value="8" ${product.referralCommission == 8 ? 'selected' : ''}>8%</option>
-                            <option value="10" ${product.referralCommission == 10 ? 'selected' : ''}>10%</option>
-                            <option value="15" ${product.referralCommission == 15 ? 'selected' : ''}>15%</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditProductModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" id="saveProductBtn">
-                        <span>💾</span> Guardar Cambios
-                    </button>
-                </div>
-            </form>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-}
-
-function closeEditProductModal() {
-    document.getElementById('editProductModal')?.remove();
-}
-
-async function saveProductChanges(productId) {
-    const ms = window.marketplaceSystem;
-    if (!ms) return;
-
-    const btn = document.getElementById('saveProductBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳</span> Guardando...';
-
-    const productData = {
-        title: document.getElementById('editProductName').value,
-        category_id: document.getElementById('editProductCategory').value,
-        condition: document.getElementById('editProductCondition').value,
-        price: parseFloat(document.getElementById('editProductPrice').value),
-        quantity: parseInt(document.getElementById('editProductQuantity').value),
-        location: document.getElementById('editProductLocation').value,
-        description: document.getElementById('editProductDescription').value,
-        shipping_available: document.getElementById('editProductShipping').checked,
-        shipping_price: parseFloat(document.getElementById('editProductShippingPrice').value) || 0,
-        referral_commission_percent: parseFloat(document.getElementById('editProductCommission').value)
-    };
-
-    try {
-        const response = await ms.apiRequest(`/api/marketplace/products/${productId}`, {
-            method: 'PUT',
-            body: JSON.stringify(productData)
-        });
-
-        if (response.success) {
-            closeEditProductModal();
-            ms.showNotification('Producto actualizado exitosamente', 'success');
-            // Reload my products
-            ms.loadMyProducts();
-        } else {
-            throw new Error(response.error || 'Error al actualizar');
-        }
-    } catch (error) {
-        ms.showNotification(error.message || 'Error al actualizar el producto', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>💾</span> Guardar Cambios';
-    }
-}
-
-async function deleteProduct(productId) {
-    const ms = window.marketplaceSystem;
-    if (!ms) return;
-
-    // Find product to show name in confirmation
-    const product = ms.myProducts?.find(p => p.productId == productId);
-    const productName = product?.name || 'este producto';
-
-    // Confirm deletion
-    if (!confirm(`¿Estas seguro de que deseas eliminar "${productName}"?\n\nEsta accion no se puede deshacer.`)) {
-        return;
-    }
-
-    try {
-        const response = await ms.apiRequest(`/api/marketplace/products/${productId}`, {
-            method: 'DELETE'
-        });
-
-        if (response.success) {
-            ms.showNotification('Producto eliminado exitosamente', 'success');
-            // Reload my products
-            ms.loadMyProducts();
-        } else {
-            throw new Error(response.error || 'Error al eliminar');
-        }
-    } catch (error) {
-        ms.showNotification(error.message || 'Error al eliminar el producto', 'error');
-    }
 }
 
 // Share modal for referral links
@@ -3079,7 +4231,7 @@ async function showShareModal(itemId, type = 'service') {
 
                         <div style="background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(16,185,129,0.1)); border: 1px solid rgba(0,255,255,0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
                             <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Ganas por cada ${actionText}</div>
-                            <div style="font-size: 32px; font-weight: 700; color: #10B981;">L.${estimatedCommission}</div>
+                            <div style="font-size: 32px; font-weight: 700; color: #10B981;">${ms.formatPrice(parseFloat(estimatedCommission), item.currency || 'HNL')}</div>
                             <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${commissionPercent}% de comisión</div>
                         </div>
 
@@ -3269,10 +4421,243 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// v4.4.0: Delegated click handler for marketplace actions (moved out of CSS template)
+function setupMarketplaceDelegatedListeners() {
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        switch (action) {
+            case 'view-service': if (typeof viewService === 'function') viewService(id); break;
+            case 'book-service': e.stopPropagation(); if (typeof bookService === 'function') bookService(id); break;
+            case 'share-service': e.stopPropagation(); if (typeof showShareModal === 'function') showShareModal(id); break;
+            case 'view-product': if (typeof viewProduct === 'function') viewProduct(id); break;
+            case 'buy-product': e.stopPropagation(); if (typeof buyProduct === 'function') buyProduct(id); break;
+            case 'share-product': e.stopPropagation(); if (typeof showShareModal === 'function') showShareModal(id, 'product'); break;
+            case 'toggle-like': if (typeof toggleLike === 'function') toggleLike(id); break;
+            case 'show-comments': if (typeof showComments === 'function') showComments(id); break;
+            case 'share-post': if (typeof sharePost === 'function') sharePost(id); break;
+            case 'cancel-booking': if (typeof cancelBooking === 'function') cancelBooking(id); break;
+            case 'contact-provider': if (typeof contactProvider === 'function') contactProvider(id); break;
+            case 'reschedule-booking': if (typeof rescheduleBooking === 'function') rescheduleBooking(id); break;
+            case 'leave-review': if (typeof leaveReview === 'function') leaveReview(id); break;
+            case 'rebook-service': if (typeof rebookService === 'function') rebookService(id); break;
+            case 'edit-store': window.marketplaceSystem?.openEditStoreModal(); break;
+            case 'close-edit-store': document.getElementById('storeEditOverlay')?.remove(); break;
+            case 'view-my-store': window.marketplaceSystem?.loadMyStore(); break;
+            case 'select-shop-type': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                if (id === 'mixed') {
+                    ms.showNotification('Tipo Mixta disponible proximamente con Premium', 'info');
+                } else if (id === 'services' || id === 'products') {
+                    ms._selectedShopType = id;
+                    ms.renderStoreLayoutPicker();
+                }
+                break;
+            }
+            case 'change-shop-type': {
+                const ms2 = window.marketplaceSystem;
+                if (ms2) ms2.renderStoreOnboarding();
+                break;
+            }
+            case 'select-layout': {
+                const msL = window.marketplaceSystem;
+                if (msL && (id === 'classic' || id === 'showcase' || id === 'compact')) {
+                    msL._selectedLayout = id;
+                    msL.renderStoreThemePicker();
+                }
+                break;
+            }
+            case 'change-layout': {
+                const msL2 = window.marketplaceSystem;
+                if (msL2) msL2.renderStoreLayoutPicker();
+                break;
+            }
+            case 'select-theme': {
+                const msT = window.marketplaceSystem;
+                const validThemes = ['dark', 'cyan', 'gold', 'green', 'coral', 'purple'];
+                if (msT && validThemes.includes(id)) {
+                    msT._selectedTheme = id;
+                    msT.renderStoreOnboardingForm();
+                }
+                break;
+            }
+            case 'change-theme': {
+                const msT2 = window.marketplaceSystem;
+                if (msT2) msT2.renderStoreThemePicker();
+                break;
+            }
+            case 'pick-edit-layout': {
+                const container = btn.closest('.store-edit-layout-picker');
+                if (container) {
+                    container.querySelectorAll('.store-edit-layout-opt').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+                break;
+            }
+            case 'pick-edit-theme': {
+                const container2 = btn.closest('.store-edit-theme-picker');
+                if (container2) {
+                    container2.querySelectorAll('.store-edit-theme-opt').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+                break;
+            }
+            case 'add-service': {
+                const ms3 = window.marketplaceSystem;
+                if (ms3?.isGuest) { ms3.showLoginPrompt('ofrecer servicios'); break; }
+                if (ms3?._currentProvider?.shop_type === 'products') {
+                    ms3.showNotification('Tu tienda es de tipo Productos. No puedes crear servicios.', 'error');
+                } else if (ms3) {
+                    ms3.openCreateServiceModal();
+                }
+                break;
+            }
+            case 'add-product': {
+                const ms4 = window.marketplaceSystem;
+                if (ms4?.isGuest) { ms4.showLoginPrompt('publicar productos'); break; }
+                if (ms4?._currentProvider?.shop_type === 'services') {
+                    ms4.showNotification('Tu tienda es de tipo Servicios. No puedes crear productos.', 'error');
+                } else if (ms4) {
+                    ms4.openCreateProductModal();
+                }
+                break;
+            }
+            case 'close-create-service': {
+                document.getElementById('serviceCreateOverlay')?.remove();
+                break;
+            }
+            case 'close-create-product': {
+                document.getElementById('productCreateOverlay')?.remove();
+                break;
+            }
+            case 'submit-service': {
+                window.marketplaceSystem?.handleCreateService();
+                break;
+            }
+            case 'submit-product': {
+                window.marketplaceSystem?.handleCreateProduct();
+                break;
+            }
+            case 'remove-service-image': {
+                const idx = parseInt(btn.dataset.index);
+                if (!isNaN(idx)) window.marketplaceSystem?._removeImage('service', idx);
+                break;
+            }
+            case 'remove-product-image': {
+                const idx2 = parseInt(btn.dataset.index);
+                if (!isNaN(idx2)) window.marketplaceSystem?._removeImage('product', idx2);
+                break;
+            }
+            case 'copy-portfolio-url': {
+                const url = btn.dataset.url;
+                if (url && navigator.clipboard) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        window.marketplaceSystem?.showNotification('URL copiada al portapapeles', 'success');
+                    }).catch(() => {
+                        window.marketplaceSystem?.showNotification('No se pudo copiar', 'error');
+                    });
+                }
+                break;
+            }
+            case 'open-portfolio-maker': {
+                window.marketplaceSystem?.openPortfolioMaker();
+                break;
+            }
+            case 'back-to-store': {
+                window.marketplaceSystem?.loadMyStore();
+                break;
+            }
+            case 'toggle-cv-section': {
+                const secKey = btn.dataset.section;
+                if (secKey) window.marketplaceSystem?.handleToggleCvSection(secKey);
+                break;
+            }
+            case 'add-cv-item': {
+                const secKey2 = btn.dataset.section;
+                if (secKey2) window.marketplaceSystem?.handleAddCvItem(secKey2);
+                break;
+            }
+            case 'edit-cv-item': {
+                const secKey3 = btn.dataset.section;
+                const idx3 = parseInt(btn.dataset.index);
+                if (secKey3 && !isNaN(idx3)) window.marketplaceSystem?.handleEditCvItem(secKey3, idx3);
+                break;
+            }
+            case 'remove-cv-item': {
+                const secKey4 = btn.dataset.section;
+                const idx4 = parseInt(btn.dataset.index);
+                if (secKey4 && !isNaN(idx4)) window.marketplaceSystem?.handleRemoveCvItem(secKey4, idx4);
+                break;
+            }
+            case 'confirm-cv-item': {
+                const secKey5 = btn.dataset.section;
+                if (secKey5) window.marketplaceSystem?.handleConfirmCvItem(secKey5);
+                break;
+            }
+            case 'cancel-cv-form': {
+                const secKey6 = btn.dataset.section;
+                if (secKey6) window.marketplaceSystem?.handleCancelCvForm(secKey6);
+                break;
+            }
+            case 'save-portfolio': {
+                window.marketplaceSystem?.savePortfolio();
+                break;
+            }
+            case 'download-cv-pdf': {
+                window.marketplaceSystem?.downloadPortfolioPDF();
+                break;
+            }
+            case 'import-cv-file': {
+                document.getElementById('cvFileInput')?.click();
+                break;
+            }
+            case 'process-cv-upload': {
+                window.marketplaceSystem?.processCvUpload();
+                break;
+            }
+            case 'generate-cv-summary': {
+                window.marketplaceSystem?.generateAISummary();
+                break;
+            }
+            case 'toggle-featured': {
+                const msF = window.marketplaceSystem;
+                if (!msF) break;
+                const fType = btn.dataset.type;
+                const fId = btn.dataset.id;
+                const wasFeatured = btn.dataset.featured === 'true';
+                const fEndpoint = fType === 'services' ? '/services/' + fId : '/products/' + fId;
+                btn.disabled = true;
+                msF.apiRequest(fEndpoint, { method: 'PATCH', body: JSON.stringify({ featured: !wasFeatured }) })
+                    .then(() => { msF.showNotification(wasFeatured ? 'Quitado de destacados' : 'Marcado como destacado', 'success'); msF.loadMyStore(); })
+                    .catch(() => { msF.showNotification('Error al actualizar', 'error'); btn.disabled = false; });
+                break;
+            }
+            case 'move-item-up':
+            case 'move-item-down': {
+                const msM = window.marketplaceSystem;
+                if (!msM) break;
+                const mType = btn.dataset.type;
+                const mId = btn.dataset.id;
+                const currentOrder = parseInt(btn.dataset.order) || 0;
+                const newOrder = action === 'move-item-up' ? Math.max(0, currentOrder - 1) : currentOrder + 1;
+                const mEndpoint = mType === 'services' ? '/services/' + mId : '/products/' + mId;
+                btn.disabled = true;
+                msM.apiRequest(mEndpoint, { method: 'PATCH', body: JSON.stringify({ display_order: newOrder }) })
+                    .then(() => { msM.loadMyStore(); })
+                    .catch(() => { msM.showNotification('Error al reordenar', 'error'); btn.disabled = false; });
+                break;
+            }
+        }
+    });
+}
+
 // Initialize the system when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.marketplaceSystem = new MarketplaceSocialSystem();
-    window.ms = window.marketplaceSystem; // Alias for convenience
+    window.ms = window.marketplaceSystem; // Alias for shorter references
 });
 
 // Export for other modules
