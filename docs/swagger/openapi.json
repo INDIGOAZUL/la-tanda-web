@@ -1,0 +1,4272 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "La Tanda API",
+    "version": "4.6.1",
+    "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```",
+    "contact": {
+      "name": "INDIGOAZUL Development",
+      "url": "https://latanda.online",
+      "email": "dev@latanda.online"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://latanda.online",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autenticación, registro, verificación de email, reset de contraseña, WebAuthn"
+    },
+    {
+      "name": "User",
+      "description": "Perfil de usuario, configuración, 2FA, dispositivos, logros"
+    },
+    {
+      "name": "Wallet",
+      "description": "Balance, depósitos, retiros, historial de transacciones, PIN"
+    },
+    {
+      "name": "Groups",
+      "description": "Grupos de ahorro, membresías, roles, distribuciones, calendario"
+    },
+    {
+      "name": "Tandas",
+      "description": "Tandas de ahorro rotativo, posiciones, pagos, turnos"
+    },
+    {
+      "name": "Contributions",
+      "description": "Contribuciones a grupos, comprobantes, verificación"
+    },
+    {
+      "name": "Social Feed",
+      "description": "Publicaciones, comentarios, likes, bookmarks, follows, encuestas"
+    },
+    {
+      "name": "Marketplace - Services",
+      "description": "Servicios del marketplace, categorías, búsqueda"
+    },
+    {
+      "name": "Marketplace - Products",
+      "description": "Productos del marketplace, inventario, órdenes"
+    },
+    {
+      "name": "Marketplace - Providers",
+      "description": "Vendedores/proveedores, tiendas, reseñas"
+    },
+    {
+      "name": "Marketplace - Portfolio",
+      "description": "Portafolio profesional / CV maker, descarga PDF"
+    },
+    {
+      "name": "Marketplace - Bookings",
+      "description": "Reservas de servicios, estados, reviews"
+    },
+    {
+      "name": "Lottery",
+      "description": "Lotería predictiva de Honduras, estadísticas, jaladores, predicciones ML"
+    },
+    {
+      "name": "MIA AI",
+      "description": "Asistente IA MIA"
+    },
+    {
+      "name": "Notifications",
+      "description": "Notificaciones push, preferencias, suscripciones VAPID"
+    },
+    {
+      "name": "Public",
+      "description": "Endpoints públicos sin autenticación"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtenido de /api/auth/login"
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Error interno del servidor"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "example": "user_a1b2c3d4e5f6g7h8"
+          },
+          "name": {
+            "type": "string",
+            "example": "María López"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "handle": {
+            "type": "string",
+            "example": "maria-lopez"
+          },
+          "avatar_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ]
+          },
+          "email_verified": {
+            "type": "boolean"
+          },
+          "verification_level": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "verified",
+              "premium"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "properties": {
+          "provider_id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "business_name": {
+            "type": "string",
+            "example": "Mi Negocio HN"
+          },
+          "description": {
+            "type": "string"
+          },
+          "shop_type": {
+            "type": "string",
+            "enum": [
+              "services",
+              "products",
+              "mixed"
+            ]
+          },
+          "store_layout": {
+            "type": "string",
+            "enum": [
+              "classic",
+              "showcase",
+              "compact"
+            ]
+          },
+          "store_theme": {
+            "type": "string",
+            "enum": [
+              "dark",
+              "cyan",
+              "gold",
+              "green",
+              "coral",
+              "purple"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatsapp": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string"
+          },
+          "neighborhood": {
+            "type": "string",
+            "nullable": true
+          },
+          "service_areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "social_links": {
+            "type": "object",
+            "properties": {
+              "github": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "website": {
+                "type": "string"
+              }
+            }
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "pending",
+              "inactive"
+            ]
+          },
+          "avg_rating": {
+            "type": "number"
+          },
+          "total_reviews": {
+            "type": "integer"
+          },
+          "completed_jobs": {
+            "type": "integer"
+          },
+          "response_rate": {
+            "type": "integer"
+          }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "service_id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "price_type": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "hourly",
+              "quote"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "HNL",
+              "USD",
+              "LTD"
+            ]
+          },
+          "category_id": {
+            "type": "integer"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "HNL",
+              "USD",
+              "LTD"
+            ]
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "display_order": {
+            "type": "integer"
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "max_members": {
+            "type": "integer"
+          },
+          "contribution_amount": {
+            "type": "number"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          }
+        }
+      },
+      "Portfolio": {
+        "type": "object",
+        "properties": {
+          "portfolio_id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "Siempre resuelto del perfil del usuario (no editable)"
+          },
+          "professional_title": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true
+          },
+          "experience": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "company": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "string"
+                },
+                "start_date": {
+                  "type": "string"
+                },
+                "end_date": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "current": {
+                  "type": "boolean"
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "education": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "degree": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "start_year": {
+                  "type": "integer"
+                },
+                "end_year": {
+                  "type": "integer",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "basico",
+                    "intermedio",
+                    "avanzado",
+                    "experto"
+                  ]
+                }
+              }
+            }
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "issuer": {
+                  "type": "string"
+                },
+                "year": {
+                  "type": "integer"
+                },
+                "url": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "language": {
+                  "type": "string"
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "basico",
+                    "intermedio",
+                    "avanzado",
+                    "nativo"
+                  ]
+                }
+              }
+            }
+          },
+          "allow_downloads": {
+            "type": "boolean"
+          },
+          "is_public": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "limitParam": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 20,
+          "maximum": 100
+        },
+        "description": "Máximo de resultados"
+      },
+      "offsetParam": {
+        "name": "offset",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 0
+        },
+        "description": "Desplazamiento para paginación"
+      },
+      "searchParam": {
+        "name": "search",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Término de búsqueda"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Token JWT faltante o inválido",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Permisos insuficientes",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso no encontrado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Error interno del servidor",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Health check del servidor",
+        "responses": {
+          "200": {
+            "description": "Servidor funcionando",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/stats": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Estadísticas públicas de la plataforma",
+        "responses": {
+          "200": {
+            "description": "Estadísticas generales (usuarios, grupos, transacciones)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/products": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Productos destacados para preview público",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/info": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Información general de la plataforma",
+        "responses": {
+          "200": {
+            "description": "Info de La Tanda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/lottery/recent": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Resultados recientes de lotería",
+        "responses": {
+          "200": {
+            "description": "Últimos resultados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Iniciar sesión",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso — retorna JWT token y datos del usuario",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Registrar nuevo usuario",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "referralCode": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email ya registrado"
+          }
+        }
+      }
+    },
+    "/api/auth/check-duplicates": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verificar si email ya existe",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado de verificación"
+          }
+        }
+      }
+    },
+    "/api/auth/send-verification": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Enviar email de verificación",
+        "responses": {
+          "200": {
+            "description": "Email enviado"
+          }
+        }
+      }
+    },
+    "/api/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verificar email con token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verificado"
+          }
+        }
+      }
+    },
+    "/api/auth/request-reset": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Solicitar reset de contraseña",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email de reset enviado"
+          }
+        }
+      }
+    },
+    "/api/auth/verify-reset-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verificar token de reset",
+        "responses": {
+          "200": {
+            "description": "Token válido"
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resetear contraseña con token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña actualizada"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refrescar JWT token",
+        "responses": {
+          "200": {
+            "description": "Nuevo token generado"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Cerrar sesión",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada"
+          }
+        }
+      }
+    },
+    "/api/user/profile": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener perfil del usuario autenticado",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del perfil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Actualizar perfil del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/user/avatar": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Subir avatar del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Avatar actualizado"
+          }
+        }
+      }
+    },
+    "/api/user/settings": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener configuración del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuración actual"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Actualizar configuración",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuración actualizada"
+          }
+        }
+      }
+    },
+    "/api/user/change-password": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Cambiar contraseña",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contraseña cambiada"
+          }
+        }
+      }
+    },
+    "/api/user/activity": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener actividad reciente del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de actividades"
+          }
+        }
+      }
+    },
+    "/api/user/achievements": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener logros del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de logros"
+          }
+        }
+      }
+    },
+    "/api/user/devices": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Listar dispositivos conectados",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de dispositivos"
+          }
+        }
+      }
+    },
+    "/api/user/2fa/setup": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Configurar autenticación 2FA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR code y secreto para configurar TOTP"
+          }
+        }
+      }
+    },
+    "/api/user/2fa/verify": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Verificar código 2FA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA activado"
+          }
+        }
+      }
+    },
+    "/api/user/2fa/disable": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Desactivar 2FA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "2FA desactivado"
+          }
+        }
+      }
+    },
+    "/api/user/2fa/status": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Estado de 2FA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actual de 2FA"
+          }
+        }
+      }
+    },
+    "/api/wallet/balance": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Obtener balance de la billetera",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance actual en HNL, USD, LTD tokens"
+          }
+        }
+      }
+    },
+    "/api/wallet/balance-history": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Historial de balance",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de movimientos"
+          }
+        }
+      }
+    },
+    "/api/wallet/withdrawals": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Solicitar retiro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "amount",
+                  "type"
+                ],
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "bank",
+                      "mobile",
+                      "crypto"
+                    ]
+                  },
+                  "address": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Retiro solicitado"
+          }
+        }
+      }
+    },
+    "/api/wallet/pin/set": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Establecer PIN de seguridad",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PIN establecido"
+          }
+        }
+      }
+    },
+    "/api/wallet/pin/status": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Estado del PIN",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PIN activo/inactivo"
+          }
+        }
+      }
+    },
+    "/api/wallet/pin/verify": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Verificar PIN",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PIN válido"
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/bank-transfer": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Crear depósito por transferencia bancaria",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depósito creado, pendiente de confirmación"
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/mobile": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Crear depósito móvil (Tigo Money)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Depósito móvil creado"
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/crypto": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Crear depósito crypto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dirección de depósito generada"
+          }
+        }
+      }
+    },
+    "/api/wallet/withdraw/bank": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Retiro a cuenta bancaria",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retiro bancario solicitado"
+          }
+        }
+      }
+    },
+    "/api/wallet/withdraw/mobile": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Retiro a billetera móvil",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retiro móvil solicitado"
+          }
+        }
+      }
+    },
+    "/api/wallet/withdraw/crypto": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Retiro a dirección crypto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retiro crypto solicitado"
+          }
+        }
+      }
+    },
+    "/api/wallet/withdraw/fees": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Consultar comisiones de retiro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tabla de comisiones por método"
+          }
+        }
+      }
+    },
+    "/api/payments/history": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Historial de pagos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          },
+          {
+            "$ref": "#/components/parameters/offsetParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pagos"
+          }
+        }
+      }
+    },
+    "/api/payments/methods/available": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Métodos de pago disponibles",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de métodos"
+          }
+        }
+      }
+    },
+    "/api/groups": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Listar grupos",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          },
+          {
+            "$ref": "#/components/parameters/offsetParam"
+          },
+          {
+            "$ref": "#/components/parameters/searchParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de grupos"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Crear nuevo grupo de ahorro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "contribution_amount",
+                  "frequency"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "contribution_amount": {
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": [
+                      "weekly",
+                      "biweekly",
+                      "monthly"
+                    ]
+                  },
+                  "max_members": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Grupo creado"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Obtener detalle de un grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del grupo"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/join": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Unirse a un grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unido exitosamente"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/members": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Listar miembros del grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de miembros"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/calendar": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Calendario del grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendario de pagos y turnos"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/contributions": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Contribuciones del grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contribuciones"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/stats": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Estadísticas del grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats del grupo"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/payout/request": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Solicitar payout del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payout solicitado"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/payout/status": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Estado de payout",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actual del payout"
+          }
+        }
+      }
+    },
+    "/api/tandas": {
+      "get": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Listar tandas disponibles",
+        "responses": {
+          "200": {
+            "description": "Lista de tandas"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/tandas/create": {
+      "post": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Crear nueva tanda de ahorro rotativo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Tanda creada"
+          }
+        }
+      }
+    },
+    "/api/tandas/my-tandas": {
+      "get": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Mis tandas",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tandas del usuario"
+          }
+        }
+      }
+    },
+    "/api/tandas/pay": {
+      "post": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Realizar pago de tanda",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pago registrado"
+          }
+        }
+      }
+    },
+    "/api/tandas/available-positions": {
+      "get": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Posiciones disponibles",
+        "responses": {
+          "200": {
+            "description": "Lista de posiciones"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/contributions": {
+      "get": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Listar contribuciones del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de contribuciones"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Hacer una contribución",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contribución registrada"
+          }
+        }
+      }
+    },
+    "/api/feed/social": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Obtener feed social",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          },
+          {
+            "$ref": "#/components/parameters/offsetParam"
+          },
+          {
+            "$ref": "#/components/parameters/searchParam"
+          },
+          {
+            "name": "tab",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "following",
+                "trending"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de publicaciones"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Crear publicación",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "media_urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "is_anonymous": {
+                    "type": "boolean"
+                  },
+                  "poll_options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Publicación creada"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}": {
+      "put": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Editar publicación",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publicación editada"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Eliminar publicación",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publicación eliminada"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}/like": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Dar/quitar like a publicación",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like toggled"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}/bookmark": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Guardar/quitar bookmark",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookmark toggled"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}/comments": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Obtener comentarios de publicación",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de comentarios"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Agregar comentario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comentario creado"
+          }
+        }
+      }
+    },
+    "/api/feed/social/follow/{userId}": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Seguir usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Siguiendo"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Dejar de seguir",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dejó de seguir"
+          }
+        }
+      }
+    },
+    "/api/feed/social/bookmarks": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Mis bookmarks",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publicaciones guardadas"
+          }
+        }
+      }
+    },
+    "/api/feed/social/trending": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Publicaciones trending",
+        "responses": {
+          "200": {
+            "description": "Top publicaciones"
+          }
+        }
+      }
+    },
+    "/api/marketplace/categories": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Listar categorías del marketplace",
+        "responses": {
+          "200": {
+            "description": "Lista de categorías con iconos y nombres en español"
+          }
+        }
+      }
+    },
+    "/api/marketplace/services": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Listar servicios",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          },
+          {
+            "$ref": "#/components/parameters/offsetParam"
+          },
+          {
+            "$ref": "#/components/parameters/searchParam"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "featured",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de servicios",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "services": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Service"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Crear servicio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "description",
+                  "price",
+                  "category_id"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "price_type": {
+                    "type": "string",
+                    "enum": [
+                      "fixed",
+                      "hourly",
+                      "quote"
+                    ]
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "HNL",
+                      "USD",
+                      "LTD"
+                    ],
+                    "default": "HNL"
+                  },
+                  "category_id": {
+                    "type": "integer"
+                  },
+                  "duration_hours": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Servicio creado"
+          },
+          "403": {
+            "description": "Tu tienda no permite servicios (tipo Productos)"
+          }
+        }
+      }
+    },
+    "/api/marketplace/services/{serviceId}": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Detalle de un servicio",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del servicio"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Actualizar featured/display_order de servicio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "featured": {
+                    "type": "boolean"
+                  },
+                  "display_order": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Servicio actualizado"
+          }
+        }
+      }
+    },
+    "/api/marketplace/services/upload-images": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Subir imágenes para servicio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URLs de imágenes subidas"
+          }
+        }
+      }
+    },
+    "/api/marketplace/products": {
+      "get": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Listar productos",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          },
+          {
+            "$ref": "#/components/parameters/offsetParam"
+          },
+          {
+            "$ref": "#/components/parameters/searchParam"
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Crear producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "price",
+                  "quantity"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "HNL",
+                      "USD",
+                      "LTD"
+                    ]
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado"
+          },
+          "403": {
+            "description": "Tu tienda no permite productos (tipo Servicios)"
+          }
+        }
+      }
+    },
+    "/api/marketplace/products/{productId}": {
+      "get": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Detalle de producto",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del producto"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Actualizar producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto actualizado"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Actualizar featured/display_order de producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto actualizado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Eliminar producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto eliminado"
+          }
+        }
+      }
+    },
+    "/api/marketplace/products/{productId}/buy": {
+      "post": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Comprar producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "default": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Orden creada"
+          }
+        }
+      }
+    },
+    "/api/marketplace/products/upload-images": {
+      "post": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Subir imágenes para producto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URLs de imágenes subidas"
+          }
+        }
+      }
+    },
+    "/api/marketplace/providers": {
+      "get": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Listar proveedores/vendedores",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limitParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de proveedores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "providers": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Provider"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/marketplace/providers/register": {
+      "post": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Registrar tienda (crear perfil de vendedor)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "business_name",
+                  "shop_type"
+                ],
+                "properties": {
+                  "business_name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "shop_type": {
+                    "type": "string",
+                    "enum": [
+                      "services",
+                      "products"
+                    ],
+                    "description": "Tipo de tienda (mixed solo para Premium)"
+                  },
+                  "store_layout": {
+                    "type": "string",
+                    "enum": [
+                      "classic",
+                      "showcase",
+                      "compact"
+                    ]
+                  },
+                  "store_theme": {
+                    "type": "string",
+                    "enum": [
+                      "dark",
+                      "cyan",
+                      "gold",
+                      "green",
+                      "coral",
+                      "purple"
+                    ]
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "whatsapp": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "neighborhood": {
+                    "type": "string"
+                  },
+                  "service_areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "social_links": {
+                    "type": "object",
+                    "properties": {
+                      "github": {
+                        "type": "string"
+                      },
+                      "linkedin": {
+                        "type": "string"
+                      },
+                      "website": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tienda creada"
+          },
+          "409": {
+            "description": "Ya tienes una tienda registrada"
+          }
+        }
+      }
+    },
+    "/api/marketplace/providers/me": {
+      "get": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Obtener mi perfil de vendedor",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del provider o null"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Actualizar mi tienda",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "whatsapp": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "neighborhood": {
+                    "type": "string"
+                  },
+                  "store_layout": {
+                    "type": "string"
+                  },
+                  "store_theme": {
+                    "type": "string"
+                  },
+                  "social_links": {
+                    "type": "object"
+                  }
+                },
+                "description": "shop_type NO se puede cambiar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tienda actualizada"
+          }
+        }
+      }
+    },
+    "/api/marketplace/providers/{providerId}": {
+      "get": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Detalle de un proveedor con sus servicios",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del proveedor + servicios"
+          }
+        }
+      }
+    },
+    "/api/marketplace/providers/{providerId}/reviews": {
+      "get": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Reseñas de un proveedor",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reseñas"
+          }
+        }
+      }
+    },
+    "/api/marketplace/bookings": {
+      "get": {
+        "tags": [
+          "Marketplace - Bookings"
+        ],
+        "summary": "Listar mis reservas",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reservas"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Marketplace - Bookings"
+        ],
+        "summary": "Crear reserva de servicio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "service_id"
+                ],
+                "properties": {
+                  "service_id": {
+                    "type": "integer"
+                  },
+                  "scheduled_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reserva creada"
+          }
+        }
+      }
+    },
+    "/api/marketplace/bookings/{bookingId}/status": {
+      "put": {
+        "tags": [
+          "Marketplace - Bookings"
+        ],
+        "summary": "Actualizar estado de reserva",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "confirmed",
+                      "completed",
+                      "cancelled"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado actualizado"
+          }
+        }
+      }
+    },
+    "/api/marketplace/reviews": {
+      "post": {
+        "tags": [
+          "Marketplace - Bookings"
+        ],
+        "summary": "Crear reseña de servicio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "booking_id",
+                  "rating"
+                ],
+                "properties": {
+                  "booking_id": {
+                    "type": "integer"
+                  },
+                  "rating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reseña creada"
+          }
+        }
+      }
+    },
+    "/api/marketplace/favorites": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Mis servicios favoritos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de favoritos"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Agregar a favoritos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agregado a favoritos"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Quitar de favoritos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quitado de favoritos"
+          }
+        }
+      }
+    },
+    "/api/marketplace/portfolio/cv/me": {
+      "get": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Obtener mi portafolio/CV para edición",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos del portafolio o null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "portfolio": {
+                          "$ref": "#/components/schemas/Portfolio"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Crear o actualizar mi portafolio/CV",
+        "description": "UPSERT — crea si no existe, actualiza si ya existe. El campo full_name siempre se resuelve del perfil del usuario (se ignora en el body). Requiere tienda activa.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "professional_title": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "summary": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "experience": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "education": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "skills": {
+                    "type": "array",
+                    "maxItems": 30,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "certifications": {
+                    "type": "array",
+                    "maxItems": 15,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "projects": {
+                    "type": "array",
+                    "maxItems": 15,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "languages": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "allow_downloads": {
+                    "type": "boolean"
+                  },
+                  "is_public": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Portafolio guardado"
+          },
+          "403": {
+            "description": "Necesitas una tienda activa"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Eliminar mi portafolio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portafolio eliminado"
+          }
+        }
+      }
+    },
+    "/api/marketplace/portfolio/cv/parse": {
+      "post": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Importar CV desde PDF — extrae texto y parsea con IA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cv": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF máximo 5MB"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Datos del CV parseados por IA (Groq)"
+          }
+        }
+      }
+    },
+    "/api/marketplace/portfolio/cv/generate-summary": {
+      "post": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Generar resumen profesional con IA",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "portfolioData": {
+                    "type": "object",
+                    "description": "Datos actuales del portafolio"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resumen generado por Groq AI"
+          }
+        }
+      }
+    },
+    "/api/marketplace/portfolio/{handle}": {
+      "get": {
+        "tags": [
+          "Marketplace - Portfolio"
+        ],
+        "summary": "Portafolio público de un vendedor (para /negocio/{handle})",
+        "description": "Endpoint público sin autenticación. Retorna datos del usuario, proveedor, servicios, productos, reseñas, y portafolio/CV si existe y es público.",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "maria-lopez"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos completos del portafolio público"
+          },
+          "404": {
+            "description": "Handle no encontrado"
+          }
+        }
+      }
+    },
+    "/api/marketplace/stats": {
+      "get": {
+        "tags": [
+          "Marketplace - Providers"
+        ],
+        "summary": "Estadísticas del vendedor",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats de ventas, visitas, etc."
+          }
+        }
+      }
+    },
+    "/api/lottery/stats": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Estadísticas de frecuencia de números",
+        "responses": {
+          "200": {
+            "description": "Frecuencias históricas de números de lotería de Honduras"
+          }
+        }
+      }
+    },
+    "/api/lottery/stats/detailed": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Estadísticas detalladas",
+        "responses": {
+          "200": {
+            "description": "Análisis detallado con patrones, gaps, tendencias"
+          }
+        }
+      }
+    },
+    "/api/lottery/results": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Resultados recientes de la Lotería Nacional de Honduras",
+        "responses": {
+          "200": {
+            "description": "Últimos sorteos con números ganadores"
+          }
+        }
+      }
+    },
+    "/api/lottery/jaladores": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Tabla de números jaladores",
+        "description": "Fórmula: (num+25)%100, (num+50)%100, (num+75)%100",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Números jaladores basados en último resultado real"
+          }
+        }
+      }
+    },
+    "/api/lottery/predict-ml": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Predicción con modelo ML",
+        "responses": {
+          "200": {
+            "description": "Predicciones generadas por modelo de machine learning"
+          }
+        }
+      }
+    },
+    "/api/lottery/predict-ensemble": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Predicción ensemble (múltiples modelos)",
+        "responses": {
+          "200": {
+            "description": "Predicciones combinadas de múltiples algoritmos"
+          }
+        }
+      }
+    },
+    "/api/lottery/leaderboard": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Tabla de líderes de predicciones",
+        "responses": {
+          "200": {
+            "description": "Top predictores por precisión"
+          }
+        }
+      }
+    },
+    "/api/lottery/accuracy-dashboard": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Dashboard de precisión de predicciones",
+        "responses": {
+          "200": {
+            "description": "Métricas de precisión histórica"
+          }
+        }
+      }
+    },
+    "/api/mia/chat": {
+      "post": {
+        "tags": [
+          "MIA AI"
+        ],
+        "summary": "Chat con asistente IA MIA",
+        "description": "Powered by Groq Llama 3.3 70B. Máximo 2000 caracteres por mensaje. Roles permitidos: user, assistant.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "conversationHistory": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant"
+                          ]
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta de MIA"
+          }
+        }
+      }
+    },
+    "/api/mia/status": {
+      "get": {
+        "tags": [
+          "MIA AI"
+        ],
+        "summary": "Estado de MIA",
+        "responses": {
+          "200": {
+            "description": "Disponibilidad del servicio de IA"
+          }
+        }
+      }
+    },
+    "/api/push/vapid-key": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Obtener clave pública VAPID para push notifications",
+        "responses": {
+          "200": {
+            "description": "Clave pública VAPID"
+          }
+        }
+      }
+    },
+    "/api/push/subscribe": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Suscribir dispositivo a push notifications",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subscription": {
+                    "type": "object",
+                    "description": "PushSubscription del navegador"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Suscripción registrada"
+          }
+        }
+      }
+    },
+    "/api/push/unsubscribe": {
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Desuscribir de push notifications",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suscripción eliminada"
+          }
+        }
+      }
+    },
+    "/api/upload/social-image": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Subir imagen para publicación social",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL de imagen subida"
+          }
+        }
+      }
+    },
+    "/api/upload/social-video": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Subir video para publicación social",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "video": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "URL de video subido"
+          }
+        }
+      }
+    },
+    "/api/referrals/my-code": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener mi código de referido",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Código de referido"
+          }
+        }
+      }
+    },
+    "/api/referrals/list": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Listar mis referidos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios referidos"
+          }
+        }
+      }
+    },
+    "/api/referrals/apply": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Aplicar código de referido",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Código aplicado"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/link-preview": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Preview de enlace (OG metadata)",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Título, descripción, imagen del enlace"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/search": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Búsqueda global",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados de búsqueda"
+          }
+        }
+      }
+    },
+    "/api/users/search-mentions": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Buscar usuarios para menciones (@)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios que coinciden"
+          }
+        }
+      }
+    },
+    "/api/gifs/search": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Buscar GIFs (Klipy API)",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GIFs encontrados"
+          }
+        }
+      }
+    },
+    "/api/gifs/trending": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "GIFs trending (Klipy API)",
+        "responses": {
+          "200": {
+            "description": "GIFs populares"
+          }
+        }
+      }
+    },
+    "/api/rewards/onboarding/claim": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Reclamar recompensa de onboarding",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recompensa reclamada"
+          }
+        }
+      }
+    },
+    "/api/rewards/onboarding/status": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Estado de recompensa de onboarding",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progreso de onboarding"
+          }
+        }
+      }
+    },
+    "/api/hub/summary": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Resumen del hub de usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen de actividad, balance, grupos"
+          }
+        }
+      }
+    },
+    "/api/kyc/process-ocr": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Procesar documento de identidad (OCR)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Datos extraídos del documento"
+          }
+        }
+      }
+    },
+    "/api/kyc/status": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Estado de verificación KYC",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actual de verificación de identidad"
+          }
+        }
+      }
+    }
+  }
+}
