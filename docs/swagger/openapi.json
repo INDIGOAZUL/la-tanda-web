@@ -580,27 +580,39 @@
           },
           "type": {
             "type": "string",
-            "enum": ["bank_transfer", "crypto", "mobile_payment"],
+            "enum": [
+              "bank_transfer",
+              "crypto",
+              "mobile_payment"
+            ],
             "description": "Tipo de depósito"
           },
           "status": {
             "type": "string",
-            "enum": ["pending_transfer", "receipt_uploaded", "processing", "confirmed", "failed", "cancelled", "expired"],
+            "enum": [
+              "pending_transfer",
+              "receipt_uploaded",
+              "processing",
+              "confirmed",
+              "failed",
+              "cancelled",
+              "expired"
+            ],
             "description": "Estado actual del depósito"
           },
           "amount": {
             "type": "number",
-            "example": 500.00
+            "example": 500.0
           },
           "net_amount": {
             "type": "number",
             "description": "Monto neto después de comisión",
-            "example": 487.50
+            "example": 487.5
           },
           "transaction_fee": {
             "type": "number",
             "description": "Comisión cobrada",
-            "example": 12.50
+            "example": 12.5
           },
           "currency": {
             "type": "string",
@@ -1734,12 +1746,15 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["amount", "bank_code"],
+                "required": [
+                  "amount",
+                  "bank_code"
+                ],
                 "properties": {
                   "amount": {
                     "type": "number",
                     "minimum": 1,
-                    "example": 500.00,
+                    "example": 500.0,
                     "description": "Monto a depositar en HNL"
                   },
                   "bank_code": {
@@ -1822,12 +1837,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["amount", "phone_number", "carrier"],
+                "required": [
+                  "amount",
+                  "phone_number",
+                  "carrier"
+                ],
                 "properties": {
                   "amount": {
                     "type": "number",
                     "minimum": 1,
-                    "example": 200.00,
+                    "example": 200.0,
                     "description": "Monto a depositar en HNL"
                   },
                   "phone_number": {
@@ -1906,17 +1925,24 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["amount", "crypto_currency"],
+                "required": [
+                  "amount",
+                  "crypto_currency"
+                ],
                 "properties": {
                   "amount": {
                     "type": "number",
                     "minimum": 1,
-                    "example": 100.00,
+                    "example": 100.0,
                     "description": "Monto equivalente en HNL"
                   },
                   "crypto_currency": {
                     "type": "string",
-                    "enum": ["BTC", "ETH", "USDT"],
+                    "enum": [
+                      "BTC",
+                      "ETH",
+                      "USDT"
+                    ],
                     "example": "USDT",
                     "description": "Criptomoneda para el depósito"
                   },
@@ -1991,7 +2017,10 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id", "receipt"],
+                "required": [
+                  "deposit_id",
+                  "receipt"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2114,7 +2143,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id", "new_status"],
+                "required": [
+                  "deposit_id",
+                  "new_status"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2122,7 +2154,12 @@
                   },
                   "new_status": {
                     "type": "string",
-                    "enum": ["processing", "confirmed", "failed", "expired"],
+                    "enum": [
+                      "processing",
+                      "confirmed",
+                      "failed",
+                      "expired"
+                    ],
                     "description": "Nuevo estado del depósito"
                   },
                   "admin_notes": {
@@ -2192,7 +2229,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id"],
+                "required": [
+                  "deposit_id"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2258,7 +2297,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id"],
+                "required": [
+                  "deposit_id"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2329,7 +2370,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id"],
+                "required": [
+                  "deposit_id"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2458,7 +2501,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id"],
+                "required": [
+                  "deposit_id"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2538,7 +2583,10 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["deposit_id", "rejection_reason"],
+                "required": [
+                  "deposit_id",
+                  "rejection_reason"
+                ],
                 "properties": {
                   "deposit_id": {
                     "type": "string",
@@ -2825,6 +2873,59 @@
         "responses": {
           "200": {
             "description": "Datos del grupo"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Eliminar grupo",
+        "description": "Soft delete (admin de grupo) o hard delete (super-admin con confirmación).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Modo: soft (default) o hard"
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nombre del grupo (requerido para hard delete)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grupo eliminado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -3302,6 +3403,39 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Obtener post individual",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del post"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del post"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -5483,6 +5617,3133 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/register-options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Opciones de registro WebAuthn",
+        "description": "Genera challenge de registro biométrico (FIDO2/WebAuthn).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Challenge de registro generado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Registrar credencial WebAuthn",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "credential": {
+                    "type": "object"
+                  },
+                  "device_name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "credential"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credencial biométrica registrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/authenticate-options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Opciones de autenticación WebAuthn",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Challenge de autenticación generado"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/authenticate": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Autenticar con WebAuthn",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "credential": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "credential"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticación exitosa, retorna JWT"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/credentials": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Listar credenciales WebAuthn",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de credenciales biométricas del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/webauthn/credentials/{credentialId}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Eliminar credencial WebAuthn",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la credencial"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credencial eliminada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/auth/account-data/{userId}": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Exportar datos de cuenta",
+        "description": "Descarga resumen de datos del usuario (GDPR). Solo cuenta propia o admin.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos de la cuenta"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/auth/delete-account/{userId}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Eliminar cuenta",
+        "description": "Eliminación segura de cuenta. Solo cuenta propia o admin.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cuenta eliminada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/recovery/backup-codes/generate": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Generar códigos de respaldo",
+        "description": "Genera 10 códigos de respaldo para recuperación de cuenta.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Códigos de respaldo generados (mostrados una sola vez)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/recovery/backup-codes/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verificar código de respaldo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "backup_code": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "backup_code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Código verificado correctamente"
+          }
+        }
+      }
+    },
+    "/api/recovery/backup-codes/status": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Estado de códigos de respaldo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conteo de códigos disponibles/usados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/recovery/security-questions/set": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Configurar preguntas de seguridad",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "question": {
+                          "type": "string"
+                        },
+                        "answer": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "questions"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preguntas configuradas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/recovery/security-questions/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verificar preguntas de seguridad",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "answers": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "email",
+                  "answers"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verificación exitosa (2 de 3 correctas)"
+          }
+        }
+      }
+    },
+    "/api/recovery/security-questions/get": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Obtener preguntas de seguridad",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Email del usuario",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de preguntas (sin respuestas)"
+          }
+        }
+      }
+    },
+    "/api/contributions/request": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Solicitar referencia de pago",
+        "description": "Genera código de referencia e instrucciones de pago para una contribución.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "group_id": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "payment_method": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "group_id",
+                  "amount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Referencia de pago generada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/verify": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Verificar contribución (coordinador)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la contribución"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "approve",
+                      "reject"
+                    ]
+                  },
+                  "rejection_reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contribución verificada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/verify-ocr": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Verificación OCR de comprobante",
+        "description": "Verifica automáticamente el comprobante de pago mediante OCR (Tesseract).",
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la contribución"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado de verificación OCR"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/upload-proof": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Subir comprobante de contribución",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la contribución"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proof": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comprobante subido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/feed/social/comments/{commentId}": {
+      "delete": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Eliminar comentario propio",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del comentario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comentario eliminado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/feed/social/following": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Feed de usuarios seguidos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Máximo"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Desplazamiento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feed de usuarios seguidos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/feed/social/suggestions": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Sugerencias de usuarios a seguir",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Máximo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuarios sugeridos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/feed/social/user/{userId}/profile": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Perfil de usuario",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mini perfil (nombre, avatar, bio, conteos, is_following)"
+          }
+        }
+      }
+    },
+    "/api/feed/social/user/{userId}/posts": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Posts de un usuario",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Máximo"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Desplazamiento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de posts del usuario"
+          }
+        }
+      }
+    },
+    "/api/feed/social/user/{userId}/followers": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Seguidores de un usuario",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Máximo"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Desplazamiento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de seguidores"
+          }
+        }
+      }
+    },
+    "/api/feed/social/user/{userId}/following": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Seguidos por un usuario",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Máximo"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Desplazamiento"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios seguidos"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}/vote": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Votar en encuesta",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del post con encuesta"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "option_index": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "option_index"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voto registrado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{postId}/poll": {
+      "get": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Obtener resultados de encuesta",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del post con encuesta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados de la encuesta"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/members/invite": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Invitar miembro al grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "invitee_email": {
+                    "type": "string"
+                  },
+                  "invitee_name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "invitee_email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitación enviada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/members/{userId}": {
+      "delete": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Remover miembro del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Miembro removido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/contributions/pending": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Contribuciones pendientes (coordinador)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contribuciones pendientes de verificación"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/role-requests": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Solicitar cambio de rol",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "requested_role": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "requested_role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitud de rol creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/transfer-ownership": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Transferir propiedad del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "new_owner_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "new_owner_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Propiedad transferida"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/reorder-turns": {
+      "put": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Reordenar turnos de miembros",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_turns": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "user_id": {
+                          "type": "string"
+                        },
+                        "new_position": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Turnos reordenados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/distribution/preview": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Vista previa de distribución",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vista previa de distribución del ciclo actual"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/distribution/execute": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Ejecutar distribución",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Distribución ejecutada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/distributions": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Historial de distribuciones",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de distribuciones históricas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/export/members": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Exportar miembros (PDF/CSV)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Formato: pdf o csv"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo descargable de miembros"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/export/payments": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Exportar pagos (PDF/CSV)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Formato: pdf o csv"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo descargable de pagos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/export/summary": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Exportar resumen del grupo (PDF)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen del grupo en PDF"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/invitations/{invitationId}/remind": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Enviar recordatorio de invitación",
+        "description": "Envía recordatorio al invitado. Cooldown de 24 horas.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la invitación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recordatorio enviado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "description": "Cooldown de 24 horas no ha pasado"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/settings": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Obtener configuración del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuración de aprobación del grupo"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/finances/summary": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Resumen financiero del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen financiero"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/notifications/payment-reminders": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Enviar recordatorios de pago",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recordatorios enviados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/activate-tanda": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Activar tanda del grupo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "group_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "group_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tanda activada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/position-requests": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Solicitudes de posición (coordinador)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de solicitudes de posición"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/approve-position-request": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Aprobar solicitud de posición",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud aprobada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/groups/reject-position-request": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Rechazar solicitud de posición",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud rechazada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/invitations/{userId}": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Obtener invitaciones del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de invitaciones recibidas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/invitations/token/{token}": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Ver invitación por token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token de la invitación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles de la invitación"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/invitations/token/{token}/accept": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Aceptar invitación",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token de la invitación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitación aceptada, unido al grupo"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/invitations/token/{token}/decline": {
+      "post": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Rechazar invitación",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token de la invitación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitación rechazada"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/wallet/limits": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Obtener límites de wallet",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Límites actuales (diario, por transacción, mensual, PIN)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Actualizar límites de wallet",
+        "description": "Solo permite REDUCIR límites. Para aumentar, usar request-increase.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "daily_withdrawal_limit": {
+                    "type": "number"
+                  },
+                  "single_transaction_limit": {
+                    "type": "number"
+                  },
+                  "monthly_limit": {
+                    "type": "number"
+                  },
+                  "require_pin_threshold": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Límites actualizados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/wallet/limits/request-increase": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Solicitar aumento de límite",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "requested_daily_limit": {
+                    "type": "number"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitud de aumento creada (requiere revisión)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/wallet/whitelist": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Listar direcciones de retiro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "address_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filtrar: bank, mobile, crypto"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de direcciones whitelisted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Agregar dirección de retiro",
+        "description": "Agrega dirección al whitelist. Genera código de verificación.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address_type": {
+                    "type": "string",
+                    "enum": [
+                      "bank",
+                      "mobile",
+                      "crypto"
+                    ]
+                  }
+                },
+                "required": [
+                  "address_type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dirección agregada, pendiente de verificación"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/wallet/whitelist/{whitelistId}/verify": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Verificar dirección de retiro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "whitelistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del whitelist"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "verification_code": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "verification_code"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dirección verificada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/wallet/whitelist/{whitelistId}": {
+      "delete": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Eliminar dirección de retiro",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "whitelistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del whitelist"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dirección eliminada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/payments/pending/{groupId}": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Pagos pendientes de un grupo",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pagos pendientes"
+          }
+        }
+      }
+    },
+    "/api/payments/approve": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Aprobar pago (coordinador)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payment_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "payment_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pago aprobado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/payments/reject": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Rechazar pago (coordinador)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payment_id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "payment_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pago rechazado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/tandas/start": {
+      "post": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Iniciar tanda",
+        "description": "Solo coordinador. Requiere mínimo 2 miembros.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tanda_id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tanda_id"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tanda iniciada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/tandas/{tandaId}": {
+      "get": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Obtener detalles de tanda",
+        "parameters": [
+          {
+            "name": "tandaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la tanda"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles de la tanda con participantes"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/tandas/request-position": {
+      "post": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Solicitar posición en tanda",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud de posición creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/tandas/my-position-status": {
+      "get": {
+        "tags": [
+          "Tandas"
+        ],
+        "summary": "Estado de mi posición",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de posición del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/jaladores/{number}": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Números jaladores para un número",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Número (00-99)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Números jaladores (companion numbers)"
+          }
+        }
+      }
+    },
+    "/api/lottery/tabla-jaladora": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Tabla jaladora completa (25 grupos)",
+        "responses": {
+          "200": {
+            "description": "Tabla completa de números jaladores"
+          }
+        }
+      }
+    },
+    "/api/lottery/trial-spin": {
+      "post": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Giro de prueba (sin cuenta)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "draw_time": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "draw_time"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Predicción de prueba (no se registra)"
+          }
+        }
+      }
+    },
+    "/api/lottery/spin": {
+      "post": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Girar ruleta de predicción",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "draw_time": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "draw_time"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Predicción registrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/spin-status": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Estado de giros del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Giros disponibles y historial"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/history": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Historial de giros del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de predicciones pasadas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/achievements": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Logros de lotería del usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de logros desbloqueados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/my-predictions": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Mis predicciones",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de predicciones del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/social-feed": {
+      "get": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Feed social de lotería",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Posts compartidos de predicciones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/lottery/share-prediction": {
+      "post": {
+        "tags": [
+          "Lottery"
+        ],
+        "summary": "Compartir predicción al feed",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Predicción compartida"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/products/my": {
+      "get": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Mis productos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos del vendedor"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/product-orders": {
+      "get": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Mis órdenes de productos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de órdenes de compra/venta"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/product-orders/{orderId}/status": {
+      "put": {
+        "tags": [
+          "Marketplace - Products"
+        ],
+        "summary": "Actualizar estado de orden",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la orden"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de orden actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/wallet/balance": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Balance LTD del marketplace",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance de tokens LTD"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/wallet/check-commission": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Verificar capacidad de comisión",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado de comisión del vendedor"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/reviews/{serviceId}": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Reseñas de un servicio",
+        "parameters": [
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del servicio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de reseñas del servicio"
+          }
+        }
+      }
+    },
+    "/api/marketplace/subscription": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Estado de suscripción",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tipo y estado de suscripción del vendedor"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/subscription/upgrade": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Mejorar suscripción",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suscripción mejorada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/messages/conversations": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Conversaciones del marketplace",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de conversaciones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/messages": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Enviar mensaje en marketplace",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mensaje enviado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/messages/unread": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Mensajes no leídos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conteo de mensajes no leídos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/messages/read": {
+      "put": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Marcar mensajes como leídos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mensajes marcados como leídos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/referrals/my-code": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Mi código de referido",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Código de referido del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/referrals/track": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Registrar click de referido",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Click registrado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/referrals/history": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Historial de referidos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de referidos y estados"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/referrals/payout": {
+      "post": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Solicitar pago de comisiones",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud de pago creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/marketplace/referrals/payouts": {
+      "get": {
+        "tags": [
+          "Marketplace - Services"
+        ],
+        "summary": "Historial de pagos de referidos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pagos de comisiones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/matching/preferences": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Guardar preferencias de matching",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "type": "string"
+                  },
+                  "contribution_range": {
+                    "type": "object"
+                  },
+                  "preferred_frequency": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preferencias guardadas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/matching/preferences/{userId}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Obtener preferencias de matching",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preferencias de matching del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/conversion/request": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Solicitar conversión de tokens",
+        "description": "Convierte tokens testnet a mainnet. Transacción FOR UPDATE.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversión procesada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/proof/{filename}": {
+      "get": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Obtener imagen de comprobante",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nombre del archivo de comprobante"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imagen del comprobante"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/receipt/{filename}": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Obtener imagen de recibo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Nombre del archivo de recibo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Imagen del recibo"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/user/devices/{deviceId}": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Revocar sesión",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la sesión/dispositivo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión revocada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/referrals/validate/{referralCode}": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Validar código de referido",
+        "parameters": [
+          {
+            "name": "referralCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Código de referido"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Código válido con nombre del referente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
