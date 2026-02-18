@@ -1,0 +1,370 @@
+{
+  "info": {
+    "name": "La Tanda API",
+    "description": "Complete API collection for La Tanda Web3 Platform.\n\n## Getting Started\n1. Import this collection into Postman\n2. Set up environment (included)\n3. Use demo credentials or register your own account\n4. Start testing!\n\n## Demo Account\n- Email: demo@latanda.online\n- Password: LaTandaDemo2026!\n\n## Support\n- Portal: https://latanda.online/dev-dashboard.html\n- GitHub: https://github.com/INDIGOAZUL/la-tanda-web",
+    "version": "3.41.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://latanda.online",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Public Endpoints",
+      "description": "No authentication required",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Check API status and uptime"
+          }
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/public/info",
+            "description": "Get API information and demo credentials"
+          }
+        },
+        {
+          "name": "Platform Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/public/stats",
+            "description": "Get platform statistics"
+          }
+        },
+        {
+          "name": "Public Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/public/products?limit=10&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "products"],
+              "query": [
+                {"key": "limit", "value": "10"},
+                {"key": "offset", "value": "0"}
+              ]
+            },
+            "description": "Browse marketplace products"
+          }
+        },
+        {
+          "name": "Lottery Recent Results",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/public/lottery/recent?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "lottery", "recent"],
+              "query": [
+                {"key": "limit", "value": "10"}
+              ]
+            },
+            "description": "Get recent lottery results"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "Login, register, and token management",
+      "item": [
+        {
+          "name": "Login (Demo Account)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.auth_token) {",
+                  "        pm.collectionVariables.set('authToken', jsonData.data.auth_token);",
+                  "        console.log('Token saved to collection variables');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@latanda.online\",\n  \"password\": \"LaTandaDemo2026!\"\n}"
+            },
+            "description": "Login with demo credentials. Token is automatically saved."
+          }
+        },
+        {
+          "name": "Register New User",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/register",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+504 1234-5678\"\n}"
+            },
+            "description": "Register a new user account"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"your_refresh_token_here\"\n}"
+            },
+            "description": "Refresh expired access token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "description": "User profile management",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/user/profile",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/user/profile",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"bio\": \"Developer testing the API\"\n}"
+            },
+            "description": "Update user profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "description": "Wallet and balance operations",
+      "item": [
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/wallet/balance",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get wallet balance"
+          }
+        },
+        {
+          "name": "Get Transaction History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/transactions?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet", "transactions"],
+              "query": [
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get transaction history"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Groups & Tandas",
+      "description": "Group and tanda management",
+      "item": [
+        {
+          "name": "My Groups",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/groups/my-groups-pg",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get user's groups"
+          }
+        },
+        {
+          "name": "My Tandas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tandas/mine",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get user's tandas"
+          }
+        },
+        {
+          "name": "Create Group",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/groups",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Group\",\n  \"description\": \"API testing group\",\n  \"max_members\": 10,\n  \"contribution_amount\": 100,\n  \"frequency\": \"weekly\"\n}"
+            },
+            "description": "Create a new savings group"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Marketplace",
+      "description": "Marketplace operations",
+      "item": [
+        {
+          "name": "List My Products",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/marketplace/products/mine",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get my listed products"
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/marketplace/products",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Product\",\n  \"description\": \"Product created via API\",\n  \"price\": 50,\n  \"currency\": \"HNL\",\n  \"category_id\": \"electronics\"\n}"
+            },
+            "description": "Create a new product listing"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification management",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get user notifications"
+          }
+        },
+        {
+          "name": "Mark All Read",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/notifications/read-all",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Mark all notifications as read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lottery Predictor",
+      "description": "Lottery prediction features",
+      "item": [
+        {
+          "name": "Get Prediction",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/lottery/predict?time_slot=3pm",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lottery", "predict"],
+              "query": [
+                {"key": "time_slot", "value": "3pm"}
+              ]
+            },
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get lottery prediction"
+          }
+        },
+        {
+          "name": "My Predictions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/lottery/my-predictions",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get my prediction history"
+          }
+        },
+        {
+          "name": "Leaderboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/lottery/leaderboard",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{authToken}}"}
+            ],
+            "description": "Get prediction leaderboard"
+          }
+        }
+      ]
+    }
+  ]
+}

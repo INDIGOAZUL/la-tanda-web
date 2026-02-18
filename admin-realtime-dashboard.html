@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="js/admin-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard en Tiempo Real - Admin | La Tanda</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-purple: #7F00FF;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --border-primary: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(127, 0, 255, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-accent);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .admin-logo {
+            height: 40px;
+        }
+
+        .admin-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .admin-nav-link {
+            padding: 8px 16px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .admin-nav-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--tanda-cyan);
+            color: var(--tanda-cyan);
+        }
+
+        .admin-nav-link.active {
+            background: linear-gradient(45deg, var(--tanda-cyan), #00D4D4);
+            color: var(--bg-primary);
+            border-color: transparent;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            padding: 12px 20px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .quick-action-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--tanda-cyan);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-btn i {
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px 20px;
+            }
+
+            .admin-nav {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .admin-nav-link {
+                width: 100%;
+                text-align: center;
+            }
+
+            .admin-container {
+                padding: 20px 16px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-header-left">
+            <img loading="lazy" src="darckfield 2 latanda.png" alt="La Tanda" class="admin-logo">
+            <h1 class="admin-title">Panel de Administración</h1>
+        </div>
+        <nav class="admin-nav">
+            <a href="admin-panel-v2.html" class="admin-nav-link">
+                <i class="fas fa-tachometer-alt"></i> Panel Principal
+            </a>
+            <a href="admin-realtime-dashboard.html" class="admin-nav-link active">
+                <i class="fas fa-chart-line"></i> Tiempo Real
+            </a>
+            <a href="admin-audit-logs-viewer.html" class="admin-nav-link">
+                <i class="fas fa-clipboard-list"></i> Audit Logs
+            </a>
+            <a href="admin-kyc-review.html" class="admin-nav-link">
+                <i class="fas fa-user-check"></i> KYC
+            </a>
+        </nav>
+    </header>
+
+    <div class="admin-container">
+        <div class="page-header">
+            <h2 class="page-title">Dashboard en Tiempo Real</h2>
+            <p class="page-subtitle">Monitoreo en vivo del estado del sistema y estadísticas actualizadas cada 30 segundos</p>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-action-btn" onclick="window.refreshDashboardStats()">
+                <i class="fas fa-sync-alt"></i>
+                Actualizar Ahora
+            </button>
+            <a href="admin-panel-v2.html" class="quick-action-btn">
+                <i class="fas fa-cog"></i>
+                Configuración
+            </a>
+            <a href="admin-audit-logs-viewer.html" class="quick-action-btn">
+                <i class="fas fa-history"></i>
+                Ver Audit Logs
+            </a>
+            <button class="quick-action-btn" onclick="exportDashboardData()">
+                <i class="fas fa-download"></i>
+                Exportar Datos
+            </button>
+        </div>
+
+        <!-- Real-time Dashboard Stats Component -->
+        <div id="dashboardStatsContainer"></div>
+    </div>
+
+    <!-- Load CountUp.js for animated numbers -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.6.2/countUp.umd.min.js" integrity="sha384-vXT49jGGCeAKOfoUSBNWyvikG+v71Wv3B4/uupfdGdp8Dr27WBc1WcDaH6/y6Hbt" crossorigin="anonymous"></script>
+
+    <!-- Load the real-time stats component -->
+    <script>
+        // Load the component dynamically
+        fetch('realtime-dashboard-stats-component.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('dashboardStatsContainer').innerHTML = html;
+
+                // Execute scripts from the loaded component
+                const scripts = document.getElementById('dashboardStatsContainer').getElementsByTagName('script');
+                for (let script of scripts) {
+                    const ns = document.createElement("script"); ns.textContent = script.textContent; script.parentNode.replaceChild(ns, script);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading dashboard stats:', error);
+                document.getElementById('dashboardStatsContainer').innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                        <p>Error cargando el componente de estadísticas</p>
+                        <p style="font-size: 14px; margin-top: 8px;">${error.message}</p>
+                    </div>
+                `;
+            });
+
+        // Export dashboard data function
+        function exportDashboardData() {
+            if (!window.lastStats) {
+                alert('No hay datos para exportar. Espere a que se carguen las estadísticas.');
+                return;
+            }
+
+            const dataStr = JSON.stringify(window.lastStats, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `dashboard-stats-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            console.log('✅ Dashboard data exported');
+        }
+    </script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

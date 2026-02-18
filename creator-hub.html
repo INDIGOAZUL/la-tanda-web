@@ -1,0 +1,2853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+                <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="dashboard.page_title">La Tanda - Web3 DeFi Ecosystem</title>
+    <meta name="description" content="Dashboard principal La Tanda Web3 Ecosystem">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <!-- Web3 Crypto Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ================================
+           🌐 WEB3 DESIGN SYSTEM
+           ================================ */
+
+        /* Enhanced animated background with glassmorphism effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.1) 0%, transparent 70%),
+                radial-gradient(circle at 75% 75%, rgba(127, 255, 216, 0.05) 0%, transparent 70%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+        
+        /* Additional floating background elements */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 10%;
+            right: 10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.03) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        @keyframes backgroundPulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+
+        /* ================================
+           🍔 SIDEBAR NAVIGATION
+           ================================ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 320px;
+            height: 100vh;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border-right: 2px solid var(--border-accent);
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-card);
+            text-align: center;
+        }
+
+        .sidebar-logo {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 15px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .sidebar-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .sidebar-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--crypto-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-section {
+            padding: 16px 0;
+        }
+
+        .nav-section-title {
+            padding: 8px 24px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-bottom: 1px solid var(--border-card);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--tanda-cyan);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--tanda-cyan);
+            transform: translateX(8px);
+            border-left: 2px solid var(--tanda-cyan);
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.15);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--tanda-cyan);
+            border-left: 4px solid var(--tanda-cyan);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover .nav-icon {
+            transform: scale(1.1);
+            text-shadow: 0 0 10px var(--tanda-cyan);
+        }
+
+        .nav-text {
+            font-size: 14px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .nav-badge {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--crypto-gold));
+            color: var(--tanda-black);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 255, 255, 0.3);
+        }
+
+        .nav-badge.hot {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .nav-badge.new {
+            background: linear-gradient(135deg, #22d55e, #16a34a);
+        }
+
+        .nav-badge.beta {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        }
+
+        .nav-badge.free {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .nav-badge.pro {
+            background: linear-gradient(135deg, var(--crypto-gold), #e6c200);
+        }
+
+        .nav-badge.alert {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        :root {
+            /* La Tanda Web3 Colors */
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --tanda-black: #000000;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #00FFFF;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --border-card: rgba(0, 255, 255, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --crypto-gold: #ffd700;
+            --success-color: #22d55e;
+            --warning-color: #fbbf24;
+            --error-color: #f87171;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* ================================
+           ✨ BACKGROUND EFFECTS
+           ================================ */
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.7;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .gradient-orb-1 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, var(--tanda-cyan) 0%, transparent 70%);
+            top: 10%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .gradient-orb-2 {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, var(--crypto-gold) 0%, transparent 70%);
+            top: 60%;
+            right: 20%;
+            animation-delay: 2s;
+        }
+
+        .gradient-orb-3 {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+            bottom: 20%;
+            left: 70%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            33% { transform: translateY(-30px) scale(1.1); }
+            66% { transform: translateY(15px) scale(0.9); }
+        }
+
+        /* ================================
+           📦 CONTAINER
+           ================================ */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 90px 20px 0 20px; /* top=header space */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ================================
+           🏢 MODERN HEADER WITH MENU
+           ================================ */
+        .page-header {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 2px solid var(--border-accent);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin: 20px 0 30px 0;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3), 
+                0 0 40px rgba(0, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hamburger-menu {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            color: var(--tanda-cyan);
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .hamburger-menu:hover {
+            background: var(--tanda-cyan);
+            color: var(--tanda-black);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .logo-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 255, 0.03) 50%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header-title h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light), var(--crypto-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            margin: 0;
+        }
+
+        /* ================================
+           📋 MAIN STATS CAROUSEL SECTION
+           ================================ */
+        .stats-carousel-container {
+            position: relative;
+            margin-bottom: 32px;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .stats-carousel {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stats-slide {
+            min-width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .carousel-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            color: var(--tanda-cyan);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .carousel-btn:hover {
+            background: var(--tanda-cyan);
+            color: var(--tanda-black);
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .carousel-indicators {
+            display: flex;
+            gap: 8px;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-dot.active {
+            background: var(--tanda-cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .slide-title {
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light), var(--crypto-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            padding: 16px 0;
+        }
+
+        .slide-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--tanda-cyan), transparent);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-accent);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .stat-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .trend-positive {
+            background: rgba(34, 213, 94, 0.2);
+            color: var(--success-color);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--crypto-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .stat-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ================================
+           📊 QUICK ACTIONS SECTION
+           ================================ */
+        .quick-actions {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .action-item {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-accent);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-icon {
+            font-size: 32px;
+            color: var(--tanda-cyan);
+            margin-bottom: 12px;
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .action-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ================================
+           📈 RECENT ACTIVITY SECTION
+           ================================ */
+        .recent-activity {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-card);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .activity-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+        }
+
+        .header-subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .header-quick-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-action-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            color: var(--tanda-cyan);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-action-btn:hover {
+            background: var(--tanda-cyan);
+            color: var(--tanda-black);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+            border-color: var(--tanda-cyan);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+        }
+
+        .network-status-modern {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(34, 213, 94, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: 25px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .network-status-modern .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--success-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ================================
+           🚀 FUTURISTIC WEB3 HEADER ELEMENTS
+           ================================ */
+        .crypto-ticker {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.08);
+            padding: 2px 0;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 8px;
+            margin-top: 1px;
+        }
+
+        .ticker-content {
+            display: flex;
+            animation: scroll 45s linear infinite;
+            gap: 32px;
+            white-space: nowrap;
+            padding: 0 12px;
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 10px;
+            font-weight: 300;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            letter-spacing: 0.2px;
+        }
+
+        .ticker-item:hover {
+            color: var(--tanda-cyan);
+            transform: scale(1.01);
+        }
+
+        .ticker-symbol {
+            font-family: 'Inter', monospace;
+            font-weight: 500;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            opacity: 0.85;
+        }
+
+        .ticker-price {
+            color: var(--tanda-cyan);
+            font-weight: 400;
+            font-size: 10px;
+            font-family: 'Inter', monospace;
+        }
+
+        .ticker-change {
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 400;
+            font-family: 'Inter', monospace;
+            letter-spacing: 0.1px;
+        }
+
+        .ticker-event {
+            color: var(--crypto-gold);
+            font-weight: 400;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ticker-event-icon {
+            font-size: 8px;
+            opacity: 0.8;
+        }
+
+        .ticker-news {
+            color: var(--text-secondary);
+            font-weight: 300;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ticker-positive {
+            background: rgba(34, 213, 94, 0.2);
+            color: var(--success-color);
+        }
+
+        .ticker-negative {
+            background: rgba(248, 113, 113, 0.2);
+            color: var(--error-color);
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .wallet-connect {
+            display: inline-flex;
+            max-height: 36px;
+            max-width: 130px;
+            align-items: center;
+            gap: 2px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 215, 0, 0.1));
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 2px 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .wallet-connect:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 215, 0, 0.2));
+            // transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+
+.wallet-info { display: flex; flex-direction: column; justify-content: center; width: 100%; overflow: hidden; min-width: 0; }
+        .wallet-address {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+.wallet-toggle-visibility {            background: transparent;            border: none;            color: var(--text-secondary);            cursor: pointer;            padding: 0 2px;            margin-left: 4px;            font-size: 9px;            transition: color 0.2s;            display: flex;            align-items: center;        }        .wallet-toggle-visibility:hover {            color: var(--tanda-cyan);        }        .wallet-balance.hidden {            display: none;        }
+        .wallet-balance {
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            font-size: 9px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .network-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .network-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .network-name {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .network-status {
+            font-size: 8px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .network-dropdown.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .network-option:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .network-option.active {
+            background: rgba(0, 255, 255, 0.15);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .network-option-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .network-option-info {
+            flex: 1;
+        }
+
+        .network-option-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .network-option-chain {
+            font-size: 9px;
+            color: var(--text-secondary);
+        }
+
+        .network-dropdown-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .tx-progress-bar {
+            width: 60px;
+            height: 4px;
+            background: rgba(251, 191, 36, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .tx-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--warning-color), var(--success-color));
+            border-radius: 2px;
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { width: 30%; }
+            50% { width: 80%; }
+        }
+
+        .preferences-toggle:hover {
+            border-color: var(--tanda-cyan);
+            color: var(--tanda-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .toggle-arrow {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .preferences-toggle.active .toggle-arrow {
+            transform: rotate(180deg);
+        }
+
+        .preferences-dropdown {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 16px;
+            min-width: 220px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .preference-group {
+            margin-bottom: 12px;
+        }
+
+        .preference-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .preference-group label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .theme-toggle, .language-toggle, .currency-toggle {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover, .language-toggle:hover, .currency-toggle:hover {
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+        }
+
+        .theme-option, .lang-option, .currency-option {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .theme-option.active, .lang-option.active, .currency-option.active {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            box-shadow: 0 2px 8px rgba(0, 255, 255, 0.3);
+        }
+
+        .alert-icon {
+            font-size: 14px;
+        }
+
+        /* ================================
+           💫 FLASH CARDS STYLES
+           ================================ */
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        /* removed */
+
+        .action-btn:hover {
+            background: var(--tanda-cyan);
+            color: var(--tanda-black);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        /* removed */
+
+        .trend-up {
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            color: var(--error-color);
+        }
+
+        /* ================================
+           🎬 ANIMATIONS
+           ================================ */
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        @keyframes glowRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* ================================
+           📱 RESPONSIVE DESIGN - ENHANCED
+           ================================ */
+        
+        /* Large tablets and small desktops */
+        @media (max-width: 1024px) {
+            /* removed */
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Tablets */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+            
+            .sidebar {
+                width: 280px;
+                left: -280px;
+            }
+            
+            .crypto-ticker {
+                padding: 8px 16px;
+            }
+            
+            .ticker-content {
+                animation-duration: 40s; /* Slower on mobile for readability */
+            }
+            
+            .page-header {
+                padding: 16px 20px;
+                margin: 16px 0 24px 0;
+            }
+
+            .header-title h1 {
+                font-size: 24px;
+            }
+
+            /* removed */
+
+            .header-quick-actions {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .header-action-btn {
+                min-width: 44px; /* Touch-friendly size */
+                min-height: 44px;
+            }
+            
+            .stats-slide {
+                padding: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 16px;
+            }
+            
+            .modal-content {
+                width: 95vw;
+                max-width: none;
+                margin: 20px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            }
+        }
+
+    
+        /* ============================================
+           DASHBOARD SECTIONS - LA TANDA STYLE
+           ============================================ */
+        
+        .dashboard-sections {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .dashboard-section {
+            background: var(--lt-bg-card, #161b22);
+            border: 1px solid var(--lt-border-accent, rgba(0, 212, 255, 0.2));
+            border-radius: var(--lt-radius-lg, 16px);
+            padding: 24px;
+            transition: var(--lt-transition-normal);
+        }
+        
+        .dashboard-section:hover {
+            border-color: var(--lt-primary, #00d4ff);
+            box-shadow: var(--lt-shadow-glow);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--lt-border, #30363d);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .section-title h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--lt-text-primary, #e6edf3);
+            margin: 0;
+        }
+        
+        .section-title .section-icon { font-size: 1.5rem; }
+        .section-subtitle { color: var(--lt-text-secondary, #8b949e); font-size: 0.875rem; margin-top: 4px; }
+        .section-actions { display: flex; gap: 8px; }
+        
+        .section-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--lt-border-accent);
+            color: var(--lt-primary);
+            border-radius: var(--lt-radius-md);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: var(--lt-transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .section-btn:hover { background: rgba(0, 212, 255, 0.1); border-color: var(--lt-primary); }
+        .section-btn.primary { background: linear-gradient(135deg, var(--lt-primary), var(--lt-accent)); border: none; color: #fff; }
+        .section-btn.primary:hover { transform: translateY(-2px); box-shadow: var(--lt-shadow-glow); }
+        
+        .welcome-section { background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(118, 75, 162, 0.1)); }
+        .welcome-content { display: flex; flex-direction: column; gap: 16px; }
+        .welcome-greeting { display: flex; align-items: center; gap: 16px; }
+        
+        .welcome-avatar {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--lt-primary), var(--lt-secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #fff; border: 2px solid var(--lt-border-accent);
+        }
+        
+        .welcome-text h1 { font-size: 1.5rem; color: var(--lt-text-primary); margin: 0; }
+        .welcome-text p { color: var(--lt-text-secondary); margin: 4px 0 0 0; font-size: 0.9rem; }
+        
+        .welcome-last-activity {
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+            background: rgba(0, 212, 255, 0.05); border-radius: var(--lt-radius-md);
+            color: var(--lt-text-secondary); font-size: 0.875rem;
+        }
+        .welcome-last-activity i { color: var(--lt-primary); }
+        
+        .tandas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        
+        .tanda-card {
+            background: var(--lt-bg-dark); border: 1px solid var(--lt-border);
+            border-radius: var(--lt-radius-md); padding: 16px; transition: var(--lt-transition-fast);
+        }
+        .tanda-card:hover { border-color: var(--lt-primary); transform: translateY(-2px); }
+        .tanda-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .tanda-name { font-weight: 600; color: var(--lt-text-primary); display: flex; align-items: center; gap: 8px; }
+        .tanda-name i { color: var(--lt-primary); }
+        .tanda-role { font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; background: rgba(0, 212, 255, 0.1); color: var(--lt-primary); }
+        .tanda-info { display: flex; flex-direction: column; gap: 8px; font-size: 0.875rem; color: var(--lt-text-secondary); }
+        .tanda-progress { margin-top: 12px; }
+        .progress-bar { height: 6px; background: var(--lt-bg-hover); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--lt-primary), var(--lt-accent)); transition: width 0.3s ease; }
+        .progress-text { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--lt-text-muted); margin-top: 4px; }
+        .no-tandas { text-align: center; padding: 40px; color: var(--lt-text-secondary); }
+        .no-tandas i { font-size: 3rem; color: var(--lt-text-muted); margin-bottom: 16px; display: block; }
+        
+        .actions-market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .actions-market-grid { grid-template-columns: 1fr; } }
+        .actions-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        
+        /* removed */
+        .action-btn:hover { border-color: var(--lt-primary); background: rgba(0, 212, 255, 0.05); transform: translateY(-2px); }
+        .action-btn i { font-size: 1.5rem; color: var(--lt-primary); }
+        .action-btn span { font-size: 0.875rem; }
+        
+        .market-section { position: relative; }
+        .coming-soon-overlay {
+            position: absolute; inset: 0; background: rgba(13, 17, 23, 0.8); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; border-radius: var(--lt-radius-md); z-index: 1;
+        }
+        .coming-soon-badge { background: linear-gradient(135deg, var(--lt-secondary), var(--lt-accent)); padding: 12px 24px; border-radius: var(--lt-radius-md); font-weight: 600; color: #fff; }
+        
+        .crypto-list { display: flex; flex-direction: column; gap: 12px; }
+        .crypto-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--lt-bg-dark); border-radius: var(--lt-radius-sm); }
+        .crypto-name { font-weight: 500; color: var(--lt-text-primary); }
+        .crypto-price { text-align: right; }
+        .crypto-price .price { color: var(--lt-text-primary); }
+        .crypto-price .change { font-size: 0.75rem; }
+        .crypto-price .change.positive { color: #3fb950; }
+        .crypto-price .change.negative { color: #f85149; }
+        
+        .activity-list { display: flex; flex-direction: column; gap: 0; }
+        .activity-item-new { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--lt-border); }
+        .activity-item-new:last-child { border-bottom: none; }
+        .activity-icon-wrapper { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-icon-wrapper.completed { background: rgba(63, 185, 80, 0.1); color: #3fb950; }
+        .activity-icon-wrapper.pending { background: rgba(210, 153, 34, 0.1); color: #d29922; }
+        .activity-icon-wrapper.received { background: rgba(0, 212, 255, 0.1); color: var(--lt-primary); }
+        .activity-details { flex: 1; }
+        .activity-title-text { font-weight: 500; color: var(--lt-text-primary); }
+        .activity-subtitle { font-size: 0.875rem; color: var(--lt-text-secondary); }
+        .activity-meta { text-align: right; }
+        .activity-amount-text { font-weight: 600; color: var(--lt-text-primary); }
+        .activity-time-text { font-size: 0.75rem; color: var(--lt-text-muted); }
+        
+        .footer-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 768px) { .footer-stats { grid-template-columns: repeat(2, 1fr); } }
+        .footer-stat { text-align: center; padding: 16px; }
+        .footer-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--lt-primary); }
+        .footer-stat-label { font-size: 0.875rem; color: var(--lt-text-secondary); margin-top: 4px; }
+        @media (max-width: 640px) { .tandas-grid { grid-template-columns: 1fr; } .welcome-greeting { flex-direction: column; text-align: center; } }
+        /* Redundant sections removed */
+
+
+        /* ================================
+           MINING CARD STYLES
+           ================================ */
+        .mining-card {
+            background: linear-gradient(135deg, rgba(20, 30, 48, 0.95), rgba(13, 17, 23, 0.98));
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+        .mining-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .mining-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--tanda-cyan, #00ffff);
+        }
+        .network-badge .testnet {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .network-badge .mainnet {
+            background: linear-gradient(135deg, #22d55e, #16a34a);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .tier-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .tier-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .tier-progress-container { flex: 1; }
+        .tier-progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .tier-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tanda-cyan, #00ffff), #00ff88);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .tier-progress-text { font-size: 0.7rem; color: var(--text-secondary, #888); margin-top: 4px; }
+        .mining-circle-container { display: flex; justify-content: center; margin: 20px 0; }
+        .mining-circle {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mining-circle-inner { position: absolute; text-align: center; z-index: 2; }
+        .reward-amount {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00ffff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .countdown { font-size: 0.85rem; color: var(--text-secondary, #888); margin-top: 4px; }
+        .countdown.available { color: #22d55e; font-weight: 600; }
+        .progress-ring { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .progress-ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 8; }
+        .progress-ring-fill { fill: none; stroke: #00ffff; stroke-width: 8; stroke-linecap: round; }
+        .mine-button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--tanda-cyan, #00ffff), #00cc99);
+            color: #000;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        .mine-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4); }
+        .mine-button:disabled { background: linear-gradient(135deg, #555, #444); color: #888; cursor: not-allowed; }
+        .mining-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 12px;
+        }
+        .mining-stat { text-align: center; }
+        .mining-stat .stat-label { font-size: 0.75rem; color: var(--text-secondary, #888); display: block; margin-bottom: 4px; }
+        .mining-stat .stat-value { font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 600; color: #fff; }
+        .testnet-notice {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .testnet-notice.hidden { display: none; }
+
+    /* ========================================
+       LOTTERY SLIDE COMPLETE CSS
+       ======================================== */
+    .lottery-slide-dual {
+        display: flex;
+        gap: 20px;
+        padding: 15px 20px;
+        min-height: 200px;
+        align-items: center;
+        justify-content: center;
+    }
+    .lottery-promo-side {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        max-width: 200px;
+    }
+    .lottery-result-side {
+        flex: 0 0 auto;
+        width: 120px;
+        background: linear-gradient(145deg, rgba(26,26,46,0.95), rgba(22,33,62,0.95));
+        border-radius: 12px;
+        padding: 12px 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid rgba(255,215,0,0.2);
+    }
+    .lottery-mini-machine {
+        background: linear-gradient(145deg, #1a1a2e, #16213e);
+        border-radius: 12px;
+        padding: 15px;
+        border: 2px solid rgba(255, 215, 0, 0.3);
+    }
+    .lottery-mini-numbers {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+    .lottery-mini-number {
+        width: 40px;
+        height: 48px;
+        background: linear-gradient(180deg, #2a2a4e, #1a1a3e);
+        border: 2px solid #ffd700;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffd700;
+    }
+    .lottery-spin-animation {
+        animation: numberSpin 0.15s infinite;
+    }
+    @keyframes numberSpin {
+        0% { transform: translateY(-2px); }
+        50% { transform: translateY(2px); }
+        100% { transform: translateY(-2px); }
+    }
+    .lottery-brand {
+        color: #fff;
+        font-size: 0.95rem;
+        margin: 0;
+        font-weight: 600;
+    }
+    .lottery-tagline {
+        color: #aaa;
+        font-size: 0.75rem;
+        margin: 0;
+    }
+    .lottery-cta-btn {
+        background: linear-gradient(135deg, #ffd700, #ffaa00);
+        color: #1a1a2e;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .lottery-cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+    }
+    .pulse-glow {
+        animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.3); }
+        50% { box-shadow: 0 0 15px rgba(255,215,0,0.5); }
+    }
+    .result-header {
+        font-size: 0.65rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .result-number-box {
+        background: linear-gradient(145deg, #1a1a2e, #0d1117);
+        border-radius: 10px;
+        padding: 8px 18px;
+        border: 2px solid #ffd700;
+    }
+    .result-big-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #ffd700;
+    }
+    .result-animal {
+        font-size: 0.85rem;
+        color: #ddd;
+        font-weight: 500;
+        margin: 5px 0;
+    }
+    .result-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        font-size: 0.7rem;
+        margin-top: 5px;
+    }
+    .result-time {
+        color: #777;
+        font-size: 0.65rem;
+    }
+    .result-temp-badge {
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+    .result-temp-badge.hot { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .result-temp-badge.cold { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .result-temp-badge.neutral { background: rgba(156,163,175,0.2); color: #9ca3af; }
+    .result-insight {
+        font-size: 0.6rem;
+        color: #6b7280;
+        text-align: center;
+        line-height: 1.2;
+    }
+    .next-draw-info {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        text-align: center;
+        width: 100%;
+    }
+    .next-draw-label {
+        font-size: 0.6rem;
+        color: #666;
+    }
+    .next-draw-value {
+        font-size: 0.8rem;
+        color: #ffd700;
+        font-weight: 600;
+    }
+    @media (max-width: 480px) {
+        .lottery-slide-dual {
+            flex-direction: column;
+            gap: 10px;
+            min-height: auto;
+            padding: 10px;
+        }
+        .lottery-promo-side, .lottery-result-side {
+            max-width: 100%;
+            width: 100%;
+        }
+        .lottery-result-side {
+            flex-direction: row;
+            justify-content: space-around;
+            padding: 10px;
+        }
+    }
+        /* DASHBOARD CLEANUP 2026-01-24: Hide redundant sections */
+        #carouselWrapper,
+        #miningSection,
+        #misTandasSection,
+        #actionsMarketSection,
+        #footerStatsSection {
+            display: none !important;
+        }
+        </style>
+    <!-- Notification Center Component -->
+    <link rel="stylesheet" href="css/components/notification-center.css">
+    <!-- Wallet Dropdown Component -->
+    <link rel="stylesheet" href="css/components/wallet-dropdown.css">
+    <!-- Mobile Touch & Positioning Fixes -->
+    <link rel="stylesheet" href="css/mobile-touch-fixes.css">
+    <link rel="stylesheet" href="css/mobile-notification-fix.css">
+    <!-- Mobile Network Switcher Emergency Fix -->
+    <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
+    <!-- Mobile Wallet Connection Fix -->
+    <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
+    <!-- Transaction Modal Component -->
+    <link rel="stylesheet" href="css/transaction-modal.css">
+    <!-- Global Header Component -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <link rel="stylesheet" href="css/onboarding.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/mia-assistant.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/social-feed.css?v=11.7">
+    <link rel="stylesheet" href="css/hub/comments-modal.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.0">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558147">
+    <link rel="stylesheet" href="css/dashboard-polish.css?v=1.0">
+    <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/creator-hub.html">
+    <meta property="og:title" content="Creator Hub | La Tanda">
+    <meta property="og:description" content="Herramientas para creadores de contenido en La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Creator Hub | La Tanda">
+    <meta name="twitter:description" content="Herramientas para creadores de contenido en La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body data-sidebar="true">
+    <!-- Global Header Container -->
+    <div id="global-header"></div>
+
+    <!-- Web3 Background Effects -->
+    <div class="bg-effects">
+        <div class="gradient-orb gradient-orb-1"></div>
+        <div class="gradient-orb gradient-orb-2"></div>
+        <div class="gradient-orb gradient-orb-3"></div>
+    </div>
+
+    <!-- OLD SIDEBAR REMOVED - Using modular sidebar component -->
+    <!-- ============================================
+         3-COLUMN TWITTER-STYLE LAYOUT
+         Added: 2026-01-25
+         ============================================ -->
+    <div class="dashboard-3col">
+
+        <!-- LEFT SIDEBAR - Navigation -->
+        <aside class="left-sidebar" id="leftSidebar">
+            <!-- Main Navigation -->
+            <nav class="nav-menu">
+                <a href="/home-dashboard.html" class="nav-menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+                <a href="/explorar.html" class="nav-menu-item">
+                    <i class="fas fa-hashtag"></i>
+                    <span>Explorar</span>
+                </a>
+                <a href="/trabajo.html" class="nav-menu-item">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Trabajo</span>
+                </a>
+                <a href="/creator-hub.html" class="nav-menu-item active">
+                    <i class="fas fa-palette"></i>
+                    <span>Creator Hub</span>
+                </a>
+                <a href="/guardados.html" class="nav-menu-item">
+                    <i class="fas fa-bookmark"></i>
+                    <span>Guardados</span>
+                </a>
+                <a href="/mensajes.html" class="nav-menu-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Mensajes</span>
+                </a>
+                <a href="/mineria.html" class="nav-menu-item">
+                    <i class="fas fa-hammer"></i>
+                    <span>Minería</span>
+                </a>
+                <a href="mi-perfil.html" class="nav-menu-item">
+                    <i class="fas fa-bars"></i>
+                    <span>Menu</span>
+                </a>
+            </nav>
+
+            <!-- Post Button -->
+            <button class="nav-post-btn" onclick="SocialFeed.openCompose()">
+                <i class="fas fa-plus"></i> Publicar
+            </button>
+
+            <!-- Section Divider -->
+            <div class="nav-section-divider"></div>
+            <div class="nav-section-label">Accesos Rapidos</div>
+
+            <!-- Quick Links -->
+            <nav class="nav-menu">
+                <a href="my-wallet.html" class="nav-menu-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>Mi Wallet</span>
+                </a>
+                <a href="/groups-advanced-system.html" class="nav-menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>Mis Tandas</span>
+                </a>
+                <a href="/marketplace-social.html" class="nav-menu-item">
+                    <i class="fas fa-store"></i>
+                    <span>Marketplace</span>
+                </a>
+                <a href="/lottery-predictor.html" class="nav-menu-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Loteria</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN FEED - Center Content -->
+        <main class="main-feed" id="mainFeed">
+            <!-- Creator Hub Header -->
+            <div class="main-feed-header" style="border-bottom: 1px solid rgba(0,255,255,0.1);">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <h1 class="main-feed-title" style="font-size:1.5rem;font-weight:700;">
+                        <i class="fas fa-palette" style="color:#00FFFF;margin-right:10px;"></i>Creator Hub
+                    </h1>
+                    <button id="btnCreateContent" style="padding:10px 20px;background:#00FFFF;color:#000;border:none;border-radius:20px;font-weight:600;cursor:pointer;font-size:0.9rem;">
+                        <i class="fas fa-plus"></i> Crear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+                <div style="background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.15);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:700;color:#00FFFF;" id="statViews">1.2K</div>
+                    <div style="font-size:0.8rem;color:#888;">Vistas</div>
+                </div>
+                <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:700;color:#ef4444;" id="statLikes">328</div>
+                    <div style="font-size:0.8rem;color:#888;">Likes</div>
+                </div>
+                <div style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:700;color:#8b5cf6;" id="statFollowers">156</div>
+                    <div style="font-size:0.8rem;color:#888;">Seguidores</div>
+                </div>
+                <div style="background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:16px;text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:700;color:#22c55e;" id="statEarnings">L.450</div>
+                    <div style="font-size:0.8rem;color:#888;">Ganancias</div>
+                </div>
+            </div>
+
+            <!-- Creator Level -->
+            <div style="margin:0 16px 16px;padding:16px;background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(0,255,255,0.05));border:1px solid rgba(139,92,246,0.2);border-radius:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:50px;height:50px;background:linear-gradient(135deg,#8b5cf6,#00FFFF);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-star" style="color:#fff;font-size:1.3rem;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:600;color:#fff;">Creador Nivel 2</div>
+                            <div style="font-size:0.85rem;color:#888;">350 / 500 XP para Nivel 3</div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.85rem;color:#8b5cf6;font-weight:600;">70%</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.1);border-radius:10px;height:8px;overflow:hidden;">
+                    <div style="background:linear-gradient(90deg,#8b5cf6,#00FFFF);height:100%;width:70%;border-radius:10px;"></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div style="padding:0 16px 16px;">
+                <h2 style="font-size:1rem;font-weight:600;color:#fff;margin:0 0 12px 0;">
+                    <i class="fas fa-bolt" style="color:#fbbf24;margin-right:8px;"></i>Acciones Rapidas
+                </h2>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+                    <button class="creator-action-btn" data-action="post" style="padding:16px 12px;background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.2);border-radius:12px;color:#00FFFF;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                        <i class="fas fa-edit" style="font-size:1.3rem;"></i>
+                        <span style="font-size:0.75rem;">Publicar</span>
+                    </button>
+                    <button class="creator-action-btn" data-action="schedule" style="padding:16px 12px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);border-radius:12px;color:#8b5cf6;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                        <i class="fas fa-calendar-alt" style="font-size:1.3rem;"></i>
+                        <span style="font-size:0.75rem;">Programar</span>
+                    </button>
+                    <button class="creator-action-btn" data-action="analytics" style="padding:16px 12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:12px;color:#22c55e;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                        <i class="fas fa-chart-bar" style="font-size:1.3rem;"></i>
+                        <span style="font-size:0.75rem;">Analytics</span>
+                    </button>
+                    <button class="creator-action-btn" data-action="promote" style="padding:16px 12px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:12px;color:#fbbf24;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                        <i class="fas fa-bullhorn" style="font-size:1.3rem;"></i>
+                        <span style="font-size:0.75rem;">Promocionar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- My Content Tabs -->
+            <div style="padding:0 16px 16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <h2 style="font-size:1rem;font-weight:600;color:#fff;margin:0;">
+                        <i class="fas fa-folder" style="color:#00FFFF;margin-right:8px;"></i>Mi Contenido
+                    </h2>
+                </div>
+                <div class="creator-tabs" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:8px;">
+                    <button class="creator-tab active" data-tab="todos" style="padding:10px 20px;border-radius:20px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.15);color:#00FFFF;font-size:0.9rem;cursor:pointer;white-space:nowrap;">
+                        Todos
+                    </button>
+                    <button class="creator-tab" data-tab="publicados" style="padding:10px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:0.9rem;cursor:pointer;white-space:nowrap;">
+                        <i class="fas fa-check-circle"></i> Publicados
+                    </button>
+                    <button class="creator-tab" data-tab="borradores" style="padding:10px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:0.9rem;cursor:pointer;white-space:nowrap;">
+                        <i class="fas fa-file-alt"></i> Borradores
+                    </button>
+                    <button class="creator-tab" data-tab="programados" style="padding:10px 20px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:0.9rem;cursor:pointer;white-space:nowrap;">
+                        <i class="fas fa-clock"></i> Programados
+                    </button>
+                </div>
+                <div id="contentContainer" style="display:flex;flex-direction:column;gap:12px;">
+                    <!-- Content items loaded by JS -->
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div style="padding:0 16px 16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <h2 style="font-size:1rem;font-weight:600;color:#fff;margin:0;">
+                        <i class="fas fa-trophy" style="color:#fbbf24;margin-right:8px;"></i>Logros de Creador
+                    </h2>
+                    <a href="#" style="color:#00FFFF;font-size:0.85rem;text-decoration:none;">Ver todos</a>
+                </div>
+                <div id="achievementsContainer" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;">
+                    <!-- Achievements loaded by JS -->
+                </div>
+            </div>
+
+            <!-- Monetization Tips -->
+            <div style="margin:0 16px 16px;padding:16px;background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.05));border:1px solid rgba(34,197,94,0.2);border-radius:12px;">
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                    <div style="width:40px;height:40px;background:rgba(34,197,94,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-lightbulb" style="color:#22c55e;font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:#22c55e;margin-bottom:4px;">Tip de Monetizacion</div>
+                        <div id="monetizationTip" style="color:#ccc;font-size:0.9rem;line-height:1.5;">
+                            Publica contenido regularmente para aumentar tu alcance. Los creadores activos ganan 3x mas en propinas.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR - Hub Cards & Widgets -->
+        <aside class="right-sidebar" id="rightSidebar">
+            <div class="right-sidebar-sticky">
+
+                <!-- Search Box -->
+                <div class="sidebar-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar en La Tanda..." id="sidebarSearch" onkeypress="if(event.key==='Enter')window.LaTandaPopup && window.LaTandaPopup.showInfo('Busqueda proximamente')">
+                </div>
+
+                <!-- Hub Module Cards -->
+                <div class="sidebar-hub-cards" id="sidebarHubCards">
+
+                    <!-- FINANZAS Card -->
+                    <div class="sidebar-hub-card">
+                        <div class="sidebar-hub-card-header">
+                            <span class="sidebar-hub-card-title">Finanzas</span>
+                            <div class="sidebar-hub-card-icon bg-cyan">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                        </div>
+                        <div class="sidebar-hub-card-value" id="sidebarBalance">0.00 <small style="font-size:0.6em;opacity:0.7">LTD</small></div>
+                        <div class="sidebar-hub-card-label">Balance disponible</div>
+                        <div class="sidebar-hub-card-meta" id="sidebarTandasCount">0 tandas activas</div>
+                        <a href="my-wallet.html" class="sidebar-hub-card-btn">Ver wallet</a>
+                    </div>
+
+                    <!-- MERCADO Card -->
+                    <div class="sidebar-hub-card">
+                        <div class="sidebar-hub-card-header">
+                            <span class="sidebar-hub-card-title">Mercado</span>
+                            <div class="sidebar-hub-card-icon bg-yellow">
+                                <i class="fas fa-store"></i>
+                            </div>
+                        </div>
+                        <div class="sidebar-hub-card-value" id="sidebarProducts">0</div>
+                        <div class="sidebar-hub-card-label">Mis productos</div>
+                        <div class="sidebar-hub-card-meta" id="sidebarSales">0 ventas hoy</div>
+                        <a href="/marketplace-social.html" class="sidebar-hub-card-btn">Ver marketplace</a>
+                    </div>
+
+                    <!-- LOTERIA Card -->
+                    <div class="sidebar-hub-card">
+                        <div class="sidebar-hub-card-header">
+                            <span class="sidebar-hub-card-title">Loteria</span>
+                            <div class="sidebar-hub-card-icon bg-purple">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                        </div>
+                        <div class="sidebar-hub-card-value" id="sidebarLotteryNumbers" style="display:flex;gap:6px;">
+                            <span style="background:rgba(139,92,246,0.2);padding:4px 10px;border-radius:8px;font-size:0.9rem;">3</span>
+                            <span style="background:rgba(139,92,246,0.2);padding:4px 10px;border-radius:8px;font-size:0.9rem;">45</span>
+                            <span style="background:rgba(139,92,246,0.2);padding:4px 10px;border-radius:8px;font-size:0.9rem;">23</span>
+                        </div>
+                        <div class="sidebar-hub-card-label">Numeros calientes</div>
+                        <div class="sidebar-hub-card-meta" id="sidebarNextDraw">Proximo sorteo: --</div>
+                        <a href="/lottery-predictor.html" class="sidebar-hub-card-btn">Jugar ahora</a>
+                    </div>
+
+                    <!-- MINERIA Card -->
+                    <div class="sidebar-hub-card">
+                        <div class="sidebar-hub-card-header">
+                            <span class="sidebar-hub-card-title">Mineria</span>
+                            <div class="sidebar-hub-card-icon bg-green">
+                                <i class="fas fa-hammer"></i>
+                            </div>
+                        </div>
+                        <div class="sidebar-hub-card-value" id="sidebarMiningTier">Bronce</div>
+                        <div class="sidebar-hub-card-label">Tier actual</div>
+                        <div class="sidebar-hub-card-meta" id="sidebarMiningStreak">0 dias de racha</div>
+                        <a href="#" class="sidebar-hub-card-btn" onclick="window.LaTandaPopup && window.LaTandaPopup.showInfo('Mineria proximamente')">Minar ahora</a>
+                    </div>
+                </div>
+
+                <!-- Who to Follow Widget -->
+                <div class="sidebar-widget">
+                    <h3 class="sidebar-widget-title">A quien seguir</h3>
+                    <div id="whoToFollowList">
+                        <div class="who-to-follow-item">
+                            <div class="who-to-follow-avatar">ML</div>
+                            <div class="who-to-follow-info">
+                                <div class="who-to-follow-name">Maria Lopez</div>
+                                <div class="who-to-follow-handle">@marialopez</div>
+                            </div>
+                            <button class="who-to-follow-btn" onclick="window.LaTandaPopup && window.LaTandaPopup.showInfo('Seguir proximamente')">Seguir</button>
+                        </div>
+                        <div class="who-to-follow-item">
+                            <div class="who-to-follow-avatar">JM</div>
+                            <div class="who-to-follow-info">
+                                <div class="who-to-follow-name">Juan Martinez</div>
+                                <div class="who-to-follow-handle">@juanm</div>
+                            </div>
+                            <button class="who-to-follow-btn" onclick="window.LaTandaPopup && window.LaTandaPopup.showInfo('Seguir proximamente')">Seguir</button>
+                        </div>
+                        <div class="who-to-follow-item">
+                            <div class="who-to-follow-avatar">CR</div>
+                            <div class="who-to-follow-info">
+                                <div class="who-to-follow-name">Carlos Reyes</div>
+                                <div class="who-to-follow-handle">@creyes</div>
+                            </div>
+                            <button class="who-to-follow-btn" onclick="window.LaTandaPopup && window.LaTandaPopup.showInfo('Seguir proximamente')">Seguir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trending Widget -->
+                <div class="sidebar-widget">
+                    <h3 class="sidebar-widget-title">Tendencias</h3>
+                    <div id="trendingList">
+                        <div class="trending-item" onclick="document.querySelector('.feed-tab[data-tab=grupos]')?.click()">
+                            <div class="trending-category">Finanzas - Trending</div>
+                            <div class="trending-topic">#Tandas</div>
+                            <div class="trending-count">127 publicaciones</div>
+                        </div>
+                        <div class="trending-item" onclick="document.querySelector('.feed-tab[data-tab=mercado]')?.click()">
+                            <div class="trending-category">Mercado</div>
+                            <div class="trending-topic">#VentasHN</div>
+                            <div class="trending-count">89 publicaciones</div>
+                        </div>
+                        <div class="trending-item" onclick="document.querySelector('.feed-tab[data-tab=loteria]')?.click()">
+                            <div class="trending-category">Entretenimiento</div>
+                            <div class="trending-topic">#LoteriaTanda</div>
+                            <div class="trending-count">54 publicaciones</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
+    <!-- END 3-COLUMN LAYOUT -->
+
+    <!-- Mobile Bottom Navigation -->
+
+    <!-- ============================================
+         MOBILE DRAWER NAVIGATION
+         Added: 2026-01-26
+         ============================================ -->
+
+    <!-- Drawer Overlay -->
+    <div class="mobile-drawer-overlay" id="mobileDrawerOverlay" onclick="MobileDrawer.close()"></div>
+
+    <!-- Drawer Panel -->
+    <aside class="mobile-drawer" id="mobileDrawer">
+        <!-- Drawer Header -->
+        <div class="mobile-drawer-header">
+            <div class="mobile-drawer-brand">
+                <div class="mobile-drawer-logo">
+                    <img loading="lazy" src="images/latanda-icon.png" alt="La Tanda" class="logo-fallback">
+                </div>
+                <span class="mobile-drawer-title">La Tanda</span>
+            </div>
+            <button class="mobile-drawer-close" onclick="MobileDrawer.close()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- User Info -->
+        <div class="mobile-drawer-user" id="mobileDrawerUser">
+            <div class="mobile-drawer-avatar" id="mobileDrawerAvatar">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="mobile-drawer-user-info">
+                <div class="mobile-drawer-user-name" id="mobileDrawerUserName">Usuario</div>
+                <div class="mobile-drawer-user-handle" id="mobileDrawerUserHandle">@usuario</div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="mobile-drawer-stats">
+            <div class="mobile-drawer-stat">
+                <span class="mobile-drawer-stat-value" id="mobileDrawerFollowing">0</span>
+                <span class="mobile-drawer-stat-label">Siguiendo</span>
+            </div>
+            <div class="mobile-drawer-stat">
+                <span class="mobile-drawer-stat-value" id="mobileDrawerFollowers">0</span>
+                <span class="mobile-drawer-stat-label">Seguidores</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="mobile-drawer-nav">
+            <a href="mi-perfil.html" class="mobile-drawer-item">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="my-wallet.html" class="mobile-drawer-item">
+                <i class="fas fa-wallet"></i>
+                <span>Wallet</span>
+            </a>
+            <a href="/groups-advanced-system.html" class="mobile-drawer-item">
+                <i class="fas fa-users"></i>
+                <span>Mis Tandas</span>
+            </a>
+            <a href="/marketplace-social.html" class="mobile-drawer-item">
+                <i class="fas fa-store"></i>
+                <span>Mercado</span>
+            </a>
+            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Mensajes proximamente')">
+                <i class="fas fa-envelope"></i>
+                <span>Mensajes</span>
+            </a>
+
+            <div class="mobile-drawer-divider"></div>
+            <div class="mobile-drawer-section-label">Herramientas</div>
+
+            <a href="#" class="mobile-drawer-item mia-trigger" onclick="MobileDrawer.close(); window.MiaAssistant && window.MiaAssistant.open && window.MiaAssistant.open() || window.LaTandaPopup && window.LaTandaPopup.showInfo('MIA Assistant disponible pronto')">
+                <i class="fas fa-robot" style="color:#00FFFF;"></i>
+                <span>MIA Assistant</span>
+            </a>
+            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); typeof openLotteryModal === 'function' && openLotteryModal() || window.LaTandaPopup && window.LaTandaPopup.showInfo('Predictor disponible pronto')">
+                <i class="fas fa-magic" style="color:#ffd700;"></i>
+                <span>Predictor Loteria</span>
+            </a>
+            <a href="/lottery-predictor.html" class="mobile-drawer-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Loteria</span>
+            </a>
+
+            <div class="mobile-drawer-divider"></div>
+
+            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Configuracion proximamente')">
+                <i class="fas fa-cog"></i>
+                <span>Configuracion</span>
+            </a>
+            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Ayuda proximamente')">
+                <i class="fas fa-question-circle"></i>
+                <span>Ayuda</span>
+            </a>
+        </nav>
+
+        <!-- Footer -->
+
+            <div class="mobile-drawer-divider"></div>
+            <div class="mobile-drawer-section-label">Tu Resumen</div>
+
+            <!-- Quick Stats Cards -->
+            <div class="mobile-drawer-quick-stats" id="mobileDrawerQuickStats">
+                <div class="drawer-stat-card">
+                    <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #00FFFF, #00E5E5);">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="drawer-stat-info">
+                        <div class="drawer-stat-label">Balance</div>
+                        <div class="drawer-stat-value" id="drawerBalance">0.00 LTD</div>
+                    </div>
+                </div>
+                <div class="drawer-stat-card">
+                    <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #22d55e, #16a34a);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="drawer-stat-info">
+                        <div class="drawer-stat-label">Tandas Activas</div>
+                        <div class="drawer-stat-value" id="drawerTandas">0</div>
+                    </div>
+                </div>
+                <div class="drawer-stat-card">
+                    <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="drawer-stat-info">
+                        <div class="drawer-stat-label">Productos</div>
+                        <div class="drawer-stat-value" id="drawerProducts">0</div>
+                    </div>
+                </div>
+                <div class="drawer-stat-card">
+                    <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="drawer-stat-info">
+                        <div class="drawer-stat-label">Tu Progreso</div>
+                        <div class="drawer-stat-value" id="drawerProgress">0%</div>
+                    </div>
+                </div>
+            </div>
+
+        <div class="mobile-drawer-footer">
+            <button class="mobile-drawer-logout" onclick="MobileDrawer.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Cerrar Sesion</span>
+            </button>
+        </div>
+    </aside>
+
+
+    <!-- FAB (Floating Action Button) -->
+    <button class="mobile-fab" id="mobileFab" onclick="SocialFeed.openCompose()"><i class="fas fa-plus"></i></button>
+
+        <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mobile-nav-item" onclick="EdgeSwipe.toggleLeft()">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+        </button>
+        <a href="/home-dashboard.html" class="mobile-nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="/marketplace-social.html" class="mobile-nav-item">
+            <i class="fas fa-store"></i>
+            <span>Mercado</span>
+        </a>
+        <button class="mobile-nav-item" onclick="EdgeSwipe.toggleRight()">
+            <i class="fas fa-th-large"></i>
+            <span>Widgets</span>
+        </button>
+    </nav>
+
+    <!-- Global Dynamic Footer (shared-components.css + shared-components.js) -->
+    <link rel="stylesheet" href="shared-components.css?v=1760032177">
+    <script src="shared-components.js?v=7.18"></script>
+    <div id="latanda-footer" class="auto-footer"></div>
+
+    
+    <script>
+        // ================================
+        // 📊 DYNAMIC ECOSYSTEM METRICS SYSTEM (DISABLED - Using Real API Data)
+        // ================================
+        
+        // NOTE: Real Tanda data is loaded by dashboard-sections-loader.js
+        // DeFi metrics are hidden with 'Coming Soon' overlay
+        
+        class LaTandaEcosystemMetrics {
+            constructor() {
+                // No longer using mock data - real data comes from API
+                console.log('[EcosystemMetrics] Disabled - Using real API data from dashboard-sections-loader.js');
+            }
+            
+            // Stub methods to prevent errors if called elsewhere
+            init() {}
+            loadMarketplaceData() {}
+            startRealTimeUpdates() {}
+            simulateMarketActivity() {}
+            simulateMajorActivity() {}
+            updateAllMetrics() {}
+            updateMetric() {}
+            showNotification() {}
+        }
+        
+        // Create instance but it won't do anything
+        let ecosystemMetrics = new LaTandaEcosystemMetrics();
+        
+        // Initialize footer updates on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof updateFooterData === 'function') {
+                updateFooterData();
+                setInterval(updateFooterData, 12000);
+            }
+            
+            // Make it globally available
+            window.LaTandaEcosystem = ecosystemMetrics;
+            console.log('🚀 La Tanda Ecosystem Metrics System initialized');
+        });
+    </script>
+
+    <!-- 🌐 Translation System -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.7.11/i18next.min.js" integrity="sha384-kqrz926ieztN0OKhKR17dS5DPBV82IGrRcqA8/gk9+wzQbGga63usrJmWolShECZ" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2.4.2/i18nextHttpBackend.min.js" integrity="sha384-yxTj8amMhnhYI1a2BiC6D8XPHPBenxjHwY+BnQuhFYuIl32glJcrevL/W0QyUQP3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7.2.0/i18nextBrowserLanguageDetector.min.js" integrity="sha384-099MVvR7WaAXsovY5rMvaY+Uq49ZmVhGPTFSyf4wTuyjNEpC/cBjpOJJa0/J97Mk" crossorigin="anonymous"></script>
+    <script src="i18next-implementation-backend.js?v=1759688935"></script>
+    
+    <!-- 🚀 Real-time API Integration -->
+    <script src="real-time-api-integration.js"></script>
+    
+    <!-- 🔧 Dashboard Integration Fix -->
+    <script src="dashboard-integration-fix.js"></script>
+    
+    <!-- Notification Center Component -->
+    <script src="js/components/notification-center.js?v=2.7"></script>
+    <!-- Wallet Dropdown Component -->
+    <!-- Network Switcher Component -->
+    <script src="js/components/network-switcher.js"></script>
+    <!-- Mobile Wallet Connection Fix -->
+
+<script>
+// Wallet Balance Visibility Toggle
+function toggleBalanceVisibility() {    const balanceEl = document.querySelector(".wallet-balance");    const eyeIcon = document.getElementById("walletEyeIcon");    const isHidden = balanceEl.classList.toggle("hidden");        if (isHidden) {        eyeIcon.classList.remove("fa-eye");        eyeIcon.classList.add("fa-eye-slash");    } else {        eyeIcon.classList.remove("fa-eye-slash");        eyeIcon.classList.add("fa-eye");    }        localStorage.setItem("walletBalanceHidden", isHidden);}
+
+document.addEventListener("DOMContentLoaded", () => {    const isHidden = localStorage.getItem("walletBalanceHidden") === "true";    if (isHidden) {        const balanceEl = document.querySelector(".wallet-balance");        const eyeIcon = document.getElementById("walletEyeIcon");        if (balanceEl && eyeIcon) {            balanceEl.classList.add("hidden");            eyeIcon.classList.remove("fa-eye");            eyeIcon.classList.add("fa-eye-slash");        }    }});</script>
+    <!-- Transaction Modal Component -->
+    <script src="js/components/transaction-modal.js"></script>
+    <!-- 🔌 Real Data API Connector -->
+    <script src="js/dashboard-api-connector.js"></script>
+    <!-- 📊 Real Data Patch -->
+    <script src="js/dashboard-real-data-patch.js"></script>
+    <script src="js/dashboard-sections-loader.js?v=14.1"></script>
+    <!-- 🧹 Header/Footer Cleanup -->
+    <script src="js/header-footer-cleanup.js"></script>
+    <!-- Loading States Component -->
+    <script src="js/components/loading-states.js"></script>
+    <!-- Global Header Scripts -->
+    <script src="js/components-loader.js?v=30.2"></script>
+    <!-- Hub Inteligente Modules -->
+    <script src="js/hub/hub-api-connector.js?v=1.02"></script>
+    <script src="js/hub/contextual-alerts.js?v=1.03"></script>
+    <script src="js/hub/insights-engine.js?v=1.03"></script>
+    <script src="js/hub/module-cards.js?v=1.02"></script>
+    <script src="js/hub/mia-assistant.js?v=1.02"></script>
+    <script src="js/creator-hub.js?v=1.0"></script>
+    <script src="js/hub/sidebar-widgets.js?v=1770829609"></script>
+    <script src="js/mobile-drawer.js?v=1769469123"></script>
+    <script src="js/dashboard-polish.js?v=1.0"></script>
+    <script src="js/edge-swipe.js?v=1769558147"></script>
+    <script src="js/hub/comments-modal.js?v=1.0"></script>
+    <script src="js/hub/user-mini-profile.js?v=2.0"></script>
+    <script>
+    // Mining System
+    let miningStatus = null;
+    let miningCountdownInterval = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMiningStatus();
+    });
+
+    async function loadMiningStatus() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        if (!token) return;
+        
+        try {
+            const response = await fetch('/api/mining/status', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await response.json();
+            if (data.success) {
+                miningStatus = data;
+                updateMiningUI();
+                startMiningCountdown();
+            }
+        } catch (error) {
+            console.error('[Mining] Error:', error);
+        }
+    }
+
+    function updateMiningUI() {
+        if (!miningStatus) return;
+        const { mining, tier, platform_state } = miningStatus;
+        
+        const networkBadge = document.getElementById('networkBadge');
+        if (networkBadge) {
+            networkBadge.innerHTML = platform_state === 'testnet' 
+                ? '<span class="testnet">TESTNET</span>' 
+                : '<span class="mainnet">MAINNET</span>';
+        }
+        
+        const tierBadge = document.getElementById('tierBadge');
+        if (tierBadge) {
+            tierBadge.textContent = tier.display_name;
+            tierBadge.style.background = tier.color;
+        }
+        
+        const tierProgress = document.getElementById('tierProgress');
+        const tierProgressText = document.getElementById('tierProgressText');
+        if (tierProgress && tierProgressText) {
+            const pointsNeeded = tier.name === 'bronze' ? 50 : 150;
+            const progress = tier.next_tier ? (tier.points / pointsNeeded) * 100 : 100;
+            tierProgress.style.width = progress + '%';
+            tierProgressText.textContent = tier.points + '/' + pointsNeeded + ' pts' + (tier.next_tier ? ' → ' + (tier.next_tier === 'silver' ? 'Plata' : 'Oro') : '');
+        }
+        
+        const rewardAmount = document.getElementById('rewardAmount');
+        if (rewardAmount) rewardAmount.textContent = '+' + tier.potential_reward.toFixed(1) + ' LTD';
+        
+        const streakCount = document.getElementById('streakCount');
+        if (streakCount) streakCount.textContent = mining.current_streak + ' dias';
+        
+        const totalMined = document.getElementById('totalMined');
+        if (totalMined) totalMined.textContent = mining.testnet_ltd_mined.toFixed(2) + ' LTD';
+        
+        const mineButton = document.getElementById('mineButton');
+        if (mineButton) {
+            if (mining.can_claim) {
+                mineButton.disabled = false;
+                mineButton.innerHTML = '<i class="fas fa-hammer"></i><span>MINAR</span>';
+            } else {
+                mineButton.disabled = true;
+                mineButton.innerHTML = '<i class="fas fa-clock"></i><span>ESPERA</span>';
+            }
+        }
+        
+        const testnetNotice = document.getElementById('testnetNotice');
+        if (testnetNotice) {
+            testnetNotice.style.display = platform_state === 'mainnet' ? 'none' : 'flex';
+        }
+    }
+
+    function startMiningCountdown() {
+        if (miningCountdownInterval) clearInterval(miningCountdownInterval);
+        miningCountdownInterval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+    }
+
+    function updateCountdown() {
+        if (!miningStatus) return;
+        const countdown = document.getElementById('miningCountdown');
+        const mineButton = document.getElementById('mineButton');
+        if (!countdown) return;
+        
+        let timeRemaining = miningStatus.mining.time_until_claim_ms;
+        if (timeRemaining > 0) {
+            miningStatus.mining.time_until_claim_ms -= 1000;
+            timeRemaining = miningStatus.mining.time_until_claim_ms;
+            
+            if (timeRemaining <= 0) {
+                miningStatus.mining.can_claim = true;
+                countdown.textContent = 'Disponible';
+                countdown.classList.add('available');
+                if (mineButton) {
+                    mineButton.disabled = false;
+                    mineButton.innerHTML = '<i class="fas fa-hammer"></i><span>MINAR</span>';
+                }
+                return;
+            }
+            
+            const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            countdown.textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+            countdown.classList.remove('available');
+        } else {
+            countdown.textContent = 'Disponible';
+            countdown.classList.add('available');
+        }
+    }
+
+    async function claimMining() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        if (!token) { showWarning('Por favor inicia sesion'); return; }
+        
+        const mineButton = document.getElementById('mineButton');
+        if (mineButton) {
+            mineButton.disabled = true;
+            mineButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>MINANDO...</span>';
+        }
+        
+        try {
+            const response = await fetch('/api/mining/claim', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                if (typeof showNotification === 'function') {
+                    showNotification(data.message, 'success');
+                } else {
+                    showSuccess(data.message);
+                }
+                await loadMiningStatus();
+            } else {
+                const errorMsg = data.data?.error?.message || data.message || 'Error al minar';
+                if (typeof showNotification === 'function') {
+                    showNotification(errorMsg, 'error');
+                } else {
+                    showError(errorMsg);
+                }
+                if (mineButton) {
+                    mineButton.disabled = false;
+                    mineButton.innerHTML = '<i class="fas fa-hammer"></i><span>MINAR</span>';
+                }
+            }
+        } catch (error) {
+            console.error('[Mining] Claim error:', error);
+            showError('Error de conexion');
+            if (mineButton) {
+                mineButton.disabled = false;
+                mineButton.innerHTML = '<i class="fas fa-hammer"></i><span>MINAR</span>';
+            }
+        }
+    }
+    </script>
+    <script src="js/onboarding/onboarding-system.js?v=1.5"></script>
+
+    <!-- Lottery Predictor Modal -->
+    <style>
+    .lottery-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 10000; }
+    .lottery-modal-overlay.active { display: flex; }
+    .lottery-modal { background: linear-gradient(135deg, #1a1a2e, #16213e); border-radius: 20px; padding: 30px; max-width: 450px; width: 90%; position: relative; }
+    .lottery-modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+    .lottery-modal-header { text-align: center; margin-bottom: 20px; }
+    .lottery-modal-header h2 { color: #ffd700; margin: 10px 0; }
+    .lottery-modal-header p { color: #888; }
+    .lottery-modal-rules { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+    .lottery-modal-rules h4 { color: #fff; margin-bottom: 10px; }
+    .lottery-modal-rules ul { color: #888; padding-left: 20px; }
+    .lottery-modal-actions { display: flex; flex-direction: column; gap: 10px; }
+    .lottery-modal-btn { padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; }
+    .lottery-modal-btn.primary { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a1a2e; }
+    .lottery-modal-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+    </style>
+    <div class="lottery-modal-overlay" id="lotteryModal">
+        <div class="lottery-modal">
+            <button class="lottery-modal-close" onclick="closeLotteryModal()">&times;</button>
+            <div class="lottery-modal-header">
+                <div class="lottery-icon">🎰</div>
+                <h2>Predictor La Diaria</h2>
+                <p id="lotteryModalSubtitle">Predicciones basadas en análisis estadístico</p>
+            </div>
+            <div class="lottery-modal-rules">
+                <h4><i class="fas fa-info-circle"></i> Información</h4>
+                <ul id="lotteryModalRules">
+                    <li>Análisis de frecuencias históricas</li>
+                    <li>Patrones estadísticos de los últimos sorteos</li>
+                    <li>Algoritmo de predicción avanzado</li>
+                </ul>
+            </div>
+            <div class="lottery-modal-actions" id="lotteryModalActions">
+                <!-- Buttons dynamically inserted by JS -->
+            </div>
+        </div>
+    </div>
+    <script src="pwa-manager.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        // Wait for DOM and all modules to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[Hub Inteligente] Initializing...');
+
+            // Initialize components
+            HubContextualAlerts.init('hubAlertsContainer');
+            HubInsightsEngine.init('hubInsightsContainer');
+            HubModuleCards.init('hubModulesContainer');
+            // CreatorHubModule loads automatically
+
+            // Load data
+            loadHubData();
+        });
+
+        async function loadHubData() {
+            try {
+                // Priority 1: Critical data (summary)
+                const criticalData = await HubAPI.fetchCriticalData();
+
+                if (criticalData) {
+                    // Render alerts
+                    HubContextualAlerts.render(criticalData.alerts);
+
+                    // Render module cards
+                    HubModuleCards.render(criticalData);
+
+                    console.log('[Hub Inteligente] Critical data loaded');
+                }
+
+            } catch (error) {
+                console.error('[Hub Inteligente] Error loading data:', error);
+            }
+        }
+
+        // Listen for secondary data
+        document.addEventListener('hubSecondaryDataLoaded', function(e) {
+            const data = e.detail;
+
+            if (data.insights) {
+                HubInsightsEngine.render(data.insights);
+            }
+
+            if (data.activity) {
+                // HubUnifiedFeed.render(data.activity); // Replaced by SocialFeed
+            }
+
+            console.log('[Hub Inteligente] Secondary data loaded');
+        });
+
+    })();
+    </script>
+
+<script>
+// ============================================
+// SIDEBAR HUB CARDS DATA SYNC
+// Added: 2026-01-25
+// ============================================
+(function() {
+    async function updateSidebarHubCards() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        try {
+            // Fetch user data for welcome message
+            const userStr = localStorage.getItem('latanda_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const welcomeTitle = document.getElementById('welcomeTitle');
+                if (welcomeTitle && user.name) {
+                    welcomeTitle.textContent = 'Hola, ' + user.name.split(' ')[0] + '!';
+                }
+            }
+
+            // Fetch balance
+            const balanceRes = await fetch('/api/wallet/balance', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (balanceRes.ok) {
+                const balanceData = await balanceRes.json();
+                if (balanceData.success && balanceData.data) {
+                    const balance = balanceData.data.balance || 0;
+                    const sidebarBalance = document.getElementById('sidebarBalance');
+                    if (sidebarBalance) {
+                        sidebarBalance.innerHTML = balance.toFixed(2) + ' <small style="font-size:0.6em;opacity:0.7">LTD</small>';
+                    }
+                }
+            }
+
+            // Fetch tandas count
+            const tandasRes = await fetch('/api/groups/my-groups', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (tandasRes.ok) {
+                const tandasData = await tandasRes.json();
+                if (tandasData.success && tandasData.data) {
+                    const activeCount = (tandasData.data.groups || []).filter(g => g.status === 'active').length;
+                    const sidebarTandas = document.getElementById('sidebarTandasCount');
+                    if (sidebarTandas) {
+                        sidebarTandas.textContent = activeCount + ' tandas activas';
+                    }
+                }
+            }
+
+            // Fetch marketplace data
+            const productsRes = await fetch('/api/marketplace/my-products', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (productsRes.ok) {
+                const productsData = await productsRes.json();
+                if (productsData.success && productsData.data) {
+                    const count = (productsData.data.products || []).length;
+                    const sidebarProducts = document.getElementById('sidebarProducts');
+                    if (sidebarProducts) {
+                        sidebarProducts.textContent = count;
+                    }
+                }
+            }
+
+            console.log('[SidebarSync] Hub cards updated');
+        } catch (error) {
+            console.error('[SidebarSync] Error:', error);
+        }
+    }
+
+    // Run on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateSidebarHubCards);
+    } else {
+        updateSidebarHubCards();
+    }
+
+    // Also update when window gets focus (user returns to tab)
+    window.addEventListener('focus', function() {
+        setTimeout(updateSidebarHubCards, 1000);
+    });
+})();
+</script>
+    <script src="js/hub/contextual-widgets.js?v=1770829609"></script>
+
+<script>
+// logo-fallback-listener: Replace broken logo images with icon
+document.addEventListener('error', function(e) {
+    if (e.target.tagName === 'IMG' && e.target.classList.contains('logo-fallback')) {
+        e.target.style.display = 'none';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-coins';
+        icon.style.color = '#00FFFF';
+        e.target.parentElement.appendChild(icon);
+    }
+}, true);
+</script>
+</body>
+</html>

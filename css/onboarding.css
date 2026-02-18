@@ -1,0 +1,710 @@
+/**
+ * LA TANDA - ONBOARDING SYSTEM CSS
+ * Styles for: Checklist, Tooltips, Notifications, Celebration
+ */
+
+/* ============================================================
+   CHECKLIST COMPONENT
+   ============================================================ */
+
+.onboarding-checklist {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 102, 255, 0.1);
+    z-index: 9000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    transform: translateY(100%) scale(0.95);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    overflow: hidden;
+}
+
+.onboarding-checklist.visible {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.onboarding-checklist.minimized .checklist-content {
+    max-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.checklist-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.checklist-header:hover {
+    background: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+}
+
+.checklist-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.checklist-title i {
+    font-size: 1.1rem;
+}
+
+.checklist-progress-mini {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.checklist-toggle {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+}
+
+.checklist-toggle:hover {
+    transform: scale(1.2);
+}
+
+.checklist-content {
+    max-height: 500px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.checklist-progress-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.checklist-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0066ff 0%, #00d4ff 100%);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.checklist-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.checklist-stats span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checklist-stats i {
+    color: #0066ff;
+}
+
+.checklist-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.checklist-task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.checklist-task:hover {
+    background: #f1f5f9;
+    border-color: #0066ff;
+    transform: translateX(4px);
+}
+
+.checklist-task.completed {
+    background: #f0fdf4;
+    opacity: 0.8;
+}
+
+.checklist-task.completed .task-icon {
+    color: #22c55e;
+}
+
+.checklist-task.current {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #0066ff;
+}
+
+.checklist-task.current .task-icon {
+    color: #0066ff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.task-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 50%;
+    font-size: 1rem;
+    color: #64748b;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.task-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.task-desc {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.task-reward {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #92400e;
+    flex-shrink: 0;
+}
+
+.task-reward.earned {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #166534;
+}
+
+.task-reward i {
+    font-size: 0.7rem;
+}
+
+.checklist-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pending-rewards {
+    font-size: 0.8rem;
+    color: #f59e0b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checklist-dismiss {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.checklist-dismiss:hover {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* ============================================================
+   CONTEXTUAL TOOLTIPS
+   ============================================================ */
+
+.onboarding-tooltip {
+    position: fixed;
+    z-index: 9500;
+    width: 220px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.onboarding-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    transform: rotate(45deg);
+}
+
+.onboarding-tooltip[data-position="bottom"] .tooltip-arrow {
+    top: -6px;
+    left: 50%;
+    margin-left: -6px;
+}
+
+.onboarding-tooltip[data-position="top"] .tooltip-arrow {
+    bottom: -6px;
+    left: 50%;
+    margin-left: -6px;
+}
+
+.onboarding-tooltip[data-position="right"] .tooltip-arrow {
+    left: -6px;
+    top: 50%;
+    margin-top: -6px;
+}
+
+.onboarding-tooltip[data-position="left"] .tooltip-arrow {
+    right: -6px;
+    top: 50%;
+    margin-top: -6px;
+}
+
+.tooltip-content {
+    padding: 16px;
+    color: white;
+}
+
+.tooltip-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    color: #00d4ff;
+}
+
+.tooltip-message {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.tooltip-dismiss {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tooltip-dismiss:hover {
+    background: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   SMART NOTIFICATIONS
+   ============================================================ */
+
+.onboarding-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 340px;
+    max-width: calc(100vw - 40px);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    gap: 14px;
+    z-index: 9100;
+    transform: translateX(120%);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border-left: 4px solid #0066ff;
+}
+
+.onboarding-notification.visible {
+    transform: translateX(0);
+}
+
+.notif-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-icon i {
+    font-size: 1.2rem;
+    color: #0066ff;
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.notif-message {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.notif-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.notif-action {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.notif-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+.notif-dismiss {
+    width: 32px;
+    height: 32px;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.notif-dismiss:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ============================================================
+   REWARD TOAST
+   ============================================================ */
+
+.reward-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 50px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+    z-index: 9200;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.reward-toast.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.reward-icon {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reward-icon i {
+    color: #f59e0b;
+    font-size: 1rem;
+}
+
+.reward-content {
+    color: #92400e;
+}
+
+.reward-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.reward-detail {
+    font-size: 0.8rem;
+}
+
+/* ============================================================
+   CELEBRATION MODAL
+   ============================================================ */
+
+.onboarding-celebration {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.onboarding-celebration.visible {
+    opacity: 1;
+}
+
+.celebration-content {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    transform: scale(0.8);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.onboarding-celebration.visible .celebration-content {
+    transform: scale(1);
+}
+
+.celebration-emoji {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.celebration-content h2 {
+    font-size: 1.75rem;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.celebration-content p {
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.celebration-reward {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    padding: 12px 24px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+}
+
+.celebration-reward i {
+    color: #f59e0b;
+    font-size: 1.25rem;
+}
+
+.celebration-reward span {
+    font-weight: 700;
+    color: #92400e;
+    font-size: 1.1rem;
+}
+
+.celebration-content button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.celebration-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .onboarding-checklist {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+
+    .onboarding-notification {
+        top: auto;
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        transform: translateY(120%);
+    }
+
+    .onboarding-notification.visible {
+        transform: translateY(0);
+    }
+
+    .checklist-tasks {
+        max-height: 200px;
+    }
+
+    .celebration-content {
+        margin: 20px;
+        padding: 30px;
+    }
+}
+
+/* ============================================================
+   DARK MODE SUPPORT
+   ============================================================ */
+
+@media (prefers-color-scheme: dark) {
+    .onboarding-checklist {
+        background: #1e293b;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .checklist-content {
+        background: #1e293b;
+    }
+
+    .checklist-progress-bar {
+        background: #334155;
+    }
+
+    .checklist-stats {
+        color: #94a3b8;
+        border-color: #334155;
+    }
+
+    .checklist-task {
+        background: #0f172a;
+    }
+
+    .checklist-task:hover {
+        background: #1e293b;
+    }
+
+    .task-icon {
+        background: #334155;
+    }
+
+    .task-title {
+        color: #f1f5f9;
+    }
+
+    .checklist-footer {
+        border-color: #334155;
+    }
+
+    .onboarding-notification {
+        background: #1e293b;
+    }
+
+    .notif-title {
+        color: #f1f5f9;
+    }
+
+    .notif-message {
+        color: #94a3b8;
+    }
+
+    .notif-dismiss {
+        background: #334155;
+        color: #94a3b8;
+    }
+}

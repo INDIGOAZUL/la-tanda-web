@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="js/admin-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - La Tanda Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(127, 0, 255, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #00FFFF;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .filters {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00FFFF;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .logs-table {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #00FFFF;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 16px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .severity-info { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .severity-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .severity-error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .severity-critical { background: rgba(239, 68, 68, 0.3); color: #ef4444; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00FFFF, #00D4D4);
+            color: #0f172a;
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.2);
+            color: #f8fafc;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: #f8fafc;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background: #00FFFF;
+            color: #0f172a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-clipboard-list"></i> Audit Logs</h1>
+            <p style="color: #94a3b8;">Sistema de auditoría y trazabilidad de eventos</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-label">Total de Logs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCritical">-</div>
+                <div class="stat-label">Críticos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat24h">-</div>
+                <div class="stat-label">Últimas 24h</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat7d">-</div>
+                <div class="stat-label">Últimos 7 días</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="refreshLogs()">
+                <i class="fas fa-sync"></i> Actualizar
+            </button>
+            <button class="btn btn-secondary" onclick="exportLogs('json')">
+                <i class="fas fa-download"></i> Exportar JSON
+            </button>
+            <button class="btn btn-secondary" onclick="exportLogs('csv')">
+                <i class="fas fa-file-csv"></i> Exportar CSV
+            </button>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Severidad</label>
+                <select id="filterSeverity" onchange="applyFilters()">
+                    <option value="">Todos</option>
+                    <option value="info">Info</option>
+                    <option value="warning">Warning</option>
+                    <option value="error">Error</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Tipo de Evento</label>
+                <input type="text" id="filterEventType" placeholder="auth.login.success" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>User ID</label>
+                <input type="text" id="filterUserId" placeholder="user_123" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Desde</label>
+                <input type="date" id="filterDateFrom" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Hasta</label>
+                <input type="date" id="filterDateTo" onchange="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Buscar</label>
+                <input type="text" id="filterSearch" placeholder="Buscar..." onchange="applyFilters()">
+            </div>
+        </div>
+
+        <div class="logs-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Severidad</th>
+                        <th>Evento</th>
+                        <th>Usuario</th>
+                        <th>IP</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody">
+                    <tr>
+                        <td colspan="6" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando logs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+
+    // XSS prevention helper (v4.1.0)
+    function escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+        const limit = 50;
+        const apiUrl = 'https://latanda.online';
+        const authToken = localStorage.getItem('admin_token') || localStorage.getItem('auth_token');
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${apiUrl}/api/admin/audit-logs/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('statTotal').textContent = data.data.total_logs.toLocaleString();
+                    document.getElementById('statCritical').textContent = data.data.by_severity.critical.toLocaleString();
+                    document.getElementById('stat24h').textContent = data.data.by_time.last_24h.toLocaleString();
+                    document.getElementById('stat7d').textContent = data.data.by_time.last_7d.toLocaleString();
+                }
+            } catch (error) {
+            }
+        }
+
+        async function loadLogs(page = 1) {
+            const tbody = document.getElementById('logsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando logs...</td></tr>';
+
+            try {
+                const filters = getFilters();
+                const queryString = new URLSearchParams({ ...filters, page, limit }).toString();
+
+                const response = await fetch(`${apiUrl}/api/admin/audit-logs?${queryString}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    displayLogs(data.data.logs);
+                    displayPagination(data.data.pagination);
+                    currentPage = page;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="loading">Error cargando logs</td></tr>';
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">Error de conexión</td></tr>';
+            }
+        }
+
+        function displayLogs(logs) {
+            const tbody = document.getElementById('logsTableBody');
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">No hay logs para mostrar</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+                <tr>
+                    <td>${new Date(log.timestamp).toLocaleString()}</td>
+                    <td><span class="severity-badge severity-${escapeHtml(log.severity)}">${escapeHtml(log.severity)}</span></td>
+                    <td><code>${escapeHtml(log.event_type)}</code></td>
+                    <td>${escapeHtml(log.user_email || log.user_id || '-')}</td>
+                    <td><code>${escapeHtml(log.ip_address || '-')}</code></td>
+                    <td><small>${escapeHtml(JSON.stringify(log.details || {}).substring(0, 100))}...</small></td>
+                </tr>
+            `).join('');
+        }
+
+        function displayPagination(pagination) {
+            const container = document.getElementById('pagination');
+            const { page, total_pages } = pagination;
+
+            let html = '';
+
+            if (page > 1) {
+                html += `<button onclick="loadLogs(${page - 1})">← Anterior</button>`;
+            }
+
+            for (let i = Math.max(1, page - 2); i <= Math.min(total_pages, page + 2); i++) {
+                html += `<button class="${i === page ? 'active' : ''}" onclick="loadLogs(${i})">${i}</button>`;
+            }
+
+            if (page < total_pages) {
+                html += `<button onclick="loadLogs(${page + 1})">Siguiente →</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function getFilters() {
+            return {
+                severity: document.getElementById('filterSeverity').value,
+                event_type: document.getElementById('filterEventType').value,
+                user_id: document.getElementById('filterUserId').value,
+                date_from: document.getElementById('filterDateFrom').value,
+                date_to: document.getElementById('filterDateTo').value,
+                search: document.getElementById('filterSearch').value
+            };
+        }
+
+        function applyFilters() {
+            loadLogs(1);
+        }
+
+        function refreshLogs() {
+            loadLogs(currentPage);
+            loadStats();
+        }
+
+        async function exportLogs(format) {
+            const filters = getFilters();
+            const queryString = new URLSearchParams({ ...filters, format }).toString();
+            window.open(`${apiUrl}/api/admin/audit-logs/export?${queryString}`, '_blank');
+        }
+
+        // Initialize
+        if (!authToken) {
+            alert('No estás autenticado. Por favor inicia sesión.');
+            window.location.href = '/admin-panel.html';
+        } else {
+            loadStats();
+            loadLogs(1);
+        }
+    </script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

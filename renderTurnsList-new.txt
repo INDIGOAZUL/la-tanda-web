@@ -1,0 +1,44 @@
+function renderTurnsList() {
+            var contentDiv = document.getElementById('turnsContent');
+            if (!contentDiv) return;
+            
+            // Lottery action bar
+            var actionsHtml = '<div style="display: flex; gap: 10px; margin-bottom: 16px; padding: 12px; background: rgba(245,158,11,0.1); border-radius: 10px; border: 1px solid rgba(245,158,11,0.3);"><button onclick="startLotteryCountdown()" style="flex: 1; padding: 10px 16px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2rem;">🎲</span> Iniciar Tombola</button></div>';
+            
+            var html = actionsHtml + '<div id="turnsList" style="display: flex; flex-direction: column; gap: 8px;">';
+            
+            turnsMembers.forEach(function(member, index) {
+                var position = index + 1;
+                var isLocked = member.turn_locked === true;
+                var lockIcon = isLocked ? '🔒' : '🔓';
+                var lockBg = isLocked ? '#059669' : '#374151';
+                var itemBg = isLocked ? '#1e3a3a' : '#1e293b';
+                var itemBorder = isLocked ? '#059669' : '#334155';
+                
+                html += '<div class="turn-item' + (isLocked ? ' turn-locked' : '') + '" ' + (!isLocked ? 'draggable="true"' : '') + ' data-user-id="' + member.user_id + '" data-index="' + index + '" data-locked="' + isLocked + '" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: ' + itemBg + '; border: 1px solid ' + itemBorder + '; border-radius: 10px; cursor: ' + (!isLocked ? 'grab' : 'default') + ';">' +
+                    '<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 0.875rem;">' + position + '</div>' +
+                    '<div style="flex: 1;">' +
+                        '<div style="font-weight: 500; color: #f3f4f6;">' + (member.name || member.full_name || member.username || 'Usuario') + '</div>' +
+                        '<div style="font-size: 0.75rem; color: #9ca3af;">' + (member.role === 'creator' || member.role === 'admin' ? 'Administrador' : 'Miembro') + (isLocked ? ' • Bloqueada' : '') + '</div>' +
+                    '</div>' +
+                    '<button onclick="toggleTurnLock(' + index + ')" style="width: 32px; height: 32px; background: ' + lockBg + '; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="' + (isLocked ? 'Desbloquear' : 'Bloquear') + '">' + lockIcon + '</button>' +
+                    '<div style="display: flex; gap: 4px;">' +
+                        '<button onclick="moveTurnUp(' + index + ')" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === 0 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === 0 ? '0.3' : '1') + ';" ' + (isLocked || index === 0 ? 'disabled' : '') + '><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></button>' +
+                        '<button onclick="moveTurnDown(' + index + ')" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === turnsMembers.length - 1 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === turnsMembers.length - 1 ? '0.3' : '1') + ';" ' + (isLocked || index === turnsMembers.length - 1 ? 'disabled' : '') + '><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button>' +
+                    '</div>' +
+                '</div>';
+            });
+            
+            html += '</div>';
+            contentDiv.innerHTML = html;
+            contentDiv.style.display = 'block';
+            
+            // Enable drag and drop (only for unlocked items)
+            initDragAndDrop();
+        }
+        
+        function moveTurnUp(index) {
+            if (index <= 0) return;
+            if (turnsMembers[index].turn_locked) return;
+            var temp = turnsMembers[index];
+            turnsMembers[index] = turnsMembers[index - 1];

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minería LTD - La Tanda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800.0">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/edge-swipe.css?v=1.5">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <link rel="stylesheet" href="shared-components.css?v=1760032177">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(20, 27, 45, 0.95);
+            --accent-cyan: #00ffff;
+            --accent-gold: #ffd700;
+            --accent-bronze: #cd7f32;
+            --accent-silver: #c0c0c0;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --border-card: rgba(0,255,255,0.1);
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .mining-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .mining-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .mining-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin: 0 0 10px;
+        }
+        
+        .mining-header p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .tier-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tier-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--accent-bronze), #8b4513);
+            box-shadow: 0 0 30px rgba(205, 127, 50, 0.4);
+        }
+        
+        .tier-icon.silver {
+            background: linear-gradient(135deg, var(--accent-silver), #808080);
+            box-shadow: 0 0 30px rgba(192, 192, 192, 0.4);
+        }
+        
+        .tier-icon.gold {
+            background: linear-gradient(135deg, var(--accent-gold), #b8860b);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+        
+        .tier-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .tier-progress {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 12px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .tier-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--accent-cyan);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .mine-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, var(--accent-cyan), #00b3b3);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .mine-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .mine-button:disabled {
+            background: rgba(255,255,255,0.2);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .rewards-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .rewards-section h3 {
+            margin: 0 0 15px;
+            color: var(--accent-gold);
+        }
+        
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-card);
+        }
+        
+        .reward-item:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+        .leader-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .leader-item:last-child { border-bottom: none; }
+        .leader-item .rank { font-size: 1.2rem; }
+        .leader-item .name { flex: 1; margin: 0 10px; }
+        .leader-item .score { font-weight: 600; }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/mineria.html">
+    <meta property="og:title" content="Mineria LTD | La Tanda">
+    <meta property="og:description" content="Gana tokens LTD por tu actividad diaria en la plataforma.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Mineria LTD | La Tanda">
+    <meta name="twitter:description" content="Gana tokens LTD por tu actividad diaria en la plataforma.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <!-- Global Header -->
+    <div id="global-header"></div>
+
+    <div class="dashboard-3col">
+        <!-- Left Sidebar -->
+                <aside class="left-sidebar" id="leftSidebar">
+            <nav class="nav-menu">
+                <a href="/home-dashboard.html" class="nav-menu-item">
+                    <i class="fas fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+                <a href="/explorar.html" class="nav-menu-item">
+                    <i class="fas fa-hashtag"></i>
+                    <span>Explorar</span>
+                </a>
+                <a href="/trabajo.html" class="nav-menu-item">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Trabajo</span>
+                </a>
+                <a href="/creator-hub.html" class="nav-menu-item">
+                    <i class="fas fa-palette"></i>
+                    <span>Creator Hub</span>
+                </a>
+                <a href="/guardados.html" class="nav-menu-item">
+                    <i class="fas fa-bookmark"></i>
+                    <span>Guardados</span>
+                </a>
+                <a href="/mensajes.html" class="nav-menu-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Mensajes</span>
+                </a>
+                <a href="/mineria.html" class="nav-menu-item active">
+                    <i class="fas fa-hammer"></i>
+                    <span>Minería</span>
+                </a>
+                <a href="mi-perfil.html" class="nav-menu-item">
+                    <i class="fas fa-bars"></i>
+                    <span>Menu</span>
+                </a>
+            </nav>
+
+            <!-- Post Button -->
+            <button class="nav-post-btn" onclick="window.LaTandaPopup && window.LaTandaPopup.showInfo('Crear publicacion proximamente')">
+                <i class="fas fa-plus"></i> Publicar
+            </button>
+
+            <!-- Section Divider -->
+            <div class="nav-section-divider"></div>
+            <div class="nav-section-label">Accesos Rapidos</div>
+
+            <!-- Quick Links -->
+            <nav class="nav-menu">
+                <a href="my-wallet.html" class="nav-menu-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>Mi Wallet</span>
+                </a>
+                <a href="/groups-advanced-system.html" class="nav-menu-item">
+                    <i class="fas fa-users"></i>
+                    <span>Mis Tandas</span>
+                </a>
+                <a href="/marketplace-social.html" class="nav-menu-item">
+                    <i class="fas fa-store"></i>
+                    <span>Marketplace</span>
+                </a>
+                <a href="/lottery-predictor.html" class="nav-menu-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Loteria</span>
+                </a>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-feed">
+            <div class="mining-container">
+                <div class="mining-header">
+                    <h1><i class="fas fa-hammer"></i> Minería LTD</h1>
+                    <p>Gana tokens LTD diariamente por tu actividad</p>
+                </div>
+                
+                <div class="tier-display" id="tierDisplay">
+                    <div class="tier-icon" id="tierIcon">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <div class="tier-name" id="tierName">Bronce</div>
+                    <p id="tierDesc">Nivel inicial de minero</p>
+                    <div class="tier-progress">
+                        <div class="tier-progress-bar" id="tierProgress" style="width: 30%"></div>
+                    </div>
+                    <p class="tier-next">Siguiente tier: <span id="nextTier">Plata (70 días de racha)</span></p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="streakDays">0</div>
+                        <div class="stat-label">Días de Racha</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="dailyReward">0.5</div>
+                        <div class="stat-label">LTD / Día</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMined">0.00</div>
+                        <div class="stat-label">Total Minado</div>
+                    </div>
+                </div>
+                
+                <button class="mine-button" id="mineButton" onclick="claimDaily()">
+                    <i class="fas fa-hammer"></i> Minar Ahora
+                </button>
+                
+                <div class="rewards-section">
+                    <h3><i class="fas fa-gift"></i> Recompensas por Tier</h3>
+                    <div class="reward-item">
+                        <span><i class="fas fa-medal" style="color: #cd7f32"></i> Bronce</span>
+                        <span>0.5 LTD/día</span>
+                    </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-medal" style="color: #c0c0c0"></i> Plata</span>
+                        <span>1.0 LTD/día</span>
+                    </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-medal" style="color: #ffd700"></i> Oro</span>
+                        <span>2.0 LTD/día</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Right Sidebar - Contextual Widgets -->
+        <aside class="right-sidebar" id="rightSidebar">
+            <div class="right-sidebar-sticky">
+            <div class="sidebar-widgets" id="contextualWidgets">
+                <!-- Mining specific widgets -->
+                <div class="widget-card">
+                    <h4><i class="fas fa-chart-line"></i> Tu Progreso</h4>
+                    <div class="widget-content" id="miningProgress">
+                        <p>Racha actual: <strong>0 días</strong></p>
+                        <p>Mejor racha: <strong>0 días</strong></p>
+                        <p>Próximo bonus: <strong>7 días</strong></p>
+                    </div>
+                </div>
+                <div class="widget-card">
+                    <h4><i class="fas fa-trophy"></i> Top Mineros</h4>
+                    <div class="widget-content" id="topMiners">
+                        <div class="leader-item"><span class="rank">🥇</span> <span class="name">Usuario1</span> <span class="score" style="color: var(--accent-cyan);">365 días</span></div>
+                        <div class="leader-item"><span class="rank">🥈</span> <span class="name">Usuario2</span> <span class="score" style="color: var(--accent-cyan);">280 días</span></div>
+                        <div class="leader-item"><span class="rank">🥉</span> <span class="name">Usuario3</span> <span class="score" style="color: var(--accent-cyan);">195 días</span></div>
+                        
+                    </div>
+                </div>
+            </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Global Footer -->
+    <div id="latanda-footer" class="auto-footer"></div>
+    
+    <script src="shared-components.js?v=7.18"></script>
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/edge-swipe.js?v=1.5"></script>
+    <script>
+                async function loadMiningData() {
+            try {
+                const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+                if (!token) {
+                    window.location.href = "/auth.html";
+                    return;
+                }
+                
+                const response = await fetch("/api/mining/status", {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+                
+                const data = await response.json();
+                console.log("[Mining] API Response:", data);
+                
+                if (data.success && data.mining) {
+                    const mining = data.mining;
+                    const tierData = data.tier || {};
+                    
+                    // Update stats
+                    document.getElementById("streakDays").textContent = mining.current_streak || 0;
+                    document.getElementById("dailyReward").textContent = (tierData.potential_reward || tierData.base_reward || 0.5).toFixed(1);
+                    document.getElementById("totalMined").textContent = (mining.testnet_ltd_mined || 0).toFixed(2);
+                    
+                    // Update tier display
+                    const tierName = tierData.name || "bronze";
+                    const tierNameEl = document.getElementById("tierName");
+                    const tierIcon = document.getElementById("tierIcon");
+                    const tierProgress = document.getElementById("tierProgress");
+                    const tierDesc = document.getElementById("tierDesc");
+                    const nextTierEl = document.getElementById("nextTier");
+                    
+                    if (tierNameEl) tierNameEl.textContent = tierData.display_name || tierName.charAt(0).toUpperCase() + tierName.slice(1);
+                    
+                    // Update tier description
+                    if (tierDesc) {
+                        const descriptions = {
+                            bronze: "Nivel inicial de minero",
+                            silver: "Minero experimentado",
+                            gold: "Minero experto"
+                        };
+                        tierDesc.textContent = descriptions[tierName] || "Nivel de minero";
+                    }
+                    
+                    // Update next tier info
+                    if (nextTierEl && tierData.next_tier) {
+                        nextTierEl.textContent = tierData.next_tier.charAt(0).toUpperCase() + tierData.next_tier.slice(1) + " (" + (tierData.points_to_next || 0) + " puntos más)";
+                    }
+                    
+                    // Update tier icon color
+                    if (tierIcon) {
+                        tierIcon.className = "tier-icon";
+                        if (tierName === "silver") tierIcon.classList.add("silver");
+                        if (tierName === "gold") tierIcon.classList.add("gold");
+                    }
+                    
+                    // Update progress bar
+                    if (tierProgress && tierData.points !== undefined) {
+                        const progress = tierData.points_to_next > 0 
+                            ? (tierData.points / (tierData.points + tierData.points_to_next)) * 100 
+                            : 100;
+                        tierProgress.style.width = progress + "%";
+                    }
+                    
+                    // Update button state
+                    const btn = document.getElementById("mineButton");
+                    if (btn) {
+                        if (mining.can_claim === false) {
+                            btn.disabled = true;
+                            btn.innerHTML = "<i class=\"fas fa-clock\"></i> Espera " + (mining.time_formatted || "24h");
+                            btn.style.background = "linear-gradient(135deg, #666, #444)";
+                        } else {
+                            btn.disabled = false;
+                            btn.innerHTML = "<i class=\"fas fa-hammer\"></i> Minar Ahora";
+                            btn.style.background = "linear-gradient(135deg, var(--accent-cyan), #00b3b3)";
+                        }
+                    }
+                    
+                    // Update widget data
+                    const progressWidget = document.getElementById("miningProgress");
+                    if (progressWidget) {
+                        progressWidget.innerHTML = "<p>Racha actual: <strong>" + (mining.current_streak || 0) + " días</strong></p>" +
+                            "<p>Mejor racha: <strong>" + (mining.longest_streak || 0) + " días</strong></p>" +
+                            "<p>Total claims: <strong>" + (mining.total_claims || 0) + "</strong></p>";
+                    }
+                } else {
+                    console.error("[Mining] API error:", data.message || "Unknown error");
+                }
+            } catch (error) {
+                console.error("[Mining] Error loading data:", error);
+            }
+        }
+
+        
+        async function claimDaily() {
+            const btn = document.getElementById("mineButton");
+            btn.disabled = true;
+            btn.innerHTML = "<i class=\"fas fa-spinner fa-spin\"></i> Procesando...";
+            
+            try {
+                const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+                
+                const response = await fetch("/api/mining/claim", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const reward = data.claim?.total_reward || 0.5;
+                    btn.innerHTML = "<i class=\"fas fa-check\"></i> +" + reward + " LTD!";
+                    btn.style.background = "linear-gradient(135deg, #00ff88, #00b366)";
+                    
+                    if (window.LaTandaPopup) {
+                        LaTandaPopup.showSuccess("Recompensa reclamada: " + reward + " LTD!");
+                    }
+                    
+                    setTimeout(function() { loadMiningData(); }, 1500);
+                } else {
+                    btn.innerHTML = "<i class=\"fas fa-times\"></i> " + (data.message || "Error");
+                    btn.style.background = "linear-gradient(135deg, #ff4444, #cc0000)";
+                    
+                    if (window.LaTandaPopup) {
+                        LaTandaPopup.showError(data.message || "Error al minar");
+                    }
+                }
+            } catch (error) {
+                btn.innerHTML = "<i class=\"fas fa-times\"></i> Error";
+                btn.style.background = "linear-gradient(135deg, #ff4444, #cc0000)";
+                console.error("Mining error:", error);
+            }
+            
+            setTimeout(function() { loadMiningData(); }, 3000);
+        }
+        
+        // Initialize
+        document.addEventListener("DOMContentLoaded", function() {
+            loadMiningData();
+            if (window.EdgeSwipe) EdgeSwipe.init();
+        });
+    </script>
+</body>
+</html>

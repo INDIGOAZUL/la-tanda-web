@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Únete al Grupo - La Tanda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/shared-components.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.6);
+            --border-primary: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .gradient-orb-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--tanda-cyan) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+        }
+
+        .gradient-orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .invitation-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .group-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .group-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--tanda-cyan), #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border: 3px solid var(--border-accent);
+        }
+
+        .group-name {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--tanda-cyan);
+        }
+
+        .group-type {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--tanda-cyan);
+            margin-bottom: 20px;
+        }
+
+        .group-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .group-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-primary);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .coordinator-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 16px;
+            border: 1px solid var(--border-primary);
+            margin-bottom: 30px;
+        }
+
+        .coordinator-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--tanda-cyan), #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .coordinator-details {
+            flex: 1;
+        }
+
+        .coordinator-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .coordinator-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--tanda-cyan), #3b82f6);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-accent);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+        }
+
+        .loading-state, .error-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-primary);
+            border-top-color: var(--tanda-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-icon {
+            font-size: 64px;
+            color: var(--error);
+            margin-bottom: 20px;
+        }
+
+        .success-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+
+        .group-requirements {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-primary);
+            margin-bottom: 30px;
+        }
+
+        .requirements-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .requirement-item i {
+            color: var(--tanda-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="gradient-orb gradient-orb-1"></div>
+        <div class="gradient-orb gradient-orb-2"></div>
+    </div>
+
+    <div class="container">
+        <div class="invitation-card">
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="spinner"></div>
+                <h2>Cargando información del grupo...</h2>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display: none;">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h2>Grupo No Encontrado</h2>
+                <p style="color: var(--text-secondary); margin: 16px 0;">
+                    El grupo que buscas no existe o ya no está disponible.
+                </p>
+                <a href="/groups-advanced-system.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver a Grupos
+                </a>
+            </div>
+
+            <!-- Group Content (Hidden initially) -->
+            <div id="groupContent" style="display: none;">
+                <div class="group-header">
+                    <div class="group-avatar" id="groupAvatar">🏢</div>
+                    <h1 class="group-name" id="groupName">Cargando...</h1>
+                    <span class="group-type" id="groupType">Familiar</span>
+                    <p class="group-description" id="groupDescription">
+                        Descripción del grupo...
+                    </p>
+                </div>
+
+                <div class="group-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="contribution">L. 0</div>
+                        <div class="stat-label">Contribución</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="members">0/0</div>
+                        <div class="stat-label">Miembros</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="frequency">Mensual</div>
+                        <div class="stat-label">Frecuencia</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="trustScore">0%</div>
+                        <div class="stat-label">Confianza</div>
+                    </div>
+                </div>
+
+                <div class="coordinator-info">
+                    <div class="coordinator-avatar">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="coordinator-details">
+                        <div class="coordinator-label">Coordinador del Grupo</div>
+                        <div class="coordinator-name" id="coordinatorName">---</div>
+                    </div>
+                </div>
+
+                <div class="group-requirements" id="requirementsSection" style="display: none;">
+                    <div class="requirements-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        Requisitos para Unirte
+                    </div>
+                    <div id="requirementsList"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="joinBtn" onclick="joinGroup()">
+                        <i class="fas fa-user-plus"></i>
+                        Unirme a Este Grupo
+                    </button>
+                    <a href="/groups-advanced-system.html" class="btn btn-secondary">
+                        <i class="fas fa-search"></i>
+                        Explorar Otros Grupos
+                    </a>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" class="success-state" style="display: none;">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>¡Te has Unido Exitosamente!</h2>
+                <p style="color: var(--text-secondary); margin: 16px 0 30px;">
+                    Ahora eres parte de <span id="successGroupName" style="color: var(--tanda-cyan);"></span>
+                </p>
+                <div class="action-buttons">
+                    <a href="/groups-advanced-system.html" class="btn btn-primary">
+                        <i class="fas fa-th-large"></i>
+                        Ver Mis Grupos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get group ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupId = urlParams.get('id') || window.location.pathname.split('/').pop();
+
+        let currentGroup = null;
+
+        // Load group information
+        async function loadGroup() {
+            try {
+
+                // Call API to get group details
+                const response = await fetch(`https://latanda.online/api/groups/${groupId}`);
+
+                if (!response.ok) {
+                    throw new Error('Group not found');
+                }
+
+                const data = await response.json();
+                currentGroup = data.data;
+
+                // Display group information
+                displayGroup(currentGroup);
+
+            } catch (error) {
+                showError();
+            }
+        }
+
+        function displayGroup(group) {
+            // Hide loading, show content
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('groupContent').style.display = 'block';
+
+            // Populate group data
+            document.getElementById('groupName').textContent = group.name || 'Grupo Sin Nombre';
+            document.getElementById('groupDescription').textContent = group.description || 'Sin descripción';
+            document.getElementById('groupType').textContent = group.category || group.type || 'General';
+
+            // Stats
+            document.getElementById('contribution').textContent = `L. ${(group.contribution_amount || 0).toLocaleString()}`;
+            document.getElementById('members').textContent = `${group.member_count || 0}/${group.max_members || 0}`;
+            document.getElementById('frequency').textContent = formatFrequency(group.frequency);
+            document.getElementById('trustScore').textContent = `${group.trust_score || 95}%`;
+
+            // Coordinator
+            document.getElementById('coordinatorName').textContent = group.admin_name || 'Coordinador';
+
+            // Avatar (use emoji based on category)
+            const avatarEmoji = {
+                'family': '👨‍👩‍👧‍👦',
+                'business': '💼',
+                'community': '🏘️',
+                'work': '🏢'
+            }[group.category] || '🏢';
+            document.getElementById('groupAvatar').textContent = avatarEmoji;
+
+            // Check if group is full
+            if (group.member_count >= group.max_members) {
+                document.getElementById('joinBtn').disabled = true;
+                document.getElementById('joinBtn').innerHTML = '<i class="fas fa-users"></i> Grupo Lleno';
+                document.getElementById('joinBtn').style.opacity = '0.5';
+                document.getElementById('joinBtn').style.cursor = 'not-allowed';
+            }
+        }
+
+        function formatFrequency(frequency) {
+            const map = {
+                'weekly': 'Semanal',
+                'biweekly': 'Quincenal',
+                'monthly': 'Mensual'
+            };
+            return map[frequency] || frequency;
+        }
+
+        function showError() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+        }
+
+        async function joinGroup() {
+            const btn = document.getElementById('joinBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uniéndote...';
+
+            try {
+                // Check if user is logged in
+                const token = (localStorage.getItem('auth_token') || localStorage.getItem('authToken'));
+                if (!token) {
+                    // Redirect to login with return URL
+                    window.location.href = `/auth-enhanced.html?returnUrl=${encodeURIComponent(window.location.href)}`;
+                    return;
+                }
+
+                // Call API to join group
+                const response = await fetch(`https://latanda.online/api/groups/${groupId}/join`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        group_id: groupId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to join group');
+                }
+
+                // Show success
+                showSuccess();
+
+            } catch (error) {
+                alert('Error al unirte al grupo. Por favor, intenta nuevamente.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> Unirme a Este Grupo';
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('groupContent').style.display = 'none';
+            document.getElementById('successState').style.display = 'block';
+            document.getElementById('successGroupName').textContent = currentGroup.name;
+        }
+
+        // Load group on page load
+        if (groupId) {
+            loadGroup();
+        } else {
+            showError();
+        }
+    </script>
+</body>
+</html>

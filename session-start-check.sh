@@ -15,17 +15,17 @@ echo ""
 echo "---"
 echo ""
 
-echo "📊 1. POSTGRESQL DATABASE"
-echo "---"
-PGPASSWORD='latanda123' psql -U latanda_user -d latanda_production -h localhost -c "
-SELECT
-  'users' as table_name, COUNT(*) as count FROM users
-UNION ALL SELECT 'groups', COUNT(*) FROM groups
-UNION ALL SELECT 'contributions', COUNT(*) FROM contributions
-UNION ALL SELECT 'transactions', COUNT(*) FROM transactions
-UNION ALL SELECT 'user_wallets', COUNT(*) FROM user_wallets;
-" 2>&1
-echo ""
+# echo "📊 1. POSTGRESQL DATABASE"
+# echo "---"
+# PGPASSWORD='latanda123' psql -U latanda_user -d latanda_production -h localhost -c "
+# SELECT
+#   'users' as table_name, COUNT(*) as count FROM users
+# UNION ALL SELECT 'groups', COUNT(*) FROM groups
+# UNION ALL SELECT 'contributions', COUNT(*) FROM contributions
+# UNION ALL SELECT 'transactions', COUNT(*) FROM transactions
+# UNION ALL SELECT 'user_wallets', COUNT(*) FROM user_wallets;
+# " 2>&1
+# echo ""
 
 echo "🚀 2. APIS CORRIENDO"
 echo "---"

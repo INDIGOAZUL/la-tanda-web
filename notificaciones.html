@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00FFFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Simple Auth Check - just verify token exists -->
+    <script>
+    (function() {
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("latanda_auth_token");
+        if (!token) {
+            localStorage.setItem("redirect_after_auth", window.location.pathname);
+            window.location.href = "/auth-enhanced.html";
+        }
+    })();
+    </script>
+    
+    <title>Notificaciones - La Tanda</title>
+    <meta name="description" content="Centro de notificaciones - La Tanda">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="shared-components.css">
+    <link rel="stylesheet" href="css/components/notification-center.css">
+    
+    <style>
+        :root {
+            --tanda-cyan: #00d4ff;
+            --tanda-cyan-light: #5ce1ff;
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --text-tertiary: #6e7681;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .notifications-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 80px;
+            padding-bottom: 100px;
+        }
+        
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+        
+        .page-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.75rem;
+            color: var(--tanda-cyan);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: var(--tanda-cyan);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--tanda-cyan);
+        }
+        
+        .notifications-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--tanda-cyan);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: var(--tanda-cyan);
+        }
+        
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .notification-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .notification-card:hover {
+            background: var(--bg-tertiary);
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateX(4px);
+        }
+        
+        .notification-card.unread {
+            border-left: 3px solid var(--tanda-cyan);
+            background: rgba(0, 212, 255, 0.03);
+        }
+        
+        .notification-card .icon {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        
+        .notification-card .content {
+            flex: 1;
+        }
+        
+        .notification-card .title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .notification-card .message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .notification-card .time {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+        
+        .notification-card .mark-read {
+            align-self: center;
+            background: transparent;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: var(--tanda-cyan);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .notification-card .mark-read:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .unread-count {
+            background: var(--tanda-cyan);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .notifications-page {
+                padding: 16px;
+                padding-top: 70px;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .notifications-actions {
+                flex-wrap: wrap;
+            }
+            
+            .notification-card {
+                padding: 16px;
+                gap: 12px;
+            }
+            
+            .notification-card .icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/notificaciones.html">
+    <meta property="og:title" content="Notificaciones | La Tanda">
+    <meta property="og:description" content="Revisa tus notificaciones y actividad reciente.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Notificaciones | La Tanda">
+    <meta name="twitter:description" content="Revisa tus notificaciones y actividad reciente.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body data-sidebar="true">
+    <!-- Header placeholder -->
+    <div id="global-header"></div>
+    
+    <main class="notifications-page">
+        <div class="page-header">
+            <h1>
+                <i class="fas fa-bell"></i>
+                Notificaciones
+                <span class="unread-count" id="unreadCount">0</span>
+            </h1>
+            <a href="home-dashboard.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Dashboard
+            </a>
+        </div>
+        
+        <div class="notifications-actions">
+            <button class="action-btn" id="markAllRead">
+                <i class="fas fa-check-double"></i> Marcar todo leído
+            </button>
+            <button class="action-btn" id="clearAll">
+                <i class="fas fa-trash"></i> Limpiar todo
+            </button>
+        </div>
+        
+        <div class="notifications-list" id="notificationsList">
+            <!-- Notifications will be inserted here -->
+        </div>
+    </main>
+    
+    <!-- Footer placeholder -->
+    <div id="latanda-footer"></div>
+    
+    <!-- Scripts -->
+    <script src="js/components-loader.js?v=30.2"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const userId = localStorage.getItem("userId") || "demo-user";
+        const storageKey = `notifications_${userId}`;
+        
+        function getNotifications() {
+            try {
+                const stored = localStorage.getItem(storageKey);
+                return stored ? JSON.parse(stored) : getMockNotifications();
+            } catch (e) {
+                return getMockNotifications();
+            }
+        }
+        
+        function getMockNotifications() {
+            return [
+                {
+                    id: "notif_1",
+                    type: "transactions",
+                    icon: "💰",
+                    title: "Pago Recibido",
+                    message: "Has recibido 1,000 LTD de Tanda #42",
+                    time: new Date().toISOString(),
+                    read: false
+                },
+                {
+                    id: "notif_2",
+                    type: "tandas",
+                    icon: "👥",
+                    title: "Nuevo Miembro",
+                    message: "María se unió a tu Tanda Ahorros 2025",
+                    time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+                    read: false
+                },
+                {
+                    id: "notif_3",
+                    type: "transactions",
+                    icon: "✅",
+                    title: "Transacción Confirmada",
+                    message: "Tu depósito de 500 LTD ha sido confirmado",
+                    time: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+                    read: true
+                },
+                {
+                    id: "notif_4",
+                    type: "system",
+                    icon: "🔒",
+                    title: "Aviso de Seguridad",
+                    message: "Habilita 2FA para mayor seguridad en tu cuenta",
+                    time: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                    read: true
+                }
+            ];
+        }
+        
+        function saveNotifications(notifications) {
+            localStorage.setItem(storageKey, JSON.stringify(notifications));
+        }
+        
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return "Justo ahora";
+            if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)} minutos`;
+            if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)} horas`;
+            if (seconds < 604800) return `Hace ${Math.floor(seconds / 86400)} días`;
+            return date.toLocaleDateString('es-HN');
+        }
+        
+        function render() {
+            const notifications = getNotifications();
+            const list = document.getElementById('notificationsList');
+            const unreadCount = document.getElementById('unreadCount');
+            
+            const unread = notifications.filter(n => !n.read).length;
+            unreadCount.textContent = unread;
+            unreadCount.style.display = unread > 0 ? 'inline' : 'none';
+            
+            if (notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔔</div>
+                        <h3>No tienes notificaciones</h3>
+                        <p>Las nuevas notificaciones aparecerán aquí</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = notifications.map(n => `
+                <div class="notification-card ${n.read ? '' : 'unread'}" data-id="${escapeHtml(n.id)}">
+                    <div class="icon">${escapeHtml(n.icon)}</div>
+                    <div class="content">
+                        <div class="title">${escapeHtml(n.title)}</div>
+                        <div class="message">${escapeHtml(n.message)}</div>
+                        <div class="time">${escapeHtml(getTimeAgo(n.time))}</div>
+                    </div>
+                    ${!n.read ? '<button class="mark-read" title="Marcar como leído"><i class="fas fa-check"></i></button>' : ''}
+                </div>
+            `).join('');
+            
+            // Attach event listeners
+            document.querySelectorAll('.notification-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.mark-read')) {
+                        markAsRead(card.dataset.id);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.mark-read').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const card = btn.closest('.notification-card');
+                    markAsRead(card.dataset.id);
+                });
+            });
+        }
+        
+        function markAsRead(id) {
+            const notifications = getNotifications();
+            const notif = notifications.find(n => n.id === id);
+            if (notif && !notif.read) {
+                notif.read = true;
+                saveNotifications(notifications);
+                render();
+            }
+        }
+        
+        function markAllRead() {
+            const notifications = getNotifications();
+            notifications.forEach(n => n.read = true);
+            saveNotifications(notifications);
+            render();
+        }
+        
+        function clearAll() {
+            if (confirm('¿Estás seguro de que quieres eliminar todas las notificaciones?')) {
+                saveNotifications([]);
+                render();
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('markAllRead').addEventListener('click', markAllRead);
+        document.getElementById('clearAll').addEventListener('click', clearAll);
+        
+        // Initial render
+        render();
+    });
+    </script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

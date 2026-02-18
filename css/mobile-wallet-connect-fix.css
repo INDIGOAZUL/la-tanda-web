@@ -1,0 +1,284 @@
+/* ============================================
+   MOBILE WALLET FIXES - CONSOLIDATED
+   Fixes all wallet interaction and display issues
+   ============================================ */
+
+/* ==========================================
+   DESKTOP FIXES
+   ========================================== */
+
+/* Fix eye icon positioning on desktop */
+.wallet-toggle-visibility {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 8px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wallet-toggle-visibility i {
+    position: static !important; /* Don't allow absolute positioning */
+    margin: 0 auto;
+    font-size: 14px;
+    color: var(--tanda-cyan);
+}
+
+/* Ensure wallet balance is visible and not hidden */
+.wallet-balance {
+    position: relative;
+    display: inline-block;
+    min-width: 80px;
+    text-align: left;
+    padding-right: 8px;
+}
+
+.wallet-balance.hidden::after {
+    content: '••••••';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: inherit;
+}
+
+/* ==========================================
+   MOBILE FIXES
+   ========================================== */
+
+/* Force wallet info to be clickable on mobile */
+.wallet-info {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2) !important;
+    user-select: none !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.wallet-info * {
+    pointer-events: none !important; /* Prevent child elements from blocking */
+}
+
+@media (max-width: 768px) {
+
+    /* ===== WALLET INFO BUTTON ===== */
+    .wallet-info {
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        min-width: 120px !important;
+        min-height: 50px !important;
+        padding: 8px 12px !important;
+        gap: 2px !important;
+        z-index: 100 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Touch feedback */
+    .wallet-info:active {
+        transform: scale(0.98) !important;
+        opacity: 0.9 !important;
+        background: rgba(0, 255, 255, 0.05) !important;
+        border-radius: 8px !important;
+    }
+
+    /* ===== WALLET DROPDOWN ===== */
+    .wallet-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: auto !important;
+        max-height: 85vh !important;
+        margin: 0 !important;
+        padding: 20px 16px !important;
+        box-sizing: border-box !important;
+        border-radius: 20px 20px 0 0 !important;
+        z-index: 10003 !important; /* Higher than network switcher */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+
+        /* Hidden by default */
+        transform: translateY(100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: none !important;
+
+        /* Ensure no negative margins or hidden content */
+        clip-path: none !important;
+    }
+
+    /* Active state - slide up */
+    .wallet-dropdown.active {
+        display: block !important;
+        transform: translateY(0) !important;
+    }
+
+    /* Add backdrop */
+    .wallet-dropdown::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: -1;
+        pointer-events: auto;
+    }
+
+    /* ===== WALLET CONTENT ===== */
+    .wallet-content,
+    .wallet-balance-section,
+    .wallet-transactions,
+    .wallet-actions {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .wallet-action-btn {
+        min-height: 48px !important;
+        padding: 14px !important;
+        font-size: 15px !important;
+        touch-action: manipulation !important;
+    }
+
+    /* ===== HEADER LAYOUT ===== */
+    .header-right-section {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        pointer-events: auto !important;
+    }
+
+    /* ===== WALLET ADDRESS & BALANCE ===== */
+    .wallet-address {
+        font-size: 13px !important;
+        max-width: 110px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    .wallet-balance {
+        font-size: 12px !important;
+        max-width: 110px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    /* ===== EYE ICON BUTTON ===== */
+    .wallet-toggle-visibility {
+        min-width: 40px !important;
+        min-height: 40px !important;
+        padding: 10px !important;
+        flex-shrink: 0 !important;
+        touch-action: manipulation !important;
+    }
+
+    .wallet-toggle-visibility i {
+        font-size: 16px !important;
+    }
+
+    /* ===== TRANSACTION LIST ===== */
+    .transactions-list {
+        max-height: 40vh !important;
+        overflow-y: auto !important;
+    }
+
+    .transaction-item {
+        min-height: 60px !important;
+        padding: 12px !important;
+        touch-action: manipulation !important;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .wallet-dropdown {
+        padding: 16px !important;
+        max-height: 90vh !important;
+    }
+
+    .wallet-info {
+        min-width: 100px !important;
+    }
+
+    .wallet-address {
+        font-size: 12px !important;
+        max-width: 85px !important;
+    }
+
+    .wallet-balance {
+        font-size: 11px !important;
+        max-width: 90px !important;
+    }
+
+    .wallet-action-btn {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .wallet-dropdown {
+        max-height: 70vh !important;
+    }
+
+    .transactions-list {
+        max-height: 30vh !important;
+    }
+}
+
+/* Touch device specific */
+@media (hover: none) {
+    .wallet-info:active {
+        background: rgba(0, 255, 255, 0.1) !important;
+    }
+
+    .wallet-action-btn:active {
+        transform: scale(0.97) !important;
+    }
+}
+
+/* ==========================================
+   PREVENT CONFLICTS
+   ========================================== */
+
+/* Override any conflicting styles */
+@media (max-width: 768px) {
+    /* Remove any transform conflicts */
+    .wallet-dropdown:not(.active) {
+        visibility: hidden !important;
+    }
+
+    .wallet-dropdown.active {
+        visibility: visible !important;
+    }
+
+    /* Ensure proper stacking */
+    .network-dropdown {
+        z-index: 10001 !important;
+    }
+
+    .wallet-dropdown {
+        z-index: 10003 !important; /* Always above network dropdown */
+    }
+}

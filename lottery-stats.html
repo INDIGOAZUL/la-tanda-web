@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de Lotería - La Tanda</title>
+    <link rel="stylesheet" href="css/main.css?v=8.1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #B8860B;
+            --purple: #6B46C1;
+            --red-hot: #ef4444;
+            --blue-cold: #3b82f6;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .stats-header h1 {
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .stats-header p {
+            color: #888;
+        }
+
+        .period-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .period-btn {
+            padding: 10px 25px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .period-btn.active {
+            background: var(--purple);
+            border-color: var(--purple);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+
+        .stat-card h3 {
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .heatmap-container {
+            overflow-x: auto;
+        }
+
+        .heatmap {
+            display: grid;
+            grid-template-columns: 60px repeat(10, 1fr);
+            gap: 2px;
+            font-size: 0.75rem;
+        }
+
+        .heatmap-header {
+            background: var(--bg-dark);
+            padding: 8px 4px;
+            text-align: center;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .heatmap-row-label {
+            background: var(--bg-dark);
+            padding: 8px 4px;
+            text-align: center;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .heatmap-cell {
+            padding: 8px 4px;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-stat {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .summary-stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .summary-stat-label {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .top-numbers {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .top-number-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .top-number-card.hot {
+            border: 2px solid var(--red-hot);
+            box-shadow: 0 0 15px rgba(239,68,68,0.3);
+        }
+
+        .top-number-card.cold {
+            border: 2px solid var(--blue-cold);
+            box-shadow: 0 0 15px rgba(59,130,246,0.3);
+        }
+
+        .top-number-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .top-number-freq {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--purple);
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .trend-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 10px;
+        }
+
+        .trend-up {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+        }
+
+        .trend-down {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+        }
+
+        /* Heatmap Tabs */
+        .heatmap-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .heatmap-tab {
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            color: #888;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .heatmap-tab:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .heatmap-tab.active {
+            background: var(--purple);
+            color: #fff;
+            border-color: var(--purple);
+        }
+
+        .heatmap-tab.tab-all { border-left: 3px solid var(--gold); }
+        .heatmap-tab.tab-11am { border-left: 3px solid #f59e0b; }
+        .heatmap-tab.tab-3pm { border-left: 3px solid #eab308; }
+        .heatmap-tab.tab-9pm { border-left: 3px solid #6366f1; }
+
+        .heatmap-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Backtest / Comparator styles */
+        .accuracy-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .accuracy-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .accuracy-card.highlight {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%);
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+
+        .accuracy-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .accuracy-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .accuracy-compare {
+            font-size: 0.8rem;
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .accuracy-compare.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .backtest-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .backtest-table th,
+        .backtest-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .backtest-table th {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .backtest-table .hit {
+            color: #22c55e;
+        }
+
+        .backtest-table .miss {
+            color: #888;
+        }
+
+        .prediction-numbers {
+            display: flex;
+            gap: 5px;
+        }
+
+        .prediction-num {
+            background: rgba(99, 102, 241, 0.3);
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .prediction-num.matched {
+            background: rgba(34, 197, 94, 0.5);
+            color: #fff;
+        }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/lottery-stats.html">
+    <meta property="og:title" content="Estadisticas de Loteria | La Tanda">
+    <meta property="og:description" content="Historico y estadisticas de resultados de loteria.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Estadisticas de Loteria | La Tanda">
+    <meta name="twitter:description" content="Historico y estadisticas de resultados de loteria.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="stats-container">
+        <a href="/lottery-predictor.html" class="back-link">← Volver al Predictor</a>
+
+        <div class="stats-header">
+            <h1>📊 Estadísticas de La Diaria</h1>
+            <p>Análisis detallado de frecuencias y patrones</p>
+        </div>
+
+        <div class="period-selector">
+            <button class="period-btn" data-period="7">7 días</button>
+            <button class="period-btn active" data-period="30">30 días</button>
+            <button class="period-btn" data-period="90">90 días</button>
+            <button class="period-btn" data-period="180">180 días</button>
+        </div>
+
+        <div id="loading" class="loading">Cargando estadísticas...</div>
+
+        <div id="statsContent" style="display: none;">
+            <!-- Summary Stats -->
+            <div class="summary-stats" id="summaryStats"></div>
+
+            <!-- Top Numbers -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>🔥 Top 10 Calientes</h3>
+                    <div class="top-numbers" id="topHot"></div>
+                </div>
+                <div class="stat-card">
+                    <h3>❄️ Top 10 Fríos</h3>
+                    <div class="top-numbers" id="topCold"></div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="stats-grid">
+                <div class="stat-card full-width">
+                    <h3>📈 Distribución de Frecuencia (0-99)</h3>
+                    <div class="chart-container">
+                        <canvas id="frequencyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>🌅 Frecuencia 11 AM</h3>
+                    <div class="chart-container">
+                        <canvas id="chart11am"></canvas>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>☀️ Frecuencia 3 PM</h3>
+                    <div class="chart-container">
+                        <canvas id="chart3pm"></canvas>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3>🌙 Frecuencia 9 PM</h3>
+                    <div class="chart-container">
+                        <canvas id="chart9pm"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap with Time Tabs -->
+            <div class="stats-grid">
+                <div class="stat-card full-width">
+                    <h3>🗺️ Mapa de Calor por Número y Horario</h3>
+                    <p style="color:#888;font-size:0.85rem;margin-bottom:15px;">Selecciona un horario para ver patrones específicos</p>
+
+                    <div class="heatmap-tabs">
+                        <button class="heatmap-tab tab-all active" data-slot="all">📊 Todos</button>
+                        <button class="heatmap-tab tab-11am" data-slot="11am">🌅 11 AM</button>
+                        <button class="heatmap-tab tab-3pm" data-slot="3pm">☀️ 3 PM</button>
+                        <button class="heatmap-tab tab-9pm" data-slot="9pm">🌙 9 PM</button>
+                    </div>
+
+                    <div class="heatmap-container">
+                        <div class="heatmap" id="heatmap"></div>
+                    </div>
+
+                    <div class="heatmap-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:rgba(239,68,68,0.9)"></div>
+                            <span>Muy Caliente (&gt;70%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:rgba(251,191,36,0.7)"></div>
+                            <span>Caliente (40-70%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:rgba(59,130,246,0.5)"></div>
+                            <span>Templado (1-40%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background:rgba(50,50,50,0.5)"></div>
+                            <span>Frío (0)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Trend -->
+            <div class="stats-grid">
+                <div class="stat-card full-width">
+                    <h3>📅 Tendencia Diaria</h3>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backtest / Predictor Accuracy -->
+            <div class="stats-grid">
+                <div class="stat-card full-width">
+                    <h3>🎯 Precisión del Predictor (Backtest)</h3>
+                    <p style="color:#888;font-size:0.85rem;margin-bottom:20px;">
+                        Simulación histórica: ¿Cuántas veces nuestras predicciones habrían acertado?
+                    </p>
+
+                    <div class="accuracy-cards" id="accuracyCards">
+                        <div class="accuracy-card">
+                            <div class="accuracy-value">--</div>
+                            <div class="accuracy-label">Cargando...</div>
+                        </div>
+                    </div>
+
+                    <h4 style="color:#fff;margin:25px 0 15px;">Últimos Resultados</h4>
+                    <div style="overflow-x:auto;">
+                        <table class="backtest-table" id="backtestTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Horario</th>
+                                    <th>Resultado</th>
+                                    <th>Predicciones Top 5</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backtestBody">
+                                <tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script>
+        let charts = {};
+        let currentPeriod = 30;
+        let currentStats = null; // Store stats globally for heatmap tabs
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadStats(currentPeriod);
+            loadBacktest();
+
+            // Period selector
+            document.querySelectorAll(".period-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    currentPeriod = parseInt(btn.dataset.period);
+                    loadStats(currentPeriod);
+                });
+            });
+
+            // Heatmap tabs
+            document.querySelectorAll(".heatmap-tab").forEach(tab => {
+                tab.addEventListener("click", () => {
+                    document.querySelectorAll(".heatmap-tab").forEach(t => t.classList.remove("active"));
+                    tab.classList.add("active");
+                    const slot = tab.dataset.slot;
+                    if (currentStats) {
+                        if (slot === "all") {
+                            renderHeatmap(currentStats.frequency, "Todos los horarios");
+                        } else {
+                            renderHeatmap(currentStats.byTimeSlot[slot], slot.toUpperCase());
+                        }
+                    }
+                });
+            });
+        });
+
+        async function loadStats(period) {
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("statsContent").style.display = "none";
+
+            try {
+                const response = await fetch("/api/lottery/stats/detailed?period=" + period);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderStats(data.data);
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("statsContent").style.display = "block";
+                }
+            } catch (e) {
+                console.error("Error loading stats:", e);
+                document.getElementById("loading").textContent = "Error al cargar estadísticas";
+            }
+        }
+
+        function renderStats(stats) {
+            currentStats = stats; // Store for heatmap tabs
+
+            // Reset heatmap tab to "all"
+            document.querySelectorAll(".heatmap-tab").forEach(t => t.classList.remove("active"));
+            document.querySelector('.heatmap-tab[data-slot="all"]').classList.add("active");
+
+            // Summary stats
+            const maxFreq = Math.max(...stats.frequency);
+            const avgFreq = (stats.totalDraws / 100).toFixed(1);
+            document.getElementById("summaryStats").innerHTML =
+                '<div class="summary-stat"><div class="summary-stat-value">' + stats.totalDraws + '</div><div class="summary-stat-label">Total Sorteos</div></div>' +
+                '<div class="summary-stat"><div class="summary-stat-value">' + stats.period + '</div><div class="summary-stat-label">Días Analizados</div></div>' +
+                '<div class="summary-stat"><div class="summary-stat-value">' + maxFreq + '</div><div class="summary-stat-label">Máx. Frecuencia</div></div>' +
+                '<div class="summary-stat"><div class="summary-stat-value">' + avgFreq + '</div><div class="summary-stat-label">Promedio</div></div>';
+
+            // Top hot numbers
+            document.getElementById("topHot").innerHTML = stats.top10.map(n =>
+                '<div class="top-number-card hot"><div class="top-number-value">' + String(n.number).padStart(2, "0") + '</div><div class="top-number-freq">' + n.frequency + 'x</div></div>'
+            ).join("");
+
+            // Top cold numbers
+            document.getElementById("topCold").innerHTML = stats.bottom10.map(n =>
+                '<div class="top-number-card cold"><div class="top-number-value">' + String(n.number).padStart(2, "0") + '</div><div class="top-number-freq">' + n.frequency + 'x</div></div>'
+            ).join("");
+
+            // Frequency chart
+            renderFrequencyChart(stats.frequency);
+
+            // Time slot charts
+            renderTimeChart("chart11am", stats.byTimeSlot["11am"], "#f59e0b");
+            renderTimeChart("chart3pm", stats.byTimeSlot["3pm"], "#eab308");
+            renderTimeChart("chart9pm", stats.byTimeSlot["9pm"], "#6366f1");
+
+            // Heatmap (default to all)
+            renderHeatmap(stats.frequency, "Todos los horarios");
+
+            // Trend chart
+            renderTrendChart(stats.dailyTrend);
+        }
+
+        function renderFrequencyChart(frequency) {
+            const ctx = document.getElementById("frequencyChart").getContext("2d");
+
+            if (charts.frequency) charts.frequency.destroy();
+
+            const colors = frequency.map(f => {
+                const maxF = Math.max(...frequency);
+                const intensity = f / maxF;
+                if (intensity > 0.7) return "rgba(239, 68, 68, 0.8)";
+                if (intensity > 0.4) return "rgba(251, 191, 36, 0.8)";
+                if (intensity > 0) return "rgba(59, 130, 246, 0.8)";
+                return "rgba(100, 100, 100, 0.3)";
+            });
+
+            charts.frequency = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: Array.from({length: 100}, (_, i) => String(i).padStart(2, "0")),
+                    datasets: [{
+                        label: "Frecuencia",
+                        data: frequency,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: "#888", maxRotation: 0, autoSkip: true, maxTicksLimit: 20 },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { color: "#888" },
+                            grid: { color: "rgba(255,255,255,0.1)" }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTimeChart(canvasId, data, color) {
+            const ctx = document.getElementById(canvasId).getContext("2d");
+
+            if (charts[canvasId]) charts[canvasId].destroy();
+
+            // Group into decades (0-9, 10-19, etc.)
+            const decades = [];
+            for (let i = 0; i < 10; i++) {
+                const sum = data.slice(i * 10, (i + 1) * 10).reduce((a, b) => a + b, 0);
+                decades.push(sum);
+            }
+
+            charts[canvasId] = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: ["00-09", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"],
+                    datasets: [{
+                        data: decades,
+                        backgroundColor: [
+                            "rgba(239, 68, 68, 0.7)",
+                            "rgba(249, 115, 22, 0.7)",
+                            "rgba(234, 179, 8, 0.7)",
+                            "rgba(132, 204, 22, 0.7)",
+                            "rgba(34, 197, 94, 0.7)",
+                            "rgba(20, 184, 166, 0.7)",
+                            "rgba(6, 182, 212, 0.7)",
+                            "rgba(59, 130, 246, 0.7)",
+                            "rgba(139, 92, 246, 0.7)",
+                            "rgba(236, 72, 153, 0.7)"
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "right",
+                            labels: { color: "#888", font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHeatmap(frequency, title) {
+            const container = document.getElementById("heatmap");
+            const maxFreq = Math.max(...frequency);
+            const totalFreq = frequency.reduce((a, b) => a + b, 0);
+
+            // Column headers (0-9)
+            let html = '<div class="heatmap-header" style="font-size:0.7rem;color:#666;">' + (title || "") + '</div>';
+            for (let i = 0; i < 10; i++) {
+                html += '<div class="heatmap-header">' + i + '</div>';
+            }
+
+            for (let row = 0; row < 10; row++) {
+                html += '<div class="heatmap-row-label">' + row + '0s</div>';
+                for (let col = 0; col < 10; col++) {
+                    const num = row * 10 + col;
+                    const freq = frequency[num] || 0;
+                    const intensity = maxFreq > 0 ? freq / maxFreq : 0;
+
+                    let bgColor;
+                    if (intensity > 0.7) bgColor = "rgba(239, 68, 68, " + (0.4 + intensity * 0.6) + ")";
+                    else if (intensity > 0.4) bgColor = "rgba(251, 191, 36, " + (0.3 + intensity * 0.5) + ")";
+                    else if (intensity > 0) bgColor = "rgba(59, 130, 246, " + (0.2 + intensity * 0.4) + ")";
+                    else bgColor = "rgba(50, 50, 50, 0.5)";
+
+                    const pct = totalFreq > 0 ? ((freq / totalFreq) * 100).toFixed(1) : 0;
+                    html += '<div class="heatmap-cell" style="background:' + bgColor + '" title="' + String(num).padStart(2, "0") + ': ' + freq + ' veces (' + pct + '%)">' + String(num).padStart(2, "0") + '</div>';
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderTrendChart(dailyTrend) {
+            const ctx = document.getElementById("trendChart").getContext("2d");
+
+            if (charts.trend) charts.trend.destroy();
+
+            charts.trend = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: dailyTrend.map(d => {
+                        const date = new Date(d.date);
+                        return date.toLocaleDateString("es-HN", { month: "short", day: "numeric" });
+                    }),
+                    datasets: [{
+                        label: "Sorteos por día",
+                        data: dailyTrend.map(d => parseInt(d.draws)),
+                        borderColor: "#6366f1",
+                        backgroundColor: "rgba(99, 102, 241, 0.1)",
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: "#888", maxRotation: 45 },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { color: "#888" },
+                            grid: { color: "rgba(255,255,255,0.1)" },
+                            min: 0,
+                            max: 4
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadBacktest() {
+            try {
+                const response = await fetch("/api/lottery/backtest?days=30");
+                const data = await response.json();
+
+                if (data.success) {
+                    renderAccuracy(data.data.accuracy);
+                    renderBacktestTable(data.data.recentResults);
+                }
+            } catch (e) {
+                console.error("Error loading backtest:", e);
+            }
+        }
+
+        function renderAccuracy(accuracy) {
+            const container = document.getElementById("accuracyCards");
+
+            const top1Improvement = (parseFloat(accuracy.top1Rate) / parseFloat(accuracy.expectedRandom.top1)).toFixed(1);
+            const top3Improvement = (parseFloat(accuracy.top3Rate) / parseFloat(accuracy.expectedRandom.top3)).toFixed(1);
+            const top5Improvement = (parseFloat(accuracy.top5Rate) / parseFloat(accuracy.expectedRandom.top5)).toFixed(1);
+
+            container.innerHTML = `
+                <div class="accuracy-card">
+                    <div class="accuracy-value">${accuracy.totalTests}</div>
+                    <div class="accuracy-label">Sorteos Analizados</div>
+                </div>
+                <div class="accuracy-card highlight">
+                    <div class="accuracy-value">${accuracy.top1Rate}%</div>
+                    <div class="accuracy-label">Top 1 Aciertos (${accuracy.top1Hits})</div>
+                    <div class="accuracy-compare positive">${top1Improvement}x mejor que azar</div>
+                </div>
+                <div class="accuracy-card highlight">
+                    <div class="accuracy-value">${accuracy.top3Rate}%</div>
+                    <div class="accuracy-label">Top 3 Aciertos (${accuracy.top3Hits})</div>
+                    <div class="accuracy-compare positive">${top3Improvement}x mejor que azar</div>
+                </div>
+                <div class="accuracy-card highlight">
+                    <div class="accuracy-value">${accuracy.top5Rate}%</div>
+                    <div class="accuracy-label">Top 5 Aciertos (${accuracy.top5Hits})</div>
+                    <div class="accuracy-compare positive">${top5Improvement}x mejor que azar</div>
+                </div>
+            `;
+        }
+
+        function renderBacktestTable(results) {
+            const tbody = document.getElementById("backtestBody");
+
+            if (!results || results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sin datos</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = results.map(r => {
+                const date = new Date(r.date).toLocaleDateString("es-HN", { month: "short", day: "numeric" });
+                const predictions = r.predicted.map(p =>
+                    `<span class="prediction-num${p === r.actual ? ' matched' : ''}">${p}</span>`
+                ).join("");
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${r.time || "--"}</td>
+                        <td><strong style="color:var(--gold);font-size:1.2rem;">${r.actual}</strong></td>
+                        <td><div class="prediction-numbers">${predictions}</div></td>
+                        <td class="${r.hitTop5 ? 'hit' : 'miss'}">${r.hitTop5 ? (r.hitTop3 ? '🎯 Top 3!' : '✓ Top 5') : '✗'}</td>
+                    </tr>
+                `;
+            }).join("");
+        }
+    </script>
+    <script src="pwa-manager.js"></script>
+</body>
+</html>

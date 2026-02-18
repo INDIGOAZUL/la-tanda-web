@@ -102,7 +102,7 @@ DatabaseService (Lines 1318-1557)
 ```javascript
 setAdminCredentials() (Lines 2030-2054)
 ├── Purpose: Auto-configure admin login
-├── Credentials: admin@latanda.online / Admin123!
+├── Credentials: admin@latanda.online / [REDACTED]
 ├── Storage: sessionStorage for auto-login
 └── Redirect: auth-enhanced.html
 

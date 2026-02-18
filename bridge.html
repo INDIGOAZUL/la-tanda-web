@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
+
+    <meta charset="UTF-8">
+    <!-- Resource Optimization -->
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge | La Tanda Web3 Cross-Chain</title>
+    <!-- Critical CSS: Font Awesome with async loading -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Optimized Google Fonts loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"></noscript>
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #00FFFF;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --border-card: rgba(0, 255, 255, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success-color: #22d55e;
+            --error-color: #f87171;
+            --warning-color: #fbbf24;
+            --info-color: #3b82f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .bridge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--tanda-cyan);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .beta-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .bridge-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            gap: 24px;
+        }
+
+        .bridge-main {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bridge-main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--tanda-cyan) 0%, var(--tanda-cyan-light) 100%);
+        }
+
+        .bridge-form {
+            display: grid;
+            gap: 24px;
+        }
+
+        .network-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .network-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .network-card.active {
+            border-color: var(--tanda-cyan);
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .network-card:hover {
+            border-color: var(--tanda-cyan);
+            transform: translateY(-2px);
+        }
+
+        .network-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .network-logo.ethereum { background: linear-gradient(135deg, #627eea, #3b82f6); }
+        .network-logo.latanda { background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-dark)); }
+        .network-logo.polygon { background: linear-gradient(135deg, #8247e5, #6366f1); }
+        .network-logo.bsc { background: linear-gradient(135deg, #f0b90b, #f59e0b); }
+
+        .network-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .network-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .bridge-arrow {
+            align-self: center;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--tanda-cyan);
+            font-size: 18px;
+        }
+
+        .bridge-arrow:hover {
+            transform: rotate(180deg);
+            background: rgba(0, 255, 255, 0.2);
+        }
+
+        .amount-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .amount-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .amount-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .amount-balance {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .amount-balance:hover {
+            color: var(--tanda-cyan);
+        }
+
+        .amount-field {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .amount-field input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 600;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .token-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .token-selector:hover {
+            border-color: var(--tanda-cyan);
+        }
+
+        .token-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--tanda-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .bridge-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .bridge-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--tanda-cyan) 0%, #0080FF 100%);
+            border: none;
+            border-radius: 12px;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .bridge-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .bridge-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .supported-networks {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .supported-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .networks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .network-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .network-item.coming-soon {
+            opacity: 0.6;
+        }
+
+        .coming-soon-text {
+            font-size: 12px;
+            color: var(--warning-color);
+            margin-left: auto;
+        }
+
+        @media (max-width: 768px) {
+            .bridge-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .network-selector {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .bridge-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+  <script async type="module" crossorigin src="/assets/js/bridge-6F3hq9O7.js"></script>
+  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script>    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/bridge.html">
+    <meta property="og:title" content="Bridge | La Tanda">
+    <meta property="og:description" content="Transfiere tokens entre diferentes redes blockchain.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bridge | La Tanda">
+    <meta name="twitter:description" content="Transfiere tokens entre diferentes redes blockchain.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <!-- Global Header Component -->
+    <div id="global-header"></div>
+    <div class="bridge-container">
+        <div class="bridge-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='index.html'">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </button>
+                <h1 class="page-title">
+                    <i class="fas fa-exchange-alt"></i> Bridge
+                </h1>
+                <span class="beta-badge">BETA</span>
+            </div>
+        </div>
+
+        <!-- Bridge Main Interface -->
+        <div class="bridge-main">
+            <div class="bridge-form">
+                <!-- Network Selector -->
+                <div class="network-selector">
+                    <div class="network-card active" data-network="latanda">
+                        <div class="network-logo latanda">LT</div>
+                        <div class="network-name">La Tanda Chain</div>
+                        <div class="network-status">Red nativa</div>
+                    </div>
+                    
+                    <div class="bridge-arrow" onclick="swapNetworks()">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    
+                    <div class="network-card" data-network="ethereum">
+                        <div class="network-logo ethereum">Ξ</div>
+                        <div class="network-name">Ethereum</div>
+                        <div class="network-status">Mainnet</div>
+                    </div>
+                </div>
+
+                <!-- Amount Input -->
+                <div class="amount-input">
+                    <div class="amount-header">
+                        <div class="amount-label">Cantidad a transferir</div>
+                        <div class="amount-balance" onclick="setMaxAmount()">Balance: 2,500.00 LTD</div>
+                    </div>
+                    <div class="amount-field">
+                        <input type="number" placeholder="0.00" id="bridgeAmount">
+                        <div class="token-selector">
+                            <div class="token-logo">LTD</div>
+                            <span>LTD</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bridge Info -->
+                <div class="bridge-info">
+                    <div class="info-row">
+                        <span class="info-label">Tarifa de Bridge</span>
+                        <span class="info-value">0.1% (~2.5 LTD)</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tiempo estimado</span>
+                        <span class="info-value">5-15 minutos</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Recibirás</span>
+                        <span class="info-value">~2,497.5 LTD</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tasa de cambio</span>
+                        <span class="info-value">1:1 (-fees)</span>
+                    </div>
+                </div>
+
+                <!-- Bridge Button -->
+                <button class="bridge-btn" onclick="initiateBridge()" disabled>
+                    <i class="fas fa-rocket"></i>
+                    Iniciar Transfer Cross-Chain
+                </button>
+            </div>
+        </div>
+
+        <!-- Supported Networks -->
+        <div class="supported-networks">
+            <h2 class="supported-title">
+                <i class="fas fa-network-wired"></i>
+                Redes Soportadas
+            </h2>
+            
+            <div class="networks-grid">
+                <div class="network-item">
+                    <div class="network-logo latanda">LT</div>
+                    <div>
+                        <div class="network-name">La Tanda Chain</div>
+                        <div class="network-status">Red principal</div>
+                    </div>
+                </div>
+                
+                <div class="network-item">
+                    <div class="network-logo ethereum">Ξ</div>
+                    <div>
+                        <div class="network-name">Ethereum</div>
+                        <div class="network-status">Mainnet</div>
+                    </div>
+                </div>
+                
+                <div class="network-item coming-soon">
+                    <div class="network-logo polygon">P</div>
+                    <div>
+                        <div class="network-name">Polygon</div>
+                        <div class="network-status">L2 scaling</div>
+                    </div>
+                    <span class="coming-soon-text">Próximamente</span>
+                </div>
+                
+                <div class="network-item coming-soon">
+                    <div class="network-logo bsc">B</div>
+                    <div>
+                        <div class="network-name">BSC</div>
+                        <div class="network-status">Fast & cheap</div>
+                    </div>
+                    <span class="coming-soon-text">Próximamente</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Bridge Manager Class
+        class BridgeManager {
+            constructor() {
+                this.sourceNetwork = 'latanda';
+                this.targetNetwork = 'ethereum';
+                this.supportedNetworks = {
+                    latanda: { name: 'La Tanda Chain', symbol: 'LT', active: true },
+                    ethereum: { name: 'Ethereum', symbol: 'Ξ', active: true },
+                    polygon: { name: 'Polygon', symbol: 'P', active: false },
+                    bsc: { name: 'BSC', symbol: 'B', active: false }
+                };
+                
+                this.fees = {
+                    bridge: 0.001, // 0.1%
+                    gas: 0.005     // ~0.5%
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                // Enable amount input monitoring
+                const amountInput = document.getElementById('bridgeAmount');
+                amountInput.addEventListener('input', () => this.updateBridgeInfo());
+                
+                // Enable network selection
+                document.querySelectorAll('.network-card').forEach(card => {
+                    card.addEventListener('click', () => this.selectNetwork(card));
+                });
+            }
+            
+            updateBridgeInfo() {
+                const amount = parseFloat(document.getElementById('bridgeAmount').value) || 0;
+                const fee = amount * this.fees.bridge;
+                const received = amount - fee;
+                
+                // Update info display
+                document.querySelector('.info-row:nth-child(1) .info-value').textContent = `0.1% (~${fee.toFixed(2)} LTD)`;
+                document.querySelector('.info-row:nth-child(3) .info-value').textContent = `~${received.toFixed(2)} LTD`;
+                
+                // Enable/disable bridge button
+                const bridgeBtn = document.querySelector('.bridge-btn');
+                bridgeBtn.disabled = amount <= 0 || amount > 2500;
+            }
+            
+            selectNetwork(card) {
+                const network = card.dataset.network;
+                if (!this.supportedNetworks[network].active) {
+                    alert('Esta red estará disponible próximamente');
+                    return;
+                }
+                
+                // Update UI selection
+                document.querySelectorAll('.network-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+            }
+        }
+
+        function swapNetworks() {
+            console.log('🔄 Intercambiando redes...');
+            const cards = document.querySelectorAll('.network-card');
+            const activeCard = document.querySelector('.network-card.active');
+            const inactiveCard = Array.from(cards).find(card => !card.classList.contains('active'));
+            
+            // Swap active states
+            activeCard.classList.remove('active');
+            inactiveCard.classList.add('active');
+            
+            console.log('✅ Redes intercambiadas');
+        }
+
+        function setMaxAmount() {
+            document.getElementById('bridgeAmount').value = '2500.00';
+            bridgeManager.updateBridgeInfo();
+            console.log('💰 Cantidad máxima establecida');
+        }
+
+        function initiateBridge() {
+            const amount = document.getElementById('bridgeAmount').value;
+            console.log(`🌉 Iniciando bridge de ${amount} LTD...`);
+            
+            // Show loading state
+            const btn = document.querySelector('.bridge-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            btn.disabled = true;
+            
+            // Simulate bridge process
+            setTimeout(() => {
+                alert(`Bridge iniciado exitosamente!\n\nTransfiriendo: ${amount} LTD\nTiempo estimado: 5-15 minutos\n\nRecibirás una notificación cuando se complete.`);
+                
+                // Restore button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                // Clear form
+                document.getElementById('bridgeAmount').value = '';
+                bridgeManager.updateBridgeInfo();
+            }, 2000);
+        }
+
+        // Initialize bridge manager
+        let bridgeManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            bridgeManager = new BridgeManager();
+            console.log('🌉 Bridge system initialized');
+        });
+    </script>
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/bridge-legacy-CvD272dr.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/header.js"></script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

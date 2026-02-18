@@ -1,0 +1,1 @@
+System.register(["./modulepreload-polyfill-legacy-CvD272dr.js","./shared-components-v2-legacy-B5Bwmp_F.js","./translation-styles-legacy-DKRdR6_a.js","./shared-components-chunk-legacy-CvD272dr.js","./translation-system-design-legacy-CvD272dr.js"],function(){"use strict";return{setters:[null,null,null,null,null],execute:function(){}}});

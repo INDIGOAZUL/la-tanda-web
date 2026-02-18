@@ -1,0 +1,152 @@
+/* ============================================
+   MOBILE NETWORK SWITCHER EMERGENCY FIX
+   Forces touch interaction on mobile
+   ============================================ */
+
+/* Force touch-action on network switcher */
+.network-switcher,
+.network-switcher * {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3) !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Make sure network switcher is clickable on mobile */
+@media (max-width: 768px) {
+    .network-switcher {
+        position: relative !important;
+        z-index: 100 !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 8px 12px !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        display: inline-flex !important;
+    }
+
+    /* Ensure network dropdown appears correctly on mobile */
+    .network-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        min-width: unset !important;
+        max-height: 60vh !important;
+        border-radius: 16px 16px 0 0 !important;
+        z-index: 10001 !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: translateY(100%) !important;
+        transition: transform 0.3s ease !important;
+    }
+
+    .network-dropdown.active {
+        transform: translateY(0) !important;
+        display: block !important;
+    }
+
+    /* Make network options touch-friendly */
+    .network-option {
+        min-height: 56px !important;
+        padding: 16px !important;
+        margin-bottom: 8px !important;
+        border-radius: 12px !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2) !important;
+        pointer-events: auto !important;
+    }
+
+    .network-option:active {
+        background: rgba(0, 255, 255, 0.2) !important;
+        transform: scale(0.98) !important;
+    }
+
+    /* Add backdrop for dropdown */
+    .network-dropdown::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .network-dropdown.active::before {
+        pointer-events: auto;
+    }
+
+    /* Network dropdown header on mobile */
+    .network-dropdown-header {
+        padding: 0 0 16px 0 !important;
+        margin-bottom: 16px !important;
+    }
+
+    .network-dropdown-title {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+    }
+
+    /* Network option details */
+    .network-option-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 16px !important;
+    }
+
+    .network-option-name {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+    }
+
+    .network-option-chain {
+        font-size: 13px !important;
+    }
+
+    /* Ensure header doesn't interfere */
+    .header-right-section {
+        position: relative !important;
+        z-index: 99 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Remove hover states on mobile */
+    .network-switcher:hover {
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(75, 0, 130, 0.1)) !important;
+        box-shadow: none !important;
+    }
+
+    .network-option:hover {
+        background: transparent !important;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .network-dropdown {
+        max-height: 70vh !important;
+    }
+
+    .network-option {
+        min-height: 60px !important;
+        padding: 18px !important;
+    }
+}
+
+/* Active state feedback for touch */
+@media (hover: none) {
+    .network-switcher:active {
+        transform: scale(0.95);
+        background: linear-gradient(135deg, rgba(138, 43, 226, 0.25), rgba(75, 0, 130, 0.25)) !important;
+    }
+}

@@ -1,0 +1,216 @@
+<!-- La Tanda Sidebar Component v1.2 -->
+<style>
+.nav-item.coming-soon {
+    opacity: 0.6;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+.nav-badge.soon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+.nav-badge.count {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    min-width: 20px;
+    text-align: center;
+}
+.nav-section.collapsed .nav-items-collapsible {
+    display: none;
+}
+.nav-section-title.collapsible {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+}
+.nav-section-title.collapsible:hover {
+    color: var(--tanda-cyan, #00ffff);
+}
+.nav-section-title .collapse-icon {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+    font-size: 12px;
+    opacity: 0.7;
+}
+.nav-section.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+.sidebar-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-card, #ffffff10);
+    margin-top: auto;
+}
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.logout-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+</style>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+
+    <!-- PRINCIPAL Section -->
+    <nav class="nav-section">
+        <div class="nav-section-title">
+            <i class="fas fa-chart-pie"></i> <span data-i18n="nav.section_principal">PRINCIPAL</span>
+        </div>
+        <a href="home-dashboard.html" class="nav-item" data-page="home-dashboard">
+            <i class="fas fa-chart-pie nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="my-wallet.html" class="nav-item" data-page="my-wallet">
+            <i class="fas fa-wallet nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.wallet">Mi Wallet</span>
+            <span class="nav-badge hot">HOT</span>
+        </a>
+        <a href="kyc-registration.html" class="nav-item" data-page="kyc-registration">
+            <i class="fas fa-user-check nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.kyc_verification">Verificación KYC</span>
+            <span class="nav-badge alert" id="kycBadge">!</span>
+        </a>
+    </nav>
+
+    <!-- TANDAS & SOCIAL Section -->
+    <nav class="nav-section">
+        <div class="nav-section-title">
+            <i class="fas fa-users"></i> <span data-i18n="nav.section_tandas">TANDAS & SOCIAL</span>
+        </div>
+        <a href="groups-advanced-system.html" class="nav-item" data-page="groups-advanced-system">
+            <i class="fas fa-coins nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.my_tandas">Mis Tandas</span>
+            <span class="nav-badge count" id="tandasCount">0</span>
+        </a>
+        <a href="invitaciones.html" class="nav-item" data-page="invitaciones">
+            <i class="fas fa-paper-plane nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.invitations">Invitaciones</span>
+            <span class="nav-badge count" id="invitationsCount">0</span>
+        </a>
+        <a href="marketplace-social.html" class="nav-item" data-page="marketplace-social">
+            <i class="fas fa-store nav-icon"></i>
+            <span class="nav-text" data-i18n="nav.marketplace">Marketplace Social</span>
+        </a>
+        <a href="lottery-predictor.html" class="nav-item" data-page="lottery-predictor">
+            <i class="fas fa-dice nav-icon"></i>
+            <span class="nav-text">Lottery Predictor</span>
+            <span class="nav-badge new">ML</span>
+        </a>
+    </nav>
+
+    <!-- DeFi HUB Section - Collapsible -->
+    <nav class="nav-section collapsed" id="defiSection" data-collapsible="true">
+        <div class="nav-section-title collapsible">
+            <i class="fas fa-coins"></i> <span data-i18n="nav.section_defi">DeFi HUB</span>
+            <i class="fas fa-chevron-down collapse-icon"></i>
+        </div>
+        <div class="nav-items-collapsible">
+            <a href="lightning-banking-demo.html" class="nav-item" data-page="lightning-banking-demo">
+                <i class="fas fa-bolt nav-icon"></i>
+                <span class="nav-text" data-i18n="home_dashboard.lightning_bank">Lightning Bank</span>
+                <span class="nav-badge free">FREE</span>
+            </a>
+            <a href="commission-system.html" class="nav-item" data-page="commission-system">
+                <i class="fas fa-percent nav-icon"></i>
+                <span class="nav-text" data-i18n="home_dashboard.commissions">Comisiones</span>
+            </a>
+            <a href="creator-escrow-demo.html" class="nav-item" data-page="creator-escrow-demo">
+                <i class="fas fa-lock nav-icon"></i>
+                <span class="nav-text" data-i18n="home_dashboard.escrow_system">Escrow System</span>
+                <span class="nav-badge beta">BETA</span>
+            </a>
+            <a href="web3-dashboard.html" class="nav-item coming-soon" data-page="web3-dashboard">
+                <i class="fas fa-sync-alt nav-icon"></i>
+                <span class="nav-text" data-i18n="nav.exchange">Exchange</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+            <a href="trading.html" class="nav-item coming-soon" data-page="trading">
+                <i class="fas fa-chart-line nav-icon"></i>
+                <span class="nav-text" data-i18n="nav.trading">Trading</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+            <a href="staking.html" class="nav-item coming-soon" data-page="staking">
+                <i class="fas fa-piggy-bank nav-icon"></i>
+                <span class="nav-text">Staking & Farms</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- WEB3 ASSETS Section - Collapsible -->
+    <nav class="nav-section collapsed" id="web3Section" data-collapsible="true">
+        <div class="nav-section-title collapsible">
+            <i class="fas fa-gem"></i> <span data-i18n="home_dashboard.web3_assets">WEB3 ASSETS</span>
+            <i class="fas fa-chevron-down collapse-icon"></i>
+        </div>
+        <div class="nav-items-collapsible">
+            <a href="analytics.html" class="nav-item" data-page="analytics">
+                <i class="fas fa-chart-bar nav-icon"></i>
+                <span class="nav-text" data-i18n="nav.analytics">Analytics</span>
+                <span class="nav-badge pro">PRO</span>
+            </a>
+            <a href="dev-dashboard.html" class="nav-item" data-page="dev-dashboard">
+                <i class="fas fa-code nav-icon"></i>
+                <span class="nav-text">Developer Portal</span>
+                <span class="nav-badge dev">DEV</span>
+            </a>
+            <a href="nft-memberships.html" class="nav-item coming-soon" data-page="nft-memberships">
+                <i class="fas fa-gem nav-icon"></i>
+                <span class="nav-text">NFT Memberships</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+            <a href="governance.html" class="nav-item coming-soon" data-page="governance">
+                <i class="fas fa-vote-yea nav-icon"></i>
+                <span class="nav-text">Governance</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+            <a href="ltd-token-economics.html" class="nav-item coming-soon" data-page="ltd-token-economics">
+                <i class="fas fa-coins nav-icon"></i>
+                <span class="nav-text">LTD Tokenomics</span>
+                <span class="nav-badge soon">PRONTO</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- CUENTA Section -->
+    <nav class="nav-section">
+        <div class="nav-section-title">
+            <i class="fas fa-user"></i> <span data-i18n="home_dashboard.account">CUENTA</span>
+        </div>
+        <a href="mi-perfil.html" class="nav-item" data-page="mi-perfil">
+            <i class="fas fa-user-circle nav-icon"></i>
+            <span class="nav-text" data-i18n="home_dashboard.my_profile">Mi Perfil</span>
+        </a>
+        <a href="seguridad.html" class="nav-item" data-page="seguridad">
+            <i class="fas fa-shield-alt nav-icon"></i>
+            <span class="nav-text" data-i18n="home_dashboard.security">Seguridad</span>
+        </a>
+        <a href="configuracion.html" class="nav-item" data-page="configuracion">
+            <i class="fas fa-cog nav-icon"></i>
+            <span class="nav-text" data-i18n="home_dashboard.configuration">Configuración</span>
+        </a>
+    </nav>
+
+    <!-- Logout Footer -->
+    <div class="sidebar-footer">
+        <button class="logout-btn" id="sidebarLogoutBtn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Cerrar Sesión</span>
+        </button>
+    </div>
+</aside>

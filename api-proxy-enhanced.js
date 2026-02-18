@@ -328,7 +328,9 @@ class EnhancedAPIProxy {
             };
         }
 
-        // Admin and demo credentials removed — use production auth API
+        // Admin login handled by production API (no hardcoded credentials)
+
+        // Demo credentials
 
 
 

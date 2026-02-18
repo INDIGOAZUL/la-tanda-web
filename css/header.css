@@ -1,0 +1,563 @@
+/* ============================================
+   LA TANDA - HEADER STYLES
+   Version: 1.0
+   ============================================ */
+
+/* Import variables */
+@import url("variables.css");
+
+/* ============================================
+   HEADER CONTAINER
+   ============================================ */
+.lt-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--lt-header-height, 70px);
+    background: var(--lt-header-bg, rgba(13, 17, 23, 0.95));
+    backdrop-filter: blur(var(--lt-header-blur, 20px));
+    -webkit-backdrop-filter: blur(var(--lt-header-blur, 20px));
+    border-bottom: 1px solid var(--lt-border-accent);
+    z-index: var(--lt-z-header, 1000);
+    display: flex;
+    align-items: center;
+}
+
+.lt-header-container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 var(--lt-spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--lt-spacing-md);
+}
+
+/* ============================================
+   LEFT SECTION: Menu + Brand
+   ============================================ */
+.lt-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--lt-spacing-md);
+}
+
+/* Hamburger Menu Button */
+.lt-menu-toggle {
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: 1px solid var(--lt-border-accent);
+    border-radius: var(--lt-radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--lt-transition-fast);
+}
+
+.lt-menu-toggle:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--lt-primary);
+}
+
+.lt-hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lt-hamburger-line {
+    width: 18px;
+    height: 2px;
+    background: var(--lt-primary);
+    border-radius: 1px;
+    transition: var(--lt-transition-fast);
+}
+
+.lt-menu-toggle:hover .lt-hamburger-line {
+    background: var(--lt-primary-light);
+}
+
+/* Sidebar open state */
+body.sidebar-open .lt-hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(4px, 4px);
+}
+body.sidebar-open .lt-hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+body.sidebar-open .lt-hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(4px, -4px);
+}
+
+/* Brand */
+.lt-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--lt-spacing-sm);
+    text-decoration: none;
+}
+
+.lt-brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--lt-radius-sm);
+    object-fit: contain;
+    background: white;
+    padding: 2px;
+}
+
+.lt-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.lt-brand-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--lt-primary);
+    line-height: 1.2;
+}
+
+.lt-brand-tagline {
+    font-size: 0.7rem;
+    color: var(--lt-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   CENTER SECTION: Wallet
+   ============================================ */
+.lt-header-center {
+    display: flex;
+    align-items: center;
+}
+
+.lt-wallet {
+    display: flex;
+    align-items: center;
+    gap: var(--lt-spacing-sm);
+    padding: var(--lt-spacing-sm) var(--lt-spacing-md);
+    background: var(--lt-bg-card);
+    border: 1px solid var(--lt-border-accent);
+    border-radius: var(--lt-radius-lg);
+}
+
+.lt-wallet-label {
+    font-size: 0.75rem;
+    color: var(--lt-text-muted);
+}
+
+.lt-wallet-balance {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--lt-primary);
+    font-family: "Roboto Mono", monospace;
+}
+
+.lt-wallet-balance.hidden {
+    filter: blur(8px);
+    user-select: none;
+}
+
+.lt-wallet-toggle {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: var(--lt-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--lt-radius-sm);
+    transition: var(--lt-transition-fast);
+}
+
+.lt-wallet-toggle:hover {
+    color: var(--lt-primary);
+    background: rgba(0, 212, 255, 0.1);
+}
+
+/* ============================================
+   RIGHT SECTION: Actions
+   ============================================ */
+
+/* Notification Badge - Enhanced with pulse animation */
+.lt-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 10px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+    animation: badge-pulse 2s infinite;
+    border: 2px solid rgba(13, 17, 23, 0.9);
+}
+
+.lt-badge:not(:empty) {
+    display: flex;
+}
+
+@keyframes badge-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
+        transform: scale(1.05);
+    }
+}
+
+.lt-badge.urgent {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    animation: badge-pulse-urgent 1s infinite;
+}
+
+@keyframes badge-pulse-urgent {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.4); }
+    50% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.2); }
+}
+.lt-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--lt-spacing-sm);
+}
+
+.lt-header-btn {
+    width: 42px;
+    height: 42px;
+    background: transparent;
+    border: 1px solid var(--lt-border-accent);
+    border-radius: var(--lt-radius-md);
+    color: var(--lt-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: var(--lt-transition-fast);
+}
+
+.lt-header-btn:hover {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--lt-primary);
+    border-color: var(--lt-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--lt-shadow-glow);
+}
+
+.lt-header-btn i {
+    font-size: 1rem;
+}
+
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .lt-header-container {
+        padding: 0 var(--lt-spacing-md);
+    }
+
+    .lt-brand-text {
+        display: none;
+    }
+
+    .lt-header-center {
+        display: none;
+    }
+
+    .lt-wallet-label {
+        display: none;
+    }
+
+    .lt-header-btn {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lt-header {
+        height: 60px;
+    }
+
+    .lt-menu-toggle {
+        width: 38px;
+        height: 38px;
+    }
+
+    .lt-brand-logo {
+        width: 34px;
+        height: 34px;
+    }
+
+    .lt-header-btn {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* ============================================
+   BODY PADDING (for fixed header)
+   ============================================ */
+body.has-lt-header {
+    padding-top: var(--lt-header-height, 70px);
+}
+
+@media (max-width: 480px) {
+    body.has-lt-header {
+        padding-top: 60px;
+    }
+}
+
+/* Wallet Info Area - Clickable */
+.lt-wallet-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.lt-wallet-info:hover {
+    background-color: rgba(0, 229, 255, 0.1);
+}
+
+/* ============================================
+   WALLET DROPDOWN PANEL
+   ============================================ */
+.lt-wallet-wrapper {
+    position: relative;
+}
+
+.lt-wallet-arrow {
+    font-size: 10px;
+    margin-left: 6px;
+    transition: transform 0.2s ease;
+}
+
+.lt-wallet-wrapper.open .lt-wallet-arrow {
+    transform: rotate(180deg);
+}
+
+.lt-wallet-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.95);
+    width: 320px;
+    background: var(--lt-bg-card, #161b22);
+    border: 1px solid var(--lt-border-accent, rgba(0, 212, 255, 0.2));
+    border-radius: var(--lt-radius-lg, 16px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    z-index: 1100;
+}
+
+.lt-wallet-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) scale(1);
+}
+
+.lt-wd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--lt-border, #30363d);
+}
+
+.lt-wd-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--lt-text-primary, #e6edf3);
+}
+
+.lt-wd-close {
+    background: none;
+    border: none;
+    color: var(--lt-text-muted, #6e7681);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.lt-wd-close:hover {
+    color: var(--lt-primary, #00d4ff);
+}
+
+.lt-wd-balance {
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(102, 126, 234, 0.1));
+}
+
+.lt-wd-balance-label {
+    font-size: 0.75rem;
+    color: var(--lt-text-muted, #6e7681);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.lt-wd-balance-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--lt-primary, #00d4ff);
+    font-family: 'Roboto Mono', monospace;
+}
+
+.lt-wd-balance-usd {
+    font-size: 0.85rem;
+    color: var(--lt-text-secondary, #8b949e);
+    margin-top: 4px;
+}
+
+.lt-wd-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 16px;
+    border-bottom: 1px solid var(--lt-border, #30363d);
+}
+
+.lt-wd-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    background: var(--lt-bg-hover, #21262d);
+    border-radius: var(--lt-radius-md, 10px);
+    text-decoration: none;
+    color: var(--lt-text-secondary, #8b949e);
+    transition: all 0.2s ease;
+}
+
+.lt-wd-action:hover {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--lt-primary, #00d4ff);
+    transform: translateY(-2px);
+}
+
+.lt-wd-action i {
+    font-size: 1.2rem;
+}
+
+.lt-wd-action span {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.lt-wd-footer {
+    padding: 12px 16px;
+}
+
+.lt-wd-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--lt-primary, #00d4ff);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: opacity 0.2s;
+}
+
+.lt-wd-link:hover {
+    opacity: 0.8;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .lt-wallet-dropdown {
+        width: 290px;
+        left: auto;
+        right: -50px;
+        transform: scale(0.95);
+    }
+    
+    .lt-wallet-dropdown.active {
+        transform: scale(1);
+    }
+    
+    .lt-wd-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   HEADER SPACING - Global Fix
+   Added: 2025-12-08
+   ============================================ */
+/* Spacing for content below fixed header (70px + 10px buffer = 80px) */
+.nav-header,
+.main-content,
+.container:first-of-type,
+main.notifications-page {
+    margin-top: 80px;
+}
+
+/* For pages that need padding instead of margin */
+.header-content-spacing {
+    padding-top: 80px;
+}
+
+/* Header Avatar Styles */
+.lt-profile-btn {
+    position: relative;
+    padding: 4px !important;
+}
+
+.lt-header-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: block;
+}
+
+.lt-header-avatar-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+.lt-header-avatar[src=''],
+.lt-header-avatar:not([src]) {
+    display: none;
+}
+
+.lt-header-avatar[src=''] + .lt-header-avatar-fallback,
+.lt-header-avatar:not([src]) + .lt-header-avatar-fallback {
+    display: flex;
+}

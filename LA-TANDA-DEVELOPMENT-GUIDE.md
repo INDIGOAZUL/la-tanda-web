@@ -636,7 +636,7 @@ node test-database-final.js
 # Test specific endpoints
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@latanda.online","password":"Admin123!"}'
+  -d '{"email":"admin@latanda.online","password":"[REDACTED]"}'
 
 # Test with authentication
 curl -X GET http://localhost:3001/api/users/profile \
@@ -680,7 +680,7 @@ const tests = [
         method: 'POST',
         data: {
             email: 'admin@latanda.online',
-            password: 'Admin123!'
+            password: '[REDACTED]'
         }
     },
     // Add new tests here
@@ -718,7 +718,7 @@ curl https://api.latanda.online/health
 # Login and get token
 TOKEN=$(curl -s -X POST https://api.latanda.online/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@latanda.online","password":"Admin123!"}' \
+  -d '{"email":"admin@latanda.online","password":"[REDACTED]"}' \
   | jq -r '.data.token')
 
 # Use token for authenticated requests

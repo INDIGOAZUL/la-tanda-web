@@ -1,0 +1,404 @@
+
+/* ================================================
+   MOBILE DRAWER NAVIGATION
+   Added: 2026-01-26
+   ================================================ */
+
+/* Drawer Overlay */
+.mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-drawer-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Drawer Panel */
+.mobile-drawer {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    background: linear-gradient(180deg, rgba(15, 15, 26, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 255, 255, 0.1);
+    z-index: 2000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.mobile-drawer.active {
+    display: flex;
+    flex-direction: column;
+    transform: translateX(0);
+}
+
+/* Drawer Header */
+.mobile-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-drawer-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-drawer-logo {
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.mobile-drawer-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.mobile-drawer-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00FFFF, #7FFFD8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mobile-drawer-close {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-drawer-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* User Section */
+.mobile-drawer-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.mobile-drawer-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(127, 255, 216, 0.2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00FFFF;
+    font-size: 1.2rem;
+}
+
+.mobile-drawer-user-info {
+    flex: 1;
+}
+
+.mobile-drawer-user-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.mobile-drawer-user-handle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+}
+
+/* Stats Row */
+.mobile-drawer-stats {
+    display: flex;
+    gap: 24px;
+    padding: 0 16px 16px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-drawer-stat {
+    display: flex;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.mobile-drawer-stat-value {
+    font-weight: 600;
+    color: #fff;
+}
+
+.mobile-drawer-stat-label {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Navigation */
+.mobile-drawer-nav {
+    flex: 1;
+    padding: 8px 0;
+}
+
+.mobile-drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.mobile-drawer-item:hover,
+.mobile-drawer-item:active {
+    background: rgba(0, 255, 255, 0.08);
+    color: #00FFFF;
+}
+
+.mobile-drawer-item i {
+    width: 24px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.mobile-drawer-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 8px 16px;
+}
+
+/* Footer */
+.mobile-drawer-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-drawer-logout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    border-radius: 10px;
+    color: #f87171;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-drawer-logout:hover {
+    background: rgba(248, 113, 113, 0.2);
+}
+
+/* ================================================
+   FLOATING ACTION BUTTON (FAB)
+   ================================================ */
+.mobile-fab {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #00FFFF, #00E5E5);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow:
+        0 4px 20px rgba(0, 255, 255, 0.4),
+        0 0 30px rgba(0, 255, 255, 0.2);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.mobile-fab:hover {
+    transform: scale(1.1);
+    box-shadow:
+        0 6px 30px rgba(0, 255, 255, 0.5),
+        0 0 40px rgba(0, 255, 255, 0.3);
+}
+
+.mobile-fab:active {
+    transform: scale(0.95);
+}
+
+/* ================================================
+   MOBILE MENU BUTTON (in bottom nav)
+   ================================================ */
+.mobile-nav-menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    color: rgba(255, 255, 255, 0.5);
+    background: none;
+    border: none;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.mobile-nav-menu-btn i {
+    font-size: 1.25rem;
+}
+
+.mobile-nav-menu-btn:hover,
+.mobile-nav-menu-btn:active {
+    color: #00FFFF;
+}
+
+/* ================================================
+   SHOW ON MOBILE ONLY
+   ================================================ */
+@media (max-width: 1024px) {
+    .mobile-drawer-overlay,
+    .mobile-drawer {
+        display: block;
+    }
+
+    .mobile-drawer {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mobile-fab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Adjust FAB position for very small screens */
+@media (max-width: 480px) {
+    .mobile-fab {
+        bottom: 75px;
+        right: 16px;
+        width: 52px;
+        height: 52px;
+    }
+}
+
+/* ================================================
+   DRAWER QUICK STATS
+   Added: 2026-01-26
+   ================================================ */
+.mobile-drawer-section-label {
+    padding: 8px 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mobile-drawer-quick-stats {
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.drawer-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.drawer-stat-card:active {
+    background: rgba(255, 255, 255, 0.06);
+    transform: scale(0.98);
+}
+
+.drawer-stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.drawer-stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.drawer-stat-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 2px;
+}
+
+.drawer-stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Show FAB on mobile */
+@media (max-width: 1024px) {
+    .mobile-fab {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Fix: Ensure overlay doesn't block when not active */
+.mobile-drawer-overlay:not(.active) {
+    pointer-events: none !important;
+}

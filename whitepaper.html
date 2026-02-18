@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="La Tanda Whitepaper - Technical documentation for the Web3 rotating savings platform">
+    <title>Whitepaper - La Tanda Web3</title>
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <style>
+        :root {
+            --tanda-cyan: #00D4FF;
+            --tanda-purple: #8B5CF6;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.9);
+            --border-accent: rgba(0, 212, 255, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(180deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-accent);
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .toc {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .toc h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--tanda-cyan);
+        }
+
+        .toc ul {
+            list-style: none;
+            columns: 2;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: var(--tanda-cyan);
+        }
+
+        section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--tanda-cyan);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin: 30px 0 15px 0;
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin: 25px 0 10px 0;
+            color: var(--tanda-cyan);
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 25px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid var(--tanda-cyan);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+        }
+
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-accent);
+        }
+
+        th {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--tanda-cyan);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        .token-address {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin: 15px 0;
+            border: 1px solid var(--border-accent);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--tanda-cyan);
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-accent);
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: var(--tanda-cyan);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .toc ul { columns: 1; }
+            section { padding: 25px; }
+            .logo { font-size: 2.2rem; }
+        }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/whitepaper.html">
+    <meta property="og:title" content="Whitepaper | La Tanda">
+    <meta property="og:description" content="Whitepaper tecnico de la plataforma La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Whitepaper | La Tanda">
+    <meta name="twitter:description" content="Whitepaper tecnico de la plataforma La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <header>
+        <div class="logo">La Tanda</div>
+        <p class="subtitle">Whitepaper Tecnico v1.0</p>
+        <p class="meta">Enero 2026 | Ray-Banks LLC</p>
+    </header>
+
+    <div class="container">
+        <a href="home-dashboard.html" class="back-link">← Volver al Dashboard</a>
+
+        <nav class="toc">
+            <h2>Contenido</h2>
+            <ul>
+                <li><a href="#abstract">1. Resumen Ejecutivo</a></li>
+                <li><a href="#problem">2. El Problema</a></li>
+                <li><a href="#solution">3. La Solucion</a></li>
+                <li><a href="#technology">4. Tecnologia</a></li>
+                <li><a href="#tokenomics">5. Tokenomics</a></li>
+                <li><a href="#features">6. Funcionalidades</a></li>
+                <li><a href="#security">7. Seguridad</a></li>
+                <li><a href="#roadmap">8. Roadmap</a></li>
+                <li><a href="#team">9. Equipo y Legal</a></li>
+            </ul>
+        </nav>
+
+        <section id="abstract">
+            <h1>1. Resumen Ejecutivo</h1>
+            <p>La Tanda es una plataforma Web3 que digitaliza y mejora el sistema tradicional de tandas (asociaciones rotativas de ahorro y credito) mediante tecnologia blockchain, democratizando el acceso a servicios financieros para comunidades desatendidas.</p>
+            
+            <div class="highlight-box">
+                <strong>Mision:</strong> Construir la plataforma financiera Web3 mas accesible del mundo, combinando la confianza de las tandas tradicionales con la transparencia y seguridad de blockchain.
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="value">1.7B</div>
+                    <div class="label">Personas sin acceso bancario</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">$500B+</div>
+                    <div class="label">Mercado de ROSCAs global</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">105</div>
+                    <div class="label">Endpoints API</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">200M</div>
+                    <div class="label">LTD Token Supply</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="problem">
+            <h1>2. El Problema</h1>
+            
+            <h2>2.1 Exclusion Financiera</h2>
+            <p>Segun el Banco Mundial, 1.7 mil millones de adultos no tienen acceso a servicios bancarios. En America Latina, el 45% de la poblacion esta sub-bancarizada, dependiendo de sistemas informales para ahorro y credito.</p>
+
+            <h2>2.2 Limitaciones de Tandas Tradicionales</h2>
+            <ul>
+                <li><strong>Confianza:</strong> Dependen de relaciones personales, limitando el alcance</li>
+                <li><strong>Transparencia:</strong> Sin registros verificables de transacciones</li>
+                <li><strong>Escala:</strong> Dificil crecer mas alla de comunidades locales</li>
+                <li><strong>Seguridad:</strong> Riesgo de incumplimiento sin garantias</li>
+                <li><strong>Acceso:</strong> Requieren presencia fisica y coordinacion manual</li>
+            </ul>
+
+            <h2>2.3 Barreras de Web3</h2>
+            <p>Las soluciones DeFi existentes son demasiado complejas para usuarios no tecnicos, con interfaces intimidantes, tarifas de gas impredecibles y riesgos de seguridad.</p>
+        </section>
+
+        <section id="solution">
+            <h1>3. La Solucion: La Tanda</h1>
+            
+            <p>La Tanda combina lo mejor de ambos mundos: la familiaridad y confianza de las tandas tradicionales con la seguridad, transparencia y alcance global de blockchain.</p>
+
+            <h2>3.1 Propuesta de Valor</h2>
+            <table>
+                <tr>
+                    <th>Caracteristica</th>
+                    <th>Tanda Tradicional</th>
+                    <th>La Tanda Web3</th>
+                </tr>
+                <tr>
+                    <td>Alcance</td>
+                    <td>Local (10-20 personas)</td>
+                    <td>Global (sin limite)</td>
+                </tr>
+                <tr>
+                    <td>Transparencia</td>
+                    <td>Verbal/papel</td>
+                    <td>Blockchain inmutable</td>
+                </tr>
+                <tr>
+                    <td>Seguridad</td>
+                    <td>Confianza personal</td>
+                    <td>Smart contracts + KYC</td>
+                </tr>
+                <tr>
+                    <td>Pagos</td>
+                    <td>Efectivo/banco</td>
+                    <td>Crypto + fiat</td>
+                </tr>
+                <tr>
+                    <td>Recompensas</td>
+                    <td>Ninguna</td>
+                    <td>Tokens LTD</td>
+                </tr>
+            </table>
+
+            <h2>3.2 Como Funciona</h2>
+            <ol>
+                <li><strong>Crear/Unirse:</strong> Usuario crea una tanda o se une a una existente</li>
+                <li><strong>Contribuir:</strong> Pagos periodicos automaticos o manuales</li>
+                <li><strong>Sorteo:</strong> Sistema de tombola en vivo determina turnos</li>
+                <li><strong>Recibir:</strong> Miembro recibe el pozo en su turno</li>
+                <li><strong>Ganar:</strong> Tokens LTD por participacion y cumplimiento</li>
+            </ol>
+        </section>
+
+        <section id="technology">
+            <h1>4. Arquitectura Tecnica</h1>
+
+            <h2>4.1 Stack Tecnologico</h2>
+            <table>
+                <tr>
+                    <th>Capa</th>
+                    <th>Tecnologia</th>
+                </tr>
+                <tr>
+                    <td>Frontend</td>
+                    <td>HTML5, CSS3, JavaScript (Vanilla + PWA)</td>
+                </tr>
+                <tr>
+                    <td>Backend</td>
+                    <td>Node.js (HTTP nativo), PM2 cluster</td>
+                </tr>
+                <tr>
+                    <td>Base de Datos</td>
+                    <td>PostgreSQL 16 (25 tablas)</td>
+                </tr>
+                <tr>
+                    <td>Cache</td>
+                    <td>Redis</td>
+                </tr>
+                <tr>
+                    <td>Blockchain</td>
+                    <td>Polygon (Amoy testnet → PoS mainnet)</td>
+                </tr>
+                <tr>
+                    <td>Smart Contracts</td>
+                    <td>Solidity, Hardhat</td>
+                </tr>
+                <tr>
+                    <td>ML/AI</td>
+                    <td>Python, XGBoost, scikit-learn</td>
+                </tr>
+            </table>
+
+            <h2>4.2 API RESTful</h2>
+            <p>105 endpoints organizados en categorias:</p>
+            <ul>
+                <li><strong>Auth (12):</strong> Login, registro, verificacion, tokens</li>
+                <li><strong>Wallet (15):</strong> Balance, depositos, retiros, historial</li>
+                <li><strong>Groups/Tandas (18):</strong> CRUD, miembros, turnos, tombola</li>
+                <li><strong>Admin (12):</strong> Usuarios, KYC, pagos, auditoria</li>
+                <li><strong>Lottery (15):</strong> Predicciones ML, suscripciones, estadisticas</li>
+                <li><strong>Mining (7):</strong> Recompensas diarias, tiers, logros</li>
+            </ul>
+
+            <h2>4.3 Smart Contracts</h2>
+            <div class="token-address">
+                LTD Token: 0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc (Polygon Amoy)
+            </div>
+            <ul>
+                <li><strong>TandaToken.sol:</strong> ERC20 token con funciones de gobernanza</li>
+                <li><strong>TandaGroup.sol:</strong> Logica de grupos y contribuciones</li>
+                <li><strong>TandaEscrow.sol:</strong> Custodia de fondos con liberacion programada</li>
+            </ul>
+        </section>
+
+        <section id="tokenomics">
+            <h1>5. Tokenomics</h1>
+
+            <h2>5.1 LTD Token</h2>
+            <p>LTD (La Tanda Dollar) es el token de utilidad nativo de la plataforma.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="value">200M</div>
+                    <div class="label">Supply Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">ERC20</div>
+                    <div class="label">Estandar</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">Polygon</div>
+                    <div class="label">Blockchain</div>
+                </div>
+            </div>
+
+            <h2>5.2 Distribucion</h2>
+            <table>
+                <tr>
+                    <th>Categoria</th>
+                    <th>Porcentaje</th>
+                    <th>Tokens</th>
+                </tr>
+                <tr>
+                    <td>Recompensas Comunidad</td>
+                    <td>40%</td>
+                    <td>80,000,000</td>
+                </tr>
+                <tr>
+                    <td>Desarrollo</td>
+                    <td>20%</td>
+                    <td>40,000,000</td>
+                </tr>
+                <tr>
+                    <td>Equipo (vesting 2 años)</td>
+                    <td>15%</td>
+                    <td>30,000,000</td>
+                </tr>
+                <tr>
+                    <td>Marketing</td>
+                    <td>10%</td>
+                    <td>20,000,000</td>
+                </tr>
+                <tr>
+                    <td>Reserva/Liquidez</td>
+                    <td>10%</td>
+                    <td>20,000,000</td>
+                </tr>
+                <tr>
+                    <td>Bounties</td>
+                    <td>5%</td>
+                    <td>10,000,000</td>
+                </tr>
+            </table>
+
+            <h2>5.3 Utilidad del Token</h2>
+            <ul>
+                <li><strong>Staking:</strong> Bloquear LTD para obtener beneficios premium</li>
+                <li><strong>Gobernanza:</strong> Votar en propuestas de la plataforma</li>
+                <li><strong>Descuentos:</strong> Reduccion de comisiones al pagar con LTD</li>
+                <li><strong>Acceso:</strong> Funciones exclusivas para holders</li>
+                <li><strong>Recompensas:</strong> Ganar LTD por actividad en la plataforma</li>
+            </ul>
+        </section>
+
+        <section id="features">
+            <h1>6. Funcionalidades</h1>
+
+            <h2>6.1 Sistema de Tandas</h2>
+            <ul>
+                <li>Crear grupos con configuracion flexible</li>
+                <li>Multiples posiciones por miembro</li>
+                <li>Tombola en vivo con WebSocket</li>
+                <li>Bloqueo de posiciones para coordinadores</li>
+                <li>Sistema de comisiones 90/10</li>
+            </ul>
+
+            <h2>6.2 Predictor de Loteria</h2>
+            <p>Sistema ML para predicciones de "La Diaria" Honduras:</p>
+            <ul>
+                <li>Modelos XGBoost por horario (11am, 3pm, 9pm)</li>
+                <li>42% precision Top-1 (42x mejor que aleatorio)</li>
+                <li>Sistema freemium (Gratis/Premium/Diamante)</li>
+                <li>Gamificacion: logros, puntos, rankings</li>
+            </ul>
+
+            <h2>6.3 Sistema de Mineria</h2>
+            <ul>
+                <li>Recompensas diarias en LTD</li>
+                <li>Progresion de tiers (Bronce/Plata/Oro)</li>
+                <li>Bonos por racha consecutiva</li>
+                <li>Sistema anti-fraude</li>
+            </ul>
+
+            <h2>6.4 Suscripciones</h2>
+            <table>
+                <tr>
+                    <th>Plan</th>
+                    <th>Precio</th>
+                    <th>Beneficios</th>
+                </tr>
+                <tr>
+                    <td>Gratis</td>
+                    <td>$0</td>
+                    <td>1 spin/dia, horario 9pm</td>
+                </tr>
+                <tr>
+                    <td>Premium</td>
+                    <td>$25/mes</td>
+                    <td>3 spins/dia, todos horarios, historial</td>
+                </tr>
+                <tr>
+                    <td>Diamante</td>
+                    <td>$49/mes</td>
+                    <td>Ilimitado, 5 numeros, API acceso</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="security">
+            <h1>7. Seguridad</h1>
+
+            <h2>7.1 Infraestructura</h2>
+            <ul>
+                <li>SSL/TLS 1.2+ obligatorio</li>
+                <li>Rate limiting (nginx + fail2ban)</li>
+                <li>Firewall UFW configurado</li>
+                <li>PostgreSQL/Redis solo localhost</li>
+            </ul>
+
+            <h2>7.2 Aplicacion</h2>
+            <ul>
+                <li>JWT con expiracion (24h/7d)</li>
+                <li>Bcrypt para passwords (12 rounds)</li>
+                <li>Sanitizacion de inputs (XSS prevention)</li>
+                <li>Queries parametrizadas (SQL injection prevention)</li>
+                <li>CORS restringido</li>
+            </ul>
+
+            <h2>7.3 Headers de Seguridad</h2>
+            <ul>
+                <li>Strict-Transport-Security (HSTS)</li>
+                <li>Content-Security-Policy (CSP)</li>
+                <li>X-Frame-Options: DENY</li>
+                <li>X-Content-Type-Options: nosniff</li>
+            </ul>
+
+            <h2>7.4 Compliance</h2>
+            <ul>
+                <li>KYC/AML para verificacion de identidad</li>
+                <li>Evaluacion PCI-DSS completada</li>
+                <li>Logs de auditoria inmutables</li>
+            </ul>
+        </section>
+
+        <section id="roadmap">
+            <h1>8. Roadmap</h1>
+
+            <h2>Completado (2024-2025)</h2>
+            <ul>
+                <li>Infraestructura core y API (105 endpoints)</li>
+                <li>Sistema de tandas con WebSocket</li>
+                <li>LTD Token en Polygon Amoy</li>
+                <li>Predictor de loteria con ML</li>
+                <li>Sistema de mineria y gamificacion</li>
+            </ul>
+
+            <h2>Q1-Q2 2026</h2>
+            <ul>
+                <li>OAuth (Google, Apple, Telegram)</li>
+                <li>Integracion de pagos (Stripe)</li>
+                <li>App movil (React Native)</li>
+                <li>Auditoria de smart contracts</li>
+            </ul>
+
+            <h2>Q3-Q4 2026</h2>
+            <ul>
+                <li>Lanzamiento en Mainnet</li>
+                <li>Distribucion publica de LTD</li>
+                <li>Staking y gobernanza</li>
+                <li>Expansion multi-chain</li>
+            </ul>
+
+            <p><a href="roadmap.html">Ver roadmap completo →</a></p>
+            <p><a href="/docs/BLOCKCHAIN-STRATEGY.md">📄 Ver estrategia blockchain (Fase 1: Polygon, Fase 2: La Tanda Chain) →</a></p>
+        </section>
+
+        <section id="team">
+            <h1>9. Equipo y Legal</h1>
+
+            <h2>9.1 Entidad Legal</h2>
+            <div class="highlight-box">
+                <strong>Ray-Banks LLC</strong><br>
+                New Mexico Limited Liability Company<br>
+                EIN: 37-2158338<br>
+                Operando como: Latanda Financial Services
+            </div>
+
+            <h2>9.2 Contacto</h2>
+            <ul>
+                <li><strong>Website:</strong> <a href="https://latanda.online">latanda.online</a></li>
+                <li><strong>Corporate:</strong> <a href="https://raybanks.org">raybanks.org</a></li>
+                <li><strong>Email:</strong> contact@latanda.online</li>
+                <li><strong>GitHub:</strong> <a href="https://github.com/INDIGOAZUL/la-tanda-web">INDIGOAZUL/la-tanda-web</a></li>
+                <li><strong>Twitter:</strong> @TandaWeb3</li>
+            </ul>
+
+            <h2>9.3 Disclaimer</h2>
+            <p style="font-size: 0.85rem; opacity: 0.8;">
+                Este documento es solo para fines informativos y no constituye asesoramiento financiero, legal o de inversion. Los tokens LTD actualmente operan en testnet y no tienen valor monetario. Invertir en criptomonedas conlleva riesgos significativos. Consulte con profesionales antes de tomar decisiones financieras.
+            </p>
+        </section>
+    </div>
+
+    <footer>
+        <p>2024-2026 Ray-Banks LLC. Todos los derechos reservados.</p>
+        <p style="margin-top: 10px;">
+            <a href="roadmap.html">Roadmap</a> |
+            <a href="privacy-policy.html">Privacidad</a> |
+            <a href="terms-of-service.html">Terminos</a> |
+            <a href="https://latanda.online/docs">API Docs</a>
+        </p>
+    </footer>
+
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>
