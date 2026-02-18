@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "La Tanda API",
-    "version": "4.6.1",
-    "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```",
+    "version": "4.6.3",
+    "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```\n\n**Revocación de tokens:** Los tokens son invalidados al cerrar sesión (`POST /api/auth/logout`) o cambiar contraseña. Un token revocado recibe `401 Token ha sido revocado` en cualquier endpoint protegido.",
     "contact": {
       "name": "INDIGOAZUL Development",
       "url": "https://latanda.online",
@@ -88,7 +88,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "JWT token obtenido de /api/auth/login"
+        "description": "JWT token obtenido de /api/auth/login. Los tokens son revocados al cerrar sesión o cambiar contraseña; un token revocado retorna 401."
       }
     },
     "schemas": {
@@ -600,11 +600,49 @@
     },
     "responses": {
       "Unauthorized": {
-        "description": "Token JWT faltante o inválido",
+        "description": "Token JWT faltante, inválido o revocado. Posibles mensajes: `No token provided`, `Invalid or expired token`, `Token ha sido revocado`.",
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "missing": {
+                "summary": "Token no proporcionado",
+                "value": {
+                  "success": false,
+                  "data": {
+                    "error": {
+                      "code": 401,
+                      "message": "No token provided"
+                    }
+                  }
+                }
+              },
+              "expired": {
+                "summary": "Token expirado o inválido",
+                "value": {
+                  "success": false,
+                  "data": {
+                    "error": {
+                      "code": 401,
+                      "message": "Invalid or expired token"
+                    }
+                  }
+                }
+              },
+              "revoked": {
+                "summary": "Token revocado (logout o cambio de contraseña)",
+                "value": {
+                  "success": false,
+                  "data": {
+                    "error": {
+                      "code": 401,
+                      "message": "Token ha sido revocado"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1048,6 +1086,9 @@
         "responses": {
           "200": {
             "description": "Sesión cerrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1159,6 +1200,9 @@
         "responses": {
           "200": {
             "description": "Avatar actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1177,6 +1221,9 @@
         "responses": {
           "200": {
             "description": "Configuración actual"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -1193,6 +1240,9 @@
         "responses": {
           "200": {
             "description": "Configuración actualizada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1233,6 +1283,9 @@
         "responses": {
           "200": {
             "description": "Contraseña cambiada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1251,6 +1304,9 @@
         "responses": {
           "200": {
             "description": "Lista de actividades"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1269,6 +1325,9 @@
         "responses": {
           "200": {
             "description": "Lista de logros"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1287,6 +1346,9 @@
         "responses": {
           "200": {
             "description": "Lista de dispositivos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1305,6 +1367,9 @@
         "responses": {
           "200": {
             "description": "QR code y secreto para configurar TOTP"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1338,6 +1403,9 @@
         "responses": {
           "200": {
             "description": "2FA activado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1356,6 +1424,9 @@
         "responses": {
           "200": {
             "description": "2FA desactivado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1374,6 +1445,9 @@
         "responses": {
           "200": {
             "description": "Estado actual de 2FA"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1392,6 +1466,9 @@
         "responses": {
           "200": {
             "description": "Balance actual en HNL, USD, LTD tokens"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1410,6 +1487,9 @@
         "responses": {
           "200": {
             "description": "Historial de movimientos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1457,6 +1537,9 @@
         "responses": {
           "200": {
             "description": "Retiro solicitado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1475,6 +1558,9 @@
         "responses": {
           "200": {
             "description": "PIN establecido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1493,6 +1579,9 @@
         "responses": {
           "200": {
             "description": "PIN activo/inactivo"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1511,6 +1600,9 @@
         "responses": {
           "200": {
             "description": "PIN válido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1529,6 +1621,9 @@
         "responses": {
           "200": {
             "description": "Depósito creado, pendiente de confirmación"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1547,6 +1642,9 @@
         "responses": {
           "200": {
             "description": "Depósito móvil creado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1565,6 +1663,9 @@
         "responses": {
           "200": {
             "description": "Dirección de depósito generada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1583,6 +1684,9 @@
         "responses": {
           "200": {
             "description": "Retiro bancario solicitado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1601,6 +1705,9 @@
         "responses": {
           "200": {
             "description": "Retiro móvil solicitado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1619,6 +1726,9 @@
         "responses": {
           "200": {
             "description": "Retiro crypto solicitado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1637,6 +1747,9 @@
         "responses": {
           "200": {
             "description": "Tabla de comisiones por método"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1663,6 +1776,9 @@
         "responses": {
           "200": {
             "description": "Lista de pagos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1681,6 +1797,9 @@
         "responses": {
           "200": {
             "description": "Lista de métodos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1760,6 +1879,9 @@
         "responses": {
           "201": {
             "description": "Grupo creado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1811,6 +1933,9 @@
         "responses": {
           "200": {
             "description": "Unido exitosamente"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1931,6 +2056,9 @@
         "responses": {
           "200": {
             "description": "Payout solicitado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1959,6 +2087,9 @@
         "responses": {
           "200": {
             "description": "Estado actual del payout"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -1972,6 +2103,9 @@
         "responses": {
           "200": {
             "description": "Lista de tandas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         },
         "security": [
@@ -1995,6 +2129,9 @@
         "responses": {
           "201": {
             "description": "Tanda creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2013,6 +2150,9 @@
         "responses": {
           "200": {
             "description": "Tandas del usuario"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2031,6 +2171,9 @@
         "responses": {
           "200": {
             "description": "Pago registrado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2044,6 +2187,9 @@
         "responses": {
           "200": {
             "description": "Lista de posiciones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         },
         "security": [
@@ -2067,6 +2213,9 @@
         "responses": {
           "200": {
             "description": "Lista de contribuciones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2083,6 +2232,9 @@
         "responses": {
           "200": {
             "description": "Contribución registrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2167,6 +2319,9 @@
         "responses": {
           "201": {
             "description": "Publicación creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2195,6 +2350,9 @@
         "responses": {
           "200": {
             "description": "Publicación editada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2221,6 +2379,9 @@
         "responses": {
           "200": {
             "description": "Publicación eliminada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2249,6 +2410,9 @@
         "responses": {
           "200": {
             "description": "Like toggled"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2277,6 +2441,9 @@
         "responses": {
           "200": {
             "description": "Bookmark toggled"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2340,6 +2507,9 @@
         "responses": {
           "201": {
             "description": "Comentario creado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2368,6 +2538,9 @@
         "responses": {
           "200": {
             "description": "Siguiendo"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2394,6 +2567,9 @@
         "responses": {
           "200": {
             "description": "Dejó de seguir"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2412,6 +2588,9 @@
         "responses": {
           "200": {
             "description": "Publicaciones guardadas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2569,6 +2748,9 @@
           },
           "403": {
             "description": "Tu tienda no permite servicios (tipo Productos)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2635,6 +2817,9 @@
         "responses": {
           "200": {
             "description": "Servicio actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2671,6 +2856,9 @@
         "responses": {
           "200": {
             "description": "URLs de imágenes subidas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2757,6 +2945,9 @@
           },
           "403": {
             "description": "Tu tienda no permite productos (tipo Servicios)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2806,6 +2997,9 @@
         "responses": {
           "200": {
             "description": "Producto actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2832,6 +3026,9 @@
         "responses": {
           "200": {
             "description": "Producto actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -2858,6 +3055,9 @@
         "responses": {
           "200": {
             "description": "Producto eliminado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2901,6 +3101,9 @@
         "responses": {
           "200": {
             "description": "Orden creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -2937,6 +3140,9 @@
         "responses": {
           "200": {
             "description": "URLs de imágenes subidas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3084,6 +3290,9 @@
           },
           "409": {
             "description": "Ya tienes una tienda registrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3102,6 +3311,9 @@
         "responses": {
           "200": {
             "description": "Datos del provider o null"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3160,6 +3372,9 @@
         "responses": {
           "200": {
             "description": "Tienda actualizada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3224,6 +3439,9 @@
         "responses": {
           "200": {
             "description": "Lista de reservas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3264,6 +3482,9 @@
         "responses": {
           "201": {
             "description": "Reserva creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3311,6 +3532,9 @@
         "responses": {
           "200": {
             "description": "Estado actualizado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3355,6 +3579,9 @@
         "responses": {
           "201": {
             "description": "Reseña creada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3373,6 +3600,9 @@
         "responses": {
           "200": {
             "description": "Lista de favoritos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3389,6 +3619,9 @@
         "responses": {
           "200": {
             "description": "Agregado a favoritos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3405,6 +3638,9 @@
         "responses": {
           "200": {
             "description": "Quitado de favoritos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3443,6 +3679,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3530,6 +3769,9 @@
           },
           "403": {
             "description": "Necesitas una tienda activa"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       },
@@ -3546,6 +3788,9 @@
         "responses": {
           "200": {
             "description": "Portafolio eliminado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3580,6 +3825,9 @@
         "responses": {
           "200": {
             "description": "Datos del CV parseados por IA (Groq)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3613,6 +3861,9 @@
         "responses": {
           "200": {
             "description": "Resumen generado por Groq AI"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3659,6 +3910,9 @@
         "responses": {
           "200": {
             "description": "Stats de ventas, visitas, etc."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3828,6 +4082,9 @@
         "responses": {
           "200": {
             "description": "Respuesta de MIA"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3887,6 +4144,9 @@
         "responses": {
           "200": {
             "description": "Suscripción registrada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3905,6 +4165,9 @@
         "responses": {
           "200": {
             "description": "Suscripción eliminada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3938,6 +4201,9 @@
         "responses": {
           "200": {
             "description": "URL de imagen subida"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3971,6 +4237,9 @@
         "responses": {
           "200": {
             "description": "URL de video subido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -3989,6 +4258,9 @@
         "responses": {
           "200": {
             "description": "Código de referido"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4007,6 +4279,9 @@
         "responses": {
           "200": {
             "description": "Lista de usuarios referidos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4034,6 +4309,9 @@
         "responses": {
           "200": {
             "description": "Código aplicado"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         },
         "security": [
@@ -4063,6 +4341,9 @@
         "responses": {
           "200": {
             "description": "Título, descripción, imagen del enlace"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         },
         "security": [
@@ -4123,6 +4404,9 @@
         "responses": {
           "200": {
             "description": "Lista de usuarios que coinciden"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4177,6 +4461,9 @@
         "responses": {
           "200": {
             "description": "Recompensa reclamada"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4195,6 +4482,9 @@
         "responses": {
           "200": {
             "description": "Progreso de onboarding"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4213,6 +4503,9 @@
         "responses": {
           "200": {
             "description": "Resumen de actividad, balance, grupos"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4246,6 +4539,9 @@
         "responses": {
           "200": {
             "description": "Datos extraídos del documento"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -4264,6 +4560,9 @@
         "responses": {
           "200": {
             "description": "Estado actual de verificación de identidad"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
