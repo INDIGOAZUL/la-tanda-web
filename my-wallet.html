@@ -1,0 +1,2999 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00FFFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- 🔐 AUTH PROTECTION - Redirect to login if not authenticated -->
+    <script>
+    (function() {
+        const AUTH_PAGE = "/auth-enhanced.html";
+        const currentPage = window.location.pathname;
+        
+        function isValidToken(token) {
+            // v4.1.0: JWT-only validation (no dev/demo tokens)
+            if (!token || typeof token !== 'string') return false;
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) return false;
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Math.floor(Date.now() / 1000);
+                if (payload.exp && payload.exp <= now) return false;
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        // Check authentication
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("auth_token");
+        const session = localStorage.getItem("latanda_session");
+        console.log("🔍 Auth check - auth_token:", !!localStorage.getItem("auth_token"), "auth_token:", !!localStorage.getItem("auth_token"));
+        
+        let hasValidAuth = false;
+        
+        if (token && isValidToken(token)) {
+            hasValidAuth = true;
+        } else if (session) {
+            try {
+                const parsedSession = JSON.parse(session);
+                if (parsedSession.auth_token && isValidToken(parsedSession.auth_token)) {
+                    hasValidAuth = true;
+                }
+            } catch (e) {}
+        }
+        
+        if (!hasValidAuth) {
+            console.log("🔐 No valid authentication found, redirecting to login...");
+            localStorage.setItem("redirect_after_auth", currentPage);
+            window.location.href = AUTH_PAGE;
+        } else {
+            console.log("✅ Authentication verified, allowing access to wallet");
+        }
+    })();
+    </script>
+    <title data-i18n="wallet.page_title">My Wallet - La Tanda Web3</title>
+    <meta name="description" content="My Wallet - Gestiona tus fondos, transacciones y activos digitales en La Tanda">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <!-- Web3 Crypto Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
+
+    <!-- OCR Library for Receipt Processing -->
+    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js" integrity="sha384-+56qagDlzJ3YYkDcyAXRdhrP7/+ai8qJcS6HpjACl2idDoCyCqRf5VVi7E/XkGae" crossorigin="anonymous"></script>
+
+    <!-- Shared Components -->
+    <link rel="stylesheet" href="shared-components.css">
+
+    <link rel="stylesheet" href="my-wallet.css">
+    <!-- Week 2: Error Handling System -->
+    <!-- Week 3: Switched to bundled version (31% smaller) -->
+    <link rel="stylesheet" href="latanda-ux-bundle.css">
+    <link rel="stylesheet" href="pwa-styles.css">
+    <!-- PWA Service Worker -->
+    <!-- Global i18n Translation System -->
+    <script src="global-i18n-manager.js"></script>
+
+    <script src="sw-register.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.7.6/i18next.min.js" integrity="sha384-OCCT+KZFt2FsqTxlTd8CUSq86zW/ZKmV0oe7qj36oye2CDbbVuxIXTY20t/u9LJt" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2.4.2/i18nextHttpBackend.min.js" integrity="sha384-yxTj8amMhnhYI1a2BiC6D8XPHPBenxjHwY+BnQuhFYuIl32glJcrevL/W0QyUQP3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7.2.0/i18nextBrowserLanguageDetector.min.js" integrity="sha384-099MVvR7WaAXsovY5rMvaY+Uq49ZmVhGPTFSyf4wTuyjNEpC/cBjpOJJa0/J97Mk" crossorigin="anonymous"></script>
+    <script src="i18next-implementation-backend.js?v=1759688935"></script>
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <link rel="stylesheet" href="css/onboarding.css?v=1.0">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/my-wallet.html">
+    <meta property="og:title" content="Mi Billetera | La Tanda">
+    <meta property="og:description" content="Administra tu billetera digital, depositos y retiros en La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Mi Billetera | La Tanda">
+    <meta name="twitter:description" content="Administra tu billetera digital, depositos y retiros en La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <!-- Global Header Component -->
+    <div id="global-header"></div>
+    <!-- Sidebar Navigation (Consistent with home-dashboard.html) -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img loading="lazy" src="assets/logo-latanda-latest.png" alt="La Tanda Logo">
+            </div>
+            <h3 class="sidebar-title">La Tanda Web3</h3>
+            <p class="sidebar-subtitle">DeFi Ecosystem</p>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Core Navigation -->
+            <div class="nav-section">
+                <h4 class="nav-section-title" data-i18n="nav.core">CORE</h4>
+                <a href="home-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-pie nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.dashboard">Dashboard</span>
+                </a>
+                <a href="my-wallet.html" class="nav-item active">
+                    <i class="fas fa-wallet nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.wallet">My Wallet</span>
+                    <span class="nav-badge hot">HOT</span>
+                </a>
+                <a href="my-wallet.html" class="nav-item">
+                    <i class="fas fa-exchange-alt nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.transactions">Transactions</span>
+                </a>
+                <a href="kyc-registration.html" class="nav-item">
+                    <i class="fas fa-user-check nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.kyc_verification">Verificación KYC</span>
+                    <span class="nav-badge alert">!</span>
+                </a>
+            </div>
+
+            <!-- Tandas & Social -->
+            <div class="nav-section">
+                <h4 class="nav-section-title" data-i18n="nav.tandas_social">TANDAS & SOCIAL</h4>
+                <a href="groups-advanced-system.html" class="nav-item">
+                    <i class="fas fa-coins nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.my_tandas">My Tandas</span>
+                    <span class="nav-badge">3</span>
+                </a>
+                <a href="groups-advanced-system.html#create" class="nav-item">
+                    <i class="fas fa-plus-circle nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.create_tanda">Create Tanda</span>
+                </a>
+                <a href="invitaciones.html" class="nav-item">
+                    <i class="fas fa-paper-plane nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.invitations">Invitations</span>
+                    <span class="nav-badge">2</span>
+                </a>
+                <a href="marketplace-social.html" class="nav-item">
+                    <i class="fas fa-store nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.marketplace">Marketplace Social</span>
+                </a>
+            </div>
+
+            <!-- DeFi Hub -->
+            <div class="nav-section">
+                <h4 class="nav-section-title" data-i18n="nav.defi_hub">DEFI HUB</h4>
+                <a href="web3-dashboard.html" class="nav-item">
+                    <i class="fas fa-sync-alt nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.exchange">Exchange</span>
+                </a>
+                <a href="trading.html" class="nav-item">
+                    <i class="fas fa-chart-line nav-icon"></i>
+                    <span class="nav-text" data-i18n="nav.trading">Trading</span>
+                </a>
+                <!-- Staking disabled until mainnet -->
+                <!--<a href="staking.html" class="nav-item">
+                    <i class="fas fa-piggy-bank nav-icon"></i>
+                    <span class="nav-text">Staking & Farms</span>
+                </a>-->
+                <a href="lending.html" class="nav-item">
+                    <i class="fas fa-hand-holding-usd nav-icon"></i>
+                    <span class="nav-text">Lending</span>
+                    <span class="nav-badge new">NEW</span>
+                </a>
+                <a href="bridge.html" class="nav-item">
+                    <i class="fas fa-bridge nav-icon"></i>
+                    <span class="nav-text">Bridge</span>
+                    <span class="nav-badge beta">BETA</span>
+                </a>
+            </div>
+
+            <!-- Account Settings -->
+            <div class="nav-section">
+                <h4 class="nav-section-title" data-i18n="nav.account">CUENTA</h4>
+                <a href="mi-perfil.html" class="nav-item">
+                    <i class="fas fa-user-circle nav-icon"></i>
+                    <span class="nav-text">My Profile</span>
+                </a>
+                <a href="seguridad.html" class="nav-item">
+                    <i class="fas fa-shield-alt nav-icon"></i>
+                    <span class="nav-text">Security</span>
+                </a>
+                <a href="configuracion.html" class="nav-item">
+                    <i class="fas fa-cog nav-icon"></i>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" style="margin-top: 80px;">
+        <!-- Header -->
+        <header class="header" style="display:none;">
+            <div class="header-left">
+                <button class="home-btn" onclick="goHome()">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </button>
+                <h1 class="page-title">
+                    <i class="fas fa-wallet"></i>
+                    <span data-i18n="wallet.title">My Wallet</span>
+                </h1>
+            </div>
+            <div class="header-right">
+                <div class="user-balance-summary">
+                    <div class="balance-info">
+                        <span class="balance-label">Balance Total:</span>
+                        <span class="balance-amount" id="totalBalance">$3,614.23</span>
+                    </div>
+                </div>
+                <button class="balance-toggle" id="balanceToggle" onclick="toggleBalanceVisibility()">
+                    <i class="fas fa-eye" id="balanceIcon"></i>
+                </button>
+                <div class="notification-center">
+                    <button class="notification-btn" onclick="toggleNotificationCenter()">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="dropdown-header">
+                            <h4>Notificaciones</h4>
+                            <button class="clear-all-btn" onclick="clearAllNotifications()">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="empty-notifications">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>No hay notificaciones</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wallet-settings">
+                    <button class="settings-btn" onclick="toggleWalletSettings()">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <div class="settings-dropdown" id="walletSettingsDropdown">
+                        <div class="dropdown-header">
+                            <h4>Settings del Wallet</h4>
+                        </div>
+                        <div class="dropdown-content">
+                            <a href="#" class="setting-item" onclick="toggleCurrencyPreference()">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Moneda Principal</span>
+                                <span class="setting-value" id="currencyPreference">USD</span>
+                            </a>
+                            <a href="#" class="setting-item" onclick="toggleNotifications()">
+                                <i class="fas fa-bell"></i>
+                                <span>Notificaciones</span>
+                                <span class="setting-toggle" id="notificationToggle">ON</span>
+                            </a>
+                            <a href="#" class="setting-item" onclick="showSecuritySettings()">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Security</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="#" class="setting-item" onclick="showLightningWalletConfig()">
+                                <i class="fas fa-bolt"></i>
+                                <span>Lightning Wallet</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="#" class="setting-item" onclick="exportWalletData()">
+                                <i class="fas fa-download"></i>
+                                <span>Exportar Datos</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="#" class="setting-item" onclick="showPrivacySettings()">
+                                <i class="fas fa-user-secret"></i>
+                                <span>Privacidad</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Wallet Content -->
+        
+<!-- 📊 BALANCE HISTORY CHART COMPONENT (Plan C - Day 3, Task 1) -->
+<!-- Add this to my-wallet.html after the balance summary section -->
+
+<style>
+    .balance-history-section {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(127, 0, 255, 0.05) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 24px 0;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .chart-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #00FFFF;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .chart-period-btn {
+        padding: 8px 16px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 8px;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .chart-period-btn:hover {
+        background: rgba(0, 255, 255, 0.1);
+        border-color: rgba(0, 255, 255, 0.3);
+        color: #00FFFF;
+    }
+
+    .chart-period-btn.active {
+        background: linear-gradient(45deg, #00FFFF, #00D4D4);
+        color: #0f172a;
+        border-color: transparent;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .chart-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .chart-stat {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .chart-stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #00FFFF;
+        margin-bottom: 4px;
+    }
+
+    .chart-stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+        text-transform: uppercase;
+    }
+
+    .chart-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 400px;
+        color: #94a3b8;
+    }
+
+    @media (max-width: 768px) {
+        .chart-container {
+            height: 300px;
+        }
+
+        .chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .chart-controls {
+            width: 100%;
+            overflow-x: auto;
+        }
+    }
+</style>
+
+<div class="balance-history-section">
+    <div class="chart-header">
+        <h3 class="chart-title">
+            <i class="fas fa-chart-line"></i>
+            Historial de Balance
+        </h3>
+        <div class="chart-controls">
+            <button class="chart-period-btn" data-period="7" onclick="loadBalanceHistory('7d')">7D</button>
+            <button class="chart-period-btn" data-period="30" onclick="loadBalanceHistory('30d')">30D</button>
+            <button class="chart-period-btn" data-period="90" onclick="loadBalanceHistory('90d')">90D</button>
+            <button class="chart-period-btn active" data-period="all" onclick="loadBalanceHistory('all')">Todo</button>
+        </div>
+    </div>
+
+    <div class="chart-container" id="chartContainer">
+        <canvas id="balanceHistoryChart"></canvas>
+    </div>
+
+    <div class="chart-stats" id="chartStats">
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statCurrentBalance">-</div>
+            <div class="chart-stat-label">Balance Actual</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statHighest">-</div>
+            <div class="chart-stat-label">Máximo</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statLowest">-</div>
+            <div class="chart-stat-label">Mínimo</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statDeposits">-</div>
+            <div class="chart-stat-label">Total Depósitos</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statWithdrawals">-</div>
+            <div class="chart-stat-label">Total Retiros</div>
+        </div>
+        <div class="chart-stat">
+            <div class="chart-stat-value" id="statTransactions">-</div>
+            <div class="chart-stat-label">Transacciones</div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+
+<script>
+/**
+ * 📊 BALANCE HISTORY CHART
+ * Plan C - Day 3, Task 1
+ */
+
+let balanceChart = null;
+let currentPeriod = 'all';
+
+async function loadBalanceHistory(period = 'all') {
+    // Get user ID from multiple sources
+    let userId = localStorage.getItem('user_id') || localStorage.getItem('currentUserId');
+    
+    // Try latanda_user JSON
+    if (!userId || userId === 'pending_auth') {
+        try {
+            const latandaUser = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+            userId = latandaUser.id || latandaUser.user_id || userId;
+        } catch(e) {}
+    }
+    
+    // Try walletInstance
+    if (!userId || userId === 'pending_auth') {
+        if (typeof walletInstance !== 'undefined' && walletInstance.getCurrentUserId) {
+            const walletUserId = walletInstance.getCurrentUserId();
+            if (walletUserId && walletUserId !== 'pending_auth') {
+                userId = walletUserId;
+            }
+        }
+    }
+    
+    const authToken = localStorage.getItem('auth_token');
+
+    console.log('🔍 loadBalanceHistory - userId:', userId, 'authToken:', authToken ? 'present' : 'missing');
+    
+    if (!userId || userId === 'pending_auth' || !authToken) {
+        console.error('User not authenticated or using default ID');
+        // Try again in 1 second
+        setTimeout(() => loadBalanceHistory(period), 1000);
+        return;
+    }
+
+    try {
+        // Show loading
+        document.getElementById('chartContainer').innerHTML = '<div class="chart-loading"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</div>';
+
+        // Fetch balance history
+        const response = await fetch(`https://latanda.online/api/wallet/balance-history?user_id=${userId}&period=${period}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Restore canvas
+            document.getElementById('chartContainer').innerHTML = '<canvas id="balanceHistoryChart"></canvas>';
+
+            // Update period buttons
+            document.querySelectorAll('.chart-period-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.period === period) {
+                    btn.classList.add('active');
+                }
+            });
+
+            currentPeriod = period;
+
+            // Render chart
+            renderBalanceChart(data.data);
+
+            // Update stats
+            updateChartStats(data.data.stats);
+
+            console.log('✅ Balance history loaded:', data.data.history?.length || 0, 'points');
+        } else {
+            throw new Error(data.error || 'Failed to load balance history');
+        }
+    } catch (error) {
+        console.error('❌ Error loading balance history:', error);
+        document.getElementById('chartContainer').innerHTML = '<div class="chart-loading" style="color: #f87171; text-align: center;"><i class="fas fa-exclamation-triangle"></i><br>' + 'Error de conexión' + '<br><button onclick="loadBalanceHistory()" style="margin-top:10px;padding:8px 16px;background:#0066ff;color:white;border:none;border-radius:6px;cursor:pointer;">Reintentar</button></div>';
+    }
+}
+function renderBalanceChart(data) {
+    const ctx = document.getElementById('balanceHistoryChart');
+
+    if (!ctx) {
+        console.error('Canvas element not found');
+        return;
+    }
+
+    // Destroy existing chart
+    if (balanceChart) {
+        balanceChart.destroy();
+    }
+
+    // Prepare data for Chart.js
+    const labels = data.history.map(h => {
+        const date = new Date(h.date);
+        return date.toLocaleDateString('es-ES', {
+            month: 'short',
+            day: 'numeric',
+            ...(currentPeriod === 'all' ? { year: 'numeric' } : {})
+        });
+    });
+
+    const balances = data.history.map(h => h.balance);
+
+    // Create gradient
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(0, 255, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(0, 255, 255, 0.05)');
+
+    // Chart configuration
+    balanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Balance (LTD)',
+                data: balances,
+                borderColor: '#00FFFF',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#00FFFF',
+                pointBorderColor: '#0f172a',
+                pointBorderWidth: 2,
+                pointHoverBackgroundColor: '#00FFFF',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#00FFFF',
+                    bodyColor: '#f8fafc',
+                    borderColor: 'rgba(0, 255, 255, 0.3)',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const history = data.history[index];
+                            const balance = context.parsed.y;
+
+                            let label = `Balance: ${balance.toFixed(2)} LTD`;
+
+                            if (history.description) {
+                                label += `\n${history.description}`;
+                            }
+
+                            if (history.amount) {
+                                const sign = history.direction === 'in' ? '+' : '-';
+                                label += `\n${sign}${history.amount.toFixed(2)} LTD`;
+                            }
+
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: function(value) {
+                            return value.toFixed(0) + ' LTD';
+                        }
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function updateChartStats(stats) {
+    document.getElementById('statCurrentBalance').textContent = (stats.current_balance || 0).toFixed(2) + ' LTD';
+    document.getElementById('statHighest').textContent = (stats.highest_balance || stats.max_balance || 0).toFixed(2) + ' LTD';
+    document.getElementById('statLowest').textContent = (stats.lowest_balance || stats.min_balance || 0).toFixed(2) + ' LTD';
+    document.getElementById('statDeposits').textContent = (stats.total_deposits || 0).toFixed(2) + ' LTD';
+    document.getElementById('statWithdrawals').textContent = (stats.total_withdrawals || 0).toFixed(2) + ' LTD';
+    document.getElementById('statTransactions').textContent = (stats.total_transactions || stats.transaction_count || 0).toString();
+}
+
+// Auto-load on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Small delay to ensure other scripts have loaded
+    setTimeout(() => {
+        loadBalanceHistory('all');
+    }, 500);
+});
+
+// Export function for manual refresh
+window.refreshBalanceHistory = () => {
+    loadBalanceHistory(currentPeriod);
+};
+</script>
+
+<main class="wallet-content">
+
+            <!-- Quick Actions Section -->
+            <section class="quick-actions">
+                <h3 class="section-title">Acciones Rápidas</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showSendModal()">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send</span>
+                    </button>
+                    <button class="action-btn" onclick="showReceiveModal()">
+                        <i class="fas fa-qrcode"></i>
+                        <span>Recibir</span>
+                    </button>
+                    <button class="action-btn" onclick="showDepositModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Depositar</span>
+                    </button>
+                    <button class="action-btn" onclick="showWithdrawModal()">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Retirar</span>
+                    </button>
+                </div>
+            </section>
+
+
+            <!-- Recent Transactions Section -->
+            <section class="recent-transactions">
+                <div class="section-header">
+                    <h3 class="section-title">Transactions Recientes</h3>
+                    <div class="transaction-filters">
+                        <select id="transactionFilter" onchange="filterTransactions()">
+                            <option value="all">Todas</option>
+                            <option value="deposit">Depósitos</option>
+                            <option value="withdrawal">Retiros</option>
+                            <option value="transfer">Transferencias</option>
+                            <option value="tanda">Tandas</option>
+                        </select>
+                        <button class="filter-btn" onclick="showDateFilter()">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+<!-- 🔍 TRANSACTION FILTERS COMPONENT (Plan C - Day 3, Task 2) -->
+<!-- Advanced filters for transaction table in my-wallet.html -->
+
+<style>
+    .filters-section {
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(127, 0, 255, 0.05) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 24px 0;
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .filters-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #00FFFF;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filters-toggle {
+        background: transparent;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: #00FFFF;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .filters-toggle:hover {
+        background: rgba(0, 255, 255, 0.1);
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-label {
+        font-size: 12px;
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-input,
+    .filter-select {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #f8fafc;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: rgba(0, 255, 255, 0.5);
+        box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+    }
+
+    .filter-input::placeholder {
+        color: #64748b;
+    }
+
+    .filters-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .filter-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-btn-primary {
+        background: linear-gradient(45deg, #00FFFF, #00D4D4);
+        color: #0f172a;
+        flex: 1;
+    }
+
+    .filter-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 255, 255, 0.4);
+    }
+
+    .filter-btn-secondary {
+        background: rgba(148, 163, 184, 0.2);
+        color: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .filter-btn-secondary:hover {
+        background: rgba(148, 163, 184, 0.3);
+    }
+
+    .filter-results {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .filter-results-text {
+        color: #cbd5e1;
+        font-size: 14px;
+    }
+
+    .filter-results-count {
+        color: #00FFFF;
+        font-weight: 700;
+    }
+
+    .active-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    .active-filter-tag {
+        background: rgba(0, 255, 255, 0.2);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: #00FFFF;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .active-filter-tag button {
+        background: none;
+        border: none;
+        color: #00FFFF;
+        cursor: pointer;
+        padding: 0;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .filters-collapsed .filters-grid {
+        display: none;
+    }
+
+    .filters-collapsed .filters-actions {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-actions {
+            flex-direction: column;
+        }
+
+        .filter-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="filters-section" id="transactionFilters">
+    <div class="filters-header">
+        <h3 class="filters-title">
+            <i class="fas fa-filter"></i>
+            Filtros
+        </h3>
+        <button class="filters-toggle" onclick="toggleFilters()">
+            <i class="fas fa-chevron-up" id="filterToggleIcon"></i>
+            <span id="filterToggleText">Ocultar</span>
+        </button>
+    </div>
+
+    <div class="filters-grid">
+        <div class="filter-group">
+            <label class="filter-label">Tipo</label>
+            <select class="filter-select" id="filterType">
+                <option value="">Todos</option>
+                <option value="deposit">Depósito</option>
+                <option value="withdrawal">Retiro</option>
+                <option value="transfer">Transferencia</option>
+                <option value="reward">Recompensa</option>
+                <option value="payment">Pago</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Estado</label>
+            <select class="filter-select" id="filterStatus">
+                <option value="">Todos</option>
+                <option value="completed">Completado</option>
+                <option value="pending">Pendiente</option>
+                <option value="failed">Fallido</option>
+                <option value="cancelled">Cancelado</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Desde</label>
+            <input type="date" class="filter-input" id="filterDateFrom">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Hasta</label>
+            <input type="date" class="filter-input" id="filterDateTo">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Monto Mínimo</label>
+            <input type="number" class="filter-input" id="filterAmountMin" placeholder="0.00" step="0.01" min="0">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Monto Máximo</label>
+            <input type="number" class="filter-input" id="filterAmountMax" placeholder="1000.00" step="0.01" min="0">
+        </div>
+    </div>
+
+    <div class="filter-group" style="margin-top: 12px;">
+        <label class="filter-label">Buscar en descripción</label>
+        <input type="text" class="filter-input" id="filterSearch" placeholder="Buscar por descripción...">
+    </div>
+
+    <div class="filters-actions">
+        <button class="filter-btn filter-btn-primary" onclick="applyTransactionFilters()">
+            <i class="fas fa-filter"></i>
+            Aplicar Filtros
+        </button>
+        <button class="filter-btn filter-btn-secondary" onclick="clearTransactionFilters()" style="margin-right: 8px;">
+            <i class="fas fa-times"></i>
+            Limpiar
+        </button>
+        <button class="filter-btn filter-btn-export" onclick="walletInstance.exportToCSV()" title="Exportar a CSV" style="background: #28a745;">
+            <i class="fas fa-file-csv"></i> CSV
+        </button>
+        <button class="filter-btn filter-btn-export" onclick="walletInstance.exportToPDF()" title="Exportar a PDF" style="background: #dc3545;">
+            <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
+
+    <div class="active-filters" id="activeFilters"></div>
+
+    <div class="filter-results" id="filterResults" style="display: none;">
+        <span class="filter-results-text">
+            Mostrando <span class="filter-results-count" id="filteredCount">0</span> de
+            <span class="filter-results-count" id="totalCount">0</span> transacciones
+        </span>
+    </div>
+</div>
+
+<script>
+/**
+ * 🔍 TRANSACTION FILTERS SYSTEM
+ * Plan C - Day 3, Task 2
+ */
+
+let allTransactions = [];
+let filteredTransactions = [];
+let currentFilters = {};
+
+// Initialize filters from localStorage
+function initTransactionFilters() {
+    const savedFilters = localStorage.getItem('transaction_filters');
+    if (savedFilters) {
+        currentFilters = JSON.parse(savedFilters);
+        applyFiltersToUI(currentFilters);
+    }
+}
+
+// Apply saved filters to UI inputs
+function applyFiltersToUI(filters) {
+    if (filters.type) document.getElementById('filterType').value = filters.type;
+    if (filters.status) document.getElementById('filterStatus').value = filters.status;
+    if (filters.dateFrom) document.getElementById('filterDateFrom').value = filters.dateFrom;
+    if (filters.dateTo) document.getElementById('filterDateTo').value = filters.dateTo;
+    if (filters.amountMin) document.getElementById('filterAmountMin').value = filters.amountMin;
+    if (filters.amountMax) document.getElementById('filterAmountMax').value = filters.amountMax;
+    if (filters.search) document.getElementById('filterSearch').value = filters.search;
+}
+
+// Get current filter values from UI
+function getCurrentFilters() {
+    return {
+        type: document.getElementById('filterType').value,
+        status: document.getElementById('filterStatus').value,
+        dateFrom: document.getElementById('filterDateFrom').value,
+        dateTo: document.getElementById('filterDateTo').value,
+        amountMin: document.getElementById('filterAmountMin').value,
+        amountMax: document.getElementById('filterAmountMax').value,
+        search: document.getElementById('filterSearch').value.toLowerCase()
+    };
+}
+
+// Apply filters to transactions
+function applyTransactionFilters() {
+    currentFilters = getCurrentFilters();
+
+    // Save to localStorage
+    localStorage.setItem('transaction_filters', JSON.stringify(currentFilters));
+
+    // Filter transactions
+    filteredTransactions = allTransactions.filter(tx => {
+        // Filter by type
+        if (currentFilters.type && tx.type !== currentFilters.type) return false;
+
+        // Filter by status
+        if (currentFilters.status && tx.status !== currentFilters.status) return false;
+
+        // Filter by date range
+        if (currentFilters.dateFrom) {
+            const txDate = new Date(tx.created_at);
+            const fromDate = new Date(currentFilters.dateFrom);
+            if (txDate < fromDate) return false;
+        }
+
+        if (currentFilters.dateTo) {
+            const txDate = new Date(tx.created_at);
+            const toDate = new Date(currentFilters.dateTo);
+            toDate.setHours(23, 59, 59, 999); // Include entire day
+            if (txDate > toDate) return false;
+        }
+
+        // Filter by amount range
+        const amount = parseFloat(tx.amount);
+        if (currentFilters.amountMin && amount < parseFloat(currentFilters.amountMin)) return false;
+        if (currentFilters.amountMax && amount > parseFloat(currentFilters.amountMax)) return false;
+
+        // Filter by search term
+        if (currentFilters.search) {
+            const description = (tx.description || '').toLowerCase();
+            if (!description.includes(currentFilters.search)) return false;
+        }
+
+        return true;
+    });
+
+    // Update UI
+    updateFilterResults();
+    updateActiveFilters();
+    renderTransactions(filteredTransactions);
+
+    console.log(`✅ Filters applied: ${filteredTransactions.length}/${allTransactions.length} transactions`);
+}
+
+// Clear all filters
+function clearTransactionFilters() {
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterAmountMin').value = '';
+    document.getElementById('filterAmountMax').value = '';
+    document.getElementById('filterSearch').value = '';
+
+    currentFilters = {};
+    localStorage.removeItem('transaction_filters');
+
+    filteredTransactions = allTransactions;
+    updateFilterResults();
+    updateActiveFilters();
+    renderTransactions(filteredTransactions);
+
+    console.log('✅ Filters cleared');
+}
+
+// Update filter results display
+function updateFilterResults() {
+    const resultsDiv = document.getElementById('filterResults');
+    const filteredCountSpan = document.getElementById('filteredCount');
+    const totalCountSpan = document.getElementById('totalCount');
+
+    filteredCountSpan.textContent = filteredTransactions.length;
+    totalCountSpan.textContent = allTransactions.length;
+
+    resultsDiv.style.display = 'flex';
+}
+
+// Update active filters display
+function updateActiveFilters() {
+    const container = document.getElementById('activeFilters');
+    const filters = getCurrentFilters();
+    const tags = [];
+
+    if (filters.type) {
+        tags.push({ key: 'type', label: `Tipo: ${filters.type}` });
+    }
+
+    if (filters.status) {
+        tags.push({ key: 'status', label: `Estado: ${filters.status}` });
+    }
+
+    if (filters.dateFrom) {
+        tags.push({ key: 'dateFrom', label: `Desde: ${filters.dateFrom}` });
+    }
+
+    if (filters.dateTo) {
+        tags.push({ key: 'dateTo', label: `Hasta: ${filters.dateTo}` });
+    }
+
+    if (filters.amountMin) {
+        tags.push({ key: 'amountMin', label: `Min: ${filters.amountMin} LTD` });
+    }
+
+    if (filters.amountMax) {
+        tags.push({ key: 'amountMax', label: `Max: ${filters.amountMax} LTD` });
+    }
+
+    if (filters.search) {
+        tags.push({ key: 'search', label: `Buscar: "${filters.search}"` });
+    }
+
+    if (tags.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = tags.map(tag => `
+        <div class="active-filter-tag">
+            ${tag.label}
+            <button onclick="removeFilter('${tag.key}')" title="Quitar filtro">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Remove individual filter
+function removeFilter(key) {
+    const inputMap = {
+        'type': 'filterType',
+        'status': 'filterStatus',
+        'dateFrom': 'filterDateFrom',
+        'dateTo': 'filterDateTo',
+        'amountMin': 'filterAmountMin',
+        'amountMax': 'filterAmountMax',
+        'search': 'filterSearch'
+    };
+
+    if (inputMap[key]) {
+        document.getElementById(inputMap[key]).value = '';
+        applyTransactionFilters();
+    }
+}
+
+// Toggle filters visibility
+function toggleFilters() {
+    const filtersSection = document.getElementById('transactionFilters');
+    const icon = document.getElementById('filterToggleIcon');
+    const text = document.getElementById('filterToggleText');
+
+    filtersSection.classList.toggle('filters-collapsed');
+
+    if (filtersSection.classList.contains('filters-collapsed')) {
+        icon.className = 'fas fa-chevron-down';
+        text.textContent = 'Mostrar';
+    } else {
+        icon.className = 'fas fa-chevron-up';
+        text.textContent = 'Ocultar';
+    }
+}
+
+// Hook into existing transaction loading
+// This should be called after transactions are loaded
+window.setupTransactionFilters = function(transactions) {
+    allTransactions = transactions;
+    filteredTransactions = transactions;
+
+    initTransactionFilters();
+
+    // If filters were saved, apply them
+    if (Object.keys(currentFilters).length > 0) {
+        applyTransactionFilters();
+    } else {
+        updateFilterResults();
+    }
+};
+
+// Auto-apply filters on Enter key
+document.addEventListener('DOMContentLoaded', () => {
+    const filterInputs = document.querySelectorAll('.filter-input, .filter-select');
+    filterInputs.forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyTransactionFilters();
+            }
+        });
+    });
+});
+</script>
+
+
+<!-- 📥 REPORT EXPORT SYSTEM (Plan C - Day 3, Task 3) -->
+<!-- CSV and PDF export functionality for transactions and reports -->
+
+<style>
+    .export-button-group {
+        display: flex;
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .export-btn {
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(30, 41, 59, 0.8);
+        color: #f8fafc;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .export-btn:hover {
+        background: rgba(0, 255, 255, 0.1);
+        border-color: rgba(0, 255, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    .export-btn i {
+        font-size: 16px;
+    }
+
+    /* Export Modal */
+    .export-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .export-modal.active {
+        display: flex;
+    }
+
+    .export-modal-content {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .export-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .export-modal-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #00FFFF;
+    }
+
+    .export-modal-close {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .export-modal-close:hover {
+        background: rgba(148, 163, 184, 0.2);
+        color: #f8fafc;
+    }
+
+    .export-option {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .export-option:hover {
+        border-color: rgba(0, 255, 255, 0.5);
+        background: rgba(0, 255, 255, 0.05);
+    }
+
+    .export-option-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .export-option-desc {
+        font-size: 14px;
+        color: #94a3b8;
+    }
+
+    .export-format-selector {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .format-btn {
+        flex: 1;
+        padding: 16px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 2px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .format-btn:hover {
+        border-color: rgba(0, 255, 255, 0.5);
+    }
+
+    .format-btn.selected {
+        border-color: #00FFFF;
+        background: rgba(0, 255, 255, 0.1);
+    }
+
+    .format-icon {
+        font-size: 32px;
+        color: #00FFFF;
+        margin-bottom: 8px;
+    }
+
+    .format-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+
+    @media (max-width: 768px) {
+        .export-button-group {
+            flex-direction: column;
+        }
+
+        .export-btn {
+            width: 100%;
+        }
+    }
+</style>
+<!-- Export Modal -->
+<div class="export-modal" id="exportModal">
+    <div class="export-modal-content">
+        <div class="export-modal-header">
+            <h3 class="export-modal-title">Exportar Reporte</h3>
+            <button class="export-modal-close" onclick="closeExportModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="export-options">
+            <div class="export-option" onclick="selectExportType('transactions')">
+                <div class="export-option-title">
+                    <i class="fas fa-list" style="color: #00FFFF;"></i>
+                    Todas las Transacciones
+                </div>
+                <div class="export-option-desc">
+                    Exporta todas tus transacciones (con filtros aplicados)
+                </div>
+            </div>
+
+            <div class="export-option" onclick="selectExportType('monthly')">
+                <div class="export-option-title">
+                    <i class="fas fa-calendar-alt" style="color: #00FFFF;"></i>
+                    Resumen Mensual
+                </div>
+                <div class="export-option-desc">
+                    Balance y transacciones agrupadas por mes
+                </div>
+            </div>
+
+            <div class="export-option" onclick="selectExportType('income_expense')">
+                <div class="export-option-title">
+                    <i class="fas fa-chart-pie" style="color: #00FFFF;"></i>
+                    Ingresos vs Egresos
+                </div>
+                <div class="export-option-desc">
+                    Análisis detallado de ingresos y gastos
+                </div>
+            </div>
+        </div>
+
+        <div class="export-format-selector">
+            <div class="format-btn selected" data-format="csv" onclick="selectFormat('csv')">
+                <div class="format-icon"><i class="fas fa-file-csv"></i></div>
+                <div class="format-name">CSV</div>
+            </div>
+            <div class="format-btn" data-format="pdf" onclick="selectFormat('pdf')">
+                <div class="format-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="format-name">PDF</div>
+            </div>
+            <div class="format-btn" data-format="json" onclick="selectFormat('json')">
+                <div class="format-icon"><i class="fas fa-file-code"></i></div>
+                <div class="format-name">JSON</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include jsPDF for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" integrity="sha384-vuyrTV5nkscLp1knFvt+FIHfKKzmROBq5reruhMRslauj54mW+l2B8b6szMN6lCL" crossorigin="anonymous"></script>
+
+<script>
+/**
+ * 📥 REPORT EXPORT SYSTEM
+ * Plan C - Day 3, Task 3
+ */
+
+let selectedExportType = 'transactions';
+let selectedFormat = 'csv';
+
+function openExportModal() {
+    document.getElementById('exportModal').classList.add('active');
+}
+
+function closeExportModal() {
+    document.getElementById('exportModal').classList.remove('active');
+}
+
+function selectExportType(type) {
+    selectedExportType = type;
+    performExport();
+}
+
+function selectFormat(format) {
+    selectedFormat = format;
+
+    // Update UI
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.dataset.format === format) {
+            btn.classList.add('selected');
+        }
+    });
+}
+
+// Quick export (current filtered transactions)
+function exportTransactionsQuick(format) {
+    const transactions = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+
+    if (format === 'csv') {
+        exportTransactionsCSV(transactions);
+    } else if (format === 'pdf') {
+        exportTransactionsPDF(transactions);
+    } else if (format === 'json') {
+        exportTransactionsJSON(transactions);
+    }
+}
+
+// Perform export based on selected type and format
+function performExport() {
+    closeExportModal();
+
+    console.log(`📥 Exporting: ${selectedExportType} as ${selectedFormat}`);
+
+    if (selectedExportType === 'transactions') {
+        const transactions = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+
+        if (selectedFormat === 'csv') {
+            exportTransactionsCSV(transactions);
+        } else if (selectedFormat === 'pdf') {
+            exportTransactionsPDF(transactions);
+        } else if (selectedFormat === 'json') {
+            exportTransactionsJSON(transactions);
+        }
+    } else if (selectedExportType === 'monthly') {
+        exportMonthlyReport();
+    } else if (selectedExportType === 'income_expense') {
+        exportIncomeExpenseReport();
+    }
+}
+
+// Export transactions as CSV
+function exportTransactionsCSV(transactions) {
+    if (!transactions || transactions.length === 0) {
+        showWarning('No hay transacciones para exportar');
+        return;
+    }
+
+    // CSV header
+    let csv = 'ID,Fecha,Tipo,Estado,Monto (LTD),Descripción,De Usuario,A Usuario\n';
+
+    // Add rows
+    transactions.forEach(tx => {
+        const row = [
+            tx.id,
+            new Date(tx.created_at).toLocaleString('es-ES'),
+            tx.type,
+            tx.status,
+            tx.amount,
+            `"${(tx.description || '').replace(/"/g, '""')}"`, // Escape quotes
+            tx.from_user_id || '',
+            tx.to_user_id || ''
+        ].join(',');
+
+        csv += row + '\n';
+    });
+
+    // Download
+    downloadFile(csv, `transacciones_${getDateStamp()}.csv`, 'text/csv');
+
+    console.log(`✅ Exported ${transactions.length} transactions as CSV`);
+}
+
+// Export transactions as PDF
+function exportTransactionsPDF(transactions) {
+    if (!transactions || transactions.length === 0) {
+        showWarning('No hay transacciones para exportar');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(0, 255, 255);
+    doc.text('La Tanda - Reporte de Transacciones', 14, 20);
+
+    // Date
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 28);
+
+    // Summary
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text(`Total de transacciones: ${transactions.length}`, 14, 36);
+
+    // Calculate totals
+    const deposits = transactions.filter(tx => tx.type === 'deposit').reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+    const withdrawals = transactions.filter(tx => tx.type === 'withdrawal').reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+
+    doc.text(`Total depósitos: ${deposits.toFixed(2)} LTD`, 14, 42);
+    doc.text(`Total retiros: ${withdrawals.toFixed(2)} LTD`, 14, 48);
+
+    // Table
+    const tableData = transactions.map(tx => [
+        new Date(tx.created_at).toLocaleDateString('es-ES'),
+        tx.type,
+        tx.status,
+        `${tx.amount.toFixed(2)} LTD`,
+        (tx.description || '').substring(0, 40)
+    ]);
+
+    doc.autoTable({
+        startY: 55,
+        head: [['Fecha', 'Tipo', 'Estado', 'Monto', 'Descripción']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+            fillColor: [0, 255, 255],
+            textColor: [0, 0, 0]
+        },
+        styles: {
+            fontSize: 8
+        }
+    });
+
+    // Download
+    doc.save(`transacciones_${getDateStamp()}.pdf`);
+
+    console.log(`✅ Exported ${transactions.length} transactions as PDF`);
+}
+
+// Export transactions as JSON
+function exportTransactionsJSON(transactions) {
+    if (!transactions || transactions.length === 0) {
+        showWarning('No hay transacciones para exportar');
+        return;
+    }
+
+    const data = {
+        export_date: new Date().toISOString(),
+        user_id: localStorage.getItem('user_id'),
+        total_transactions: transactions.length,
+        transactions: transactions
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    downloadFile(json, `transacciones_${getDateStamp()}.json`, 'application/json');
+
+    console.log(`✅ Exported ${transactions.length} transactions as JSON`);
+}
+
+// Export monthly report
+function exportMonthlyReport() {
+    const transactions = allTransactions;
+
+    // Group by month
+    const monthlyData = {};
+
+    transactions.forEach(tx => {
+        const date = new Date(tx.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = {
+                deposits: 0,
+                withdrawals: 0,
+                count: 0
+            };
+        }
+
+        monthlyData[monthKey].count++;
+
+        if (tx.type === 'deposit') {
+            monthlyData[monthKey].deposits += parseFloat(tx.amount);
+        } else if (tx.type === 'withdrawal') {
+            monthlyData[monthKey].withdrawals += parseFloat(tx.amount);
+        }
+    });
+
+    if (selectedFormat === 'csv') {
+        let csv = 'Mes,Depósitos (LTD),Retiros (LTD),Balance Neto (LTD),Transacciones\n';
+
+        Object.keys(monthlyData).sort().forEach(month => {
+            const data = monthlyData[month];
+            const net = data.deposits - data.withdrawals;
+            csv += `${month},${data.deposits.toFixed(2)},${data.withdrawals.toFixed(2)},${net.toFixed(2)},${data.count}\n`;
+        });
+
+        downloadFile(csv, `resumen_mensual_${getDateStamp()}.csv`, 'text/csv');
+    }
+
+    console.log('✅ Monthly report exported');
+}
+
+// Export income vs expense report
+function exportIncomeExpenseReport() {
+    const transactions = allTransactions;
+
+    const income = transactions.filter(tx => ['deposit', 'reward'].includes(tx.type));
+    const expenses = transactions.filter(tx => ['withdrawal', 'payment'].includes(tx.type));
+
+    const totalIncome = income.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+    const totalExpenses = expenses.reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+
+    if (selectedFormat === 'csv') {
+        let csv = 'Categoría,Tipo,Monto (LTD),Cantidad\n';
+        csv += `Ingresos,Total,${totalIncome.toFixed(2)},${income.length}\n`;
+        csv += `Egresos,Total,${totalExpenses.toFixed(2)},${expenses.length}\n`;
+        csv += `Balance Neto,Total,${(totalIncome - totalExpenses).toFixed(2)},\n`;
+
+        downloadFile(csv, `ingresos_egresos_${getDateStamp()}.csv`, 'text/csv');
+    }
+
+    console.log('✅ Income vs Expense report exported');
+}
+
+// Utility: Download file
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Utility: Get date stamp for filenames
+function getDateStamp() {
+    const now = new Date();
+    return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeExportModal();
+    }
+});
+</script>
+
+<!-- Transaction Summary -->
+                <div id="transactionsSummary"></div>
+
+                <div class="transaction-list" id="transactionsList">
+                    <!-- Transactions will be populated by JavaScript -->
+                    <div class="loading-transactions">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Cargando transacciones...</p>
+                    </div>
+                </div>
+                <button class="view-all-btn" onclick="goToTransactions()">
+                    View Todas las Transactions
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Send Modal -->
+    <div class="modal" id="sendModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-paper-plane"></i> Send Fondos</h3>
+                <button class="modal-close" onclick="closeSendModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="sendForm">
+                    <div class="input-group">
+                        <label for="recipientEmail">Destinatario (Email o User)</label>
+                        <input type="text" id="recipientEmail" placeholder="usuario@email.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="sendAmount">Monto</label>
+                        <input type="number" id="sendAmount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="sendCurrency">Moneda</label>
+                        <select id="sendCurrency" required>
+                            <option value="USD">USD</option>
+                            <option value="HNL">HNL</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="sendNote">Nota (opcional)</label>
+                        <textarea id="sendNote" placeholder="Concepto de la transferencia"></textarea>
+                    </div>
+                    <div class="transaction-fees">
+                        <p>Comisión: <span id="sendFee">$0.00</span></p>
+                        <p>Total a enviar: <span id="sendTotal">$0.00</span></p>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeSendModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Modal -->
+    <div class="modal" id="receiveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-qrcode"></i> Recibir Fondos</h3>
+                <button class="modal-close" onclick="closeReceiveModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="receive-options">
+                    <div class="input-group">
+                        <label for="receiveAmount">Monto (opcional)</label>
+                        <input type="number" id="receiveAmount" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="receiveCurrency">Moneda</label>
+                        <select id="receiveCurrency">
+                            <option value="USD">USD</option>
+                            <option value="HNL">HNL</option>
+                        </select>
+                    </div>
+                    <div class="qr-container">
+                        <canvas id="qrCode"></canvas>
+                    </div>
+                    <div class="receive-info">
+                        <p class="wallet-address">Tu dirección de wallet:</p>
+                        <div class="address-container">
+                            <span id="walletAddress">latanda_user_12345</span>
+                            <button class="copy-btn" onclick="copyAddress()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeReceiveModal()">Cerrar</button>
+                        <button type="button" class="btn-primary" onclick="shareQR()">Compartir QR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Opciones de Depósito</h3>
+                <button class="modal-close" onclick="closeDepositModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Method Selection Screen -->
+                <div class="method-selection" id="methodSelection">
+                    <div class="selection-header">
+                        <h4>Selecciona tu método de depósito preferido:</h4>
+                    </div>
+
+                    <!-- Banking Category -->
+                    <div class="category-section">
+                        <h5 class="category-title">🏛️ DEPÓSITO BANCARIO</h5>
+                        <div class="method-options">
+                            <div class="method-option" onclick="selectDepositMethod('atlantida')">
+                                <div class="method-icon">🏛️</div>
+                                <div class="method-info">
+                                    <h6>Banco Atlántida</h6>
+                                    <p>Transferencia bancaria tradicional</p>
+                                    <div class="method-details">
+                                        <span class="time">⏱️ 24-48 horas</span>
+                                        <span class="type">📋 Manual</span>
+                                    </div>
+                                </div>
+                                <div class="method-arrow">→</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cryptocurrency Category -->
+                    <div class="category-section">
+                        <h5 class="category-title">💎 CRIPTOMONEDAS</h5>
+                        <div class="method-options">
+                            <div class="method-option" onclick="selectDepositMethod('lightning')">
+                                <div class="method-icon">⚡</div>
+                                <div class="method-info">
+                                    <h6>Blink Lightning</h6>
+                                    <p>Pago instantáneo Bitcoin Lightning</p>
+                                    <div class="method-details">
+                                        <span class="time">⏱️ Instantáneo</span>
+                                        <span class="type">🤖 Automático</span>
+                                    </div>
+                                </div>
+                                <div class="method-arrow">→</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Future Categories (Coming Soon) -->
+                    <div class="category-section coming-soon">
+                        <h5 class="category-title">💳 TARJETAS DE CRÉDITO/DÉBITO</h5>
+                        <div class="coming-soon-message">
+                            <span>🚧 Próximamente disponible</span>
+                        </div>
+                    </div>
+
+                    <div class="category-section coming-soon">
+                        <h5 class="category-title">📱 PAGOS MÓVILES</h5>
+                        <div class="coming-soon-message">
+                            <span>🚧 Próximamente disponible</span>
+                        </div>
+                    </div>
+
+                    <div class="selection-actions">
+                        <button type="button" class="btn-secondary" onclick="closeDepositModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Banco Atlántida Form (Hidden initially) -->
+                <div class="atlantida-deposit-form" id="atlantidaForm" style="display: none;">
+                    <div class="method-header">
+                        <button class="back-btn" onclick="showMethodSelection()">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h4>🏛️ DEPÓSITO BANCARIO</h4>
+                    </div>
+
+                    <div class="bank-details-section">
+                        <h5>📋 DATOS PARA TU TRANSFERENCIA:</h5>
+                        <div class="bank-details-grid">
+                            <div class="detail-item">
+                                <label>🏦 Banco:</label>
+                                <span>Banco Atlántida</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>📋 Tipo de cuenta:</label>
+                                <span>Cheques</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>🔢 Número de cuenta:</label>
+                                <div class="copyable-field">
+                                    <span id="bankDetailsAccountNumber">30613012837</span>
+                                    <button class="copy-btn" onclick="copyToClipboard('30613012837', this)">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <label>👤 Titular:</label>
+                                <span>Narjell Ebanks</span>
+                            </div>
+                            <div class="detail-item reference-field">
+                                <label>📝 Referencia:</label>
+                                <div class="copyable-field">
+                                    <span id="depositReference" class="generated-reference"></span>
+                                    <button class="copy-btn" onclick="copyReference()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instructions-section">
+                        <h5>💡 INSTRUCCIONES:</h5>
+                        <ol class="instruction-list">
+                            <li>Realiza la transferencia</li>
+                            <li><strong>OBLIGATORIO:</strong> Incluye esta referencia</li>
+                            <li>Sube tu comprobante</li>
+                            <li>Espera confirmación (24-48h)</li>
+                        </ol>
+                    </div>
+
+                    <div class="upload-section">
+                        <h5>📎 SUBIR COMPROBANTE:</h5>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <div class="upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p><strong>📁 SELECCIONAR ARCHIVO</strong></p>
+                                <p>O arrastra tu imagen aquí</p>
+                                <input type="file" id="depositReceipt" accept="image/*,.pdf" onchange="handleFileUpload(this)">
+                            </div>
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <img loading="lazy" id="previewImage" src="" alt="Preview">
+                                <div class="file-info">
+                                    <span id="fileName"></span>
+                                    <button class="remove-file-btn" onclick="removeFile()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="amount-section">
+                        <h5>💵 MONTO DEPOSITADO:</h5>
+                        <div class="amount-input-group">
+                            <input type="number" id="depositAmount" placeholder="0.00" step="0.01" required>
+                            <span class="currency-label">HNL</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="showMethodSelection()">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </button>
+                        <button type="button" class="btn-primary" onclick="submitDeposit()" id="submitDepositBtn" disabled>
+                            <i class="fas fa-check"></i> Send Comprobante
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lightning Form (Hidden initially) -->
+                <div class="lightning-deposit-form" id="lightningForm" style="display: none;">
+                    <div class="method-header">
+                        <button class="back-btn" onclick="showMethodSelection()">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h4>⚡ DEPÓSITO LIGHTNING</h4>
+                    </div>
+
+                    <div class="lightning-amount-section">
+                        <h5>💵 MONTO A DEPOSITAR:</h5>
+                        <div class="amount-input-group">
+                            <input type="number" id="lightningAmount" placeholder="0.00" step="0.01" min="1" required onchange="generateLightningInvoice()">
+                            <span class="currency-label">USD</span>
+                        </div>
+                        <p class="amount-note">Monto mínimo: $1 USD</p>
+                    </div>
+
+                    <div class="lightning-invoice-section" id="invoiceSection" style="display: none;">
+                        <h5>🔗 INVOICE LIGHTNING:</h5>
+                        <div class="invoice-container">
+                            <textarea id="lightningInvoice" readonly placeholder="Se generará automáticamente..."></textarea>
+                            <div class="invoice-actions">
+                                <button class="copy-btn" onclick="copyLightningInvoice()">
+                                    <i class="fas fa-copy"></i> Copiar
+                                </button>
+                                <button class="open-wallet-btn" onclick="openLightningWallet()">
+                                    <i class="fas fa-external-link-alt"></i> Abrir Wallet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lightning-instructions" id="lightningInstructions" style="display: none;">
+                        <h5>💡 INSTRUCCIONES:</h5>
+                        <ol class="instruction-list">
+                            <li>Copia el invoice Lightning</li>
+                            <li>Abre tu wallet Lightning favorito</li>
+                            <li>Pega el invoice y confirma el pago</li>
+                            <li>¡Tu saldo se actualizará automáticamente!</li>
+                        </ol>
+                    </div>
+
+                    <div class="lightning-status" id="lightningStatus" style="display: none;">
+                        <div class="status-indicator">
+                            <div class="loading-spinner"></div>
+                            <span>⏱️ Esperando pago...</span>
+                        </div>
+                        <p>Verificando automáticamente el pago cada 5 segundos</p>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="showMethodSelection()">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </button>
+                        <button type="button" class="btn-primary" onclick="checkLightningPayment()" id="checkPaymentBtn" style="display: none;">
+                            <i class="fas fa-search"></i> Verificar Pago
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Withdrawal Modal -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content withdraw-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-money-bill-wave"></i> Retirar Fondos</h3>
+                <button class="modal-close" onclick="closeWithdrawModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Balance Display -->
+                <div class="balance-display">
+                    <div class="available-balance">
+                        <span class="balance-label">Balance disponible:</span>
+                        <span class="balance-amount" id="withdrawAvailableBalance">$0.00</span>
+                    </div>
+                </div>
+
+                <form id="withdrawForm">
+                    <!-- Amount Input -->
+                    <div class="input-group amount-input-group">
+                        <label for="withdrawAmount" class="input-label">Monto a retirar</label>
+                        <div class="amount-input-container">
+                            <input
+                                type="number"
+                                id="withdrawAmount"
+                                class="amount-input"
+                                placeholder="2000"
+                                step="0.01"
+                                min="1"
+                                max="999999"
+                                required
+                                oninput="walletInstance.calculateWithdrawalFees()"
+                            >
+                            <div class="quick-amounts">
+                                <button type="button" class="quick-amount-btn" onclick="walletInstance.setWithdrawAmount(100)">100</button>
+                                <button type="button" class="quick-amount-btn" onclick="walletInstance.setWithdrawAmount(500)">500</button>
+                                <button type="button" class="quick-amount-btn" onclick="walletInstance.setWithdrawAmount(1000)">1000</button>
+                                <button type="button" class="quick-amount-btn" onclick="walletInstance.setWithdrawAmount('max')">Máximo</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Currency Selection -->
+                    <div class="input-group currency-group">
+                        <label for="withdrawCurrency" class="input-label">Moneda</label>
+                        <div class="currency-selector">
+                            <select id="withdrawCurrency" class="currency-select" onchange="walletInstance.calculateWithdrawalFees()">
+                                <option value="USD">USD - Dólar Estadounidense</option>
+                                <option value="HNL" selected>HNL - Lempira Hondureña</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bank Account Selection -->
+                    <div class="input-group bank-account-group">
+                        <label for="bankAccount" class="input-label">Account bancaria</label>
+                        <div class="bank-account-selector">
+                            <select id="bankAccount" class="bank-account-select" onchange="walletInstance.onBankAccountChange()">
+                                <option value="">Seleccionar cuenta guardada</option>
+                                <option value="add_new" class="add-new-option">+ Agregar nueva cuenta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Add New Bank Account Form (Initially Hidden) -->
+                    <div class="new-bank-account-form" id="newBankAccountForm" style="display: none;">
+                        <div class="form-section-title">
+                            <i class="fas fa-university"></i> Nueva cuenta bancaria
+                        </div>
+                        <div class="bank-form-grid">
+                            <div class="input-group">
+                                <label for="bankName">Banco *</label>
+                                <select id="bankName" required>
+                                    <option value="">Seleccionar banco</option>
+                                    <option value="Banco Atlántida">Banco Atlántida</option>
+                                    <option value="BANADESA">BANADESA</option>
+                                    <option value="BAC Honduras">BAC Honduras</option>
+                                    <option value="Banco Ficohsa">Banco Ficohsa</option>
+                                    <option value="Banco de Occidente">Banco de Occidente</option>
+                                    <option value="Banco Promerica">Banco Promerica</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="accountNumber">Número de cuenta *</label>
+                                <input type="text" id="accountNumber" placeholder="Ej: 30613012837" maxlength="20" minlength="8" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="accountHolder">Titular de la cuenta *</label>
+                                <input type="text" id="accountHolder" placeholder="Nombre completo del titular" minlength="3" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="accountType">Tipo de cuenta *</label>
+                                <select id="accountType" required>
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="ahorros">Account de ahorros</option>
+                                    <option value="corriente">Account corriente</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="save-account-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="saveAccount" checked>
+                                <span class="checkmark"></span>
+                                Save esta cuenta para futuros retiros
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Fee Calculation Display -->
+                    <div class="withdrawal-summary">
+                        <div class="fee-breakdown">
+                            <div class="fee-item">
+                                <span class="fee-label">Comisión de retiro:</span>
+                                <span class="fee-amount" id="withdrawalFee">0.00 HNL</span>
+                            </div>
+                            <div class="fee-item total-item">
+                                <span class="fee-label">Recibirás:</span>
+                                <span class="fee-amount total-amount" id="withdrawalTotal">0.00 HNL</span>
+                            </div>
+                        </div>
+                        <div class="fee-note">
+                            <i class="fas fa-gift"></i>
+                            <span>¡Retiros sin comisiones! Los fondos son procesados en 1-3 días hábiles</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeWithdrawModal()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn-primary" id="withdrawSubmitBtn" onclick="console.log('🏦 BUTTON CLICKED DIRECTLY'); return true;">
+                            <i class="fas fa-money-bill-wave"></i> Retirar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Procesando transacción...</p>
+        </div>
+    </div>
+
+    <!-- Wallet Lock Screen -->
+    <div class="wallet-lock-screen" id="walletLockScreen" style="display: none;">
+        <div class="lock-screen-content">
+            <div class="lock-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2>Wallet Bloqueado</h2>
+            <p>Ingresa tu PIN para desbloquear</p>
+            <button class="btn-primary" onclick="unlockWallet()">Desbloquear</button>
+        </div>
+    </div>
+
+    <!-- Lightning Wallet Configuration Modal -->
+    <div class="modal" id="lightningWalletModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bolt"></i> Lightning Wallet</h3>
+                <button class="modal-close" onclick="closeLightningWalletModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Lightning Wallet Status -->
+                <div class="lightning-wallet-status" id="lightningWalletStatus">
+                    <div class="status-card not-connected" id="connectionStatus">
+                        <div class="status-icon">
+                            <i class="fas fa-bolt-slash"></i>
+                        </div>
+                        <div class="status-info">
+                            <h4>Lightning Wallet No Conectado</h4>
+                            <p>Conecta tu wallet Lightning para transferencias instantáneas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lightning Balance Display -->
+                <div class="lightning-balance-section" id="lightningBalanceSection" style="display: none;">
+                    <h4><i class="fas fa-wallet"></i> Balance Lightning</h4>
+                    <div class="lightning-balance-card">
+                        <div class="balance-display">
+                            <div class="balance-amount">
+                                <span class="sats-amount" id="lightningBalanceSats">0</span>
+                                <span class="sats-label">sats</span>
+                            </div>
+                            <div class="balance-usd">
+                                <span id="lightningBalanceUSD">$0.00</span> USD
+                            </div>
+                        </div>
+                        <div class="balance-actions">
+                            <button class="btn-secondary" onclick="refreshLightningBalance()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                            <button class="btn-primary" onclick="showLightningTransfer()">
+                                <i class="fas fa-exchange-alt"></i> Transferir a My Wallet
+                            </button>
+                        </div>
+                        <div class="wallet-management">
+                            <button class="btn-disconnect" onclick="disconnectLightningWallet()">
+                                <i class="fas fa-unlink"></i> Desconectar Wallet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connection Options -->
+                <div class="connection-options" id="connectionOptions">
+                    <h4><i class="fas fa-plug"></i> Opciones de Conexión</h4>
+                    <div class="connection-methods">
+                        <div class="connection-method" onclick="connectBlink()">
+                            <div class="method-icon">⚡</div>
+                            <div class="method-info">
+                                <h5>Blink Wallet</h5>
+                                <p>Conectar con tu cuenta Blink</p>
+                                <span class="method-status">Recomendado</span>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="connection-method" onclick="connectLNURL()">
+                            <div class="method-icon">🔗</div>
+                            <div class="method-info">
+                                <h5>LNURL-Auth</h5>
+                                <p>Conexión segura con código QR</p>
+                                <span class="method-status">Seguro</span>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                        <div class="connection-method" onclick="connectManual()">
+                            <div class="method-icon">⚙️</div>
+                            <div class="method-info">
+                                <h5>Settings Manual</h5>
+                                <p>Para usuarios avanzados</p>
+                                <span class="method-status">Avanzado</span>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Section -->
+                <div class="lightning-transfer-section" id="lightningTransferSection" style="display: none;">
+                    <h4><i class="fas fa-exchange-alt"></i> Transferir Fondos</h4>
+                    <div class="transfer-form">
+                        <div class="input-group">
+                            <label for="transferAmount">Monto a transferir</label>
+                            <div class="amount-input-group">
+                                <input type="number" id="transferAmount" placeholder="0.00" step="0.01" min="1">
+                                <span class="currency-label">USD</span>
+                            </div>
+                            <div class="conversion-info">
+                                <span id="transferSatsEquivalent">≈ 0 sats</span>
+                            </div>
+                        </div>
+                        <div class="transfer-summary">
+                            <div class="summary-row">
+                                <span>De:</span>
+                                <span>Lightning Wallet</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>A:</span>
+                                <span>My Wallet La Tanda</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Velocidad:</span>
+                                <span class="instant">⚡ Instantáneo</span>
+                            </div>
+                        </div>
+                        <div class="transfer-actions">
+                            <button class="btn-secondary" onclick="cancelTransfer()">
+                                Cancel
+                            </button>
+                            <button class="btn-primary" onclick="executeLightningTransfer()" id="executeTransferBtn" disabled>
+                                <i class="fas fa-bolt"></i> Transferir Ahora
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Details Modal -->
+    <div class="modal" id="receiptModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="receiptModalTitle">📄 Detalles del Comprobante</h3>
+                <button class="modal-close" onclick="closeReceiptModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="receiptModalBody">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Review Modal -->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="notification-styles.css">
+
+    <!-- JavaScript -->
+    <!-- Shared Components -->
+    <script src="shared-components.js?v=7.18"></script>
+
+    <!-- Professional Deposit Flow System -->
+    <script src="notification-system.js"></script>
+    <!-- Week 2: Complete Error Handling System -->
+    <script src="loading-manager.js"></script>
+    <script src="error-handler.js"></script>
+    <script src="receipt-manager.js"></script>
+    <script src="ocr-receipt-processor.js"></script>
+    <script src="deposit-flow-manager.js"></script>
+    <script src="my-wallet.js?v=20260211001"></script>
+
+    <!-- 🌐 API Integration Patch -->
+    <script>
+/**
+ * 🌐 API Integration Patch for my-wallet.html
+ * This script patches the wallet functions to use live API endpoints
+ */
+
+console.log('🔧 Loading API Integration Patch...');
+
+// Wait for walletInstance to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => patchWalletAPI(), 500);
+});
+
+function patchWalletAPI() {
+    if (typeof walletInstance === 'undefined') {
+        console.warn('⚠️ walletInstance not found, retrying...');
+        setTimeout(() => patchWalletAPI(), 1000);
+        return;
+    }
+
+    console.log('🔧 Patching Wallet API methods...');
+
+    // ============================================
+    // 1. Patch getCurrentUserId()
+    // ============================================
+    walletInstance.getCurrentUserId = function() {
+        // Try to get user ID from latanda_user object first
+        const latandaUser = localStorage.getItem("latanda_user");
+        if (latandaUser) {
+            try {
+                const userData = JSON.parse(latandaUser);
+                if (userData.id) {
+                    console.log("✅ Got user ID from latanda_user:", userData.id);
+                    return userData.id;
+                }
+            } catch (e) { console.log("⚠️ Error parsing latanda_user"); }
+        }
+        // Fallback to direct storage keys
+        const userId = sessionStorage.getItem("latanda_user_id") || 
+                      localStorage.getItem("latanda_user_id") || 
+                      sessionStorage.getItem("userId") || 
+                      localStorage.getItem("userId") ||
+                      localStorage.getItem("user_id");
+        if (userId) return userId;
+        console.log("⚠️ No user ID found, using default");
+        return "pending_auth";
+    };
+
+    // ============================================
+    // 2. Patch loadBalancesFromAPI()
+    // ============================================
+    walletInstance.loadBalancesFromAPI = async function() {
+        try {
+            this.showBalanceLoadingState && this.showBalanceLoadingState();
+
+            const cachedBalances = this.getCachedBalances && this.getCachedBalances();
+            if (cachedBalances && this.isCacheValid && this.isCacheValid('balances')) {
+                console.log('📦 Using cached balance data');
+                this.balances = cachedBalances;
+                this.hideBalanceLoadingState && this.hideBalanceLoadingState();
+                return;
+            }
+
+            const userId = this.getCurrentUserId();
+
+            console.log('🔄 Fetching balances from API for user:', userId);
+            const response = await fetch(`https://latanda.online/api/wallet/balance?user_id=${userId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.userSession?.auth_token || this.userSession?.token || localStorage.getItem('auth_token')}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (data && data.success && data.data) {
+                console.log('✅ Balance loaded from API:', data.data);
+
+                // Parse the nested data structure from API
+                const balanceData = data.data.data || data.data;
+                const balances = balanceData.balances || balanceData;
+
+                this.balances = {
+                    USD: parseFloat(balances.total_usd || balances.available_usd || balanceData.balance || 0),
+                    HNL: parseFloat(balances.total_hnl || balances.available_hnl || 0),
+                    LTD: parseFloat(balances.ltd_tokens || balanceData.ltd_balance || 0)
+                };
+
+                localStorage.setItem('balance_cache', JSON.stringify({
+                    balances: this.balances,
+                    timestamp: Date.now()
+                }));
+
+                // Update the totalBalance display element
+                const totalBalanceEl = document.getElementById('totalBalance');
+                if (totalBalanceEl) {
+                    const ltdBalance = this.balances.LTD || 0;
+                    totalBalanceEl.textContent = ltdBalance.toFixed(2) + ' LTD';
+                    console.log('✅ Updated totalBalance display:', ltdBalance, 'LTD');
+                }
+
+            } else {
+                throw new Error('No balance data in API response');
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading balances from API:', error);
+
+            const cachedBalances = this.getCachedBalances && this.getCachedBalances();
+            if (cachedBalances) {
+                this.balances = cachedBalances;
+            } else {
+                const savedBalances = localStorage.getItem('balances');
+                this.balances = savedBalances ? JSON.parse(savedBalances) : { USD: 0.00, HNL: 0.00, LTD: 0.00 };
+            }
+        } finally {
+            this.hideBalanceLoadingState && this.hideBalanceLoadingState();
+        }
+    };
+
+    // ============================================
+    // 3. Patch fetchTransactionHistory()
+    // ============================================
+    walletInstance.fetchTransactionHistory = async function() {
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isLocal) {
+                console.log('🏠 Local mode: Loading from localStorage');
+                this.loadLocalTransactionHistory && this.loadLocalTransactionHistory();
+                return;
+            }
+
+            const userId = this.getCurrentUserId();
+            console.log('🔄 Fetching transactions from API for user:', userId);
+
+            const response = await fetch('https://latanda.online/api/user/transactions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.userSession?.auth_token || this.userSession?.token || localStorage.getItem('auth_token')}`
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    limit: 100,
+                    offset: 0
+                })
+            });
+
+            const data = await response.json();
+
+            if (data && data.success && data.data && data.data.transactions) {
+                this.transactionHistory = data.data.transactions.map(tx => ({
+                    id: tx.id || tx.transaction_id || 'tx_' + Date.now(),
+                    type: tx.type || 'transfer',
+                    status: tx.status || 'completed',
+                    amount: parseFloat(tx.amount || 0),
+                    currency: tx.currency || 'USD',
+                    description: tx.description || tx.type,
+                    timestamp: tx.created_at || tx.timestamp || new Date().toISOString(),
+                    date: tx.created_at || tx.timestamp || new Date().toISOString(),
+                    recipient: tx.to || tx.receiver || 'User',
+                    fee: parseFloat(tx.fee || 0)
+                }));
+
+                console.log('✅ Loaded ' + this.transactionHistory.length + ' transactions from API');
+                localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+            } else {
+                console.warn('⚠️ No transactions, loading from cache');
+                this.loadLocalTransactionHistory && this.loadLocalTransactionHistory();
+            }
+
+        } catch (error) {
+            console.error('❌ Error loading transactions:', error);
+            this.loadLocalTransactionHistory && this.loadLocalTransactionHistory();
+        }
+    };
+
+    // ============================================
+    // 4. Patch processSendTransaction()
+    // ============================================
+    walletInstance.processSendTransaction = async function() {
+        try {
+            walletInstance.showLoading('Procesando envío...');
+
+            const formData = {
+                recipient: document.getElementById('recipientEmail').value,
+                amount: parseFloat(document.getElementById('sendAmount').value),
+                currency: document.getElementById('sendCurrency').value,
+                note: document.getElementById('sendNote').value
+            };
+
+            if (this.validateSendForm && !(await this.validateSendForm(formData))) {
+                return;
+            }
+
+            if (formData.amount > this.balances[formData.currency]) {
+                throw new Error('Saldo insuficiente');
+            }
+
+            try {
+                const userId = this.getCurrentUserId();
+                console.log('🔄 Sending transfer via API:', { userId, ...formData });
+
+                const response = await fetch('https://latanda.online/api/wallet/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.userSession?.auth_token || this.userSession?.token || localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        recipient: formData.recipient,
+                        amount: formData.amount,
+                        currency: formData.currency,
+                        note: formData.note,
+                        type: 'internal_transfer'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data && data.success) {
+                    console.log('✅ Transfer successful:', data);
+
+                    this.balances[formData.currency] = data.data?.new_balance !== undefined ?
+                        data.data.new_balance : this.balances[formData.currency] - formData.amount;
+
+                    const newTransaction = {
+                        id: data.data?.transaction_id || `tx_${Date.now()}`,
+                        type: 'transfer',
+                        amount: formData.amount,
+                        currency: formData.currency,
+                        description: `Envío a ${formData.recipient}`,
+                        status: data.data?.status || 'completed',
+                        timestamp: new Date(),
+                        date: new Date().toISOString(),
+                        recipient: formData.recipient,
+                        fee: data.data?.fee || 0
+                    };
+
+                    this.transactionHistory.unshift(newTransaction);
+                    localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+
+                    this.showSuccess && this.showSuccess('Transferencia exitosa');
+
+                } else {
+                    throw new Error(data.message || 'Transfer failed');
+                }
+
+            } catch (apiError) {
+                console.error('❌ API transfer failed:', apiError);
+                console.log('📦 Using offline mode');
+
+                this.balances[formData.currency] -= formData.amount;
+
+                const newTransaction = {
+                    id: `tx_${Date.now()}`,
+                    type: 'transfer',
+                    amount: formData.amount,
+                    currency: formData.currency,
+                    description: `Envío a ${formData.recipient} (Offline)`,
+                    status: 'pending',
+                    timestamp: new Date(),
+                    recipient: formData.recipient,
+                    offline: true
+                };
+
+                this.transactionHistory.unshift(newTransaction);
+                localStorage.setItem('transactionHistory', JSON.stringify(this.transactionHistory));
+            }
+
+            this.updateBalanceDisplay && this.updateBalanceDisplay();
+            this.updateTransactionHistory && this.updateTransactionHistory();
+            localStorage.setItem('balances', JSON.stringify(this.balances));
+
+            this.closeSendModal && this.closeSendModal();
+            this.sendTransactionNotification && this.sendTransactionNotification('sent', formData.amount, formData.currency, formData.recipient);
+
+        } catch (error) {
+            console.error('Error processing send transaction:', error);
+            this.showError && this.showError(error.message || 'Error al procesar la transferencia');
+        } finally {
+            walletInstance.hideLoading && walletInstance.hideLoading();
+        }
+    };
+
+    console.log('✅ API Integration Patch applied!');
+    console.log('📊 Patched methods: getCurrentUserId, loadBalancesFromAPI, fetchTransactionHistory, processSendTransaction');
+}
+    </script>
+
+    <script>
+// DISABLED (redundant auth check):         // Authentication check for wallet access
+// DISABLED (redundant auth check):         document.addEventListener('DOMContentLoaded', function() {
+// DISABLED (redundant auth check):             // Wait for shared components to initialize
+// DISABLED (redundant auth check):             setTimeout(() => {
+// DISABLED (redundant auth check):                 if (laTandaComponents && !laTandaComponents.isAuthenticated()) {
+// DISABLED (redundant auth check):                     console.log('🔒 Wallet access requires authentication');
+// DISABLED (redundant auth check):                     laTandaComponents.showLoginModal();
+// DISABLED (redundant auth check):                 }
+// DISABLED (redundant auth check):             }, 100);
+// DISABLED (redundant auth check):         });
+
+        // Additional global functions for enhanced settings
+        function toggleNotificationCenter() {
+            walletInstance?.toggleNotificationCenter();
+        }
+
+        function clearAllNotifications() {
+            walletInstance?.clearAllNotifications();
+        }
+
+        function unlockWallet() {
+            walletInstance?.unlockWallet();
+        }
+
+        // Professional Deposit Flow Functions
+        function startProfessionalFlow() {
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const currency = document.getElementById('depositCurrency').value;
+
+            if (!amount || amount < 1) {
+                if (window.showWarning) {
+                    window.showWarning('Por favor ingresa un monto válido');
+                } else {
+                    console.warn('Por favor ingresa un monto válido');
+                }
+                return;
+            }
+
+            console.log(`🚀 Starting professional flow: ${currency} ${amount}`);
+            window.depositFlowManager.startDepositFlow(amount, currency);
+        }
+
+        function setAmount(amount) {
+            const amountInput = document.getElementById('depositAmount');
+            if (amountInput) {
+                amountInput.value = amount;
+                amountInput.dispatchEvent(new Event('input'));
+            }
+        }
+
+        function updateCurrencyPreview() {
+            const currency = document.getElementById('depositCurrency').value;
+            const currencySymbol = document.getElementById('currencySymbol');
+            const amountInput = document.getElementById('depositAmount');
+
+            // Update currency symbol
+            if (currencySymbol) {
+                let symbol = 'L';
+                if (currency === 'USD') symbol = '$';
+                else if (currency === 'USDC') symbol = 'USDC';
+                else if (currency === 'HNL') symbol = 'L';
+
+                currencySymbol.textContent = symbol;
+            }
+
+            // Update suggestions based on currency
+            const suggestions = document.querySelectorAll('.amount-suggestions button');
+            if (currency === 'USD') {
+                suggestions[0].innerHTML = '$25';
+                suggestions[0].onclick = () => setAmount(25);
+                suggestions[1].innerHTML = '$50';
+                suggestions[1].onclick = () => setAmount(50);
+                suggestions[2].innerHTML = '$100';
+                suggestions[2].onclick = () => setAmount(100);
+                suggestions[3].innerHTML = '$250';
+                suggestions[3].onclick = () => setAmount(250);
+            } else if (currency === 'USDC') {
+                suggestions[0].innerHTML = '10 USDC';
+                suggestions[0].onclick = () => setAmount(10);
+                suggestions[1].innerHTML = '25 USDC';
+                suggestions[1].onclick = () => setAmount(25);
+                suggestions[2].innerHTML = '50 USDC';
+                suggestions[2].onclick = () => setAmount(50);
+                suggestions[3].innerHTML = '100 USDC';
+                suggestions[3].onclick = () => setAmount(100);
+            } else {
+                // HNL
+                suggestions[0].innerHTML = 'L 100';
+                suggestions[0].onclick = () => setAmount(100);
+                suggestions[1].innerHTML = 'L 500';
+                suggestions[1].onclick = () => setAmount(500);
+                suggestions[2].innerHTML = 'L 1000';
+                suggestions[2].onclick = () => setAmount(1000);
+                suggestions[3].innerHTML = 'L 2500';
+                suggestions[3].onclick = () => setAmount(2500);
+            }
+
+            // Update method preview if amount is entered
+            if (amountInput && amountInput.value) {
+                const amount = parseFloat(amountInput.value);
+                walletInstance?.updateMethodPreview(amount, currency);
+            }
+        }
+
+        // Lightning Network functions
+        function copyLightningInvoice() {
+            const textarea = document.querySelector('.invoice-container textarea');
+            if (textarea) {
+                textarea.select();
+                document.execCommand('copy');
+
+                // Show feedback
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 1000);
+            }
+        }
+
+        function openLightningWallet() {
+            const invoice = document.querySelector('.invoice-container textarea').value;
+            const lightningUrl = `lightning:${invoice}`;
+
+            // Try to open Lightning wallet
+            if (navigator.userAgent.match(/Android/i)) {
+                window.open(lightningUrl, '_system');
+            } else if (navigator.userAgent.match(/iPhone|iPad/i)) {
+                window.location = lightningUrl;
+            } else {
+                // Desktop - copy to clipboard and show instruction
+                navigator.clipboard.writeText(invoice).then(() => {
+                    if (window.showInfo) {
+                        window.showInfo('Invoice copiado al portapapeles. Abre tu wallet Lightning y pega el invoice.');
+                    } else {
+                        console.log('Invoice copiado al portapapeles');
+                    }
+                });
+            }
+        }
+
+        function checkLightningPayment() {
+            // Mock Lightning payment check
+            // In production, this would check with Lightning provider API
+            console.log('🔍 Checking Lightning payment status...');
+
+            setTimeout(() => {
+                // Simulate payment received
+                if (window.depositFlowManager.currentDeposit) {
+                    window.depositFlowManager.updateStatus('admin_approved');
+                    window.depositFlowManager.autoApproveDeposit();
+                }
+            }, 2000);
+        }
+
+        // Navigation functions for success screen
+        function goToTandas() {
+            closeDepositModal();
+            window.open('groups-advanced-system.html', '_blank');
+        }
+
+        function goToStaking() {
+            closeDepositModal();
+            // Staking disabled until mainnet
+            // window.open('web3-dashboard.html#staking', '_blank');
+        }
+
+        // Upload handler function with Receipt Manager integration
+        async function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                // Show preview
+                const preview = document.getElementById('filePreview');
+                const previewImage = document.getElementById('previewImage');
+                const fileName = document.getElementById('fileName');
+                const placeholder = document.querySelector('.upload-placeholder');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    fileName.textContent = file.name;
+                    placeholder.style.display = 'none';
+                    preview.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+
+                // Get deposit data from form
+                const amount = parseFloat(document.getElementById('atlantidaAmount')?.value) || 0;
+                const currency = 'USD'; // Atlántida uses USD
+
+                // Process with Receipt Manager
+                if (window.receiptManager) {
+                    const receipt = await window.receiptManager.handleAtlantidaReceiptUpload(file, {
+                        amount: amount,
+                        currency: currency,
+                        depositId: 'ATL_' + Date.now()
+                    });
+
+                    console.log('📄 Receipt processed:', receipt.id);
+
+                    // Store receipt ID for form submission
+                    input.dataset.receiptId = receipt.id;
+
+                    // Admin functionality moved to dedicated admin panel
+                }
+
+            } catch (error) {
+                console.error('❌ Error processing file:', error);
+                if (window.notificationSystem) {
+                    window.notificationSystem.show('receipt_upload_error', {
+                        error: error.message
+                    });
+                }
+            }
+        }
+
+        // Admin functionality removed - use dedicated admin panel
+
+        // Remove file function
+        function removeFile() {
+            const preview = document.getElementById('filePreview');
+            const placeholder = document.querySelector('.upload-placeholder');
+            const input = document.getElementById('depositReceipt');
+
+            preview.style.display = 'none';
+            placeholder.style.display = 'flex';
+            input.value = '';
+        }
+    </script>
+    <script src="js/user-sync.js"></script>
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="pwa-manager.js"></script>
+    <script src="js/url-param-handler.js?v=3.4"></script>
+    <script src="js/onboarding/onboarding-system.js?v=1.5"></script>
+</body>
+</html>

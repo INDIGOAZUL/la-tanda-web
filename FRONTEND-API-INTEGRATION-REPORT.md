@@ -110,7 +110,7 @@ curl http://localhost:3001/health
 # Admin login  
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@latanda.online","password":"Admin123!"}'
+  -d '{"email":"admin@latanda.online","password":"[REDACTED]"}'
 ```
 
 ### Method 2: Frontend API Switching

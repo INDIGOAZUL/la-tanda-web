@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Ayuda - La Tanda Web3</title>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <link rel="stylesheet" href="css/footer.css">
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.8);
+            --border-accent: rgba(0, 255, 255, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Inter", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .help-container {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .help-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .help-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .help-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 30px auto;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            border-radius: 12px;
+            border: 2px solid var(--border-accent);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-box input:focus {
+            border-color: var(--tanda-cyan);
+        }
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+        .search-box i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--tanda-cyan);
+            font-size: 18px;
+        }
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+        .quick-link-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .quick-link-card:hover {
+            border-color: var(--tanda-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.15);
+        }
+        .quick-link-card i {
+            font-size: 32px;
+            color: var(--tanda-cyan);
+            margin-bottom: 16px;
+        }
+        .quick-link-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .quick-link-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .faq-section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .section-title i {
+            color: var(--tanda-cyan);
+        }
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .faq-question {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        .faq-question:hover {
+            background: rgba(0, 255, 255, 0.05);
+        }
+        .faq-question i {
+            color: var(--tanda-cyan);
+            transition: transform 0.3s;
+        }
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: 0 24px 20px;
+        }
+        .faq-answer p {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .contact-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        .contact-section h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .contact-section p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        .contact-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .contact-btn.primary {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--bg-primary);
+        }
+        .contact-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+        .contact-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--tanda-cyan);
+            color: var(--tanda-cyan);
+        }
+        .contact-btn.secondary:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+        @media (max-width: 768px) {
+            .help-header h1 { font-size: 28px; }
+            .contact-section { padding: 24px; }
+            .contact-buttons { flex-direction: column; }
+            .contact-btn { justify-content: center; }
+        }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/help-center.html">
+    <meta property="og:title" content="Centro de Ayuda | La Tanda">
+    <meta property="og:description" content="Preguntas frecuentes y soporte de La Tanda.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Centro de Ayuda | La Tanda">
+    <meta name="twitter:description" content="Preguntas frecuentes y soporte de La Tanda.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <div id="global-header"></div>
+    
+    <div class="help-container">
+        <div class="help-header">
+            <h1><i class="fas fa-life-ring"></i> Centro de Ayuda</h1>
+            <p>Encuentra respuestas a tus preguntas y aprende a usar La Tanda Web3 de manera efectiva</p>
+        </div>
+
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="faq-search" placeholder="Buscar en el centro de ayuda...">
+        </div>
+
+        <div class="quick-links">
+            <a href="#getting-started" class="quick-link-card">
+                <i class="fas fa-rocket"></i>
+                <h3>Primeros Pasos</h3>
+                <p>Aprende a crear tu cuenta y configurar tu perfil</p>
+            </a>
+            <a href="#tandas" class="quick-link-card">
+                <i class="fas fa-users"></i>
+                <h3>Tandas</h3>
+                <p>Todo sobre crear y participar en tandas</p>
+            </a>
+            <a href="#wallet" class="quick-link-card">
+                <i class="fas fa-wallet"></i>
+                <h3>Billetera</h3>
+                <p>Gestiona tu saldo y transacciones</p>
+            </a>
+            <a href="#security" class="quick-link-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Seguridad</h3>
+                <p>Protege tu cuenta con 2FA y KYC</p>
+            </a>
+        </div>
+
+        <div class="faq-section" id="getting-started">
+            <h2 class="section-title"><i class="fas fa-rocket"></i> Primeros Pasos</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Qué es La Tanda Web3?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>La Tanda Web3 es una plataforma fintech que digitaliza el sistema tradicional de tandas (ROSCA), permitiéndote ahorrar en comunidad de forma segura y transparente. Utilizamos tecnología blockchain para garantizar la seguridad de tus fondos.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo creo una cuenta?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para crear una cuenta: 1) Visita nuestra página de registro, 2) Ingresa tu correo electrónico y crea una contraseña segura, 3) Verifica tu correo electrónico, 4) Completa el proceso de KYC para activar todas las funciones.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Qué documentos necesito para el KYC?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para completar la verificación KYC necesitas: 1) Una identificación oficial vigente (INE, pasaporte o licencia), 2) Un comprobante de domicilio reciente (no mayor a 3 meses), 3) Una selfie en tiempo real para verificación facial.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="tandas">
+            <h2 class="section-title"><i class="fas fa-users"></i> Tandas</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo funciona una tanda?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Una tanda es un grupo de ahorro donde cada miembro aporta una cantidad fija periódicamente. Cada periodo, un miembro diferente recibe el total acumulado. Es una forma tradicional de ahorro comunitario ahora digitalizada y asegurada.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo me uno a una tanda?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Puedes unirte a una tanda desde el Dashboard. Busca tandas disponibles, revisa los términos (monto, frecuencia, número de participantes) y solicita unirte. El organizador aprobará tu solicitud.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Puedo crear mi propia tanda?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí, usuarios verificados pueden crear tandas. Define el monto de aportación, la frecuencia de pagos, el número de participantes y las reglas. Invita a amigos o permite que otros usuarios se unan.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Qué pasa si un miembro no paga?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>La Tanda Web3 tiene mecanismos de protección: los usuarios deben completar KYC, mantenemos un fondo de garantía, y los incumplimientos afectan el score de confianza del usuario. En casos graves, tomamos acciones legales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="wallet">
+            <h2 class="section-title"><i class="fas fa-wallet"></i> Billetera y Transacciones</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo deposito dinero?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Puedes depositar mediante transferencia bancaria, tarjeta de débito/crédito, o criptomonedas. Ve a tu Billetera, selecciona "Depositar" y elige tu método preferido. Los depósitos se reflejan en minutos.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo retiro mis fondos?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Para retirar, ve a Billetera > Retirar. Ingresa el monto y selecciona tu método (transferencia bancaria o crypto). Los retiros se procesan en 24-48 horas hábiles dependiendo del método.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cuáles son las comisiones?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>La Tanda cobra una pequeña comisión por administración de tandas (1-2%). Los depósitos son gratuitos. Los retiros pueden tener comisiones según el método elegido. Consulta la sección de tarifas para detalles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-section" id="security">
+            <h2 class="section-title"><i class="fas fa-shield-alt"></i> Seguridad</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Cómo activo la autenticación de dos factores (2FA)?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Ve a Configuración > Seguridad > Autenticación de dos factores. Puedes elegir entre Google Authenticator o SMS. Escanea el código QR con tu app de autenticación y confirma con el código generado.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Qué hago si olvido mi contraseña?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>En la página de inicio de sesión, haz clic en "¿Olvidaste tu contraseña?". Ingresa tu correo electrónico y recibirás un enlace para crear una nueva contraseña. El enlace expira en 1 hora.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>¿Mis fondos están seguros?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Sí. Utilizamos encriptación de grado bancario, los fondos se mantienen en cuentas segregadas, implementamos 2FA, y nuestros smart contracts son auditados. Además, contamos con un fondo de garantía para proteger a los usuarios.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2>¿No encontraste lo que buscabas?</h2>
+            <p>Nuestro equipo de soporte está listo para ayudarte</p>
+            <div class="contact-buttons">
+                <a href="https://t.me/AhorroLaTanda" target="_blank" rel="noopener noreferrer" class="contact-btn primary">
+                    <i class="fab fa-telegram"></i>
+                    Telegram Soporte
+                </a>
+                <a href="contact.html" class="contact-btn secondary">
+                    <i class="fas fa-envelope"></i>
+                    Contactar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="latanda-footer"></div>
+
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/header.js"></script>
+    <script>
+        // FAQ Accordion
+        document.querySelectorAll(".faq-question").forEach(question => {
+            question.addEventListener("click", () => {
+                const item = question.parentElement;
+                const wasActive = item.classList.contains("active");
+                // Close all
+                document.querySelectorAll(".faq-item").forEach(i => i.classList.remove("active"));
+                // Toggle current
+                if (!wasActive) item.classList.add("active");
+            });
+        });
+
+        // Search filter
+        document.getElementById("faq-search").addEventListener("input", function(e) {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll(".faq-item").forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? "" : "none";
+            });
+            // Show/hide sections based on visible items
+            document.querySelectorAll(".faq-section").forEach(section => {
+                const visibleItems = section.querySelectorAll(".faq-item:not([style*=\x27display: none\x27])");
+                section.style.display = visibleItems.length > 0 ? "" : "none";
+            });
+        });
+
+        // Smooth scroll to sections
+        document.querySelectorAll(".quick-link-card").forEach(card => {
+            card.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = document.querySelector(card.getAttribute("href"));
+                if (target) {
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            });
+        });
+    </script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

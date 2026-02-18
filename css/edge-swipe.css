@@ -1,0 +1,171 @@
+/* ================================================
+   EDGE SWIPE - Mobile Sidebar Navigation
+   Version: 1.4.0
+   ================================================ */
+
+/* Sidebar Overlay Backdrop */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.sidebar-overlay:not(.active) {
+    pointer-events: none;
+}
+
+/* Edge Swipe Indicators (visual hints) */
+.edge-hint {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 80px;
+    background: linear-gradient(180deg, rgba(0, 255, 255, 0.6) 0%, rgba(0, 255, 255, 0.2) 100%);
+    border-radius: 3px;
+    z-index: 2001;
+    opacity: 0;
+    transition: opacity 0.3s ease, width 0.2s ease;
+    pointer-events: none;
+}
+
+.edge-hint.left {
+    left: 0;
+    border-radius: 0 3px 3px 0;
+}
+
+.edge-hint.right {
+    right: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.edge-hint.visible {
+    opacity: 1;
+    width: 8px;
+}
+
+/* Mobile Sidebar Styles - Only apply on mobile/tablet */
+@media (max-width: 1023px) {
+    /* Left Sidebar - Slide from left */
+    .left-sidebar {
+        display: flex !important;
+        flex-direction: column;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: linear-gradient(180deg, rgba(15, 15, 26, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(0, 255, 255, 0.2) !important;
+        z-index: 1999 !important;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto !important;
+        padding-top: 60px !important;
+    }
+
+    .left-sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Right Sidebar - Slide from right */
+    .right-sidebar {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 300px !important;
+        max-width: 90vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        background: linear-gradient(180deg, rgba(15, 15, 26, 0.98) 0%, rgba(10, 10, 20, 0.98) 100%) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-left: 1px solid rgba(0, 255, 255, 0.2) !important;
+        z-index: 1999 !important;
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto !important;
+        padding-top: 60px !important;
+    }
+
+    .right-sidebar.active {
+        transform: translateX(0);
+    }
+
+    .right-sidebar-sticky {
+        position: relative !important;
+        top: 0 !important;
+        max-height: none !important;
+    }
+
+    /* Close buttons for sidebars */
+    .sidebar-close-btn {
+        display: flex !important;
+        position: absolute;
+        top: 12px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.2rem;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3);
+    }
+
+    .sidebar-close-btn:hover,
+    .sidebar-close-btn:active {
+        background: rgba(0, 255, 255, 0.2);
+        color: #00FFFF;
+        border-color: rgba(0, 255, 255, 0.4);
+    }
+
+    .left-sidebar .sidebar-close-btn {
+        right: 12px;
+    }
+
+    .right-sidebar .sidebar-close-btn {
+        left: 12px;
+    }
+
+    /* Main feed full width on mobile */
+    .main-feed {
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        padding-bottom: 80px;
+    }
+}
+
+/* Desktop - hide edge hints and close buttons */
+@media (min-width: 1024px) {
+    .edge-hint,
+    .sidebar-overlay,
+    .sidebar-close-btn {
+        display: none !important;
+    }
+}

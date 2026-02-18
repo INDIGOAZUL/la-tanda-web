@@ -533,7 +533,7 @@ Mobile Features:
 ### Demo Access Options (Lines 771-788)
 ```javascript
 Admin Access (🔧 Admin Access)
-├── Credentials: admin@latanda.online / Admin123!
+├── Credentials: admin@latanda.online / [REDACTED]
 ├── Permissions: full_access, user_management, system_config
 ├── Token Duration: 8 hours
 └── Auto-redirect: home-dashboard.html

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda - Developer Portal</title>
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <style>
+        :root {
+            --tanda-cyan: #00D4FF;
+            --tanda-green: #00FF88;
+            --tanda-purple: #8B5CF6;
+            --bg-dark: #0a0f1a;
+            --bg-card: #111827;
+            --bg-code: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(10, 15, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .logo-text { font-weight: 700; font-size: 1.25rem; }
+        .logo-text span { color: var(--tanda-cyan); }
+        .header-links { display: flex; gap: 1.5rem; }
+        .header-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .header-links a:hover { color: var(--tanda-cyan); }
+        
+        /* Hero */
+        .hero {
+            padding: 4rem 2rem;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0, 212, 255, 0.05) 0%, transparent 100%);
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--tanda-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2rem; }
+        .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-purple));
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3); }
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover { border-color: var(--tanda-cyan); }
+        
+        /* Status Banner */
+        .status-banner {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            max-width: 500px;
+            margin: 2rem auto 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--tanda-green);
+            animation: pulse 2s infinite;
+        }
+        .status-dot.offline { background: #ef4444; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .status-text { flex: 1; }
+        .status-text strong { color: var(--tanda-green); }
+        .status-text.offline strong { color: #ef4444; }
+        .status-meta { color: var(--text-secondary); font-size: 0.85rem; }
+        
+        /* Main Content */
+        .main { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; }
+        
+        /* Section */
+        .section { margin-bottom: 4rem; }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .section-title i { color: var(--tanda-cyan); }
+        
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: var(--tanda-cyan); transform: translateY(-2px); }
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--tanda-cyan);
+            margin-bottom: 1rem;
+        }
+        .card h3 { margin-bottom: 0.5rem; }
+        .card p { color: var(--text-secondary); font-size: 0.9rem; }
+        
+        /* Endpoints Table */
+        .endpoints-table {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .endpoint-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            gap: 1rem;
+        }
+        .endpoint-row:last-child { border-bottom: none; }
+        .method {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .method.get { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .method.post { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .method.put { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+        .method.delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 0.9rem; }
+        .endpoint-desc { color: var(--text-secondary); font-size: 0.85rem; }
+        
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .code-block pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .code-block .comment { color: #6b7280; }
+        .code-block .string { color: #22c55e; }
+        .code-block .keyword { color: #8b5cf6; }
+        .code-block .function { color: #3b82f6; }
+        
+        /* Footer */
+        .footer {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        .footer a { color: var(--tanda-cyan); text-decoration: none; }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.75rem; }
+            .endpoint-row { grid-template-columns: 1fr; gap: 0.5rem; }
+            .header-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🏦</div>
+                <div class="logo-text">La Tanda <span>API</span></div>
+            </a>
+            <nav class="header-links">
+                <a href="#try-now" style="color: var(--tanda-green);"><i class="fas fa-play-circle"></i> Try Now</a>
+                <a href="#endpoints">Endpoints</a>
+                <a href="#marketplace">Marketplace</a>
+                <a href="#lottery">Lottery</a>
+                <a href="#contribute">Contribute</a>
+                <a href="#auth">Autenticación</a>
+                <a href="#examples">Ejemplos</a>
+                <a href="/docs" target="_blank" rel="noopener noreferrer">Swagger UI</a>
+                <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <h1>La Tanda Developer API</h1>
+        <p>Integra servicios financieros colaborativos en tu aplicación. API RESTful con autenticación JWT.</p>
+        <div class="hero-buttons">
+            <a href="/docs" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-book"></i> Documentación Completa
+            </a>
+            <a href="#quick-start" class="btn btn-secondary">
+                <i class="fas fa-rocket"></i> Quick Start
+            </a>
+        </div>
+        
+        <div class="status-banner" id="api-status">
+            <div class="status-dot" id="status-dot"></div>
+            <div class="status-text" id="status-text">
+                <strong>Verificando...</strong>
+            </div>
+            <div class="status-meta" id="status-meta">--</div>
+        </div>
+    </section>
+    
+    <main class="main">
+        <!-- Features -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-cube"></i> Características</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <h3>Grupos y Tandas</h3>
+                    <p>Crea y administra grupos de ahorro colaborativo con rotación automática de turnos.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-wallet"></i></div>
+                    <h3>Wallet Digital</h3>
+                    <p>Sistema de billetera con depósitos, retiros y transferencias entre usuarios.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Seguridad JWT</h3>
+                    <p>Autenticación segura con tokens JWT y refresh tokens automáticos.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Notificaciones</h3>
+                    <p>Sistema de notificaciones en tiempo real para eventos importantes.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Try Now - Developer Onboarding -->
+        <section class="section" id="try-now" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1)); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
+            <h2 class="section-title"><i class="fas fa-play-circle"></i> Try Now - Start in 30 Seconds</h2>
+            
+            <div style="display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                <!-- Demo Account -->
+                <div class="card" style="background: rgba(0, 255, 136, 0.1); border-color: var(--tanda-green);">
+                    <div class="card-icon" style="background: rgba(0, 255, 136, 0.2);"><i class="fas fa-user-check" style="color: var(--tanda-green);"></i></div>
+                    <h3 style="color: var(--tanda-green);">Demo Account</h3>
+                    <p style="margin-bottom: 1rem;">Use these credentials to test authenticated endpoints:</p>
+                    <div class="code-block" style="background: rgba(0,0,0,0.3); padding: 1rem;">
+                        <code style="color: var(--tanda-green);">
+                            Email: user@example.com<br>
+                            Password: [REDACTED]<br>
+                            Balance: 1,000 HNL (test)
+                        </code>
+                    </div>
+                </div>
+                
+                <!-- Public Endpoints -->
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-globe"></i></div>
+                    <h3>Public Endpoints</h3>
+                    <p style="margin-bottom: 1rem;">No auth required - try these now:</p>
+                    <ul style="list-style: none; padding: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        <li style="margin-bottom: 0.5rem;"><span class="method get" style="font-size: 0.7rem; margin-right: 0.5rem;">GET</span> <code>/api/public/info</code></li>
+                        <li style="margin-bottom: 0.5rem;"><span class="method get" style="font-size: 0.7rem; margin-right: 0.5rem;">GET</span> <code>/api/public/stats</code></li>
+                        <li style="margin-bottom: 0.5rem;"><span class="method get" style="font-size: 0.7rem; margin-right: 0.5rem;">GET</span> <code>/api/public/products</code></li>
+                        <li style="margin-bottom: 0.5rem;"><span class="method get" style="font-size: 0.7rem; margin-right: 0.5rem;">GET</span> <code>/api/public/lottery/recent</code></li>
+                    </ul>
+                </div>
+                
+                <!-- Tools -->
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-tools"></i></div>
+                    <h3>Developer Tools</h3>
+                    <p style="margin-bottom: 1rem;">Resources to speed up integration:</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <a href="/postman-collection.json" download class="btn btn-secondary" style="justify-content: flex-start;">
+                            <i class="fas fa-download"></i> Postman Collection
+                        </a>
+                        <a href="/docs" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="justify-content: flex-start;">
+                            <i class="fas fa-book"></i> Swagger UI
+                        </a>
+                        <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="justify-content: flex-start;">
+                            <i class="fab fa-github"></i> GitHub Repo
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick cURL Example -->
+            <div style="margin-top: 1.5rem;">
+                <h4 style="margin-bottom: 0.75rem;"><i class="fas fa-terminal" style="color: var(--tanda-cyan);"></i> Try with cURL</h4>
+                <div class="code-block">
+<pre style="color: #e2e8f0;"><span class="comment"># 1. Test public endpoint (no auth)</span>
+curl https://latanda.online/api/public/stats
+
+<span class="comment"># 2. Login with demo account</span>
+curl -X POST https://latanda.online/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"[REDACTED]"}' 
+
+<span class="comment"># 3. Use token for authenticated request</span>
+curl https://latanda.online/api/wallet/balance \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"</pre>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Authentication -->
+        <section class="section" id="auth">
+            <h2 class="section-title"><i class="fas fa-key"></i> Autenticación</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Todas las peticiones autenticadas requieren el header Authorization con un token JWT válido.</p>
+            <div class="code-block">
+<pre><span class="comment">// Obtener token de acceso</span>
+<span class="keyword">POST</span> /api/auth/login
+{
+  <span class="string">"email"</span>: <span class="string">"usuario@ejemplo.com"</span>,
+  <span class="string">"password"</span>: <span class="string">"tu_contraseña"</span>
+}
+
+<span class="comment">// Respuesta</span>
+{
+  <span class="string">"success"</span>: <span class="keyword">true</span>,
+  <span class="string">"data"</span>: {
+    <span class="string">"auth_token"</span>: <span class="string">"eyJhbGciOiJIUzI1NiIs..."</span>,
+    <span class="string">"refresh_token"</span>: <span class="string">"eyJhbGciOiJIUzI1NiIs..."</span>,
+    <span class="string">"expires_in"</span>: 86400
+  }
+}</pre>
+            </div>
+            <div class="code-block">
+<pre><span class="comment">// Usar token en peticiones</span>
+<span class="keyword">GET</span> /api/user/profile
+<span class="function">Authorization</span>: Bearer eyJhbGciOiJIUzI1NiIs...</pre>
+            </div>
+        </section>
+        
+        <!-- Endpoints -->
+        <section class="section" id="endpoints">
+            <h2 class="section-title"><i class="fas fa-plug"></i> Endpoints Principales</h2>
+            <div class="endpoints-table">
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/health</span>
+                    <span class="endpoint-desc">Estado del API</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/auth/login</span>
+                    <span class="endpoint-desc">Iniciar sesión</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/auth/register</span>
+                    <span class="endpoint-desc">Registrar usuario</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/user/profile</span>
+                    <span class="endpoint-desc">Obtener perfil del usuario</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/groups/my-groups-pg</span>
+                    <span class="endpoint-desc">Listar grupos del usuario</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/groups</span>
+                    <span class="endpoint-desc">Crear nuevo grupo</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/wallet/balance</span>
+                    <span class="endpoint-desc">Obtener balance de wallet</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/notifications</span>
+                    <span class="endpoint-desc">Obtener notificaciones</span>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; color: var(--text-secondary);">
+                <i class="fas fa-info-circle"></i> Ver la <a href="/docs" target="_blank" rel="noopener noreferrer" style="color: var(--tanda-cyan);">documentación completa</a> para todos los endpoints disponibles.
+            </p>
+        </section>
+
+        <!-- Marketplace API -->
+        <section class="section" id="marketplace">
+            <h2 class="section-title"><i class="fas fa-store"></i> Marketplace API</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Endpoints para el marketplace social de productos y servicios.</p>
+            <div class="endpoints-table">
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/marketplace/products</span>
+                    <span class="endpoint-desc">Listar productos</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/marketplace/products</span>
+                    <span class="endpoint-desc">Crear producto</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/marketplace/services</span>
+                    <span class="endpoint-desc">Listar servicios</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/marketplace/providers</span>
+                    <span class="endpoint-desc">Listar proveedores</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/marketplace/messages</span>
+                    <span class="endpoint-desc">Enviar mensaje</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/marketplace/orders</span>
+                    <span class="endpoint-desc">Listar pedidos</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lottery Predictor API -->
+        <section class="section" id="lottery">
+            <h2 class="section-title"><i class="fas fa-dice"></i> Lottery Predictor API</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Endpoints para predicciones de lotería Honduras La Diaria.</p>
+            <div class="endpoints-table">
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/predict</span>
+                    <span class="endpoint-desc">Obtener predicción</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/stats</span>
+                    <span class="endpoint-desc">Estadísticas de frecuencia</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/recent</span>
+                    <span class="endpoint-desc">Resultados recientes</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/my-predictions</span>
+                    <span class="endpoint-desc">Mis predicciones</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/leaderboard</span>
+                    <span class="endpoint-desc">Tabla de líderes</span>
+                </div>
+                <div class="endpoint-row">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/lottery/achievements</span>
+                    <span class="endpoint-desc">Logros y badges</span>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Quick Start -->
+        <section class="section" id="quick-start">
+            <h2 class="section-title"><i class="fas fa-rocket"></i> Quick Start</h2>
+            <div class="code-block">
+<pre><span class="comment">// Ejemplo con JavaScript/Fetch</span>
+
+<span class="keyword">const</span> API_BASE = <span class="string">'https://latanda.online'</span>;
+
+<span class="comment">// 1. Login</span>
+<span class="keyword">const</span> loginResponse = <span class="keyword">await</span> <span class="function">fetch</span>(`${API_BASE}/api/auth/login`, {
+  method: <span class="string">'POST'</span>,
+  headers: { <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span> },
+  body: JSON.<span class="function">stringify</span>({ 
+    email: <span class="string">'tu@email.com'</span>, 
+    password: <span class="string">'tu_password'</span> 
+  })
+});
+<span class="keyword">const</span> { data } = <span class="keyword">await</span> loginResponse.<span class="function">json</span>();
+<span class="keyword">const</span> token = data.auth_token;
+
+<span class="comment">// 2. Obtener perfil</span>
+<span class="keyword">const</span> profileResponse = <span class="keyword">await</span> <span class="function">fetch</span>(`${API_BASE}/api/user/profile`, {
+  headers: { <span class="string">'Authorization'</span>: `Bearer ${token}` }
+});
+<span class="keyword">const</span> profile = <span class="keyword">await</span> profileResponse.<span class="function">json</span>();
+console.<span class="function">log</span>(profile);</pre>
+            </div>
+        </section>
+        
+        <!-- Contribute Section -->
+        <section class="section" id="contribute">
+            <h2 class="section-title"><i class="fab fa-github"></i> Contribute & Earn LTD</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Join our developer community and earn LTD tokens for contributions.</p>
+            <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--tanda-cyan); margin-bottom: 0.5rem;"><i class="fas fa-code"></i> Code</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">SDK development, bug fixes, new features</p>
+                    <span style="color: var(--tanda-green);">100-500 LTD</span>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--tanda-cyan); margin-bottom: 0.5rem;"><i class="fas fa-book"></i> Docs</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Tutorials, guides, translations</p>
+                    <span style="color: var(--tanda-green);">50-200 LTD</span>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--tanda-cyan); margin-bottom: 0.5rem;"><i class="fas fa-shield-alt"></i> Security</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Audits, vulnerability reports</p>
+                    <span style="color: var(--tanda-green);">200-1000 LTD</span>
+                </div>
+            </div>
+            <p style="background: rgba(0, 212, 255, 0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--tanda-cyan);">
+                <strong>Note:</strong> LTD tokens are currently on <strong>Polygon Amoy testnet</strong>. They will be exchangeable 1:1 for mainnet tokens at launch.
+            </p>
+            <div style="margin-top: 1.5rem;">
+                <a href="https://github.com/INDIGOAZUL/la-tanda-web/issues" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="margin-right: 1rem;"><i class="fas fa-tasks"></i> View Bounties</a>
+                <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer" class="btn btn-secondary"><i class="fab fa-github"></i> Fork Repository</a>
+            </div>
+        </section>
+
+        <!-- Rate Limits -->
+        <section class="section">
+            <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> Rate Limits</h2>
+            <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="card">
+                    <h3>General</h3>
+                    <p style="font-size: 1.5rem; color: var(--tanda-cyan); margin: 0.5rem 0;">100 req/min</p>
+                    <p>Por IP</p>
+                </div>
+                <div class="card">
+                    <h3>Autenticación</h3>
+                    <p style="font-size: 1.5rem; color: var(--tanda-cyan); margin: 0.5rem 0;">10 req/min</p>
+                    <p>Login/Register</p>
+                </div>
+                <div class="card">
+                    <h3>Transacciones</h3>
+                    <p style="font-size: 1.5rem; color: var(--tanda-cyan); margin: 0.5rem 0;">30 req/min</p>
+                    <p>Por usuario</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>© 2024-2026 La Tanda. <a href="index.html">Volver al inicio</a> | <a href="/docs" target="_blank" rel="noopener noreferrer">Swagger UI</a>
+                <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a></p>
+    </footer>
+    
+    <script>
+        // Check API status on load
+        async function checkAPIStatus() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const meta = document.getElementById('status-meta');
+            
+            try {
+                const start = Date.now();
+                const response = await fetch('https://latanda.online/health');
+                const latency = Date.now() - start;
+                const data = await response.json();
+                
+                if (data.success) {
+                    dot.classList.remove('offline');
+                    text.innerHTML = '<strong>API Online</strong> - ' + data.data.endpoints_available + ' endpoints';
+                    text.classList.remove('offline');
+                    meta.textContent = latency + 'ms · v' + (data.meta?.version || '2.0');
+                } else {
+                    throw new Error('API error');
+                }
+            } catch (error) {
+                dot.classList.add('offline');
+                text.innerHTML = '<strong>API Offline</strong>';
+                text.classList.add('offline');
+                meta.textContent = 'No disponible';
+            }
+        }
+        
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 60000); // Check every minute
+    </script>
+</body>
+</html>

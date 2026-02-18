@@ -21,7 +21,7 @@
 - **Input Validation:** express-validator sanitization
 
 ### ✅ 3. Authentication System Enhancement
-- **Admin Login:** `admin@latanda.online` / `Admin123!` ✅
+- **Admin Login:** `admin@latanda.online` / `[REDACTED]` ✅
 - **Demo Login:** `demo@latanda.online` / `demo123` ✅
 - **JWT Tokens:** Enhanced with proper expiry (8h admin, 24h users)
 - **Password Security:** bcrypt with 12 salt rounds

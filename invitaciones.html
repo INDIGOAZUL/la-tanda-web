@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitaciones | La Tanda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.8);
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(0,255,255,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(0,255,255,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .page-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: #000;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,255,255,0.3);
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--bg-card);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border-accent);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: #000;
+            font-weight: 600;
+        }
+
+        .tab-btn .count {
+            background: rgba(0,0,0,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .tab-btn.active .count {
+            background: rgba(0,0,0,0.3);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Invitation Cards */
+        .invitation-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .invitation-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--tanda-cyan);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--tanda-cyan);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending { background: var(--warning-color); color: #000; }
+        .status-accepted { background: var(--success-color); color: #fff; }
+        .status-declined, .status-expired { background: var(--error-color); color: #fff; }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-meta i {
+            color: var(--tanda-cyan);
+            width: 16px;
+        }
+
+        .card-message {
+            background: rgba(0,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            border-left: 3px solid var(--tanda-cyan);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-accept {
+            background: var(--success-color);
+            color: #fff;
+        }
+
+        .btn-decline {
+            background: transparent;
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--tanda-cyan);
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        /* Create Form */
+        .create-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--tanda-cyan);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: #000;
+            font-weight: 600;
+            width: 100%;
+            padding: 14px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-accent);
+            border-top-color: var(--tanda-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: var(--success-color); }
+        .toast.error { background: var(--error-color); }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .tabs { flex-direction: column; }
+            .card-actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='home-dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                <h1 class="page-title">Invitaciones</h1>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="received">
+                <i class="fas fa-inbox"></i> Recibidas <span class="count" id="receivedCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="sent">
+                <i class="fas fa-paper-plane"></i> Enviadas <span class="count" id="sentCount">0</span>
+            </button>
+            <button class="tab-btn" data-tab="referrals">
+                <i class="fas fa-users"></i> Referidos
+            </button>
+            <button class="tab-btn" data-tab="create">
+                <i class="fas fa-plus"></i> Nueva
+            </button>
+        </div>
+
+        <!-- Tab Content: Received -->
+        <div class="tab-content active" id="tab-received">
+            <div id="receivedList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Sent -->
+        <div class="tab-content" id="tab-sent">
+            <div id="sentList">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Referrals -->
+        <div class="tab-content" id="tab-referrals">
+            <div class="referral-section">
+                <h2 style="margin-bottom: 20px; color: var(--tanda-cyan);">
+                    <i class="fas fa-gift"></i> Programa de Referidos
+                </h2>
+                
+                <!-- Referral Code Card -->
+                <div style="background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(138,43,226,0.1)); border: 1px solid var(--tanda-cyan); border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center;">
+                    <p style="color: #888; margin-bottom: 8px;">Tu codigo de referido</p>
+                    <div style="font-size: 2rem; font-weight: bold; color: var(--tanda-cyan); letter-spacing: 4px;" id="myReferralCode">
+                        <div class="spinner" style="margin: 0 auto;"></div>
+                    </div>
+                    <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="app.copyReferralLink()" class="btn" style="background: var(--tanda-cyan); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            <i class="fas fa-copy"></i> Copiar Link
+                        </button>
+                        <button onclick="app.shareWhatsApp()" class="btn" style="background: #25D366; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                            <i class="fab fa-whatsapp"></i> Compartir
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Referral Benefits -->
+                <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <h3 style="color: #fff; margin-bottom: 16px;"><i class="fas fa-star"></i> Beneficios</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: rgba(0,255,255,0.1); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; color: var(--tanda-cyan);">25 LTD</div>
+                            <div style="color: #888; font-size: 0.875rem;">Por cada referido verificado</div>
+                        </div>
+                        <div style="background: rgba(138,43,226,0.1); padding: 16px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 1.5rem; color: #8A2BE2;">50 LTD</div>
+                            <div style="color: #888; font-size: 0.875rem;">Bono para tu referido</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Referral Stats -->
+                <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                    <h3 style="color: #fff; margin-bottom: 16px;"><i class="fas fa-chart-bar"></i> Tus Estadisticas</h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;" id="referralStats">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; color: #888;" id="statPending">0</div>
+                            <div style="color: #666; font-size: 0.75rem;">Pendientes</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; color: var(--tanda-cyan);" id="statRegistered">0</div>
+                            <div style="color: #666; font-size: 0.75rem;">Registrados</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; color: #10b981;" id="statVerified">0</div>
+                            <div style="color: #666; font-size: 0.75rem;">Verificados</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.5rem; color: #f59e0b;" id="statRewards">0 LTD</div>
+                            <div style="color: #666; font-size: 0.75rem;">Ganado</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Referrals List -->
+                <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px;">
+                    <h3 style="color: #fff; margin-bottom: 16px;"><i class="fas fa-list"></i> Mis Referidos</h3>
+                    <div id="referralsList">
+                        <p style="color: #666; text-align: center;">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Create -->
+        <div class="tab-content" id="tab-create">
+            <div class="create-form">
+                <h2 style="margin-bottom: 20px; color: var(--tanda-cyan);">
+                    <i class="fas fa-envelope"></i> Crear Invitacion
+                </h2>
+                <form id="createForm">
+                    <div class="form-group">
+                        <label>Grupo</label>
+                        <select id="groupSelect" required>
+                            <option value="">Seleccionar grupo...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Email del destinatario</label>
+                        <input type="email" id="inviteeEmail" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre (opcional)</label>
+                        <input type="text" id="inviteeName" placeholder="Nombre del invitado">
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje personal (opcional)</label>
+                        <textarea id="inviteMessage" placeholder="Escribe un mensaje personalizado..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Invitacion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    class InvitationManager {
+        constructor() {
+            this.user = null;
+            this.token = null;
+            this.received = [];
+            this.sent = [];
+            this.groups = [];
+        }
+
+        async init() {
+            // Check for token in URL (invitation link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteToken = urlParams.get("token");
+            
+            if (inviteToken) {
+                await this.handleTokenInvitation(inviteToken);
+                return;
+            }
+
+            // Get user
+            const userData = localStorage.getItem("latanda_user");
+            this.token = localStorage.getItem("auth_token");
+            
+            if (!userData) {
+                this.showToast("Debes iniciar sesion", "error");
+                setTimeout(() => window.location.href = "auth-enhanced.html", 1500);
+                return;
+            }
+            
+            this.user = JSON.parse(userData);
+            this.setupTabs();
+            await this.loadData();
+        }
+
+        setupTabs() {
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const tab = btn.dataset.tab;
+                    
+                    // Update buttons
+                    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    
+                    // Update content
+                    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+                    document.getElementById("tab-" + tab).classList.add("active");
+                });
+            });
+        }
+
+        async loadData() {
+            const userId = this.user.user_id || this.user.id;
+            
+            try {
+                // Load received invitations
+                const recRes = await fetch("/api/invitations/" + userId);
+                const recData = await recRes.json();
+                this.received = recData.success ? recData.data.invitations : [];
+
+                // Load sent invitations
+                const sentRes = await fetch("/api/invitations/sent/" + userId);
+                const sentData = await sentRes.json();
+                this.sent = sentData.success ? sentData.data.invitations : [];
+
+                // Load user groups for create form
+                const groupsRes = await fetch("/api/groups?user_id=" + userId);
+                const groupsData = await groupsRes.json();
+                this.groups = groupsData.success ? (groupsData.data.groups || groupsData.data || []) : [];
+
+                this.render();
+                this.loadReferralData();
+            } catch (error) {
+                console.error("Error loading data:", error);
+                this.showToast("Error al cargar datos", "error");
+            }
+        }
+
+        render() {
+            this.renderReceived();
+            this.renderSent();
+            this.renderGroupSelect();
+            
+            document.getElementById("receivedCount").textContent = this.received.length;
+            document.getElementById("sentCount").textContent = this.sent.length;
+        }
+
+        renderReceived() {
+            const container = document.getElementById("receivedList");
+            
+            if (this.received.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No tienes invitaciones</h3>
+                        <p>Las invitaciones que recibas apareceran aqui</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.received.map(inv => this.renderCard(inv, "received")).join("");
+        }
+
+        renderSent() {
+            const container = document.getElementById("sentList");
+            
+            if (this.sent.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-paper-plane"></i>
+                        <h3>No has enviado invitaciones</h3>
+                        <p>Crea una nueva invitacion para empezar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = this.sent.map(inv => this.renderCard(inv, "sent")).join("");
+        }
+
+        renderCard(inv, type) {
+            const date = new Date(inv.created_at).toLocaleDateString("es-HN");
+            const statusClass = "status-" + inv.status;
+            const statusText = {pending: "Pendiente", accepted: "Aceptada", declined: "Rechazada", expired: "Expirada"}[inv.status] || inv.status;
+            
+            let actions = "";
+            if (type === "received" && inv.status === "pending") {
+                actions = `
+                    <div class="card-actions">
+                        <button class="btn btn-accept" onclick="app.acceptInvitation('${inv.token}')">\n                            <i class="fas fa-check"></i> Aceptar
+                        </button>
+                        <button class="btn btn-decline" onclick="app.declineInvitation('${inv.token}')">\n                            <i class="fas fa-times"></i> Rechazar
+                        </button>
+                    </div>
+                `;
+            }
+ else if (type === 'sent' && inv.status === 'pending') {
+                const canRemind = !inv.last_reminded_at || 
+                    (Date.now() - new Date(inv.last_reminded_at).getTime()) > 24 * 60 * 60 * 1000;
+                const reminderInfo = inv.reminder_count > 0 ? 
+                    '<span style="font-size: 0.75rem; color: #9ca3af; margin-right: 0.5rem;">Recordatorios: ' + inv.reminder_count + '</span>' : '';
+                const inviteeName = (inv.invitee_name || inv.invitee_email || 'Invitado').replace(/'/g, "\\'");
+                
+                actions = '<div class="card-actions" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
+                    reminderInfo +
+                    (canRemind ? 
+                        '<button class="btn btn-remind" onclick="app.sendReminder(\'' + inv.group_id + '\', \'' + inv.id + '\', \'' + inviteeName + '\')" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-bell"></i> Recordar</button>' 
+                        : '<span style="font-size: 0.75rem; color: #9ca3af;">Espera 24h</span>') +
+                    '<button class="btn btn-share" onclick="app.shareInvitation(\'' + inv.token + '\', \'' + (inv.group_name || 'Grupo').replace(/'/g, "\\'") + '\')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-share"></i> Compartir</button>' +
+                    '</div>';
+            }
+
+            const recipient = type === "sent" ? 
+                `<span><i class="fas fa-user"></i> Para: ${inv.invitee_name || inv.invitee_email || "Usuario"}</span>` :
+                `<span><i class="fas fa-user"></i> De: ${inv.inviter_name || "Usuario"}</span>`;
+
+            return `
+                <div class="invitation-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-users"></i>
+                            ${inv.group_name || "Grupo"}
+                        </div>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="card-meta">
+                        ${recipient}
+                        <span><i class="fas fa-calendar"></i> ${date}</span>
+                        <span><i class="fas fa-dollar-sign"></i> L. ${parseFloat(inv.contribution_amount || 0).toLocaleString()}</span>
+                        <span><i class="fas fa-sync"></i> ${inv.frequency || "mensual"}</span>
+                    </div>
+                    ${inv.message ? `<div class="card-message">"${inv.message}"</div>` : ""}
+                    ${actions}
+                </div>
+            `;
+        }
+
+        renderGroupSelect() {
+            const select = document.getElementById("groupSelect");
+            select.innerHTML = `<option value="">Seleccionar grupo...</option>` + 
+                this.groups.map(g => `<option value="${g.group_id || g.id}">${g.name}</option>`).join("");
+        }
+
+        async acceptInvitation(token) {
+            try {
+                const res = await fetch("/api/invitations/token/" + token + "/accept", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: this.user.user_id || this.user.id })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    this.showToast("Te has unido al grupo!", "success");
+                    await this.loadData();
+                } else {
+                    this.showToast(data.data?.error?.message || "Error", "error");
+                }
+            } catch (error) {
+                this.showToast("Error de conexion", "error");
+            }
+        }
+
+        async declineInvitation(token) {
+            if (!confirm("Rechazar esta invitacion?")) return;
+            
+            try {
+                const res = await fetch("/api/invitations/token/" + token + "/decline", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    this.showToast("Invitacion rechazada", "success");
+                    await this.loadData();
+                } else {
+                    this.showToast(data.data?.error?.message || "Error", "error");
+                }
+            } catch (error) {
+                this.showToast("Error de conexion", "error");
+            }
+        }
+
+        async handleTokenInvitation(token) {
+            // Show loading
+            document.querySelector(".container").innerHTML = `
+                <div class="loading" style="min-height: 50vh;">
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            try {
+                const res = await fetch("/api/invitations/token/" + token);
+                const data = await res.json();
+
+                if (!data.success) {
+                    this.showTokenError(data.data?.error?.message || "Invitacion no valida");
+                    return;
+                }
+
+                const inv = data.data;
+                this.showTokenInvitation(inv, token);
+            } catch (error) {
+                this.showTokenError("Error al cargar invitacion");
+            }
+        }
+
+        showTokenInvitation(inv, token) {
+            const userData = localStorage.getItem("latanda_user");
+            const isLoggedIn = !!userData;
+            
+            document.querySelector(".container").innerHTML = `
+                <div class="invitation-card" style="max-width: 500px; margin: 40px auto;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-envelope-open"></i>
+                            Invitacion a Grupo
+                        </div>
+                    </div>
+                    <h2 style="margin: 20px 0; color: var(--tanda-cyan);">${inv.group_name}</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">${inv.group_description || ""}</p>
+                    <div class="card-meta" style="margin-bottom: 20px;">
+                        <span><i class="fas fa-user"></i> Invitado por: ${inv.inviter_name || "Usuario"}</span>
+                        <span><i class="fas fa-dollar-sign"></i> L. ${parseFloat(inv.contribution_amount || 0).toLocaleString()}</span>
+                        <span><i class="fas fa-sync"></i> ${inv.frequency || "mensual"}</span>
+                    </div>
+                    ${inv.message ? `<div class="card-message">"${inv.message}"</div>` : ""}
+                    <div class="card-actions" style="flex-direction: column;">
+                        ${isLoggedIn ? `
+                            <button class="btn btn-accept" style="width:100%" onclick="app.acceptTokenInvite('${token}')">\n                                <i class="fas fa-check"></i> Aceptar y Unirse
+                            </button>
+                            <button class="btn btn-decline" style="width:100%" onclick="window.location.href='invitaciones.html'">
+                                <i class="fas fa-times"></i> Rechazar
+                            </button>
+                        ` : `
+                            <button class="btn btn-primary" style="width:100%" onclick="localStorage.setItem('redirect_after_auth', 'invitaciones.html?token=${token}'); window.location.href='auth-enhanced.html'">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesion para Aceptar
+                            </button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        showTokenError(message) {
+            document.querySelector(".container").innerHTML = `
+                <div class="empty-state" style="min-height: 50vh;">
+                    <i class="fas fa-exclamation-circle" style="color: var(--error-color);"></i>
+                    <h3>${message}</h3>
+                    <p>Esta invitacion puede haber expirado o ya fue utilizada.</p>
+                    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="window.location.href='invitaciones.html'">
+                        <i class="fas fa-arrow-left"></i> Ir a Invitaciones
+                    </button>
+                </div>
+            `;
+        }
+
+        async acceptTokenInvite(token) {
+            const userData = localStorage.getItem("latanda_user");
+            if (!userData) {
+                this.showToast("Debes iniciar sesion", "error");
+                return;
+            }
+            
+            const user = JSON.parse(userData);
+            try {
+                const res = await fetch("/api/invitations/token/" + token + "/accept", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: user.user_id || user.id })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    this.showToast("Te has unido al grupo!", "success");
+                    setTimeout(() => window.location.href = "groups-advanced-system.html", 1500);
+                } else {
+                    this.showToast(data.data?.error?.message || "Error", "error");
+                }
+            } catch (error) {
+                this.showToast("Error de conexion", "error");
+            }
+        }
+
+
+
+        // ============================================
+        // REFERRAL METHODS
+        // ============================================
+
+        async loadReferralData() {
+            try {
+                const res = await fetch('/api/referrals/my-code', {
+                    headers: {
+                        'Authorization': 'Bearer ' + this.token
+                    }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    this.referralCode = data.referral_code;
+                    this.referralLink = data.referral_link;
+                    this.referralStats = data.stats;
+                    this.renderReferralSection();
+                }
+            } catch (error) {
+                console.error('Error loading referral data:', error);
+            }
+        }
+
+        renderReferralSection() {
+            const codeEl = document.getElementById('myReferralCode');
+            if (codeEl) {
+                codeEl.textContent = this.referralCode || 'Error';
+            }
+
+            if (this.referralStats) {
+                const pending = document.getElementById('statPending');
+                const registered = document.getElementById('statRegistered');
+                const verified = document.getElementById('statVerified');
+                const rewards = document.getElementById('statRewards');
+
+                if (pending) pending.textContent = this.referralStats.pending || 0;
+                if (registered) registered.textContent = this.referralStats.registered || 0;
+                if (verified) verified.textContent = this.referralStats.verified || 0;
+                if (rewards) rewards.textContent = (this.referralStats.total_rewards || 0) + ' LTD';
+            }
+
+            this.loadReferralsList();
+        }
+
+        async loadReferralsList() {
+            try {
+                const res = await fetch('/api/referrals/list', {
+                    headers: {
+                        'Authorization': 'Bearer ' + this.token
+                    }
+                });
+                const data = await res.json();
+
+                const container = document.getElementById('referralsList');
+                if (!container) return;
+
+                if (!data.success || !data.referrals || data.referrals.length === 0) {
+                    container.innerHTML = '<p style="color: #666; text-align: center;">Aun no tienes referidos. Comparte tu codigo!</p>';
+                    return;
+                }
+
+                let html = '';
+                data.referrals.forEach(function(ref) {
+                    const date = new Date(ref.created_at).toLocaleDateString('es-HN');
+                    const statusColors = {
+                        pending: '#888',
+                        registered: '#00d4ff',
+                        verified: '#10b981',
+                        rewarded: '#f59e0b'
+                    };
+                    const statusText = {
+                        pending: 'Pendiente',
+                        registered: 'Registrado',
+                        verified: 'Verificado',
+                        rewarded: 'Recompensado'
+                    };
+                    const name = ref.referred_name || ref.referred_email || 'Invitado';
+                    const color = statusColors[ref.status] || '#888';
+                    const status = statusText[ref.status] || ref.status;
+
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">';
+                    html += '<div><div style="color: #fff;">' + name + '</div>';
+                    html += '<div style="color: #666; font-size: 0.75rem;">' + date + '</div></div>';
+                    html += '<div style="color: ' + color + '; font-size: 0.875rem;">' + status + '</div></div>';
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading referrals list:', error);
+            }
+        }
+
+        copyReferralLink() {
+            const link = this.referralLink || 'https://latanda.online/auth-enhanced.html?ref=' + this.referralCode;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(link).then(() => {
+                    this.showToast('Link copiado!', 'success');
+                });
+            } else {
+                prompt('Copia este link:', link);
+            }
+        }
+
+        shareWhatsApp() {
+            const link = this.referralLink || 'https://latanda.online/auth-enhanced.html?ref=' + this.referralCode;
+            const text = encodeURIComponent('Te invito a unirte a La Tanda! Registrate con mi link y ambos recibimos beneficios: ' + link);
+            window.open('https://wa.me/?text=' + text, '_blank');
+        }
+
+        showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = "toast " + type + " show";
+            setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+    }
+
+    // Initialize
+    const app = new InvitationManager();
+    
+    // Create form submission
+    document.getElementById("createForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const groupId = document.getElementById("groupSelect").value;
+        const email = document.getElementById("inviteeEmail").value;
+        const name = document.getElementById("inviteeName").value;
+        const message = document.getElementById("inviteMessage").value;
+
+        if (!groupId) {
+            app.showToast("Selecciona un grupo", "error");
+            return;
+        }
+
+        try {
+            const userData = localStorage.getItem("latanda_user");
+            const user = JSON.parse(userData);
+            
+            const res = await fetch("/api/groups/" + groupId + "/members/invite", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    inviter_id: user.user_id || user.id,
+                    email: email || null,
+                    name: name || null,
+                    message: message || null
+                })
+            });
+            
+            const data = await res.json();
+            
+            if (data.success || data.token) {
+                app.showToast("Invitacion creada!", "success");
+                
+                // Show shareable link
+                const link = "https://latanda.online/invitaciones.html?token=" + (data.token || data.data?.token);
+                if (confirm("Invitacion creada! Link copiado al portapapeles.\\n\\n" + link + "\\n\\nAbrir WhatsApp para compartir?")) {
+                    window.open("https://wa.me/?text=" + encodeURIComponent("Te invito a unirte a mi grupo en La Tanda: " + link));
+                }
+                
+                // Copy to clipboard
+                navigator.clipboard?.writeText(link);
+                
+                // Reset form and reload
+                e.target.reset();
+                await app.loadData();
+                
+                // Switch to sent tab
+                document.querySelector("[data-tab=sent]").click();
+            } else {
+                app.showToast(data.error || data.message || "Error", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            app.showToast("Error de conexion", "error");
+        }
+    });
+
+    // Start app
+    document.addEventListener("DOMContentLoaded", () => app.init());
+    </script>
+    <script src="pwa-manager.js"></script>
+</body>
+</html>

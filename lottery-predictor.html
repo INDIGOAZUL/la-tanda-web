@@ -1,0 +1,2285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictor de Lotería - La Tanda</title>
+    <link rel="stylesheet" href="css/main.css?v=8.0">
+    <style>
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #B8860B;
+            --purple: #6B46C1;
+            --purple-dark: #553C9A;
+            --red-hot: #ef4444;
+            --blue-cold: #3b82f6;
+        }
+
+        .disclaimer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center; flex-direction: column;
+            padding: 20px;
+        }
+
+        .disclaimer-modal {
+            background: #1a1a2e;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            border: 2px solid var(--gold);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .disclaimer-modal h2 {
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .disclaimer-content {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .disclaimer-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .disclaimer-content li {
+            margin-bottom: 8px;
+        }
+
+        .disclaimer-warning {
+            background: rgba(239,68,68,0.2);
+            border: 1px solid var(--red-hot);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #fca5a5;
+        }
+
+        .disclaimer-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+
+        .disclaimer-checkbox input {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+        }
+
+        .disclaimer-checkbox label {
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .disclaimer-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .disclaimer-btn.accept {
+            background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: #000;
+        }
+
+        .disclaimer-btn.accept:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .disclaimer-btn.decline {
+            background: transparent;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .lottery-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .next-draw {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .next-draw-label {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+
+        .next-draw-time {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .next-draw-countdown {
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .slot-machine {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1);
+            border: 3px solid var(--gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slot-machine::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+            animation: shimmer 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .slot-header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slot-header h2 {
+            color: var(--gold);
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            margin-bottom: 5px;
+        }
+
+        .slot-header .subtitle {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .draw-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center; flex-direction: column;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .draw-option {
+            padding: 10px 20px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .draw-option.active {
+            background: var(--purple);
+            border-color: var(--purple);
+        }
+
+        .slot-display {
+            display: flex;
+            justify-content: center; flex-direction: column;
+            gap: 15px;
+            margin: 30px 0;
+            position: relative;
+            z-index: 1;
+            flex-wrap: wrap;
+        }
+
+        .slot-reel {
+            width: 70px;
+            height: 90px;
+            background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 50%, #0f0f23 100%);
+            border-radius: 10px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center; flex-direction: column;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .slot-reel.spinning .reel-number {
+            animation: spinNumbers 0.1s linear infinite;
+        }
+
+        @keyframes spinNumbers {
+            0% { transform: translateY(-100%); opacity: 0; }
+            50% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+
+        .slot-reel.hot {
+            border-color: var(--red-hot);
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.5), 0 0 20px rgba(239,68,68,0.5);
+        }
+
+        .slot-reel.cold {
+            border-color: var(--blue-cold);
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.5), 0 0 20px rgba(59,130,246,0.5);
+        }
+        .reel-sign { display: block; font-size: 0.8rem; color: #ffd700; margin-top: 4px; }
+
+        .spin-button {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #000;
+            background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255,215,0,0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .spin-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,215,0,0.6);
+        }
+
+        .spin-button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .spin-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+            position: relative;
+            z-index: 1;
+        }
+
+        .spin-count, .confidence {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .confidence strong {
+            color: var(--gold);
+        }
+
+
+        /* Share Button */
+        .share-section {
+            display: none;
+            justify-content: center; flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(107,70,193,0.15);
+            border-radius: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .share-section.visible {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .share-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .share-btn.whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
+        .share-btn.telegram {
+            background: #0088cc;
+            color: white;
+        }
+
+        .share-btn.copy {
+            background: var(--purple);
+            color: white;
+        }
+
+        .share-btn.twitter {
+            background: #1DA1F2;
+            color: white;
+        }
+
+        .share-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: toastIn 0.3s ease;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        .my-predictions-panel {
+            background: linear-gradient(135deg, rgba(107,70,193,0.15) 0%, rgba(107,70,193,0.05) 100%);
+            border: 1px solid var(--purple);
+        }
+        
+        .my-prediction-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .my-prediction-item .numbers {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+        
+        .my-prediction-item .meta {
+            color: #888;
+            font-size: 0.8rem;
+            text-align: right;
+        }
+        
+        .my-prediction-item .result {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .my-prediction-item .result.pending {
+            background: rgba(234,179,8,0.2);
+            color: #eab308;
+        }
+        
+        .my-prediction-item .result.won {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+        }
+        
+        .my-prediction-item .result.lost {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+        }
+
+        .how-it-works {
+            background: rgba(107,70,193,0.1);
+            border: 1px solid var(--purple);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .how-it-works h3 {
+            color: var(--purple);
+            margin-bottom: 15px;
+        }
+
+        .how-it-works-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .how-step {
+            text-align: center;
+            padding: 15px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .how-step-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .how-step-title {
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .how-step-desc {
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        .stats-panel {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stats-panel h3 {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .number-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .number-chip {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .number-chip.hot {
+            background: rgba(239,68,68,0.2);
+            color: var(--red-hot);
+            border: 1px solid var(--red-hot);
+        }
+
+        .number-chip.cold {
+            background: rgba(59,130,246,0.2);
+            color: var(--blue-cold);
+            border: 1px solid var(--blue-cold);
+        }
+
+        .subscription-banner {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .subscription-banner h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .subscription-banner p {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 20px;
+        }
+
+        .plan-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .plan-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .plan-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-3px);
+        }
+
+        .plan-card.diamond {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(184,134,11,0.2) 100%);
+        }
+
+        .plan-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .plan-price {
+            font-size: 1.8rem;
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .plan-price small {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .plan-features {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .result-date {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .result-number {
+            font-weight: bold;
+            color: var(--gold);
+            font-size: 1.3rem;
+        }
+
+        .footer-disclaimer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            margin-top: 30px;
+            border-top: 1px solid #333;
+        }
+
+        .footer-disclaimer a {
+            color: var(--purple);
+            text-decoration: none;
+        }
+
+        /* Gamification Styles */
+        .gamification-section {
+            margin: 25px 0;
+        }
+
+        .user-stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #1e1e3f, #2d2d5a);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-icon {
+            font-size: 1.8rem;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .section-header a {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .achievements-preview {
+            background: rgba(30,30,60,0.5);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .achievements-grid {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .badge-item {
+            flex: 0 0 auto;
+            width: 80px;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .badge-item.earned {
+            border-color: var(--gold);
+            background: rgba(255,215,0,0.1);
+        }
+
+        .badge-item.locked {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+
+        .badge-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .badge-name {
+            font-size: 0.7rem;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-item.earned .badge-name {
+            color: var(--gold);
+        }
+
+        .mini-leaderboard {
+            background: rgba(30,30,60,0.5);
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+
+        .leaderboard-row:hover {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .leaderboard-row.current-user {
+            background: rgba(255,215,0,0.15);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .lb-rank {
+            width: 30px;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .lb-rank.gold { color: #FFD700; }
+        .lb-rank.silver { color: #C0C0C0; }
+        .lb-rank.bronze { color: #CD7F32; }
+
+        .lb-user {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .lb-name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .lb-badges {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .lb-points {
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        @media (max-width: 600px) {
+            .user-stats-bar {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            .stat-item {
+                width: 45%;
+                justify-content: center; flex-direction: column;
+            }
+        }
+
+        /* Social Feed Styles - Enhanced Cards */
+        .social-feed { margin-top: 20px; }
+        .social-feed h3 { color: #fff; margin-bottom: 15px; font-size: 1.1rem; }
+        .feed-list { display: flex; flex-direction: column; gap: 12px; }
+        .feed-empty { color: #888; text-align: center; padding: 20px; font-style: italic; }
+        
+        .feed-item {
+            background: linear-gradient(145deg, rgba(26,26,46,0.95), rgba(22,33,62,0.9));
+            border-radius: 12px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,215,0,0.15);
+            transition: all 0.3s ease;
+        }
+        .feed-item:hover {
+            border-color: rgba(255,215,0,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .feed-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .feed-user {
+            color: var(--gold);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .feed-time {
+            color: #666;
+            font-size: 0.75rem;
+        }
+        
+        .feed-numbers {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .feed-number {
+            background: linear-gradient(145deg, #1a1a2e, #0d1117);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 8px 14px;
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1.2rem;
+            min-width: 45px;
+            text-align: center;
+        }
+        
+        .feed-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .feed-meta span:first-child {
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+        .feed-result {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .feed-result.pending {
+            background: rgba(234,179,8,0.2);
+            color: #eab308;
+        }
+        .feed-result.win {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+        }
+        .feed-result.miss {
+            background: rgba(239,68,68,0.2);
+            color: #ef4444;
+        }
+        
+        .load-more-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            color: var(--gold);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .load-more-btn:hover {
+            background: rgba(255,215,0,0.2);
+        }
+
+        /* Algorithm Toggle Switch */
+        .algo-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .algo-switch input { opacity: 0; width: 0; height: 0; }
+        .algo-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(145deg, #2a2a4a, #1a1a2e); border-radius: 24px; transition: 0.3s; border: 1px solid #3d3d5c; }
+        .algo-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 2px; background: #8892b0; border-radius: 50%; transition: 0.3s; }
+        .algo-switch input:checked + .algo-slider { background: linear-gradient(145deg, #1a3a4a, #0d2a3a); border-color: #64ffda; }
+        .algo-switch input:checked + .algo-slider:before { transform: translateX(26px); background: #64ffda; }
+        /* Tabla Jaladora Styles */
+        .jaladora-panel {
+            background: linear-gradient(135deg, rgba(107, 70, 193, 0.2), rgba(255, 215, 0, 0.1));
+            border: 1px solid var(--purple);
+        }
+        
+        .jaladora-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .jaladora-last-result, .jaladora-suggestion {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .jaladora-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            min-width: 100px;
+        }
+        
+        .jaladora-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+            background: rgba(255,215,0,0.2);
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 2px solid var(--gold);
+            font-family: monospace;
+        }
+        
+        .jaladora-animal {
+            color: var(--purple);
+            font-size: 0.9rem;
+            background: rgba(107,70,193,0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        .jaladora-numbers {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .jaladora-numbers .jala-num {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: monospace;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        
+        .jaladora-numbers .jala-num:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(107,70,193,0.5);
+        }
+        
+        .jaladora-numbers .jala-num .jala-sign {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: normal;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        
+        .jaladora-table-toggle {
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .jaladora-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        
+        .jaladora-group {
+            background: rgba(107,70,193,0.15);
+            border: 1px solid rgba(107,70,193,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .jaladora-group-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .jaladora-group-numbers span {
+            background: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .jaladora-group.active {
+            background: rgba(255,215,0,0.2);
+            border-color: var(--gold);
+        }
+        
+        .jaladora-group.active .jaladora-group-numbers span {
+            background: rgba(255,215,0,0.3);
+            color: var(--gold);
+        }
+        
+        @media (max-width: 600px) {
+            .jaladora-number { font-size: 1.5rem; padding: 6px 12px; }
+            .jaladora-numbers .jala-num { font-size: 1.1rem; padding: 6px 10px; }
+            .jaladora-table { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/lottery-predictor.html">
+    <meta property="og:title" content="Predictor de Loteria | La Tanda">
+    <meta property="og:description" content="Analisis y predicciones de numeros de loteria con IA.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Predictor de Loteria | La Tanda">
+    <meta name="twitter:description" content="Analisis y predicciones de numeros de loteria con IA.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+</head>
+<body>
+    <div class="disclaimer-overlay" id="disclaimerModal" style="display: none;">
+        <div class="disclaimer-modal">
+            <h2>⚠️ Aviso Importante</h2>
+            <div class="disclaimer-content">
+                <p>Antes de continuar, por favor lee y acepta los siguientes términos:</p>
+
+                <div class="disclaimer-warning">
+                    <strong>🎲 Este servicio es SOLO para entretenimiento</strong>
+                    <p style="margin-top: 8px; margin-bottom: 0;">Las predicciones NO garantizan resultados ganadores.</p>
+                </div>
+
+                <ul>
+                    <li>Las predicciones se basan en análisis estadístico de frecuencia histórica</li>
+                    <li>Los juegos de azar conllevan riesgo de pérdida financiera</li>
+                    <li>Juega responsablemente y solo con dinero que puedas permitirte perder</li>
+                    <li>Debes ser mayor de 18 años para usar este servicio</li>
+                    <li>La Tanda no está afiliada con Lotería Nacional de Honduras</li>
+                </ul>
+
+                <p><strong>Si tienes problemas con el juego compulsivo, busca ayuda profesional.</strong></p>
+            </div>
+
+            <div class="disclaimer-checkbox">
+                <input type="checkbox" id="disclaimerAccept">
+                <label for="disclaimerAccept">Soy mayor de 18 años, entiendo que es solo entretenimiento y acepto los términos de uso.</label>
+            </div>
+
+            <button class="disclaimer-btn accept" id="disclaimerAcceptBtn" disabled onclick="acceptDisclaimer()">
+                Entiendo y Acepto
+            </button>
+            <button class="disclaimer-btn decline" onclick="declineDisclaimer()">
+                No, salir
+            </button>
+        </div>
+    </div>
+
+    <div id="header-placeholder"></div>
+
+    <main class="lottery-container">
+        <div class="nav-back" style="margin-bottom: 15px;"><a href="home-dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; color: var(--gold); text-decoration: none; font-weight: 500; padding: 10px 20px; background: rgba(255,215,0,0.1); border-radius: 25px; transition: all 0.3s;"><i class="fas fa-arrow-left"></i> Volver al Dashboard</a></div>
+        <div class="next-draw">
+            <div>
+                <div class="next-draw-label">Próximo sorteo</div>
+                <div class="next-draw-time" id="nextDrawTime">9:00 PM</div>
+            </div>
+            <div class="next-draw-countdown" id="countdown">--:--:--</div>
+        </div>
+
+        <div class="slot-machine">
+            <div class="slot-header">
+                <h2>🎰 Predictor La Diaria</h2>
+                <p class="subtitle">Honduras Lottery Predictions</p>
+            </div>
+
+            <div class="draw-selector">
+                <button class="draw-option active" data-time="any">Cualquiera</button>
+                <button class="draw-option" data-time="11am">11 AM</button>
+                <button class="draw-option" data-time="3pm">3 PM</button>
+                <button class="draw-option" data-time="9pm">9 PM</button>
+            </div>
+
+            <div class="algo-selector" id="algoSelectorDiv" style="display: none; style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span style="color: #8892b0; font-size: 0.85rem;">Algoritmo:</span>
+                <label class="algo-switch">
+                    <input type="checkbox" id="useMLToggle" onchange="toggleAlgorithm(this.checked)">
+                    <span class="algo-slider"></span>
+                </label>
+                <span id="algoLabel" style="color: #64ffda; font-size: 0.85rem; min-width: 80px;">Clásico</span>
+            </div>
+
+            <div class="slot-display" id="slotDisplay">
+                <div class="slot-reel"><span class="reel-number">--</span><span class="reel-sign"></span></div>
+            </div>
+
+            <button class="spin-button" id="spinButton" onclick="spin()">
+                🎲 GIRAR
+            </button>
+
+            <div class="spin-info">
+                <span class="spin-count" id="spinCount">Giros: 3/3</span>
+                <span class="confidence" id="confidence">Confianza: <strong>--</strong></span>
+            </div>
+
+            <!-- Share Section (hidden until prediction) -->
+            <div class="share-section" id="shareSection">
+                <button class="share-btn whatsapp" onclick="shareToWhatsApp()">
+                    📱 WhatsApp
+                </button>
+                <button class="share-btn telegram" onclick="shareToTelegram()">
+                    ✈️ Telegram
+                </button>
+                <button class="share-btn twitter" onclick="shareToTwitter()">
+                    🐦 Twitter
+                </button>
+                <button class="share-btn feed" onclick="shareToFeed()">
+                    🌐 Feed
+                </button>
+                <button class="share-btn copy" onclick="copyPrediction()">
+                    📋 Copiar
+                </button>
+            </div>
+        </div>
+
+        <div class="how-it-works">
+            <h3>💡 ¿Cómo Funciona?</h3>
+            <div class="how-it-works-grid">
+                <div class="how-step">
+                    <div class="how-step-icon">📊</div>
+                    <div class="how-step-title">Análisis</div>
+                    <div class="how-step-desc">Analizamos 180+ días de resultados</div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-icon">🔥❄️</div>
+                    <div class="how-step-title">Patrones</div>
+                    <div class="how-step-desc">Detectamos números calientes y fríos</div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-icon">🎯</div>
+                    <div class="how-step-title">Predicción</div>
+                    <div class="how-step-desc">Generamos sugerencias inteligentes</div>
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="lottery-stats.html" class="stats-link-btn" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.3s, box-shadow 0.3s;">
+                📊 Ver Estadísticas Detalladas
+            </a>
+        </div>
+
+        <!-- Gamification Section -->
+        <div class="gamification-section" id="gamificationSection" style="display: none;">
+            <!-- User Stats Bar -->
+            <div class="user-stats-bar">
+                <div class="stat-item">
+                    <span class="stat-icon">🎯</span>
+                    <div class="stat-info">
+                        <span class="stat-value" id="userPoints">0</span>
+                        <span class="stat-label">Puntos</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🔥</span>
+                    <div class="stat-info">
+                        <span class="stat-value" id="userStreak">0</span>
+                        <span class="stat-label">Racha</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🏆</span>
+                    <div class="stat-info">
+                        <span class="stat-value" id="userBadges">0</span>
+                        <span class="stat-label">Badges</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-info">
+                        <span class="stat-value" id="userAccuracy">--%</span>
+                        <span class="stat-label">Precisión</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Preview -->
+            <div class="achievements-preview">
+                <div class="section-header">
+                    <h3>🏅 Logros</h3>
+                    <a href="#" onclick="showAllAchievements(); return false;">Ver todos →</a>
+                </div>
+                <div class="achievements-grid" id="achievementsGrid">
+                    <!-- Badges loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Mini Leaderboard -->
+            <div class="mini-leaderboard">
+                <div class="section-header">
+                    <h3>🏆 Ranking Semanal</h3>
+                    <a href="#" onclick="showFullLeaderboard(); return false;">Ver completo →</a>
+                </div>
+                <div class="leaderboard-list" id="leaderboardList">
+                    <!-- Leaderboard loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Urgent upgrade message when no spins -->
+        <div class="no-spins-upgrade" id="noSpinsUpgrade" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 16px; margin: 20px 0; text-align: center;">
+            <div style="font-size: 1.5rem; margin-bottom: 8px;">😢 ¡Se acabaron tus giros!</div>
+            <div style="color: #ddd; margin-bottom: 15px;">Vuelve mañana o mejora tu plan</div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="window.location.reload()" style="background: rgba(255,255,255,0.2); border: 1px solid white; padding: 12px 25px; border-radius: 25px; color: white; cursor: pointer;">🔄 Mañana tendré 3 giros</button>
+                <button onclick="document.getElementById("subscriptionBanner").scrollIntoView({behavior: "smooth"})" style="background: linear-gradient(135deg, #f5af19, #f12711); border: none; padding: 12px 25px; border-radius: 25px; color: white; font-weight: bold; cursor: pointer;">⭐ Ver Planes Premium</button>
+            </div>
+        </div>
+
+        <div class="subscription-banner" id="subscriptionBanner" style="display: none;">
+            <h3>⭐ Mejora tu Experiencia</h3>
+            <p>Obtén más giros diarios y predicciones múltiples</p>
+            <div class="plan-cards">
+                <div class="plan-card" onclick="subscribe('premium')">
+                    <div class="plan-name">⭐ Premium</div>
+                    <div class="plan-price">$25<small>/mes</small></div>
+                    <div class="plan-features">10 giros/día<br>3 números por giro<br>Estadísticas avanzadas</div>
+                </div>
+                <div class="plan-card diamond" onclick="subscribe('diamond')">
+                    <div class="plan-name">💎 Diamante</div>
+                    <div class="plan-price">$49<small>/mes</small></div>
+                    <div class="plan-features">Giros ilimitados<br>5 números por giro<br>Alertas personalizadas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <h3>🔥 Números Calientes <small style="color:#888;font-weight:normal;">(más frecuentes)</small></h3>
+            <div class="number-grid" id="hotNumbers"></div>
+        </div>
+
+        <div class="stats-panel">
+            <h3>❄️ Números Fríos <small style="color:#888;font-weight:normal;">(sin aparecer)</small></h3>
+            <div class="number-grid" id="coldNumbers"></div>
+        </div>
+
+        <!-- Tabla Jaladora Section -->
+        <div class="stats-panel jaladora-panel">
+            <h3>🎯 Tabla Jaladora <small style="color:#888;font-weight:normal;">(números que se atraen)</small></h3>
+            <div class="jaladora-info" id="jaladoraInfo">
+                <div class="jaladora-last-result">
+                    <span class="jaladora-label">Último número:</span>
+                    <span class="jaladora-number" id="jaladoraLastNumber">--</span>
+                    <span class="jaladora-animal" id="jaladoraLastAnimal"></span>
+                </div>
+                <div class="jaladora-suggestion">
+                    <span class="jaladora-label">Jala a:</span>
+                    <div class="jaladora-numbers" id="jaladoraNumbers"></div>
+                </div>
+            </div>
+            <div class="jaladora-table-toggle">
+                <button class="btn btn-outline btn-sm" onclick="toggleTablaJaladora()">
+                    <i class="fas fa-table"></i> Ver tabla completa
+                </button>
+            </div>
+            <div class="jaladora-table" id="jaladoraTable" style="display:none;"></div>
+        </div>
+
+        <div class="stats-panel">
+            <h3>📊 Últimos Resultados</h3>
+            <div id="recentResults"></div>
+
+        <!-- Mis Predicciones (solo usuarios logueados) -->
+        <div class="stats-panel my-predictions-panel" id="myPredictionsPanel" style="display:none;">
+            <h3>🎯 Mis Predicciones</h3>
+            <div id="myPredictionsList">
+                <div class="feed-empty">Cargando tus predicciones...</div>
+            </div>
+        </div>
+
+        <!-- Social Feed -->
+        <div class="social-feed">
+            <h3>🌐 Feed de Predicciones</h3>
+            <div class="feed-list" id="socialFeed">
+                <div class="feed-empty">Cargando predicciones...</div>
+            </div>
+            <button class="load-more-btn" id="loadMoreFeed" style="display:none;" onclick="loadMoreFeed()">Cargar más</button>
+        </div>
+
+        <div class="footer-disclaimer">
+            ⚠️ <strong>Solo entretenimiento.</strong> Las predicciones no garantizan resultados.
+            Juega responsablemente. +18 años.<br>
+            <a href="#" onclick="showDisclaimer(); return false;">Ver términos completos</a>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/components-loader.js?v=30.2"></script>
+    <script>
+        let selectedTime = "any";
+        let useML = false;
+
+        function toggleAlgorithm(checked) {
+            useML = checked;
+            document.getElementById("algoLabel").textContent = checked ? "Premium" : "Básico";
+            console.log("Algorithm:", useML ? "Premium" : "Classic");
+        }
+        let spinStatus = null;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const accepted = localStorage.getItem("lottery_disclaimer_accepted");
+            if (!accepted) {
+                showDisclaimer();
+            }
+
+            await loadStats();
+            await loadSpinStatus();
+            await loadGamificationData();
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+
+            document.querySelectorAll(".draw-option").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".draw-option").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    selectedTime = btn.dataset.time;
+                });
+            });
+
+            document.getElementById("disclaimerAccept").addEventListener("change", (e) => {
+                document.getElementById("disclaimerAcceptBtn").disabled = !e.target.checked;
+            });
+        });
+
+        function showDisclaimer() {
+            document.getElementById("disclaimerModal").style.display = "flex";
+        }
+
+        function acceptDisclaimer() {
+            localStorage.setItem("lottery_disclaimer_accepted", Date.now());
+            document.getElementById("disclaimerModal").style.display = "none";
+        }
+
+        function declineDisclaimer() {
+            window.location.href = "/home-dashboard.html";
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const draws = [
+                { hour: 11, minute: 0, label: "11:00 AM" },
+                { hour: 15, minute: 0, label: "3:00 PM" },
+                { hour: 21, minute: 0, label: "9:00 PM" }
+            ];
+
+            const hondurasOffset = -6;
+            const utcHours = now.getUTCHours();
+            const hondurasHour = (utcHours + hondurasOffset + 24) % 24;
+            const hondurasMinute = now.getUTCMinutes();
+            const hondurasSecond = now.getUTCSeconds();
+
+            let nextDraw = null;
+            for (const draw of draws) {
+                if (hondurasHour < draw.hour || (hondurasHour === draw.hour && hondurasMinute < draw.minute)) {
+                    nextDraw = draw;
+                    break;
+                }
+            }
+            if (!nextDraw) nextDraw = draws[0];
+
+            document.getElementById("nextDrawTime").textContent = nextDraw.label;
+
+            let hoursLeft = nextDraw.hour - hondurasHour;
+            let minutesLeft = nextDraw.minute - hondurasMinute;
+            let secondsLeft = 60 - hondurasSecond;
+
+            if (secondsLeft === 60) {
+                secondsLeft = 0;
+            } else {
+                minutesLeft--;
+            }
+
+            if (minutesLeft < 0) {
+                minutesLeft += 60;
+                hoursLeft--;
+            }
+
+            if (hoursLeft < 0) {
+                hoursLeft += 24;
+            }
+
+            document.getElementById("countdown").textContent =
+                String(hoursLeft).padStart(2, "0") + ":" + String(minutesLeft).padStart(2, "0") + ":" + String(secondsLeft).padStart(2, "0");
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch("/api/lottery/stats");
+                const data = await response.json();
+
+                if (data.success) {
+                    const hotGrid = document.getElementById("hotNumbers");
+                    hotGrid.innerHTML = data.data.stats.hotNumbers.map(n =>
+                        '<span class="number-chip hot" title="Apareció ' + n.frequency + ' veces">' + n.number + ' (' + n.frequency + 'x)</span>'
+                    ).join("");
+
+                    const coldGrid = document.getElementById("coldNumbers");
+                    coldGrid.innerHTML = data.data.stats.coldNumbers.map(n =>
+                        '<span class="number-chip cold" title="No aparece hace ' + n.gapDays + ' días">' + n.number + ' (' + n.gapDays + 'd)</span>'
+                    ).join("");
+
+                    const resultsDiv = document.getElementById("recentResults");
+                    resultsDiv.innerHTML = data.data.stats.recentResults.slice(0, 5).map(r => {
+                        const d = new Date(r.date); d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); const date = d.toLocaleDateString("es-HN", { month: "short", day: "numeric" });
+                        return '<div class="result-row"><span class="result-date">' + date + ' ' + r.time + '</span><span class="result-number">' + r.mainNumber + '</span></div>';
+                    }).join("");
+                }
+            } catch (e) {
+                console.error("Error loading stats:", e);
+            }
+        }
+
+
+        // ==========================================
+        // TRIAL SYSTEM - Allow 1 free spin without login
+        // ==========================================
+        let isTrialMode = false;
+        let trialSpinUsed = false;
+
+        function checkTrialStatus() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasTrial = urlParams.get('trial') === 'true';
+            const trialAlreadyUsed = localStorage.getItem('lotteryTrialSpinUsed') === 'true';
+
+            if (hasTrial && !trialAlreadyUsed) {
+                isTrialMode = true;
+                return { canUseTrial: true, reason: 'trial_available' };
+            } else if (hasTrial && trialAlreadyUsed) {
+                return { canUseTrial: false, reason: 'trial_already_used' };
+            }
+            return { canUseTrial: false, reason: 'no_trial' };
+        }
+
+        function markTrialUsed() {
+            localStorage.setItem('lotteryTrialSpinUsed', 'true');
+            localStorage.setItem('lotteryFreeTrial', 'used');
+            trialSpinUsed = true;
+            isTrialMode = false;
+        }
+
+        async function handleTrialSpin() {
+            if (!isTrialMode || trialSpinUsed) {
+                alert('Tu prueba gratis ya fue usada. Crea una cuenta para más predicciones.');
+                return null;
+            }
+
+            const btn = document.getElementById("spinButton");
+            const reels = document.querySelectorAll(".slot-reel");
+
+            btn.disabled = true;
+            btn.textContent = "🎲 Girando...";
+
+            reels.forEach(reel => reel.classList.add("spinning"));
+
+            try {
+                // Call prediction API without auth for trial
+                const response = await fetch("/api/lottery/trial-spin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draw_time: selectedTime || null, use_ml: useML }) });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Stop spinning and show result
+                    setTimeout(() => {
+                        reels.forEach((reel, i) => {
+                            reel.classList.remove("spinning");
+                            const num = data.data.prediction.numbers[0].value || data.data.prediction.numbers[0].number; const sign = data.data.prediction.numbers[0].sign || "";
+                            reel.querySelector(".reel-number").textContent = String(num).padStart(2, '0'); reel.querySelector(".reel-sign").textContent = sign;
+                        });
+
+                        // Mark trial as used
+                        markTrialUsed();
+
+                        // Update UI
+                        updateTrialUIAfterSpin(data.data);
+
+                        // Show share buttons for trial users too
+                        showTrialShareSection(data.data.prediction);
+
+                        // Update confidence
+                        const conf = data.data.prediction.confidence || 0;
+                        document.getElementById("confidence").innerHTML = "Confianza: <strong>" + conf + "%</strong>";
+
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Error en predicción');
+                }
+            } catch (e) {
+                console.error("Trial spin error:", e);
+                reels.forEach(reel => reel.classList.remove("spinning"));
+                btn.disabled = false;
+                btn.textContent = "🎲 GIRAR";
+                alert("Error al obtener predicción. Intenta de nuevo.");
+            }
+        }
+
+        function updateTrialUIAfterSpin(prediction) {
+            const countEl = document.getElementById("spinCount");
+            const btnEl = document.getElementById("spinButton");
+
+            countEl.textContent = "✅ Prueba usada - Crea cuenta para más";
+            btnEl.disabled = true;
+            btnEl.textContent = "🔓 Crear Cuenta Gratis";
+            btnEl.onclick = function() {
+                localStorage.setItem("redirect_after_auth", "/lottery-predictor.html"); window.location.href = "/auth-enhanced.html?register=true";
+            };
+
+            // Show success message
+            showTrialSuccessMessage(prediction);
+        }
+
+        function showTrialSuccessMessage(prediction) {
+            const container = document.querySelector(".slot-machine");
+            const existingMsg = document.getElementById("trialSuccessMsg");
+            if (existingMsg) existingMsg.remove();
+
+            const msg = document.createElement("div");
+            msg.id = "trialSuccessMsg";
+            msg.style.cssText = "background: linear-gradient(135deg, #10b981, #059669); padding: 15px; border-radius: 12px; margin-top: 15px; text-align: center;";
+            msg.innerHTML = '<div style="font-size: 1.5rem; margin-bottom: 8px;">🎉 ¡Tu predicción está lista!</div>' +
+                '<div style="font-size: 0.9rem; opacity: 0.9;">Crea una cuenta gratis para obtener más predicciones diarias</div>';
+            container.appendChild(msg);
+        }
+
+        function showTrialShareSection(prediction) {
+            const shareSection = document.getElementById("shareSection"); // Hide original for trial users
+            if (shareSection) {
+                shareSection.style.display = "none"; // Hidden - using trialShareBtns instead
+            }
+
+            // Create share buttons if they don't exist
+            let shareBtns = document.getElementById("trialShareBtns");
+            if (!shareBtns) {
+                const num = prediction.numbers ? prediction.numbers[0].number : (prediction.number || "??");
+                const shareText = "🎰 Mi predicción de La Diaria: " + num + " - Prueba gratis en La Tanda! latanda.online/lottery-predictor.html";
+
+                shareBtns = document.createElement("div");
+                shareBtns.id = "trialShareBtns";
+                shareBtns.style.cssText = "display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap;";
+                shareBtns.innerHTML =
+                    '<a href="https://wa.me/?text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener noreferrer" style="background: #25D366; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fab fa-whatsapp"></i> WhatsApp</a>' +
+                    '<a href="https://t.me/share/url?url=' + encodeURIComponent('https://latanda.online/lottery-predictor.html') + '&text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener noreferrer" style="background: #0088cc; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fab fa-telegram"></i> Telegram</a>' +
+                    '<button onclick="copyTrialPrediction()" style="background: #6366f1; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;"><i class="fas fa-copy"></i> Copiar</button>';
+
+                const container = document.querySelector(".slot-machine");
+                container.appendChild(shareBtns);
+            }
+        }
+
+        function copyTrialPrediction() {
+            const reels = document.querySelectorAll(".slot-reel .reel-number");
+            let nums = [];
+            reels.forEach(r => nums.push(r.textContent));
+            const text = "🎰 Mi predicción de La Diaria: " + nums.join(", ") + " - Prueba gratis en latanda.online";
+            navigator.clipboard.writeText(text).then(() => {
+                alert("¡Copiado al portapapeles!");
+            });
+        }
+
+        async function loadSpinStatus() {
+            // FIRST: Check for auth token (logged in user takes priority)
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+
+            if (token) {
+                // User is logged in - use normal API
+                try {
+                    const response = await fetch("/api/lottery/spin-status", {
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        spinStatus = data.data.spin_status;
+                        updateSpinUI(spinStatus, true);
+                        // Show share buttons if user has previous prediction
+                        if (data.data.prediction) {
+                            showShareSection(data.data.prediction);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error loading spin status:", e);
+                }
+                return;
+            }
+
+            // NOT logged in - check trial status
+            const trialStatus = checkTrialStatus();
+
+            if (trialStatus.canUseTrial) {
+                // Trial mode - allow 1 free spin
+                updateSpinUI({
+                    tier: "trial",
+                    spinsRemaining: 1,
+                    maxSpins: 1,
+                    canSpin: true
+                });
+                return;
+            }
+
+            // No token and no trial available
+            if (trialStatus.reason === 'trial_already_used') {
+                updateSpinUI({
+                    tier: "guest_trial_used",
+                    spinsRemaining: 0,
+                    canSpin: false,
+                    message: "Tu prueba gratis fue usada"
+                });
+            } else {
+                updateSpinUI({ tier: "guest", spinsRemaining: 0, canSpin: false });
+            }
+        }
+        function updateSpinUI(status, skipSlotUpdate) {
+            const countEl = document.getElementById("spinCount");
+            const btnEl = document.getElementById("spinButton");
+            const banner = document.getElementById("subscriptionBanner");
+
+            if (status.tier === "trial") {
+                // Trial mode
+                countEl.textContent = "🎁 Prueba Gratis: 1 giro";
+                btnEl.disabled = false;
+                btnEl.textContent = "🎲 GIRAR GRATIS";
+                btnEl.onclick = handleTrialSpin;
+                btnEl.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                if (banner) banner.style.display = "none";
+
+            } else if (status.tier === "guest" || status.tier === "guest_trial_used") {
+                // Guest mode
+                if (status.message) {
+                    countEl.textContent = status.message;
+                } else {
+                    countEl.textContent = "Inicia sesión para jugar";
+                }
+                btnEl.disabled = true;
+                btnEl.textContent = "🔒 Iniciar Sesión";
+                btnEl.style.background = "";
+                btnEl.onclick = function() { localStorage.setItem("redirect_after_auth", "/lottery-predictor.html"); window.location.href = "/auth-enhanced.html"; };
+                if (banner) banner.style.display = "none";
+
+            } else {
+                // Logged in user
+                const remaining = status.spinsRemaining === "unlimited" ? "∞" : status.spinsRemaining;
+                const max = status.maxSpins === -1 ? "∞" : status.maxSpins;
+                const tierLabel = status.tier === "diamond" ? "💎" : status.tier === "premium" ? "⭐" : "🎁";
+                countEl.textContent = "Giros: " + remaining + "/" + max + " " + tierLabel;
+                btnEl.disabled = !status.canSpin;
+                btnEl.textContent = status.canSpin ? "🎲 GIRAR" : "Sin giros disponibles";
+                btnEl.style.background = "";
+                btnEl.onclick = spin;
+
+                if (banner) banner.style.display = status.tier === "free" ? "block" : "none";
+
+                // Show urgent message when free user has no spins
+                const noSpinsMsg = document.getElementById("noSpinsUpgrade");
+                if (noSpinsMsg) {
+                    noSpinsMsg.style.display = (!status.canSpin && status.tier === "free") ? "block" : "none";
+                }
+            }
+
+            if (!skipSlotUpdate) updateSlotDisplay(status.tier);
+        }
+
+        function updateSlotDisplay(tier) {
+            const display = document.getElementById("slotDisplay");
+            const numReels = tier === "diamond" ? 5 : tier === "premium" ? 3 : 1;
+
+            display.innerHTML = "";
+            for (let i = 0; i < numReels; i++) {
+                const reel = document.createElement("div");
+                reel.className = "slot-reel";
+                reel.id = "reel" + i;
+                reel.innerHTML = '<span class="reel-number">--</span>';
+                display.appendChild(reel);
+            }
+        }
+
+        async function spin() {
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+            if (!token) return;
+
+            const btn = document.getElementById("spinButton");
+            btn.disabled = true;
+            btn.textContent = "🎰 Girando...";
+
+            const reels = document.querySelectorAll(".slot-reel");
+            reels.forEach(function(reel, i) {
+                reel.classList.add("spinning");
+                animateReel(reel, i * 200);
+            });
+
+            try {
+                const response = await fetch("/api/lottery/spin", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ draw_time: selectedTime === "any" ? null : selectedTime, use_ml: useML })
+                });
+
+                const data = await response.json();
+
+                for (let i = 0; i < reels.length; i++) {
+                    await new Promise(function(r) { setTimeout(r, 500 + i * 300); });
+                    reels[i].classList.remove("spinning");
+
+                    if (data.success && data.data.prediction.numbers[i]) {
+                        const n = data.data.prediction.numbers[i];
+                        reels[i].querySelector(".reel-number").textContent = String(n.value || n.number).padStart(2, "0"); reels[i].querySelector(".reel-sign").textContent = n.sign || "";
+                        reels[i].classList.remove("hot", "cold");
+                        if (n.isHot) reels[i].classList.add("hot");
+                        if (n.isCold) reels[i].classList.add("cold");
+                    }
+                }
+
+                if (data.success) {
+                    document.getElementById("confidence").innerHTML =
+                        'Confianza: <strong>' + data.data.prediction.confidence + '%</strong>';
+
+                    spinStatus = data.data.spin_status;
+                    updateSpinUI(spinStatus, true);
+                    // Show share buttons
+                    showShareSection(data.data.prediction);
+                } else {
+                    alert(data.data && data.data.error ? data.data.error.message : "Error al girar");
+                    btn.disabled = false;
+                    btn.textContent = "🎲 GIRAR";
+                }
+            } catch (e) {
+                console.error("Spin error:", e);
+                reels.forEach(function(reel) { reel.classList.remove("spinning"); });
+                btn.disabled = false;
+                btn.textContent = "🎲 GIRAR";
+            }
+        }
+
+        function animateReel(reel, delay) {
+            setTimeout(function() {
+                const numEl = reel.querySelector(".reel-number");
+                const interval = setInterval(function() {
+                    if (!reel.classList.contains("spinning")) {
+                        clearInterval(interval);
+                        return;
+                    }
+                    numEl.textContent = String(Math.floor(Math.random() * 100)).padStart(2, "0");
+                }, 50);
+            }, delay);
+        }
+
+        function subscribe(tier) {
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+            if (!token) {
+                localStorage.setItem("redirect_after_auth", "/lottery-predictor.html"); window.location.href = "/auth-enhanced.html";
+                return;
+            }
+            alert("Función de pago para plan " + tier + " próximamente...");
+        }
+
+        // ==================== SHARE FUNCTIONS ====================
+        let lastPrediction = null;
+
+        function showShareSection(prediction) {
+            lastPrediction = prediction;
+            document.getElementById('shareSection').classList.add('visible');
+        }
+
+        function hideShareSection() {
+            document.getElementById('shareSection').classList.remove('visible');
+        }
+
+        function getShareText() {
+            if (!lastPrediction) return '';
+            const numbers = lastPrediction.numbers.map(n => String(n.value || n).padStart(2, '0') + (n.sign ? ' (' + n.sign + ')' : '')).join(', ');
+            const time = getNextDrawTime();
+            return `🎰 Mi predicción para La Diaria (Honduras)\n\n🔮 Números: ${numbers}\n⏰ Sorteo: ${time}\n📊 Confianza: ${lastPrediction.confidence}%\n\n¡Prueba tu suerte! 👉 https://latanda.online/lottery-predictor.html`;
+        }
+
+        function shareToWhatsApp() {
+            const text = encodeURIComponent(getShareText());
+            window.open(`https://wa.me/?text=${text}`, '_blank');
+        }
+
+        function shareToTelegram() {
+            const text = encodeURIComponent(getShareText());
+            window.open(`https://t.me/share/url?url=https://latanda.online/lottery-predictor.html&text=${text}`, '_blank');
+        }
+
+        function shareToTwitter() {
+            const text = encodeURIComponent(getShareText());
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
+        function copyPrediction() {
+            const text = getShareText();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('¡Copiado al portapapeles!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('¡Copiado al portapapeles!');
+            });
+        }
+
+        function showToast(message) {
+            const existing = document.querySelector('.share-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'share-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function getNextDrawTime() {
+            const now = new Date();
+            const hour = now.getHours();
+            if (hour < 11) return '11:00 AM';
+            if (hour < 15) return '3:00 PM';
+            if (hour < 21) return '9:00 PM';
+            return '11:00 AM (mañana)';
+        }
+
+
+        // Social Feed Functions
+        let feedOffset = 0;
+        let feedHasMore = false;
+
+        async function loadSocialFeed() {
+            try {
+                const response = await fetch(`/api/lottery/social-feed?limit=10&offset=${feedOffset}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderFeedItems(result.data.predictions, feedOffset === 0);
+                    feedHasMore = result.data.pagination.hasMore;
+                    document.getElementById('loadMoreFeed').style.display = feedHasMore ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error loading feed:', error);
+                document.getElementById('socialFeed').innerHTML = '<div class="feed-empty">Error al cargar el feed</div>';
+            }
+        }
+
+        function renderFeedItems(predictions, replace = false) {
+            const feedEl = document.getElementById('socialFeed');
+            
+            if (predictions.length === 0 && replace) {
+                feedEl.innerHTML = '<div class="feed-empty">No hay predicciones públicas aún. ¡Sé el primero en compartir!</div>';
+                return;
+            }
+            
+            const html = predictions.map(p => {
+                const numbers = typeof p.predicted_numbers === 'string' ? 
+                    JSON.parse(p.predicted_numbers) : p.predicted_numbers;
+                
+                let resultClass = 'pending';
+                let resultText = '⏳ Pendiente';
+                if (p.was_correct === true) {
+                    resultClass = 'win';
+                    resultText = '🎉 ¡Acertó!';
+                } else if (p.was_correct === false) {
+                    resultClass = 'miss';
+                    resultText = '❌ No acertó';
+                }
+                
+                return `
+                    <div class="feed-item">
+                        <div class="feed-item-header">
+                            <span class="feed-user">👤 ${p.display_name || 'Anónimo'}</span>
+                            <span class="feed-time">${formatTimeAgo(p.created_at)}</span>
+                        </div>
+                        <div class="feed-numbers">
+                            ${numbers.filter(n => n !== null && n !== undefined && !isNaN(parseInt(typeof n === 'object' ? (n.number || n.value) : n))).map(n => {
+                                const num = typeof n === 'object' ? (n.number || n.value || 0) : n;
+                                return `<span class="feed-number">${String(num).padStart(2, '0')}</span>`;
+                            }).join('')}
+                        </div>
+                        <div class="feed-meta">
+                            <span>🎯 ${p.target_time}</span>
+                            <span class="feed-result ${resultClass}">${resultText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if (replace) {
+                feedEl.innerHTML = html;
+            } else {
+                feedEl.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        function formatTimeAgo(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'Hace un momento';
+            if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+            if (diff < 86400) return `Hace ${Math.floor(diff/3600)} horas`;
+            return `Hace ${Math.floor(diff/86400)} días`;
+        }
+
+        function loadMoreFeed() {
+            feedOffset += 10;
+            loadSocialFeed();
+        }
+
+        async function shareToFeed() {
+            if (!lastPrediction || !lastPrediction.id) {
+                showToast('Primero genera una predicción');
+                return;
+            }
+            
+            const displayName = prompt('¿Con qué nombre quieres aparecer en el feed?', 'Anónimo') || 'Anónimo';
+            
+            try {
+                const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+                const userId = localStorage.getItem('userId') || 'guest_' + Math.random().toString(36).substr(2, 9);
+                const response = await fetch('/api/lottery/share-prediction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' },
+                    body: JSON.stringify({
+                        prediction_id: lastPrediction.id,
+                        user_id: userId,
+                        display_name: displayName,
+                        is_public: true
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('¡Predicción compartida en el feed!');
+                    feedOffset = 0;
+                    loadSocialFeed();
+                } else {
+                    showToast(result.data.error.message || 'Error al compartir');
+                }
+            } catch (error) {
+                showToast('Error al compartir');
+            }
+        }
+
+
+        // ========== MIS PREDICCIONES ==========
+        async function loadMyPredictions() {
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+            const panel = document.getElementById("myPredictionsPanel");
+            if (!panel) return;
+            
+            if (!token) {
+                panel.style.display = "none";
+                return;
+            }
+            
+            try {
+                const response = await fetch("/api/lottery/my-predictions?limit=5", {
+                    headers: { "Authorization": "Bearer " + token }
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.predictions && result.data.predictions.length > 0) {
+                    panel.style.display = "block";
+                    const listEl = document.getElementById("myPredictionsList");
+                    
+                    listEl.innerHTML = result.data.predictions.map(p => {
+                        const nums = p.numbers || p.predicted_numbers || [];
+                        const numbers = nums
+                            .filter(n => n !== null && n !== undefined && !isNaN(parseInt(typeof n === 'object' ? (n.number || n.value) : n)))
+                            .map(n => String(typeof n === "object" ? (n.number || n.value) : n).padStart(2, "0"))
+                            .join(", ");
+                        
+                        const date = new Date(p.date || p.createdAt || p.created_at); date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                        const dateStr = date.toLocaleDateString("es-HN", { day: "numeric", month: "short" });
+                        const timeStr = p.time || p.drawTime || p.target_time || "";
+                        
+                        let resultClass = "pending";
+                        let resultText = "Pendiente";
+                        
+                        if (p.actualResult !== null && p.actualResult !== undefined && !p.pending) {
+                            if (p.hitType) {
+                                resultClass = "won";
+                                resultText = "Acertaste!";
+                            } else {
+                                resultClass = "lost";
+                                resultText = "Fue: " + String(p.actualResult).padStart(2, "0");
+                            }
+                        }
+                        
+                        return "<div class=\"my-prediction-item\">" +
+                            "<div>" +
+                                "<div class=\"numbers\">" + numbers + "</div>" +
+                                "<div class=\"meta\">" + dateStr + " - " + timeStr + "</div>" +
+                            "</div>" +
+                            "<div class=\"result " + resultClass + "\">" + resultText + "</div>" +
+                        "</div>";
+                    }).join("");
+                } else {
+                    panel.style.display = "none";
+                }
+            } catch (err) {
+                console.error("Error loading my predictions:", err);
+                panel.style.display = "none";
+            }
+        }
+
+        // Load feed on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSocialFeed();
+            loadMyPredictions();
+            
+            // Auto-refresh resultados cada 5 minutos
+            setInterval(() => {
+                loadStats();
+                loadMyPredictions();
+            }, 5 * 60 * 1000);
+        });
+
+        // ==========================================
+        // GAMIFICATION SYSTEM
+        // ==========================================
+        async function loadGamificationData() {
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+            if (!token) {
+                // Hide gamification for guests
+                document.getElementById("gamificationSection").style.display = "none";
+                return;
+            }
+
+            // Show gamification section for logged users
+            document.getElementById("gamificationSection").style.display = "block";
+
+            try {
+                // Load all gamification data in parallel
+                const [statsRes, achievementsRes, leaderboardRes] = await Promise.all([
+                    fetch("/api/lottery/user-stats", { headers: { "Authorization": "Bearer " + token } }),
+                    fetch("/api/lottery/achievements", { headers: { "Authorization": "Bearer " + token } }),
+                    fetch("/api/lottery/leaderboard?period=weekly&limit=5", { headers: { "Authorization": "Bearer " + token } })
+                ]);
+
+                const [statsData, achievementsData, leaderboardData] = await Promise.all([
+                    statsRes.json(),
+                    achievementsRes.json(),
+                    leaderboardRes.json()
+                ]);
+
+                if (statsData.success) renderUserStats(statsData.data);
+                if (achievementsData.success) renderAchievements(achievementsData.data);
+                if (leaderboardData.success) renderLeaderboard(leaderboardData.data);
+
+            } catch (e) {
+                console.error("Error loading gamification:", e);
+            }
+        }
+
+        function renderUserStats(stats) {
+            document.getElementById("userPoints").textContent = formatNumber(stats.total_points || 0);
+            document.getElementById("userStreak").textContent = stats.current_streak || 0;
+            document.getElementById("userBadges").textContent = stats.badges_earned || 0;
+
+            const accuracy = stats.accuracy_rate || 0;
+            document.getElementById("userAccuracy").textContent = accuracy.toFixed(1) + "%";
+        }
+
+        function renderAchievements(data) {
+            const grid = document.getElementById("achievementsGrid");
+            const achievements = data.achievements || [];
+
+            // Show first 6 achievements
+            const displayAchievements = achievements.slice(0, 6);
+
+            grid.innerHTML = displayAchievements.map(a => {
+                const earnedClass = a.earned ? "earned" : "locked";
+                return '<div class="badge-item ' + earnedClass + '" title="' + a.description + '">' +
+                    '<div class="badge-icon">' + a.icon + '</div>' +
+                    '<div class="badge-name">' + a.name + '</div>' +
+                '</div>';
+            }).join("");
+
+            if (achievements.length === 0) {
+                grid.innerHTML = '<div style="color:#888;padding:20px;">Completa giros para desbloquear logros</div>';
+            }
+        }
+
+        function renderLeaderboard(data) {
+            const list = document.getElementById("leaderboardList");
+            const entries = data.leaderboard || [];
+            const currentUserId = data.current_user_id;
+
+            if (entries.length === 0) {
+                list.innerHTML = '<div style="color:#888;padding:20px;text-align:center;">Sin datos esta semana</div>';
+                return;
+            }
+
+            list.innerHTML = entries.map((entry, i) => {
+                const rank = i + 1;
+                const rankClass = rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "";
+                const isCurrentUser = entry.user_id === currentUserId;
+                const rowClass = isCurrentUser ? "leaderboard-row current-user" : "leaderboard-row";
+                const rankIcon = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "#" + rank;
+
+                return '<div class="' + rowClass + '">' +
+                    '<span class="lb-rank ' + rankClass + '">' + rankIcon + '</span>' +
+                    '<div class="lb-user">' +
+                        '<div class="lb-name">' + (entry.display_name || "Usuario " + entry.user_id.slice(0,4)) + '</div>' +
+                        '<div class="lb-badges">🏅 ' + (entry.badges || 0) + ' badges</div>' +
+                    '</div>' +
+                    '<span class="lb-points">' + formatNumber(entry.points || 0) + ' pts</span>' +
+                '</div>';
+            }).join("");
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+            if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+            return num.toString();
+        }
+
+        function showAllAchievements() {
+            // TODO: Open modal with all achievements
+            alert("Próximamente: Vista completa de logros");
+        }
+
+        function showFullLeaderboard() {
+            // TODO: Open modal with full leaderboard
+            alert("Próximamente: Leaderboard completo");
+        }
+        // ===== TABLA JALADORA FUNCTIONS =====
+        const LOTTERY_SIGNS = {
+            0: "Avión", 1: "Pies", 2: "Mujer", 3: "Muerto", 4: "Tigre",
+            5: "Embarazada", 6: "Elefante", 7: "Navaja", 8: "Conejo", 9: "Hombre",
+            10: "Anillo", 11: "Perro", 12: "Caballo", 13: "Gato", 14: "Boda",
+            15: "Ratón", 16: "Niña", 17: "Joven", 18: "Ángel", 19: "Mariposa",
+            20: "Espejo", 21: "Pájaro", 22: "Ataúd", 23: "Mono", 24: "Sapo",
+            25: "Balanza", 26: "Bandera", 27: "Juego", 28: "Gallo", 29: "Padre",
+            30: "Bolo", 31: "Alacrán", 32: "Culebra", 33: "Carpintero", 34: "Música",
+            35: "Virgen", 36: "Ciejita", 37: "Suerte", 38: "Pistola", 39: "Jabón",
+            40: "Cielo", 41: "Novia", 42: "Madre", 43: "Pantera", 44: "Mesas",
+            45: "Iglesia", 46: "Familia", 47: "Banco", 48: "Estrella", 49: "Sombra",
+            50: "Luna Nueva", 51: "Policía", 52: "Zorrillo", 53: "Llanta", 54: "Licor",
+            55: "Olas", 56: "Árbol", 57: "Cuchillo", 58: "Venado", 59: "Selva",
+            60: "Dragón", 61: "Guerra", 62: "Lagarto", 63: "Coco", 64: "Mueble",
+            65: "Pintura", 66: "Diablo", 67: "Vaca", 68: "Ladrón", 69: "Soldado",
+            70: "Oro", 71: "Zapatos", 72: "Arco", 73: "Fuego", 74: "Edificio",
+            75: "Reina", 76: "Palomas", 77: "Humo", 78: "Tienda", 79: "Flores",
+            80: "Café", 81: "Rieles", 82: "Escuela", 83: "Bote", 84: "Coronas",
+            85: "Casa", 86: "Reloj", 87: "León", 88: "Platos", 89: "Búho",
+            90: "Lentes", 91: "Tortuga", 92: "Águila", 93: "Cartero", 94: "Carro",
+            95: "Costurera", 96: "Dinero", 97: "Viejito", 98: "Bailes", 99: "Aretes"
+        };
+        
+        async function loadJaladoraInfo() {
+            try {
+                const response = await fetch("/api/lottery/jaladores");
+                const data = await response.json();
+                if (data.success) {
+                    const info = data.data;
+                    const lastNum = info.ultimoNumero.toString().padStart(2, "0");
+                    document.getElementById("jaladoraLastNumber").textContent = lastNum;
+                    document.getElementById("jaladoraLastAnimal").textContent = LOTTERY_SIGNS[info.ultimoNumero] || "";
+                    
+                    const jaladorasHtml = info.jaladores.map(num => {
+                        const numStr = num.toString().padStart(2, "0");
+                        const sign = LOTTERY_SIGNS[num] || "";
+                        return `<div class="jala-num">${numStr}<span class="jala-sign">${sign}</span></div>`;
+                    }).join("");
+                    document.getElementById("jaladoraNumbers").innerHTML = jaladorasHtml;
+                    
+                    window.jaladoraData = info;
+                }
+            } catch (error) {
+                console.error("Error loading jaladora info:", error);
+            }
+        }
+        
+        function toggleTablaJaladora() {
+            const table = document.getElementById("jaladoraTable");
+            const isVisible = table.style.display !== "none";
+            if (isVisible) {
+                table.style.display = "none";
+            } else {
+                if (!table.innerHTML) loadTablaJaladora();
+                table.style.display = "grid";
+            }
+        }
+        
+        async function loadTablaJaladora() {
+            try {
+                const response = await fetch("/api/lottery/tabla-jaladora");
+                const data = await response.json();
+                if (data.success) {
+                    const tabla = data.data.tabla;
+                    const lastNum = window.jaladoraData?.ultimoNumero;
+                    const lastBase = lastNum !== undefined ? lastNum % 25 : -1;
+                    
+                    let html = "";
+                    for (let base = 0; base < 25; base++) {
+                        const grupo = tabla[base];
+                        const isActive = base === lastBase;
+                        html += `<div class="jaladora-group ${isActive ? "active" : ""}">`;
+                        html += `<div class="jaladora-group-numbers">`;
+                        grupo.numeros.forEach(num => {
+                            html += `<span>${num}</span>`;
+                        });
+                        html += `</div></div>`;
+                    }
+                    document.getElementById("jaladoraTable").innerHTML = html;
+                }
+            } catch (error) {
+                console.error("Error loading tabla jaladora:", error);
+            }
+        }
+        
+        // Load jaladora on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            loadJaladoraInfo();
+        });
+    </script>
+    <script src="pwa-manager.js"></script>
+</body>
+</html>

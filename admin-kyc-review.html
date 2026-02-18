@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <script src="js/admin-guard.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin KYC Review - La Tanda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tanda-cyan: #00FFFF;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-accent: rgba(15, 23, 42, 0.8);
+            --border-primary: rgba(148, 163, 184, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a2332 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--tanda-cyan), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--tanda-cyan);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .verification-list {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .verification-item {
+            background: var(--bg-accent);
+            border: 1px solid var(--border-accent);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .verification-item:hover {
+            border-color: var(--tanda-cyan);
+            transform: translateX(5px);
+        }
+
+        .verification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .verification-header h3 {
+            font-size: 18px;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pending {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .status-badge.approved {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .status-badge.rejected {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .verification-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 28px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--border-primary);
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .image-container {
+            background: var(--bg-accent);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 8px;
+            cursor: zoom-in;
+        }
+
+        .image-label {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .verification-details {
+            background: var(--bg-accent);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: var(--tanda-cyan);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-approve {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-approve:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-reject {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-reject:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-accent);
+            color: var(--text-primary);
+            border: 1px solid var(--border-accent);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-primary);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .auto-verification-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .score-value.high {
+            color: var(--success);
+        }
+
+        .score-value.medium {
+            color: var(--warning);
+        }
+
+        .score-value.low {
+            color: var(--danger);
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Admin KYC Review</h1>
+            <button class="btn btn-secondary" onclick="loadPendingVerifications()">🔄 Refresh</button>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">-</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statReview">-</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statApproved">-</div>
+                <div class="stat-label">Approved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAutoApproved">-</div>
+                <div class="stat-label">Auto-Approved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAutoRate">-</div>
+                <div class="stat-label">Auto-Approval Rate</div>
+            </div>
+        </div>
+
+        <!-- Pending Verifications List -->
+        <div class="verification-list">
+            <h2 style="margin-bottom: 20px;">⏳ Pending Verifications</h2>
+            <div id="verificationsList">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal" id="reviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>KYC Verification Review</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+
+            <div id="modalContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://latanda.online';
+
+    // XSS prevention helper (v4.1.0)
+    function escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+        let currentVerification = null;
+
+        // Get auth token from localStorage
+        function getAuthToken() {
+            return localStorage.getItem('admin_token') || localStorage.getItem('auth_token');
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/kyc/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const stats = result.data;
+                    document.getElementById('statTotal').textContent = stats.total;
+                    document.getElementById('statReview').textContent = stats.review;
+                    document.getElementById('statApproved').textContent = stats.approved;
+                    document.getElementById('statAutoApproved').textContent = stats.auto_approved;
+                    document.getElementById('statAutoRate').textContent = `${stats.auto_approval_rate}%`;
+                }
+            } catch (error) {
+            }
+        }
+
+        // Load pending verifications
+        async function loadPendingVerifications() {
+            const listContainer = document.getElementById('verificationsList');
+            listContainer.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/kyc/pending`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const verifications = result.data.verifications;
+
+                    if (verifications.length === 0) {
+                        listContainer.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">✅</div>
+                                <h3>All caught up!</h3>
+                                <p>No pending KYC verifications to review.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    listContainer.innerHTML = verifications.map(v => `
+                        <div class="verification-item" data-action="view-kyc" data-id="${escapeHtml(v.id)}">
+                            <div class="verification-header">
+                                <h3>${escapeHtml(v.user_info?.name || 'Unknown User')}</h3>
+                                <span class="status-badge ${v.status}">${v.status}</span>
+                            </div>
+                            <div class="verification-info">
+                                <div><strong>Email:</strong> ${escapeHtml(v.user_info?.email || 'N/A')}</div>
+                                <div><strong>Phone:</strong> ${escapeHtml(v.user_info?.phone || 'N/A')}</div>
+                                <div><strong>Submitted:</strong> ${new Date(v.submitted_at).toLocaleString()}</div>
+                                <div><strong>Score:</strong> ${v.auto_verification?.score || 'N/A'}/100</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = `<div class="loading">Error loading verifications: Error al cargar verificaciones</div>`;
+                }
+            } catch (error) {
+                listContainer.innerHTML = `<div class="loading">Error: Error de conexion</div>`;
+            }
+        }
+
+        // View verification details
+        async function viewVerification(verificationId) {
+            try {
+                const response = await fetch(`${API_URL}/api/admin/kyc/${verificationId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentVerification = result.data.verification;
+                    const user = result.data.user;
+                    const v = currentVerification;
+                    const auto = v.auto_verification;
+
+                    const modalContent = document.getElementById('modalContent');
+                    modalContent.innerHTML = `
+                        <div class="verification-details">
+                            <h3>User Information</h3>
+                            <div class="detail-row">
+                                <div class="detail-label">Name:</div>
+                                <div>${escapeHtml(user?.name || 'N/A')}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Email:</div>
+                                <div>${escapeHtml(user?.email || 'N/A')}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Phone:</div>
+                                <div>${escapeHtml(user?.phone || 'N/A')}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Birth Date:</div>
+                                <div>${escapeHtml(user?.birth_date || 'N/A')}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Submitted:</div>
+                                <div>${new Date(v.submitted_at).toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        ${auto ? `
+                        <div class="verification-details">
+                            <h3>Automated Verification Scores</h3>
+                            <div class="auto-verification-scores">
+                                <div class="score-card">
+                                    <div class="score-value ${getScoreClass(auto.scores.ocr)}">${auto.scores.ocr}</div>
+                                    <div class="score-label">OCR Match</div>
+                                </div>
+                                <div class="score-card">
+                                    <div class="score-value ${getScoreClass(auto.scores.faceMatch)}">${auto.scores.faceMatch}</div>
+                                    <div class="score-label">Face Match</div>
+                                </div>
+                                <div class="score-card">
+                                    <div class="score-value ${getScoreClass(auto.scores.quality)}">${auto.scores.quality}</div>
+                                    <div class="score-label">Quality</div>
+                                </div>
+                                <div class="score-card">
+                                    <div class="score-value ${getScoreClass(auto.scores.fraud)}">${auto.scores.fraud}</div>
+                                    <div class="score-label">Fraud Check</div>
+                                </div>
+                                <div class="score-card">
+                                    <div class="score-value ${getScoreClass(auto.score)}">${auto.score}</div>
+                                    <div class="score-label">Final Score</div>
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Decision:</div>
+                                <div><span class="status-badge ${auto.decision}">${auto.decision}</span></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Reasoning:</div>
+                                <div>${auto.reasoning}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="verification-details">
+                            <h3>Uploaded Documents</h3>
+                            <div class="images-grid">
+                                ${v.documents.map(doc => `
+                                    <div class="image-container">
+                                        <img loading="lazy" src="${doc.url}" alt="${doc.fieldName}" onclick="openImageFullscreen('${doc.url}')">
+                                        <div class="image-label">${doc.fieldName.toUpperCase()} (${(doc.size / 1024).toFixed(1)} KB)</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="verification-details">
+                            <h3>Admin Notes (Optional)</h3>
+                            <textarea id="adminNotes" placeholder="Add notes about this verification..."></textarea>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-approve" onclick="approveVerification()">✅ Approve</button>
+                            <button class="btn btn-reject" onclick="showRejectForm()">❌ Reject</button>
+                            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        </div>
+
+                        <div id="rejectForm" style="display: none; margin-top: 20px;">
+                            <div class="verification-details">
+                                <h3>Rejection Reason (Required)</h3>
+                                <textarea id="rejectReason" placeholder="Explain why this verification is rejected..."></textarea>
+                                <div class="action-buttons" style="margin-top: 15px;">
+                                    <button class="btn btn-reject" onclick="rejectVerification()">Confirm Rejection</button>
+                                    <button class="btn btn-secondary" onclick="hideRejectForm()">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('reviewModal').classList.add('active');
+                }
+            } catch (error) {
+                alert('Error loading verification details');
+            }
+        }
+
+        function getScoreClass(score) {
+            if (score >= 85) return 'high';
+            if (score >= 70) return 'medium';
+            return 'low';
+        }
+
+        function showRejectForm() {
+            document.getElementById('rejectForm').style.display = 'block';
+        }
+
+        function hideRejectForm() {
+            document.getElementById('rejectForm').style.display = 'none';
+        }
+
+        // Approve verification
+        async function approveVerification() {
+            if (!confirm('Are you sure you want to approve this verification?')) return;
+
+            try {
+                const notes = document.getElementById('adminNotes').value;
+
+                const response = await fetch(`${API_URL}/api/admin/kyc/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        verification_id: currentVerification.id,
+                        notes: notes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ Verification approved successfully!');
+                    closeModal();
+                    loadPendingVerifications();
+                    loadStatistics();
+                } else {
+                    alert('Error: ' + (result.data?.error?.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error approving verification');
+            }
+        }
+
+        // Reject verification
+        async function rejectVerification() {
+            const reason = document.getElementById('rejectReason').value.trim();
+
+            if (!reason) {
+                alert('Please provide a rejection reason');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to reject this verification?')) return;
+
+            try {
+                const notes = document.getElementById('adminNotes').value;
+
+                const response = await fetch(`${API_URL}/api/admin/kyc/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        verification_id: currentVerification.id,
+                        reason: reason,
+                        notes: notes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('❌ Verification rejected');
+                    closeModal();
+                    loadPendingVerifications();
+                    loadStatistics();
+                } else {
+                    alert('Error: ' + (result.data?.error?.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error rejecting verification');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('reviewModal').classList.remove('active');
+            currentVerification = null;
+        }
+
+        function openImageFullscreen(url) {
+            window.open(url, '_blank');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check if user is logged in
+            if (!getAuthToken()) {
+                alert('Please login first');
+                window.location.href = 'auth-enhanced.html';
+                return;
+            }
+
+            loadStatistics();
+            loadPendingVerifications();
+        });
+    </script>
+    <script src="shared-components.js?v=7.18"></script>
+</body>
+</html>

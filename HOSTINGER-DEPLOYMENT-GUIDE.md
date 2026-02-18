@@ -109,7 +109,7 @@ curl https://api.latanda.online/api/system/status
 # Admin login test
 curl -X POST https://api.latanda.online/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@latanda.online","password":"Admin123!"}'
+  -d '{"email":"admin@latanda.online","password":"[REDACTED]"}'
 ```
 
 ### Expected Responses
