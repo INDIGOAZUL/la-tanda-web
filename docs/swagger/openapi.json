@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "La Tanda API",
-    "version": "4.6.3",
+    "version": "4.7.0",
     "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```\n\n**Revocación de tokens:** Los tokens son invalidados al cerrar sesión (`POST /api/auth/logout`) o cambiar contraseña. Un token revocado recibe `401 Token ha sido revocado` en cualquier endpoint protegido.",
     "contact": {
       "name": "INDIGOAZUL Development",
@@ -565,6 +565,115 @@
           },
           "total": {
             "type": "integer"
+          }
+        }
+      },
+      "Deposit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dep_bank_1708300000000_abc123"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["bank_transfer", "crypto", "mobile_payment"],
+            "description": "Tipo de depósito"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending_transfer", "receipt_uploaded", "processing", "confirmed", "failed", "cancelled", "expired"],
+            "description": "Estado actual del depósito"
+          },
+          "amount": {
+            "type": "number",
+            "example": 500.00
+          },
+          "net_amount": {
+            "type": "number",
+            "description": "Monto neto después de comisión",
+            "example": 487.50
+          },
+          "transaction_fee": {
+            "type": "number",
+            "description": "Comisión cobrada",
+            "example": 12.50
+          },
+          "currency": {
+            "type": "string",
+            "example": "HNL"
+          },
+          "reference_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "bank_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Solo para tipo bank_transfer"
+          },
+          "crypto_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Solo para tipo crypto"
+          },
+          "deposit_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dirección crypto generada"
+          },
+          "carrier": {
+            "type": "string",
+            "nullable": true,
+            "description": "Solo para tipo mobile_payment"
+          },
+          "instructions": {
+            "type": "object",
+            "nullable": true,
+            "description": "Instrucciones para completar el depósito"
+          },
+          "receipt": {
+            "type": "object",
+            "nullable": true,
+            "description": "Datos del comprobante subido"
+          },
+          "status_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "to": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "extension_count": {
+            "type": "integer",
+            "example": 0
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }
@@ -1613,17 +1722,84 @@
           "Wallet"
         ],
         "summary": "Crear depósito por transferencia bancaria",
+        "description": "Crea un depósito pendiente de transferencia bancaria. El usuario debe transferir a la cuenta receptora y luego subir el comprobante.",
         "security": [
           {
             "BearerAuth": []
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "bank_code"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 1,
+                    "example": 500.00,
+                    "description": "Monto a depositar en HNL"
+                  },
+                  "bank_code": {
+                    "type": "string",
+                    "example": "BAC",
+                    "description": "Código del banco emisor"
+                  },
+                  "reference_number": {
+                    "type": "string",
+                    "example": "REF-2026-001",
+                    "description": "Número de referencia de la transferencia (opcional)"
+                  },
+                  "user_account_number": {
+                    "type": "string",
+                    "description": "Número de cuenta del usuario (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Depósito creado, pendiente de confirmación"
+            "description": "Depósito creado, pendiente de confirmación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Deposit"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Depósito creado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Monto inválido o datos faltantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
@@ -1634,17 +1810,80 @@
           "Wallet"
         ],
         "summary": "Crear depósito móvil (Tigo Money)",
+        "description": "Crea un depósito vía pago móvil (Tigo Money). Genera un código SMS para verificación.",
         "security": [
           {
             "BearerAuth": []
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "phone_number", "carrier"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 1,
+                    "example": 200.00,
+                    "description": "Monto a depositar en HNL"
+                  },
+                  "phone_number": {
+                    "type": "string",
+                    "example": "+50499887766",
+                    "description": "Número de teléfono del usuario"
+                  },
+                  "carrier": {
+                    "type": "string",
+                    "example": "tigo",
+                    "description": "Operador móvil"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Depósito móvil creado"
+            "description": "Depósito móvil creado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Deposit"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Depósito móvil creado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Monto o datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
@@ -1655,6 +1894,503 @@
           "Wallet"
         ],
         "summary": "Crear depósito crypto",
+        "description": "Crea un depósito de criptomoneda. Genera una dirección de depósito y código QR para el usuario.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "crypto_currency"],
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "minimum": 1,
+                    "example": 100.00,
+                    "description": "Monto equivalente en HNL"
+                  },
+                  "crypto_currency": {
+                    "type": "string",
+                    "enum": ["BTC", "ETH", "USDT"],
+                    "example": "USDT",
+                    "description": "Criptomoneda para el depósito"
+                  },
+                  "network": {
+                    "type": "string",
+                    "example": "ethereum",
+                    "description": "Red blockchain (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dirección de depósito generada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Deposit"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Depósito crypto creado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/upload-receipt": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Subir comprobante de depósito",
+        "description": "Sube un comprobante (imagen) para un depósito pendiente. Actualiza el estado a `receipt_uploaded`.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id", "receipt"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito"
+                  },
+                  "receipt": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Imagen del comprobante (JPEG, PNG)"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Notas adicionales sobre el comprobante"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comprobante subido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Depósito no encontrado o archivo inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/track/{depositId}": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Rastrear estado de depósito",
+        "description": "Obtiene el estado actual y detalles de un depósito. Solo el dueño del depósito puede consultarlo.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "depositId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del depósito a rastrear"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalles del depósito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Deposit"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/update-status": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Actualizar estado de depósito (admin)",
+        "description": "Actualiza el estado de un depósito. Si el nuevo estado es `confirmed`, acredita el monto al wallet del usuario de forma transaccional. Requiere rol admin.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id", "new_status"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito"
+                  },
+                  "new_status": {
+                    "type": "string",
+                    "enum": ["processing", "confirmed", "failed", "expired"],
+                    "description": "Nuevo estado del depósito"
+                  },
+                  "admin_notes": {
+                    "type": "string",
+                    "description": "Notas del administrador"
+                  },
+                  "received_amount": {
+                    "type": "number",
+                    "description": "Monto recibido (si difiere del solicitado)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Transición de estado inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/cancel": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Cancelar depósito",
+        "description": "Cancela un depósito pendiente del usuario autenticado. Solo depósitos en estado `pending_transfer` pueden cancelarse.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito a cancelar"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Razón de la cancelación (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depósito cancelado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El depósito no puede ser cancelado en su estado actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/modify": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Modificar depósito pendiente",
+        "description": "Modifica el monto o referencia de un depósito pendiente. Solo depósitos en estado `pending_transfer` pueden modificarse. Historial de modificaciones se registra.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 1,
+                    "description": "Nuevo monto del depósito"
+                  },
+                  "reference_number": {
+                    "type": "string",
+                    "description": "Nuevo número de referencia"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depósito modificado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El depósito no puede ser modificado o datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/deposit/extend": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Extender tiempo de depósito",
+        "description": "Extiende el plazo de expiración de un depósito pendiente. Máximo 3 extensiones permitidas. Historial de extensiones se registra.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito"
+                  },
+                  "extension_hours": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 72,
+                    "example": 24,
+                    "description": "Horas adicionales (default: 24)"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Razón de la extensión (opcional)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plazo extendido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Límite de extensiones alcanzado o estado inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/pending": {
+      "get": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Listar depósitos pendientes (admin)",
+        "description": "Lista todos los depósitos con estado `pending_transfer` o `processing`. Requiere rol admin.",
         "security": [
           {
             "BearerAuth": []
@@ -1662,10 +2398,194 @@
         ],
         "responses": {
           "200": {
-            "description": "Dirección de depósito generada"
+            "description": "Lista de depósitos pendientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "deposits": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Deposit"
+                          }
+                        },
+                        "total": {
+                          "type": "integer",
+                          "example": 5
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/confirm": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Confirmar depósito (admin)",
+        "description": "Confirma un depósito y acredita el monto neto al wallet del usuario. Operación transaccional: actualiza depósito + acredita wallet + registra transacción. Requiere rol admin.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito a confirmar"
+                  },
+                  "admin_notes": {
+                    "type": "string",
+                    "description": "Notas del administrador"
+                  },
+                  "received_amount": {
+                    "type": "number",
+                    "description": "Monto realmente recibido (si difiere del original)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depósito confirmado y wallet acreditado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Depósito confirmado y wallet acreditado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Depósito no encontrado o no es confirmable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/reject": {
+      "post": {
+        "tags": [
+          "Wallet"
+        ],
+        "summary": "Rechazar depósito (admin)",
+        "description": "Rechaza un depósito pendiente con razón. Requiere rol admin.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["deposit_id", "rejection_reason"],
+                "properties": {
+                  "deposit_id": {
+                    "type": "string",
+                    "description": "ID del depósito a rechazar"
+                  },
+                  "rejection_reason": {
+                    "type": "string",
+                    "description": "Razón del rechazo"
+                  },
+                  "admin_notes": {
+                    "type": "string",
+                    "description": "Notas adicionales del administrador"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Depósito rechazado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Depósito no encontrado o no puede ser rechazado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
