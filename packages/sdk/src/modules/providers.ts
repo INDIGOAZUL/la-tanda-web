@@ -30,7 +30,7 @@ export class ProvidersModule {
      * @returns The newly created provider profile.
      */
     async register(data: ProviderRegistration): Promise<ProviderProfile> {
-        return this._http.post<ProviderProfile>('/api/marketplace/providers/register', data)
+        return this._http.post<ProviderProfile>('/marketplace/providers/register', data)
     }
 
     /**
@@ -42,7 +42,7 @@ export class ProvidersModule {
      * @returns The active business profile.
      */
     async getProfile(): Promise<ProviderProfile> {
-        return this._http.get<ProviderProfile>('/api/marketplace/providers/me')
+        return this._http.get<ProviderProfile>('/marketplace/providers/me')
     }
 
     /**
@@ -55,6 +55,6 @@ export class ProvidersModule {
      * @returns The updated provider profile.
      */
     async updateProfile(data: ProviderUpdate): Promise<ProviderProfile> {
-        return this._http.put<ProviderProfile>('/api/marketplace/providers/me', data)
+        return this._http.put<ProviderProfile>('/marketplace/providers/me', data)
     }
 }

@@ -23,7 +23,7 @@ export class NotificationModule {
      * @param params - Optional filters, such as pagination or notification type.
      */
     async list(params?: any): Promise<Notification[]> {
-        return this._http.get<Notification[]>('/api/notifications', params)
+        return this._http.get<Notification[]>('/notifications', params)
     }
 
     /**
@@ -31,7 +31,7 @@ export class NotificationModule {
      * Typically used for badge counts in navigation bars.
      */
     async getUnreadCount(): Promise<UnreadCount> {
-        return this._http.get<UnreadCount>('/api/notifications/unread-count')
+        return this._http.get<UnreadCount>('/notifications/unread-count')
     }
 
     /**
@@ -39,14 +39,14 @@ export class NotificationModule {
      * Efficient for users clearing their entire inbox at once.
      */
     async markAllRead(): Promise<{ success: boolean }> {
-        return this._http.post<{ success: boolean }>('/api/notifications/read-all')
+        return this._http.post<{ success: boolean }>('/notifications/read-all')
     }
 
     /**
      * Fetches the user's global notification dispatch settings (Email, Push, SMS).
      */
     async getPreferences(): Promise<NotificationPreferences> {
-        return this._http.get<NotificationPreferences>('/api/notifications/preferences')
+        return this._http.get<NotificationPreferences>('/notifications/preferences')
     }
 
     /**
@@ -55,6 +55,6 @@ export class NotificationModule {
      * @param data - Partial preference update object.
      */
     async updatePreferences(data: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
-        return this._http.put<NotificationPreferences>('/api/notifications/preferences', data)
+        return this._http.put<NotificationPreferences>('/notifications/preferences', data)
     }
 }

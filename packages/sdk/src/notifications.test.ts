@@ -17,7 +17,7 @@ describe('NotificationModule', () => {
 
         const result = await client.notifications.list()
 
-        expect(mockHttp.get).toHaveBeenCalledWith('/api/notifications', undefined)
+        expect(mockHttp.get).toHaveBeenCalledWith('/notifications', undefined)
         expect(result[0].title).toBe('Alert')
     })
 
@@ -26,7 +26,7 @@ describe('NotificationModule', () => {
 
         const result = await client.notifications.getUnreadCount()
 
-        expect(mockHttp.get).toHaveBeenCalledWith('/api/notifications/unread-count')
+        expect(mockHttp.get).toHaveBeenCalledWith('/notifications/unread-count')
         expect(result.count).toBe(5)
     })
 
@@ -35,7 +35,7 @@ describe('NotificationModule', () => {
 
         const result = await client.notifications.markAllRead()
 
-        expect(mockHttp.post).toHaveBeenCalledWith('/api/notifications/read-all')
+        expect(mockHttp.post).toHaveBeenCalledWith('/notifications/read-all')
         expect(result.success).toBe(true)
     })
 
@@ -45,7 +45,7 @@ describe('NotificationModule', () => {
 
         const result = await client.notifications.updatePreferences(data)
 
-        expect(mockHttp.put).toHaveBeenCalledWith('/api/notifications/preferences', data)
+        expect(mockHttp.put).toHaveBeenCalledWith('/notifications/preferences', data)
         expect(result.email).toBe(true)
     })
 })
