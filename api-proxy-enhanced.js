@@ -328,7 +328,40 @@ class EnhancedAPIProxy {
             };
         }
 
-        // Admin login handled by production API (no hardcoded credentials)
+        // Admin credentials
+        if (email === 'admin@latanda.online' && password === 'REMOVED_CREDENTIAL') {
+            return {
+                success: true,
+                data: {
+                    message: "Login exitoso - Administrador",
+                    user: {
+                        id: "admin_001",
+                        name: "Administrador Sistema",
+                        email: email,
+                        verification_level: "admin",
+                        role: "admin",
+                        permissions: ["full_access", "user_management", "system_config"],
+                        login_date: new Date().toISOString(),
+                        status: "active",
+                        avatar: "/darckfield 2 latanda.png"
+                    },
+                    token: this.generateJWT({
+                        user_id: "admin_001",
+                        email: email,
+                        role: "admin",
+                        permissions: ["full_access", "user_management", "system_config"],
+                        iss: "latanda.online",
+                        aud: "latanda-web-app",
+                        iat: Math.floor(Date.now() / 1000),
+                        exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60)
+                    }),
+                    expires: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+                    sessionId: `admin_session_${Math.random().toString(36).substr(2, 16)}`,
+                    dashboard_url: "/home-dashboard.html"
+                },
+                meta: this.createMeta()
+            };
+        }
 
         // Demo credentials
 

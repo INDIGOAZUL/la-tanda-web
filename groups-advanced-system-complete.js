@@ -78,7 +78,7 @@ class LaTandaGroupsSystemComplete {
                 // Usuario demo por defecto
                 this.currentUser = {
                     id: 'user_' + Date.now(),
-                    email: 'user@example.com',
+                    email: 'demo@latanda.online',
                     name: 'Demo Usuario',
                     role: 'user'
                 };
