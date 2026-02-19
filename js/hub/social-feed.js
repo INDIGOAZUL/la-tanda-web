@@ -696,7 +696,7 @@ const SocialFeed = {
                     uploadedMedia = await this.uploadImages();
                 } catch (uploadError) {
                     this.showUploadProgress(false, 0);
-                    window.LaTandaPopup && window.LaTandaPopup.showError(uploadError.message || "Error al subir archivos");
+                    window.LaTandaPopup && window.LaTandaPopup.showError("Error al subir archivos. Intenta de nuevo.");
                     return;
                 }
             }
@@ -784,7 +784,7 @@ const SocialFeed = {
                 throw new Error(result.message || result.error || "Error al publicar");
             }
         } catch (error) {
-            window.LaTandaPopup && window.LaTandaPopup.showError(error.message || "Error al publicar");
+            window.LaTandaPopup && window.LaTandaPopup.showError("Error al publicar. Intenta de nuevo.");
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -904,7 +904,7 @@ const SocialFeed = {
                 throw new Error(result.message || result.error || "Error al eliminar");
             }
         } catch (error) {
-            window.LaTandaPopup && window.LaTandaPopup.showError(error.message || "Error al eliminar");
+            window.LaTandaPopup && window.LaTandaPopup.showError("Error al eliminar. Intenta de nuevo.");
         }
     },
 
@@ -1003,7 +1003,7 @@ const SocialFeed = {
                 throw new Error(result.message || result.error || "Error al actualizar");
             }
         } catch (error) {
-            window.LaTandaPopup && window.LaTandaPopup.showError(error.message || "Error al actualizar");
+            window.LaTandaPopup && window.LaTandaPopup.showError("Error al actualizar. Intenta de nuevo.");
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;

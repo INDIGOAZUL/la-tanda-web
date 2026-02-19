@@ -527,7 +527,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=11.8'
+            'js/hub/social-feed.js?v=11.9'
         ];
         
         for (const module of modules) {

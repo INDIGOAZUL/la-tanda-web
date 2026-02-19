@@ -691,8 +691,8 @@ class MarketplaceSocialSystem {
                 <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
                     <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
                     <h3>Error cargando reservas</h3>
-                    <p>${error.message || 'Intenta de nuevo más tarde'}</p>
-                    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="window.marketplaceSystem.loadBookingsData()">Reintentar</button>
+                    <p>Intenta de nuevo mas tarde.</p>
+                    <button class="btn btn-secondary" style="margin-top: 15px;" data-action="retry-bookings">Reintentar</button>
                 </div>
             `;
         }
@@ -867,7 +867,7 @@ class MarketplaceSocialSystem {
                 throw new Error(response.error || 'Error al crear reserva');
             }
         } catch (error) {
-            this.showNotification(error.message || 'Error al crear la reserva. Intenta de nuevo.', 'error');
+            this.showNotification('Error al crear la reserva. Intenta de nuevo.', 'error');
         } finally {
             // Reset button
             if (submitBtn) {
@@ -3302,8 +3302,8 @@ class MarketplaceSocialSystem {
                 <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.6);">
                     <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
                     <h3>Error al cargar mensajes</h3>
-                    <p>${error.message || "Intenta de nuevo más tarde"}</p>
-                    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="window.marketplaceSystem.loadConversations()">
+                    <p>Intenta de nuevo mas tarde.</p>
+                    <button class="btn btn-secondary" style="margin-top: 15px;" data-action="retry-conversations">
                         Reintentar
                     </button>
                 </div>
@@ -4236,7 +4236,7 @@ async function cancelBooking(bookingId) {
             throw new Error(response?.error || 'Error al cancelar');
         }
     } catch (error) {
-        window.marketplaceSystem?.showNotification(error.message || 'Error al cancelar la reserva', 'error');
+        window.marketplaceSystem?.showNotification('Error al cancelar la reserva', 'error');
     }
 }
 
@@ -4391,65 +4391,70 @@ async function showShareModal(itemId, type = 'service') {
             const estimatedCommission = (itemPrice * commissionPercent / 100).toFixed(0);
             const actionText = type === 'product' ? 'venta' : 'reserva';
 
-            // Create modal
+            // Create modal — all user data escaped
+            const esc = ms.escapeHtml.bind(ms);
+            const safeImage = esc(String(itemImage || ''));
+            const safeTitle = esc(String(itemTitle || ''));
+            const safeOwner = esc(String(itemOwner || ''));
+            const safeLink = esc(String(referralLink || ''));
+            const safeCode = esc(String(referralCode || ''));
+            const encodedLink = encodeURIComponent(referralLink);
+            const encodedTitle = encodeURIComponent(itemTitle);
+
             const modal = document.createElement('div');
             modal.id = 'shareModal';
             modal.className = 'modal active';
             modal.innerHTML = `
                 <div class="modal-content" style="max-width: 500px;">
                     <div class="modal-header">
-                        <h2 class="modal-title">💰 Compartir y Ganar</h2>
-                        <button class="close-btn" onclick="closeShareModal()">&times;</button>
+                        <h2 class="modal-title">Compartir y Ganar</h2>
+                        <button class="close-btn" data-action="close-share-modal">&times;</button>
                     </div>
                     <div style="padding: 20px;">
                         <div style="text-align: center; margin-bottom: 20px;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">${itemImage}</div>
-                            <div style="font-size: 18px; font-weight: 600;">${itemTitle}</div>
-                            <div style="color: rgba(255,255,255,0.7);">${itemOwner}</div>
+                            <div style="font-size: 48px; margin-bottom: 10px;">${safeImage}</div>
+                            <div style="font-size: 18px; font-weight: 600;">${safeTitle}</div>
+                            <div style="color: rgba(255,255,255,0.7);">${safeOwner}</div>
                         </div>
 
                         <div style="background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(16,185,129,0.1)); border: 1px solid rgba(0,255,255,0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
                             <div style="font-size: 14px; color: rgba(255,255,255,0.7);">Ganas por cada ${actionText}</div>
                             <div style="font-size: 32px; font-weight: 700; color: #10B981;">${ms.formatPrice(parseFloat(estimatedCommission), item.currency || 'HNL')}</div>
-                            <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${commissionPercent}% de comisión</div>
+                            <div style="font-size: 12px; color: rgba(255,255,255,0.5);">${commissionPercent}% de comision</div>
                         </div>
 
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tu link de referido:</label>
                             <div style="display: flex; gap: 8px;">
-                                <input type="text" id="referralLinkInput" value="${referralLink}" readonly
+                                <input type="text" id="referralLinkInput" value="${safeLink}" readonly
                                        style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 12px;">
-                                <button onclick="copyReferralLink()" class="btn btn-secondary" style="padding: 12px 16px;">
+                                <button data-action="copy-referral-link" class="btn btn-secondary" style="padding: 12px 16px;">
                                     📋
                                 </button>
                             </div>
                             <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px;">
-                                Código: ${referralCode}
+                                Codigo: ${safeCode}
                             </div>
                         </div>
 
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
-                            <button onclick="shareToWhatsApp('${encodeURIComponent(referralLink)}', '${encodeURIComponent(itemTitle)}')"
-                                    class="share-social-btn" style="background: #25D366;">
+                            <button data-action="share-whatsapp" class="share-social-btn" style="background: #25D366;">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
-                            <button onclick="shareToTelegram('${encodeURIComponent(referralLink)}', '${encodeURIComponent(itemTitle)}')"
-                                    class="share-social-btn" style="background: #0088cc;">
+                            <button data-action="share-telegram" class="share-social-btn" style="background: #0088cc;">
                                 <i class="fab fa-telegram-plane"></i>
                             </button>
-                            <button onclick="shareToFacebook('${encodeURIComponent(referralLink)}')"
-                                    class="share-social-btn" style="background: #1877F2;">
+                            <button data-action="share-facebook" class="share-social-btn" style="background: #1877F2;">
                                 <i class="fab fa-facebook-f"></i>
                             </button>
-                            <button onclick="shareToTwitter('${encodeURIComponent(referralLink)}', '${encodeURIComponent(itemTitle)}')"
-                                    class="share-social-btn" style="background: #1DA1F2;">
+                            <button data-action="share-twitter" class="share-social-btn" style="background: #1DA1F2;">
                                 <i class="fab fa-twitter"></i>
                             </button>
                         </div>
 
                         <div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                             <a href="commission-system.html" style="color: #00FFFF; text-decoration: none; font-size: 14px;">
-                                📊 Ver mi panel de comisiones →
+                                Ver mi panel de comisiones
                             </a>
                         </div>
                     </div>
@@ -4468,7 +4473,7 @@ async function showShareModal(itemId, type = 'service') {
                         color: white;
                         font-size: 20px;
                         cursor: pointer;
-                        transition: all 0.2s;
+                        transition: transform 0.2s, filter 0.2s;
                     }
                     .share-social-btn:hover {
                         transform: scale(1.05);
@@ -4477,6 +4482,20 @@ async function showShareModal(itemId, type = 'service') {
                 `;
                 document.head.appendChild(style);
             }
+
+            // Delegated click listener for share modal actions
+            modal.addEventListener('click', (e) => {
+                const action = e.target.closest('[data-action]')?.dataset.action;
+                if (!action) return;
+                switch (action) {
+                    case 'close-share-modal': closeShareModal(); break;
+                    case 'copy-referral-link': copyReferralLink(); break;
+                    case 'share-whatsapp': shareToWhatsApp(encodedLink, encodedTitle); break;
+                    case 'share-telegram': shareToTelegram(encodedLink, encodedTitle); break;
+                    case 'share-facebook': shareToFacebook(encodedLink); break;
+                    case 'share-twitter': shareToTwitter(encodedLink, encodedTitle); break;
+                }
+            });
 
             document.body.appendChild(modal);
         } else {
@@ -4856,6 +4875,14 @@ function setupMarketplaceDelegatedListeners() {
             case 'exp-retry': {
                 const msR = window.marketplaceSystem;
                 if (msR) msR.loadExplorarFeed(msR._expTab, false);
+                break;
+            }
+            case 'retry-bookings': {
+                window.marketplaceSystem?.loadBookingsData();
+                break;
+            }
+            case 'retry-conversations': {
+                window.marketplaceSystem?.loadConversations();
                 break;
             }
         }
