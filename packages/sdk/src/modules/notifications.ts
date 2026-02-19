@@ -27,6 +27,15 @@ export class NotificationModule {
     }
 
     /**
+     * Marks a specific notification as 'read'.
+     * 
+     * @param id - The unique identifier of the notification.
+     */
+    async markRead(id: string): Promise<{ success: boolean }> {
+        return this._http.put<{ success: boolean }>(`/notifications/${id}/read`)
+    }
+
+    /**
      * Fetches the current number of unread alerts. 
      * Typically used for badge counts in navigation bars.
      */

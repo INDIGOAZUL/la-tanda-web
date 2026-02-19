@@ -1,5 +1,5 @@
 import { HttpClient } from '../utils/http'
-import { OcrRequest, OcrResult, IdentityStatus } from '../types/verification'
+import { OcrRequest, OcrResult, IdentityStatus, VerificationResult } from '../types/verification'
 
 /**
  * The VerificationModule coordinates the Identity (KYC) flow for the platform.
@@ -63,5 +63,23 @@ export class VerificationModule {
      */
     async getStatus(): Promise<IdentityStatus> {
         return this._http.get<IdentityStatus>('/kyc/status')
+    }
+
+    /**
+     * Initiates the phone verification process by sending an OTP via SMS.
+     * 
+     * @param phone - The user's mobile number in international format (+504...).
+     */
+    async requestPhoneVerification(phone: string): Promise<VerificationResult> {
+        return this._http.post<VerificationResult>('/kyc/verify-phone', { phone })
+    }
+
+    /**
+     * Completes the phone verification by submitting the OTP received via SMS.
+     * 
+     * @param otp - The one-time password sent to the user's phone.
+     */
+    async verifyOtp(otp: string): Promise<VerificationResult> {
+        return this._http.post<VerificationResult>('/kyc/verify-otp', { otp })
     }
 }

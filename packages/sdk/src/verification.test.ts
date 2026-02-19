@@ -40,4 +40,18 @@ describe('VerificationModule', () => {
         expect(mockHttp.get).toHaveBeenCalledWith('/kyc/status')
         expect(result.status).toBe('verified')
     })
+
+    test('requestPhoneVerification calls POST /kyc/verify-phone', async () => {
+        mockHttp.post.mockResolvedValue({ success: true })
+        const result = await client.verification.requestPhoneVerification('+504 9999-9999')
+        expect(mockHttp.post).toHaveBeenCalledWith('/kyc/verify-phone', { phone: '+504 9999-9999' })
+        expect(result.success).toBe(true)
+    })
+
+    test('verifyOtp calls POST /kyc/verify-otp', async () => {
+        mockHttp.post.mockResolvedValue({ success: true })
+        const result = await client.verification.verifyOtp('123456')
+        expect(mockHttp.post).toHaveBeenCalledWith('/kyc/verify-otp', { otp: '123456' })
+        expect(result.success).toBe(true)
+    })
 })
