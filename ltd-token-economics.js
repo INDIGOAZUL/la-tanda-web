@@ -752,7 +752,7 @@ class LTDTokenEconomics {
         return {
             id: 'demo_user_001',
             name: 'Usuario Demo',
-            email: 'user@example.com'
+            email: 'demo@latanda.online'
         };
     }
     
