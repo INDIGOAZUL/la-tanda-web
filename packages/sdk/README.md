@@ -1,6 +1,6 @@
 # @latanda/sdk
 
-TypeScript SDK for the La Tanda Web3 platform - auth, wallet, tandas, marketplace, and lottery.
+TypeScript SDK for the La Tanda platform - fintech tools for rotating savings (Tandas), payments, and community marketplace.
 
 ## Installation
 
@@ -23,53 +23,66 @@ const { user, auth_token } = await client.auth.login({
   password: 'your-password',
 });
 
-// Get wallet balance
+// Get wallet balance (HNL)
 const balance = await client.wallet.getBalance();
 
-// List groups
+// List public savings circles
 const groups = await client.tandas.listGroups();
 ```
 
 ## Modules
 
 ### 🔐 Authentication (`auth`)
-Hardened login, registration, and session management.
-- `login(creds)`: Secure login with placeholder-ready creds.
-- `getCurrentUser()`: Fetches full profile from `/auth/me`.
+Secure login, registration, and session management.
+- `login(creds)`: Authenticate and persist session.
+- `getCurrentUser()`: Fetches full profile from `/user/profile`.
 - `refreshToken()`: Automatic session extension with recursion guard.
 
 ### 💰 Wallet (`wallet`)
-Lempira (HNL) centric balance and payment processing. **No crypto required.**
-- `getBalances()`: List all asset balances (HNL, USD).
-- `getHistory(filters)`: POST-based transaction history.
-- `processPayment(req)`: Withdrawals, transfers, and contributions.
+HNL (Lempira) balance and payment processing.
+- `getBalance()`: Get current HNL balance and available funds.
+- `getHistory(filters)`: View transaction history (GET).
+- `withdrawToBank(data)` / `withdrawToMobile(data)`: Initiate withdrawals.
+- `setPin(pin)` / `verifyPin(pin)`: Secure transaction authorization.
 
-### 👥 Groups (`tandas`)
-Rotating savings circles with role-based participation.
-- `listGroups(filters)`: Find public recruitment groups.
-- `createGroup(data)`: Start a new circle with custom frequency.
-- `joinGroup(id)` / `contribute(id, amt)`: Simple participation flow.
-
-### 🏪 Marketplace (`marketplace`)
-Community-driven product listings.
-- `listProducts(filters)`: Search by category, price, or seller.
-- `createProduct(data)`: List items for sale.
+### 👥 Groups & Tandas (`tandas`)
+Rotating savings circles with group management and contribution tracking.
+- `listGroups(filters)`: Find public groups for recruitment.
+- `createGroup(data)`: Start a new circle.
+- `contribute(groupId, amount)`: Make a contribution to the current round.
+- `runTombola(groupId)`: Perform fair turn randomization for the circle.
 
 ### 🎭 Social Feed (`feed`)
-Interaction layer for community engagement.
-- `getPosts()`: Fetch social updates.
-- `toggleLike(id)` / `addComment(id, text)`: Native social interactions.
+Community interaction layer.
+- `listSocialFeed()`: Fetch latest updates from the community.
+- `likePost(id)` / `addComment(id, text)`: Native social interactions.
+- `bookmarkPost(id)` / `listBookmarks()`: User engagement tools.
 
 ### 🎲 Lottery (`lottery`)
-Fair member selection using backend-secured entropy.
-- `listDraws()`: Track upcoming and past lottery results.
-- `performDraw(groupId)`: Trigger automated, fair winner selection.
+Honduras national lottery prediction engine.
+- `getStats()`: Real-time prediction statistics.
+- `spin()`: Execute a paid prediction spin.
+- `getJaladores()`: Look up "pulling numbers" context.
+
+### 🏪 Marketplace & Providers (`marketplace`, `providers`)
+Buy/sell products and manage business profiles.
+- `listProducts()`: Search community listings.
+- `registerProvider(data)`: Create a business profile (Mi Tienda).
+- `getProfile()`: Manage your provider credentials and status.
+
+### 🆔 Verification & KYC (`verification`)
+Secure identity verification flows.
+- `uploadDocument(file, type)`: Submit identity documents for review.
+- `processOCR(data)`: Automated data extraction from documents.
+- `getStatus()`: Track your verification progress.
+
+---
 
 ## Error Handling
 
-```typescript
-import { LaTandaClient, AuthenticationError, ValidationError } from '@latanda/sdk';
+The SDK uses specialized error classes for various failure modes:
 
+```typescript
 try {
   await client.auth.login({ email, password });
 } catch (err) {
