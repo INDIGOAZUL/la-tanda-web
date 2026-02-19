@@ -141,6 +141,7 @@
             background: rgba(255,255,255,0.03); font-size: 48px;
         }
         .item-card-body { padding: 16px; }
+        .item-card-category { font-size: 11px; color: var(--accent-primary); opacity: 0.8; margin-bottom: 4px; }
         .item-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
         .item-card-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 8px; line-height: 1.4; }
         .item-card-price { font-size: 18px; font-weight: 700; color: var(--accent-primary); }
@@ -600,6 +601,7 @@
                         html += '<div class="item-card-img-placeholder">&#128295;</div>';
                     }
                     html += '<div class="item-card-body">';
+                    if (s.category_name) html += '<div class="item-card-category">' + esc(s.category_icon || '') + ' ' + esc(s.category_name) + '</div>';
                     html += '<div class="item-card-title">' + esc(s.title) + '</div>';
                     if (s.short_description) html += '<div class="item-card-desc">' + esc(s.short_description) + '</div>';
                     var priceText = s.price_type === 'fixed' ? ('L. ' + esc(s.price)) : esc(s.price_type === 'hourly' ? 'Por hora' : s.price_type === 'negotiable' ? 'Negociable' : s.price_type);
@@ -625,6 +627,7 @@
                         html += '<div class="item-card-img-placeholder">&#128230;</div>';
                     }
                     html += '<div class="item-card-body">';
+                    if (pr.category_name) html += '<div class="item-card-category">' + esc(pr.category_icon || '') + ' ' + esc(pr.category_name) + '</div>';
                     html += '<div class="item-card-title">' + esc(pr.title) + '</div>';
                     var curr = pr.currency === 'LTD' ? 'LTD' : 'L.';
                     html += '<div class="item-card-price">' + curr + ' ' + esc(pr.price) + '<span class="item-card-type">Producto</span></div>';
@@ -692,8 +695,8 @@
             }
             html += '</div>';
             // Service areas
-            if (p.social_links && p.social_links.service_areas) {
-                var areas = Array.isArray(p.social_links.service_areas) ? p.social_links.service_areas : [];
+            if (p.service_areas) {
+                var areas = Array.isArray(p.service_areas) ? p.service_areas : [];
                 if (areas.length > 0) {
                     html += '<div class="contact-areas">';
                     html += '<div class="contact-areas-title">Areas de servicio</div>';

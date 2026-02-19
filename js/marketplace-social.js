@@ -1650,15 +1650,18 @@ class MarketplaceSocialSystem {
         }
         return items.map((item, index) => {
             const icon = type === 'services' ? '🔧' : '📦';
-            const img = item.images && item.images[0] ? `<img src="${esc(item.images[0])}" alt="">` : icon;
+            const imgSrc = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
+            const img = imgSrc ? `<img src="${esc(imgSrc)}" alt="">` : icon;
             const meta = type === 'services'
                 ? `${item.price_type === 'fixed' ? `L. ${esc(item.price)}` : esc(item.price_type)} · ${esc(item.booking_count || 0)} reservas`
                 : `L. ${esc(item.price)} · ${esc(item.quantity || 0)} en stock`;
+            const catLabel = item.category_name ? `${esc(item.category_icon || '')} ${esc(item.category_name)}` : '';
             const itemId = type === 'services' ? item.service_id : item.id;
             const featuredClass = item.featured ? ' featured-active' : '';
             return `<div class="store-item-card">
                 <div class="store-item-img">${img}</div>
                 <div class="store-item-info">
+                    ${catLabel ? `<div class="store-item-category">${catLabel}</div>` : ''}
                     <div class="store-item-title">${esc(item.title)}</div>
                     <div class="store-item-meta">${meta}</div>
                 </div>
@@ -2588,6 +2591,19 @@ class MarketplaceSocialSystem {
 
             <form id="storeEditForm">
                 <div class="store-form-group">
+                    <label>Logo / Imagen de perfil</label>
+                    <div class="store-edit-avatar-section">
+                        <div class="store-edit-avatar-preview" id="editStoreAvatarPreview">
+                            ${provider.profile_image ? `<img src="${esc(provider.profile_image)}" alt="">` : `<span>${esc((provider.business_name || 'T').charAt(0).toUpperCase())}</span>`}
+                        </div>
+                        <div class="store-edit-avatar-actions">
+                            <button type="button" class="store-btn-upload" id="editStoreAvatarBtn">Cambiar logo</button>
+                            <input type="file" id="editStoreAvatarInput" accept="image/*" style="display:none">
+                            <div class="store-edit-avatar-hint">JPG, PNG o WebP. Max 2 MB.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="store-form-group">
                     <label>Nombre del negocio *</label>
                     <input type="text" id="editStoreName" required maxlength="255" value="${esc(provider.business_name || '')}">
                 </div>
@@ -2652,6 +2668,53 @@ class MarketplaceSocialSystem {
             if (e.target === overlay) overlay.remove();
         });
 
+        // Profile image upload handler
+        let pendingProfileImage = null;
+        const avatarBtn = document.getElementById('editStoreAvatarBtn');
+        const avatarInput = document.getElementById('editStoreAvatarInput');
+        const avatarPreview = document.getElementById('editStoreAvatarPreview');
+        if (avatarBtn && avatarInput) {
+            avatarBtn.addEventListener('click', () => avatarInput.click());
+            avatarInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    this.showNotification('Solo se permiten imagenes', 'error');
+                    return;
+                }
+                if (file.size > 2 * 1024 * 1024) {
+                    this.showNotification('Imagen muy grande (max 2 MB)', 'error');
+                    return;
+                }
+                avatarBtn.disabled = true;
+                avatarBtn.textContent = 'Subiendo...';
+                try {
+                    const compressed = await this._compressImage(file, 400, 400, 0.85);
+                    const formData = new FormData();
+                    formData.append('images', compressed, 'profile.' + (file.name.split('.').pop() || 'jpg'));
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const uploadRes = await fetch('/api/marketplace/services/upload-images', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success && uploadData.data?.urls?.length) {
+                        pendingProfileImage = uploadData.data.urls[0];
+                        avatarPreview.innerHTML = `<img src="${this.escapeHtml(pendingProfileImage)}" alt="">`;
+                        avatarBtn.textContent = 'Cambiar logo';
+                    } else {
+                        this.showNotification('Error al subir imagen', 'error');
+                        avatarBtn.textContent = 'Cambiar logo';
+                    }
+                } catch (err) {
+                    this.showNotification('Error al subir imagen', 'error');
+                    avatarBtn.textContent = 'Cambiar logo';
+                }
+                avatarBtn.disabled = false;
+            });
+        }
+
         const editForm = document.getElementById('storeEditForm');
         if (editForm) {
             editForm.addEventListener('submit', async (e) => {
@@ -2677,22 +2740,27 @@ class MarketplaceSocialSystem {
                 const selectedLayout = activeLayout ? activeLayout.dataset.id : currentLayout;
                 const selectedTheme = activeTheme ? activeTheme.dataset.id : currentTheme;
 
+                const updateBody = {
+                    business_name: document.getElementById('editStoreName').value.trim(),
+                    description: document.getElementById('editStoreDesc').value.trim(),
+                    phone: document.getElementById('editStorePhone').value.trim() || null,
+                    whatsapp: document.getElementById('editStoreWhatsapp').value.trim() || null,
+                    email: document.getElementById('editStoreEmail').value.trim() || null,
+                    city: document.getElementById('editStoreCity').value.trim() || null,
+                    neighborhood: document.getElementById('editStoreNeighborhood').value.trim() || null,
+                    service_areas: areas.length ? areas : null,
+                    social_links: Object.keys(newSocialLinks).length ? newSocialLinks : {},
+                    store_layout: selectedLayout,
+                    store_theme: selectedTheme
+                };
+                if (pendingProfileImage) {
+                    updateBody.profile_image = pendingProfileImage;
+                }
+
                 try {
                     const res = await this.apiRequest('/api/marketplace/providers/me', {
                         method: 'PUT',
-                        body: JSON.stringify({
-                            business_name: document.getElementById('editStoreName').value.trim(),
-                            description: document.getElementById('editStoreDesc').value.trim(),
-                            phone: document.getElementById('editStorePhone').value.trim() || null,
-                            whatsapp: document.getElementById('editStoreWhatsapp').value.trim() || null,
-                            email: document.getElementById('editStoreEmail').value.trim() || null,
-                            city: document.getElementById('editStoreCity').value.trim() || null,
-                            neighborhood: document.getElementById('editStoreNeighborhood').value.trim() || null,
-                            service_areas: areas.length ? areas : null,
-                            social_links: Object.keys(newSocialLinks).length ? newSocialLinks : {},
-                            store_layout: selectedLayout,
-                            store_theme: selectedTheme
-                        })
+                        body: JSON.stringify(updateBody)
                     });
 
                     if (res.success) {
