@@ -127,7 +127,7 @@ class MarketplaceSocialSystem {
             this.setupEventListeners();
 
             // Load data in parallel for faster initialization
-            await Promise.all([
+            await Promise.allSettled([
                 this.loadCategories(),
                 this.loadMarketplaceData(),
                 this.loadServicesData(),
@@ -142,7 +142,7 @@ class MarketplaceSocialSystem {
             this.populateCategoryFilters();
 
         } catch (error) {
-            this.showNotification('Error inicializando el marketplace', 'error');
+            // Non-blocking: individual sections handle their own errors
         }
     }
 
@@ -151,13 +151,14 @@ class MarketplaceSocialSystem {
         try {
             const response = await this.apiRequest('/api/marketplace/categories');
 
-            if (response.success && response.categories) {
+            const cats = response.data?.categories || response.categories;
+            if (response.success && cats) {
                 // Store as both array and object
-                this.categoriesData = response.categories;
+                this.categoriesData = cats;
 
                 // Convert to the frontend format (object with id: label)
                 this.serviceCategories = {};
-                response.categories.forEach(cat => {
+                cats.forEach(cat => {
                     this.serviceCategories[cat.category_id] = `${cat.icon} ${cat.name_es}`;
                 });
 
@@ -172,14 +173,15 @@ class MarketplaceSocialSystem {
         try {
             const response = await this.apiRequest('/api/marketplace/stats');
 
-            if (response.success && response.stats) {
+            const stats = response.data?.stats || response.stats;
+            if (response.success && stats) {
                 this.marketStats = {
-                    totalProducts: parseInt(response.stats.total_products) || this.marketStats.totalProducts,
-                    totalSellers: parseInt(response.stats.total_providers) || this.marketStats.totalSellers,
-                    totalTransactions: parseInt(response.stats.total_bookings) || this.marketStats.totalTransactions,
-                    totalVolume: parseFloat(response.stats.total_volume) || this.marketStats.totalVolume,
-                    totalServices: parseInt(response.stats.total_services) || this.marketStats.totalServices,
-                    totalProviders: parseInt(response.stats.total_providers) || this.marketStats.totalProviders
+                    totalProducts: parseInt(stats.total_products) || this.marketStats.totalProducts,
+                    totalSellers: parseInt(stats.total_providers) || this.marketStats.totalSellers,
+                    totalTransactions: parseInt(stats.total_bookings) || this.marketStats.totalTransactions,
+                    totalVolume: parseFloat(stats.total_volume) || this.marketStats.totalVolume,
+                    totalServices: parseInt(stats.total_services) || this.marketStats.totalServices,
+                    totalProviders: parseInt(stats.total_providers) || this.marketStats.totalProviders
                 };
             }
         } catch (error) {
@@ -193,12 +195,13 @@ class MarketplaceSocialSystem {
         try {
             const response = await this.apiRequest('/api/marketplace/subscription');
 
-            if (response.success && response.subscription) {
-                this.subscriptionData = response.subscription;
-                this.userSubscription = response.subscription.tier || 'free';
+            const sub = response.data?.subscription || response.subscription;
+            if (response.success && sub) {
+                this.subscriptionData = sub;
+                this.userSubscription = sub.tier || 'free';
 
                 // Log tanda member status
-                if (response.subscription.is_tanda_benefit) {
+                if (sub.is_tanda_benefit) {
                 }
 
             }
@@ -431,18 +434,18 @@ class MarketplaceSocialSystem {
     switchTab(tabName) {
         // Update tab buttons
         document.querySelectorAll('.nav-tab').forEach(tab => {
-            if (tab.dataset.tab) {
-                tab.classList.remove('active');
-            }
+            if (tab.dataset.tab) tab.classList.remove('active');
         });
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        
+        const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeTab) activeTab.classList.add('active');
+
         // Update content sections
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
-        document.getElementById(tabName).classList.add('active');
-        
+        const section = document.getElementById(tabName);
+        if (section) section.classList.add('active');
+
         // Load section-specific data
         this.loadSectionData(tabName);
     }
@@ -879,9 +882,10 @@ class MarketplaceSocialSystem {
             // Fetch products from real API
             const response = await this.apiRequest('/api/marketplace/products');
 
-            if (response.success && response.products) {
+            const prods = response.data?.products || response.products;
+            if (response.success && prods) {
                 // Transform API response to frontend format
-                this.products = response.products.map(p => ({
+                this.products = prods.map(p => ({
                     id: `prod_${p.id}`,
                     productId: p.id,  // For referrals API
                     name: p.title,
@@ -956,9 +960,10 @@ class MarketplaceSocialSystem {
             // Fetch services from real API
             const response = await this.apiRequest('/api/marketplace/services');
 
-            if (response.success && response.services) {
+            const svcs = response.data?.services || response.services;
+            if (response.success && svcs) {
                 // Transform API response to frontend format
-                this.services = response.services.map(s => ({
+                this.services = svcs.map(s => ({
                     id: `srv_${s.service_id}`,
                     serviceId: s.service_id,
                     title: s.title,
@@ -1115,85 +1120,191 @@ class MarketplaceSocialSystem {
     }
     
     updateMarketStats() {
-        document.getElementById('totalProducts').textContent = this.marketStats.totalProducts.toLocaleString();
-        document.getElementById('totalSellers').textContent = this.marketStats.totalSellers.toLocaleString();
-        document.getElementById('totalTransactions').textContent = this.marketStats.totalTransactions.toLocaleString();
-        document.getElementById('totalVolume').textContent = `${(this.marketStats.totalVolume / 1000).toFixed(1)}K`;
+        const el1 = document.getElementById('totalProducts');
+        const el2 = document.getElementById('totalSellers');
+        const el3 = document.getElementById('totalTransactions');
+        const el4 = document.getElementById('totalVolume');
+        if (el1) el1.textContent = this.marketStats.totalProducts.toLocaleString();
+        if (el2) el2.textContent = this.marketStats.totalSellers.toLocaleString();
+        if (el3) el3.textContent = this.marketStats.totalTransactions.toLocaleString();
+        if (el4) el4.textContent = `${(this.marketStats.totalVolume / 1000).toFixed(1)}K`;
     }
     
     loadMarketplaceProducts() {
-        this.loadFeaturedProducts();
-        this.loadRecentProducts();
+        this._expOffset = 0;
+        this._expTab = 'exp-tiendas';
+        this._expLoading = false;
+        this._expCategory = null;
+        this._expTabsSetup = false;
+        this._setupExpTabs();
+        this._loadExpCategoryPills('exp-tiendas');
+        this.loadExplorarFeed('exp-tiendas', false);
     }
-    
-    loadFeaturedProducts() {
-        const container = document.getElementById('featuredProducts');
-        if (!container) return;
-        
-        const featuredProducts = this.products.filter(p => p.featured);
-        
-        container.innerHTML = featuredProducts.map(product => this.createProductCard(product)).join('');
-    }
-    
-    loadRecentProducts() {
-        const container = document.getElementById('recentProducts');
-        if (!container) return;
-        
-        const recentProducts = this.products
-            .sort((a, b) => new Date(b.created) - new Date(a.created))
-            .slice(0, 8);
-        
-        container.innerHTML = recentProducts.map(product => this.createProductCard(product)).join('');
-    }
-    
-    createProductCard(product) {
-        const priceUSD = (product.price * 0.0847).toFixed(2); // Assuming 1 LTD = $0.0847
 
-        // Calculate potential commission (5% default)
-        const commissionPercent = product.referralCommission || 5;
-        const estimatedCommission = (product.price * commissionPercent / 100).toFixed(0);
+    _setupExpTabs() {
+        if (this._expTabsSetup) return;
+        this._expTabsSetup = true;
+        const tabsContainer = document.querySelector('.exp-tabs');
+        if (!tabsContainer) return;
+        tabsContainer.addEventListener('click', (e) => {
+            const tab = e.target.closest('.exp-tab');
+            if (!tab || tab.classList.contains('active')) return;
+            tabsContainer.querySelectorAll('.exp-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const tabId = tab.dataset.expTab;
+            this._expTab = tabId;
+            this._expOffset = 0;
+            this._expCategory = null;
+            this._loadExpCategoryPills(tabId);
+            this.loadExplorarFeed(tabId, false);
+        });
 
-        return `
-            <div class="product-card" data-action="view-product" data-id="${this.escapeHtml(product.id)}">
-                <div class="product-image">
-                    <span>${product.image}</span>
-                    ${product.featured ? '<div class="product-badge">Destacado</div>' : ''}
-                </div>
-                <div class="product-info">
-                    <div class="product-title">${product.name}</div>
-                    <div class="product-description">${this.escapeHtml(product.description)}</div>
-                    <div class="product-price">
-                        <div>
-                            <div class="price-ltd">${product.price} LTD</div>
-                            <div class="price-usd">≈ $${priceUSD} USD</div>
-                        </div>
-                        <div style="text-align: right; color: ${product.quantity > 0 ? '#10B981' : '#EF4444'}; font-size: 12px;">
-                            ${product.quantity > 0 ? `${product.quantity} disponibles` : 'Agotado'}
-                        </div>
-                    </div>
-                    <div class="product-seller">
-                        <div class="seller-avatar">${product.seller.avatar}</div>
-                        <div class="seller-info">
-                            <div class="seller-name">${this.escapeHtml(product.seller.name)}</div>
-                            <div class="seller-rating">⭐ ${product.seller.rating}/5.0</div>
-                        </div>
-                    </div>
-                    <div class="product-actions" style="display: flex; gap: 8px; margin-top: 10px;">
-                        <button class="btn btn-primary" style="flex: 1;" data-action="buy-product" data-id="${this.escapeHtml(product.id)}">
-                            <span>🛒</span> Comprar
-                        </button>
-                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share-product" data-id="${this.escapeHtml(product.id)}" title="Compartir y ganar L.${estimatedCommission}">
-                            <span>💰</span>
-                        </button>
-                    </div>
-                    ${!this.isGuest ? `
-                    <div class="commission-hint" style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(0,255,255,0.7);">
-                        💰 Gana L.${estimatedCommission} por cada venta referida
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
+        const pillsContainer = document.getElementById('expCategoryPills');
+        if (pillsContainer) {
+            pillsContainer.addEventListener('click', (e) => {
+                const pill = e.target.closest('.exp-pill');
+                if (!pill || pill.classList.contains('active')) return;
+                pillsContainer.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                this._expCategory = pill.dataset.value || null;
+                this._expOffset = 0;
+                this.loadExplorarFeed(this._expTab, false);
+            });
+        }
+    }
+
+    _loadExpCategoryPills(tab) {
+        const container = document.getElementById('expCategoryPills');
+        if (!container) return;
+        if (tab === 'exp-tiendas') {
+            const cities = ['Todos', 'Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Comayagua', 'Choluteca'];
+            container.innerHTML = cities.map((c, i) =>
+                '<button class="exp-pill' + (i === 0 ? ' active' : '') + '" data-value="' + (i === 0 ? '' : this.escapeHtml(c)) + '">' + this.escapeHtml(c) + '</button>'
+            ).join('');
+        } else {
+            const cats = this.categoriesData || [];
+            let html = '<button class="exp-pill active" data-value="">Todos</button>';
+            cats.forEach(c => {
+                html += '<button class="exp-pill" data-value="' + this.escapeHtml(String(c.category_id)) + '">' + this.escapeHtml(c.icon || '') + ' ' + this.escapeHtml(c.name_es || c.name || '') + '</button>';
+            });
+            container.innerHTML = html;
+        }
+    }
+
+    async loadExplorarFeed(tab, append) {
+        if (this._expLoading) return;
+        this._expLoading = true;
+        const container = document.getElementById('expFeedContainer');
+        const loadMoreEl = document.getElementById('expLoadMore');
+        if (!container) { this._expLoading = false; return; }
+        const limit = 10;
+
+        if (!append) {
+            this._expOffset = 0;
+            container.innerHTML = '<div class="exp-skeleton"></div><div class="exp-skeleton"></div><div class="exp-skeleton"></div>';
+        }
+
+        let url = '';
+        const cat = this._expCategory;
+        if (tab === 'exp-tiendas') {
+            url = '/api/marketplace/providers?limit=' + limit + '&offset=' + this._expOffset;
+            if (cat) url += '&city=' + encodeURIComponent(cat);
+        } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
+            url = '/api/marketplace/products?limit=' + limit + '&offset=' + this._expOffset;
+            if (cat) url += '&category=' + encodeURIComponent(cat);
+        } else if (tab === 'exp-servicios') {
+            url = '/api/marketplace/services?limit=' + limit + '&offset=' + this._expOffset;
+            if (cat) url += '&category=' + encodeURIComponent(cat);
+        }
+
+        try {
+            const resp = await this.apiRequest(url);
+            const d = resp.data || resp;
+            let items = [];
+            if (tab === 'exp-tiendas') items = d.providers || [];
+            else if (tab === 'exp-servicios') items = d.services || [];
+            else items = d.products || [];
+
+            if (items.length === 0 && !append) {
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">📭</div><div class="exp-empty-text">No se encontraron resultados</div></div>';
+                if (loadMoreEl) loadMoreEl.style.display = 'none';
+                this._expLoading = false;
+                return;
+            }
+
+            const html = items.map(item => this._renderExpCard(item, tab)).join('');
+            if (append) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+            this._expOffset += items.length;
+            if (loadMoreEl) loadMoreEl.style.display = items.length >= limit ? '' : 'none';
+        } catch (err) {
+            if (!append) {
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">⚠️</div><div class="exp-empty-text">Error al cargar datos</div><button class="exp-retry-btn" data-action="exp-retry">Reintentar</button></div>';
+            }
+            if (loadMoreEl) loadMoreEl.style.display = 'none';
+        }
+        this._expLoading = false;
+    }
+
+    _renderExpCard(item, tab) {
+        const esc = (v) => this.escapeHtml(String(v || ''));
+        if (tab === 'exp-tiendas') {
+            const avatar = item.profile_image || item.avatar_url;
+            const initial = (item.business_name || 'T').charAt(0).toUpperCase();
+            const avatarHtml = avatar
+                ? '<img src="' + esc(avatar) + '" alt="" loading="lazy">'
+                : '<span class="exp-card-initial">' + esc(initial) + '</span>';
+            const verified = item.is_verified ? ' <span class="exp-verified" title="Verificado">✓</span>' : '';
+            const rating = item.avg_rating ? ('<span>⭐ ' + Number(item.avg_rating).toFixed(1) + '</span>') : '';
+            const reviews = item.total_reviews ? ('<span>(' + esc(item.total_reviews) + ')</span>') : '';
+            const city = item.city ? ('<span>📍 ' + esc(item.city) + '</span>') : '';
+            const shopType = item.shop_type === 'services' ? 'Servicios' : item.shop_type === 'products' ? 'Productos' : 'Tienda';
+            return '<div class="exp-card" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '">' +
+                '<div class="exp-card-avatar">' + avatarHtml + '</div>' +
+                '<div class="exp-card-body">' +
+                    '<div class="exp-card-title">' + esc(item.business_name) + verified + '</div>' +
+                    '<div class="exp-card-meta">' + rating + reviews + city + '</div>' +
+                    '<div class="exp-card-badge">' + esc(shopType) + '</div>' +
+                '</div>' +
+                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
+            '</div>';
+        }
+        if (tab === 'exp-servicios') {
+            const img = (Array.isArray(item.images) && item.images.length > 0)
+                ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
+                : '<span class="exp-card-icon">🛠️</span>';
+            const priceLabel = item.price_type === 'fixed' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN')) : item.price_type === 'range' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + '/hora') : 'Consultar');
+            const rating = item.avg_rating ? ('⭐ ' + Number(item.avg_rating).toFixed(1)) : '';
+            const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
+            return '<div class="exp-card" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
+                '<div class="exp-card-avatar">' + img + '</div>' +
+                '<div class="exp-card-body">' +
+                    '<div class="exp-card-title">' + esc(item.title) + '</div>' +
+                    '<div class="exp-card-sub"><span class="exp-card-price">' + priceLabel + '</span>' + (rating ? ' · ' + rating : '') + '</div>' +
+                    catPill +
+                '</div>' +
+                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
+            '</div>';
+        }
+        // Products (exp-productos, exp-recientes)
+        const pImg = (Array.isArray(item.images) && item.images.length > 0)
+            ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
+            : '<span class="exp-card-icon">📦</span>';
+        const condMap = { new: 'Nuevo', used: 'Usado', refurbished: 'Reacondicionado' };
+        const cond = condMap[item.condition] || '';
+        const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
+        return '<div class="exp-card" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
+            '<div class="exp-card-avatar">' + pImg + '</div>' +
+            '<div class="exp-card-body">' +
+                '<div class="exp-card-title">' + esc(item.title) + '</div>' +
+                '<div class="exp-card-sub"><span class="exp-card-price">L. ' + Number(item.price || 0).toLocaleString('es-HN') + '</span>' + (cond ? ' · ' + esc(cond) : '') + '</div>' +
+                catPill +
+            '</div>' +
+            '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
+        '</div>';
     }
     
     loadSocialFeed() {
@@ -4716,6 +4827,35 @@ function setupMarketplaceDelegatedListeners() {
                 msM.apiRequest(mEndpoint, { method: 'PATCH', body: JSON.stringify({ display_order: newOrder }) })
                     .then(() => { msM.loadMyStore(); })
                     .catch(() => { msM.showNotification('Error al reordenar', 'error'); btn.disabled = false; });
+                break;
+            }
+            case 'exp-load-more': {
+                const msE = window.marketplaceSystem;
+                if (msE) msE.loadExplorarFeed(msE._expTab, true);
+                break;
+            }
+            case 'exp-sell-product': {
+                const msE2 = window.marketplaceSystem;
+                if (msE2?.isGuest) { msE2.showLoginPrompt('vender productos'); break; }
+                if (msE2) msE2.openCreateProductModal();
+                break;
+            }
+            case 'exp-view-tienda': {
+                const handle = btn.dataset.handle;
+                if (handle) window.location.href = '/negocio/' + encodeURIComponent(handle);
+                break;
+            }
+            case 'exp-view-producto': {
+                if (typeof viewProduct === 'function') viewProduct(id);
+                break;
+            }
+            case 'exp-view-servicio': {
+                if (typeof viewService === 'function') viewService(id);
+                break;
+            }
+            case 'exp-retry': {
+                const msR = window.marketplaceSystem;
+                if (msR) msR.loadExplorarFeed(msR._expTab, false);
                 break;
             }
         }
