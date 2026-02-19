@@ -1,579 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
-
     <meta charset="UTF-8">
-    <!-- Resource Optimization -->
-    <!-- DNS Prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
-    <!-- Preconnect to critical origins -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis Tandas - La Tanda Platform</title>
-
-    <!-- Font Awesome -->
-    <!-- Critical CSS: Font Awesome with async loading -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
-
-    <!-- Custom Styles -->
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Background Animation */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Header */
-        .page-header {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .header-title i {
-            font-size: 2rem;
-            color: var(--tanda-cyan);
-            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-        }
-
-        .header-title h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .stat-card:hover {
-            border-color: rgba(0, 255, 255, 0.3);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 255, 255, 0.15);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .stat-icon.active {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
-            color: #22c55e;
-        }
-
-        .stat-icon.pending {
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1));
-            color: #f97316;
-        }
-
-        .stat-icon.completed {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
-            color: #3b82f6;
-        }
-
-        .stat-icon.earnings {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
-            color: var(--tanda-cyan);
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-change {
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .stat-change.positive {
-            color: #22c55e;
-        }
-
-        .stat-change.neutral {
-            color: var(--text-secondary);
-        }
-
-        /* Filters Section */
-        .filters-section {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .filters-row {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 250px;
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.75rem;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--tanda-cyan);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .filter-btn {
-            padding: 0.75rem 1.25rem;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 10px;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .filter-btn:hover {
-            border-color: rgba(0, 255, 255, 0.3);
-            color: var(--text-primary);
-        }
-
-        .filter-btn.active {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
-            border-color: var(--tanda-cyan);
-            color: var(--tanda-cyan);
-        }
-
-        /* Tandas Grid */
-        .tandas-section {
-            margin-bottom: 2rem;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .view-toggle {
-            display: flex;
-            gap: 0.5rem;
-            background: rgba(30, 41, 59, 0.6);
-            padding: 0.25rem;
-            border-radius: 10px;
-        }
-
-        .view-btn {
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .view-btn.active {
-            background: rgba(0, 255, 255, 0.2);
-            color: var(--tanda-cyan);
-        }
-
-        .tandas-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .tandas-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        /* Tanda Card */
-        .tanda-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
-
-        .tanda-card:hover {
-            border-color: rgba(0, 255, 255, 0.3);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 255, 255, 0.15);
-        }
-
-        .tanda-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
-
-        .tanda-title-group h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .tanda-meta {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .tanda-status-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .tanda-status-badge.active {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .tanda-status-badge.pending {
-            background: rgba(249, 115, 22, 0.2);
-            color: #f97316;
-            border: 1px solid rgba(249, 115, 22, 0.3);
-        }
-
-        .tanda-status-badge.completed {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .tanda-amount {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(0, 255, 255, 0.05);
-            border: 1px solid rgba(0, 255, 255, 0.1);
-            border-radius: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .amount-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .amount-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--tanda-cyan);
-        }
-
-        .tanda-progress-section {
-            margin-bottom: 1rem;
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .progress-label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        .progress-percentage {
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: var(--tanda-cyan);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        .tanda-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .detail-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-        }
-
-        .detail-value {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .tanda-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(148, 163, 184, 0.1);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 16px;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            color: rgba(0, 255, 255, 0.3);
-            margin-bottom: 1rem;
-        }
-
-        .empty-state h3 {
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .empty-state p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-
-        /* Loading State */
-        .loading-container {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid rgba(0, 255, 255, 0.1);
-            border-top-color: var(--tanda-cyan);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            .header-top {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
-            }
-
-            .header-actions {
-                width: 100%;
-            }
-
-            .filters-row {
-                flex-direction: column;
-            }
-
-            .search-box {
-                width: 100%;
-            }
-
-            .tandas-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tanda-details {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-  <script type="module" crossorigin src="/assets/js/myTandas-Diz8mGsE.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
-  <link rel="stylesheet" crossorigin href="/assets/css/myTandas-CRhkPxen.css">
-  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
-  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
-<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script>    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=24.5">
-    <!-- Open Graph -->
+    <meta name="theme-color" content="#0f172a">
+    <title>Mis Tandas | La Tanda</title>
+    <meta name="description" content="Gestiona tus tandas de ahorro colaborativo en La Tanda.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/dashboard-layout.css">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://latanda.online/my-tandas.html">
     <meta property="og:title" content="Mis Tandas | La Tanda">
@@ -585,168 +23,1318 @@
     <meta name="twitter:title" content="Mis Tandas | La Tanda">
     <meta name="twitter:description" content="Crea y gestiona tus tandas de ahorro colaborativo.">
     <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+    <style>
+        /* Stats Grid */
+        .mt-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .mt-stat-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        @media (hover: hover) {
+            .mt-stat-card:hover {
+                border-color: rgba(0, 255, 255, 0.3);
+                box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+            }
+        }
+        .mt-stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .mt-stat-icon.active { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .mt-stat-icon.pending { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+        .mt-stat-icon.completed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .mt-stat-icon.total { background: rgba(0, 255, 255, 0.15); color: #00FFFF; }
+        .mt-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .mt-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+            margin: 4px 0;
+        }
+
+        /* Filters */
+        .mt-filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .mt-search {
+            flex: 1;
+            min-width: 180px;
+            position: relative;
+        }
+        .mt-search input {
+            width: 100%;
+            padding: 10px 12px 10px 36px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 10px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 0.9rem;
+        }
+        .mt-search input:focus {
+            outline: none;
+            border-color: #00FFFF;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.15);
+        }
+        .mt-search input::placeholder { color: var(--text-secondary, #94a3b8); }
+        .mt-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary, #94a3b8);
+            font-size: 0.85rem;
+        }
+        .mt-filter-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .mt-pill {
+            padding: 8px 14px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 10px;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .mt-pill:hover { border-color: rgba(0, 255, 255, 0.3); color: var(--text-primary, #e2e8f0); }
+        .mt-pill.active {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00FFFF;
+            color: #00FFFF;
+        }
+        .mt-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .mt-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+        }
+        .mt-view-toggle {
+            display: flex;
+            gap: 4px;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 3px;
+            border-radius: 8px;
+        }
+        .mt-view-btn {
+            padding: 6px 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #94a3b8);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .mt-view-btn.active {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00FFFF;
+        }
+
+        /* Tanda Cards - Grid */
+        .mt-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+        .mt-grid.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        /* Tanda Card */
+        .mt-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+        @media (hover: hover) {
+            .mt-card:hover {
+                border-color: rgba(0, 255, 255, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 30px rgba(0, 255, 255, 0.12);
+            }
+        }
+        .mt-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .mt-card-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+            margin-bottom: 4px;
+        }
+        .mt-card-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary, #94a3b8);
+        }
+        .mt-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+        .mt-badge.active { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .mt-badge.collecting { background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .mt-badge.pending, .mt-badge.recruiting, .mt-badge.scheduled { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .mt-badge.completed { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .mt-badge.paused { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        .mt-card-amount {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .mt-card-amount-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary, #94a3b8);
+            font-weight: 600;
+        }
+        .mt-card-amount-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #00FFFF;
+        }
+
+        /* Progress */
+        .mt-progress-section { margin-bottom: 12px; }
+        .mt-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .mt-progress-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary, #94a3b8);
+            font-weight: 600;
+        }
+        .mt-progress-pct {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #00FFFF;
+        }
+        .mt-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .mt-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00FFFF, #7fffd8);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        /* Card Details Grid */
+        .mt-card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .mt-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .mt-detail-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .mt-detail-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        /* Card Actions */
+        .mt-card-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        .mt-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .mt-btn-primary {
+            background: linear-gradient(135deg, #00FFFF, #00cccc);
+            color: #0f172a;
+        }
+        .mt-btn-primary:hover { opacity: 0.9; }
+        .mt-btn-secondary {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-primary, #e2e8f0);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .mt-btn-secondary:hover { border-color: rgba(0, 255, 255, 0.3); }
+
+        /* States */
+        .mt-loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .mt-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 255, 0.1);
+            border-top-color: #00FFFF;
+            border-radius: 50%;
+            animation: mtSpin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes mtSpin { to { transform: rotate(360deg); } }
+        .mt-empty {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+        }
+        .mt-empty i { font-size: 3rem; color: rgba(0, 255, 255, 0.25); margin-bottom: 12px; }
+        .mt-empty h3 { font-size: 1.2rem; color: var(--text-primary, #e2e8f0); margin-bottom: 6px; }
+        .mt-empty p { color: var(--text-secondary, #94a3b8); margin-bottom: 20px; font-size: 0.9rem; }
+        .mt-error {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+        }
+        .mt-error i { font-size: 2.5rem; color: #ef4444; margin-bottom: 10px; }
+        .mt-error h3 { color: var(--text-primary, #e2e8f0); margin-bottom: 6px; }
+        .mt-error p { color: var(--text-secondary, #94a3b8); margin-bottom: 16px; font-size: 0.9rem; }
+
+        /* Modal */
+        .mt-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .mt-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .mt-modal {
+            background: #1e293b;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        .mt-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .mt-modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+        }
+        .mt-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary, #94a3b8);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .mt-modal-close:hover { color: var(--text-primary, #e2e8f0); }
+
+        /* Detail Modal */
+        .mt-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .mt-detail-box {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .mt-detail-box-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary, #94a3b8);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .mt-detail-box-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+        }
+
+        /* Create Form */
+        .mt-form-group {
+            margin-bottom: 16px;
+        }
+        .mt-form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary, #94a3b8);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .mt-form-input, .mt-form-select, .mt-form-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: var(--text-primary, #e2e8f0);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .mt-form-input:focus, .mt-form-select:focus, .mt-form-textarea:focus {
+            outline: none;
+            border-color: #00FFFF;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.15);
+        }
+        .mt-form-textarea { min-height: 80px; resize: vertical; }
+        .mt-form-select option { background: #1e293b; }
+        .mt-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .mt-form-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary, #94a3b8);
+            margin-top: 4px;
+        }
+
+        /* Header bar */
+        .mt-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        .mt-page-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .mt-page-title i {
+            font-size: 1.5rem;
+            color: #00FFFF;
+        }
+        .mt-page-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary, #e2e8f0);
+        }
+        .mt-coordinator-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* Notification toast */
+        .mt-toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .mt-toast.visible { opacity: 1; transform: translateX(0); }
+        .mt-toast.success { background: #22c55e; }
+        .mt-toast.error { background: #ef4444; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .mt-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .mt-grid { grid-template-columns: 1fr; }
+            .mt-filters { flex-direction: column; gap: 8px; }
+            .mt-search { width: 100%; min-width: auto; }
+            .mt-page-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .mt-detail-grid { grid-template-columns: 1fr; }
+            .mt-form-row { grid-template-columns: 1fr; }
+            .mt-card-details { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .mt-stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* Focus visible for a11y */
+        .mt-pill:focus-visible, .mt-btn:focus-visible, .mt-view-btn:focus-visible, .mt-modal-close:focus-visible {
+            outline: 2px solid #00FFFF;
+            outline-offset: 2px;
+        }
+    </style>
 </head>
-<body>
-    <!-- Global Header Component -->
+<body data-sidebar="true">
     <div id="global-header"></div>
-    <div class="container">
-        <!-- Page Header -->
-        <header class="page-header" style="display:none;">
-            <div class="header-top">
-                <div class="header-title">
+
+    <div class="dashboard-3col">
+        <!-- LEFT SIDEBAR -->
+        <aside class="left-sidebar" id="leftSidebar">
+            <nav class="nav-menu">
+                <a href="/home-dashboard.html" class="nav-menu-item">
+                    <i class="fas fa-home"></i><span>Inicio</span>
+                </a>
+                <a href="/explorar.html" class="nav-menu-item">
+                    <i class="fas fa-hashtag"></i><span>Explorar</span>
+                </a>
+                <a href="/trabajo.html" class="nav-menu-item">
+                    <i class="fas fa-briefcase"></i><span>Trabajo</span>
+                </a>
+                <a href="/creator-hub.html" class="nav-menu-item">
+                    <i class="fas fa-palette"></i><span>Creator Hub</span>
+                </a>
+                <a href="/guardados.html" class="nav-menu-item">
+                    <i class="fas fa-bookmark"></i><span>Guardados</span>
+                </a>
+                <a href="/mensajes.html" class="nav-menu-item">
+                    <i class="fas fa-envelope"></i><span>Mensajes</span>
+                </a>
+                <a href="/mineria.html" class="nav-menu-item">
+                    <i class="fas fa-hammer"></i><span>Mineria</span>
+                </a>
+                <a href="mi-perfil.html" class="nav-menu-item">
+                    <i class="fas fa-bars"></i><span>Menu</span>
+                </a>
+            </nav>
+            <div class="nav-section-divider"></div>
+            <div class="nav-section-label">Accesos Rapidos</div>
+            <nav class="nav-menu">
+                <a href="my-wallet.html" class="nav-menu-item">
+                    <i class="fas fa-wallet"></i><span>Mi Wallet</span>
+                </a>
+                <a href="/my-tandas.html" class="nav-menu-item active">
+                    <i class="fas fa-hand-holding-usd"></i><span>Mis Tandas</span>
+                </a>
+                <a href="/marketplace-social.html" class="nav-menu-item">
+                    <i class="fas fa-store"></i><span>Marketplace</span>
+                </a>
+                <a href="/lottery-predictor.html" class="nav-menu-item">
+                    <i class="fas fa-ticket-alt"></i><span>Loteria</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- MAIN FEED -->
+        <main class="main-feed" id="mainFeed">
+            <!-- Page Header -->
+            <div class="mt-page-header">
+                <div class="mt-page-title">
                     <i class="fas fa-hand-holding-usd"></i>
                     <h1>Mis Tandas</h1>
                 </div>
-                <div class="header-actions">
-                    <button class="action-btn btn-primary" onclick="window.location.href='create-tanda.html'">
-                        <i class="fas fa-plus"></i> Nueva Tanda
-                    </button>
+                <button class="mt-btn mt-btn-primary" data-action="open-create-modal">
+                    <i class="fas fa-plus"></i> Nueva Tanda
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="mt-stats-grid" id="mtStats">
+                <div class="mt-stat-card">
+                    <div class="mt-stat-icon active"><i class="fas fa-play-circle"></i></div>
+                    <div class="mt-stat-label">Activas</div>
+                    <div class="mt-stat-value" id="stat-active">0</div>
+                </div>
+                <div class="mt-stat-card">
+                    <div class="mt-stat-icon pending"><i class="fas fa-clock"></i></div>
+                    <div class="mt-stat-label">Pendientes</div>
+                    <div class="mt-stat-value" id="stat-pending">0</div>
+                </div>
+                <div class="mt-stat-card">
+                    <div class="mt-stat-icon completed"><i class="fas fa-check-circle"></i></div>
+                    <div class="mt-stat-label">Completadas</div>
+                    <div class="mt-stat-value" id="stat-completed">0</div>
+                </div>
+                <div class="mt-stat-card">
+                    <div class="mt-stat-icon total"><i class="fas fa-layer-group"></i></div>
+                    <div class="mt-stat-label">Total</div>
+                    <div class="mt-stat-value" id="stat-total">0</div>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon active">
-                            <i class="fas fa-play-circle"></i>
-                        </div>
-                    </div>
-                    <div class="stat-label">Tandas Activas</div>
-                    <div class="stat-value" id="stat-active">0</div>
-                    <div class="stat-change neutral" id="stat-active-change">
-                        <i class="fas fa-minus"></i> Sin cambios
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon pending">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                    <div class="stat-label">Próximo Pago</div>
-                    <div class="stat-value" id="stat-next-payment">-</div>
-                    <div class="stat-change neutral" id="stat-next-date">
-                        <i class="fas fa-calendar"></i> -
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon completed">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                    <div class="stat-label">Tandas Completadas</div>
-                    <div class="stat-value" id="stat-completed">0</div>
-                    <div class="stat-change positive" id="stat-completed-change">
-                        <i class="fas fa-arrow-up"></i> +0 este mes
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                    </div>
-                    <div class="stat-label">Total Ganado</div>
-                    <div class="stat-value" id="stat-earnings">L. 0</div>
-                    <div class="stat-change positive" id="stat-earnings-change">
-                        <i class="fas fa-arrow-up"></i> +L. 0
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Filters Section -->
-        <div class="filters-section">
-            <div class="filters-row">
-                <div class="search-box">
+            <!-- Filters -->
+            <div class="mt-filters">
+                <div class="mt-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="search-input" placeholder="Buscar tandas por nombre...">
+                    <input type="text" id="mtSearchInput" placeholder="Buscar tandas por nombre...">
                 </div>
-                <div class="filter-group">
-                    <button class="filter-btn active" data-filter="all">
-                        <i class="fas fa-list"></i> Todas
-                    </button>
-                    <button class="filter-btn" data-filter="active">
-                        <i class="fas fa-play-circle"></i> Activas
-                    </button>
-                    <button class="filter-btn" data-filter="pending">
-                        <i class="fas fa-clock"></i> Pendientes
-                    </button>
-                    <button class="filter-btn" data-filter="completed">
-                        <i class="fas fa-check-circle"></i> Completadas
-                    </button>
+                <div class="mt-filter-pills">
+                    <button class="mt-pill active" data-action="filter-tandas" data-filter="all">Todas</button>
+                    <button class="mt-pill" data-action="filter-tandas" data-filter="active">Activas</button>
+                    <button class="mt-pill" data-action="filter-tandas" data-filter="pending">Pendientes</button>
+                    <button class="mt-pill" data-action="filter-tandas" data-filter="completed">Completadas</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Tandas Section -->
-        <section class="tandas-section">
-            <div class="section-header">
-                <h2 class="section-title">Mis Tandas (<span id="tandas-count">0</span>)</h2>
-                <div class="view-toggle">
-                    <button class="view-btn active" data-view="grid">
+            <!-- Section Header -->
+            <div class="mt-section-header">
+                <div class="mt-section-title">Tandas (<span id="mtCount">0</span>)</div>
+                <div class="mt-view-toggle">
+                    <button class="mt-view-btn active" data-action="toggle-view" data-view="grid" aria-label="Vista cuadricula">
                         <i class="fas fa-th"></i>
                     </button>
-                    <button class="view-btn" data-view="list">
+                    <button class="mt-view-btn" data-action="toggle-view" data-view="list" aria-label="Vista lista">
                         <i class="fas fa-list"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Loading State -->
-            <div class="loading-container" id="loading-state">
-                <div class="loading-spinner"></div>
-                <p style="color: var(--text-secondary);">Cargando tandas...</p>
+            <!-- Content Container -->
+            <div id="mtContent">
+                <div class="mt-loading" id="mtLoading">
+                    <div class="mt-spinner"></div>
+                    <p style="color: var(--text-secondary, #94a3b8);">Cargando tandas...</p>
+                </div>
             </div>
+        </main>
 
-            <!-- Tandas Grid (will be populated by JavaScript) -->
-            <div class="tandas-grid" id="tandas-grid" style="display: none;"></div>
-
-            <!-- Empty State -->
-            <div class="empty-state" id="empty-state" style="display: none;">
-                <i class="fas fa-hand-holding-usd"></i>
-                <h3>No tienes tandas todavía</h3>
-                <p>Crea tu primera tanda para comenzar a ahorrar con tu comunidad</p>
-                <button class="action-btn btn-primary" onclick="window.location.href='create-tanda.html'">
-                    <i class="fas fa-plus"></i> Crear Mi Primera Tanda
-                </button>
+        <!-- RIGHT SIDEBAR -->
+        <aside class="right-sidebar" id="rightSidebar">
+            <div class="right-sidebar-sticky">
+                <div class="sidebar-hub-cards" id="sidebarHubCards"></div>
             </div>
-        </section>
+        </aside>
     </div>
 
-    <!-- Scripts -->
+    <!-- Detail Modal -->
+    <div class="mt-modal-overlay" id="mtDetailModal">
+        <div class="mt-modal">
+            <div class="mt-modal-header">
+                <div class="mt-modal-title" id="mtDetailTitle">Detalle de Tanda</div>
+                <button class="mt-modal-close" data-action="close-modal" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="mtDetailBody"></div>
+        </div>
+    </div>
 
-    <script>
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Initializing My Tandas Page...');
+    <!-- Create Modal -->
+    <div class="mt-modal-overlay" id="mtCreateModal">
+        <div class="mt-modal">
+            <div class="mt-modal-header">
+                <div class="mt-modal-title">Crear Nueva Tanda</div>
+                <button class="mt-modal-close" data-action="close-modal" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="mtCreateBody">
+                <div class="mt-form-group">
+                    <label class="mt-form-label">Nombre de la tanda</label>
+                    <input type="text" class="mt-form-input" id="createName" placeholder="Ej: Tanda del Trabajo" maxlength="100">
+                </div>
+                <div class="mt-form-group">
+                    <label class="mt-form-label">Descripcion</label>
+                    <textarea class="mt-form-textarea" id="createDescription" placeholder="Describe el proposito de esta tanda..." maxlength="500"></textarea>
+                </div>
+                <div class="mt-form-row">
+                    <div class="mt-form-group">
+                        <label class="mt-form-label">Monto de contribucion (L.)</label>
+                        <input type="number" class="mt-form-input" id="createAmount" placeholder="500" min="10" max="100000" step="1">
+                    </div>
+                    <div class="mt-form-group">
+                        <label class="mt-form-label">Participantes</label>
+                        <input type="number" class="mt-form-input" id="createParticipants" placeholder="10" min="2" max="50">
+                    </div>
+                </div>
+                <div class="mt-form-group">
+                    <label class="mt-form-label">Frecuencia de pago</label>
+                    <select class="mt-form-select" id="createFrequency">
+                        <option value="weekly">Semanal</option>
+                        <option value="biweekly">Quincenal</option>
+                        <option value="monthly" selected>Mensual</option>
+                    </select>
+                </div>
+                <div class="mt-form-group" style="margin-top: 8px;">
+                    <div class="mt-form-hint">
+                        <i class="fas fa-info-circle"></i> La tanda se creara en estado de reclutamiento. Podras iniciarla cuando todos los participantes se hayan unido.
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="mt-btn mt-btn-secondary" data-action="close-modal" style="flex:1;">Cancelar</button>
+                    <button class="mt-btn mt-btn-primary" data-action="submit-create" style="flex:1;">
+                        <i class="fas fa-plus"></i> Crear Tanda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            // Initialize managers
-            if (typeof TandasDataManager !== 'undefined') {
-                window.tandasDataManager = new TandasDataManager();
+    <!-- Payment Modal -->
+    <div class="mt-modal-overlay" id="mtPaymentModal">
+        <div class="mt-modal">
+            <div class="mt-modal-header">
+                <div class="mt-modal-title">Realizar Pago</div>
+                <button class="mt-modal-close" data-action="close-modal" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="mtPaymentBody"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="mt-toast" id="mtToast"></div>
+
+    <script src="js/components-loader.js?v=30.2" defer></script>
+    <script defer>
+    (function() {
+        'use strict';
+
+        // --- State ---
+        let allTandas = [];
+        let filteredTandas = [];
+        let currentFilter = 'all';
+        let currentView = 'grid';
+        let searchQuery = '';
+        let searchTimer = null;
+
+        // --- Helpers ---
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getToken() {
+            return localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        }
+
+        function formatCurrency(amount) {
+            const num = parseFloat(amount);
+            if (isNaN(num)) return 'L. 0.00';
+            return 'L. ' + num.toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatDate(str) {
+            if (!str) return '-';
+            try {
+                return new Date(str).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' });
+            } catch { return '-'; }
+        }
+
+        function formatRelativeDate(str) {
+            if (!str) return '-';
+            try {
+                const date = new Date(str);
+                const now = new Date();
+                const diffMs = date - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays === 0) return 'Hoy';
+                if (diffDays === 1) return 'Manana';
+                if (diffDays > 1 && diffDays <= 30) return 'En ' + diffDays + ' dias';
+                if (diffDays < 0) return 'Hace ' + Math.abs(diffDays) + ' dias';
+                return formatDate(str);
+            } catch { return '-'; }
+        }
+
+        function frequencyLabel(freq) {
+            const map = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+            return map[freq] || freq || '-';
+        }
+
+        function statusLabel(status) {
+            const map = {
+                active: 'Activa', collecting: 'Cobrando', pending: 'Pendiente',
+                recruiting: 'Reclutando', scheduled: 'Programada',
+                completed: 'Completada', paused: 'Pausada'
+            };
+            return map[status] || status || '-';
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('mtToast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.className = 'mt-toast ' + (type || 'success') + ' visible';
+            setTimeout(function() { toast.classList.remove('visible'); }, 3000);
+        }
+
+        // --- API ---
+        async function apiCall(url, options) {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/auth.html';
+                return null;
+            }
+            const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+            const res = await fetch(url, Object.assign({ headers: headers }, options || {}));
+            if (res.status === 401) {
+                window.location.href = '/auth.html';
+                return null;
+            }
+            if (!res.ok) {
+                const data = await res.json().catch(function() { return {}; });
+                throw new Error(data.message || 'Error del servidor');
+            }
+            return res.json();
+        }
+
+        // --- Load Tandas ---
+        async function loadMyTandas() {
+            var contentEl = document.getElementById('mtContent');
+            var loadingEl = document.getElementById('mtLoading');
+            if (loadingEl) loadingEl.style.display = '';
+            try {
+                var result = await apiCall('/api/tandas/my-tandas');
+                if (!result) return;
+                var data = result.data || result;
+                allTandas = data.tandas || [];
+                applyFilters();
+                renderStats();
+                if (loadingEl) loadingEl.style.display = 'none';
+            } catch (err) {
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (contentEl) {
+                    contentEl.innerHTML =
+                        '<div class="mt-error">' +
+                        '<i class="fas fa-exclamation-triangle"></i>' +
+                        '<h3>Error al cargar tandas</h3>' +
+                        '<p>No se pudieron cargar tus tandas. Intenta de nuevo.</p>' +
+                        '<button class="mt-btn mt-btn-primary" data-action="retry-load"><i class="fas fa-redo"></i> Reintentar</button>' +
+                        '</div>';
+                }
+            }
+        }
+
+        // --- Render Stats ---
+        function renderStats() {
+            var active = 0, pending = 0, completed = 0;
+            allTandas.forEach(function(t) {
+                var s = t.status;
+                if (s === 'active' || s === 'collecting') active++;
+                else if (s === 'pending' || s === 'recruiting' || s === 'scheduled' || s === 'paused') pending++;
+                else if (s === 'completed') completed++;
+            });
+            var el;
+            el = document.getElementById('stat-active'); if (el) el.textContent = active;
+            el = document.getElementById('stat-pending'); if (el) el.textContent = pending;
+            el = document.getElementById('stat-completed'); if (el) el.textContent = completed;
+            el = document.getElementById('stat-total'); if (el) el.textContent = allTandas.length;
+        }
+
+        // --- Filter & Search ---
+        function applyFilters() {
+            filteredTandas = allTandas.filter(function(t) {
+                // Status filter
+                if (currentFilter !== 'all') {
+                    if (currentFilter === 'active' && t.status !== 'active' && t.status !== 'collecting') return false;
+                    if (currentFilter === 'pending' && t.status !== 'pending' && t.status !== 'recruiting' && t.status !== 'scheduled' && t.status !== 'paused') return false;
+                    if (currentFilter === 'completed' && t.status !== 'completed') return false;
+                }
+                // Search filter
+                if (searchQuery) {
+                    var name = (t.group_name || '').toLowerCase();
+                    if (name.indexOf(searchQuery.toLowerCase()) === -1) return false;
+                }
+                return true;
+            });
+            renderCards();
+        }
+
+        // --- Render Cards ---
+        function renderCards() {
+            var contentEl = document.getElementById('mtContent');
+            var countEl = document.getElementById('mtCount');
+            if (countEl) countEl.textContent = filteredTandas.length;
+            if (!contentEl) return;
+
+            if (filteredTandas.length === 0) {
+                if (allTandas.length === 0) {
+                    contentEl.innerHTML =
+                        '<div class="mt-empty">' +
+                        '<i class="fas fa-hand-holding-usd"></i>' +
+                        '<h3>No tienes tandas todavia</h3>' +
+                        '<p>Crea tu primera tanda para comenzar a ahorrar con tu comunidad</p>' +
+                        '<button class="mt-btn mt-btn-primary" data-action="open-create-modal">' +
+                        '<i class="fas fa-plus"></i> Crear Mi Primera Tanda</button>' +
+                        '</div>';
+                } else {
+                    contentEl.innerHTML =
+                        '<div class="mt-empty">' +
+                        '<i class="fas fa-filter"></i>' +
+                        '<h3>Sin resultados</h3>' +
+                        '<p>No se encontraron tandas con los filtros actuales</p>' +
+                        '</div>';
+                }
+                return;
             }
 
-            if (typeof TandasUIRenderer !== 'undefined') {
-                window.tandasUIRenderer = new TandasUIRenderer();
+            var viewClass = currentView === 'list' ? ' list-view' : '';
+            var html = '<div class="mt-grid' + viewClass + '">';
+            filteredTandas.forEach(function(t) {
+                var tandaId = escapeHtml(t.tanda_id);
+                var name = escapeHtml(t.group_name || 'Tanda');
+                var status = escapeHtml(t.status);
+                var freq = escapeHtml(frequencyLabel(t.frequency));
+                var amount = formatCurrency(t.contribution_amount);
+                var totalPerTurn = formatCurrency(t.total_per_turn);
+                var progress = t.progress_percentage || 0;
+                var turn = (t.current_turn || 0) + '/' + (t.total_participants || 0);
+                var myTurn = t.my_turn_position || '-';
+                var collector = escapeHtml(t.collecting_member || '-');
+                var nextPay = formatRelativeDate(t.next_payment_date);
+                var isCoordinator = t.is_coordinator;
+                var isActive = (status === 'active' || status === 'collecting');
+
+                html += '<div class="mt-card" data-action="view-tanda-detail" data-tanda-id="' + tandaId + '">';
+                html += '<div class="mt-card-header">';
+                html += '<div>';
+                html += '<div class="mt-card-name">' + name + '</div>';
+                html += '<div class="mt-card-meta">' + freq;
+                if (isCoordinator) html += ' <span class="mt-coordinator-badge"><i class="fas fa-crown"></i> Coordinador</span>';
+                html += '</div></div>';
+                html += '<span class="mt-badge ' + status + '">' + escapeHtml(statusLabel(t.status)) + '</span>';
+                html += '</div>';
+
+                html += '<div class="mt-card-amount">';
+                html += '<span class="mt-card-amount-label">Contribucion</span>';
+                html += '<span class="mt-card-amount-value">' + escapeHtml(amount) + '</span>';
+                html += '</div>';
+
+                if (isActive) {
+                    html += '<div class="mt-progress-section">';
+                    html += '<div class="mt-progress-header">';
+                    html += '<span class="mt-progress-label">Progreso</span>';
+                    html += '<span class="mt-progress-pct">' + progress + '%</span>';
+                    html += '</div>';
+                    html += '<div class="mt-progress-bar"><div class="mt-progress-fill" style="width:' + Math.min(progress, 100) + '%"></div></div>';
+                    html += '</div>';
+                }
+
+                html += '<div class="mt-card-details">';
+                html += '<div class="mt-detail-item"><span class="mt-detail-label">Turno actual</span><span class="mt-detail-value">' + escapeHtml(turn) + '</span></div>';
+                html += '<div class="mt-detail-item"><span class="mt-detail-label">Mi turno</span><span class="mt-detail-value">#' + escapeHtml(String(myTurn)) + '</span></div>';
+                if (isActive) {
+                    html += '<div class="mt-detail-item"><span class="mt-detail-label">Cobra</span><span class="mt-detail-value">' + collector + '</span></div>';
+                    html += '<div class="mt-detail-item"><span class="mt-detail-label">Proximo pago</span><span class="mt-detail-value">' + escapeHtml(nextPay) + '</span></div>';
+                } else {
+                    html += '<div class="mt-detail-item"><span class="mt-detail-label">Recibe</span><span class="mt-detail-value">' + escapeHtml(totalPerTurn) + '</span></div>';
+                    html += '<div class="mt-detail-item"><span class="mt-detail-label">Miembros</span><span class="mt-detail-value">' + escapeHtml(String(t.members_joined || t.total_participants || '-')) + '/' + escapeHtml(String(t.total_participants || '-')) + '</span></div>';
+                }
+                html += '</div>';
+
+                html += '<div class="mt-card-actions">';
+                html += '<button class="mt-btn mt-btn-secondary" data-action="view-tanda-detail" data-tanda-id="' + tandaId + '"><i class="fas fa-eye"></i> Ver</button>';
+                if (isActive) {
+                    html += '<button class="mt-btn mt-btn-primary" data-action="open-payment" data-tanda-id="' + tandaId + '"><i class="fas fa-credit-card"></i> Pagar</button>';
+                }
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            contentEl.innerHTML = html;
+        }
+
+        // --- Detail Modal ---
+        async function showTandaDetail(tandaId) {
+            var modal = document.getElementById('mtDetailModal');
+            var body = document.getElementById('mtDetailBody');
+            var title = document.getElementById('mtDetailTitle');
+            if (!modal || !body) return;
+
+            // Find from local cache first
+            var tanda = allTandas.find(function(t) { return String(t.tanda_id) === String(tandaId); });
+            if (!tanda) {
+                showToast('Tanda no encontrada', 'error');
+                return;
             }
 
-            if (typeof TandasEventHandlers !== 'undefined') {
-                window.tandasEventHandlers = new TandasEventHandlers();
+            if (title) title.textContent = escapeHtml(tanda.group_name || 'Tanda');
+            var status = tanda.status || 'active';
+            var isActive = (status === 'active' || status === 'collecting');
+
+            var html = '';
+            html += '<div style="margin-bottom:16px;"><span class="mt-badge ' + escapeHtml(status) + '">' + escapeHtml(statusLabel(status)) + '</span>';
+            if (tanda.is_coordinator) html += ' <span class="mt-coordinator-badge"><i class="fas fa-crown"></i> Coordinador</span>';
+            html += '</div>';
+
+            html += '<div class="mt-detail-grid">';
+            html += buildDetailBox('Contribucion', formatCurrency(tanda.contribution_amount));
+            html += buildDetailBox('Total por turno', formatCurrency(tanda.total_per_turn));
+            html += buildDetailBox('Frecuencia', frequencyLabel(tanda.frequency));
+            html += buildDetailBox('Participantes', String(tanda.total_participants || '-'));
+            html += buildDetailBox('Turno actual', (tanda.current_turn || 0) + '/' + (tanda.total_participants || 0));
+            html += buildDetailBox('Mi turno', '#' + String(tanda.my_turn_position || '-'));
+            if (isActive) {
+                html += buildDetailBox('Cobra actualmente', tanda.collecting_member || '-');
+                html += buildDetailBox('Proximo pago', formatRelativeDate(tanda.next_payment_date));
+            }
+            if (tanda.cycle_start_date) {
+                html += buildDetailBox('Inicio del ciclo', formatDate(tanda.cycle_start_date));
+            }
+            if (tanda.coordinator_name) {
+                html += buildDetailBox('Coordinador', tanda.coordinator_name);
+            }
+            html += '</div>';
+
+            if (isActive) {
+                html += '<div class="mt-progress-section">';
+                html += '<div class="mt-progress-header">';
+                html += '<span class="mt-progress-label">Progreso del ciclo</span>';
+                html += '<span class="mt-progress-pct">' + (tanda.progress_percentage || 0) + '%</span>';
+                html += '</div>';
+                html += '<div class="mt-progress-bar"><div class="mt-progress-fill" style="width:' + Math.min(tanda.progress_percentage || 0, 100) + '%"></div></div>';
+                html += '</div>';
             }
 
-            console.log('✅ My Tandas Page Initialized');
+            if (tanda.my_contributions_paid != null) {
+                html += '<div style="margin-top:16px;padding:12px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:10px;">';
+                html += '<div class="mt-detail-label" style="margin-bottom:4px;">Mis contribuciones</div>';
+                html += '<div class="mt-detail-value">' + escapeHtml(String(tanda.my_contributions_paid)) + ' de ' + escapeHtml(String(tanda.my_contributions_total)) + ' pagadas</div>';
+                html += '</div>';
+            }
+
+            html += '<div style="display:flex;gap:10px;margin-top:20px;">';
+            if (isActive) {
+                html += '<button class="mt-btn mt-btn-primary" style="flex:1;" data-action="open-payment" data-tanda-id="' + escapeHtml(String(tandaId)) + '"><i class="fas fa-credit-card"></i> Realizar Pago</button>';
+            }
+            html += '<button class="mt-btn mt-btn-secondary" style="flex:1;" data-action="close-modal"><i class="fas fa-times"></i> Cerrar</button>';
+            html += '</div>';
+
+            body.innerHTML = html;
+            modal.classList.add('visible');
+        }
+
+        function buildDetailBox(label, value) {
+            return '<div class="mt-detail-box">' +
+                '<div class="mt-detail-box-label">' + escapeHtml(label) + '</div>' +
+                '<div class="mt-detail-box-value">' + escapeHtml(value) + '</div>' +
+                '</div>';
+        }
+
+        // --- Payment Modal ---
+        function showPaymentModal(tandaId) {
+            var tanda = allTandas.find(function(t) { return String(t.tanda_id) === String(tandaId); });
+            if (!tanda) return;
+            var modal = document.getElementById('mtPaymentModal');
+            var body = document.getElementById('mtPaymentBody');
+            if (!modal || !body) return;
+
+            var amount = formatCurrency(tanda.contribution_amount);
+            var html = '';
+            html += '<div style="text-align:center;margin-bottom:20px;">';
+            html += '<div style="font-size:2rem;font-weight:700;color:#00FFFF;margin-bottom:4px;">' + escapeHtml(amount) + '</div>';
+            html += '<div style="color:var(--text-secondary,#94a3b8);font-size:0.85rem;">Contribucion para ' + escapeHtml(tanda.group_name || 'Tanda') + '</div>';
+            html += '</div>';
+
+            html += '<div style="background:rgba(15,23,42,0.5);border:1px solid rgba(148,163,184,0.1);border-radius:10px;padding:12px;margin-bottom:16px;">';
+            html += '<div class="mt-detail-label" style="margin-bottom:8px;">Resumen del pago</div>';
+            html += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--text-secondary,#94a3b8);font-size:0.85rem;">Tanda</span><span style="color:var(--text-primary,#e2e8f0);font-size:0.85rem;font-weight:600;">' + escapeHtml(tanda.group_name || '-') + '</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--text-secondary,#94a3b8);font-size:0.85rem;">Turno</span><span style="color:var(--text-primary,#e2e8f0);font-size:0.85rem;font-weight:600;">' + escapeHtml(String(tanda.current_turn || 0)) + '/' + escapeHtml(String(tanda.total_participants || 0)) + '</span></div>';
+            html += '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-secondary,#94a3b8);font-size:0.85rem;">Metodo</span><span style="color:var(--text-primary,#e2e8f0);font-size:0.85rem;font-weight:600;">Wallet LTD</span></div>';
+            html += '</div>';
+
+            html += '<div style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.2);border-radius:8px;padding:10px;margin-bottom:20px;font-size:0.8rem;color:#f97316;">';
+            html += '<i class="fas fa-info-circle"></i> El monto se debitara de tu wallet. Asegurate de tener saldo suficiente.';
+            html += '</div>';
+
+            html += '<div style="display:flex;gap:10px;">';
+            html += '<button class="mt-btn mt-btn-secondary" data-action="close-modal" style="flex:1;">Cancelar</button>';
+            html += '<button class="mt-btn mt-btn-primary" data-action="confirm-payment" data-tanda-id="' + escapeHtml(String(tandaId)) + '" style="flex:1;"><i class="fas fa-check"></i> Confirmar Pago</button>';
+            html += '</div>';
+
+            body.innerHTML = html;
+            // Close detail modal if open
+            closeAllModals();
+            modal.classList.add('visible');
+        }
+
+        // --- Confirm Payment ---
+        async function confirmPayment(tandaId) {
+            var tanda = allTandas.find(function(t) { return String(t.tanda_id) === String(tandaId); });
+            if (!tanda) return;
+
+            var btn = document.querySelector('[data-action="confirm-payment"][data-tanda-id="' + tandaId + '"]');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'; }
+
+            try {
+                var result = await apiCall('/api/tandas/pay', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        tanda_id: tandaId,
+                        amount: tanda.contribution_amount,
+                        payment_method: 'wallet'
+                    })
+                });
+                if (result) {
+                    closeAllModals();
+                    showToast('Pago realizado exitosamente', 'success');
+                    loadMyTandas();
+                }
+            } catch (err) {
+                showToast('Error al procesar el pago', 'error');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Pago'; }
+            }
+        }
+
+        // --- Create Tanda ---
+        async function submitCreateTanda() {
+            var name = document.getElementById('createName');
+            var desc = document.getElementById('createDescription');
+            var amount = document.getElementById('createAmount');
+            var participants = document.getElementById('createParticipants');
+            var frequency = document.getElementById('createFrequency');
+
+            if (!name || !amount || !participants || !frequency) return;
+            var nameVal = name.value.trim();
+            var amountVal = parseFloat(amount.value);
+            var partVal = parseInt(participants.value);
+            var freqVal = frequency.value;
+
+            if (!nameVal) { showToast('Ingresa un nombre para la tanda', 'error'); name.focus(); return; }
+            if (isNaN(amountVal) || amountVal < 10) { showToast('El monto minimo es L. 10', 'error'); amount.focus(); return; }
+            if (isNaN(partVal) || partVal < 2) { showToast('Se necesitan al menos 2 participantes', 'error'); participants.focus(); return; }
+            if (partVal > 50) { showToast('Maximo 50 participantes', 'error'); participants.focus(); return; }
+
+            var submitBtn = document.querySelector('[data-action="submit-create"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...'; }
+
+            try {
+                var token = getToken();
+                // Decode JWT to get userId for coordinator_id
+                var payload = JSON.parse(atob(token.split('.')[1]));
+                var userId = payload.userId || payload.user_id || payload.sub;
+
+                // Build turns_order with coordinator first, rest as placeholders
+                var turnsOrder = [userId];
+                for (var i = 1; i < partVal; i++) {
+                    turnsOrder.push('pending_slot_' + i);
+                }
+
+                var result = await apiCall('/api/tandas/create', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: nameVal,
+                        description: (desc ? desc.value.trim() : ''),
+                        contribution_amount: amountVal,
+                        participants: partVal,
+                        frequency: freqVal,
+                        coordinator_id: userId,
+                        turns_order: turnsOrder
+                    })
+                });
+                if (result) {
+                    closeAllModals();
+                    showToast('Tanda creada exitosamente', 'success');
+                    loadMyTandas();
+                    // Reset form
+                    name.value = '';
+                    if (desc) desc.value = '';
+                    amount.value = '';
+                    participants.value = '';
+                    frequency.value = 'monthly';
+                }
+            } catch (err) {
+                showToast('Error al crear la tanda', 'error');
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-plus"></i> Crear Tanda'; }
+            }
+        }
+
+        // --- Modals ---
+        function closeAllModals() {
+            var modals = document.querySelectorAll('.mt-modal-overlay');
+            modals.forEach(function(m) { m.classList.remove('visible'); });
+        }
+
+        // --- Event Delegation ---
+        document.addEventListener('click', function(e) {
+            var target = e.target.closest('[data-action]');
+            if (!target) {
+                // Close modal on overlay click
+                if (e.target.classList.contains('mt-modal-overlay')) {
+                    e.target.classList.remove('visible');
+                }
+                return;
+            }
+
+            var action = target.getAttribute('data-action');
+            var tandaId = target.getAttribute('data-tanda-id');
+
+            switch (action) {
+                case 'filter-tandas':
+                    var filter = target.getAttribute('data-filter');
+                    if (!filter) return;
+                    currentFilter = filter;
+                    document.querySelectorAll('.mt-pill').forEach(function(p) { p.classList.remove('active'); });
+                    target.classList.add('active');
+                    applyFilters();
+                    break;
+
+                case 'toggle-view':
+                    var view = target.getAttribute('data-view');
+                    if (!view) return;
+                    currentView = view;
+                    document.querySelectorAll('.mt-view-btn').forEach(function(b) { b.classList.remove('active'); });
+                    target.classList.add('active');
+                    applyFilters();
+                    break;
+
+                case 'view-tanda-detail':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (tandaId) showTandaDetail(tandaId);
+                    break;
+
+                case 'open-payment':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (tandaId) showPaymentModal(tandaId);
+                    break;
+
+                case 'confirm-payment':
+                    if (tandaId) confirmPayment(tandaId);
+                    break;
+
+                case 'open-create-modal':
+                    closeAllModals();
+                    var createModal = document.getElementById('mtCreateModal');
+                    if (createModal) createModal.classList.add('visible');
+                    break;
+
+                case 'submit-create':
+                    submitCreateTanda();
+                    break;
+
+                case 'close-modal':
+                    closeAllModals();
+                    break;
+
+                case 'retry-load':
+                    loadMyTandas();
+                    break;
+            }
         });
+
+        // ESC to close modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeAllModals();
+        });
+
+        // Search with debounce
+        var searchInput = document.getElementById('mtSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function() {
+                    searchQuery = searchInput.value.trim();
+                    applyFilters();
+                }, 300);
+            });
+        }
+
+        // --- Init ---
+        function init() {
+            var token = getToken();
+            if (!token) {
+                window.location.href = '/auth.html';
+                return;
+            }
+            loadMyTandas();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
     </script>
-  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/myTandas-legacy-B7wUGlGY.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
-    <script src="js/components-loader.js?v=30.2"></script>
-    <script src="js/header.js"></script>
-    <script src="shared-components.js?v=7.18"></script>
 </body>
 </html>
