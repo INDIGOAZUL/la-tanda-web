@@ -199,7 +199,7 @@ class LaTandaWallet {
                     if (!walletInstance) break;
                     const tx = walletInstance.transactionHistory.find(t => t.id === txId);
                     if (tx) {
-                        walletInstance.showAdminRequestModal(tx, {message: tx.admin_message || 'Se requiere nueva imagen'});
+                        walletInstance.showAdminRequestModal(tx, { message: tx.admin_message || 'Se requiere nueva imagen' });
                     }
                     break;
                 }
@@ -400,7 +400,7 @@ class LaTandaWallet {
     updateBalanceDisplay() {
         // Calculate total balance in USD (only real currencies)
         const totalUSD = this.balances.USD +
-                        (this.balances.HNL * this.exchangeRates.HNL_USD);
+            (this.balances.HNL * this.exchangeRates.HNL_USD);
 
         // Update main balance display
         const balanceElement = document.getElementById('totalBalance');
@@ -441,7 +441,7 @@ class LaTandaWallet {
         }).format(Math.abs(amount));
 
         let mainDisplay;
-        switch(currency) {
+        switch (currency) {
             case 'USD':
                 mainDisplay = `${formattedAmount} USD`;
                 break;
@@ -563,10 +563,7 @@ class LaTandaWallet {
         if (stored) {
             try {
                 this.transactionHistory = JSON.parse(stored);
-                    count: this.transactionHistory.length,
-                    storageKey: 'transactionHistory',
-                    lastTransaction: this.transactionHistory[this.transactionHistory.length - 1]?.id || 'none'
-                });
+
             } catch (error) {
                 this.transactionHistory = [];
             }
@@ -630,10 +627,7 @@ class LaTandaWallet {
                     update.status === 'completed' &&
                     previousStatus !== 'completed') {
 
-                        amount: transaction.amount,
-                        currency: transaction.currency,
-                        transactionId: transaction.id
-                    });
+
 
                     // Update balance
                     this.balances[transaction.currency] += transaction.amount;
@@ -650,13 +644,10 @@ class LaTandaWallet {
 
                 // Handle withdrawal completion
                 else if (transaction.type === 'withdrawal' &&
-                         update.status === 'completed' &&
-                         previousStatus !== 'completed') {
+                    update.status === 'completed' &&
+                    previousStatus !== 'completed') {
 
-                        amount: transaction.amount,
-                        currency: transaction.currency,
-                        transactionId: transaction.id
-                    });
+
 
                     // Update transaction details for completion
                     transaction.processedAt = update.processed_at;
@@ -672,13 +663,10 @@ class LaTandaWallet {
 
                 // Handle withdrawal rejection with balance restoration
                 else if (update.type === 'withdrawal_rejection' &&
-                         transaction.type === 'withdrawal' &&
-                         previousStatus !== 'rejected') {
+                    transaction.type === 'withdrawal' &&
+                    previousStatus !== 'rejected') {
 
-                        amount: update.amount_restored,
-                        currency: update.currency,
-                        transactionId: transaction.id
-                    });
+
 
                     // Restore balance (add back the withdrawn amount)
                     this.balances[update.currency] += update.amount_restored;
@@ -1297,8 +1285,8 @@ class LaTandaWallet {
         if (totalBalanceElement) {
             if (this.walletSettings.balanceVisible) {
                 const totalInUSD = this.balances.USD +
-                                 (this.balances.HNL * this.exchangeRates.HNL_USD) +
-                                 (0) // LTD removed * this.exchangeRates.LTD_USD;
+                    (this.balances.HNL * this.exchangeRates.HNL_USD) +
+                    (0) // LTD removed * this.exchangeRates.LTD_USD;
 
                 const preferredCurrency = this.walletSettings.currencyPreference;
                 if (preferredCurrency === 'USD') {
@@ -1348,16 +1336,16 @@ class LaTandaWallet {
         return this.transactionHistory.filter(tx => {
             // Include transactions where I am the owner/initiator
             return tx.userId === currentUserId ||
-                   tx.owner === currentUserId ||
-                   tx.walletOwner === currentUserId ||
-                   // For backward compatibility, include transactions without owner (assume they're mine)
-                   (!tx.userId && !tx.owner && !tx.walletOwner);
+                tx.owner === currentUserId ||
+                tx.walletOwner === currentUserId ||
+                // For backward compatibility, include transactions without owner (assume they're mine)
+                (!tx.userId && !tx.owner && !tx.walletOwner);
         }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     }
 
     getCurrentUserId() {
         // Get current user ID (from auth, localStorage, etc.)
-        try { const user = JSON.parse(localStorage.getItem("latanda_user")); return user?.user_id || user?.userId || localStorage.getItem("currentUserId") || "user_default_123"; } catch(e) { return localStorage.getItem("currentUserId") || "user_default_123"; }
+        try { const user = JSON.parse(localStorage.getItem("latanda_user")); return user?.user_id || user?.userId || localStorage.getItem("currentUserId") || "user_default_123"; } catch (e) { return localStorage.getItem("currentUserId") || "user_default_123"; }
     }
 
     updateTransactionsSummary(transactions) {
@@ -1767,8 +1755,8 @@ class LaTandaWallet {
 
             // Check if PIN verification is required for large transactions
             const amountInUSD = formData.currency === 'USD' ? formData.amount :
-                              formData.currency === 'HNL' ? formData.amount * this.exchangeRates.HNL_USD :
-                              formData.amount * this.exchangeRates.LTD_USD;
+                formData.currency === 'HNL' ? formData.amount * this.exchangeRates.HNL_USD :
+                    formData.amount * this.exchangeRates.LTD_USD;
 
             if (amountInUSD > 50 && this.walletSettings.pinEnabled) {
                 const pinVerified = await this.verifyPin('confirmar transferencia');
@@ -2398,7 +2386,7 @@ class LaTandaWallet {
 
     exportToCSV() {
         const transactions = this.filteredTransactions || this.transactionHistory;
-        
+
         if (!transactions || transactions.length === 0) {
             this.showWarning('No hay transacciones para exportar');
             return;
@@ -2406,7 +2394,7 @@ class LaTandaWallet {
 
         // CSV Headers
         const headers = ['ID', 'Fecha', 'Tipo', 'Descripción', 'Monto', 'Moneda', 'Estado', 'Método'];
-        
+
         // Convert transactions to CSV rows
         const rows = transactions.map(tx => {
             const date = new Date(tx.date || tx.created_at).toLocaleDateString('es-HN');
@@ -2416,7 +2404,7 @@ class LaTandaWallet {
             const currency = tx.currency || 'USD';
             const status = this.getStatusLabel(tx.status);
             const method = tx.method || tx.payment_method || '-';
-            
+
             // Escape fields that might contain commas
             const escapeCSV = (field) => {
                 if (field && (field.includes(',') || field.includes('"') || field.includes('\n'))) {
@@ -2424,7 +2412,7 @@ class LaTandaWallet {
                 }
                 return field || '';
             };
-            
+
             return [
                 tx.id,
                 date,
@@ -2439,15 +2427,15 @@ class LaTandaWallet {
 
         // Combine headers and rows
         const csvContent = [headers.join(','), ...rows].join('\n');
-        
+
         // Add BOM for Excel UTF-8 compatibility
         const BOM = '\uFEFF';
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-        
+
         // Generate filename with date
         const dateStr = new Date().toISOString().slice(0, 10);
         const filename = `transacciones_latanda_${dateStr}.csv`;
-        
+
         // Download file
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -2456,13 +2444,13 @@ class LaTandaWallet {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
-        
+
         this.showSuccess(`Exportado ${transactions.length} transacciones a CSV`);
     }
 
     exportToPDF() {
         const transactions = this.filteredTransactions || this.transactionHistory;
-        
+
         if (!transactions || transactions.length === 0) {
             this.showWarning('No hay transacciones para exportar');
             return;
@@ -2470,10 +2458,10 @@ class LaTandaWallet {
 
         // Create PDF content using browser print
         const printWindow = window.open('', '_blank');
-        const dateStr = new Date().toLocaleDateString('es-HN', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const dateStr = new Date().toLocaleDateString('es-HN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
 
         // Calculate totals
@@ -2609,16 +2597,16 @@ class LaTandaWallet {
         </thead>
         <tbody>
             ${transactions.map(tx => {
-                const date = new Date(tx.date || tx.created_at).toLocaleDateString('es-HN');
-                const type = this.getTransactionTypeLabel(tx.type);
-                const description = tx.description || tx.group_name || '-';
-                const amount = parseFloat(tx.amount || 0);
-                const isPositive = tx.type === 'deposit' || tx.type === 'reward';
-                const status = this.getStatusLabel(tx.status);
-                const statusClass = tx.status === 'completed' ? 'status-completed' : 
-                                   tx.status === 'pending' ? 'status-pending' : 'status-failed';
-                
-                return `
+            const date = new Date(tx.date || tx.created_at).toLocaleDateString('es-HN');
+            const type = this.getTransactionTypeLabel(tx.type);
+            const description = tx.description || tx.group_name || '-';
+            const amount = parseFloat(tx.amount || 0);
+            const isPositive = tx.type === 'deposit' || tx.type === 'reward';
+            const status = this.getStatusLabel(tx.status);
+            const statusClass = tx.status === 'completed' ? 'status-completed' :
+                tx.status === 'pending' ? 'status-pending' : 'status-failed';
+
+            return `
                     <tr>
                         <td>${date}</td>
                         <td>${type}</td>
@@ -2629,7 +2617,7 @@ class LaTandaWallet {
                         <td class="${statusClass}">${status}</td>
                     </tr>
                 `;
-            }).join('')}
+        }).join('')}
         </tbody>
     </table>
 
@@ -2648,7 +2636,7 @@ class LaTandaWallet {
 
         printWindow.document.write(html);
         printWindow.document.close();
-        
+
         this.showSuccess('PDF generado - usa Ctrl+P para guardar');
     }
 
@@ -3373,8 +3361,8 @@ class LaTandaWallet {
     generateUniqueReference() {
         const today = new Date();
         const dateStr = today.getFullYear().toString().slice(-2) +
-                       (today.getMonth() + 1).toString().padStart(2, '0') +
-                       today.getDate().toString().padStart(2, '0');
+            (today.getMonth() + 1).toString().padStart(2, '0') +
+            today.getDate().toString().padStart(2, '0');
 
         // Generate random 4-character code
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -3894,7 +3882,7 @@ class LaTandaWallet {
             );
 
             if (pendingTransactions.length > 0) {
-                    pendingTransactions.map(tx => ({id: tx.id.slice(-8), type: tx.type, status: tx.status})));
+                pendingTransactions.map(tx => ({ id: tx.id.slice(-8), type: tx.type, status: tx.status }));
 
                 // In production, this would call an API to check real status
                 // For now, we rely on admin updates via checkAdminUpdates()
@@ -3935,10 +3923,7 @@ class LaTandaWallet {
         try {
             const dataToSave = JSON.stringify(this.transactionHistory);
             localStorage.setItem('transactionHistory', dataToSave);
-                count: this.transactionHistory.length,
-                lastTransaction: this.transactionHistory[this.transactionHistory.length - 1]?.id || 'none',
-                storageKey: 'transactionHistory'
-            });
+
         } catch (error) {
         }
     }
@@ -3948,10 +3933,7 @@ class LaTandaWallet {
         try {
             const dataToSave = JSON.stringify(this.balances);
             localStorage.setItem('balances', dataToSave);
-                USD: this.balances.USD,
-                HNL: this.balances.HNL,
-                storageKey: 'balances'
-            });
+
         } catch (error) {
         }
     }
@@ -4231,7 +4213,7 @@ class LaTandaWallet {
 
         // Simple download as JSON (in production, would generate PDF)
         const dataStr = JSON.stringify(receiptData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(dataBlob);
 
         const link = document.createElement('a');
@@ -4317,17 +4299,6 @@ class LaTandaWallet {
                 // Method 3: If still not found, use the most recent receipt (fallback)
                 if (!receipt && receipts.length > 0) {
                     receipt = receipts.sort((a, b) => new Date(b.uploadTime) - new Date(a.uploadTime))[0];
-                }
-
-                if (receipt) {
-                        imageUrl: receipt?.imageUrl,
-                        dataUrl: receipt?.dataUrl,
-                        file: receipt?.file,
-                        fileData: receipt?.fileData,
-                        content: receipt?.content,
-                        base64: receipt?.base64,
-                        url: receipt?.url
-                    });
                 }
             }
         }
@@ -5098,8 +5069,8 @@ Generado el: ${new Date().toLocaleString()}
 
         this.showSuccess(
             this.walletSettings.balanceVisible ?
-            'Balance visible' :
-            'Balance oculto por privacidad'
+                'Balance visible' :
+                'Balance oculto por privacidad'
         );
     }
 
@@ -5537,7 +5508,7 @@ Generado el: ${new Date().toLocaleString()}
             // Increment failed attempts
             this.walletSettings.pinAttempts++;
             const remainingAttempts = this.walletSettings.maxPinAttempts - this.walletSettings.pinAttempts;
-            
+
             if (remainingAttempts <= 0) {
                 // Lock out user
                 this.walletSettings.pinLockoutUntil = Date.now() + this.walletSettings.pinLockoutDuration;
@@ -5547,7 +5518,7 @@ Generado el: ${new Date().toLocaleString()}
             } else {
                 walletInstance.showError(`PIN incorrecto. ${remainingAttempts} intento(s) restante(s).`);
             }
-            
+
             input.value = '';
             this.updatePinDots(0);
             // Add shake animation
@@ -5570,9 +5541,9 @@ Generado el: ${new Date().toLocaleString()}
         this.setupAutoLock();
 
         const timeText = timeMs === '0' ? 'Nunca' :
-                        timeMs === '300000' ? '5 minutos' :
-                        timeMs === '900000' ? '15 minutos' :
-                        timeMs === '1800000' ? '30 minutos' : '1 hora';
+            timeMs === '300000' ? '5 minutos' :
+                timeMs === '900000' ? '15 minutos' :
+                    timeMs === '1800000' ? '30 minutos' : '1 hora';
 
         this.showSuccess(`Auto-bloqueo configurado: ${timeText}`);
     }
@@ -5876,8 +5847,8 @@ Generado el: ${new Date().toLocaleString()}
                 exportData.balances = {
                     ...this.balances,
                     totalInUSD: this.balances.USD +
-                               (this.balances.HNL * this.exchangeRates.HNL_USD) +
-                               (0) // LTD removed * this.exchangeRates.LTD_USD
+                        (this.balances.HNL * this.exchangeRates.HNL_USD) +
+                        (0) // LTD removed * this.exchangeRates.LTD_USD
                 };
             }
 
@@ -6005,8 +5976,8 @@ Generado el: ${new Date().toLocaleString()}
             transfers: transactions.filter(tx => tx.type === 'transfer').length,
             totalVolume: transactions.reduce((sum, tx) => {
                 const usdAmount = tx.currency === 'USD' ? tx.amount :
-                                tx.currency === 'HNL' ? tx.amount * this.exchangeRates.HNL_USD :
-                                tx.amount * this.exchangeRates.LTD_USD;
+                    tx.currency === 'HNL' ? tx.amount * this.exchangeRates.HNL_USD :
+                        tx.amount * this.exchangeRates.LTD_USD;
                 return sum + usdAmount;
             }, 0)
         };
@@ -6284,8 +6255,8 @@ Generado el: ${new Date().toLocaleString()}
                 category.notifications.forEach(notification => {
                     const timeAgo = this.getTimeAgo(notification.timestamp);
                     const iconClass = notification.type === 'success' ? 'fa-check-circle' :
-                                    notification.type === 'error' ? 'fa-exclamation-circle' :
-                                    notification.type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+                        notification.type === 'error' ? 'fa-exclamation-circle' :
+                            notification.type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
                     const priorityClass = notification.priority ? `priority-${notification.priority}` : '';
                     const actionClass = notification.actionRequired ? 'action-required' : '';
 
@@ -7245,8 +7216,8 @@ Generado el: ${new Date().toLocaleString()}
 
         const threshold = this.notificationSettings.lowBalanceThreshold || 10;
         const totalInUSD = this.balances.USD +
-                         (this.balances.HNL * this.exchangeRates.HNL_USD) +
-                         (0); // LTD removed * this.exchangeRates.LTD_USD;
+            (this.balances.HNL * this.exchangeRates.HNL_USD) +
+            (0); // LTD removed * this.exchangeRates.LTD_USD;
 
         if (totalInUSD < threshold) {
             const preferredCurrency = this.walletSettings.currencyPreference;
@@ -7641,20 +7612,13 @@ Generado el: ${new Date().toLocaleString()}
             }
         }
 
-            amount: this.formatCurrency(amount, currency),
-            fee: this.formatCurrency(fee, currency),
-            total: this.formatCurrency(totalReceived, currency)
-        });
+
     }
 
     getWithdrawalFee(amount, currency) {
         // La Tanda Wallet no cobra comisiones por retiros
         // Los usuarios pueden retirar sus fondos sin costo adicional
         return 0.00;
-    }
-
-    onBankAccountChange() {
-        const select = document.getElementById('bankAccount');
         if (select && select.value === 'add_new') {
             this.showNewBankAccountForm();
             // Clear form fields when showing
@@ -7774,16 +7738,6 @@ Generado el: ${new Date().toLocaleString()}
     }
 
     async processWithdrawal() {
-
-        // Debug form validation status
-        const form = document.getElementById('withdrawForm');
-        if (form) {
-                isValid: form.checkValidity(),
-                elements: form.elements.length,
-                formData: new FormData(form)
-            });
-        }
-
         try {
             const formData = this.getWithdrawalFormData();
             if (!formData) return;
@@ -7829,7 +7783,6 @@ Generado el: ${new Date().toLocaleString()}
 
             // Refresh transaction display
             this.loadTransactionHistory();
-
 
         } catch (error) {
             this.hideLoading();
@@ -7916,11 +7869,7 @@ Generado el: ${new Date().toLocaleString()}
             totalReceived: amount - this.getWithdrawalFee(amount, currency)
         };
 
-            bankName: bankAccount.bankName,
-            accountNumber: bankAccount.accountNumber,
-            accountHolder: bankAccount.accountHolder,
-            accountType: bankAccount.accountType
-        });
+
 
         return formData;
     }
@@ -7987,10 +7936,7 @@ Generado el: ${new Date().toLocaleString()}
             }
         };
 
-            id: transaction.id,
-            withdrawalAccount: transaction.withdrawalAccount,
-            bankAccount: transaction.bankAccount
-        });
+
 
         return transaction;
     }
@@ -8067,8 +8013,8 @@ Generado el: ${new Date().toLocaleString()}
     getUserId() {
         // Use consistent identifier for feature flag bucketing
         return this.userSession?.user?.id ||
-               localStorage.getItem('deviceId') ||
-               this.generateDeviceId();
+            localStorage.getItem('deviceId') ||
+            this.generateDeviceId();
     }
 
     generateDeviceId() {
@@ -8343,28 +8289,28 @@ Generado el: ${new Date().toLocaleString()}
 // 🌍 GLOBAL MODAL FUNCTIONS
 // ================================
 
-window.showSendModal = function() {
+window.showSendModal = function () {
     if (!walletInstance) {
         return;
     }
     walletInstance.showSendModal();
 };
 
-window.showReceiveModal = function() {
+window.showReceiveModal = function () {
     if (!walletInstance) {
         return;
     }
     walletInstance.showReceiveModal();
 };
 
-window.showDepositModal = function(currency) {
+window.showDepositModal = function (currency) {
     if (!walletInstance) {
         return;
     }
     walletInstance.showDepositModal(currency);
 };
 
-window.showWithdrawModal = function() {
+window.showWithdrawModal = function () {
     if (!walletInstance) {
         return;
     }
@@ -8390,47 +8336,47 @@ function displayTransactionHistory(filter = 'all') {
         filteredTransactions = walletInstance.transactionHistory.filter(tx => tx.type === filter);
     }
 
-        // Sort by date (newest first)
-        filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort by date (newest first)
+    filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        if (filteredTransactions.length === 0) {
-            transactionsList.innerHTML = `
+    if (filteredTransactions.length === 0) {
+        transactionsList.innerHTML = `
                 <div class="no-transactions">
                     <i class="fas fa-receipt"></i>
                     <p>No hay transacciones para mostrar</p>
                 </div>
             `;
-            return;
-        }
-
-        const transactionsHTML = filteredTransactions.map(tx => createTransactionHTML(tx)).join('');
-        transactionsList.innerHTML = transactionsHTML;
+        return;
     }
 
+    const transactionsHTML = filteredTransactions.map(tx => createTransactionHTML(tx)).join('');
+    transactionsList.innerHTML = transactionsHTML;
+}
+
 function createTransactionHTML(transaction) {
-        const isPositive = ['deposit', 'receive'].includes(transaction.type);
-        const amountClass = isPositive ? 'positive' : 'negative';
-        const amountSign = isPositive ? '+' : '-';
+    const isPositive = ['deposit', 'receive'].includes(transaction.type);
+    const amountClass = isPositive ? 'positive' : 'negative';
+    const amountSign = isPositive ? '+' : '-';
 
-        // Format date
-        const dateStr = formatTransactionDate(transaction.date);
+    // Format date
+    const dateStr = formatTransactionDate(transaction.date);
 
-        // Get icon based on type
-        const iconClass = getTransactionIcon(transaction.type);
+    // Get icon based on type
+    const iconClass = getTransactionIcon(transaction.type);
 
-        // Format amount with currency
-        const formattedAmount = `${amountSign}${transaction.amount.toFixed(2)} ${transaction.currency}`;
+    // Format amount with currency
+    const formattedAmount = `${amountSign}${transaction.amount.toFixed(2)} ${transaction.currency}`;
 
-        // Fee display
-        const feeDisplay = transaction.fee > 0 ? `Fee: ${transaction.fee.toFixed(2)}` : '';
+    // Fee display
+    const feeDisplay = transaction.fee > 0 ? `Fee: ${transaction.fee.toFixed(2)}` : '';
 
-        // Status badge
-        const statusBadge = getStatusBadge(transaction.status);
+    // Status badge
+    const statusBadge = getStatusBadge(transaction.status);
 
-        // Action buttons for pending transactions
-        const actionButtons = getTransactionActions(transaction);
+    // Action buttons for pending transactions
+    const actionButtons = getTransactionActions(transaction);
 
-        return `
+    return `
             <div class="transaction-item" data-id="${transaction.id}">
                 <div class="transaction-icon ${transaction.type}">
                     <i class="fas ${iconClass}"></i>
@@ -8456,604 +8402,604 @@ function createTransactionHTML(transaction) {
 // ================================
 
 function formatTransactionDate(dateStr) {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const transactionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const date = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const transactionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-        // Calculate difference in days
-        const diffTime = today - transactionDate;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Calculate difference in days
+    const diffTime = today - transactionDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays === 0) {
-            return `Hoy ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-        } else if (diffDays === 1) {
-            return `Ayer ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-        } else if (diffDays < 7) {
-            return `Hace ${diffDays} días ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-        } else {
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
+    if (diffDays === 0) {
+        return `Hoy ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+        return `Ayer ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays < 7) {
+        return `Hace ${diffDays} días ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
+}
 
 function getTransactionIcon(type) {
-        const iconMap = {
-            deposit: 'fa-plus-circle',
-            withdraw: 'fa-minus-circle',
-            send: 'fa-arrow-up',
-            receive: 'fa-arrow-down',
-            transfer: 'fa-exchange-alt',
-            tanda: 'fa-users',
-            commission: 'fa-percentage',
-            reward: 'fa-gift',
-            fee: 'fa-receipt',
-            refund: 'fa-undo'
-        };
-        return iconMap[type] || 'fa-circle';
-    }
+    const iconMap = {
+        deposit: 'fa-plus-circle',
+        withdraw: 'fa-minus-circle',
+        send: 'fa-arrow-up',
+        receive: 'fa-arrow-down',
+        transfer: 'fa-exchange-alt',
+        tanda: 'fa-users',
+        commission: 'fa-percentage',
+        reward: 'fa-gift',
+        fee: 'fa-receipt',
+        refund: 'fa-undo'
+    };
+    return iconMap[type] || 'fa-circle';
+}
 
 function getStatusBadge(status) {
-        const statusConfig = {
-            completed: {
-                text: 'Completada',
-                class: 'status-completed',
-                icon: 'fa-check-circle'
-            },
-            pending: {
-                text: 'Pendiente',
-                class: 'status-pending',
-                icon: 'fa-clock'
-            },
-            processing: {
-                text: 'Procesando',
-                class: 'status-processing',
-                icon: 'fa-spinner fa-spin'
-            },
-            failed: {
-                text: 'Fallida',
-                class: 'status-failed',
-                icon: 'fa-times-circle'
-            },
-            cancelled: {
-                text: 'Cancelada',
-                class: 'status-cancelled',
-                icon: 'fa-ban'
-            }
-        };
+    const statusConfig = {
+        completed: {
+            text: 'Completada',
+            class: 'status-completed',
+            icon: 'fa-check-circle'
+        },
+        pending: {
+            text: 'Pendiente',
+            class: 'status-pending',
+            icon: 'fa-clock'
+        },
+        processing: {
+            text: 'Procesando',
+            class: 'status-processing',
+            icon: 'fa-spinner fa-spin'
+        },
+        failed: {
+            text: 'Fallida',
+            class: 'status-failed',
+            icon: 'fa-times-circle'
+        },
+        cancelled: {
+            text: 'Cancelada',
+            class: 'status-cancelled',
+            icon: 'fa-ban'
+        }
+    };
 
-        const config = statusConfig[status] || statusConfig.pending;
-        return `
+    const config = statusConfig[status] || statusConfig.pending;
+    return `
             <span class="transaction-status ${config.class}">
                 <i class="fas ${config.icon}"></i>
                 ${config.text}
             </span>
         `;
-    }
+}
 
 function getTransactionActions(transaction) {
-        // Check if transaction has any user actions available
-        if (!transaction.user_actions || transaction.user_actions.length === 0) {
-            return '';
-        }
+    // Check if transaction has any user actions available
+    if (!transaction.user_actions || transaction.user_actions.length === 0) {
+        return '';
+    }
 
-        let actions = [];
+    let actions = [];
 
-        // Process each available user action
-        transaction.user_actions.forEach(action => {
-            switch (action) {
-                case 'cancel':
-                    actions.push(`
+    // Process each available user action
+    transaction.user_actions.forEach(action => {
+        switch (action) {
+            case 'cancel':
+                actions.push(`
                         <button class="btn-secondary btn-sm" data-action="cancel-user-tx" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Cancelar transacción">
                             <i class="fas fa-times"></i>
                             Cancelar
                         </button>
                     `);
-                    break;
+                break;
 
-                case 'extend_time':
-                    actions.push(`
+            case 'extend_time':
+                actions.push(`
                         <button class="btn-info btn-sm" data-action="request-time-ext" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Solicitar más tiempo">
                             <i class="fas fa-clock"></i>
                             Más tiempo
                         </button>
                     `);
-                    break;
+                break;
 
-                case 'appeal':
-                    actions.push(`
+            case 'appeal':
+                actions.push(`
                         <button class="btn-warning btn-sm" data-action="submit-appeal" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Apelar decisión del admin">
                             <i class="fas fa-gavel"></i>
                             Apelar
                         </button>
                     `);
-                    break;
+                break;
 
-                case 'retry':
-                    actions.push(`
+            case 'retry':
+                actions.push(`
                         <button class="btn-primary btn-sm" data-action="retry-failed-tx" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Reintentar transacción">
                             <i class="fas fa-redo"></i>
                             Reintentar
                         </button>
                     `);
-                    break;
+                break;
 
-                case 'provide_docs':
-                    actions.push(`
+            case 'provide_docs':
+                actions.push(`
                         <button class="btn-info btn-sm" data-action="upload-docs" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Subir documentos adicionales">
                             <i class="fas fa-file-upload"></i>
                             Documentos
                         </button>
                     `);
-                    break;
+                break;
 
-                case 'contact_support':
-                    actions.push(`
+            case 'contact_support':
+                actions.push(`
                         <button class="btn-info btn-sm" data-action="contact-support-tx" data-tx-id="${this.escapeHtml(transaction.id)}"" title="Contactar soporte">
                             <i class="fas fa-life-ring"></i>
                             Soporte
                         </button>
                     `);
-                    break;
-            }
-        });
-
-        // Add status-specific information
-        let statusInfo = '';
-        if (transaction.status === 'pending' && transaction.deadline) {
-            const deadline = new Date(transaction.deadline);
-            const now = new Date();
-            const timeLeft = deadline - now;
-            const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
-
-            if (hoursLeft > 0) {
-                statusInfo = `<div class="transaction-deadline">⏱️ ${hoursLeft}h restantes</div>`;
-            } else {
-                statusInfo = `<div class="transaction-deadline expired">⚠️ Tiempo agotado</div>`;
-            }
+                break;
         }
+    });
 
-        if (transaction.status === 'failed' && transaction.admin_reason) {
-            statusInfo = `<div class="transaction-reason">❌ ${transaction.admin_reason}</div>`;
+    // Add status-specific information
+    let statusInfo = '';
+    if (transaction.status === 'pending' && transaction.deadline) {
+        const deadline = new Date(transaction.deadline);
+        const now = new Date();
+        const timeLeft = deadline - now;
+        const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
+
+        if (hoursLeft > 0) {
+            statusInfo = `<div class="transaction-deadline">⏱️ ${hoursLeft}h restantes</div>`;
+        } else {
+            statusInfo = `<div class="transaction-deadline expired">⚠️ Tiempo agotado</div>`;
         }
+    }
 
-        return actions.length > 0 ? `
+    if (transaction.status === 'failed' && transaction.admin_reason) {
+        statusInfo = `<div class="transaction-reason">❌ ${transaction.admin_reason}</div>`;
+    }
+
+    return actions.length > 0 ? `
             <div class="transaction-actions">
                 ${statusInfo}
                 ${actions.join('')}
             </div>
         ` : '';
-    }
+}
 
-    // ================================
-    // 🎯 USER TRANSACTION ACTIONS
-    // ================================
+// ================================
+// 🎯 USER TRANSACTION ACTIONS
+// ================================
 
-    // Cancel pending transaction (user-initiated)
+// Cancel pending transaction (user-initiated)
 function cancelUserTransaction(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
-
-        const confirmation = confirm(
-            `¿Está seguro de que desea cancelar esta transacción?\n\n` +
-            `Tipo: ${transaction.title}\n` +
-            `Monto: ${transaction.amount} ${transaction.currency}\n\n` +
-            `Esta acción no se puede deshacer.`
-        );
-
-        if (!confirmation) return;
-
-        walletInstance.showLoading('Cancelando transacción...');
-
-        // Simulate API call to admin system
-        setTimeout(() => {
-            walletInstance.hideLoading();
-
-            // Update transaction status
-            transaction.status = 'cancelled';
-            transaction.cancelled_by = 'user';
-            transaction.cancelled_date = new Date().toISOString();
-            transaction.user_actions = []; // Remove all user actions
-
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            walletInstance.showSuccess('Transacción cancelada exitosamente.');
-
-            // Add notification
-            walletInstance.addNotification({
-                type: 'info',
-                title: 'Transacción Cancelada',
-                message: `Tu ${transaction.title} de ${transaction.amount} ${transaction.currency} ha sido cancelada.`,
-                timestamp: new Date()
-            });
-        }, 1500);
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
     }
 
-    // Request time extension for pending transaction
+    const confirmation = confirm(
+        `¿Está seguro de que desea cancelar esta transacción?\n\n` +
+        `Tipo: ${transaction.title}\n` +
+        `Monto: ${transaction.amount} ${transaction.currency}\n\n` +
+        `Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmation) return;
+
+    walletInstance.showLoading('Cancelando transacción...');
+
+    // Simulate API call to admin system
+    setTimeout(() => {
+        walletInstance.hideLoading();
+
+        // Update transaction status
+        transaction.status = 'cancelled';
+        transaction.cancelled_by = 'user';
+        transaction.cancelled_date = new Date().toISOString();
+        transaction.user_actions = []; // Remove all user actions
+
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        walletInstance.showSuccess('Transacción cancelada exitosamente.');
+
+        // Add notification
+        walletInstance.addNotification({
+            type: 'info',
+            title: 'Transacción Cancelada',
+            message: `Tu ${transaction.title} de ${transaction.amount} ${transaction.currency} ha sido cancelada.`,
+            timestamp: new Date()
+        });
+    }, 1500);
+}
+
+// Request time extension for pending transaction
 function requestTimeExtension(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
-
-        const reason = prompt(
-            'Por favor explique por qué necesita más tiempo para esta transacción:\n\n' +
-            '(El admin revisará su solicitud en 1-2 horas)'
-        );
-
-        if (!reason || reason.trim() === '') {
-            walletInstance.showError('Debe proporcionar una razón para la extensión de tiempo');
-            return;
-        }
-
-        walletInstance.showLoading('Enviando solicitud de extensión...');
-
-        setTimeout(() => {
-            walletInstance.hideLoading();
-
-            // Update transaction
-            transaction.extension_requested = true;
-            transaction.extension_reason = reason.trim();
-            transaction.extension_request_date = new Date().toISOString();
-            transaction.user_actions = transaction.user_actions.filter(a => a !== 'extend_time');
-
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            walletInstance.showSuccess('Solicitud de extensión enviada. El admin la revisará pronto.');
-
-            // Add notification
-            walletInstance.addNotification({
-                type: 'info',
-                title: 'Extensión Solicitada',
-                message: `Has solicitado más tiempo para tu ${transaction.title}. El admin revisará tu solicitud.`,
-                timestamp: new Date()
-            });
-        }, 2000);
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
     }
 
-    // Submit appeal for failed/rejected transaction
+    const reason = prompt(
+        'Por favor explique por qué necesita más tiempo para esta transacción:\n\n' +
+        '(El admin revisará su solicitud en 1-2 horas)'
+    );
+
+    if (!reason || reason.trim() === '') {
+        walletInstance.showError('Debe proporcionar una razón para la extensión de tiempo');
+        return;
+    }
+
+    walletInstance.showLoading('Enviando solicitud de extensión...');
+
+    setTimeout(() => {
+        walletInstance.hideLoading();
+
+        // Update transaction
+        transaction.extension_requested = true;
+        transaction.extension_reason = reason.trim();
+        transaction.extension_request_date = new Date().toISOString();
+        transaction.user_actions = transaction.user_actions.filter(a => a !== 'extend_time');
+
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        walletInstance.showSuccess('Solicitud de extensión enviada. El admin la revisará pronto.');
+
+        // Add notification
+        walletInstance.addNotification({
+            type: 'info',
+            title: 'Extensión Solicitada',
+            message: `Has solicitado más tiempo para tu ${transaction.title}. El admin revisará tu solicitud.`,
+            timestamp: new Date()
+        });
+    }, 2000);
+}
+
+// Submit appeal for failed/rejected transaction
 function submitAppeal(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
-
-        const appealReason = prompt(
-            `Razón del rechazo: ${transaction.admin_reason}\n\n` +
-            'Por favor explique por qué desea apelar esta decisión:\n\n' +
-            '(Incluya cualquier información adicional que pueda ayudar)'
-        );
-
-        if (!appealReason || appealReason.trim() === '') {
-            walletInstance.showError('Debe proporcionar una razón para la apelación');
-            return;
-        }
-
-        walletInstance.showLoading('Enviando apelación al admin...');
-
-        setTimeout(() => {
-            walletInstance.hideLoading();
-
-            // Update transaction
-            transaction.status = 'under_appeal';
-            transaction.appeal_reason = appealReason.trim();
-            transaction.appeal_date = new Date().toISOString();
-            transaction.user_actions = transaction.user_actions.filter(a => a !== 'appeal');
-
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            walletInstance.showSuccess('Apelación enviada exitosamente. Será revisada en 24-48 horas.');
-
-            // Add notification
-            walletInstance.addNotification({
-                type: 'warning',
-                title: 'Apelación Enviada',
-                message: `Tu apelación para ${transaction.title} ha sido enviada al admin para revisión.`,
-                timestamp: new Date()
-            });
-        }, 2000);
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
     }
 
-    // Retry failed transaction with corrected information
+    const appealReason = prompt(
+        `Razón del rechazo: ${transaction.admin_reason}\n\n` +
+        'Por favor explique por qué desea apelar esta decisión:\n\n' +
+        '(Incluya cualquier información adicional que pueda ayudar)'
+    );
+
+    if (!appealReason || appealReason.trim() === '') {
+        walletInstance.showError('Debe proporcionar una razón para la apelación');
+        return;
+    }
+
+    walletInstance.showLoading('Enviando apelación al admin...');
+
+    setTimeout(() => {
+        walletInstance.hideLoading();
+
+        // Update transaction
+        transaction.status = 'under_appeal';
+        transaction.appeal_reason = appealReason.trim();
+        transaction.appeal_date = new Date().toISOString();
+        transaction.user_actions = transaction.user_actions.filter(a => a !== 'appeal');
+
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        walletInstance.showSuccess('Apelación enviada exitosamente. Será revisada en 24-48 horas.');
+
+        // Add notification
+        walletInstance.addNotification({
+            type: 'warning',
+            title: 'Apelación Enviada',
+            message: `Tu apelación para ${transaction.title} ha sido enviada al admin para revisión.`,
+            timestamp: new Date()
+        });
+    }, 2000);
+}
+
+// Retry failed transaction with corrected information
 function retryFailedTransaction(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
+    }
 
-        const confirmation = confirm(
-            `¿Desea reintentar esta transacción?\n\n` +
-            `Razón del fallo: ${transaction.admin_reason}\n\n` +
-            `Asegúrese de corregir la información antes de reintentar.`
-        );
+    const confirmation = confirm(
+        `¿Desea reintentar esta transacción?\n\n` +
+        `Razón del fallo: ${transaction.admin_reason}\n\n` +
+        `Asegúrese de corregir la información antes de reintentar.`
+    );
 
-        if (!confirmation) return;
+    if (!confirmation) return;
 
-        walletInstance.showLoading('Reintentando transacción...');
+    walletInstance.showLoading('Reintentando transacción...');
+
+    setTimeout(() => {
+        walletInstance.hideLoading();
+
+        // Create new transaction with corrected information
+        const retryTransaction = {
+            ...transaction,
+            id: transaction.id + '_retry_' + Date.now(),
+            status: 'pending',
+            date: new Date(),
+            retry_of: transaction.id,
+            retry_count: (transaction.retry_count || 0) + 1,
+            user_actions: ['cancel'], // Only allow cancel for retry
+            admin_reason: null
+        };
+
+        // Update original transaction
+        transaction.retry_attempted = true;
+        transaction.retry_date = new Date().toISOString();
+        transaction.user_actions = []; // Remove retry option
+
+        // Add retry transaction to history
+        walletInstance.transactionHistory.unshift(retryTransaction);
+
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        walletInstance.showSuccess('Transacción reenviada para procesamiento.');
+
+        // Add notification
+        walletInstance.addNotification({
+            type: 'info',
+            title: 'Transacción Reintentada',
+            message: `Tu ${transaction.title} ha sido reenviada para procesamiento.`,
+            timestamp: new Date()
+        });
+    }, 2000);
+}
+
+// Upload additional documents for verification
+function uploadAdditionalDocuments(transactionId) {
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*,.pdf,.doc,.docx';
+
+    input.onchange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        walletInstance.showLoading('Subiendo documentos...');
 
         setTimeout(() => {
             walletInstance.hideLoading();
 
-            // Create new transaction with corrected information
-            const retryTransaction = {
-                ...transaction,
-                id: transaction.id + '_retry_' + Date.now(),
-                status: 'pending',
-                date: new Date(),
-                retry_of: transaction.id,
-                retry_count: (transaction.retry_count || 0) + 1,
-                user_actions: ['cancel'], // Only allow cancel for retry
-                admin_reason: null
-            };
-
-            // Update original transaction
-            transaction.retry_attempted = true;
-            transaction.retry_date = new Date().toISOString();
-            transaction.user_actions = []; // Remove retry option
-
-            // Add retry transaction to history
-            walletInstance.transactionHistory.unshift(retryTransaction);
+            transaction.additional_docs_uploaded = true;
+            transaction.docs_upload_date = new Date().toISOString();
+            transaction.uploaded_files = files.map(f => f.name);
+            transaction.user_actions = transaction.user_actions.filter(a => a !== 'provide_docs');
 
             walletInstance.saveTransactionHistory();
             walletInstance.displayTransactionHistory();
 
-            walletInstance.showSuccess('Transacción reenviada para procesamiento.');
+            walletInstance.showSuccess(`${files.length} documento(s) subido(s) exitosamente.`);
 
-            // Add notification
             walletInstance.addNotification({
-                type: 'info',
-                title: 'Transacción Reintentada',
-                message: `Tu ${transaction.title} ha sido reenviada para procesamiento.`,
+                type: 'success',
+                title: 'Documentos Subidos',
+                message: `Has subido ${files.length} documento(s) para tu ${transaction.title}.`,
                 timestamp: new Date()
             });
         }, 2000);
-    }
+    };
 
-    // Upload additional documents for verification
-function uploadAdditionalDocuments(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
+    input.click();
+}
 
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.multiple = true;
-        input.accept = 'image/*,.pdf,.doc,.docx';
-
-        input.onchange = (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
-
-            walletInstance.showLoading('Subiendo documentos...');
-
-        setTimeout(() => {
-                walletInstance.hideLoading();
-
-                transaction.additional_docs_uploaded = true;
-                transaction.docs_upload_date = new Date().toISOString();
-                transaction.uploaded_files = files.map(f => f.name);
-                transaction.user_actions = transaction.user_actions.filter(a => a !== 'provide_docs');
-
-                walletInstance.saveTransactionHistory();
-                walletInstance.displayTransactionHistory();
-
-                walletInstance.showSuccess(`${files.length} documento(s) subido(s) exitosamente.`);
-
-                walletInstance.addNotification({
-                    type: 'success',
-                    title: 'Documentos Subidos',
-                    message: `Has subido ${files.length} documento(s) para tu ${transaction.title}.`,
-                    timestamp: new Date()
-                });
-            }, 2000);
-        };
-
-        input.click();
-    }
-
-    // Contact support for specific transaction
+// Contact support for specific transaction
 function contactSupportForTransaction(transactionId) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            walletInstance.showError('Transacción no encontrada');
-            return;
-        }
-
-        const message = prompt(
-            `Contactar soporte para: ${transaction.title}\n\n` +
-            'Describe tu problema o pregunta:\n\n' +
-            '(El equipo de soporte te responderá en 2-4 horas)'
-        );
-
-        if (!message || message.trim() === '') {
-            walletInstance.showError('Debe proporcionar un mensaje para el soporte');
-            return;
-        }
-
-        walletInstance.showLoading('Enviando mensaje al soporte...');
-
-        setTimeout(() => {
-            walletInstance.hideLoading();
-
-            transaction.support_contacted = true;
-            transaction.support_message = message.trim();
-            transaction.support_contact_date = new Date().toISOString();
-            transaction.support_ticket_id = 'SUP-' + Date.now();
-
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            walletInstance.showSuccess(`Mensaje enviado al soporte. Ticket: ${transaction.support_ticket_id}`);
-
-            walletInstance.addNotification({
-                type: 'info',
-                title: 'Soporte Contactado',
-                message: `Has contactado al soporte sobre tu ${transaction.title}. Ticket: ${transaction.support_ticket_id}`,
-                timestamp: new Date()
-            });
-        }, 1500);
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        walletInstance.showError('Transacción no encontrada');
+        return;
     }
 
-    // Save transaction history to localStorage
-    // Removed duplicate function - using main saveTransactionHistory() at line 3066
+    const message = prompt(
+        `Contactar soporte para: ${transaction.title}\n\n` +
+        'Describe tu problema o pregunta:\n\n' +
+        '(El equipo de soporte te responderá en 2-4 horas)'
+    );
 
-    // ================================
-    // 🏛️ TANDAS TRANSACTION METHODS
-    // ================================
+    if (!message || message.trim() === '') {
+        walletInstance.showError('Debe proporcionar un mensaje para el soporte');
+        return;
+    }
 
-    /**
-     * MÉTODO EFICIENTE PARA DEPÓSITOS DE TANDAS
-     * Usando cuenta personal Atlántida con verificación manual
-     */
+    walletInstance.showLoading('Enviando mensaje al soporte...');
+
+    setTimeout(() => {
+        walletInstance.hideLoading();
+
+        transaction.support_contacted = true;
+        transaction.support_message = message.trim();
+        transaction.support_contact_date = new Date().toISOString();
+        transaction.support_ticket_id = 'SUP-' + Date.now();
+
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        walletInstance.showSuccess(`Mensaje enviado al soporte. Ticket: ${transaction.support_ticket_id}`);
+
+        walletInstance.addNotification({
+            type: 'info',
+            title: 'Soporte Contactado',
+            message: `Has contactado al soporte sobre tu ${transaction.title}. Ticket: ${transaction.support_ticket_id}`,
+            timestamp: new Date()
+        });
+    }, 1500);
+}
+
+// Save transaction history to localStorage
+// Removed duplicate function - using main saveTransactionHistory() at line 3066
+
+// ================================
+// 🏛️ TANDAS TRANSACTION METHODS
+// ================================
+
+/**
+ * MÉTODO EFICIENTE PARA DEPÓSITOS DE TANDAS
+ * Usando cuenta personal Atlántida con verificación manual
+ */
 async function processTandaDeposit(tandaId, amount, currency = 'HNL') {
-        try {
-            const depositReference = generateDepositReference(tandaId);
+    try {
+        const depositReference = generateDepositReference(tandaId);
 
-            const atlantidaAccount = {
-                bank: 'Banco Atlántida',
-                account_holder: 'Tu Nombre',
-                account_number: '****-****-****-1234',
-                routing: 'ATLAHNHA',
-                currency: currency
-            };
-
-            const transaction = {
-                id: 'tanda_dep_' + Date.now(),
-                type: 'tanda_deposit',
-                title: `Depósito a Tanda #${tandaId}`,
-                amount: amount,
-                currency: currency,
-                status: 'pending_verification',
-                date: new Date(),
-                description: `Depósito para participación en Tanda`,
-                tanda_id: tandaId,
-                deposit_reference: depositReference,
-                deposit_account: atlantidaAccount,
-                verification_required: true,
-                admin_verification_needed: true,
-                user_actions: ['upload_receipt', 'cancel'],
-                estimated_processing: '2-4 horas'
-            };
-
-            walletInstance.transactionHistory.unshift(transaction);
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            showTandaDepositInstructions(transaction);
-            return transaction;
-
-        } catch (error) {
-            walletInstance.showError('Error al procesar depósito. Intenta nuevamente.');
-        }
-    }
-
-    /**
-     * MÉTODO DUAL PARA RETIROS: ATLÁNTIDA + LIGHTNING
-     * < $50 USD: Lightning/Blink (instantáneo)
-     * > $50 USD: Atlántida (1-2 días)
-     */
-async function processTandaWithdrawal(tandaId, amount, currency, withdrawalMethod = 'auto') {
-        try {
-            if (withdrawalMethod === 'auto') {
-                withdrawalMethod = determineOptimalWithdrawalMethod(amount, currency);
-            }
-
-            const transaction = {
-                id: 'tanda_wth_' + Date.now(),
-                type: 'tanda_withdrawal',
-                title: `Retiro de Tanda #${tandaId}`,
-                amount: amount,
-                currency: currency,
-                status: 'pending_processing',
-                date: new Date(),
-                description: `Retiro de ganancias de Tanda`,
-                tanda_id: tandaId,
-                withdrawal_method: withdrawalMethod,
-                admin_verification_needed: true,
-                user_actions: ['cancel'],
-                estimated_processing: withdrawalMethod === 'lightning' ? '5-10 minutos' : '1-2 días',
-                processing_fee: calculateTandaWithdrawalFee(amount, withdrawalMethod)
-            };
-
-            if (withdrawalMethod === 'lightning') {
-                transaction.lightning_details = {
-                    provider: 'Blink',
-                    max_amount: 50,
-                    instant: true,
-                    requires_lightning_address: true
-                };
-            }
-
-            walletInstance.transactionHistory.unshift(transaction);
-            walletInstance.saveTransactionHistory();
-            walletInstance.displayTransactionHistory();
-
-            notifyAdminTandaWithdrawal(transaction);
-            return transaction;
-
-        } catch (error) {
-            walletInstance.showError('Error al procesar retiro. Intenta nuevamente.');
-        }
-    }
-
-    /**
-     * SISTEMA DE GESTIÓN DE LIQUIDEZ
-     * Monitorea fondos disponibles y riesgos
-     */
-function manageTandaLiquidity() {
-        return {
-            atlantida_balance: 0,
-            lightning_balance: 0,
-            pending_deposits: 0,
-            pending_withdrawals: 0,
-            max_daily_deposits: 50000,
-            max_single_transaction: 25000,
-            min_reserve_ratio: 0.15,
-            low_liquidity_threshold: 10000,
-            high_risk_threshold: 0.85
+        const atlantidaAccount = {
+            bank: 'Banco Atlántida',
+            account_holder: 'Tu Nombre',
+            account_number: '****-****-****-1234',
+            routing: 'ATLAHNHA',
+            currency: currency
         };
-    }
 
-    // Helper methods
-function generateDepositReference(tandaId) {
-        const timestamp = Date.now().toString().slice(-6);
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `TANDA${tandaId}_${timestamp}_${random}`;
+        const transaction = {
+            id: 'tanda_dep_' + Date.now(),
+            type: 'tanda_deposit',
+            title: `Depósito a Tanda #${tandaId}`,
+            amount: amount,
+            currency: currency,
+            status: 'pending_verification',
+            date: new Date(),
+            description: `Depósito para participación en Tanda`,
+            tanda_id: tandaId,
+            deposit_reference: depositReference,
+            deposit_account: atlantidaAccount,
+            verification_required: true,
+            admin_verification_needed: true,
+            user_actions: ['upload_receipt', 'cancel'],
+            estimated_processing: '2-4 horas'
+        };
+
+        walletInstance.transactionHistory.unshift(transaction);
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        showTandaDepositInstructions(transaction);
+        return transaction;
+
+    } catch (error) {
+        walletInstance.showError('Error al procesar depósito. Intenta nuevamente.');
     }
+}
+
+/**
+ * MÉTODO DUAL PARA RETIROS: ATLÁNTIDA + LIGHTNING
+ * < $50 USD: Lightning/Blink (instantáneo)
+ * > $50 USD: Atlántida (1-2 días)
+ */
+async function processTandaWithdrawal(tandaId, amount, currency, withdrawalMethod = 'auto') {
+    try {
+        if (withdrawalMethod === 'auto') {
+            withdrawalMethod = determineOptimalWithdrawalMethod(amount, currency);
+        }
+
+        const transaction = {
+            id: 'tanda_wth_' + Date.now(),
+            type: 'tanda_withdrawal',
+            title: `Retiro de Tanda #${tandaId}`,
+            amount: amount,
+            currency: currency,
+            status: 'pending_processing',
+            date: new Date(),
+            description: `Retiro de ganancias de Tanda`,
+            tanda_id: tandaId,
+            withdrawal_method: withdrawalMethod,
+            admin_verification_needed: true,
+            user_actions: ['cancel'],
+            estimated_processing: withdrawalMethod === 'lightning' ? '5-10 minutos' : '1-2 días',
+            processing_fee: calculateTandaWithdrawalFee(amount, withdrawalMethod)
+        };
+
+        if (withdrawalMethod === 'lightning') {
+            transaction.lightning_details = {
+                provider: 'Blink',
+                max_amount: 50,
+                instant: true,
+                requires_lightning_address: true
+            };
+        }
+
+        walletInstance.transactionHistory.unshift(transaction);
+        walletInstance.saveTransactionHistory();
+        walletInstance.displayTransactionHistory();
+
+        notifyAdminTandaWithdrawal(transaction);
+        return transaction;
+
+    } catch (error) {
+        walletInstance.showError('Error al procesar retiro. Intenta nuevamente.');
+    }
+}
+
+/**
+ * SISTEMA DE GESTIÓN DE LIQUIDEZ
+ * Monitorea fondos disponibles y riesgos
+ */
+function manageTandaLiquidity() {
+    return {
+        atlantida_balance: 0,
+        lightning_balance: 0,
+        pending_deposits: 0,
+        pending_withdrawals: 0,
+        max_daily_deposits: 50000,
+        max_single_transaction: 25000,
+        min_reserve_ratio: 0.15,
+        low_liquidity_threshold: 10000,
+        high_risk_threshold: 0.85
+    };
+}
+
+// Helper methods
+function generateDepositReference(tandaId) {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `TANDA${tandaId}_${timestamp}_${random}`;
+}
 
 function determineOptimalWithdrawalMethod(amount, currency) {
-        const amountInUSD = currency === 'HNL' ? amount / 24.85 : amount;
-        return amountInUSD < 50 ? 'lightning' : 'bank_transfer';
-    }
+    const amountInUSD = currency === 'HNL' ? amount / 24.85 : amount;
+    return amountInUSD < 50 ? 'lightning' : 'bank_transfer';
+}
 
 function calculateTandaWithdrawalFee(amount, method) {
-        if (method === 'lightning') {
-            return 0.50; // Lightning: fee fijo
-        } else {
-            return Math.max(amount * 0.02, 5.00); // Banco: 2% mín $5
-        }
+    if (method === 'lightning') {
+        return 0.50; // Lightning: fee fijo
+    } else {
+        return Math.max(amount * 0.02, 5.00); // Banco: 2% mín $5
     }
+}
 
 function showTandaDepositInstructions(transaction) {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay tanda-instructions-modal';
-        modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay tanda-instructions-modal';
+    modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>💰 Instrucciones de Depósito para Tanda</h3>
@@ -9104,641 +9050,581 @@ function showTandaDepositInstructions(transaction) {
             </div>
         `;
 
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-    }
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+}
 
 function uploadTandaReceipt(transactionId) {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,.pdf';
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,.pdf';
 
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-            const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-            if (!transaction) return;
+        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+        if (!transaction) return;
 
-            walletInstance.showLoading('Subiendo comprobante...');
+        walletInstance.showLoading('Subiendo comprobante...');
 
         setTimeout(() => {
-                walletInstance.hideLoading();
-                transaction.receipt_uploaded = true;
-                transaction.receipt_filename = file.name;
-                transaction.receipt_upload_date = new Date();
-                transaction.status = 'pending_admin_verification';
-                transaction.user_actions = ['cancel'];
+            walletInstance.hideLoading();
+            transaction.receipt_uploaded = true;
+            transaction.receipt_filename = file.name;
+            transaction.receipt_upload_date = new Date();
+            transaction.status = 'pending_admin_verification';
+            transaction.user_actions = ['cancel'];
 
-                walletInstance.saveTransactionHistory();
-                walletInstance.displayTransactionHistory();
-                walletInstance.showSuccess('Comprobante subido. Verificación en proceso.');
+            walletInstance.saveTransactionHistory();
+            walletInstance.displayTransactionHistory();
+            walletInstance.showSuccess('Comprobante subido. Verificación en proceso.');
 
-                    transaction_id: transactionId,
-                    tanda_id: transaction.tanda_id,
-                    amount: transaction.amount,
-                    reference: transaction.deposit_reference
-                });
-            }, 2000);
-        };
 
-        input.click();
-    }
+        }, 2000);
+    };
+
+    input.click();
+}
 
 function notifyAdminNewDeposit(transaction) {
-            type: 'DEPOSIT_APPROVAL_REQUIRED',
-            transaction_id: transaction.id,
-            amount: transaction.amount,
-            currency: transaction.currency,
-            payment_method: transaction.paymentMethod,
-            user_id: transaction.userId,
-            wallet_owner: transaction.walletOwner,
-            receipt_image: transaction.receiptImage,
-            ocr_confidence: transaction.ocrConfidence,
-            timestamp: transaction.timestamp,
-            reference: transaction.reference,
-            description: transaction.description,
-            admin_action_required: 'APPROVE_OR_REJECT_DEPOSIT',
-            expected_processing_time: transaction.processingTime
-        });
 
-        // Store in admin notifications queue (localStorage for now)
-        const adminNotifications = JSON.parse(localStorage.getItem('admin_notifications') || '[]');
-        adminNotifications.unshift({
-            id: `admin_notif_${Date.now()}`,
-            type: 'DEPOSIT_APPROVAL_REQUIRED',
-            transaction_id: transaction.id,
-            user_id: transaction.userId,
-            amount: transaction.amount,
-            currency: transaction.currency,
-            payment_method: transaction.paymentMethod,
-            timestamp: new Date(),
-            status: 'pending_admin_review',
-            priority: 'normal'
-        });
 
-        localStorage.setItem('admin_notifications', JSON.stringify(adminNotifications));
-    }
+    localStorage.setItem('admin_notifications', JSON.stringify(adminNotifications));
+}
 
 function notifyAdminTandaWithdrawal(transaction) {
-            type: 'tanda_withdrawal_request',
-            transaction_id: transaction.id,
+    // Admin notification logic
+    if (window.notificationSystem) {
+        window.notificationSystem.show('tanda_withdrawal_request', {
+            transactionId: transaction.id,
             amount: transaction.amount,
-            method: transaction.withdrawal_method,
-            timestamp: new Date()
-        });
-
-        walletInstance.addNotification({
-            type: 'info',
-            title: 'Retiro en Proceso',
-            message: `Retiro de ${transaction.amount} ${transaction.currency} siendo procesado.`,
             timestamp: new Date()
         });
     }
-
-    // ================================
-    // 🎯 SISTEMA COMPLETO DE TANDAS CON ADMINISTRADORES Y CICLOS
-    // ================================
-
-    /**
-     * TRACKING COMPLETO DE TANDAS PARA ADMIN PANEL
-     * Maneja: Depósitos → Administradores de Tanda → Pagos de Ciclos → Control de Salidas
-     */
-function initializeTandaManagementSystem() {
-        // Estructura de datos para tracking completo
-        walletInstance.tandaSystemData = {
-            // Registro de todas las Tandas activas
-            active_tandas: {},
-
-            // Administradores de cada Tanda
-            tanda_administrators: {},
-
-            // Tracking de fondos por Tanda
-            tanda_balances: {},
-
-            // Registro de ciclos y pagos
-            cycle_tracking: {},
-
-            // Cola de pagos pendientes para admin panel
-            pending_payouts: [],
-
-            // Historial de movimientos para auditoría
-            movement_log: []
-        };
-
-        // Sistema de cuentas bancarias y métodos de pago
-        walletInstance.paymentMethods = {
-            // Cuentas bancarias de usuarios
-            user_bank_accounts: {},
-
-            // Direcciones Lightning/Blink de usuarios
-            user_lightning_addresses: {},
-
-            // Cuentas de creadores de Tandas
-            creator_accounts: {},
-
-            // Métodos de pago verificados
-            verified_methods: {}
-        };
-
-        walletInstance.loadTandaSystemData();
-        this.initializePaymentMethods();
-    }
-
-    /**
-     * PROCESO DEPÓSITO CON TRACKING COMPLETO
-     * 1. Usuario deposita → 2. Se asigna a Tanda → 3. Admin Tanda gestiona ciclos
-     */
+}
+/**
+ * TRACKING COMPLETO DE TANDAS PARA ADMIN PANEL
+ * Maneja: Depósitos → Administradores de Tanda → Pagos de Ciclos → Control de Salidas
+        tanda_balances: {},
+ 
+        // Registro de ciclos y pagos
+        cycle_tracking: {},
+ 
+ 
+    // Sistema de cuentas bancarias y métodos de pago
+    walletInstance.paymentMethods = {
+        // Cuentas bancarias de usuarios
+        user_bank_accounts: {},
+ 
+        // Direcciones Lightning/Blink de usuarios
+        user_lightning_addresses: {},
+ 
+        // Cuentas de creadores de Tandas
+        creator_accounts: {},
+ 
+        // Métodos de pago verificados
+        verified_methods: {}
+    };
+ 
+    walletInstance.loadTandaSystemData();
+    this.initializePaymentMethods();
+}
+ 
+/**
+ * PROCESO DEPÓSITO CON TRACKING COMPLETO
+ * 1. Usuario deposita → 2. Se asigna a Tanda → 3. Admin Tanda gestiona ciclos
+ */
 async function processTandaDepositWithTracking(tandaId, amount, currency = 'HNL', participantId) {
-        try {
-            const depositReference = this.generateTandaReference(tandaId, 'DEP');
+    try {
+        const depositReference = this.generateTandaReference(tandaId, 'DEP');
 
-            // Obtener info de la Tanda
-            const tandaInfo = await this.getTandaInfo(tandaId);
-            if (!tandaInfo) {
-                throw new Error('Tanda no encontrada');
-            }
-
-            const transaction = {
-                id: 'tanda_dep_' + Date.now(),
-                type: 'tanda_deposit',
-                title: `Depósito a Tanda #${tandaId}`,
-                amount: amount,
-                currency: currency,
-                status: 'pending_verification',
-                date: new Date(),
-                description: `Depósito para participación en Tanda`,
-
-                // DATOS ESPECÍFICOS PARA TRACKING
-                tanda_id: tandaId,
-                tanda_administrator: tandaInfo.administrator_id,
-                participant_id: participantId,
-                deposit_reference: depositReference,
-
-                // CONTROL ADMINISTRATIVO
-                admin_verification_needed: true,
-                tanda_admin_notification_needed: true,
-
-                // TRACKING DE FONDOS
-                affects_tanda_balance: true,
-                expected_cycle_impact: tandaInfo.next_cycle_info,
-
-                user_actions: ['upload_receipt', 'cancel'],
-                estimated_processing: '2-4 horas',
-
-                // INFO PARA ADMIN PANEL
-                admin_panel_data: {
-                    tanda_name: tandaInfo.name,
-                    administrator_name: tandaInfo.administrator_name,
-                    current_cycle: tandaInfo.current_cycle,
-                    total_participants: tandaInfo.participants.length,
-                    cycle_amount: tandaInfo.cycle_amount,
-                    next_payout_due: tandaInfo.next_payout_date
-                }
-            };
-
-            // AGREGAR AL HISTORIAL
-            walletInstance.transactionHistory.unshift(transaction);
-            walletInstance.saveTransactionHistory();
-
-            // TRACKING PARA ADMIN PANEL
-            this.updateTandaTracking('deposit_initiated', {
-                tanda_id: tandaId,
-                transaction_id: transaction.id,
-                amount: amount,
-                currency: currency,
-                participant_id: participantId,
-                reference: depositReference,
-                timestamp: new Date()
-            });
-
-            walletInstance.displayTransactionHistory();
-            showTandaDepositInstructions(transaction);
-
-            return transaction;
-
-        } catch (error) {
-            walletInstance.showError('Error al procesar depósito. Intenta nuevamente.');
+        // Obtener info de la Tanda
+        const tandaInfo = await this.getTandaInfo(tandaId);
+        if (!tandaInfo) {
+            throw new Error('Tanda no encontrada');
         }
-    }
 
-    /**
-     * PROCESO DE PAGO DE CICLO (ÚNICO RETIRO PERMITIDO)
-     * Solo el admin puede autorizar pagos de ciclos a usuarios ganadores
-     */
+        const transaction = {
+            id: 'tanda_dep_' + Date.now(),
+            type: 'tanda_deposit',
+            title: `Depósito a Tanda #${tandaId}`,
+            amount: amount,
+            currency: currency,
+            status: 'pending_verification',
+            date: new Date(),
+            description: `Depósito para participación en Tanda`,
+
+            // DATOS ESPECÍFICOS PARA TRACKING
+            tanda_id: tandaId,
+            tanda_administrator: tandaInfo.administrator_id,
+            participant_id: participantId,
+            deposit_reference: depositReference,
+
+            // CONTROL ADMINISTRATIVO
+            admin_verification_needed: true,
+            tanda_admin_notification_needed: true,
+
+            // TRACKING DE FONDOS
+            affects_tanda_balance: true,
+            expected_cycle_impact: tandaInfo.next_cycle_info,
+
+            user_actions: ['upload_receipt', 'cancel'],
+            estimated_processing: '2-4 horas',
+
+            // INFO PARA ADMIN PANEL
+            admin_panel_data: {
+                tanda_name: tandaInfo.name,
+                administrator_name: tandaInfo.administrator_name,
+                current_cycle: tandaInfo.current_cycle,
+                total_participants: tandaInfo.participants.length,
+                cycle_amount: tandaInfo.cycle_amount,
+                next_payout_due: tandaInfo.next_payout_date
+            }
+        };
+
+        // AGREGAR AL HISTORIAL
+        walletInstance.transactionHistory.unshift(transaction);
+        walletInstance.saveTransactionHistory();
+
+        // TRACKING PARA ADMIN PANEL
+        this.updateTandaTracking('deposit_initiated', {
+            tanda_id: tandaId,
+            transaction_id: transaction.id,
+            amount: amount,
+            currency: currency,
+            participant_id: participantId,
+            reference: depositReference,
+            timestamp: new Date()
+        });
+
+        walletInstance.displayTransactionHistory();
+        showTandaDepositInstructions(transaction);
+
+        return transaction;
+
+    } catch (error) {
+        walletInstance.showError('Error al procesar depósito. Intenta nuevamente.');
+    }
+}
+
+/**
+ * PROCESO DE PAGO DE CICLO (ÚNICO RETIRO PERMITIDO)
+ * Solo el admin puede autorizar pagos de ciclos a usuarios ganadores
+ */
 async function processCyclePayout(tandaId, cycleNumber, winnerId, amount, currency) {
-        try {
-            // VERIFICAR QUE ES UN PAGO DE CICLO LEGÍTIMO
-            const cycleValidation = await this.validateCyclePayout(tandaId, cycleNumber, winnerId);
-            if (!cycleValidation.valid) {
-                throw new Error(cycleValidation.reason);
+    try {
+        // VERIFICAR QUE ES UN PAGO DE CICLO LEGÍTIMO
+        const cycleValidation = await this.validateCyclePayout(tandaId, cycleNumber, winnerId);
+        if (!cycleValidation.valid) {
+            throw new Error(cycleValidation.reason);
+        }
+
+        const payoutReference = this.generateTandaReference(tandaId, 'CYCLE');
+
+        const transaction = {
+            id: 'cycle_payout_' + Date.now(),
+            type: 'tanda_cycle_payout',
+            title: `Pago Ciclo ${cycleNumber} - Tanda #${tandaId}`,
+            amount: amount,
+            currency: currency,
+            status: 'admin_authorized', // Pre-autorizado por admin
+            date: new Date(),
+            description: `Pago de ciclo a ganador de Tanda`,
+
+            // DATOS DEL CICLO
+            tanda_id: tandaId,
+            cycle_number: cycleNumber,
+            winner_id: winnerId,
+            payout_reference: payoutReference,
+
+            // SOLO ADMIN PUEDE PROCESAR
+            admin_initiated: true,
+            requires_admin_confirmation: true,
+            withdrawal_method: this.determineOptimalWithdrawalMethod(amount, currency),
+
+            // TRACKING CRÍTICO
+            affects_tanda_balance: true,
+            balance_operation: 'subtract',
+
+            user_actions: [], // Usuario no puede cancelar pagos de ciclo
+            estimated_processing: '5-10 minutos',
+
+            // DATOS PARA AUDITORÍA
+            audit_data: {
+                tanda_administrator: cycleValidation.tanda_info.administrator_id,
+                cycle_participants: cycleValidation.tanda_info.participants.length,
+                cycle_start_date: cycleValidation.cycle_info.start_date,
+                selection_method: cycleValidation.cycle_info.selection_method
             }
+        };
 
-            const payoutReference = this.generateTandaReference(tandaId, 'CYCLE');
+        // AGREGAR AL HISTORIAL
+        walletInstance.transactionHistory.unshift(transaction);
+        walletInstance.saveTransactionHistory();
 
-            const transaction = {
-                id: 'cycle_payout_' + Date.now(),
-                type: 'tanda_cycle_payout',
-                title: `Pago Ciclo ${cycleNumber} - Tanda #${tandaId}`,
-                amount: amount,
-                currency: currency,
-                status: 'admin_authorized', // Pre-autorizado por admin
-                date: new Date(),
-                description: `Pago de ciclo a ganador de Tanda`,
+        // CRITICAL: ACTUALIZAR TRACKING DE TANDA
+        this.updateTandaTracking('cycle_payout_processed', {
+            tanda_id: tandaId,
+            cycle_number: cycleNumber,
+            winner_id: winnerId,
+            amount: amount,
+            transaction_id: transaction.id,
+            timestamp: new Date()
+        });
 
-                // DATOS DEL CICLO
-                tanda_id: tandaId,
-                cycle_number: cycleNumber,
-                winner_id: winnerId,
-                payout_reference: payoutReference,
+        // NOTIFICAR ADMIN PANEL
+        this.notifyAdminPanelCyclePayout(transaction);
 
-                // SOLO ADMIN PUEDE PROCESAR
-                admin_initiated: true,
-                requires_admin_confirmation: true,
-                withdrawal_method: this.determineOptimalWithdrawalMethod(amount, currency),
+        walletInstance.displayTransactionHistory();
+        return transaction;
 
-                // TRACKING CRÍTICO
-                affects_tanda_balance: true,
-                balance_operation: 'subtract',
-
-                user_actions: [], // Usuario no puede cancelar pagos de ciclo
-                estimated_processing: '5-10 minutos',
-
-                // DATOS PARA AUDITORÍA
-                audit_data: {
-                    tanda_administrator: cycleValidation.tanda_info.administrator_id,
-                    cycle_participants: cycleValidation.tanda_info.participants.length,
-                    cycle_start_date: cycleValidation.cycle_info.start_date,
-                    selection_method: cycleValidation.cycle_info.selection_method
-                }
-            };
-
-            // AGREGAR AL HISTORIAL
-            walletInstance.transactionHistory.unshift(transaction);
-            walletInstance.saveTransactionHistory();
-
-            // CRITICAL: ACTUALIZAR TRACKING DE TANDA
-            this.updateTandaTracking('cycle_payout_processed', {
-                tanda_id: tandaId,
-                cycle_number: cycleNumber,
-                winner_id: winnerId,
-                amount: amount,
-                transaction_id: transaction.id,
-                timestamp: new Date()
-            });
-
-            // NOTIFICAR ADMIN PANEL
-            this.notifyAdminPanelCyclePayout(transaction);
-
-            walletInstance.displayTransactionHistory();
-            return transaction;
-
-        } catch (error) {
-            walletInstance.showError('Error al procesar pago de ciclo.');
-        }
+    } catch (error) {
+        walletInstance.showError('Error al procesar pago de ciclo.');
     }
+}
 
-    /**
-     * SISTEMA DE TRACKING PARA ADMIN PANEL
-     * Rastrea TODOS los movimientos de fondos
-     */
+/**
+ * SISTEMA DE TRACKING PARA ADMIN PANEL
+ * Rastrea TODOS los movimientos de fondos
+ */
 function updateTandaTracking(event_type, data) {
-        const trackingEntry = {
-            id: 'track_' + Date.now(),
-            event_type: event_type,
-            timestamp: new Date(),
-            data: data,
+    const trackingEntry = {
+        id: 'track_' + Date.now(),
+        event_type: event_type,
+        timestamp: new Date(),
+        data: data,
 
-            // BALANCE IMPACT TRACKING
-            balance_impact: this.calculateBalanceImpact(event_type, data),
+        // BALANCE IMPACT TRACKING
+        balance_impact: this.calculateBalanceImpact(event_type, data),
 
-            // ADMIN PANEL NOTIFICATIONS
-            requires_admin_attention: this.requiresAdminAttention(event_type),
+        // ADMIN PANEL NOTIFICATIONS
+        requires_admin_attention: this.requiresAdminAttention(event_type),
 
-            // AUDITORÍA
-            user_id: this.currentUser?.id,
-            session_id: this.sessionId
-        };
+        // AUDITORÍA
+        user_id: this.currentUser?.id,
+        session_id: this.sessionId
+    };
 
-        // AGREGAR AL LOG
-        this.tandaSystemData.movement_log.unshift(trackingEntry);
+    // AGREGAR AL LOG
+    this.tandaSystemData.movement_log.unshift(trackingEntry);
 
-        // ACTUALIZAR BALANCES DE TANDA
-        this.updateTandaBalance(data.tanda_id, trackingEntry.balance_impact);
+    // ACTUALIZAR BALANCES DE TANDA
+    this.updateTandaBalance(data.tanda_id, trackingEntry.balance_impact);
 
-        // ENVIAR A ADMIN PANEL (simulado)
-        this.sendToAdminPanel(trackingEntry);
+    // ENVIAR A ADMIN PANEL (simulado)
+    this.sendToAdminPanel(trackingEntry);
 
-        // GUARDAR LOCALMENTE
-        this.saveTandaSystemData();
+    // GUARDAR LOCALMENTE
+    this.saveTandaSystemData();
 
-    }
+}
 
-    /**
-     * VALIDACIÓN DE PAGOS DE CICLO
-     * Solo permite retiros legítimos de ciclos
-     */
+/**
+ * VALIDACIÓN DE PAGOS DE CICLO
+ * Solo permite retiros legítimos de ciclos
+ */
 async function validateCyclePayout(tandaId, cycleNumber, winnerId) {
-        try {
-            const tandaInfo = await this.getTandaInfo(tandaId);
+    try {
+        const tandaInfo = await this.getTandaInfo(tandaId);
 
-            // VERIFICACIONES CRÍTICAS
-            const validations = {
-                tanda_exists: !!tandaInfo,
-                cycle_exists: cycleNumber <= tandaInfo.total_cycles,
-                winner_is_participant: tandaInfo.participants.includes(winnerId),
-                cycle_not_paid: !this.isCyclePaid(tandaId, cycleNumber),
-                sufficient_funds: this.getTandaBalance(tandaId) >= tandaInfo.cycle_amount,
-                admin_authorized: true // En producción: verificar autorización del admin
-            };
+        // VERIFICACIONES CRÍTICAS
+        const validations = {
+            tanda_exists: !!tandaInfo,
+            cycle_exists: cycleNumber <= tandaInfo.total_cycles,
+            winner_is_participant: tandaInfo.participants.includes(winnerId),
+            cycle_not_paid: !this.isCyclePaid(tandaId, cycleNumber),
+            sufficient_funds: this.getTandaBalance(tandaId) >= tandaInfo.cycle_amount,
+            admin_authorized: true // En producción: verificar autorización del admin
+        };
 
-            const isValid = Object.values(validations).every(v => v === true);
+        const isValid = Object.values(validations).every(v => v === true);
 
-            return {
-                valid: isValid,
-                validations: validations,
-                reason: isValid ? null : this.getValidationFailureReason(validations),
-                tanda_info: tandaInfo,
-                cycle_info: this.getCycleInfo(tandaId, cycleNumber)
-            };
-
-        } catch (error) {
-            return {
-                valid: false,
-                reason: 'Error en validación: ' + error.message
-            };
-        }
-    }
-
-    /**
-     * DATOS PARA ADMIN PANEL
-     * Proporciona toda la info necesaria para gestionar Tandas
-     */
-function getAdminPanelTandaData() {
         return {
-            // RESUMEN FINANCIERO
-            financial_summary: {
-                total_deposits_pending: this.getTotalPendingDeposits(),
-                total_payouts_due: this.getTotalPayoutsDue(),
-                total_tanda_balance: this.getTotalTandaBalance(),
-                liquidity_status: this.getLiquidityStatus()
-            },
+            valid: isValid,
+            validations: validations,
+            reason: isValid ? null : this.getValidationFailureReason(validations),
+            tanda_info: tandaInfo,
+            cycle_info: this.getCycleInfo(tandaId, cycleNumber)
+        };
 
-            // TANDAS ACTIVAS
-            active_tandas: this.getActiveTandasSummary(),
-
-            // PAGOS PENDIENTES
-            pending_cycle_payouts: this.getPendingCyclePayouts(),
-
-            // DEPÓSITOS PENDIENTES VERIFICACIÓN
-            pending_deposit_verifications: this.getPendingDepositVerifications(),
-
-            // MOVIMIENTOS RECIENTES
-            recent_movements: this.tandaSystemData.movement_log.slice(0, 20),
-
-            // ALERTAS
-            alerts: this.generateTandaAlerts()
+    } catch (error) {
+        return {
+            valid: false,
+            reason: 'Error en validación: ' + error.message
         };
     }
+}
 
-    // HELPER METHODS para el sistema
+/**
+ * DATOS PARA ADMIN PANEL
+ * Proporciona toda la info necesaria para gestionar Tandas
+ */
+function getAdminPanelTandaData() {
+    return {
+        // RESUMEN FINANCIERO
+        financial_summary: {
+            total_deposits_pending: this.getTotalPendingDeposits(),
+            total_payouts_due: this.getTotalPayoutsDue(),
+            total_tanda_balance: this.getTotalTandaBalance(),
+            liquidity_status: this.getLiquidityStatus()
+        },
+
+        // TANDAS ACTIVAS
+        active_tandas: this.getActiveTandasSummary(),
+
+        // PAGOS PENDIENTES
+        pending_cycle_payouts: this.getPendingCyclePayouts(),
+
+        // DEPÓSITOS PENDIENTES VERIFICACIÓN
+        pending_deposit_verifications: this.getPendingDepositVerifications(),
+
+        // MOVIMIENTOS RECIENTES
+        recent_movements: this.tandaSystemData.movement_log.slice(0, 20),
+
+        // ALERTAS
+        alerts: this.generateTandaAlerts()
+    };
+}
+
+// HELPER METHODS para el sistema
 
 function generateTandaReference(tandaId, type) {
-        const timestamp = Date.now().toString().slice(-6);
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        return `${type}${tandaId}_${timestamp}_${random}`;
-    }
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${type}${tandaId}_${timestamp}_${random}`;
+}
 
 async function getTandaInfo(tandaId) {
-        // En producción: consultar API del sistema de Tandas
-        // Por ahora simular datos
-        return {
-            id: tandaId,
-            name: `Tanda #${tandaId}`,
-            administrator_id: 'admin_' + tandaId,
-            administrator_name: 'Administrador Tanda ' + tandaId,
-            current_cycle: 1,
-            total_cycles: 10,
-            cycle_amount: 1000,
-            participants: ['user1', 'user2', 'user3', 'user4', 'user5'],
-            next_payout_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        };
-    }
+    // En producción: consultar API del sistema de Tandas
+    // Por ahora simular datos
+    return {
+        id: tandaId,
+        name: `Tanda #${tandaId}`,
+        administrator_id: 'admin_' + tandaId,
+        administrator_name: 'Administrador Tanda ' + tandaId,
+        current_cycle: 1,
+        total_cycles: 10,
+        cycle_amount: 1000,
+        participants: ['user1', 'user2', 'user3', 'user4', 'user5'],
+        next_payout_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    };
+}
 
 function sendToAdminPanel(trackingEntry) {
-        // En producción: enviar via WebSocket o API al admin panel
+    // En producción: enviar via WebSocket o API al admin panel
 
-        // SIMULAR COMUNICACIÓN CON ADMIN PANEL
-        if (typeof window !== 'undefined' && window.adminPanelWebSocket) {
-            window.adminPanelWebSocket.send(JSON.stringify({
-                type: 'tanda_tracking_update',
-                data: trackingEntry
-            }));
-        }
+    // SIMULAR COMUNICACIÓN CON ADMIN PANEL
+    if (typeof window !== 'undefined' && window.adminPanelWebSocket) {
+        window.adminPanelWebSocket.send(JSON.stringify({
+            type: 'tanda_tracking_update',
+            data: trackingEntry
+        }));
     }
+}
 
 function saveTandaSystemData() {
-        localStorage.setItem('tandaSystemData', JSON.stringify(this.tandaSystemData));
-    }
+    localStorage.setItem('tandaSystemData', JSON.stringify(this.tandaSystemData));
+}
 
 function loadTandaSystemData() {
-        const saved = localStorage.getItem('tandaSystemData');
-        if (saved) {
-            walletInstance.tandaSystemData = { ...this.tandaSystemData, ...JSON.parse(saved) };
-        }
+    const saved = localStorage.getItem('tandaSystemData');
+    if (saved) {
+        walletInstance.tandaSystemData = { ...this.tandaSystemData, ...JSON.parse(saved) };
     }
+}
 
-    // ================================
-    // 💰 SISTEMA DE COMISIONES 90/10 OFICIAL
-    // ================================
+// ================================
+// 💰 SISTEMA DE COMISIONES 90/10 OFICIAL
+// ================================
 
-    /**
-     * CÁLCULO AUTOMÁTICO DE COMISIONES SEGÚN SISTEMA OFICIAL
-     * Basado en el sistema 90/10 descendente configurado
-     */
+/**
+ * CÁLCULO AUTOMÁTICO DE COMISIONES SEGÚN SISTEMA OFICIAL
+ * Basado en el sistema 90/10 descendente configurado
+ */
 function calculateTandaCommissions(totalAmount, tandaInfo) {
-        const COMMISSION_RATE = 0.10; // 10% comisión total
+    const COMMISSION_RATE = 0.10; // 10% comisión total
 
-        // Comisión total sobre el monto
-        const totalCommission = totalAmount * COMMISSION_RATE;
+    // Comisión total sobre el monto
+    const totalCommission = totalAmount * COMMISSION_RATE;
 
-        // Distribución según sistema 90/10
-        const commissionDistribution = {
-            // 90% para el coordinador/creador directo de la Tanda
-            creator_commission: totalCommission * 0.90,
+    // Distribución según sistema 90/10
+    const commissionDistribution = {
+        // 90% para el coordinador/creador directo de la Tanda
+        creator_commission: totalCommission * 0.90,
 
-            // 10% distribuido en niveles superiores
-            level_2_commission: totalCommission * 0.05, // 5% del total
-            level_3_commission: totalCommission * 0.03, // 3% del total
-            level_4_commission: totalCommission * 0.02, // 2% del total
+        // 10% distribuido en niveles superiores
+        level_2_commission: totalCommission * 0.05, // 5% del total
+        level_3_commission: totalCommission * 0.03, // 3% del total
+        level_4_commission: totalCommission * 0.02, // 2% del total
 
-            // Cálculo del monto EXACTO para el ganador del ciclo
-            cycle_winner_amount: totalAmount - totalCommission
-        };
+        // Cálculo del monto EXACTO para el ganador del ciclo
+        cycle_winner_amount: totalAmount - totalCommission
+    };
 
-        return {
-            total_collected: totalAmount,
-            total_commission: totalCommission,
-            distribution: commissionDistribution,
+    return {
+        total_collected: totalAmount,
+        total_commission: totalCommission,
+        distribution: commissionDistribution,
 
-            // DATOS PARA ADMIN PANEL
-            admin_panel_instructions: {
-                // Monto EXACTO a transferir al ganador
-                transfer_to_winner: commissionDistribution.cycle_winner_amount,
+        // DATOS PARA ADMIN PANEL
+        admin_panel_instructions: {
+            // Monto EXACTO a transferir al ganador
+            transfer_to_winner: commissionDistribution.cycle_winner_amount,
 
-                // Comisiones a distribuir
-                pay_to_creator: commissionDistribution.creator_commission,
-                pay_to_platform: commissionDistribution.level_2_commission +
-                               commissionDistribution.level_3_commission +
-                               commissionDistribution.level_4_commission,
+            // Comisiones a distribuir
+            pay_to_creator: commissionDistribution.creator_commission,
+            pay_to_platform: commissionDistribution.level_2_commission +
+                commissionDistribution.level_3_commission +
+                commissionDistribution.level_4_commission,
 
-                // Información del creador de la Tanda
-                tanda_creator: tandaInfo.administrator_name,
-                tanda_creator_id: tandaInfo.administrator_id,
+            // Información del creador de la Tanda
+            tanda_creator: tandaInfo.administrator_name,
+            tanda_creator_id: tandaInfo.administrator_id,
 
-                // Verificaciones
-                verification_checks: {
-                    all_deposits_confirmed: this.verifyAllDepositsCompleted(tandaInfo.id),
-                    total_matches_expected: totalAmount === (tandaInfo.participants.length * tandaInfo.cycle_amount),
-                    commission_calculation_correct: (commissionDistribution.cycle_winner_amount + totalCommission) === totalAmount
-                }
+            // Verificaciones
+            verification_checks: {
+                all_deposits_confirmed: this.verifyAllDepositsCompleted(tandaInfo.id),
+                total_matches_expected: totalAmount === (tandaInfo.participants.length * tandaInfo.cycle_amount),
+                commission_calculation_correct: (commissionDistribution.cycle_winner_amount + totalCommission) === totalAmount
             }
-        };
-    }
+        }
+    };
+}
 
-    /**
-     * PROCESO COMPLETO DE CICLO CON CÁLCULO DE COMISIONES
-     * Se ejecuta cuando se completa el capital de una Tanda
-     */
+/**
+ * PROCESO COMPLETO DE CICLO CON CÁLCULO DE COMISIONES
+ * Se ejecuta cuando se completa el capital de una Tanda
+ */
 async function processTandaCycleWithCommissions(tandaId, cycleNumber, winnerId) {
-        try {
-            // Obtener información completa de la Tanda
-            const tandaInfo = await this.getTandaInfo(tandaId);
-            const totalCollected = this.getTandaBalance(tandaId);
+    try {
+        // Obtener información completa de la Tanda
+        const tandaInfo = await this.getTandaInfo(tandaId);
+        const totalCollected = this.getTandaBalance(tandaId);
 
-            // VERIFICAR que el capital esté completo
-            const expectedTotal = tandaInfo.participants.length * tandaInfo.cycle_amount;
-            if (totalCollected < expectedTotal) {
-                throw new Error(`Capital incompleto. Faltan ${expectedTotal - totalCollected} ${tandaInfo.currency}`);
-            }
+        // VERIFICAR que el capital esté completo
+        const expectedTotal = tandaInfo.participants.length * tandaInfo.cycle_amount;
+        if (totalCollected < expectedTotal) {
+            throw new Error(`Capital incompleto. Faltan ${expectedTotal - totalCollected} ${tandaInfo.currency}`);
+        }
 
-            // CALCULAR COMISIONES con sistema oficial 90/10
-            const commissionData = this.calculateTandaCommissions(totalCollected, tandaInfo);
+        // CALCULAR COMISIONES con sistema oficial 90/10
+        const commissionData = this.calculateTandaCommissions(totalCollected, tandaInfo);
 
-            // Crear transacción de pago de ciclo
-            const cycleTransaction = {
-                id: 'cycle_complete_' + Date.now(),
-                type: 'tanda_cycle_complete',
-                title: `Ciclo ${cycleNumber} Completado - Tanda #${tandaId}`,
-                amount: commissionData.distribution.cycle_winner_amount,
-                currency: tandaInfo.currency,
-                status: 'awaiting_creator_confirmation',
-                date: new Date(),
-                description: `Ciclo completado, esperando confirmación del creador`,
+        // Crear transacción de pago de ciclo
+        const cycleTransaction = {
+            id: 'cycle_complete_' + Date.now(),
+            type: 'tanda_cycle_complete',
+            title: `Ciclo ${cycleNumber} Completado - Tanda #${tandaId}`,
+            amount: commissionData.distribution.cycle_winner_amount,
+            currency: tandaInfo.currency,
+            status: 'awaiting_creator_confirmation',
+            date: new Date(),
+            description: `Ciclo completado, esperando confirmación del creador`,
 
-                // DATOS DEL CICLO
-                tanda_id: tandaId,
-                cycle_number: cycleNumber,
-                winner_id: winnerId,
-                total_collected: totalCollected,
+            // DATOS DEL CICLO
+            tanda_id: tandaId,
+            cycle_number: cycleNumber,
+            winner_id: winnerId,
+            total_collected: totalCollected,
 
-                // COMISIONES CALCULADAS
-                commission_data: commissionData,
+            // COMISIONES CALCULADAS
+            commission_data: commissionData,
 
-                // INSTRUCCIONES PARA ADMIN PANEL
-                admin_instructions: {
-                    action_required: 'CONFIRMATION_FROM_CREATOR',
-                    creator_id: tandaInfo.administrator_id,
-                    creator_name: tandaInfo.administrator_name,
+            // INSTRUCCIONES PARA ADMIN PANEL
+            admin_instructions: {
+                action_required: 'CONFIRMATION_FROM_CREATOR',
+                creator_id: tandaInfo.administrator_id,
+                creator_name: tandaInfo.administrator_name,
 
-                    message_to_creator: `El capital de la Tanda #${tandaId} está completo (${totalCollected} ${tandaInfo.currency}).
+                message_to_creator: `El capital de la Tanda #${tandaId} está completo (${totalCollected} ${tandaInfo.currency}).
                                        ¿Confirmas el pago de ${commissionData.distribution.cycle_winner_amount} ${tandaInfo.currency}
                                        al ganador del ciclo ${cycleNumber}?`,
 
-                    // MONTOS EXACTOS PARA TRANSFERENCIAS
-                    exact_amounts: {
-                        to_winner: commissionData.distribution.cycle_winner_amount,
-                        to_creator: commissionData.distribution.creator_commission,
-                        to_platform: commissionData.distribution.level_2_commission +
-                                    commissionData.distribution.level_3_commission +
-                                    commissionData.distribution.level_4_commission
-                    },
-
-                    verification_passed: commissionData.admin_panel_instructions.verification_checks
+                // MONTOS EXACTOS PARA TRANSFERENCIAS
+                exact_amounts: {
+                    to_winner: commissionData.distribution.cycle_winner_amount,
+                    to_creator: commissionData.distribution.creator_commission,
+                    to_platform: commissionData.distribution.level_2_commission +
+                        commissionData.distribution.level_3_commission +
+                        commissionData.distribution.level_4_commission
                 },
 
-                user_actions: [], // No hay acciones para usuarios, solo admin
-                estimated_processing: 'Esperando confirmación del creador'
-            };
+                verification_passed: commissionData.admin_panel_instructions.verification_checks
+            },
 
-            // Agregar al historial
-            this.transactionHistory.unshift(cycleTransaction);
-            walletInstance.saveTransactionHistory();
+            user_actions: [], // No hay acciones para usuarios, solo admin
+            estimated_processing: 'Esperando confirmación del creador'
+        };
 
-            // NOTIFICAR AL ADMIN PANEL
-            this.notifyAdminCycleComplete(cycleTransaction);
+        // Agregar al historial
+        this.transactionHistory.unshift(cycleTransaction);
+        walletInstance.saveTransactionHistory();
 
-            // NOTIFICAR AL CREADOR DE LA TANDA
-            this.notifyTandaCreatorForConfirmation(cycleTransaction);
+        // NOTIFICAR AL ADMIN PANEL
+        this.notifyAdminCycleComplete(cycleTransaction);
 
-            walletInstance.displayTransactionHistory();
-            return cycleTransaction;
+        // NOTIFICAR AL CREADOR DE LA TANDA
+        this.notifyTandaCreatorForConfirmation(cycleTransaction);
 
-        } catch (error) {
-            walletInstance.showError('Error al procesar ciclo: ' + error.message);
-        }
+        walletInstance.displayTransactionHistory();
+        return cycleTransaction;
+
+    } catch (error) {
+        walletInstance.showError('Error al procesar ciclo: ' + error.message);
     }
+}
 
-    /**
-     * CONFIRMACIÓN DEL CREADOR DE TANDA
-     * El creador confirma que se proceda con el pago
-     */
+/**
+ * CONFIRMACIÓN DEL CREADOR DE TANDA
+ * El creador confirma que se proceda con el pago
+ */
 async function confirmCyclePayoutFromCreator(transactionId, creatorConfirmation) {
-        const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
-        if (!transaction) {
-            throw new Error('Transacción no encontrada');
-        }
-
-        if (creatorConfirmation.approved) {
-            // El creador aprueba el pago
-            transaction.status = 'creator_approved_processing';
-            transaction.creator_confirmation = {
-                approved: true,
-                timestamp: new Date(),
-                creator_notes: creatorConfirmation.notes || ''
-            };
-
-            // GENERAR INSTRUCCIONES COMPLETAS CON MÉTODOS DE PAGO
-            transaction = this.updateTransactionWithPaymentInstructions(transaction);
-
-            // TRACKING PARA AUDITORÍA
-            transaction.final_admin_instructions.audit_trail = {
-                cycle_completion_verified: true,
-                creator_confirmation_received: true,
-                commission_calculations_verified: true,
-                payment_methods_verified: true,
-                ready_for_execution: true
-            };
-
-        } else {
-            // El creador rechaza o postpone el pago
-            transaction.status = 'creator_rejected_pending';
-            transaction.creator_confirmation = {
-                approved: false,
-                timestamp: new Date(),
-                rejection_reason: creatorConfirmation.reason,
-                creator_notes: creatorConfirmation.notes
-            };
-        }
-
-        this.saveTransactionHistory();
-        this.displayTransactionHistory();
-
-        // Notificar al admin panel
-        this.notifyAdminCreatorResponse(transaction);
-
-        return transaction;
+    const transaction = walletInstance.transactionHistory.find(tx => tx.id === transactionId);
+    if (!transaction) {
+        throw new Error('Transacción no encontrada');
     }
+
+    if (creatorConfirmation.approved) {
+        // El creador aprueba el pago
+        transaction.status = 'creator_approved_processing';
+        transaction.creator_confirmation = {
+            approved: true,
+            timestamp: new Date(),
+            creator_notes: creatorConfirmation.notes || ''
+        };
+
+        // GENERAR INSTRUCCIONES COMPLETAS CON MÉTODOS DE PAGO
+        transaction = this.updateTransactionWithPaymentInstructions(transaction);
+
+        // TRACKING PARA AUDITORÍA
+        transaction.final_admin_instructions.audit_trail = {
+            cycle_completion_verified: true,
+            creator_confirmation_received: true,
+            commission_calculations_verified: true,
+            payment_methods_verified: true,
+            ready_for_execution: true
+        };
+
+    } else {
+        // El creador rechaza o postpone el pago
+        transaction.status = 'creator_rejected_pending';
+        transaction.creator_confirmation = {
+            approved: false,
+            timestamp: new Date(),
+            rejection_reason: creatorConfirmation.reason,
+            creator_notes: creatorConfirmation.notes
+        };
+    }
+
+    this.saveTransactionHistory();
+    this.displayTransactionHistory();
+
+    // Notificar al admin panel
+    this.notifyAdminCreatorResponse(transaction);
+
+    return transaction;
+}
 
 /**
  * VERIFICACIONES DE SEGURIDAD
@@ -9761,45 +9647,29 @@ function getTandaBalance(tandaId) {
 }
 
 function notifyAdminCycleComplete(transaction) {
-            type: 'TANDA_CAPITAL_COMPLETE',
-            transaction_id: transaction.id,
-            tanda_id: transaction.tanda_id,
-            total_collected: transaction.total_collected,
-            awaiting_creator_confirmation: true,
-
-            // MONTOS CALCULADOS LISTOS
-            calculated_amounts: transaction.admin_instructions.exact_amounts,
-
-            // SIGUIENTE ACCIÓN REQUERIDA
-            next_action: 'Wait for creator confirmation',
-            creator_to_contact: transaction.admin_instructions.creator_name,
-
-            // DATOS PARA TRACKING
+    if (window.notificationSystem) {
+        window.notificationSystem.show('tanda_capital_complete', {
+            transactionId: transaction.id,
+            tandaId: transaction.tanda_id,
+            totalCollected: transaction.total_collected,
             timestamp: new Date()
         });
     }
+}
 
 function notifyTandaCreatorForConfirmation(transaction) {
-        creator_id: transaction.admin_instructions.creator_id,
-        creator_name: transaction.admin_instructions.creator_name,
-        tanda_id: transaction.tanda_id,
-        cycle_number: transaction.cycle_number,
-        message: transaction.admin_instructions.message_to_creator,
-        amount_to_winner: transaction.admin_instructions.exact_amounts.to_winner,
-        creator_commission: transaction.admin_instructions.exact_amounts.to_creator
-    });
-
-    // En producción: enviar notificación real al creador
-    // WhatsApp, email, SMS, etc.
+    // In production, this would send a real notification to the creator
+    console.debug('Notifying creator for confirmation', transaction.admin_instructions.creator_id);
 }
 
 function notifyAdminCreatorResponse(transaction) {
-        transaction_id: transaction.id,
-        creator_approved: transaction.creator_confirmation.approved,
-        ready_for_execution: !!transaction.final_admin_instructions,
-        transfers_to_execute: transaction.final_admin_instructions?.transfers || [],
-        timestamp: new Date()
-    });
+    if (window.notificationSystem) {
+        window.notificationSystem.show('admin_creator_response', {
+            transactionId: transaction.id,
+            creatorApproved: transaction.creator_confirmation?.approved,
+            timestamp: new Date()
+        });
+    }
 }
 
 // ================================
@@ -9819,449 +9689,444 @@ async function initializePaymentMethods() {
 }
 
 function setupSamplePaymentMethods() {
-        // Ejemplo de cuentas bancarias de usuarios
-        this.paymentMethods.user_bank_accounts = {
-            'user123': {
-                primary: {
-                    bank: 'Banco Atlántida',
-                    account_number: '1234567890',
-                    account_holder: 'Juan Pérez González',
-                    account_type: 'savings',
-                    currency: 'HNL',
-                    verified: true,
-                    verification_date: '2024-01-15'
-                },
-                secondary: {
-                    bank: 'BAC Credomatic',
-                    account_number: '9876543210',
-                    account_holder: 'Juan Pérez González',
-                    account_type: 'checking',
-                    currency: 'HNL',
-                    verified: true,
-                    verification_date: '2024-01-20'
-                }
-            },
-            'user456': {
-                primary: {
-                    bank: 'Banco Continental',
-                    account_number: '5555666677',
-                    account_holder: 'María López Castro',
-                    account_type: 'savings',
-                    currency: 'HNL',
-                    verified: true,
-                    verification_date: '2024-02-01'
-                }
-            }
-        };
-
-        // Ejemplo de direcciones Lightning/Blink
-        this.paymentMethods.user_lightning_addresses = {
-            'user123': {
-                blink_address: 'juan@blink.sv',
-                lightning_address: 'juan@getalby.com',
+    // Ejemplo de cuentas bancarias de usuarios
+    this.paymentMethods.user_bank_accounts = {
+        'user123': {
+            primary: {
+                bank: 'Banco Atlántida',
+                account_number: '1234567890',
+                account_holder: 'Juan Pérez González',
+                account_type: 'savings',
+                currency: 'HNL',
                 verified: true,
-                max_amount_usd: 50,
-                preferred_for_small_amounts: true
+                verification_date: '2024-01-15'
             },
-            'user456': {
-                blink_address: 'maria@blink.sv',
+            secondary: {
+                bank: 'BAC Credomatic',
+                account_number: '9876543210',
+                account_holder: 'Juan Pérez González',
+                account_type: 'checking',
+                currency: 'HNL',
                 verified: true,
-                max_amount_usd: 100,
-                preferred_for_small_amounts: true
+                verification_date: '2024-01-20'
             }
-        };
-
-        // Ejemplo de cuentas de creadores de Tandas
-        this.paymentMethods.creator_accounts = {
-            'admin_342': {
-                name: 'Administrador Tanda 342',
-                bank_account: {
-                    bank: 'Banco Atlántida',
-                    account_number: '1111222233',
-                    account_holder: 'Carlos Ruiz Mendoza',
-                    account_type: 'checking',
-                    currency: 'HNL',
-                    verified: true
-                },
-                lightning_address: 'carlos@blink.sv',
-                preferred_method: 'bank_transfer' // Para comisiones siempre banco
+        },
+        'user456': {
+            primary: {
+                bank: 'Banco Continental',
+                account_number: '5555666677',
+                account_holder: 'María López Castro',
+                account_type: 'savings',
+                currency: 'HNL',
+                verified: true,
+                verification_date: '2024-02-01'
             }
-        };
-    }
+        }
+    };
 
-    /**
-     * OBTENER MÉTODO DE PAGO ÓPTIMO PARA USUARIO
-     * Determina automáticamente el mejor método según monto y disponibilidad
-     */
+    // Ejemplo de direcciones Lightning/Blink
+    this.paymentMethods.user_lightning_addresses = {
+        'user123': {
+            blink_address: 'juan@blink.sv',
+            lightning_address: 'juan@getalby.com',
+            verified: true,
+            max_amount_usd: 50,
+            preferred_for_small_amounts: true
+        },
+        'user456': {
+            blink_address: 'maria@blink.sv',
+            verified: true,
+            max_amount_usd: 100,
+            preferred_for_small_amounts: true
+        }
+    };
+
+    // Ejemplo de cuentas de creadores de Tandas
+    this.paymentMethods.creator_accounts = {
+        'admin_342': {
+            name: 'Administrador Tanda 342',
+            bank_account: {
+                bank: 'Banco Atlántida',
+                account_number: '1111222233',
+                account_holder: 'Carlos Ruiz Mendoza',
+                account_type: 'checking',
+                currency: 'HNL',
+                verified: true
+            },
+            lightning_address: 'carlos@blink.sv',
+            preferred_method: 'bank_transfer' // Para comisiones siempre banco
+        }
+    };
+}
+
+/**
+ * OBTENER MÉTODO DE PAGO ÓPTIMO PARA USUARIO
+ * Determina automáticamente el mejor método según monto y disponibilidad
+ */
 function getOptimalPaymentMethod(userId, amount, currency) {
-        const userBankAccounts = walletInstance.paymentMethods.user_bank_accounts[userId];
-        const userLightning = walletInstance.paymentMethods.user_lightning_addresses[userId];
+    const userBankAccounts = walletInstance.paymentMethods.user_bank_accounts[userId];
+    const userLightning = walletInstance.paymentMethods.user_lightning_addresses[userId];
 
-        // Convertir a USD para evaluación
-        const amountInUSD = currency === 'HNL' ? amount / 24.85 : amount;
+    // Convertir a USD para evaluación
+    const amountInUSD = currency === 'HNL' ? amount / 24.85 : amount;
 
-        // REGLAS DE SELECCIÓN AUTOMÁTICA:
-        // 1. Montos < $50 USD → Lightning (si disponible)
-        // 2. Montos > $50 USD → Cuenta bancaria
-        // 3. Verificar disponibilidad y preferencias
+    // REGLAS DE SELECCIÓN AUTOMÁTICA:
+    // 1. Montos < $50 USD → Lightning (si disponible)
+    // 2. Montos > $50 USD → Cuenta bancaria
+    // 3. Verificar disponibilidad y preferencias
 
-        if (amountInUSD < 50 && userLightning && userLightning.verified) {
-            return {
-                method: 'lightning',
-                details: {
-                    type: 'lightning_payment',
-                    recipient: userLightning.blink_address || userLightning.lightning_address,
-                    provider: userLightning.blink_address ? 'Blink' : 'Lightning',
-                    max_amount: userLightning.max_amount_usd,
-                    estimated_time: '5-10 minutos',
-                    fee: 0.50
-                },
-                admin_instructions: {
-                    platform: 'Blink/Lightning',
-                    recipient_address: userLightning.blink_address || userLightning.lightning_address,
-                    amount_usd: amountInUSD,
-                    amount_local: amount,
-                    currency: currency,
-                    priority: 'HIGH',
-                    execution_time: 'immediate'
-                }
-            };
-        }
-
-        // Para montos grandes o si no hay Lightning, usar cuenta bancaria
-        if (userBankAccounts && userBankAccounts.primary && userBankAccounts.primary.verified) {
-            const bankAccount = userBankAccounts.primary;
-
-            return {
-                method: 'bank_transfer',
-                details: {
-                    type: 'bank_transfer',
-                    bank: bankAccount.bank,
-                    account_number: bankAccount.account_number,
-                    account_holder: bankAccount.account_holder,
-                    account_type: bankAccount.account_type,
-                    currency: bankAccount.currency,
-                    estimated_time: '1-2 días laborables',
-                    fee: Math.max(amount * 0.02, 5.00)
-                },
-                admin_instructions: {
-                    platform: 'Banking',
-                    bank_name: bankAccount.bank,
-                    account_number: bankAccount.account_number,
-                    account_holder: bankAccount.account_holder,
-                    amount: amount,
-                    currency: currency,
-                    reference: `TANDA_PAYOUT_${Date.now()}`,
-                    priority: 'MEDIUM',
-                    execution_time: '1-2_business_days'
-                }
-            };
-        }
-
-        // Si no hay métodos disponibles
+    if (amountInUSD < 50 && userLightning && userLightning.verified) {
         return {
-            method: 'manual_contact',
+            method: 'lightning',
             details: {
-                type: 'manual_contact_required',
-                reason: 'No verified payment methods available',
-                estimated_time: 'Manual intervention required'
+                type: 'lightning_payment',
+                recipient: userLightning.blink_address || userLightning.lightning_address,
+                provider: userLightning.blink_address ? 'Blink' : 'Lightning',
+                max_amount: userLightning.max_amount_usd,
+                estimated_time: '5-10 minutos',
+                fee: 0.50
             },
             admin_instructions: {
-                action: 'CONTACT_USER',
-                user_id: userId,
-                reason: 'No hay métodos de pago verificados',
-                amount: amount,
+                platform: 'Blink/Lightning',
+                recipient_address: userLightning.blink_address || userLightning.lightning_address,
+                amount_usd: amountInUSD,
+                amount_local: amount,
                 currency: currency,
                 priority: 'HIGH',
-                requires_manual_setup: true
+                execution_time: 'immediate'
             }
         };
     }
 
-    /**
-     * GENERAR INSTRUCCIONES COMPLETAS PARA ADMIN PANEL
-     * Con todos los detalles necesarios para ejecutar pagos
-     */
-function generatePaymentInstructions(transaction) {
-        const { commission_data, winner_id, admin_instructions } = transaction;
-
-        // Obtener métodos de pago para cada destinatario
-        const winnerPayment = getOptimalPaymentMethod(
-            winner_id,
-            commission_data.distribution.cycle_winner_amount,
-            transaction.currency
-        );
-
-        const creatorPayment = getOptimalPaymentMethod(
-            admin_instructions.creator_id,
-            commission_data.distribution.creator_commission,
-            transaction.currency
-        );
+    // Para montos grandes o si no hay Lightning, usar cuenta bancaria
+    if (userBankAccounts && userBankAccounts.primary && userBankAccounts.primary.verified) {
+        const bankAccount = userBankAccounts.primary;
 
         return {
-            // INSTRUCCIONES PARA EL ADMIN PANEL
-            admin_panel_instructions: {
-                transaction_id: transaction.id,
-                tanda_id: transaction.tanda_id,
-                cycle_number: transaction.cycle_number,
-                total_amount: transaction.total_collected,
+            method: 'bank_transfer',
+            details: {
+                type: 'bank_transfer',
+                bank: bankAccount.bank,
+                account_number: bankAccount.account_number,
+                account_holder: bankAccount.account_holder,
+                account_type: bankAccount.account_type,
+                currency: bankAccount.currency,
+                estimated_time: '1-2 días laborables',
+                fee: Math.max(amount * 0.02, 5.00)
+            },
+            admin_instructions: {
+                platform: 'Banking',
+                bank_name: bankAccount.bank,
+                account_number: bankAccount.account_number,
+                account_holder: bankAccount.account_holder,
+                amount: amount,
+                currency: currency,
+                reference: `TANDA_PAYOUT_${Date.now()}`,
+                priority: 'MEDIUM',
+                execution_time: '1-2_business_days'
+            }
+        };
+    }
 
-                // PAGOS A EJECUTAR
-                payments_to_execute: [
-                    {
-                        payment_id: `winner_${transaction.id}`,
-                        type: 'cycle_winner_payout',
-                        recipient_type: 'participant',
-                        recipient_id: winner_id,
-                        amount: commission_data.distribution.cycle_winner_amount,
-                        currency: transaction.currency,
-                        method: winnerPayment.method,
-                        details: winnerPayment.admin_instructions,
-                        priority: 1,
-                        required: true
-                    },
-                    {
-                        payment_id: `creator_${transaction.id}`,
-                        type: 'creator_commission',
-                        recipient_type: 'tanda_creator',
-                        recipient_id: admin_instructions.creator_id,
-                        amount: commission_data.distribution.creator_commission,
-                        currency: transaction.currency,
-                        method: creatorPayment.method,
-                        details: creatorPayment.admin_instructions,
-                        priority: 2,
-                        required: true
-                    },
-                    {
-                        payment_id: `platform_${transaction.id}`,
-                        type: 'platform_commission',
-                        recipient_type: 'platform',
-                        recipient_id: 'platform_account',
+    // Si no hay métodos disponibles
+    return {
+        method: 'manual_contact',
+        details: {
+            type: 'manual_contact_required',
+            reason: 'No verified payment methods available',
+            estimated_time: 'Manual intervention required'
+        },
+        admin_instructions: {
+            action: 'CONTACT_USER',
+            user_id: userId,
+            reason: 'No hay métodos de pago verificados',
+            amount: amount,
+            currency: currency,
+            priority: 'HIGH',
+            requires_manual_setup: true
+        }
+    };
+}
+
+/**
+ * GENERAR INSTRUCCIONES COMPLETAS PARA ADMIN PANEL
+ * Con todos los detalles necesarios para ejecutar pagos
+ */
+function generatePaymentInstructions(transaction) {
+    const { commission_data, winner_id, admin_instructions } = transaction;
+
+    // Obtener métodos de pago para cada destinatario
+    const winnerPayment = getOptimalPaymentMethod(
+        winner_id,
+        commission_data.distribution.cycle_winner_amount,
+        transaction.currency
+    );
+
+    const creatorPayment = getOptimalPaymentMethod(
+        admin_instructions.creator_id,
+        commission_data.distribution.creator_commission,
+        transaction.currency
+    );
+
+    return {
+        // INSTRUCCIONES PARA EL ADMIN PANEL
+        admin_panel_instructions: {
+            transaction_id: transaction.id,
+            tanda_id: transaction.tanda_id,
+            cycle_number: transaction.cycle_number,
+            total_amount: transaction.total_collected,
+
+            // PAGOS A EJECUTAR
+            payments_to_execute: [
+                {
+                    payment_id: `winner_${transaction.id}`,
+                    type: 'cycle_winner_payout',
+                    recipient_type: 'participant',
+                    recipient_id: winner_id,
+                    amount: commission_data.distribution.cycle_winner_amount,
+                    currency: transaction.currency,
+                    method: winnerPayment.method,
+                    details: winnerPayment.admin_instructions,
+                    priority: 1,
+                    required: true
+                },
+                {
+                    payment_id: `creator_${transaction.id}`,
+                    type: 'creator_commission',
+                    recipient_type: 'tanda_creator',
+                    recipient_id: admin_instructions.creator_id,
+                    amount: commission_data.distribution.creator_commission,
+                    currency: transaction.currency,
+                    method: creatorPayment.method,
+                    details: creatorPayment.admin_instructions,
+                    priority: 2,
+                    required: true
+                },
+                {
+                    payment_id: `platform_${transaction.id}`,
+                    type: 'platform_commission',
+                    recipient_type: 'platform',
+                    recipient_id: 'platform_account',
+                    amount: admin_instructions.exact_amounts.to_platform,
+                    currency: transaction.currency,
+                    method: 'internal_transfer',
+                    details: {
+                        platform: 'Internal',
+                        account: 'Platform Revenue Account',
                         amount: admin_instructions.exact_amounts.to_platform,
                         currency: transaction.currency,
-                        method: 'internal_transfer',
-                        details: {
-                            platform: 'Internal',
-                            account: 'Platform Revenue Account',
-                            amount: admin_instructions.exact_amounts.to_platform,
-                            currency: transaction.currency,
-                            priority: 'LOW',
-                            execution_time: 'immediate'
-                        },
-                        priority: 3,
-                        required: true
-                    }
-                ],
-
-                // RESUMEN PARA ADMIN
-                execution_summary: {
-                    total_payments: 3,
-                    immediate_payments: winnerPayment.method === 'lightning' ? 1 : 0,
-                    bank_transfers: winnerPayment.method === 'bank_transfer' ? 1 : 0,
-                    estimated_completion: this.getEstimatedCompletionTime([winnerPayment, creatorPayment]),
-                    total_fees: this.calculateTotalFees([winnerPayment, creatorPayment]),
-
-                    verification_checklist: [
-                        { item: 'Capital completo verificado', status: true },
-                        { item: 'Creador confirmó pago', status: true },
-                        { item: 'Métodos de pago verificados', status: this.arePaymentMethodsVerified([winnerPayment, creatorPayment]) },
-                        { item: 'Comisiones calculadas correctamente', status: true }
-                    ]
+                        priority: 'LOW',
+                        execution_time: 'immediate'
+                    },
+                    priority: 3,
+                    required: true
                 }
+            ],
+
+            // RESUMEN PARA ADMIN
+            execution_summary: {
+                total_payments: 3,
+                immediate_payments: winnerPayment.method === 'lightning' ? 1 : 0,
+                bank_transfers: winnerPayment.method === 'bank_transfer' ? 1 : 0,
+                estimated_completion: this.getEstimatedCompletionTime([winnerPayment, creatorPayment]),
+                total_fees: this.calculateTotalFees([winnerPayment, creatorPayment]),
+
+                verification_checklist: [
+                    { item: 'Capital completo verificado', status: true },
+                    { item: 'Creador confirmó pago', status: true },
+                    { item: 'Métodos de pago verificados', status: this.arePaymentMethodsVerified([winnerPayment, creatorPayment]) },
+                    { item: 'Comisiones calculadas correctamente', status: true }
+                ]
             }
-        };
-    }
+        }
+    };
+}
 
-    /**
-     * ACTUALIZAR INSTRUCCIONES FINALES CON MÉTODOS DE PAGO
-     * Se ejecuta cuando el creador confirma el pago
-     */
+/**
+ * ACTUALIZAR INSTRUCCIONES FINALES CON MÉTODOS DE PAGO
+ * Se ejecuta cuando el creador confirma el pago
+ */
 function updateTransactionWithPaymentInstructions(transaction) {
-        const paymentInstructions = generatePaymentInstructions(transaction);
+    const paymentInstructions = generatePaymentInstructions(transaction);
 
-        // Agregar instrucciones detalladas a la transacción
-        transaction.final_admin_instructions = {
-            ...transaction.final_admin_instructions,
-            ...paymentInstructions.admin_panel_instructions
-        };
+    // Agregar instrucciones detalladas a la transacción
+    transaction.final_admin_instructions = {
+        ...transaction.final_admin_instructions,
+        ...paymentInstructions.admin_panel_instructions
+    };
 
-        return transaction;
-    }
+    return transaction;
+}
 
-    /**
-     * HELPER METHODS
-     */
+/**
+ * HELPER METHODS
+ */
 function arePaymentMethodsVerified(paymentMethods) {
-        return paymentMethods.every(pm =>
-            pm.method !== 'manual_contact' &&
-            (pm.details.type !== 'manual_contact_required')
-        );
-    }
+    return paymentMethods.every(pm =>
+        pm.method !== 'manual_contact' &&
+        (pm.details.type !== 'manual_contact_required')
+    );
+}
 
 function getEstimatedCompletionTime(paymentMethods) {
-        const hasBankTransfer = paymentMethods.some(pm => pm.method === 'bank_transfer');
-        return hasBankTransfer ? '1-2 días laborables' : '5-10 minutos';
-    }
+    const hasBankTransfer = paymentMethods.some(pm => pm.method === 'bank_transfer');
+    return hasBankTransfer ? '1-2 días laborables' : '5-10 minutos';
+}
 
 function calculateTotalFees(paymentMethods) {
-        return paymentMethods.reduce((total, pm) => {
-            return total + (pm.details.fee || 0);
-        }, 0);
-    }
+    return paymentMethods.reduce((total, pm) => {
+        return total + (pm.details.fee || 0);
+    }, 0);
+}
 
-    /**
-     * GESTIÓN DE CUENTAS DE USUARIO
-     */
+/**
+ * GESTIÓN DE CUENTAS DE USUARIO
+ */
 async function addUserBankAccount(userId, bankData) {
-        if (!walletInstance.paymentMethods.user_bank_accounts[userId]) {
-            walletInstance.paymentMethods.user_bank_accounts[userId] = {};
-        }
-
-        const accountKey = Object.keys(walletInstance.paymentMethods.user_bank_accounts[userId]).length === 0 ? 'primary' : 'secondary';
-
-        walletInstance.paymentMethods.user_bank_accounts[userId][accountKey] = {
-            ...bankData,
-            verified: false,
-            verification_date: null,
-            added_date: new Date().toISOString()
-        };
-
-        savePaymentMethods();
-
-        // Iniciar proceso de verificación
-        initiateAccountVerification(userId, accountKey);
+    if (!walletInstance.paymentMethods.user_bank_accounts[userId]) {
+        walletInstance.paymentMethods.user_bank_accounts[userId] = {};
     }
+
+    const accountKey = Object.keys(walletInstance.paymentMethods.user_bank_accounts[userId]).length === 0 ? 'primary' : 'secondary';
+
+    walletInstance.paymentMethods.user_bank_accounts[userId][accountKey] = {
+        ...bankData,
+        verified: false,
+        verification_date: null,
+        added_date: new Date().toISOString()
+    };
+
+    savePaymentMethods();
+
+    // Iniciar proceso de verificación
+    initiateAccountVerification(userId, accountKey);
+}
 
 async function addUserLightningAddress(userId, lightningData) {
-        this.paymentMethods.user_lightning_addresses[userId] = {
-            ...lightningData,
-            verified: false,
-            verification_date: null,
-            added_date: new Date().toISOString()
-        };
+    this.paymentMethods.user_lightning_addresses[userId] = {
+        ...lightningData,
+        verified: false,
+        verification_date: null,
+        added_date: new Date().toISOString()
+    };
 
-        savePaymentMethods();
+    savePaymentMethods();
 
-        // Iniciar proceso de verificación Lightning
-        initiateLightningVerification(userId);
-    }
+    // Iniciar proceso de verificación Lightning
+    initiateLightningVerification(userId);
+}
 
 async function initiateAccountVerification(userId, accountKey) {
-        // En producción: enviar micro-depósito para verificación
-            user_id: userId,
-            account_key: accountKey,
-            next_step: 'Send micro-deposit for verification'
-        });
-    }
+    // In production: send micro-deposit for verification
+    console.debug('Initiating account verification', { userId, accountKey });
+}
 
 async function initiateLightningVerification(userId) {
-        // En producción: enviar pequeño pago Lightning para verificación
-            user_id: userId,
-            next_step: 'Send test Lightning payment'
-        });
-    }
+    // In production: send small Lightning payment for verification
+    console.debug('Initiating lightning verification', { userId });
+}
 
 function savePaymentMethods() {
-        localStorage.setItem('paymentMethods', JSON.stringify(walletInstance.paymentMethods));
-    }
+    localStorage.setItem('paymentMethods', JSON.stringify(walletInstance.paymentMethods));
+}
 
 function loadPaymentMethods() {
-        const saved = localStorage.getItem('paymentMethods');
-        if (saved) {
-            walletInstance.paymentMethods = { ...walletInstance.paymentMethods, ...JSON.parse(saved) };
-        }
+    const saved = localStorage.getItem('paymentMethods');
+    if (saved) {
+        walletInstance.paymentMethods = { ...walletInstance.paymentMethods, ...JSON.parse(saved) };
     }
+}
 
 function getTimeAgo(timestamp) {
-        const now = new Date();
-        const time = new Date(timestamp);
-        const diffInSeconds = Math.floor((now - time) / 1000);
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - time) / 1000);
 
-        if (diffInSeconds < 60) {
-            return 'Hace un momento';
-        } else if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `Hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
-        } else if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
-        } else {
-            const days = Math.floor(diffInSeconds / 86400);
-            return `Hace ${days} día${days > 1 ? 's' : ''}`;
-        }
+    if (diffInSeconds < 60) {
+        return 'Hace un momento';
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `Hace ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    } else {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `Hace ${days} día${days > 1 ? 's' : ''}`;
     }
+}
 
-    // ================================
-    // 🔄 REFRESH & SYNC
-    // ================================
+// ================================
+// 🔄 REFRESH & SYNC
+// ================================
 
 async function refreshWallet() {
-        try {
-            await this.loadWalletData();
-        } catch (error) {
-        }
+    try {
+        await this.loadWalletData();
+    } catch (error) {
     }
+}
 
-    // ================================
-    // 🎨 UI HELPERS
-    // ================================
+// ================================
+// 🎨 UI HELPERS
+// ================================
 
 function showLoading(message = 'Cargando...') {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            const messageElement = overlay.querySelector('p');
-            if (messageElement) {
-                messageElement.textContent = message;
-            }
-            overlay.classList.add('active');
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        const messageElement = overlay.querySelector('p');
+        if (messageElement) {
+            messageElement.textContent = message;
         }
+        overlay.classList.add('active');
     }
+}
 
 function hideLoading() {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-            overlay.classList.remove('active');
-        }
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
     }
+}
 
 function showSuccess(message) {
-        this.showNotification(message, 'success');
-    }
+    this.showNotification(message, 'success');
+}
 
 function showError(message) {
-        this.showNotification(message, 'error');
-    }
+    this.showNotification(message, 'error');
+}
 
 function showInfo(message) {
-        this.showNotification(message, 'info');
-    }
+    this.showNotification(message, 'info');
+}
 
 function showNotification(message, type = 'info', persistent = false) {
-        // Check if notifications are enabled
-        if (!this.walletSettings.notificationsEnabled) {
-            return;
-        }
+    // Check if notifications are enabled
+    if (!this.walletSettings.notificationsEnabled) {
+        return;
+    }
 
-        // Add to notification history
-        const notificationData = {
-            id: Date.now(),
-            message,
-            type,
-            timestamp: new Date(),
-            read: false
-        };
+    // Add to notification history
+    const notificationData = {
+        id: Date.now(),
+        message,
+        type,
+        timestamp: new Date(),
+        read: false
+    };
 
-        this.notificationHistory.unshift(notificationData);
-        if (this.notificationHistory.length > 100) {
-            this.notificationHistory = this.notificationHistory.slice(0, 100);
-        }
-        localStorage.setItem('notificationHistory', JSON.stringify(this.notificationHistory));
+    this.notificationHistory.unshift(notificationData);
+    if (this.notificationHistory.length > 100) {
+        this.notificationHistory = this.notificationHistory.slice(0, 100);
+    }
+    localStorage.setItem('notificationHistory', JSON.stringify(this.notificationHistory));
 
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.dataset.notificationId = notificationData.id;
-        notification.innerHTML = `
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.dataset.notificationId = notificationData.id;
+    notification.innerHTML = `
             <div class="notification-content">
                 <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
                 <div class="notification-text">
@@ -10274,11 +10139,11 @@ function showNotification(message, type = 'info', persistent = false) {
             </div>
         `;
 
-        // Add styles if not already added
-        if (!document.querySelector('#notification-styles')) {
-            const styles = document.createElement('style');
-            styles.id = 'notification-styles';
-            styles.textContent = `
+    // Add styles if not already added
+    if (!document.querySelector('#notification-styles')) {
+        const styles = document.createElement('style');
+        styles.id = 'notification-styles';
+        styles.textContent = `
                 .notification {
                     position: fixed;
                     top: 20px;
@@ -10349,242 +10214,242 @@ function showNotification(message, type = 'info', persistent = false) {
                     to { transform: translateX(0); opacity: 1; }
                 }
             `;
-            document.head.appendChild(styles);
-        }
-
-        // Stack notifications properly
-        const existingNotifications = document.querySelectorAll('.notification');
-        if (existingNotifications.length > 0) {
-            const lastNotification = existingNotifications[existingNotifications.length - 1];
-            const rect = lastNotification.getBoundingClientRect();
-            notification.style.top = `${rect.bottom + 10}px`;
-        }
-
-        document.body.appendChild(notification);
-
-        // Play sound if enabled
-        if (this.notificationSettings.soundEnabled) {
-            this.playNotificationSound(type);
-        }
-
-        // Auto-remove after timeout (unless persistent)
-        if (!persistent) {
-            const timeout = type === 'error' ? 8000 : 5000;
-        setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.style.animation = 'slideOutRight 0.3s ease';
-                    setTimeout(() => notification.remove(), 300);
-                }
-            }, timeout);
-        }
-
-        return notificationData.id;
+        document.head.appendChild(styles);
     }
+
+    // Stack notifications properly
+    const existingNotifications = document.querySelectorAll('.notification');
+    if (existingNotifications.length > 0) {
+        const lastNotification = existingNotifications[existingNotifications.length - 1];
+        const rect = lastNotification.getBoundingClientRect();
+        notification.style.top = `${rect.bottom + 10}px`;
+    }
+
+    document.body.appendChild(notification);
+
+    // Play sound if enabled
+    if (this.notificationSettings.soundEnabled) {
+        this.playNotificationSound(type);
+    }
+
+    // Auto-remove after timeout (unless persistent)
+    if (!persistent) {
+        const timeout = type === 'error' ? 8000 : 5000;
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, timeout);
+    }
+
+    return notificationData.id;
+}
 
 function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
-    }
+    return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+}
 
 function formatDateTime(date) {
-        return new Intl.DateTimeFormat('es-HN', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
+    return new Intl.DateTimeFormat('es-HN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
+}
 
 function formatTime(date) {
-        return new Intl.DateTimeFormat('es-HN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
-    }
+    return new Intl.DateTimeFormat('es-HN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(date);
+}
 
-    // Currency conversion helpers
+// Currency conversion helpers
 function convertToPreferredCurrency(amount, fromCurrency) {
-        const targetCurrency = this.walletSettings.currencyPreference;
+    const targetCurrency = this.walletSettings.currencyPreference;
 
-        if (fromCurrency === targetCurrency) {
-            return amount;
-        }
-
-        // Convert to USD first if needed
-        let usdAmount = amount;
-        if (fromCurrency === 'HNL') {
-            usdAmount = amount * this.exchangeRates.HNL_USD;
-        } else if (fromCurrency === 'USD') { // LTD removed
-            usdAmount = amount * this.exchangeRates.LTD_USD;
-        }
-
-        // Convert from USD to target currency
-        if (targetCurrency === 'HNL') {
-            return usdAmount * this.exchangeRates.USD_HNL;
-        } else if (targetCurrency === 'USD') { // LTD removed
-            return usdAmount * this.exchangeRates.USD_LTD;
-        }
-
-        return usdAmount; // Default to USD
+    if (fromCurrency === targetCurrency) {
+        return amount;
     }
 
-    // Notification system methods
+    // Convert to USD first if needed
+    let usdAmount = amount;
+    if (fromCurrency === 'HNL') {
+        usdAmount = amount * this.exchangeRates.HNL_USD;
+    } else if (fromCurrency === 'USD') { // LTD removed
+        usdAmount = amount * this.exchangeRates.LTD_USD;
+    }
+
+    // Convert from USD to target currency
+    if (targetCurrency === 'HNL') {
+        return usdAmount * this.exchangeRates.USD_HNL;
+    } else if (targetCurrency === 'USD') { // LTD removed
+        return usdAmount * this.exchangeRates.USD_LTD;
+    }
+
+    return usdAmount; // Default to USD
+}
+
+// Notification system methods
 async function playNotificationSound(type) {
-        try {
-            // Check if we already have an AudioContext or need to create one
-            if (!this.audioContext) {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
-            // Check if AudioContext is suspended (due to browser autoplay policy)
-            if (this.audioContext.state === 'suspended') {
-                // Try to resume AudioContext after user gesture
-                await this.audioContext.resume();
-            }
-
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-
-            // Different frequencies for different notification types
-            const frequencies = {
-                success: 800,
-                error: 400,
-                warning: 600,
-                info: 500
-            };
-
-            oscillator.frequency.setValueAtTime(frequencies[type] || 500, this.audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-
-            oscillator.start(this.audioContext.currentTime);
-            oscillator.stop(this.audioContext.currentTime + 0.3);
-        } catch (error) {
-            // Silently fail if audio is not available or blocked
-            // console.warn('Notification sound not available:', error.message);
+    try {
+        // Check if we already have an AudioContext or need to create one
+        if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
+
+        // Check if AudioContext is suspended (due to browser autoplay policy)
+        if (this.audioContext.state === 'suspended') {
+            // Try to resume AudioContext after user gesture
+            await this.audioContext.resume();
+        }
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        // Different frequencies for different notification types
+        const frequencies = {
+            success: 800,
+            error: 400,
+            warning: 600,
+            info: 500
+        };
+
+        oscillator.frequency.setValueAtTime(frequencies[type] || 500, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.3);
+    } catch (error) {
+        // Silently fail if audio is not available or blocked
+        // console.warn('Notification sound not available:', error.message);
     }
+}
 
 // checkLowBalanceAlerts moved to class method above
 
 function sendTransactionNotification(type, amount, currency, description) {
-        if (!this.notificationSettings.transactions) return;
+    if (!this.notificationSettings.transactions) return;
 
-        const convertedAmount = this.convertToPreferredCurrency(amount, currency);
-        const preferredCurrency = this.walletSettings.currencyPreference;
-        const symbol = preferredCurrency === 'USD' ? '$' : 'L';
+    const convertedAmount = this.convertToPreferredCurrency(amount, currency);
+    const preferredCurrency = this.walletSettings.currencyPreference;
+    const symbol = preferredCurrency === 'USD' ? '$' : 'L';
 
-        let message = '';
-        switch (type) {
-            case 'sent':
-                message = `Pago de ${symbol}${this.formatCurrency(convertedAmount)} enviado exitosamente`;
-                break;
-            case 'received':
-                message = `Pago de ${symbol}${this.formatCurrency(convertedAmount)} recibido`;
-                break;
-            case 'deposit':
-                message = `Depósito de ${symbol}${this.formatCurrency(convertedAmount)} procesado`;
-                break;
-            case 'withdrawal':
-                message = `Retiro de ${symbol}${this.formatCurrency(convertedAmount)} solicitado`;
-                break;
-        }
-
-        this.showNotification(message, 'success');
+    let message = '';
+    switch (type) {
+        case 'sent':
+            message = `Pago de ${symbol}${this.formatCurrency(convertedAmount)} enviado exitosamente`;
+            break;
+        case 'received':
+            message = `Pago de ${symbol}${this.formatCurrency(convertedAmount)} recibido`;
+            break;
+        case 'deposit':
+            message = `Depósito de ${symbol}${this.formatCurrency(convertedAmount)} procesado`;
+            break;
+        case 'withdrawal':
+            message = `Retiro de ${symbol}${this.formatCurrency(convertedAmount)} solicitado`;
+            break;
     }
+
+    this.showNotification(message, 'success');
+}
 
 function sendSecurityNotification(message, type = 'security_alert') {
-        // Show local notification
-        if (this.notificationSettings?.security !== false) {
-            this.showNotification(message, 'warning', true);
-        }
-        
-        // Send to backend to persist
-        try {
-            const userId = this.getCurrentUserId();
-            if (userId && userId !== 'user_default_123') {
-                fetch('https://latanda.online/api/notifications/create', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        type: type,
-                        title: '🔒 Alerta de Seguridad',
-                        message: message,
-                        data: {
-                            timestamp: new Date().toISOString(),
-                            device: navigator.userAgent,
-                            source: 'wallet_security'
-                        }
-                    })
-                }).catch(() => {});
-            }
-        } catch (e) {
-        }
+    // Show local notification
+    if (this.notificationSettings?.security !== false) {
+        this.showNotification(message, 'warning', true);
     }
 
-function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // ================================
-    // 🌐 TRANSLATION SYSTEM
-    // ================================
-
-function initializeTranslations() {
-        // Basic translation system integration
-        // In production, this would connect to the existing translation system
-        const currentLang = localStorage.getItem('preferred_language') || 'es';
-        this.applyTranslations(currentLang);
-    }
-
-function applyTranslations(lang) {
-        const elements = document.querySelectorAll('[data-translate]');
-        elements.forEach(element => {
-            const key = element.getAttribute('data-translate');
-            // Translation would be applied here
-            // For now, keeping Spanish as default
-        });
-    }
-
-    // ================================
-    // 💾 SESSION MANAGEMENT MOVED TO CLASS
-    // ================================
-    // loadUserSession and saveUserSession are now class methods
-
-    // ================================
-    // 🔗 API HELPERS
-    // ================================
-
-async function apiCall(endpoint, options = {}) {
-        try {
-            const response = await fetch(`${walletInstance.apiBase}${endpoint}`, {
+    // Send to backend to persist
+    try {
+        const userId = this.getCurrentUserId();
+        if (userId && userId !== 'user_default_123') {
+            fetch('https://latanda.online/api/notifications/create', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${walletInstance.userSession?.token}`,
-                    ...options.headers
+                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
                 },
-                ...options
-            });
-
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            throw error;
+                body: JSON.stringify({
+                    user_id: userId,
+                    type: type,
+                    title: '🔒 Alerta de Seguridad',
+                    message: message,
+                    data: {
+                        timestamp: new Date().toISOString(),
+                        device: navigator.userAgent,
+                        source: 'wallet_security'
+                    }
+                })
+            }).catch(() => { });
         }
+    } catch (e) {
     }
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ================================
+// 🌐 TRANSLATION SYSTEM
+// ================================
+
+function initializeTranslations() {
+    // Basic translation system integration
+    // In production, this would connect to the existing translation system
+    const currentLang = localStorage.getItem('preferred_language') || 'es';
+    this.applyTranslations(currentLang);
+}
+
+function applyTranslations(lang) {
+    const elements = document.querySelectorAll('[data-translate]');
+    elements.forEach(element => {
+        const key = element.getAttribute('data-translate');
+        // Translation would be applied here
+        // For now, keeping Spanish as default
+    });
+}
+
+// ================================
+// 💾 SESSION MANAGEMENT MOVED TO CLASS
+// ================================
+// loadUserSession and saveUserSession are now class methods
+
+// ================================
+// 🔗 API HELPERS
+// ================================
+
+async function apiCall(endpoint, options = {}) {
+    try {
+        const response = await fetch(`${walletInstance.apiBase}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${walletInstance.userSession?.token}`,
+                ...options.headers
+            },
+            ...options
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
 
 // ================================
 // 🚀 GLOBAL FUNCTIONS (for HTML onclick events)
@@ -10594,14 +10459,14 @@ async function apiCall(endpoint, options = {}) {
 let walletInstance;
 
 // Declare global functions immediately for HTML event handlers
-window.showSendModal = function() {
+window.showSendModal = function () {
     if (!walletInstance) {
         return;
     }
     walletInstance.showSendModal();
 };
 
-window.showReceiveModal = function() {
+window.showReceiveModal = function () {
     if (!walletInstance) {
         return;
     }
@@ -10609,7 +10474,7 @@ window.showReceiveModal = function() {
 };
 
 
-window.showWithdrawModal = function() {
+window.showWithdrawModal = function () {
     if (!walletInstance) {
         return;
     }
@@ -10622,6 +10487,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Global error handler to capture console errors
     window.addEventListener('error', (e) => {
+        console.error('Global error:', {
             message: e.message,
             filename: e.filename,
             line: e.lineno,
@@ -10629,14 +10495,14 @@ document.addEventListener('DOMContentLoaded', () => {
             stack: e.error?.stack
         });
     });
-
-    // Global function to manually trigger withdrawal (for debugging)
-    window.debugWithdrawal = () => {
-        if (walletInstance) {
-            walletInstance.processWithdrawal();
-        }
-    };
 });
+
+// Global function to manually trigger withdrawal (for debugging)
+window.debugWithdrawal = () => {
+    if (walletInstance) {
+        walletInstance.processWithdrawal();
+    }
+};
 
 // Additional global functions for HTML event handlers
 function showSendModal() {
@@ -10949,7 +10815,7 @@ function processStaking() {
     walletInstance.showLoading('Procesando stake...');
 
     // Simulate staking process
-        setTimeout(() => {
+    setTimeout(() => {
         walletInstance.balances.LTD -= stakeAmount;
         walletInstance.updateBalanceDisplay();
         walletInstance.updateCurrencyConversions();
@@ -11033,7 +10899,7 @@ function copyToClipboard(text, button) {
 // Copy reference functionality
 function copyReference() {
     const reference = document.getElementById('depositReference').textContent;
-            copyToClipboard(reference, event.target.closest('button'));
+    copyToClipboard(reference, event.target.closest('button'));
 }
 
 // File upload handler
@@ -11095,7 +10961,7 @@ function submitDeposit() {
     const receiptInput = document.getElementById('depositReceipt');
 
     if (!amount || !reference || !receiptFile) {
-            if (window.showWarning) { window.showWarning('Por favor completa todos los campos'); }
+        if (window.showWarning) { window.showWarning('Por favor completa todos los campos'); }
         return;
     }
 
@@ -11182,7 +11048,7 @@ function checkLightningPayment() {
                 if (isPaid) {
                     walletInstance.handleLightningPaymentSuccess();
                 } else {
-            if (window.showWarning) { window.showWarning('El pago aún no ha sido detectado. Inténtalo de nuevo en unos segundos.'); }
+                    if (window.showWarning) { window.showWarning('El pago aún no ha sido detectado. Inténtalo de nuevo en unos segundos.'); }
                 }
             });
     }
@@ -11275,8 +11141,8 @@ function connectBlink() {
     };
 
     localStorage.setItem('lightningWalletConfig', JSON.stringify(blinkConfig));
-        showConnectedState(blinkConfig);
-        loadLightningBalance();
+    showConnectedState(blinkConfig);
+    loadLightningBalance();
 
     walletInstance?.showSuccess('✅ Blink Wallet conectado exitosamente!');
 
@@ -11311,7 +11177,7 @@ function loadLightningBalance() {
 }
 
 function refreshLightningBalance() {
-        loadLightningBalance();
+    loadLightningBalance();
     walletInstance?.showSuccess('✅ Balance actualizado');
 }
 
@@ -11338,7 +11204,7 @@ function showLightningTransfer() {
     transferSection.style.display = 'block';
 
     // Set up amount input monitoring
-        setupTransferAmountMonitoring();
+    setupTransferAmountMonitoring();
 }
 
 function hideTransferSection() {
@@ -11380,7 +11246,7 @@ function cancelTransfer() {
     }
 
     // Hide transfer section
-        hideTransferSection();
+    hideTransferSection();
 
     walletInstance?.showSuccess('⚡ Transferencia cancelada');
 }
@@ -11430,12 +11296,12 @@ async function executeLightningTransfer() {
 
         if (simulateTimeout) {
             // Simulate timeout after 10 seconds
-        setTimeout(() => {
+            setTimeout(() => {
                 transferBtn.disabled = false;
                 transferBtn.innerHTML = '<i class="fas fa-bolt"></i> Transferir Ahora';
 
                 walletInstance?.showError('⏱️ Transferencia cancelada por timeout. Inténtalo de nuevo.');
-        offerRetryOrFallback(amount);
+                offerRetryOrFallback(amount);
             }, 10000);
             return;
         }
@@ -11474,8 +11340,8 @@ async function executeLightningTransfer() {
                 }
 
                 // Update displays
-        loadLightningBalance();
-        hideTransferSection();
+                loadLightningBalance();
+                hideTransferSection();
 
                 walletInstance?.showSuccess(`✅ Transferencia exitosa! +$${amount} USD agregado a Mi Wallet`);
 
@@ -11488,8 +11354,8 @@ async function executeLightningTransfer() {
                 }
 
                 // Close modal after success
-        setTimeout(() => {
-        closeLightningWalletModal();
+                setTimeout(() => {
+                    closeLightningWalletModal();
                 }, 2000);
 
             } catch (processingError) {
@@ -11497,7 +11363,7 @@ async function executeLightningTransfer() {
                 transferBtn.innerHTML = '<i class="fas fa-bolt"></i> Transferir Ahora';
 
                 walletInstance?.showError('Error procesando transferencia Lightning');
-        offerRetryOrFallback(amount);
+                offerRetryOrFallback(amount);
             }
 
         }, 1500);
@@ -11513,14 +11379,14 @@ async function executeLightningTransfer() {
 
 // Helper functions for error handling
 function offerFallbackToAtlantida(amount) {
-        setTimeout(() => {
+    setTimeout(() => {
         const fallback = confirm(`¿Quieres usar depósito bancario Atlántida en su lugar?\n\nMonto: $${amount} USD`);
         if (fallback) {
-        closeLightningWalletModal();
-        setTimeout(() => {
+            closeLightningWalletModal();
+            setTimeout(() => {
                 if (walletInstance) {
                     walletInstance.showDepositModal();
-        setTimeout(() => {
+                    setTimeout(() => {
                         walletInstance.selectDepositMethod('atlantida');
                         document.getElementById('depositAmount').value = amount;
                     }, 500);
@@ -11531,10 +11397,10 @@ function offerFallbackToAtlantida(amount) {
 }
 
 function offerRetryOrFallback(amount) {
-        setTimeout(() => {
+    setTimeout(() => {
         const retry = confirm('¿Quieres intentar nuevamente la transferencia Lightning?\n\nSi cancelas, puedes usar depósito bancario Atlántida.');
         if (!retry) {
-        offerFallbackToAtlantida(amount);
+            offerFallbackToAtlantida(amount);
         }
         // If retry is true, user can manually try again
     }, 2000);

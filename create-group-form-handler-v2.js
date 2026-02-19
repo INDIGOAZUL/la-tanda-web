@@ -21,17 +21,17 @@ class CreateGroupFormHandler {
         const div = document.createElement("div");
         div.textContent = String(text != null ? text : "");
         return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    },
+    }
 
     constructor() {
         this.currentStep = 1;
         this.totalSteps = 4;
         this.formData = {};
         this.validationErrors = {};
-        
+
         this.init();
     }
-    
+
     init() {
 
         this.initializeRequiredFields();
@@ -58,32 +58,32 @@ class CreateGroupFormHandler {
         // Now enable required only for step 1 (current step)
         this.updateStepDisplay();
     }
-    
+
     setupFormNavigation() {
         const nextButton = document.getElementById('next-step');
         const prevButton = document.getElementById('previous-step');
-        
+
         if (nextButton) {
             nextButton.addEventListener('click', () => this.nextStep());
         }
-        
+
         if (prevButton) {
             prevButton.addEventListener('click', () => this.previousStep());
         }
     }
-    
+
     setupFormValidation() {
         // Real-time validation for key fields
         const form = document.getElementById('create-group-form');
         if (!form) return;
-        
+
         const fields = [
             'group-name',
-            'group-description', 
+            'group-description',
             'contribution',
             'max-participants'
         ];
-        
+
         fields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
@@ -91,19 +91,19 @@ class CreateGroupFormHandler {
                 field.addEventListener('input', () => this.clearFieldError(fieldId));
             }
         });
-        
+
         // Form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleFormSubmission();
         });
     }
-    
+
     setupCollapsibles() {
         window.toggleCollapsible = (header) => {
             const content = header.nextElementSibling;
             const icon = header.querySelector('.collapsible-icon');
-            
+
             if (content.classList.contains('expanded')) {
                 content.classList.remove('expanded');
                 icon.style.transform = 'rotate(0deg)';
@@ -113,16 +113,16 @@ class CreateGroupFormHandler {
             }
         };
     }
-    
+
     setupCharacterCounters() {
         const descriptionField = document.getElementById('group-description');
         const counter = document.getElementById('desc-count');
-        
+
         if (descriptionField && counter) {
             descriptionField.addEventListener('input', () => {
                 const count = descriptionField.value.length;
                 counter.textContent = count;
-                
+
                 if (count > 250) {
                     counter.style.color = '#f87171';
                     descriptionField.value = descriptionField.value.substring(0, 250);
@@ -132,20 +132,20 @@ class CreateGroupFormHandler {
             });
         }
     }
-    
+
     nextStep() {
         // Validate current step
         if (!this.validateCurrentStep()) {
             return;
         }
-        
+
         // Save current step data
         this.saveCurrentStepData();
-        
+
         if (this.currentStep < this.totalSteps) {
             this.currentStep++;
             this.updateStepDisplay();
-            
+
             if (this.currentStep === this.totalSteps) {
                 this.generateConfirmationSummary();
             }
@@ -154,14 +154,14 @@ class CreateGroupFormHandler {
             this.createGroup();
         }
     }
-    
+
     previousStep() {
         if (this.currentStep > 1) {
             this.currentStep--;
             this.updateStepDisplay();
         }
     }
-    
+
     updateStepDisplay() {
         // Update progress bar
         const progressFill = document.querySelector('.progress-fill');
@@ -169,7 +169,7 @@ class CreateGroupFormHandler {
         if (progressFill) {
             progressFill.style.width = `${progressPercent}%`;
         }
-        
+
         // Update step indicators
         document.querySelectorAll('.step').forEach((step, index) => {
             const stepNumber = index + 1;
@@ -183,7 +183,7 @@ class CreateGroupFormHandler {
                 step.classList.remove('active', 'completed');
             }
         });
-        
+
         // Show/hide step containers
         // FIX: Use data-step attribute instead of index to handle non-sequential steps
         document.querySelectorAll('.step-container').forEach((container) => {
@@ -203,15 +203,15 @@ class CreateGroupFormHandler {
                 });
             }
         });
-        
+
         // Update navigation buttons
         const prevButton = document.getElementById('previous-step');
         const nextButton = document.getElementById('next-step');
-        
+
         if (prevButton) {
             prevButton.style.display = this.currentStep === 1 ? 'none' : 'flex';
         }
-        
+
         if (nextButton) {
             const nextText = nextButton.querySelector('span');
             if (this.currentStep === this.totalSteps) {
@@ -223,10 +223,10 @@ class CreateGroupFormHandler {
             }
         }
     }
-    
+
     validateCurrentStep() {
         let isValid = true;
-        
+
         switch (this.currentStep) {
             case 1:
                 isValid = this.validateStep1();
@@ -241,36 +241,36 @@ class CreateGroupFormHandler {
                 isValid = this.validateStep4();
                 break;
         }
-        
+
         return isValid;
     }
-    
+
     validateStep1() {
         let isValid = true;
-        
+
         // Group name
         if (!this.validateField('group-name')) isValid = false;
-        
+
         // Group description
         if (!this.validateField('group-description')) isValid = false;
-        
+
         // Group type
         const groupType = document.getElementById('group-type').value;
         if (!groupType) {
             this.showFieldError('group-type', 'Selecciona un tipo de grupo');
             isValid = false;
         }
-        
+
         // Location
         const location = document.getElementById('location').value.trim();
         if (!location || location.length < 3) {
             this.showFieldError('location', 'La ubicación debe tener al menos 3 caracteres');
             isValid = false;
         }
-        
+
         return isValid;
     }
-    
+
     validateStep2() {
         let isValid = true;
 
@@ -294,7 +294,7 @@ class CreateGroupFormHandler {
 
         return isValid;
     }
-    
+
     validateStep3() {
         // Optional step - basic validation
         const penaltyAmount = document.getElementById('penalty-amount').value;
@@ -302,34 +302,34 @@ class CreateGroupFormHandler {
             this.showFieldError('penalty-amount', 'Monto de multa debe ser un número válido');
             return false;
         }
-        
+
         const gracePeriod = document.getElementById('grace-period').value;
         if (gracePeriod && (isNaN(gracePeriod) || gracePeriod < 0 || gracePeriod > 15)) {
             this.showFieldError('grace-period', 'Período de gracia debe ser entre 0 y 15 días');
             return false;
         }
-        
+
         return true;
     }
-    
+
     validateStep4() {
         const acceptTerms = document.getElementById('accept-terms').checked;
         if (!acceptTerms) {
             this.showFieldError('accept-terms', 'Debes aceptar los términos y condiciones');
             return false;
         }
-        
+
         return true;
     }
-    
+
     validateField(fieldId) {
         const field = document.getElementById(fieldId);
         if (!field) return true;
-        
+
         const value = field.value.trim();
         let isValid = true;
         let errorMessage = '';
-        
+
         switch (fieldId) {
             case 'group-name':
                 if (!value || value.length < 3) {
@@ -340,7 +340,7 @@ class CreateGroupFormHandler {
                     isValid = false;
                 }
                 break;
-                
+
             case 'group-description':
                 if (!value || value.length < 10) {
                     errorMessage = 'La descripción debe tener al menos 10 caracteres';
@@ -350,7 +350,7 @@ class CreateGroupFormHandler {
                     isValid = false;
                 }
                 break;
-                
+
             case 'contribution':
                 const contribution = parseFloat(value);
                 if (!value || isNaN(contribution)) {
@@ -364,7 +364,7 @@ class CreateGroupFormHandler {
                     isValid = false;
                 }
                 break;
-                
+
             case 'max-participants':
                 const maxParticipants = parseInt(value);
                 if (!value || isNaN(maxParticipants)) {
@@ -379,48 +379,48 @@ class CreateGroupFormHandler {
                 }
                 break;
         }
-        
+
         if (!isValid) {
             this.showFieldError(fieldId, errorMessage);
         } else {
             this.clearFieldError(fieldId);
         }
-        
+
         return isValid;
     }
-    
+
     showFieldError(fieldId, message) {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(`${fieldId}-error`);
-        
+
         if (field) {
             field.classList.add('error');
         }
-        
+
         if (errorElement) {
             errorElement.textContent = message;
             errorElement.style.display = 'block';
         }
-        
+
         this.validationErrors[fieldId] = message;
     }
-    
+
     clearFieldError(fieldId) {
         const field = document.getElementById(fieldId);
         const errorElement = document.getElementById(`${fieldId}-error`);
-        
+
         if (field) {
             field.classList.remove('error');
         }
-        
+
         if (errorElement) {
             errorElement.textContent = '';
             errorElement.style.display = 'none';
         }
-        
+
         delete this.validationErrors[fieldId];
     }
-    
+
     saveCurrentStepData() {
         switch (this.currentStep) {
             case 1:
@@ -430,7 +430,7 @@ class CreateGroupFormHandler {
                 this.formData.location = document.getElementById('location').value.trim();
                 this.formData.virtualMeetings = document.querySelector('input[name="virtual-meetings"]:checked').value;
                 break;
-                
+
             case 2:
                 this.formData.contribution = document.getElementById('contribution').value;
                 this.formData.maxParticipants = document.getElementById('max-participants').value;
@@ -440,7 +440,7 @@ class CreateGroupFormHandler {
                 this.formData.insuranceRequired = document.getElementById('insurance-required').checked;
                 this.formData.latePenalties = document.getElementById('late-penalties').checked;
                 break;
-                
+
             case 3:
                 this.formData.requireKYC = document.getElementById('require-id').checked;
                 this.formData.requireIncome = document.getElementById('require-income').checked;
@@ -458,11 +458,11 @@ class CreateGroupFormHandler {
                 break;
         }
     }
-    
+
     generateConfirmationSummary() {
         const summaryContainer = document.getElementById('confirmationSummary');
         if (!summaryContainer) return;
-        
+
         const summary = `
             <div class="confirmation-sections">
                 <div class="confirmation-section">
@@ -532,39 +532,39 @@ class CreateGroupFormHandler {
                 </div>
             </div>
         `;
-        
+
         summaryContainer.innerHTML = summary;
     }
-    
+
     renderConfirmationFeatures() {
         const features = [];
-        
+
         if (this.formData.requireKYC) features.push('Verificación de identidad requerida');
         if (this.formData.earlyWithdrawals) features.push('Retiros anticipados permitidos');
         if (this.formData.latePenalties) features.push('Multas por pagos tardíos');
         if (this.formData.autoSuspend) features.push('Suspensión automática tras 3 faltas');
         if (this.formData.notifyPaymentReminder) features.push('Recordatorios de pago automáticos');
-        
+
         if (features.length === 0) {
             return '<span class="no-features">Configuración básica</span>';
         }
-        
+
         return features.map(feature => `<div class="feature-item"><i class="fas fa-check"></i> ${feature}</div>`).join('');
     }
-    
+
     calculateEstimatedDuration() {
         const participants = parseInt(this.formData.maxParticipants);
         const frequency = this.formData.paymentFrequency;
-        
+
         const frequencyDays = {
             'weekly': 7,
             'biweekly': 14,
             'monthly': 30
         };
-        
+
         const totalDays = participants * (frequencyDays[frequency] || 30);
         const totalMonths = Math.round(totalDays / 30);
-        
+
         if (totalMonths < 12) {
             return `${totalMonths} meses`;
         } else {
@@ -573,7 +573,7 @@ class CreateGroupFormHandler {
             return remainingMonths > 0 ? `${years} años y ${remainingMonths} meses` : `${years} años`;
         }
     }
-    
+
     async createGroup() {
         try {
             // Show loading state
@@ -582,14 +582,14 @@ class CreateGroupFormHandler {
                 nextButton.disabled = true;
                 nextButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Creando Grupo...</span>';
             }
-            
+
             // Create group using the complete system
             if (!window.laTandaSystemComplete) {
                 throw new Error('Sistema no inicializado');
             }
-            
+
             const newGroup = await window.laTandaSystemComplete.createRealGroup(this.formData);
-            
+
             if (newGroup) {
                 // Success - redirect to groups view
                 this.showSuccessMessage(newGroup);
@@ -633,10 +633,10 @@ class CreateGroupFormHandler {
                     this.resetForm();
                 }, 2000);
             }
-            
+
         } catch (error) {
             this.showErrorMessage(error.message);
-            
+
             // Reset button
             const nextButton = document.getElementById('next-step');
             if (nextButton) {
@@ -645,7 +645,7 @@ class CreateGroupFormHandler {
             }
         }
     }
-    
+
     showSuccessMessage(group) {
         const summaryContainer = document.getElementById('confirmationSummary');
         if (summaryContainer) {
@@ -671,7 +671,7 @@ class CreateGroupFormHandler {
             `;
         }
     }
-    
+
     showErrorMessage(message) {
         const summaryContainer = document.getElementById('confirmationSummary');
         if (summaryContainer) {
@@ -687,20 +687,20 @@ class CreateGroupFormHandler {
             `;
         }
     }
-    
+
     resetForm() {
         this.currentStep = 1;
         this.formData = {};
         this.validationErrors = {};
-        
+
         const form = document.getElementById('create-group-form');
         if (form) {
             form.reset();
         }
-        
+
         this.updateStepDisplay();
     }
-    
+
     getTypeLabel(type) {
         const labels = {
             'familiar': 'Familiar',
@@ -710,7 +710,7 @@ class CreateGroupFormHandler {
         };
         return labels[type] || type;
     }
-    
+
     getFrequencyLabel(frequency) {
         const labels = {
             'weekly': 'Semanal',
@@ -736,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    
+
     const createSection = document.getElementById('create');
     if (createSection) {
         observer.observe(createSection, { attributes: true });
