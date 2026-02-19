@@ -26,7 +26,7 @@ describe('ProvidersModule', () => {
 
         const result = await client.providers.register(data)
 
-        expect(mockHttp.post).toHaveBeenCalledWith('/api/marketplace/providers/register', data)
+        expect(mockHttp.post).toHaveBeenCalledWith('/marketplace/providers/register', data)
         expect(result.id).toBe('p1')
     })
 
@@ -35,7 +35,7 @@ describe('ProvidersModule', () => {
 
         const result = await client.providers.getProfile()
 
-        expect(mockHttp.get).toHaveBeenCalledWith('/api/marketplace/providers/me')
+        expect(mockHttp.get).toHaveBeenCalledWith('/marketplace/providers/me')
         expect(result.business_name).toBe('Test Shop')
     })
 
@@ -45,7 +45,7 @@ describe('ProvidersModule', () => {
 
         const result = await client.providers.updateProfile(data)
 
-        expect(mockHttp.put).toHaveBeenCalledWith('/api/marketplace/providers/me', data)
+        expect(mockHttp.put).toHaveBeenCalledWith('/marketplace/providers/me', data)
         expect(result.description).toBe('Updated info')
     })
 })
