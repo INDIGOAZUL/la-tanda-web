@@ -600,8 +600,8 @@ class MemberManagement {
         const tabs = document.querySelectorAll('.member-tab');
 
         tabs.forEach((t, i) => {
-            t.classList.toggle('active', 
-                (tab === 'pending' && i === 0) || 
+            t.classList.toggle('active',
+                (tab === 'pending' && i === 0) ||
                 (tab === 'active' && i === 1) ||
                 (tab === 'settings' && i === 2)
             );
@@ -692,12 +692,12 @@ class MemberManagement {
     async saveSettings() {
         const btn = document.querySelector('.settings-save-btn');
         const statusDiv = document.getElementById('settingsStatus');
-        
+
         if (btn) {
             btn.disabled = true;
             btn.textContent = 'Guardando...';
         }
-        
+
         const newSettings = {
             auto_approve_invited: document.getElementById('setting-auto-invited')?.checked || false,
             auto_approve_kyc_verified: document.getElementById('setting-auto-kyc')?.checked || false,
@@ -706,7 +706,7 @@ class MemberManagement {
             notify_user_on_decision: document.getElementById('setting-notify-user')?.checked || false,
             require_manual_approval: true
         };
-        
+
         try {
             const apiBase = window.API_BASE_URL || 'https://latanda.online';
             const response = await fetch(`${apiBase}/api/groups/${this.currentGroupId}/settings`, {
@@ -717,9 +717,9 @@ class MemberManagement {
                 },
                 body: JSON.stringify({ approval_settings: newSettings })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 this.groupSettings = newSettings;
                 if (statusDiv) {
@@ -741,12 +741,12 @@ class MemberManagement {
                 statusDiv.textContent = '✗ Error de conexion';
             }
         }
-        
+
         if (btn) {
             btn.disabled = false;
             btn.textContent = '💾 Guardar Configuracion';
         }
-        
+
         setTimeout(() => {
             if (statusDiv) {
                 statusDiv.textContent = '';
@@ -769,9 +769,9 @@ class MemberManagement {
             <div class="member-item" data-member-id="${member.user_id}">
                 <div class="member-avatar">
                     ${member.profile_image_url
-                        ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${this.escapeHtml(member.user_name || member.display_name)}">`
-                        : (member.user_name || member.display_name || 'U').charAt(0).toUpperCase()
-                    }
+                ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${this.escapeHtml(member.user_name || member.display_name)}">`
+                : (member.user_name || member.display_name || 'U').charAt(0).toUpperCase()
+            }
                 </div>
                 <div class="member-info">
                     <div class="member-name">${member.user_name || member.display_name || 'Usuario'}</div>
@@ -807,9 +807,9 @@ class MemberManagement {
             <div class="member-item" data-member-id="${member.user_id}">
                 <div class="member-avatar">
                     ${member.profile_image_url
-                        ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${member.name || member.display_name}">`
-                        : (member.name || member.display_name || 'U').charAt(0).toUpperCase()
-                    }
+                ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${member.name || member.display_name}">`
+                : (member.name || member.display_name || 'U').charAt(0).toUpperCase()
+            }
                 </div>
                 <div class="member-info">
                     <div class="member-name">${this.escapeHtml(member.name || member.display_name || 'Usuario')}</div>
@@ -912,7 +912,7 @@ class MemberManagement {
     // ============================================
     // ROLE & STATUS MANAGEMENT (Added 2025-12-31)
     // ============================================
-    
+
     async handleRoleChange(memberId, newRole) {
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -932,7 +932,7 @@ class MemberManagement {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 showNotification('Rol actualizado a ' + (newRole === 'coordinator' ? 'Coordinador' : 'Miembro'), 'success');
                 const member = this.activeMembers.find(m => m.user_id === memberId);
@@ -950,7 +950,7 @@ class MemberManagement {
 
     async handleStatusChange(memberId, newStatus, memberName) {
         const action = newStatus === 'suspended' ? 'suspender' : 'activar';
-        
+
         if (!confirm(`¿Estás seguro de ${action} a ${memberName}?`)) {
             return;
         }
@@ -973,7 +973,7 @@ class MemberManagement {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 showNotification(`Miembro ${action === 'suspender' ? 'suspendido' : 'activado'} exitosamente`, 'success');
                 const member = this.activeMembers.find(m => m.user_id === memberId);
@@ -1009,7 +1009,7 @@ class MemberManagement {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 showNotification(`${memberName} ha sido removido del grupo`, 'success');
                 this.activeMembers = this.activeMembers.filter(m => m.user_id !== memberId);
