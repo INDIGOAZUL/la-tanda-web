@@ -72,6 +72,15 @@ export class HttpClient {
         const hdrs: Record<string, string> = { ...this._headers, ...opts.headers }
         if (token) hdrs['Authorization'] = `Bearer ${token}`
 
+        // fix: handle FormData for binary uploads
+        let fetchBody = opts.body
+        if (opts.body instanceof FormData) {
+            fetchBody = opts.body
+            delete hdrs['Content-Type'] // let fetch set the boundary
+        } else if (opts.body) {
+            fetchBody = JSON.stringify(opts.body)
+        }
+
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), opts.timeout || this._timeout)
 
@@ -79,7 +88,7 @@ export class HttpClient {
             const response = await fetch(url, {
                 method: opts.method,
                 headers: hdrs,
-                body: opts.body ? JSON.stringify(opts.body) : undefined,
+                body: fetchBody,
                 signal: controller.signal
             })
             clearTimeout(timer)

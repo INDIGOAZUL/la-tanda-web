@@ -29,7 +29,7 @@ export class VerificationModule {
         formData.append('document', file)
         formData.append('document_type', type)
 
-        return this._http.post<{ success: boolean; url: string }>('/api/kyc/upload-document', formData)
+        return this._http.post<{ success: boolean; url: string }>('/kyc/identity', formData)
     }
 
     /**
@@ -40,7 +40,7 @@ export class VerificationModule {
      * accuracy before final submission.
      */
     async processOCR(data: OcrRequest): Promise<OcrResult> {
-        return this._http.post<OcrResult>('/api/kyc/process-ocr', data)
+        return this._http.post<OcrResult>('/kyc/process-ocr', data)
     }
 
     /**
@@ -52,7 +52,7 @@ export class VerificationModule {
         const formData = new FormData()
         formData.append('selfie', file)
 
-        return this._http.post<{ success: boolean; url: string }>('/api/kyc/upload-selfie', formData)
+        return this._http.post<{ success: boolean; url: string }>('/kyc/upload-selfie', formData)
     }
 
     /**
@@ -62,6 +62,6 @@ export class VerificationModule {
      * unlock restricted features.
      */
     async getStatus(): Promise<IdentityStatus> {
-        return this._http.get<IdentityStatus>('/api/kyc/status')
+        return this._http.get<IdentityStatus>('/kyc/status')
     }
 }

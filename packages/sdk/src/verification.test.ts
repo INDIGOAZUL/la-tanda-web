@@ -18,7 +18,7 @@ describe('VerificationModule', () => {
 
         const result = await client.verification.uploadDocument(mockFile, 'id_card')
 
-        expect(mockHttp.post).toHaveBeenCalledWith('/api/kyc/upload-document', expect.any(FormData))
+        expect(mockHttp.post).toHaveBeenCalledWith('/kyc/identity', expect.any(FormData))
         expect(result.success).toBe(true)
     })
 
@@ -28,7 +28,7 @@ describe('VerificationModule', () => {
 
         const result = await client.verification.processOCR(data)
 
-        expect(mockHttp.post).toHaveBeenCalledWith('/api/kyc/process-ocr', data)
+        expect(mockHttp.post).toHaveBeenCalledWith('/kyc/process-ocr', data)
         expect(result.data.full_name).toBe('John Doe')
     })
 
@@ -37,7 +37,7 @@ describe('VerificationModule', () => {
 
         const result = await client.verification.getStatus()
 
-        expect(mockHttp.get).toHaveBeenCalledWith('/api/kyc/status')
+        expect(mockHttp.get).toHaveBeenCalledWith('/kyc/status')
         expect(result.status).toBe('verified')
     })
 })
