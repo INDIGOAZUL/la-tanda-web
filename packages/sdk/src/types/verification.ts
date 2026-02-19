@@ -31,3 +31,16 @@ export interface OcrResult {
         nationality: string;
     };
 }
+
+export interface PhoneVerificationRequest {
+    phone: string;
+}
+
+export interface OtpVerificationRequest {
+    otp: string;
+}
+
+export interface VerificationResult {
+    success: boolean;
+    message?: string;
+}
