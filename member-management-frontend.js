@@ -3,6 +3,14 @@
 // MEMBER MANAGEMENT FRONTEND
 // ============================================
 
+// XSS prevention helper
+function _mmEscapeHtml(text) {
+    if (text == null) return '';
+    var div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // CSS Styles for Member Management
 const memberManagementStyles = `
 <style>
@@ -234,7 +242,7 @@ const memberManagementStyles = `
     transition: all 0.2s;
 }
 
-.btn-reject:hover, 
+.btn-reject:hover,
 .role-select {
     padding: 6px 10px;
     border: 1px solid rgba(255,255,255,0.2);
@@ -381,13 +389,6 @@ document.head.insertAdjacentHTML('beforeend', memberManagementStyles);
 // MEMBER MANAGEMENT CLASS
 // ============================================
 class MemberManagement {
-    // XSS prevention helper (v3.99.0)
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = String(text != null ? text : '');
-        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    },
-
     constructor() {
         this.currentGroupId = null;
         this.pendingMembers = [];
@@ -395,11 +396,15 @@ class MemberManagement {
         this.isCoordinator = false;
     }
 
+    // XSS prevention helper
+    escapeHtml(text) {
+        return _mmEscapeHtml(text);
+    }
+
     // Check if current user is coordinator of a group
     async checkCoordinatorStatus(groupId, userId) {
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/pending-members?user_id=${userId}`);
-            const data = await response.json();
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/pending-members?user_id=${encodeURIComponent(userId)}`);
             // If we get a 403, user is not coordinator
             // If we get success or 404, user IS coordinator
             return response.status !== 403;
@@ -413,7 +418,7 @@ class MemberManagement {
         const userId = localStorage.getItem('user_id');
         try {
             // Use the main members endpoint which includes pending members
-            const url = `${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/members?user_id=${userId}`;
+            const url = `${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members?user_id=${encodeURIComponent(userId)}`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.success) {
@@ -441,7 +446,7 @@ class MemberManagement {
     async fetchActiveMembers(groupId) {
         const userId = localStorage.getItem('user_id');
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/members?user_id=${userId}`);
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members?user_id=${encodeURIComponent(userId)}`);
             const data = await response.json();
             if (data.success) {
                 this.activeMembers = data.data.members || data.data || [];
@@ -457,7 +462,7 @@ class MemberManagement {
     async fetchGroupSettings(groupId) {
         try {
             const apiBase = window.API_BASE_URL || 'https://latanda.online';
-            const response = await fetch(`${apiBase}/api/groups/${groupId}/settings`, {
+            const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/settings`, {
                 headers: {
                     'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
                 }
@@ -477,7 +482,7 @@ class MemberManagement {
     async approveMember(groupId, memberId, position = null) {
         const coordinatorId = localStorage.getItem('user_id');
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/members/${memberId}/approve`, {
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') },
                 body: JSON.stringify({ coordinator_id: coordinatorId, position })
@@ -487,7 +492,7 @@ class MemberManagement {
                 showNotification('Miembro aprobado exitosamente', 'success');
                 return true;
             } else {
-                showNotification(data.error || 'Error al aprobar miembro', 'error');
+                showNotification('Error al aprobar miembro', 'error');
                 return false;
             }
         } catch (err) {
@@ -500,7 +505,7 @@ class MemberManagement {
     async rejectMember(groupId, memberId, reason = '') {
         const coordinatorId = localStorage.getItem('user_id');
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/members/${memberId}/reject`, {
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}/reject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') },
                 body: JSON.stringify({ coordinator_id: coordinatorId, reason })
@@ -510,7 +515,7 @@ class MemberManagement {
                 showNotification('Solicitud rechazada', 'success');
                 return true;
             } else {
-                showNotification(data.error || 'Error al rechazar solicitud', 'error');
+                showNotification('Error al rechazar solicitud', 'error');
                 return false;
             }
         } catch (err) {
@@ -523,7 +528,7 @@ class MemberManagement {
     async removeMember(groupId, memberId, reason = '') {
         const coordinatorId = localStorage.getItem('user_id');
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${groupId}/members/${memberId}/remove?coordinator_id=${coordinatorId}&reason=${encodeURIComponent(reason)}`, {
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}/remove?coordinator_id=${encodeURIComponent(coordinatorId)}&reason=${encodeURIComponent(reason)}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
@@ -531,7 +536,7 @@ class MemberManagement {
                 showNotification('Miembro removido exitosamente', 'success');
                 return true;
             } else {
-                showNotification(data.error || 'Error al remover miembro', 'error');
+                showNotification('Error al remover miembro', 'error');
                 return false;
             }
         } catch (err) {
@@ -558,15 +563,15 @@ class MemberManagement {
             <div class="member-management-content">
                 <div class="member-management-header">
                     <h2>Gestion de Miembros - ${this.escapeHtml(groupName)}</h2>
-                    <button class="close-member-modal" onclick="memberManagement.closeModal()">&times;</button>
+                    <button class="close-member-modal" data-action="mm-close">&times;</button>
                 </div>
                 <div class="member-management-tabs">
-                    <button class="member-tab active" onclick="memberManagement.switchTab('pending')">
+                    <button class="member-tab active" data-action="mm-switch-tab" data-tab="pending">
                         Solicitudes Pendientes
-                        ${this.pendingMembers.length > 0 ? `<span class="pending-count-badge">${this.pendingMembers.length}</span>` : ''}
+                        ${this.pendingMembers.length > 0 ? `<span class="pending-count-badge">${parseInt(this.pendingMembers.length, 10)}</span>` : ''}
                     </button>
-                    <button class="member-tab" onclick="memberManagement.switchTab('active')">
-                        Miembros Activos (${this.activeMembers.length})
+                    <button class="member-tab" data-action="mm-switch-tab" data-tab="active">
+                        Miembros Activos (${parseInt(this.activeMembers.length, 10)})
                     </button>
                 </div>
                 <div class="member-management-body">
@@ -600,8 +605,8 @@ class MemberManagement {
         const tabs = document.querySelectorAll('.member-tab');
 
         tabs.forEach((t, i) => {
-            t.classList.toggle('active', 
-                (tab === 'pending' && i === 0) || 
+            t.classList.toggle('active',
+                (tab === 'pending' && i === 0) ||
                 (tab === 'active' && i === 1) ||
                 (tab === 'settings' && i === 2)
             );
@@ -618,8 +623,8 @@ class MemberManagement {
         return `
             <div class="settings-inner">
                 <div class="settings-section">
-                    <h3>🤖 Auto-Aprobacion</h3>
-                    
+                    <h3>Auto-Aprobacion</h3>
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">Auto-aprobar invitados</div>
@@ -630,7 +635,7 @@ class MemberManagement {
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">Auto-aprobar KYC verificado</div>
@@ -641,7 +646,7 @@ class MemberManagement {
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">Auto-aprobar email verificado</div>
@@ -653,10 +658,10 @@ class MemberManagement {
                         </label>
                     </div>
                 </div>
-                
+
                 <div class="settings-section">
-                    <h3>🔔 Notificaciones</h3>
-                    
+                    <h3>Notificaciones</h3>
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">Notificar nuevas solicitudes</div>
@@ -667,7 +672,7 @@ class MemberManagement {
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
-                    
+
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">Notificar al usuario</div>
@@ -679,9 +684,9 @@ class MemberManagement {
                         </label>
                     </div>
                 </div>
-                
-                <button class="settings-save-btn" onclick="memberManagement.saveSettings()">
-                    💾 Guardar Configuracion
+
+                <button class="settings-save-btn" data-action="mm-save-settings">
+                    Guardar Configuracion
                 </button>
                 <div id="settingsStatus"></div>
             </div>
@@ -692,12 +697,12 @@ class MemberManagement {
     async saveSettings() {
         const btn = document.querySelector('.settings-save-btn');
         const statusDiv = document.getElementById('settingsStatus');
-        
+
         if (btn) {
             btn.disabled = true;
             btn.textContent = 'Guardando...';
         }
-        
+
         const newSettings = {
             auto_approve_invited: document.getElementById('setting-auto-invited')?.checked || false,
             auto_approve_kyc_verified: document.getElementById('setting-auto-kyc')?.checked || false,
@@ -706,10 +711,10 @@ class MemberManagement {
             notify_user_on_decision: document.getElementById('setting-notify-user')?.checked || false,
             require_manual_approval: true
         };
-        
+
         try {
             const apiBase = window.API_BASE_URL || 'https://latanda.online';
-            const response = await fetch(`${apiBase}/api/groups/${this.currentGroupId}/settings`, {
+            const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(this.currentGroupId)}/settings`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -717,14 +722,14 @@ class MemberManagement {
                 },
                 body: JSON.stringify({ approval_settings: newSettings })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 this.groupSettings = newSettings;
                 if (statusDiv) {
                     statusDiv.className = 'settings-status success';
-                    statusDiv.textContent = '✓ Configuracion guardada';
+                    statusDiv.textContent = 'Configuracion guardada';
                 }
                 if (typeof showNotification === 'function') {
                     showNotification('Configuracion guardada', 'success');
@@ -732,21 +737,21 @@ class MemberManagement {
             } else {
                 if (statusDiv) {
                     statusDiv.className = 'settings-status error';
-                    statusDiv.textContent = '✗ ' + (data.error || 'Error al guardar');
+                    statusDiv.textContent = 'Error al guardar configuracion';
                 }
             }
         } catch (err) {
             if (statusDiv) {
                 statusDiv.className = 'settings-status error';
-                statusDiv.textContent = '✗ Error de conexion';
+                statusDiv.textContent = 'Error de conexion';
             }
         }
-        
+
         if (btn) {
             btn.disabled = false;
-            btn.textContent = '💾 Guardar Configuracion';
+            btn.textContent = 'Guardar Configuracion';
         }
-        
+
         setTimeout(() => {
             if (statusDiv) {
                 statusDiv.textContent = '';
@@ -765,29 +770,39 @@ class MemberManagement {
             `;
         }
 
-        return this.pendingMembers.map(member => `
-            <div class="member-item" data-member-id="${member.user_id}">
+        return this.pendingMembers.map(member => {
+            const safeName = this.escapeHtml(member.user_name || member.display_name || 'Usuario');
+            const safeEmail = this.escapeHtml(member.user_email || 'Sin email');
+            const safeId = this.escapeHtml(member.user_id);
+            const safeImgUrl = this.escapeHtml(member.profile_image_url || '');
+            const initial = (member.user_name || member.display_name || 'U').charAt(0).toUpperCase();
+            const safeInitial = this.escapeHtml(initial);
+            const dateStr = member.requested_at ? new Date(member.requested_at).toLocaleDateString('es-HN') : '';
+
+            return `
+            <div class="member-item" data-member-id="${safeId}">
                 <div class="member-avatar">
                     ${member.profile_image_url
-                        ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${this.escapeHtml(member.user_name || member.display_name)}">`
-                        : (member.user_name || member.display_name || 'U').charAt(0).toUpperCase()
+                        ? `<img src="${safeImgUrl}" alt="${safeName}">`
+                        : safeInitial
                     }
                 </div>
                 <div class="member-info">
-                    <div class="member-name">${member.user_name || member.display_name || 'Usuario'}</div>
-                    <div class="member-email">${this.escapeHtml(member.user_email || 'Sin email')}</div>
-                    <div class="member-meta">Solicitud: ${new Date(member.requested_at).toLocaleDateString('es-HN')}</div>
+                    <div class="member-name">${safeName}</div>
+                    <div class="member-email">${safeEmail}</div>
+                    <div class="member-meta">Solicitud: ${this.escapeHtml(dateStr)}</div>
                 </div>
                 <div class="member-actions">
-                    <button class="btn-approve" onclick="memberManagement.handleApprove('${member.user_id}')">
+                    <button class="btn-approve" data-action="mm-approve" data-member-id="${safeId}">
                         Aprobar
                     </button>
-                    <button class="btn-reject" onclick="memberManagement.handleReject('${member.user_id}')">
+                    <button class="btn-reject" data-action="mm-reject" data-member-id="${safeId}">
                         Rechazar
                     </button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     renderActiveMembers() {
@@ -803,37 +818,48 @@ class MemberManagement {
             `;
         }
 
-        return filteredMembers.map(member => `
-            <div class="member-item" data-member-id="${member.user_id}">
+        return filteredMembers.map(member => {
+            const safeName = this.escapeHtml(member.name || member.display_name || 'Usuario');
+            const safeEmail = this.escapeHtml(member.email || 'Sin email');
+            const safeId = this.escapeHtml(member.user_id);
+            const safeImgUrl = this.escapeHtml(member.profile_image_url || '');
+            const safeRole = this.escapeHtml(member.role || 'member');
+            const initial = (member.name || member.display_name || 'U').charAt(0).toUpperCase();
+            const safeInitial = this.escapeHtml(initial);
+            const dateStr = member.joined_at ? new Date(member.joined_at).toLocaleDateString('es-HN') : '';
+
+            return `
+            <div class="member-item" data-member-id="${safeId}">
                 <div class="member-avatar">
                     ${member.profile_image_url
-                        ? `<img src="${this.escapeHtml(member.profile_image_url || '')}" alt="${member.name || member.display_name}">`
-                        : (member.name || member.display_name || 'U').charAt(0).toUpperCase()
+                        ? `<img src="${safeImgUrl}" alt="${safeName}">`
+                        : safeInitial
                     }
                 </div>
                 <div class="member-info">
-                    <div class="member-name">${this.escapeHtml(member.name || member.display_name || 'Usuario')}</div>
-                    <div class="member-email">${this.escapeHtml(member.email || 'Sin email')}</div>
+                    <div class="member-name">${safeName}</div>
+                    <div class="member-email">${safeEmail}</div>
                     <div class="member-meta">
-                        Rol: ${member.role || 'member'} |
-                        Desde: ${new Date(member.joined_at).toLocaleDateString('es-HN')}
+                        Rol: ${safeRole} |
+                        Desde: ${this.escapeHtml(dateStr)}
                     </div>
                 </div>
                 <div class="member-actions-extended">
                     ${member.role !== 'creator' ? `
-                        <select class="role-select" onchange="memberManagement.handleRoleChange('${member.user_id}', this.value)">
+                        <select class="role-select" data-action="mm-role-change" data-member-id="${safeId}">
                             <option value="member" ${member.role === 'member' ? 'selected' : ''}>Miembro</option>
                             <option value="coordinator" ${member.role === 'coordinator' ? 'selected' : ''}>Coordinador</option>
                         </select>
-                        <button class="btn-remove" data-action="remove-member" data-member-id="${member.user_id}" data-member-name="${member.name || member.display_name || 'este miembro'}\"">
-                            ✕ Remover
+                        <button class="btn-remove" data-action="mm-remove" data-member-id="${safeId}" data-member-name="${safeName}">
+                            Remover
                         </button>
                     ` : `
-                        <span class="creator-badge">👑 Creador</span>
+                        <span class="creator-badge">Creador</span>
                     `}
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     async handleApprove(memberId) {
@@ -841,24 +867,28 @@ class MemberManagement {
         if (success) {
             // Remove from pending list and refresh UI
             this.pendingMembers = this.pendingMembers.filter(m => m.user_id !== memberId);
-            document.getElementById('pendingMembersTab').innerHTML = this.renderPendingMembers();
+            var pendingTabEl = document.getElementById('pendingMembersTab');
+            if (pendingTabEl) pendingTabEl.innerHTML = this.renderPendingMembers();
 
             // Update tab badge
             const pendingTab = document.querySelector('.member-tab');
-            const badge = pendingTab.querySelector('.pending-count-badge');
-            if (this.pendingMembers.length > 0) {
-                if (badge) {
-                    badge.textContent = this.pendingMembers.length;
-                } else {
-                    pendingTab.innerHTML += `<span class="pending-count-badge">${this.pendingMembers.length}</span>`;
+            if (pendingTab) {
+                const badge = pendingTab.querySelector('.pending-count-badge');
+                if (this.pendingMembers.length > 0) {
+                    if (badge) {
+                        badge.textContent = this.pendingMembers.length;
+                    } else {
+                        pendingTab.insertAdjacentHTML('beforeend', `<span class="pending-count-badge">${parseInt(this.pendingMembers.length, 10)}</span>`);
+                    }
+                } else if (badge) {
+                    badge.remove();
                 }
-            } else if (badge) {
-                badge.remove();
             }
 
             // Refresh active members
             await this.fetchActiveMembers(this.currentGroupId);
-            document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
+            var activeTabEl = document.getElementById('activeMembersTab');
+            if (activeTabEl) activeTabEl.innerHTML = this.renderActiveMembers();
         }
     }
 
@@ -871,15 +901,18 @@ class MemberManagement {
                 const success = await this.rejectMember(this.currentGroupId, memberId, reason);
                 if (success) {
                     this.pendingMembers = this.pendingMembers.filter(m => m.user_id !== memberId);
-                    document.getElementById('pendingMembersTab').innerHTML = this.renderPendingMembers();
+                    var pendingTabEl = document.getElementById('pendingMembersTab');
+                    if (pendingTabEl) pendingTabEl.innerHTML = this.renderPendingMembers();
 
                     // Update tab badge
                     const pendingTab = document.querySelector('.member-tab');
-                    const badge = pendingTab.querySelector('.pending-count-badge');
-                    if (this.pendingMembers.length > 0) {
-                        if (badge) badge.textContent = this.pendingMembers.length;
-                    } else if (badge) {
-                        badge.remove();
+                    if (pendingTab) {
+                        const badge = pendingTab.querySelector('.pending-count-badge');
+                        if (this.pendingMembers.length > 0) {
+                            if (badge) badge.textContent = this.pendingMembers.length;
+                        } else if (badge) {
+                            badge.remove();
+                        }
                     }
                 }
             }
@@ -887,42 +920,65 @@ class MemberManagement {
     }
 
     handleRemove(memberId, memberName) {
+        const safeName = _mmEscapeHtml(memberName);
         this.showConfirmDialog(
             'Remover Miembro',
-            `Esta seguro que desea remover a ${memberName} del grupo? Esta accion no se puede deshacer.`,
+            'Esta seguro que desea remover a ' + safeName + ' del grupo? Esta accion no se puede deshacer.',
             true,
             async (reason) => {
-                const success = await this.removeMember(this.currentGroupId, memberId, reason);
-                if (success) {
-                    this.activeMembers = this.activeMembers.filter(m => m.user_id !== memberId);
-                    document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    showNotification('Debes iniciar sesion', 'error');
+                    return;
+                }
 
-                    // Update active count
-                    const activeTab = document.querySelectorAll('.member-tab')[1];
-                    if (activeTab) {
-                        activeTab.textContent = `Miembros Activos (${this.activeMembers.filter(m => m.status === 'active').length})`;
+                const apiBase = window.API_BASE_URL || 'https://latanda.online';
+                try {
+                    const response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(this.currentGroupId) + '/members/' + encodeURIComponent(memberId), {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showNotification('Miembro removido exitosamente', 'success');
+                        this.activeMembers = this.activeMembers.filter(m => m.user_id !== memberId);
+                        var activeTabEl = document.getElementById('activeMembersTab');
+                        if (activeTabEl) activeTabEl.innerHTML = this.renderActiveMembers();
+
+                        // Update active count
+                        const activeTab = document.querySelectorAll('.member-tab')[1];
+                        if (activeTab) {
+                            activeTab.textContent = 'Miembros Activos (' + this.activeMembers.filter(m => m.status === 'active').length + ')';
+                        }
+                    } else {
+                        showNotification('Error al remover miembro', 'error');
                     }
+                } catch (error) {
+                    showNotification('Error de conexion', 'error');
                 }
             }
         );
     }
 
-
-
     // ============================================
-    // ROLE & STATUS MANAGEMENT (Added 2025-12-31)
+    // ROLE & STATUS MANAGEMENT
     // ============================================
-    
+
     async handleRoleChange(memberId, newRole) {
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            showNotification('Debes iniciar sesión', 'error');
+            showNotification('Debes iniciar sesion', 'error');
             return;
         }
 
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
         try {
-            const response = await fetch(apiBase + '/api/groups/' + this.currentGroupId + '/members/' + memberId + '/role', {
+            const response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(this.currentGroupId) + '/members/' + encodeURIComponent(memberId) + '/role', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -932,94 +988,67 @@ class MemberManagement {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 showNotification('Rol actualizado a ' + (newRole === 'coordinator' ? 'Coordinador' : 'Miembro'), 'success');
                 const member = this.activeMembers.find(m => m.user_id === memberId);
                 if (member) member.role = newRole;
-                document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
+                var activeTabEl = document.getElementById('activeMembersTab');
+                if (activeTabEl) activeTabEl.innerHTML = this.renderActiveMembers();
             } else {
-                showNotification(data.error || 'Error al cambiar rol', 'error');
-                document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
+                showNotification('Error al cambiar rol', 'error');
+                var activeTabEl2 = document.getElementById('activeMembersTab');
+                if (activeTabEl2) activeTabEl2.innerHTML = this.renderActiveMembers();
             }
         } catch (error) {
-            showNotification('Error de conexión', 'error');
-            document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
+            showNotification('Error de conexion', 'error');
+            var activeTabEl3 = document.getElementById('activeMembersTab');
+            if (activeTabEl3) activeTabEl3.innerHTML = this.renderActiveMembers();
         }
     }
 
     async handleStatusChange(memberId, newStatus, memberName) {
         const action = newStatus === 'suspended' ? 'suspender' : 'activar';
-        
-        if (!confirm(`¿Estás seguro de ${action} a ${memberName}?`)) {
-            return;
-        }
+        const safeName = _mmEscapeHtml(memberName);
 
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            showNotification('Debes iniciar sesión', 'error');
-            return;
-        }
-
-        const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        try {
-            const response = await fetch(apiBase + '/api/groups/' + this.currentGroupId + '/members/' + memberId + '/status', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showNotification(`Miembro ${action === 'suspender' ? 'suspendido' : 'activado'} exitosamente`, 'success');
-                const member = this.activeMembers.find(m => m.user_id === memberId);
-                if (member) member.status = newStatus;
-                document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
-            } else {
-                showNotification(data.error || 'Error al cambiar estado', 'error');
-            }
-        } catch (error) {
-            showNotification('Error de conexión', 'error');
-        }
-    }
-
-    async handleRemove(memberId, memberName) {
-        if (!confirm(`¿Estás seguro de remover a ${memberName} del grupo?`)) {
-            return;
-        }
-
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            showNotification('Debes iniciar sesión', 'error');
-            return;
-        }
-
-        const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        try {
-            const response = await fetch(apiBase + '/api/groups/' + this.currentGroupId + '/members/' + memberId, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+        this.showConfirmDialog(
+            (newStatus === 'suspended' ? 'Suspender' : 'Activar') + ' Miembro',
+            'Esta seguro de ' + action + ' a ' + safeName + '?',
+            false,
+            async () => {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    showNotification('Debes iniciar sesion', 'error');
+                    return;
                 }
-            });
 
-            const data = await response.json();
-            
-            if (data.success) {
-                showNotification(`${memberName} ha sido removido del grupo`, 'success');
-                this.activeMembers = this.activeMembers.filter(m => m.user_id !== memberId);
-                document.getElementById('activeMembersTab').innerHTML = this.renderActiveMembers();
-            } else {
-                showNotification(data.error || 'Error al remover miembro', 'error');
+                const apiBase = window.API_BASE_URL || 'https://latanda.online';
+                try {
+                    const response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(this.currentGroupId) + '/members/' + encodeURIComponent(memberId) + '/status', {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showNotification('Miembro ' + (action === 'suspender' ? 'suspendido' : 'activado') + ' exitosamente', 'success');
+                        const member = this.activeMembers.find(m => m.user_id === memberId);
+                        if (member) member.status = newStatus;
+                        var activeTabEl = document.getElementById('activeMembersTab');
+                        if (activeTabEl) activeTabEl.innerHTML = this.renderActiveMembers();
+                    } else {
+                        showNotification('Error al cambiar estado', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Error de conexion', 'error');
+                }
             }
-        } catch (error) {
-            showNotification('Error de conexión', 'error');
-        }
+        );
     }
 
     showConfirmDialog(title, message, showReason, onConfirm) {
@@ -1027,22 +1056,26 @@ class MemberManagement {
         dialog.className = 'confirm-dialog';
         dialog.innerHTML = `
             <div class="confirm-dialog-content">
-                <h3>${title}</h3>
-                <p>${this.escapeHtml ? this.escapeHtml(message) : message}</p>
+                <h3>${_mmEscapeHtml(title)}</h3>
+                <p>${_mmEscapeHtml(message)}</p>
                 ${showReason ? '<textarea id="confirmReason" placeholder="Razon (opcional)..."></textarea>' : ''}
                 <div class="confirm-dialog-actions">
-                    <button class="btn-cancel" onclick="this.closest('.confirm-dialog').remove()">Cancelar</button>
-                    <button class="btn-reject" id="confirmBtn">Confirmar</button>
+                    <button class="btn-cancel" data-action="mm-confirm-cancel">Cancelar</button>
+                    <button class="btn-reject" data-action="mm-confirm-ok">Confirmar</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(dialog);
 
-        dialog.querySelector('#confirmBtn').addEventListener('click', () => {
+        dialog.querySelector('[data-action="mm-confirm-ok"]').addEventListener('click', () => {
             const reason = showReason ? dialog.querySelector('#confirmReason').value : '';
             dialog.remove();
             onConfirm(reason);
+        });
+
+        dialog.querySelector('[data-action="mm-confirm-cancel"]').addEventListener('click', () => {
+            dialog.remove();
         });
 
         dialog.addEventListener('click', (e) => {
@@ -1059,10 +1092,72 @@ function openMemberManagement(groupId, groupName) {
     window.memberManagement.openModal(groupId, groupName);
 }
 
-
 // Safe wrapper to handle special characters in group names
 function openMemberManagementSafe(button) {
     const groupId = button.getAttribute('data-group-id');
     const groupName = button.getAttribute('data-group-name') || 'Grupo';
     openMemberManagement(groupId, groupName);
 }
+
+// ============================================
+// DELEGATED CLICK HANDLER
+// ============================================
+document.addEventListener('click', function(e) {
+    var target = e.target.closest('[data-action]');
+    if (!target) return;
+
+    var action = target.getAttribute('data-action');
+    if (!action || !action.startsWith('mm-')) return;
+
+    var memberId, memberName;
+
+    switch (action) {
+        case 'mm-close':
+            window.memberManagement.closeModal();
+            break;
+
+        case 'mm-switch-tab':
+            var tab = target.getAttribute('data-tab');
+            if (tab) window.memberManagement.switchTab(tab);
+            break;
+
+        case 'mm-approve':
+            memberId = target.getAttribute('data-member-id');
+            if (memberId) window.memberManagement.handleApprove(memberId);
+            break;
+
+        case 'mm-reject':
+            memberId = target.getAttribute('data-member-id');
+            if (memberId) window.memberManagement.handleReject(memberId);
+            break;
+
+        case 'mm-remove':
+            memberId = target.getAttribute('data-member-id');
+            memberName = target.getAttribute('data-member-name') || 'este miembro';
+            if (memberId) window.memberManagement.handleRemove(memberId, memberName);
+            break;
+
+        case 'mm-save-settings':
+            window.memberManagement.saveSettings();
+            break;
+
+        case 'mm-confirm-cancel':
+            // Handled by direct listener in showConfirmDialog
+            break;
+
+        case 'mm-confirm-ok':
+            // Handled by direct listener in showConfirmDialog
+            break;
+    }
+});
+
+// Delegated change handler for role select
+document.addEventListener('change', function(e) {
+    var target = e.target.closest('[data-action="mm-role-change"]');
+    if (!target) return;
+    var memberId = target.getAttribute('data-member-id');
+    var newRole = target.value;
+    if (memberId && newRole) {
+        window.memberManagement.handleRoleChange(memberId, newRole);
+    }
+});

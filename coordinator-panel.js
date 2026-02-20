@@ -226,6 +226,14 @@ input:checked + .toggle-slider:before {
 `;
 document.head.appendChild(coordinatorPanelStyles);
 
+// Escape user data for safe innerHTML insertion
+function _cpEscapeHtml(text) {
+    if (text == null) return '';
+    var div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Fetch group statistics for coordinator
 async function fetchGroupStats(groupId) {
     const apiBase = window.API_BASE_URL || 'https://latanda.online';
@@ -257,7 +265,7 @@ async function fetchGroupStats(groupId) {
             activeTandas: statsData.data?.active_tandas || 0
         };
     } catch (err) {
-        console.error('Error fetching group stats:', err);
+        // Failed to fetch group stats
         return {
             totalMembers: 0,
             activeMembers: 0,
@@ -275,30 +283,30 @@ function renderCoordinatorStats(stats) {
     return `
         <div class="coordinator-stats">
             <div class="coord-stat success">
-                <span class="coord-stat-value">${stats.activeMembers}</span>
+                <span class="coord-stat-value">${_cpEscapeHtml(stats.activeMembers)}</span>
                 <span class="coord-stat-label">Miembros Activos</span>
             </div>
             <div class="coord-stat ${stats.pendingMembers > 0 ? 'warning' : ''}">
-                <span class="coord-stat-value">${stats.pendingMembers}</span>
+                <span class="coord-stat-value">${_cpEscapeHtml(stats.pendingMembers)}</span>
                 <span class="coord-stat-label">Solicitudes</span>
             </div>
             <div class="coord-stat">
-                <span class="coord-stat-value">L. ${parseFloat(stats.totalCollected || 0).toLocaleString()}</span>
+                <span class="coord-stat-value">L. ${_cpEscapeHtml(parseFloat(stats.totalCollected || 0).toLocaleString())}</span>
                 <span class="coord-stat-label">Recaudado</span>
             </div>
             <div class="coord-stat ${stats.pendingPayments > 0 ? 'danger' : 'success'}">
-                <span class="coord-stat-value">${stats.pendingPayments}</span>
+                <span class="coord-stat-value">${_cpEscapeHtml(stats.pendingPayments)}</span>
                 <span class="coord-stat-label">Pagos Pendientes</span>
             </div>
         </div>
         <div class="coordinator-actions">
-            <button class="coord-action-btn primary" onclick="sendPaymentReminder('${window.memberManagement?.currentGroupId}')">
+            <button class="coord-action-btn primary" data-action="coord-send-reminder">
                 &#x1F514; Enviar Recordatorio
             </button>
-            <button class="coord-action-btn" onclick="viewGroupFinances('${window.memberManagement?.currentGroupId}')">
+            <button class="coord-action-btn" data-action="coord-view-finances">
                 &#x1F4B0; Ver Finanzas
             </button>
-            <button class="coord-action-btn" onclick="exportGroupReport('${window.memberManagement?.currentGroupId}')">
+            <button class="coord-action-btn" data-action="coord-export-report">
                 &#x1F4C4; Exportar Reporte
             </button>
         </div>
@@ -326,10 +334,10 @@ async function sendPaymentReminder(groupId) {
         if (data.success) {
             showNotification('Recordatorios enviados a ' + (data.data?.sent_count || 0) + ' miembros', 'success');
         } else {
-            showNotification(data.error || 'Error al enviar recordatorios', 'error');
+            showNotification('Error al enviar recordatorios', 'error');
         }
     } catch (err) {
-        console.error('Error sending reminders:', err);
+        // Error sending reminders
         showNotification('Error de conexion', 'error');
     }
 }
@@ -369,7 +377,7 @@ async function exportGroupReport(groupId) {
 
         showNotification('Reporte generado', 'success');
     } catch (err) {
-        console.error('Error exporting report:', err);
+        // Error exporting report
         showNotification('Error al exportar reporte', 'error');
     }
 }
@@ -398,20 +406,20 @@ if (window.memberManagement) {
         modal.innerHTML = `
             <div class="member-management-content">
                 <div class="member-management-header">
-                    <h2>Panel de Coordinador - ${groupName}</h2>
-                    <button class="close-member-modal" onclick="memberManagement.closeModal()">&#x2715;</button>
+                    <h2>Panel de Coordinador - ${_cpEscapeHtml(groupName)}</h2>
+                    <button class="close-member-modal" data-action="close-member-modal">&#x2715;</button>
                 </div>
                 ${renderCoordinatorStats(stats)}
                 <div class="member-management-tabs">
-                    <button class="member-tab active" onclick="memberManagement.switchTab('pending')">
+                    <button class="member-tab active" data-action="coord-switch-tab" data-tab="pending">
                         Solicitudes Pendientes
-                        ${this.pendingMembers.length > 0 ? '<span class="pending-count-badge">' + this.pendingMembers.length + '</span>' : ''}
+                        ${this.pendingMembers.length > 0 ? '<span class="pending-count-badge">' + _cpEscapeHtml(this.pendingMembers.length) + '</span>' : ''}
                     </button>
-                    <button class="member-tab" onclick="memberManagement.switchTab('active')">
-                        Miembros Activos (${this.activeMembers.filter(m => m.status === 'active').length})
+                    <button class="member-tab" data-action="coord-switch-tab" data-tab="active">
+                        Miembros Activos (${_cpEscapeHtml(this.activeMembers.filter(m => m.status === 'active').length)})
                     </button>
-                    <button class="member-tab" onclick="memberManagement.switchTab('settings')">
-                        ⚙️ Configuracion
+                    <button class="member-tab" data-action="coord-switch-tab" data-tab="settings">
+                        &#x2699;&#xFE0F; Configuracion
                     </button>
                 </div>
                 <div class="member-management-body">
@@ -436,4 +444,39 @@ if (window.memberManagement) {
     };
 }
 
-console.log('Coordinator Panel module loaded');
+// Delegated click handler for coordinator panel actions
+document.addEventListener('click', function(e) {
+    const actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+
+    const action = actionEl.getAttribute('data-action');
+    const groupId = window.memberManagement?.currentGroupId;
+
+    switch (action) {
+        case 'coord-send-reminder':
+            sendPaymentReminder(groupId);
+            break;
+
+        case 'coord-view-finances':
+            viewGroupFinances(groupId);
+            break;
+
+        case 'coord-export-report':
+            exportGroupReport(groupId);
+            break;
+
+        case 'close-member-modal':
+            if (window.memberManagement) {
+                window.memberManagement.closeModal();
+            }
+            break;
+
+        case 'coord-switch-tab': {
+            const tab = actionEl.getAttribute('data-tab');
+            if (tab && window.memberManagement) {
+                window.memberManagement.switchTab(tab);
+            }
+            break;
+        }
+    }
+});
