@@ -15,14 +15,14 @@
             margin: 20px 0;
             border: 1px solid #86efac;
         }
-        
+
         .payout-methods-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
-        
+
         .payout-methods-header h3 {
             margin: 0;
             color: #166534;
@@ -31,7 +31,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .add-payout-method-btn {
             background: #16a34a;
             color: white;
@@ -44,11 +44,11 @@
             align-items: center;
             gap: 6px;
         }
-        
+
         .add-payout-method-btn:hover {
             background: #15803d;
         }
-        
+
         .payout-method-card {
             background: white;
             border-radius: 12px;
@@ -59,18 +59,18 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .payout-method-card.default {
             border-color: #16a34a;
             box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
         }
-        
+
         .payout-method-info {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        
+
         .payout-method-icon {
             width: 48px;
             height: 48px;
@@ -80,23 +80,23 @@
             justify-content: center;
             font-size: 1.5rem;
         }
-        
+
         .payout-method-icon.bank { background: #dbeafe; }
         .payout-method-icon.tigo { background: #fef3c7; }
         .payout-method-icon.crypto { background: #f3e8ff; }
-        
+
         .payout-method-details h4 {
             margin: 0 0 4px 0;
             font-size: 1rem;
             color: #1f2937;
         }
-        
+
         .payout-method-details p {
             margin: 0;
             font-size: 0.85rem;
             color: #6b7280;
         }
-        
+
         .default-badge {
             background: #16a34a;
             color: white;
@@ -105,12 +105,12 @@
             border-radius: 12px;
             margin-left: 8px;
         }
-        
+
         .payout-method-actions {
             display: flex;
             gap: 8px;
         }
-        
+
         .payout-method-actions button {
             padding: 6px 12px;
             border-radius: 6px;
@@ -119,17 +119,17 @@
             cursor: pointer;
             font-size: 0.8rem;
         }
-        
+
         .payout-method-actions button:hover {
             background: #f3f4f6;
         }
-        
+
         .payout-method-actions .delete-btn:hover {
             background: #fee2e2;
             border-color: #fca5a5;
             color: #dc2626;
         }
-        
+
         /* Payout Modal */
         .payout-modal-overlay {
             position: fixed;
@@ -146,12 +146,12 @@
             visibility: hidden;
             transition: all 0.3s;
         }
-        
+
         .payout-modal-overlay.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .payout-modal {
             background: white;
             border-radius: 16px;
@@ -162,11 +162,11 @@
             transform: translateY(20px);
             transition: transform 0.3s;
         }
-        
+
         .payout-modal-overlay.active .payout-modal {
             transform: translateY(0);
         }
-        
+
         .payout-modal-header {
             padding: 20px;
             border-bottom: 1px solid #e5e7eb;
@@ -174,13 +174,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .payout-modal-header h3 {
             margin: 0;
             font-size: 1.2rem;
             color: #1f2937;
         }
-        
+
         .payout-modal-close {
             background: none;
             border: none;
@@ -188,22 +188,22 @@
             cursor: pointer;
             color: #6b7280;
         }
-        
+
         .payout-modal-body {
             padding: 20px;
         }
-        
+
         .payout-form-group {
             margin-bottom: 16px;
         }
-        
+
         .payout-form-group label {
             display: block;
             margin-bottom: 6px;
             font-weight: 500;
             color: #374151;
         }
-        
+
         .payout-form-group input,
         .payout-form-group select {
             width: 100%;
@@ -212,20 +212,20 @@
             border-radius: 8px;
             font-size: 1rem;
         }
-        
+
         .payout-form-group input:focus,
         .payout-form-group select:focus {
             outline: none;
             border-color: #16a34a;
             box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
         }
-        
+
         .method-type-selector {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
         }
-        
+
         .method-type-option {
             flex: 1;
             padding: 16px;
@@ -235,26 +235,26 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .method-type-option:hover {
             border-color: #16a34a;
         }
-        
+
         .method-type-option.selected {
             border-color: #16a34a;
             background: #f0fdf4;
         }
-        
+
         .method-type-option .icon {
             font-size: 2rem;
             margin-bottom: 8px;
         }
-        
+
         .method-type-option .label {
             font-weight: 500;
             color: #374151;
         }
-        
+
         .payout-modal-footer {
             padding: 16px 20px;
             border-top: 1px solid #e5e7eb;
@@ -262,7 +262,7 @@
             gap: 12px;
             justify-content: flex-end;
         }
-        
+
         .payout-btn {
             padding: 12px 24px;
             border-radius: 8px;
@@ -270,21 +270,21 @@
             cursor: pointer;
             border: none;
         }
-        
+
         .payout-btn-secondary {
             background: #f3f4f6;
             color: #374151;
         }
-        
+
         .payout-btn-primary {
             background: #16a34a;
             color: white;
         }
-        
+
         .payout-btn-primary:hover {
             background: #15803d;
         }
-        
+
         /* Collect Tanda Button */
         .collect-tanda-section {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
@@ -294,24 +294,24 @@
             text-align: center;
             border: 2px solid #f59e0b;
         }
-        
+
         .collect-tanda-section h3 {
             color: #92400e;
             margin: 0 0 8px 0;
         }
-        
+
         .collect-tanda-section p {
             color: #a16207;
             margin: 0 0 16px 0;
         }
-        
+
         .collect-tanda-amount {
             font-size: 2rem;
             font-weight: bold;
             color: #166534;
             margin-bottom: 16px;
         }
-        
+
         .collect-tanda-btn {
             background: #16a34a;
             color: white;
@@ -324,16 +324,16 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .collect-tanda-btn:hover {
             background: #15803d;
         }
-        
+
         .collect-tanda-btn:disabled {
             background: #9ca3af;
             cursor: not-allowed;
         }
-        
+
         /* Payout Status */
         .payout-status-card {
             background: white;
@@ -342,34 +342,34 @@
             margin: 20px 0;
             border: 1px solid #e5e7eb;
         }
-        
+
         .payout-status-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
-        
+
         .payout-status-badge {
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 500;
         }
-        
+
         .payout-status-badge.pending { background: #fef3c7; color: #92400e; }
         .payout-status-badge.auto_approved { background: #dbeafe; color: #1e40af; }
         .payout-status-badge.processing { background: #e0e7ff; color: #4338ca; }
         .payout-status-badge.awaiting_confirmation { background: #fce7f3; color: #9d174d; }
         .payout-status-badge.completed { background: #d1fae5; color: #065f46; }
         .payout-status-badge.rejected { background: #fee2e2; color: #991b1b; }
-        
+
         .no-payout-methods {
             text-align: center;
             padding: 40px 20px;
             color: #6b7280;
         }
-        
+
         .no-payout-methods .icon {
             font-size: 3rem;
             margin-bottom: 16px;
@@ -395,8 +395,8 @@ function getPayoutUserId() {
             if (userData.user_id) return userData.user_id;
             if (userData.id) return userData.id;
         }
-    } catch(e) {}
-    return localStorage.getItem('latanda_user_id') || 
+    } catch(e) { /* localStorage parse error */ }
+    return localStorage.getItem('latanda_user_id') ||
            sessionStorage.getItem('latanda_user_id') ||
            localStorage.getItem('userId') ||
            window.currentUserId;
@@ -414,17 +414,21 @@ function escapeHtml(text) {
 async function loadPayoutMethods() {
     const userId = getPayoutUserId();
     if (!userId) return [];
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const response = await fetch(`${apiBase}/api/users/payout-methods?user_id=${userId}`);
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        const response = await fetch(`${apiBase}/api/users/payout-methods?user_id=${userId}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         const result = await response.json();
-        
+
         if (result.success) {
             window.PayoutSystem.payoutMethods = result.data.payout_methods;
             return result.data.payout_methods;
         }
     } catch (error) {
+        /* Network or parse error loading payout methods */
     }
     return [];
 }
@@ -433,20 +437,20 @@ async function loadPayoutMethods() {
 function renderPayoutMethodsSection(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    
+
     const methods = window.PayoutSystem.payoutMethods;
-    
+
     let html = `
         <div class="payout-methods-section">
             <div class="payout-methods-header">
                 <h3><span>💳</span> Mis Métodos de Cobro</h3>
-                <button class="add-payout-method-btn" onclick="openAddPayoutMethodModal()">
+                <button class="add-payout-method-btn" data-action="payout-add-method">
                     <span>+</span> Agregar
                 </button>
             </div>
             <div class="payout-methods-list">
     `;
-    
+
     if (methods.length === 0) {
         html += `
             <div class="no-payout-methods">
@@ -461,16 +465,16 @@ function renderPayoutMethodsSection(containerId) {
                         method.method_type === 'mobile_money' ? '📱' : '₿';
             const iconClass = method.method_type === 'bank_transfer' ? 'bank' :
                              method.method_type === 'mobile_money' ? 'tigo' : 'crypto';
-            
+
             let details = '';
             if (method.method_type === 'bank_transfer') {
-                details = `${escapeHtml(method.bank_name)} - ****${method.bank_account_number?.slice(-4) || ''}`;
+                details = `${escapeHtml(method.bank_name)} - ****${escapeHtml(method.bank_account_number?.slice(-4) || '')}`;
             } else if (method.method_type === 'mobile_money') {
                 details = `Tigo Money: ${escapeHtml(method.tigo_phone)}`;
             } else {
-                details = `${escapeHtml(method.crypto_network)}: ${method.crypto_address?.slice(0,10)}...`;
+                details = `${escapeHtml(method.crypto_network)}: ${escapeHtml(method.crypto_address?.slice(0,10) || '')}...`;
             }
-            
+
             html += `
                 <div class="payout-method-card ${method.is_default ? 'default' : ''}">
                     <div class="payout-method-info">
@@ -481,18 +485,18 @@ function renderPayoutMethodsSection(containerId) {
                                   method.method_type === 'mobile_money' ? 'Tigo Money' : 'Criptomoneda'}
                                 ${method.is_default ? '<span class="default-badge">Predeterminado</span>' : ''}
                             </h4>
-                            <p>${escapeHtml(details)}</p>
+                            <p>${details}</p>
                         </div>
                     </div>
                     <div class="payout-method-actions">
-                        ${!method.is_default ? `<button onclick="setDefaultPayoutMethod('${method.id}')">Predeterminado</button>` : ''}
-                        <button class="delete-btn" onclick="deletePayoutMethod('${method.id}')">Eliminar</button>
+                        ${!method.is_default ? `<button data-action="payout-set-default" data-method-id="${escapeHtml(method.id)}">Predeterminado</button>` : ''}
+                        <button class="delete-btn" data-action="payout-delete-method" data-method-id="${escapeHtml(method.id)}">Eliminar</button>
                     </div>
                 </div>
             `;
         });
     }
-    
+
     html += `</div></div>`;
     container.innerHTML = html;
 }
@@ -504,24 +508,24 @@ function getPayoutMethodModalHTML() {
             <div class="payout-modal">
                 <div class="payout-modal-header">
                     <h3>Agregar Método de Cobro</h3>
-                    <button class="payout-modal-close" onclick="closePayoutMethodModal()">&times;</button>
+                    <button class="payout-modal-close" data-action="payout-close-modal">&times;</button>
                 </div>
                 <div class="payout-modal-body">
                     <div class="method-type-selector">
-                        <div class="method-type-option" data-type="bank_transfer" onclick="selectMethodType('bank_transfer')">
+                        <div class="method-type-option" data-type="bank_transfer" data-action="payout-select-type">
                             <div class="icon">🏦</div>
                             <div class="label">Banco</div>
                         </div>
-                        <div class="method-type-option" data-type="mobile_money" onclick="selectMethodType('mobile_money')">
+                        <div class="method-type-option" data-type="mobile_money" data-action="payout-select-type">
                             <div class="icon">📱</div>
                             <div class="label">Tigo Money</div>
                         </div>
-                        <div class="method-type-option" data-type="crypto" onclick="selectMethodType('crypto')">
+                        <div class="method-type-option" data-type="crypto" data-action="payout-select-type">
                             <div class="icon">₿</div>
                             <div class="label">Crypto</div>
                         </div>
                     </div>
-                    
+
                     <div id="bankFields" style="display: none;">
                         <div class="payout-form-group">
                             <label>Banco</label>
@@ -552,7 +556,7 @@ function getPayoutMethodModalHTML() {
                             <input type="text" id="bankAccountHolder" placeholder="Nombre completo">
                         </div>
                     </div>
-                    
+
                     <div id="tigoFields" style="display: none;">
                         <div class="payout-form-group">
                             <label>Número Tigo Money</label>
@@ -563,7 +567,7 @@ function getPayoutMethodModalHTML() {
                             <input type="text" id="tigoName" placeholder="Nombre completo">
                         </div>
                     </div>
-                    
+
                     <div id="cryptoFields" style="display: none;">
                         <div class="payout-form-group">
                             <label>Red</label>
@@ -578,7 +582,7 @@ function getPayoutMethodModalHTML() {
                             <input type="text" id="cryptoAddress" placeholder="0x... o bc1...">
                         </div>
                     </div>
-                    
+
                     <div class="payout-form-group">
                         <label>
                             <input type="checkbox" id="setAsDefault"> Establecer como predeterminado
@@ -586,8 +590,8 @@ function getPayoutMethodModalHTML() {
                     </div>
                 </div>
                 <div class="payout-modal-footer">
-                    <button class="payout-btn payout-btn-secondary" onclick="closePayoutMethodModal()">Cancelar</button>
-                    <button class="payout-btn payout-btn-primary" onclick="savePayoutMethod()">Guardar</button>
+                    <button class="payout-btn payout-btn-secondary" data-action="payout-close-modal">Cancelar</button>
+                    <button class="payout-btn payout-btn-primary" data-action="payout-save-method">Guardar</button>
                 </div>
             </div>
         </div>
@@ -601,7 +605,7 @@ function getCollectTandaModalHTML() {
             <div class="payout-modal">
                 <div class="payout-modal-header">
                     <h3>🎉 Cobrar mi Tanda</h3>
-                    <button class="payout-modal-close" onclick="closeCollectTandaModal()">&times;</button>
+                    <button class="payout-modal-close" data-action="payout-close-collect">&times;</button>
                 </div>
                 <div class="payout-modal-body" id="collectTandaContent">
                     <!-- Content will be loaded dynamically -->
@@ -639,11 +643,11 @@ window.selectMethodType = function(type) {
         el.classList.remove('selected');
     });
     document.querySelector(`[data-type="${type}"]`).classList.add('selected');
-    
+
     document.getElementById('bankFields').style.display = type === 'bank_transfer' ? 'block' : 'none';
     document.getElementById('tigoFields').style.display = type === 'mobile_money' ? 'block' : 'none';
     document.getElementById('cryptoFields').style.display = type === 'crypto' ? 'block' : 'none';
-    
+
     window.PayoutSystem.selectedMethodType = type;
 };
 
@@ -651,19 +655,19 @@ window.selectMethodType = function(type) {
 window.savePayoutMethod = async function() {
     const userId = getPayoutUserId();
     const type = window.PayoutSystem.selectedMethodType;
-    
+
     const data = {
         user_id: userId,
         method_type: type,
         is_default: document.getElementById('setAsDefault').checked
     };
-    
+
     if (type === 'bank_transfer') {
         data.bank_name = document.getElementById('bankName').value;
         data.bank_account_number = document.getElementById('bankAccountNumber').value;
         data.bank_account_type = document.getElementById('bankAccountType').value;
         data.bank_account_holder = document.getElementById('bankAccountHolder').value;
-        
+
         if (!data.bank_name || !data.bank_account_number || !data.bank_account_holder) {
             alert('Por favor completa todos los campos del banco');
             return;
@@ -671,7 +675,7 @@ window.savePayoutMethod = async function() {
     } else if (type === 'mobile_money') {
         data.tigo_phone = document.getElementById('tigoPhone').value;
         data.tigo_name = document.getElementById('tigoName').value;
-        
+
         if (!data.tigo_phone || !data.tigo_name) {
             alert('Por favor completa todos los campos de Tigo Money');
             return;
@@ -679,33 +683,34 @@ window.savePayoutMethod = async function() {
     } else if (type === 'crypto') {
         data.crypto_network = document.getElementById('cryptoNetwork').value;
         data.crypto_address = document.getElementById('cryptoAddress').value;
-        
+
         if (!data.crypto_address) {
             alert('Por favor ingresa la dirección de wallet');
             return;
         }
     }
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
+        const payToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
         const response = await fetch(`${apiBase}/api/users/payout-methods`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(payToken ? { 'Authorization': `Bearer ${payToken}` } : {}) },
             body: JSON.stringify(data)
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             closePayoutMethodModal();
             await loadPayoutMethods();
             renderPayoutMethodsSection('payoutMethodsContainer');
             if (window.showSuccess) window.showSuccess('Método de cobro agregado');
         } else {
-            alert('Error: ' + (result.data?.error?.message || 'No se pudo guardar'));
+            alert('Error al guardar el método de cobro');
         }
     } catch (error) {
-        alert('Error al guardar');
+        alert('Error al guardar el método de cobro');
     }
 };
 
@@ -713,38 +718,43 @@ window.savePayoutMethod = async function() {
 window.setDefaultPayoutMethod = async function(methodId) {
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
+        const defToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
         const response = await fetch(`${apiBase}/api/users/payout-methods/${methodId}/default`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json', ...(defToken ? { 'Authorization': `Bearer ${defToken}` } : {}) }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             await loadPayoutMethods();
             renderPayoutMethodsSection('payoutMethodsContainer');
         }
     } catch (error) {
+        /* Network error setting default method */
     }
 };
 
 // Delete payout method
 window.deletePayoutMethod = async function(methodId) {
     if (!confirm('¿Eliminar este método de cobro?')) return;
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
+        const delToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
         const response = await fetch(`${apiBase}/api/users/payout-methods/${methodId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: delToken ? { 'Authorization': `Bearer ${delToken}` } : {}
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             await loadPayoutMethods();
             renderPayoutMethodsSection('payoutMethodsContainer');
         }
     } catch (error) {
+        /* Network error deleting payout method */
     }
 };
 
@@ -752,17 +762,18 @@ window.deletePayoutMethod = async function(methodId) {
 window.checkPayoutEligibility = async function(groupId) {
     const userId = getPayoutUserId();
     if (!userId || !groupId) return null;
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
         const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/eligibility?user_id=${userId}`);
         const result = await response.json();
-        
+
         if (result.success) {
             window.PayoutSystem.eligibility = result.data;
             return result.data;
         }
     } catch (error) {
+        /* Network error checking eligibility */
     }
     return null;
 };
@@ -771,14 +782,14 @@ window.checkPayoutEligibility = async function(groupId) {
 window.renderCollectTandaSection = function(containerId, groupId) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    
+
     const eligibility = window.PayoutSystem.eligibility;
-    
+
     if (!eligibility || !eligibility.is_beneficiary) {
         container.innerHTML = '';
         return;
     }
-    
+
     if (eligibility.existing_request) {
         // Show status of existing request
         const status = eligibility.existing_request.status;
@@ -790,16 +801,16 @@ window.renderCollectTandaSection = function(containerId, groupId) {
             'completed': 'Completado',
             'rejected': 'Rechazado'
         };
-        
+
         container.innerHTML = `
             <div class="payout-status-card">
                 <div class="payout-status-header">
                     <h3>Estado de tu Cobro</h3>
-                    <span class="payout-status-badge ${status}">${statusLabels[status] || status}</span>
+                    <span class="payout-status-badge ${escapeHtml(status)}">${escapeHtml(statusLabels[status] || status)}</span>
                 </div>
                 <p>Monto: <strong>L. ${parseFloat(eligibility.existing_request.net_amount).toLocaleString('es-HN', {minimumFractionDigits: 2})}</strong></p>
                 ${status === 'awaiting_confirmation' ? `
-                    <button class="collect-tanda-btn" onclick="confirmPayoutReceipt('${groupId}', '${eligibility.existing_request.id}')">
+                    <button class="collect-tanda-btn" data-action="payout-confirm-receipt" data-group-id="${escapeHtml(groupId)}" data-request-id="${escapeHtml(eligibility.existing_request.id)}">
                         ✓ Confirmar que recibí el pago
                     </button>
                 ` : ''}
@@ -807,7 +818,7 @@ window.renderCollectTandaSection = function(containerId, groupId) {
         `;
         return;
     }
-    
+
     if (!eligibility.cycle_complete) {
         container.innerHTML = `
             <div class="payout-status-card">
@@ -820,7 +831,7 @@ window.renderCollectTandaSection = function(containerId, groupId) {
         `;
         return;
     }
-    
+
     // Eligible to collect!
     container.innerHTML = `
         <div class="collect-tanda-section">
@@ -832,7 +843,7 @@ window.renderCollectTandaSection = function(containerId, groupId) {
             <p style="font-size: 0.85rem; margin-bottom: 16px;">
                 (Monto bruto: L. ${eligibility.amounts.gross.toLocaleString('es-HN', {minimumFractionDigits: 2})} - Comisiones: L. ${(eligibility.amounts.coordinator_fee + eligibility.amounts.platform_fee).toLocaleString('es-HN', {minimumFractionDigits: 2})})
             </p>
-            <button class="collect-tanda-btn" onclick="openCollectTandaModal('${groupId}')">
+            <button class="collect-tanda-btn" data-action="payout-collect-tanda" data-group-id="${escapeHtml(groupId)}">
                 💰 Cobrar mi Tanda
             </button>
         </div>
@@ -844,11 +855,11 @@ window.openCollectTandaModal = async function(groupId) {
     initPayoutModals();
     const modal = document.getElementById('collectTandaModal');
     const content = document.getElementById('collectTandaContent');
-    
+
     await loadPayoutMethods();
     const methods = window.PayoutSystem.payoutMethods;
     const eligibility = window.PayoutSystem.eligibility;
-    
+
     if (methods.length === 0) {
         // Force registration
         content.innerHTML = `
@@ -858,7 +869,7 @@ window.openCollectTandaModal = async function(groupId) {
                 <p style="color: #6b7280; margin-bottom: 20px;">
                     Para poder recibir tu tanda, primero debes registrar cómo quieres que te paguemos.
                 </p>
-                <button class="payout-btn payout-btn-primary" onclick="closeCollectTandaModal(); openAddPayoutMethodModal();">
+                <button class="payout-btn payout-btn-primary" data-action="payout-add-method-from-collect">
                     Agregar Método de Cobro
                 </button>
             </div>
@@ -866,7 +877,7 @@ window.openCollectTandaModal = async function(groupId) {
     } else {
         // Show confirmation with method selection
         const defaultMethod = methods.find(m => m.is_default) || methods[0];
-        
+
         content.innerHTML = `
             <div style="text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 16px;">💰</div>
@@ -874,31 +885,31 @@ window.openCollectTandaModal = async function(groupId) {
                 <div class="collect-tanda-amount" style="margin: 20px 0;">
                     L. ${eligibility.amounts.net.toLocaleString('es-HN', {minimumFractionDigits: 2})}
                 </div>
-                
+
                 <div style="text-align: left; margin: 20px 0;">
                     <label style="font-weight: 500; margin-bottom: 8px; display: block;">Método de pago:</label>
                     <select id="selectedPayoutMethod" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db;">
                         ${methods.map(m => `
-                            <option value="${m.id}" ${m.id === defaultMethod.id ? 'selected' : ''}>
-                                ${m.method_type === 'bank_transfer' ? '🏦 ' + m.bank_name + ' - ****' + (m.bank_account_number?.slice(-4) || '') :
-                                  m.method_type === 'mobile_money' ? '📱 Tigo: ' + m.tigo_phone :
-                                  '₿ ' + m.crypto_network + ': ' + (m.crypto_address?.slice(0,10) || '') + '...'}
+                            <option value="${escapeHtml(m.id)}" ${m.id === defaultMethod.id ? 'selected' : ''}>
+                                ${m.method_type === 'bank_transfer' ? '🏦 ' + escapeHtml(m.bank_name) + ' - ****' + escapeHtml(m.bank_account_number?.slice(-4) || '') :
+                                  m.method_type === 'mobile_money' ? '📱 Tigo: ' + escapeHtml(m.tigo_phone) :
+                                  '₿ ' + escapeHtml(m.crypto_network) + ': ' + escapeHtml(m.crypto_address?.slice(0,10) || '') + '...'}
                             </option>
                         `).join('')}
                     </select>
                 </div>
-                
+
                 <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 20px;">
                     El pago será procesado y recibirás una notificación cuando esté listo.
                 </p>
-                
-                <button class="payout-btn payout-btn-primary" style="width: 100%;" onclick="requestPayout('${groupId}')">
+
+                <button class="payout-btn payout-btn-primary" style="width: 100%;" data-action="payout-request" data-group-id="${escapeHtml(groupId)}">
                     ✓ Confirmar y Solicitar Cobro
                 </button>
             </div>
         `;
     }
-    
+
     modal.classList.add('active');
 };
 
@@ -910,7 +921,7 @@ window.closeCollectTandaModal = function() {
 window.requestPayout = async function(groupId) {
     const userId = getPayoutUserId();
     const payoutMethodId = document.getElementById('selectedPayoutMethod').value;
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
         const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/request`, {
@@ -921,21 +932,21 @@ window.requestPayout = async function(groupId) {
                 payout_method_id: payoutMethodId
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             closeCollectTandaModal();
             if (window.showSuccess) {
-                window.showSuccess(result.data.auto_approved ? 
-                    '¡Solicitud aprobada! El pago será procesado pronto.' : 
+                window.showSuccess(result.data.auto_approved ?
+                    '¡Solicitud aprobada! El pago será procesado pronto.' :
                     'Solicitud enviada. Pendiente de revisión.');
             }
             // Refresh eligibility
             await checkPayoutEligibility(groupId);
             renderCollectTandaSection('collectTandaContainer', groupId);
         } else {
-            alert('Error: ' + (result.data?.error?.message || 'No se pudo procesar'));
+            alert('No se pudo procesar la solicitud de cobro');
         }
     } catch (error) {
         alert('Error al solicitar cobro');
@@ -945,9 +956,9 @@ window.requestPayout = async function(groupId) {
 // Confirm receipt
 window.confirmPayoutReceipt = async function(groupId, payoutRequestId) {
     if (!confirm('¿Confirmas que recibiste el pago de tu tanda?')) return;
-    
+
     const userId = getPayoutUserId();
-    
+
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
         const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/confirm`, {
@@ -958,18 +969,18 @@ window.confirmPayoutReceipt = async function(groupId, payoutRequestId) {
                 payout_request_id: payoutRequestId
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             if (window.showSuccess) window.showSuccess('¡Recepción confirmada! Ciclo cerrado.');
             await checkPayoutEligibility(groupId);
             renderCollectTandaSection('collectTandaContainer', groupId);
         } else {
-            alert('Error: ' + (result.data?.error?.message || 'No se pudo confirmar'));
+            alert('No se pudo confirmar la recepción del pago');
         }
     } catch (error) {
-        alert('Error al confirmar');
+        alert('Error al confirmar la recepción');
     }
 };
 
@@ -985,20 +996,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Initialize payout system when page is ready
 async function initPayoutSystem() {
-    
+
     // Wait for DOM to be ready
     if (document.readyState !== "complete") {
         await new Promise(resolve => {
             window.addEventListener("load", resolve);
         });
     }
-    
+
     // Load user payout methods
     await loadPayoutMethods();
-    
+
     // Always render methods section (it shows "add method" if empty)
     renderPayoutMethodsSection("payoutMethodsContainer");
-    
+
     // Check if we have a selected group or tandas data
     // We will check eligibility for each group the user has
     setTimeout(async () => {
@@ -1020,7 +1031,7 @@ async function initPayoutSystem() {
             }
         }
     }, 2000); // Wait for tandas to load
-    
+
 }
 
 // Hook into the refreshTandas function to also update payout eligibility
@@ -1051,3 +1062,56 @@ if (typeof originalRefreshTandas === "function") {
 
 // Start initialization
 initPayoutSystem();
+
+// ============================================
+// DELEGATED CLICK HANDLER
+// ============================================
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.getAttribute('data-action');
+
+    switch (action) {
+        case 'payout-add-method':
+            openAddPayoutMethodModal();
+            break;
+        case 'payout-close-modal':
+            closePayoutMethodModal();
+            break;
+        case 'payout-select-type':
+            var type = btn.getAttribute('data-type');
+            if (type) selectMethodType(type);
+            break;
+        case 'payout-save-method':
+            savePayoutMethod();
+            break;
+        case 'payout-close-collect':
+            closeCollectTandaModal();
+            break;
+        case 'payout-set-default':
+            var methodId = btn.getAttribute('data-method-id');
+            if (methodId) setDefaultPayoutMethod(methodId);
+            break;
+        case 'payout-delete-method':
+            var delMethodId = btn.getAttribute('data-method-id');
+            if (delMethodId) deletePayoutMethod(delMethodId);
+            break;
+        case 'payout-request':
+            var groupId = btn.getAttribute('data-group-id');
+            if (groupId) requestPayout(groupId);
+            break;
+        case 'payout-confirm-receipt':
+            var grpId = btn.getAttribute('data-group-id');
+            var reqId = btn.getAttribute('data-request-id');
+            if (grpId && reqId) confirmPayoutReceipt(grpId, reqId);
+            break;
+        case 'payout-collect-tanda':
+            var collectGroupId = btn.getAttribute('data-group-id');
+            if (collectGroupId) openCollectTandaModal(collectGroupId);
+            break;
+        case 'payout-add-method-from-collect':
+            closeCollectTandaModal();
+            openAddPayoutMethodModal();
+            break;
+    }
+});

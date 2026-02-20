@@ -3,14 +3,15 @@
 // DISPUTES SYSTEM FRONTEND
 // ============================================
 
-// CSS for Disputes
-// XSS prevention helper (v3.99.0)
-function escapeHtmlDF(text) {
-    const div = document.createElement("div");
-    div.textContent = String(text != null ? text : "");
-    return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+// XSS prevention helper
+function _dispEscapeHtml(text) {
+    if (text == null) return '';
+    var div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// CSS for Disputes
 const disputesStyles = document.createElement('style');
 disputesStyles.textContent = `
 /* Disputes Modal */
@@ -282,9 +283,21 @@ const disputeStatusLabels = {
     'rejected': 'Rechazado'
 };
 
+// Allowlisted dispute types for CSS class usage
+const _validDisputeTypes = ['missing_payment', 'wrong_amount', 'delayed', 'not_received', 'fraud', 'other'];
+const _validDisputeStatuses = ['pending', 'in_review', 'resolved', 'rejected'];
+
+function _safeDisputeTypeClass(type) {
+    return _validDisputeTypes.includes(type) ? type : 'other';
+}
+
+function _safeDisputeStatusClass(status) {
+    return _validDisputeStatuses.includes(status) ? status : 'pending';
+}
+
 // Open create dispute modal
 function openCreateDisputeModal(groupId, groupName, paymentId, payoutRequestId) {
-    const modal = document.createElement('div');
+    var modal = document.createElement('div');
     modal.className = 'disputes-modal';
     modal.id = 'createDisputeModal';
 
@@ -292,20 +305,20 @@ function openCreateDisputeModal(groupId, groupName, paymentId, payoutRequestId) 
         <div class="disputes-modal-content">
             <div class="disputes-header">
                 <h2>&#x26A0; Reportar Problema</h2>
-                <button class="close-member-modal" onclick="closeDisputeModal()">&times;</button>
+                <button class="close-member-modal" data-action="dispute-close-modal">&times;</button>
             </div>
             <div class="disputes-body">
                 <p style="color: #888; margin-bottom: 20px;">
-                    Reporta un problema con un pago en <strong>${escapeHtmlDF(groupName)}</strong>
+                    Reporta un problema con un pago en <strong>${_dispEscapeHtml(groupName)}</strong>
                 </p>
 
                 <div class="dispute-form-group">
                     <label>Tipo de problema</label>
                     <div class="dispute-type-options" id="disputeTypeOptions">
                         ${Object.entries(disputeTypeLabels).map(([type, info]) => `
-                            <div class="dispute-type-option" data-type="${type}" onclick="selectDisputeType('${type}')">
+                            <div class="dispute-type-option" data-type="${_dispEscapeHtml(type)}" data-action="dispute-select-type">
                                 <div class="type-icon">${info.icon}</div>
-                                <div class="type-label">${info.label}</div>
+                                <div class="type-label">${_dispEscapeHtml(info.label)}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -322,13 +335,13 @@ function openCreateDisputeModal(groupId, groupName, paymentId, payoutRequestId) 
                     <input type="text" id="disputeEvidence" placeholder="Link a captura de pantalla o comprobante">
                 </div>
 
-                <input type="hidden" id="disputeGroupId" value="${groupId}">
-                <input type="hidden" id="disputePaymentId" value="${paymentId || ''}">
-                <input type="hidden" id="disputePayoutId" value="${payoutRequestId || ''}">
+                <input type="hidden" id="disputeGroupId" value="${_dispEscapeHtml(groupId)}">
+                <input type="hidden" id="disputePaymentId" value="${_dispEscapeHtml(paymentId || '')}">
+                <input type="hidden" id="disputePayoutId" value="${_dispEscapeHtml(payoutRequestId || '')}">
 
                 <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button class="btn-cancel" style="flex: 1;" onclick="closeDisputeModal()">Cancelar</button>
-                    <button class="btn-resolve" style="flex: 1;" onclick="submitDispute()">Enviar Reporte</button>
+                    <button class="btn-cancel" style="flex: 1;" data-action="dispute-close-modal">Cancelar</button>
+                    <button class="btn-resolve" style="flex: 1;" data-action="dispute-submit">Enviar Reporte</button>
                 </div>
             </div>
         </div>
@@ -336,38 +349,39 @@ function openCreateDisputeModal(groupId, groupName, paymentId, payoutRequestId) 
 
     document.body.appendChild(modal);
 
-    modal.addEventListener('click', (e) => {
+    modal.addEventListener('click', function(e) {
         if (e.target === modal) closeDisputeModal();
     });
 }
 
 function selectDisputeType(type) {
-    document.querySelectorAll('.dispute-type-option').forEach(opt => {
+    document.querySelectorAll('.dispute-type-option').forEach(function(opt) {
         opt.classList.toggle('selected', opt.dataset.type === type);
     });
-    document.getElementById('disputeType').value = type;
+    var typeInput = document.getElementById('disputeType');
+    if (typeInput) typeInput.value = type;
 }
 
 function closeDisputeModal() {
-    const modal = document.getElementById('createDisputeModal');
+    var modal = document.getElementById('createDisputeModal');
     if (modal) modal.remove();
 
-    const viewModal = document.getElementById('viewDisputesModal');
+    var viewModal = document.getElementById('viewDisputesModal');
     if (viewModal) viewModal.remove();
 
-    const resolveModal = document.getElementById('resolveDisputeModal');
+    var resolveModal = document.getElementById('resolveDisputeModal');
     if (resolveModal) resolveModal.remove();
 }
 
 async function submitDispute() {
-    const type = document.getElementById('disputeType').value;
-    const description = document.getElementById('disputeDescription').value;
-    const evidenceUrl = document.getElementById('disputeEvidence').value;
-    const groupId = document.getElementById('disputeGroupId').value;
-    const paymentId = document.getElementById('disputePaymentId').value;
-    const payoutId = document.getElementById('disputePayoutId').value;
-    const userId = localStorage.getItem('user_id');
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
+    var type = document.getElementById('disputeType').value;
+    var description = document.getElementById('disputeDescription').value;
+    var evidenceUrl = document.getElementById('disputeEvidence').value;
+    var groupId = document.getElementById('disputeGroupId').value;
+    var paymentId = document.getElementById('disputePaymentId').value;
+    var payoutId = document.getElementById('disputePayoutId').value;
+    var userId = localStorage.getItem('user_id');
+    var apiBase = window.API_BASE_URL || 'https://latanda.online';
 
     if (!type) {
         showNotification('Selecciona el tipo de problema', 'error');
@@ -380,7 +394,7 @@ async function submitDispute() {
     }
 
     try {
-        const response = await fetch(apiBase + '/api/disputes', {
+        var response = await fetch(apiBase + '/api/disputes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -394,13 +408,13 @@ async function submitDispute() {
             })
         });
 
-        const data = await response.json();
+        var data = await response.json();
 
         if (data.success) {
             showNotification('Reporte enviado exitosamente', 'success');
             closeDisputeModal();
         } else {
-            showNotification(data.error || 'Error al enviar reporte', 'error');
+            showNotification('Error al enviar reporte', 'error');
         }
     } catch (err) {
         showNotification('Error de conexion', 'error');
@@ -409,16 +423,16 @@ async function submitDispute() {
 
 // View user's disputes
 async function viewMyDisputes() {
-    const userId = localStorage.getItem('user_id');
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
+    var userId = localStorage.getItem('user_id');
+    var apiBase = window.API_BASE_URL || 'https://latanda.online';
 
     try {
-        const response = await fetch(apiBase + '/api/disputes?user_id=' + userId);
-        const data = await response.json();
+        var response = await fetch(apiBase + '/api/disputes?user_id=' + encodeURIComponent(userId));
+        var data = await response.json();
 
-        const disputes = data.success ? data.data.disputes : [];
+        var disputes = data.success ? data.data.disputes : [];
 
-        const modal = document.createElement('div');
+        var modal = document.createElement('div');
         modal.className = 'disputes-modal';
         modal.id = 'viewDisputesModal';
 
@@ -426,7 +440,7 @@ async function viewMyDisputes() {
             <div class="disputes-modal-content">
                 <div class="disputes-header">
                     <h2>&#x1F4CB; Mis Reportes</h2>
-                    <button class="close-member-modal" onclick="closeDisputeModal()">&times;</button>
+                    <button class="close-member-modal" data-action="dispute-close-modal">&times;</button>
                 </div>
                 <div class="disputes-body">
                     ${disputes.length === 0 ? `
@@ -436,7 +450,7 @@ async function viewMyDisputes() {
                         </div>
                     ` : `
                         <div class="disputes-list">
-                            ${disputes.map(d => renderDisputeItem(d, false)).join('')}
+                            ${disputes.map(function(d) { return renderDisputeItem(d, false); }).join('')}
                         </div>
                     `}
                 </div>
@@ -445,7 +459,7 @@ async function viewMyDisputes() {
 
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', (e) => {
+        modal.addEventListener('click', function(e) {
             if (e.target === modal) closeDisputeModal();
         });
 
@@ -456,34 +470,36 @@ async function viewMyDisputes() {
 
 // View group disputes (Coordinator)
 async function viewGroupDisputes(groupId, groupName) {
-    const userId = localStorage.getItem('user_id');
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
+    var userId = localStorage.getItem('user_id');
+    var apiBase = window.API_BASE_URL || 'https://latanda.online';
 
     try {
-        const response = await fetch(apiBase + '/api/groups/' + groupId + '/disputes?user_id=' + userId);
-        const data = await response.json();
+        var response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/disputes?user_id=' + encodeURIComponent(userId));
+        var data = await response.json();
 
         if (!data.success) {
-            showNotification(data.error || 'Error al cargar disputas', 'error');
+            showNotification('Error al cargar disputas', 'error');
             return;
         }
 
-        const disputes = data.data.disputes || [];
+        var disputes = data.data.disputes || [];
+        var pendingCount = parseInt(data.data.pending_count, 10) || 0;
+        var inReviewCount = parseInt(data.data.in_review_count, 10) || 0;
 
-        const modal = document.createElement('div');
+        var modal = document.createElement('div');
         modal.className = 'disputes-modal';
         modal.id = 'viewDisputesModal';
 
         modal.innerHTML = `
             <div class="disputes-modal-content" style="max-width: 700px;">
                 <div class="disputes-header">
-                    <h2>&#x1F6A8; Disputas - ${escapeHtmlDF(groupName)}</h2>
-                    <button class="close-member-modal" onclick="closeDisputeModal()">&times;</button>
+                    <h2>&#x1F6A8; Disputas - ${_dispEscapeHtml(groupName)}</h2>
+                    <button class="close-member-modal" data-action="dispute-close-modal">&times;</button>
                 </div>
                 <div style="padding: 12px 24px; background: rgba(0,0,0,0.2); display: flex; gap: 16px; font-size: 0.85rem;">
-                    <span style="color: #f59e0b;">Pendientes: ${data.data.pending_count || 0}</span>
-                    <span style="color: #3b82f6;">En revision: ${data.data.in_review_count || 0}</span>
-                    <span style="color: #888;">Total: ${disputes.length}</span>
+                    <span style="color: #f59e0b;">Pendientes: ${_dispEscapeHtml(pendingCount)}</span>
+                    <span style="color: #3b82f6;">En revision: ${_dispEscapeHtml(inReviewCount)}</span>
+                    <span style="color: #888;">Total: ${_dispEscapeHtml(disputes.length)}</span>
                 </div>
                 <div class="disputes-body">
                     ${disputes.length === 0 ? `
@@ -493,7 +509,7 @@ async function viewGroupDisputes(groupId, groupName) {
                         </div>
                     ` : `
                         <div class="disputes-list">
-                            ${disputes.map(d => renderDisputeItem(d, true, groupId)).join('')}
+                            ${disputes.map(function(d) { return renderDisputeItem(d, true, groupId); }).join('')}
                         </div>
                     `}
                 </div>
@@ -502,7 +518,7 @@ async function viewGroupDisputes(groupId, groupName) {
 
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', (e) => {
+        modal.addEventListener('click', function(e) {
             if (e.target === modal) closeDisputeModal();
         });
 
@@ -512,48 +528,50 @@ async function viewGroupDisputes(groupId, groupName) {
 }
 
 function renderDisputeItem(dispute, isCoordinator, groupId) {
-    const typeInfo = disputeTypeLabels[dispute.type] || { icon: '?', label: dispute.type };
+    var typeInfo = disputeTypeLabels[dispute.type] || { icon: '?', label: dispute.type };
+    var safeTypeClass = _safeDisputeTypeClass(dispute.type);
+    var safeStatusClass = _safeDisputeStatusClass(dispute.status);
 
     return `
-        <div class="dispute-item" data-dispute-id="${dispute.id}">
+        <div class="dispute-item" data-dispute-id="${_dispEscapeHtml(dispute.id)}">
             <div class="dispute-item-header">
-                <span class="dispute-type-badge ${dispute.type}">${typeInfo.label}</span>
-                <span class="dispute-status-badge ${dispute.status}">${disputeStatusLabels[dispute.status]}</span>
+                <span class="dispute-type-badge ${safeTypeClass}">${_dispEscapeHtml(typeInfo.label)}</span>
+                <span class="dispute-status-badge ${safeStatusClass}">${_dispEscapeHtml(disputeStatusLabels[dispute.status] || dispute.status)}</span>
             </div>
             ${isCoordinator && dispute.user_name ? `
                 <div style="font-size: 0.85rem; color: #888; margin-bottom: 8px;">
-                    Reportado por: <strong style="color: white;">${dispute.user_name}</strong>
+                    Reportado por: <strong style="color: white;">${_dispEscapeHtml(dispute.user_name)}</strong>
                 </div>
             ` : ''}
-            <div class="dispute-description">${dispute.description}</div>
+            <div class="dispute-description">${_dispEscapeHtml(dispute.description)}</div>
             ${dispute.evidence_url ? `
                 <div style="margin-bottom: 10px;">
-                    <a href="${dispute.evidence_url}" target="_blank" style="color: var(--tanda-cyan); font-size: 0.85rem;">
+                    <a href="${_dispEscapeHtml(dispute.evidence_url)}" target="_blank" rel="noopener noreferrer" style="color: var(--tanda-cyan); font-size: 0.85rem;">
                         &#x1F4CE; Ver evidencia
                     </a>
                 </div>
             ` : ''}
             <div class="dispute-meta">
-                ${dispute.group_name ? `Grupo: ${dispute.group_name} | ` : ''}
-                Creado: ${new Date(dispute.created_at).toLocaleDateString('es-HN')}
+                ${dispute.group_name ? `Grupo: ${_dispEscapeHtml(dispute.group_name)} | ` : ''}
+                Creado: ${_dispEscapeHtml(new Date(dispute.created_at).toLocaleDateString('es-HN'))}
             </div>
             ${dispute.resolution ? `
                 <div class="dispute-resolution">
                     <div class="dispute-resolution-label">Resolucion:</div>
-                    <div class="dispute-resolution-text">${dispute.resolution}</div>
+                    <div class="dispute-resolution-text">${_dispEscapeHtml(dispute.resolution)}</div>
                 </div>
             ` : ''}
             ${isCoordinator && ['pending', 'in_review'].includes(dispute.status) ? `
                 <div class="dispute-actions">
                     ${dispute.status === 'pending' ? `
-                        <button class="btn-review" onclick="updateDisputeStatus('${dispute.id}', 'in_review')">
+                        <button class="btn-review" data-action="dispute-mark-review" data-dispute-id="${_dispEscapeHtml(dispute.id)}">
                             Marcar en Revision
                         </button>
                     ` : ''}
-                    <button class="btn-resolve" onclick="openResolveDisputeModal('${dispute.id}', '${groupId}')">
+                    <button class="btn-resolve" data-action="dispute-open-resolve" data-dispute-id="${_dispEscapeHtml(dispute.id)}" data-group-id="${_dispEscapeHtml(groupId)}">
                         Resolver
                     </button>
-                    <button class="btn-reject" onclick="openResolveDisputeModal('${dispute.id}', '${groupId}', true)">
+                    <button class="btn-reject" data-action="dispute-open-reject" data-dispute-id="${_dispEscapeHtml(dispute.id)}" data-group-id="${_dispEscapeHtml(groupId)}">
                         Rechazar
                     </button>
                 </div>
@@ -563,31 +581,32 @@ function renderDisputeItem(dispute, isCoordinator, groupId) {
 }
 
 async function updateDisputeStatus(disputeId, status) {
-    const userId = localStorage.getItem('user_id');
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
+    var userId = localStorage.getItem('user_id');
+    var apiBase = window.API_BASE_URL || 'https://latanda.online';
 
     try {
-        const response = await fetch(apiBase + '/api/disputes/' + disputeId + '/status', {
+        var response = await fetch(apiBase + '/api/disputes/' + encodeURIComponent(disputeId) + '/status', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coordinator_id: userId, status })
+            body: JSON.stringify({ coordinator_id: userId, status: status })
         });
 
-        const data = await response.json();
+        var data = await response.json();
 
         if (data.success) {
             showNotification('Estado actualizado', 'success');
             // Refresh the dispute item
-            const item = document.querySelector(`[data-dispute-id="${disputeId}"]`);
+            var item = document.querySelector('[data-dispute-id="' + CSS.escape(disputeId) + '"]');
             if (item) {
-                const badge = item.querySelector('.dispute-status-badge');
+                var badge = item.querySelector('.dispute-status-badge');
                 if (badge) {
-                    badge.className = 'dispute-status-badge ' + status;
-                    badge.textContent = disputeStatusLabels[status];
+                    var safeClass = _safeDisputeStatusClass(status);
+                    badge.className = 'dispute-status-badge ' + safeClass;
+                    badge.textContent = disputeStatusLabels[status] || status;
                 }
             }
         } else {
-            showNotification(data.error || 'Error al actualizar', 'error');
+            showNotification('Error al actualizar', 'error');
         }
     } catch (err) {
         showNotification('Error de conexion', 'error');
@@ -595,7 +614,7 @@ async function updateDisputeStatus(disputeId, status) {
 }
 
 function openResolveDisputeModal(disputeId, groupId, isReject) {
-    const modal = document.createElement('div');
+    var modal = document.createElement('div');
     modal.className = 'confirm-dialog';
     modal.id = 'resolveDisputeModal';
 
@@ -605,8 +624,8 @@ function openResolveDisputeModal(disputeId, groupId, isReject) {
             <p style="color: #888;">Proporciona una explicacion para el usuario.</p>
             <textarea id="disputeResolution" placeholder="${isReject ? 'Razon del rechazo...' : 'Como se resolvio el problema...'}" style="width: 100%; min-height: 100px; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; margin-bottom: 16px;"></textarea>
             <div class="confirm-dialog-actions">
-                <button class="btn-cancel" onclick="document.getElementById('resolveDisputeModal').remove()">Cancelar</button>
-                <button class="${isReject ? 'btn-reject' : 'btn-resolve'}" onclick="resolveDispute('${disputeId}', '${groupId}', ${isReject})">
+                <button class="btn-cancel" data-action="dispute-close-resolve-modal">Cancelar</button>
+                <button class="${isReject ? 'btn-reject' : 'btn-resolve'}" data-action="dispute-confirm-resolve" data-dispute-id="${_dispEscapeHtml(disputeId)}" data-group-id="${_dispEscapeHtml(groupId)}" data-is-reject="${isReject ? 'true' : 'false'}">
                     ${isReject ? 'Rechazar' : 'Resolver'}
                 </button>
             </div>
@@ -617,9 +636,9 @@ function openResolveDisputeModal(disputeId, groupId, isReject) {
 }
 
 async function resolveDispute(disputeId, groupId, isReject) {
-    const resolution = document.getElementById('disputeResolution').value;
-    const userId = localStorage.getItem('user_id');
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
+    var resolution = document.getElementById('disputeResolution').value;
+    var userId = localStorage.getItem('user_id');
+    var apiBase = window.API_BASE_URL || 'https://latanda.online';
 
     if (!resolution || resolution.length < 5) {
         showNotification('Proporciona una explicacion', 'error');
@@ -627,7 +646,7 @@ async function resolveDispute(disputeId, groupId, isReject) {
     }
 
     try {
-        const response = await fetch(apiBase + '/api/disputes/' + disputeId + '/resolve', {
+        var response = await fetch(apiBase + '/api/disputes/' + encodeURIComponent(disputeId) + '/resolve', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -637,19 +656,20 @@ async function resolveDispute(disputeId, groupId, isReject) {
             })
         });
 
-        const data = await response.json();
+        var data = await response.json();
 
         if (data.success) {
             showNotification('Disputa ' + (isReject ? 'rechazada' : 'resuelta'), 'success');
-            document.getElementById('resolveDisputeModal').remove();
+            var resolveModal = document.getElementById('resolveDisputeModal');
+            if (resolveModal) resolveModal.remove();
             // Refresh disputes view
             closeDisputeModal();
             // Re-open if we have groupId
             if (groupId) {
-                setTimeout(() => viewGroupDisputes(groupId, ''), 300);
+                setTimeout(function() { viewGroupDisputes(groupId, ''); }, 300);
             }
         } else {
-            showNotification(data.error || 'Error al procesar', 'error');
+            showNotification('Error al procesar', 'error');
         }
     } catch (err) {
         showNotification('Error de conexion', 'error');
@@ -658,10 +678,10 @@ async function resolveDispute(disputeId, groupId, isReject) {
 
 // Add disputes tab to coordinator panel
 if (window.memberManagement) {
-    const originalRenderCoordinatorStats = window.renderCoordinatorStats;
+    var originalRenderCoordinatorStats = window.renderCoordinatorStats;
     if (originalRenderCoordinatorStats) {
         window.renderCoordinatorStats = function(stats) {
-            let html = originalRenderCoordinatorStats(stats);
+            var html = originalRenderCoordinatorStats(stats);
 
             // Add disputes button to coordinator actions
             html = html.replace(
@@ -669,11 +689,12 @@ if (window.memberManagement) {
                 '</div>\n        <div class="coordinator-actions">'
             );
 
-            // Try to add disputes button
+            // Try to add disputes button with data-action instead of inline onclick
             if (html.includes('class="coordinator-actions"')) {
+                var safeGroupId = _dispEscapeHtml(window.memberManagement?.currentGroupId || '');
                 html = html.replace(
                     '&#x1F4C4; Exportar Reporte',
-                    '&#x1F4C4; Exportar Reporte</button>\n            <button class="coord-action-btn" onclick="viewGroupDisputes(\'' + (window.memberManagement?.currentGroupId || '') + '\', \'Grupo\')">&#x1F6A8; Ver Disputas</button'
+                    '&#x1F4C4; Exportar Reporte</button>\n            <button class="coord-action-btn" data-action="dispute-view-group" data-group-id="' + safeGroupId + '">&#x1F6A8; Ver Disputas</button'
                 );
             }
 
@@ -682,3 +703,68 @@ if (window.memberManagement) {
     }
 }
 
+// Delegated click handler for all dispute actions
+document.addEventListener('click', function(e) {
+    var target = e.target.closest('[data-action]');
+    if (!target) return;
+
+    var action = target.getAttribute('data-action');
+
+    switch (action) {
+        case 'dispute-close-modal':
+            closeDisputeModal();
+            break;
+
+        case 'dispute-select-type':
+            var type = target.getAttribute('data-type');
+            if (type) selectDisputeType(type);
+            break;
+
+        case 'dispute-submit':
+            submitDispute();
+            break;
+
+        case 'dispute-mark-review': {
+            var disputeId = target.getAttribute('data-dispute-id');
+            if (disputeId) updateDisputeStatus(disputeId, 'in_review');
+            break;
+        }
+
+        case 'dispute-open-resolve': {
+            var dId = target.getAttribute('data-dispute-id');
+            var gId = target.getAttribute('data-group-id');
+            if (dId) openResolveDisputeModal(dId, gId, false);
+            break;
+        }
+
+        case 'dispute-open-reject': {
+            var dIdR = target.getAttribute('data-dispute-id');
+            var gIdR = target.getAttribute('data-group-id');
+            if (dIdR) openResolveDisputeModal(dIdR, gIdR, true);
+            break;
+        }
+
+        case 'dispute-close-resolve-modal': {
+            var resolveModal = document.getElementById('resolveDisputeModal');
+            if (resolveModal) resolveModal.remove();
+            break;
+        }
+
+        case 'dispute-confirm-resolve': {
+            var resDisputeId = target.getAttribute('data-dispute-id');
+            var resGroupId = target.getAttribute('data-group-id');
+            var isReject = target.getAttribute('data-is-reject') === 'true';
+            if (resDisputeId) resolveDispute(resDisputeId, resGroupId, isReject);
+            break;
+        }
+
+        case 'dispute-view-group': {
+            var viewGroupId = target.getAttribute('data-group-id');
+            if (viewGroupId) viewGroupDisputes(viewGroupId, 'Grupo');
+            break;
+        }
+
+        default:
+            break;
+    }
+});
