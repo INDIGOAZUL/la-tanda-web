@@ -17,6 +17,12 @@ class LaTandaWallet {
         };
         this.selectedBank = null;
         this.transactionHistory = [];
+        
+        // Pagination state
+        this.currentPage = 1;
+        this.totalPages = 1;
+        this.paginationData = { total: 0, limit: 50, offset: 0, has_more: false };
+        
         this.qrCodeInstance = null;
         this.notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
 
@@ -130,6 +136,21 @@ class LaTandaWallet {
                 !settingsDropdown.contains(e.target) &&
                 !settingsBtn.contains(e.target)) {
                 this.closeWalletSettings();
+            }
+        });
+
+        // Pagination controls
+        document.getElementById('prevPage')?.addEventListener('click', () => this.prevPage());
+        document.getElementById('nextPage')?.addEventListener('click', () => this.nextPage());
+        document.getElementById('jumpPageBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('jumpToPage');
+            const page = parseInt(input?.value);
+            if (page) this.loadPage(page);
+        });
+        document.getElementById('jumpToPage')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const page = parseInt(e.target.value);
+                if (page) this.loadPage(page);
             }
         });
 
@@ -510,6 +531,14 @@ class LaTandaWallet {
             if (response && response.success && response.data && response.data.transactions) {
                 this.transactionHistory = response.data.transactions;
 
+                // Capture pagination data
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                    this.totalPages = Math.ceil(response.data.pagination.total / response.data.pagination.limit) || 1;
+                    this.currentPage = Math.floor(response.data.pagination.offset / response.data.pagination.limit) + 1;
+                    this.updatePaginationUI();
+                }
+
                 // Save to localStorage as backup
                 this.saveTransactionHistory();
             } else if (response && !response.success) {
@@ -573,6 +602,71 @@ class LaTandaWallet {
         } else {
             // Start with empty transaction history - real transactions will be added as they occur
             this.transactionHistory = [];
+        }
+    }
+
+    // ================================
+    // 📄 PAGINATION METHODS
+    // ================================
+
+    async loadPage(pageNum) {
+        if (pageNum < 1 || pageNum > this.totalPages) return;
+        
+        const offset = (pageNum - 1) * this.paginationData.limit;
+        const userId = this.getCurrentUserId();
+        
+        try {
+            const response = await this.apiCall('/api/user/transactions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: userId,
+                    limit: this.paginationData.limit,
+                    offset: offset
+                })
+            });
+            
+            if (response && response.success && response.data) {
+                this.transactionHistory = response.data.transactions || [];
+                this.currentPage = pageNum;
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                }
+                this.updatePaginationUI();
+                this.renderTransactionHistory();
+                this.saveTransactionHistory();
+            }
+        } catch (error) {
+            this.showError('Error al cargar la página de transacciones');
+        }
+    }
+
+    nextPage() {
+        if (this.paginationData.has_more) {
+            this.loadPage(this.currentPage + 1);
+        }
+    }
+
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.loadPage(this.currentPage - 1);
+        }
+    }
+
+    updatePaginationUI() {
+        const controls = document.getElementById('paginationControls');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const indicator = document.getElementById('pageIndicator');
+        
+        if (!controls) return;
+        
+        controls.classList.toggle('hidden', this.totalPages <= 1);
+        
+        if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = !this.paginationData.has_more;
+        
+        if (indicator) {
+            indicator.textContent = `Página ${this.currentPage} de ${this.totalPages}`;
         }
     }
 
