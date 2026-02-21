@@ -16,7 +16,22 @@ class LaTandaWallet {
             HNL_USD: 0.0402
         };
         this.selectedBank = null;
+        
+        // Pagination configuration
+        this.PAGE_SIZE_DEFAULT = 20;
+        this.PAGE_SIZE_MAX = 50;
+        this.PAGE_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+        
+        // Page cache for faster navigation
+        this.pageCache = {};
+        
         this.transactionHistory = [];
+        
+        // Pagination state
+        this.currentPage = 1;
+        this.totalPages = 1;
+        this.paginationData = { total: 0, limit: this.PAGE_SIZE_DEFAULT, offset: 0, has_more: false };
+        
         this.qrCodeInstance = null;
         this.notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
 
@@ -130,6 +145,21 @@ class LaTandaWallet {
                 !settingsDropdown.contains(e.target) &&
                 !settingsBtn.contains(e.target)) {
                 this.closeWalletSettings();
+            }
+        });
+
+        // Pagination controls
+        document.getElementById('prevPage')?.addEventListener('click', () => this.prevPage());
+        document.getElementById('nextPage')?.addEventListener('click', () => this.nextPage());
+        document.getElementById('jumpPageBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('jumpToPage');
+            const page = parseInt(input?.value);
+            if (page) this.loadPage(page);
+        });
+        document.getElementById('jumpToPage')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const page = parseInt(e.target.value);
+                if (page) this.loadPage(page);
             }
         });
 
@@ -502,13 +532,21 @@ class LaTandaWallet {
                 method: 'POST',
                 body: JSON.stringify({
                     user_id: userId,
-                    limit: 50,
+                    limit: this.PAGE_SIZE_DEFAULT,
                     offset: 0
                 })
             });
 
             if (response && response.success && response.data && response.data.transactions) {
                 this.transactionHistory = response.data.transactions;
+
+                // Capture pagination data
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                    this.totalPages = Math.ceil(response.data.pagination.total / response.data.pagination.limit) || 1;
+                    this.currentPage = Math.floor(response.data.pagination.offset / response.data.pagination.limit) + 1;
+                    this.updatePaginationUI();
+                }
 
                 // Save to localStorage as backup
                 this.saveTransactionHistory();
@@ -574,6 +612,298 @@ class LaTandaWallet {
             // Start with empty transaction history - real transactions will be added as they occur
             this.transactionHistory = [];
         }
+    }
+
+    // ================================
+    // 📄 PAGINATION METHODS
+    // ================================
+    // Handles server-side pagination for transaction history
+    // Uses backend API: POST /api/user/transactions with limit/offset
+    // Supports Previous/Next navigation and jump-to-page
+
+    /**
+     * Load a specific page of transactions
+     * @param {number} pageNum - Page number to load (1-indexed)
+     */
+    async loadPage(pageNum) {
+        if (pageNum < 1 || pageNum > this.totalPages) return;
+        
+        const offset = (pageNum - 1) * this.paginationData.limit;
+        const userId = this.getCurrentUserId();
+        const cacheKey = `page_${pageNum}_${this.paginationData.limit}`;
+        
+        // Check page cache first
+        const cached = this.getCachedPage(cacheKey);
+        if (cached) {
+            console.log(`Loading page ${pageNum} from cache`);
+            this.transactionHistory = cached.transactions;
+            this.currentPage = pageNum;
+            this.paginationData = cached.pagination;
+            this.totalPages = Math.ceil(cached.pagination.total / cached.pagination.limit) || 1;
+            this.updatePaginationUI();
+            this.renderTransactionHistory();
+            return;
+        }
+        
+        try {
+            // Show loading indicator with smooth transition
+            this.showLoading('Cargando transacciones...');
+            
+            const response = await this.apiCall('/api/user/transactions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: userId,
+                    limit: this.paginationData.limit,
+                    offset: offset
+                })
+            });
+            
+            this.hideLoading();
+            
+            if (response && response.success && response.data) {
+                this.transactionHistory = response.data.transactions || [];
+                this.currentPage = pageNum;
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                }
+                
+                // Cache this page for faster navigation
+                this.cachePage(cacheKey, {
+                    transactions: this.transactionHistory,
+                    pagination: this.paginationData
+                });
+                
+                this.updatePaginationUI();
+                this.renderTransactionHistory();
+                this.renderWithTransition();
+                this.saveTransactionHistory();
+            }
+        } catch (error) {
+            this.hideLoading();
+            this.showError('Error al cargar la página de transacciones');
+        }
+    }
+
+    /**
+     * Get cached page data if not expired
+     */
+    getCachedPage(cacheKey) {
+        const cached = this.pageCache[cacheKey];
+        if (!cached) return null;
+        
+        const isExpired = Date.now() - cached.timestamp > this.PAGE_CACHE_EXPIRY;
+        if (isExpired) {
+            delete this.pageCache[cacheKey];
+            return null;
+        }
+        return cached.data;
+    }
+
+    /**
+     * Cache page data with timestamp
+     */
+    cachePage(cacheKey, data) {
+        // Keep only last 5 pages in cache
+        const cacheKeys = Object.keys(this.pageCache);
+        if (cacheKeys.length >= 5) {
+            const oldestKey = cacheKeys[0];
+            delete this.pageCache[oldestKey];
+        }
+        
+        this.pageCache[cacheKey] = {
+            data: data,
+            timestamp: Date.now()
+        };
+    }
+
+    /**
+     * Render with smooth CSS transition
+     */
+    renderWithTransition() {
+        const list = document.getElementById('transactionsList');
+        if (list) {
+            list.classList.add('fade-transition');
+            setTimeout(() => list.classList.remove('fade-transition'), 300);
+        }
+    }
+
+    /**
+     * Navigate to next page (if available)
+     */
+    nextPage() {
+        if (this.paginationData.has_more) {
+            this.loadPage(this.currentPage + 1);
+        }
+    }
+
+    /**
+     * Navigate to previous page (if not on first page)
+     */
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.loadPage(this.currentPage - 1);
+        }
+    }
+
+    /**
+     * Update pagination UI controls based on current state
+     * Shows/hides controls, enables/disables buttons, updates indicator
+     */
+    updatePaginationUI() {
+        const controls = document.getElementById('paginationControls');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const indicator = document.getElementById('pageIndicator');
+        
+        if (!controls) return;
+        
+        controls.classList.toggle('hidden', this.totalPages <= 1);
+        
+        if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = !this.paginationData.has_more;
+        
+        if (indicator) {
+            indicator.textContent = `Página ${this.currentPage} de ${this.totalPages}`;
+        }
+    }
+
+    /**
+     * Enable infinite scroll - loads next page when user scrolls to bottom
+     * Bonus feature: +50 LTD (alternative to button pagination)
+     * Call this method to activate infinite scroll mode
+     */
+    enableInfiniteScroll() {
+        // Create intersection observer to detect scroll to bottom
+        const options = {
+            root: null,
+            rootMargin: '100px',
+            threshold: 0.1
+        };
+        
+        this.infiniteScrollObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && this.paginationData.has_more && !this.isLoadingMore) {
+                    this.loadNextPage();
+                }
+            });
+        }, options);
+        
+        // Observe the transaction list container
+        const transactionList = document.getElementById('transactionsList');
+        if (transactionList && this.infiniteScrollObserver) {
+            this.infiniteScrollObserver.observe(transactionList);
+            console.log('Infinite scroll enabled');
+        }
+        
+        // Add "Load More" button as fallback
+        this.addLoadMoreButton();
+    }
+
+    /**
+     * Disable infinite scroll
+     */
+    disableInfiniteScroll() {
+        if (this.infiniteScrollObserver) {
+            this.infiniteScrollObserver.disconnect();
+            this.infiniteScrollObserver = null;
+        }
+        // Remove load more button
+        const existingBtn = document.getElementById('loadMoreBtn');
+        if (existingBtn) existingBtn.remove();
+    }
+
+    /**
+     * Load next page (for infinite scroll)
+     */
+    async loadNextPage() {
+        if (this.isLoadingMore || !this.paginationData.has_more) return;
+        
+        this.isLoadingMore = true;
+        
+        // Show loading indicator
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando más...';
+        
+        try {
+            const nextOffset = this.paginationData.offset + this.paginationData.limit;
+            const userId = this.getCurrentUserId();
+            
+            const response = await this.apiCall('/api/user/transactions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: userId,
+                    limit: this.paginationData.limit,
+                    offset: nextOffset
+                })
+            });
+            
+            if (response && response.success && response.data) {
+                const newTransactions = response.data.transactions || [];
+                
+                // Append new transactions to existing list
+                this.transactionHistory = [...this.transactionHistory, ...newTransactions];
+                
+                // Update pagination state
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                    this.currentPage = Math.floor(response.data.pagination.offset / response.data.pagination.limit) + 1;
+                    this.totalPages = Math.ceil(response.data.pagination.total / response.data.pagination.limit) || 1;
+                }
+                
+                // Re-render transaction list
+                this.renderTransactionHistory();
+                
+                // Update button state
+                if (loadMoreBtn) {
+                    if (this.paginationData.has_more) {
+                        loadMoreBtn.innerHTML = 'Cargar más';
+                    } else {
+                        loadMoreBtn.innerHTML = 'No hay más transacciones';
+                        loadMoreBtn.disabled = true;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading more transactions:', error);
+            this.showError('Error al cargar más transacciones');
+        } finally {
+            this.isLoadingMore = false;
+        }
+    }
+
+    /**
+     * Add "Load More" button as fallback for infinite scroll
+     */
+    addLoadMoreButton() {
+        const transactionList = document.getElementById('transactionsList');
+        if (!transactionList) return;
+        
+        // Check if button already exists
+        if (document.getElementById('loadMoreBtn')) return;
+        
+        const loadMoreBtn = document.createElement('button');
+        loadMoreBtn.id = 'loadMoreBtn';
+        loadMoreBtn.className = 'load-more-btn';
+        loadMoreBtn.innerHTML = 'Cargar más';
+        loadMoreBtn.onclick = () => this.loadNextPage();
+        
+        transactionList.parentNode.insertBefore(loadMoreBtn, transactionList.nextSibling);
+    }
+
+    /**
+     * Generate pagination HTML markup for insertion into DOM
+     * @returns {string} HTML markup for pagination controls
+     */
+    getPaginationHTML() {
+        return `
+            <div id="paginationControls" class="pagination-controls hidden">
+                <button id="prevPage" class="btn-pagination">← Anterior</button>
+                <input type="number" id="jumpToPage" class="page-jump-input" min="1" placeholder="#">
+                <button id="jumpPageBtn" class="btn-pagination">Ir</button>
+                <span id="pageIndicator">Página ${this.currentPage} de ${this.totalPages}</span>
+                <button id="nextPage" class="btn-pagination">Siguiente →</button>
+            </div>
+        `;
     }
 
     // ================================
