@@ -616,6 +616,9 @@ class LaTandaWallet {
         const userId = this.getCurrentUserId();
         
         try {
+            // Show loading indicator
+            this.showLoading('Cargando transacciones...');
+            
             const response = await this.apiCall('/api/user/transactions', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -624,6 +627,8 @@ class LaTandaWallet {
                     offset: offset
                 })
             });
+            
+            this.hideLoading();
             
             if (response && response.success && response.data) {
                 this.transactionHistory = response.data.transactions || [];
@@ -636,6 +641,7 @@ class LaTandaWallet {
                 this.saveTransactionHistory();
             }
         } catch (error) {
+            this.hideLoading();
             this.showError('Error al cargar la página de transacciones');
         }
     }
