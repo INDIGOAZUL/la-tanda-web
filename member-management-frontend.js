@@ -404,7 +404,9 @@ class MemberManagement {
     // Check if current user is coordinator of a group
     async checkCoordinatorStatus(groupId, userId) {
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/pending-members?user_id=${encodeURIComponent(userId)}`);
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+            var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members`, { headers: headers });
             // If we get a 403, user is not coordinator
             // If we get success or 404, user IS coordinator
             return response.status !== 403;
@@ -415,11 +417,11 @@ class MemberManagement {
 
     // Fetch pending members for a group (uses /members endpoint and filters by status)
     async fetchPendingMembers(groupId) {
-        const userId = localStorage.getItem('user_id');
         try {
-            // Use the main members endpoint which includes pending members
-            const url = `${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members?user_id=${encodeURIComponent(userId)}`;
-            const response = await fetch(url);
+            const url = `${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '') }
+            });
             const data = await response.json();
             if (data.success) {
                 const allMembers = data.data.members || data.data || [];
@@ -444,9 +446,10 @@ class MemberManagement {
 
     // Fetch active members for a group
     async fetchActiveMembers(groupId) {
-        const userId = localStorage.getItem('user_id');
         try {
-            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members?user_id=${encodeURIComponent(userId)}`);
+            const response = await fetch(`${window.API_BASE_URL || 'https://latanda.online'}/api/groups/${encodeURIComponent(groupId)}/members`, {
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '') }
+            });
             const data = await response.json();
             if (data.success) {
                 this.activeMembers = data.data.members || data.data || [];
@@ -549,16 +552,25 @@ class MemberManagement {
     async openModal(groupId, groupName) {
         this.currentGroupId = groupId;
 
-        // Fetch data
-        await Promise.all([
-            this.fetchPendingMembers(groupId),
-            this.fetchActiveMembers(groupId),
-            this.fetchGroupSettings(groupId)
-        ]);
+        try {
+            // Fetch data (all have internal try/catch)
+            await Promise.all([
+                this.fetchPendingMembers(groupId),
+                this.fetchActiveMembers(groupId),
+                this.fetchGroupSettings(groupId)
+            ]);
+        } catch (err) {
+            // Prevent unhandled rejection from triggering global-error-handler logout
+        }
 
         const modal = document.createElement('div');
         modal.className = 'member-management-modal';
         modal.id = 'memberManagementModal';
+
+        var pendingHtml = '', activeHtml = '';
+        try { pendingHtml = this.renderPendingMembers(); } catch(e) { pendingHtml = '<p style="color:#94a3b8;padding:16px">Error al cargar solicitudes</p>'; }
+        try { activeHtml = this.renderActiveMembers(); } catch(e) { activeHtml = '<p style="color:#94a3b8;padding:16px">Error al cargar miembros</p>'; }
+
         modal.innerHTML = `
             <div class="member-management-content">
                 <div class="member-management-header">
@@ -576,10 +588,10 @@ class MemberManagement {
                 </div>
                 <div class="member-management-body">
                     <div id="pendingMembersTab" class="member-list">
-                        ${this.renderPendingMembers()}
+                        ${pendingHtml}
                     </div>
                     <div id="activeMembersTab" class="member-list" style="display: none;">
-                        ${this.renderActiveMembers()}
+                        ${activeHtml}
                     </div>
                 </div>
             </div>
@@ -1089,7 +1101,9 @@ window.memberManagement = new MemberManagement();
 
 // Function to open member management (called from group card)
 function openMemberManagement(groupId, groupName) {
-    window.memberManagement.openModal(groupId, groupName);
+    window.memberManagement.openModal(groupId, groupName).catch(function(err) {
+        // Prevent unhandled rejection from triggering global-error-handler logout
+    });
 }
 
 // Safe wrapper to handle special characters in group names

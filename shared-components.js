@@ -954,45 +954,51 @@ document.addEventListener('DOMContentLoaded', function() {
 // Global 401 Handler - Improved to handle token expiration gracefully
 (function() {
     const originalFetch = window.fetch;
-    let retryCount = {};  // Track retries per URL
-    
+    let authRedirectPending = false;
+
     window.fetch = async function(...args) {
         const response = await originalFetch.apply(this, args);
-        
-        if (response.status === 401) {
+
+        if (response.status === 401 && !authRedirectPending) {
             const currentPage = window.location.pathname;
-            const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-            
+            const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+
             // Skip redirect for admin pages (they have their own login modal)
             if (currentPage.includes('admin')) {
                 return response;
             }
-            
+
             // Skip redirect for auth endpoints (login, register)
             if (url && (url.includes('/auth/') || url.includes('/login') || url.includes('/register'))) {
                 return response;
             }
-            
+
+            // Skip redirect for non-critical background endpoints (sidebar widgets, notifications, dashboard, payouts)
+            if (url && (url.includes('/notifications/') || url.includes('/dashboard/summary') || url.includes('/wallet/balance') || url.includes('/payout-methods') || url.includes('/payout/') || url.includes('/payments/methods') || url.includes('/hub/summary') || url.includes('/mining/status') || url.includes('/marketplace/'))) {
+                return response;
+            }
+
             // Check if we have a token at all
-            const hasToken = localStorage.getItem('auth_token') ;
-            
+            const hasToken = localStorage.getItem('auth_token');
+
             if (!hasToken) {
-                // No token - redirect to login immediately
+                // No token and a primary API call returned 401 - redirect once
+                authRedirectPending = true;
                 if (!currentPage.includes('auth')) {
                     localStorage.setItem('redirect_after_auth', currentPage);
                 }
                 window.location.href = '/auth-enhanced.html';
                 return response;
             }
-            
+
             // We have a token but got 401 - likely expired
-            
-            // Show toast notification if available
+            // Only redirect once even if multiple calls fail
+            authRedirectPending = true;
+
             if (typeof window.showToast === 'function') {
-                window.showToast('Tu sesión ha expirado. Por favor inicia sesión de nuevo.', 'warning');
+                window.showToast('Tu sesion ha expirado. Por favor inicia sesion de nuevo.', 'warning');
             }
-            
-            // Wait a bit then clear and redirect (give time for user to see the message)
+
             setTimeout(() => {
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('latanda_auth_token');
@@ -1000,9 +1006,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('redirect_after_auth', currentPage);
                 }
                 window.location.href = '/auth-enhanced.html';
-            }, 1500);
+            }, 2000);
         }
-        
+
         return response;
     };
 })();

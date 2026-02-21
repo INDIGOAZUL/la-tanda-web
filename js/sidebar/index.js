@@ -90,11 +90,6 @@ const LaTandaSidebar = {
                 
                 // Update KYC badge (show if not verified)
                 this.updateKycBadge(dashboard.kyc_status);
-                
-                    tandas: dashboard.active_tandas,
-                    invitations: dashboard.pending_invitations,
-                    kyc: dashboard.kyc_status
-                });
             }
         } catch (error) {
         }

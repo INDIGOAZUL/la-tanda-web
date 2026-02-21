@@ -237,14 +237,18 @@ function _cpEscapeHtml(text) {
 // Fetch group statistics for coordinator
 async function fetchGroupStats(groupId) {
     const apiBase = window.API_BASE_URL || 'https://latanda.online';
-    const userId = localStorage.getItem('user_id');
+    var authHeaders = (typeof getAuthHeaders === 'function') ? getAuthHeaders() : {};
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+    if (!authHeaders['Authorization'] && token) {
+        authHeaders['Authorization'] = 'Bearer ' + token;
+    }
 
     try {
-        // Fetch multiple data sources in parallel
+        // Fetch multiple data sources in parallel (JWT auth, no user_id param needed)
         const [membersRes, statsRes, financesRes] = await Promise.all([
-            fetch(apiBase + '/api/groups/' + groupId + '/members?user_id=' + userId),
-            fetch(apiBase + '/api/groups/' + groupId + '/stats?user_id=' + userId).catch(() => null),
-            fetch(apiBase + '/api/groups/' + groupId + '/finances/summary?user_id=' + userId).catch(() => null)
+            fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/members', { headers: authHeaders }),
+            fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/stats', { headers: authHeaders }).catch(() => null),
+            fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/finances/summary', { headers: authHeaders }).catch(() => null)
         ]);
 
         const membersData = await membersRes.json();
