@@ -8149,6 +8149,7 @@ function renderTurnsList() {
                         var canPay = m.payment_status !== 'paid';
                         var amtPending = m.amount_pending != null ? m.amount_pending : cpState.contributionAmount;
                         var amountDisplay = 'L. ' + (amtPending > 0 ? amtPending.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '0.00');
+                        var posLabel = (m.num_positions && m.num_positions > 1) ? '<div style="font-size:0.65rem;color:#00FFFF;margin-top:1px;">' + m.num_positions + ' numeros</div>' : '';
                         var cuotasLabel = m.cycles_pending > 1 ? '<div style="font-size:0.68rem;color:#f59e0b;margin-top:1px;">Debe ' + m.cycles_pending + ' cuotas</div>' : '';
                         html += '<div class="cp-member-row" id="cp-row-' + escapeHtml(m.user_id) + '">' +
                             '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
@@ -8164,7 +8165,7 @@ function renderTurnsList() {
                             '<div style="display:flex;align-items:center;gap:8px;">' +
                                 '<div style="text-align:right;">' +
                                     '<div style="font-size:0.8rem;font-weight:600;color:#cbd5e1;">' + amountDisplay + '</div>' +
-                                    cpGetStatusPill(m.payment_status) + cuotasLabel +
+                                    cpGetStatusPill(m.payment_status) + posLabel + cuotasLabel +
                                 '</div>' +
                                 (canPay ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.1);color:#00FFFF;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Registrar</button>' : '') +
                             '</div>' +
@@ -8241,14 +8242,8 @@ function renderTurnsList() {
                     var json = await resp.json();
                     if (json.success) {
                         // Update local state
-                        cpState.members.forEach(function(m) {
-                            if (m.user_id === userId) {
-                                m.payment_status = 'paid';
-                                m.last_contribution = json.data.contribution;
-                            }
-                        });
-                        cpState.paidCount++;
-                        cpState.pendingCount = Math.max(0, cpState.pendingCount - 1);
+                        // Reload data to get accurate state (handles num_positions)
+                        await cpLoadData();
                         cpUpdateSummary();
                         cpRenderTab();
                     } else {
@@ -8314,6 +8309,7 @@ function renderTurnsList() {
                             '<div style="text-align:right;">' +
                                 '<div style="font-size:0.75rem;font-weight:600;color:#cbd5e1;">L. ' + (m.amount_pending > 0 ? m.amount_pending.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '0.00') + '</div>' +
                                 cpGetStatusPill(m.payment_status) +
+                                ((m.num_positions && m.num_positions > 1) ? '<div style="font-size:0.62rem;color:#00FFFF;">' + m.num_positions + ' num.</div>' : '') +
                                 (m.cycles_pending > 1 ? '<div style="font-size:0.65rem;color:#f59e0b;">' + m.cycles_pending + ' cuotas</div>' : '') +
                             '</div>' +
                         '</div>';
