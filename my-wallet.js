@@ -20,6 +20,10 @@ class LaTandaWallet {
         // Pagination configuration
         this.PAGE_SIZE_DEFAULT = 20;
         this.PAGE_SIZE_MAX = 50;
+        this.PAGE_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+        
+        // Page cache for faster navigation
+        this.pageCache = {};
         
         this.transactionHistory = [];
         
@@ -626,9 +630,23 @@ class LaTandaWallet {
         
         const offset = (pageNum - 1) * this.paginationData.limit;
         const userId = this.getCurrentUserId();
+        const cacheKey = `page_${pageNum}_${this.paginationData.limit}`;
+        
+        // Check page cache first
+        const cached = this.getCachedPage(cacheKey);
+        if (cached) {
+            console.log(`Loading page ${pageNum} from cache`);
+            this.transactionHistory = cached.transactions;
+            this.currentPage = pageNum;
+            this.paginationData = cached.pagination;
+            this.totalPages = Math.ceil(cached.pagination.total / cached.pagination.limit) || 1;
+            this.updatePaginationUI();
+            this.renderTransactionHistory();
+            return;
+        }
         
         try {
-            // Show loading indicator
+            // Show loading indicator with smooth transition
             this.showLoading('Cargando transacciones...');
             
             const response = await this.apiCall('/api/user/transactions', {
@@ -648,13 +666,64 @@ class LaTandaWallet {
                 if (response.data.pagination) {
                     this.paginationData = response.data.pagination;
                 }
+                
+                // Cache this page for faster navigation
+                this.cachePage(cacheKey, {
+                    transactions: this.transactionHistory,
+                    pagination: this.paginationData
+                });
+                
                 this.updatePaginationUI();
                 this.renderTransactionHistory();
+                this.renderWithTransition();
                 this.saveTransactionHistory();
             }
         } catch (error) {
             this.hideLoading();
             this.showError('Error al cargar la página de transacciones');
+        }
+    }
+
+    /**
+     * Get cached page data if not expired
+     */
+    getCachedPage(cacheKey) {
+        const cached = this.pageCache[cacheKey];
+        if (!cached) return null;
+        
+        const isExpired = Date.now() - cached.timestamp > this.PAGE_CACHE_EXPIRY;
+        if (isExpired) {
+            delete this.pageCache[cacheKey];
+            return null;
+        }
+        return cached.data;
+    }
+
+    /**
+     * Cache page data with timestamp
+     */
+    cachePage(cacheKey, data) {
+        // Keep only last 5 pages in cache
+        const cacheKeys = Object.keys(this.pageCache);
+        if (cacheKeys.length >= 5) {
+            const oldestKey = cacheKeys[0];
+            delete this.pageCache[oldestKey];
+        }
+        
+        this.pageCache[cacheKey] = {
+            data: data,
+            timestamp: Date.now()
+        };
+    }
+
+    /**
+     * Render with smooth CSS transition
+     */
+    renderWithTransition() {
+        const list = document.getElementById('transactionsList');
+        if (list) {
+            list.classList.add('fade-transition');
+            setTimeout(() => list.classList.remove('fade-transition'), 300);
         }
     }
 
