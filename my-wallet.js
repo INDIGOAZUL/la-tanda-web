@@ -16,12 +16,17 @@ class LaTandaWallet {
             HNL_USD: 0.0402
         };
         this.selectedBank = null;
+        
+        // Pagination configuration
+        this.PAGE_SIZE_DEFAULT = 20;
+        this.PAGE_SIZE_MAX = 50;
+        
         this.transactionHistory = [];
         
         // Pagination state
         this.currentPage = 1;
         this.totalPages = 1;
-        this.paginationData = { total: 0, limit: 50, offset: 0, has_more: false };
+        this.paginationData = { total: 0, limit: this.PAGE_SIZE_DEFAULT, offset: 0, has_more: false };
         
         this.qrCodeInstance = null;
         this.notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
@@ -523,7 +528,7 @@ class LaTandaWallet {
                 method: 'POST',
                 body: JSON.stringify({
                     user_id: userId,
-                    limit: 50,
+                    limit: this.PAGE_SIZE_DEFAULT,
                     offset: 0
                 })
             });
@@ -608,7 +613,14 @@ class LaTandaWallet {
     // ================================
     // 📄 PAGINATION METHODS
     // ================================
+    // Handles server-side pagination for transaction history
+    // Uses backend API: POST /api/user/transactions with limit/offset
+    // Supports Previous/Next navigation and jump-to-page
 
+    /**
+     * Load a specific page of transactions
+     * @param {number} pageNum - Page number to load (1-indexed)
+     */
     async loadPage(pageNum) {
         if (pageNum < 1 || pageNum > this.totalPages) return;
         
@@ -646,18 +658,28 @@ class LaTandaWallet {
         }
     }
 
+    /**
+     * Navigate to next page (if available)
+     */
     nextPage() {
         if (this.paginationData.has_more) {
             this.loadPage(this.currentPage + 1);
         }
     }
 
+    /**
+     * Navigate to previous page (if not on first page)
+     */
     prevPage() {
         if (this.currentPage > 1) {
             this.loadPage(this.currentPage - 1);
         }
     }
 
+    /**
+     * Update pagination UI controls based on current state
+     * Shows/hides controls, enables/disables buttons, updates indicator
+     */
     updatePaginationUI() {
         const controls = document.getElementById('paginationControls');
         const prevBtn = document.getElementById('prevPage');
@@ -674,6 +696,22 @@ class LaTandaWallet {
         if (indicator) {
             indicator.textContent = `Página ${this.currentPage} de ${this.totalPages}`;
         }
+    }
+
+    /**
+     * Generate pagination HTML markup for insertion into DOM
+     * @returns {string} HTML markup for pagination controls
+     */
+    getPaginationHTML() {
+        return `
+            <div id="paginationControls" class="pagination-controls hidden">
+                <button id="prevPage" class="btn-pagination">← Anterior</button>
+                <input type="number" id="jumpToPage" class="page-jump-input" min="1" placeholder="#">
+                <button id="jumpPageBtn" class="btn-pagination">Ir</button>
+                <span id="pageIndicator">Página ${this.currentPage} de ${this.totalPages}</span>
+                <button id="nextPage" class="btn-pagination">Siguiente →</button>
+            </div>
+        `;
     }
 
     // ================================
