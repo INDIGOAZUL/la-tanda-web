@@ -479,6 +479,17 @@ class CreateGroupFormHandler {
                 this.formData.notifyMeetingReminder = document.getElementById('notify-meeting-reminder').checked;
                 this.formData.notifyTurnUpdate = document.getElementById('notify-turn-update').checked;
                 this.formData.notifyNewMembers = document.getElementById('notify-new-members').checked;
+                // v4.10.4: Commission rate
+                var commTypeEl = document.querySelector('input[name="commission-type"]:checked');
+                var commType = commTypeEl ? commTypeEl.value : 'default';
+                if (commType === 'none') {
+                    this.formData.commissionRate = 0;
+                } else if (commType === 'custom') {
+                    var rateEl = document.getElementById('custom-commission-rate');
+                    this.formData.commissionRate = parseFloat(rateEl ? rateEl.value : 2) || 2;
+                } else {
+                    this.formData.commissionRate = null; // platform default
+                }
                 break;
         }
     }
@@ -556,6 +567,10 @@ class CreateGroupFormHandler {
             + '<span class="total-value">L. ' + this.escapeHtml(totalPerCycle) + '</span>'
             + '</div>'
             + '<div class="total-item">'
+            + '<span class="total-label">Comision:</span>'
+            + '<span class="total-value">' + this.escapeHtml(this.getCommissionLabel()) + '</span>'
+            + '</div>'
+            + '<div class="total-item">'
             + '<span class="total-label">Duracion Estimada:</span>'
             + '<span class="total-value">' + this.escapeHtml(this.calculateEstimatedDuration()) + '</span>'
             + '</div>'
@@ -580,6 +595,13 @@ class CreateGroupFormHandler {
 
         // Features are hardcoded strings (not user data), safe without escaping
         return features.map(function(feature) { return '<div class="feature-item"><i class="fas fa-check"></i> ' + feature + '</div>'; }).join('');
+    }
+
+    getCommissionLabel() {
+        var rate = this.formData.commissionRate;
+        if (rate === null || rate === undefined) return 'Estandar (3%-1%)';
+        if (rate === 0) return 'Sin comision';
+        return rate + '% personalizada';
     }
 
     calculateEstimatedDuration() {

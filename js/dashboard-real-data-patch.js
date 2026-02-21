@@ -44,11 +44,6 @@
                 if (!data) {
                     return;
                 }
-                
-                    balance: data.balance,
-                    tandasCount: data.tandasCount,
-                    hasNextPayment: !!data.nextPayment
-                });
 
                 // Update carousel stats
                 updateCarouselStats(data);

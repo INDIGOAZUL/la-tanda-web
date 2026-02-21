@@ -765,7 +765,12 @@ window.checkPayoutEligibility = async function(groupId) {
 
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/eligibility?user_id=${userId}`);
+        const eligToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        if (!eligToken) return null;
+        const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/payout/eligibility`, {
+            headers: { 'Authorization': `Bearer ${eligToken}` }
+        });
+        if (!response.ok) return null;
         const result = await response.json();
 
         if (result.success) {
@@ -924,11 +929,11 @@ window.requestPayout = async function(groupId) {
 
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/request`, {
+        const reqToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/payout/request`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(reqToken ? { 'Authorization': `Bearer ${reqToken}` } : {}) },
             body: JSON.stringify({
-                user_id: userId,
                 payout_method_id: payoutMethodId
             })
         });
@@ -961,11 +966,11 @@ window.confirmPayoutReceipt = async function(groupId, payoutRequestId) {
 
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const response = await fetch(`${apiBase}/api/groups/${groupId}/payout/confirm`, {
+        const confToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/payout/confirm`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(confToken ? { 'Authorization': `Bearer ${confToken}` } : {}) },
             body: JSON.stringify({
-                user_id: userId,
                 payout_request_id: payoutRequestId
             })
         });

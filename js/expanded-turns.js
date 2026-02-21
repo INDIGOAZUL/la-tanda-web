@@ -103,16 +103,13 @@
         if (typeof renderTurnsList === "function") renderTurnsList();
     };
     
-    // Remove a position for a member
+    // Remove a position for a member (- button, requires at least 2 positions)
     window.removePositionForMember = function(userId, slotIndex) {
         if (!window.expandedTurns) return;
-        
+
         var userPositions = window.expandedTurns.filter(function(p) { return p.user_id === userId; });
-        if (userPositions.length <= 1) {
-            alert("No se puede eliminar la unica posicion del miembro");
-            return;
-        }
-        
+        if (userPositions.length <= 1) return;
+
         // Find and remove the specific position
         var posToRemove = userPositions.find(function(p) { return p.slot_index === slotIndex; });
         if (posToRemove) {
@@ -121,7 +118,7 @@
                 window.expandedTurns.splice(idx, 1);
             }
         }
-        
+
         // Reindex slot_index for this user's remaining positions
         var newTotal = userPositions.length - 1;
         var slotCounter = 0;
@@ -131,7 +128,22 @@
                 p.total_slots = newTotal;
             }
         });
-        
+
+        if (typeof renderTurnsList === "function") renderTurnsList();
+    };
+
+    // Remove ALL positions for a member (X button, removes from turns entirely)
+    window.removeMemberFromTurns = function(userId) {
+        if (!window.expandedTurns) return;
+
+        var displayName = 'este miembro';
+        var pos = window.expandedTurns.find(function(p) { return p.user_id === userId; });
+        if (pos && pos.name && pos.name !== 'Usuario') displayName = pos.name;
+
+        if (!confirm('Eliminar a ' + displayName + ' de los turnos?')) return;
+
+        window.expandedTurns = window.expandedTurns.filter(function(p) { return p.user_id !== userId; });
+
         if (typeof renderTurnsList === "function") renderTurnsList();
     };
     

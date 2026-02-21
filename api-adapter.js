@@ -276,12 +276,7 @@ const apiAdapter = new LaTandaAPIAdapter();
 window.laTandaAPIAdapter = apiAdapter;
 
 // Test endpoints when loaded
-setTimeout(async () => {
-    if (window.location.hostname !== 'localhost') {
-        console.log('🧪 Testing real endpoints...');
-        const results = await apiAdapter.testRealEndpoints();
-        console.table(results);
-    }
-}, 2000);
+// Auto-test disabled (was causing 401s that trigger session expired redirect)
+// To test manually: await window.laTandaAPIAdapter.testRealEndpoints()
 
 console.log('🔄 La Tanda API Adapter loaded - all fetch calls will be intercepted and corrected');

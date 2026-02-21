@@ -849,14 +849,12 @@
         async function apiCall(url, options) {
             const token = getToken();
             if (!token) {
-                window.location.href = '/auth.html';
-                return null;
+                throw new Error('NO_AUTH');
             }
             const headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
             const res = await fetch(url, Object.assign({ headers: headers }, options || {}));
             if (res.status === 401) {
-                window.location.href = '/auth.html';
-                return null;
+                throw new Error('NO_AUTH');
             }
             if (!res.ok) {
                 const data = await res.json().catch(function() { return {}; });
@@ -881,13 +879,17 @@
             } catch (err) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (contentEl) {
-                    contentEl.innerHTML =
-                        '<div class="mt-error">' +
-                        '<i class="fas fa-exclamation-triangle"></i>' +
-                        '<h3>Error al cargar tandas</h3>' +
-                        '<p>No se pudieron cargar tus tandas. Intenta de nuevo.</p>' +
-                        '<button class="mt-btn mt-btn-primary" data-action="retry-load"><i class="fas fa-redo"></i> Reintentar</button>' +
-                        '</div>';
+                    if (err && err.message === 'NO_AUTH') {
+                        showAuthRequired();
+                    } else {
+                        contentEl.innerHTML =
+                            '<div class="mt-error">' +
+                            '<i class="fas fa-exclamation-triangle"></i>' +
+                            '<h3>Error al cargar tandas</h3>' +
+                            '<p>No se pudieron cargar tus tandas. Intenta de nuevo.</p>' +
+                            '<button class="mt-btn mt-btn-primary" data-action="retry-load"><i class="fas fa-redo"></i> Reintentar</button>' +
+                            '</div>';
+                    }
                 }
             }
         }
@@ -1158,6 +1160,7 @@
                     loadMyTandas();
                 }
             } catch (err) {
+                if (err && err.message === 'NO_AUTH') { showAuthRequired(); return; }
                 showToast('Error al procesar el pago', 'error');
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Pago'; }
             }
@@ -1221,6 +1224,7 @@
                     frequency.value = 'monthly';
                 }
             } catch (err) {
+                if (err && err.message === 'NO_AUTH') { showAuthRequired(); return; }
                 showToast('Error al crear la tanda', 'error');
             } finally {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-plus"></i> Crear Tanda'; }
@@ -1319,11 +1323,32 @@
             });
         }
 
+        // --- Auth Required State ---
+        function showAuthRequired() {
+            var statsEl = document.getElementById('mtStats');
+            var filtersEl = document.querySelector('.mt-filters');
+            var headerEl = document.querySelector('.mt-section-header');
+            if (statsEl) statsEl.style.display = 'none';
+            if (filtersEl) filtersEl.style.display = 'none';
+            if (headerEl) headerEl.style.display = 'none';
+            var contentEl = document.getElementById('mtContent');
+            if (contentEl) {
+                contentEl.innerHTML =
+                    '<div class="mt-empty">' +
+                    '<i class="fas fa-lock"></i>' +
+                    '<h3>Inicia sesion para ver tus tandas</h3>' +
+                    '<p>Necesitas una cuenta para crear y gestionar tandas de ahorro</p>' +
+                    '<a href="/auth-enhanced.html" class="mt-btn mt-btn-primary" style="display:inline-flex;text-decoration:none;">' +
+                    '<i class="fas fa-sign-in-alt"></i> Iniciar Sesion</a>' +
+                    '</div>';
+            }
+        }
+
         // --- Init ---
         function init() {
             var token = getToken();
             if (!token) {
-                window.location.href = '/auth.html';
+                showAuthRequired();
                 return;
             }
             loadMyTandas();

@@ -642,7 +642,8 @@ class LaTandaGroupsSystemComplete {
                         latePaymentPenalty: newGroup.penaltyAmount || 0,
                         grace_period: newGroup.gracePeriod || 3,
                         start_date: newGroup.startDate ? new Date(newGroup.startDate).toISOString().split("T")[0] : null,
-                        rules: newGroup.rules || []
+                        rules: newGroup.rules || [],
+                        commissionRate: groupData.commissionRate !== undefined ? groupData.commissionRate : null
                     })
                 });
 
