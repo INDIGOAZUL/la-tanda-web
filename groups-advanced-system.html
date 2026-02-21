@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=1.5">
+    <link rel="stylesheet" href="css/groups-page.css?v=1.6">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -8950,7 +8950,7 @@ function renderTurnsList() {
                 buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente la tanda', '#f87171', '#ef4444', redBg, redBorder);
             }
             if (canManage) {
-                buttons += _gmBtn('gm-notify-commission', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'rgba(0,255,255,0.1)', 'Notificar Comision', 'Pedir aceptacion a miembros', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-commission-manager', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'rgba(0,255,255,0.1)', 'Gestor de Comisiones', 'Ver estado y gestionar comisiones', '#00FFFF', '#00B8D4', dark, darkBorder);
             }
             if (canEdit) {
                 buttons += _gmBtn('gm-edit-group', svgEdit, 'rgba(129,140,248,0.2)', 'Editar Grupo', 'Modificar configuracion', '#e2e8f0', '#94a3b8', dark, darkBorder);
@@ -8993,7 +8993,7 @@ function renderTurnsList() {
                     case 'gm-distribute': if (typeof showDistributionPreview === 'function') showDistributionPreview(gid); break;
                     case 'gm-manage-turns': if (typeof manageTurns === 'function') manageTurns(gid); break;
                     case 'gm-toggle-pause': if (typeof toggleTandaPause === 'function') toggleTandaPause(gid); break;
-                    case 'gm-notify-commission': notifyCommission(gid); closeModal(); break;
+                    case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
                     case 'gm-edit-group': if (typeof editGroup === 'function') editGroup(gid); break;
                     case 'gm-delete-group': if (typeof confirmDeleteGroup === 'function') confirmDeleteGroup(gid); break;
                 }
@@ -9004,13 +9004,189 @@ function renderTurnsList() {
         var styleEl = document.createElement('style');
         styleEl.textContent = '.admin-option-btn:hover { background: rgba(0,255,255,0.08) !important; border-color: rgba(0,255,255,0.2) !important; transform: translateX(4px); }';
         document.head.appendChild(styleEl);
+        // v4.10.7: Commission Manager Panel
+        var cmState = { groupId: null, rate: null, type: null, members: [], summary: {} };
 
-        // v4.10.4: Notify undecided members about commission
-        async function notifyCommission(groupId) {
+        async function showCommissionManager(groupId) {
+            cmState.groupId = groupId;
+            var overlay = document.createElement('div');
+            overlay.className = 'cm-overlay';
+            overlay.id = 'cm-overlay';
+            overlay.innerHTML = '<div class="cm-modal" id="cm-modal"><div class="cm-header"><div><h3>Gestor de Comisiones</h3><div class="cm-header-sub" id="cm-group-name"></div></div><button class="cm-close" data-action="cm-close">&times;</button></div><div class="cm-body"><div class="cm-spinner" id="cm-loading"></div><div id="cm-content" style="display:none"><div id="cm-rate-badge"></div><div class="cm-stats" id="cm-stats"></div><div class="cm-actions"><button class="cm-action-btn" data-action="cm-change-rate">Cambiar Tasa</button><button class="cm-action-btn cm-action-btn-primary" data-action="cm-notify" id="cm-notify-btn">Notificar Pendientes</button></div><div class="cm-inline-form" id="cm-rate-form"><label>Tipo de comision</label><select id="cm-rate-type"><option value="platform_default">Estandar (1-3% segun monto)</option><option value="custom">Personalizada</option><option value="none">Sin comision (0%)</option></select><div id="cm-custom-wrap" style="display:none"><label>Porcentaje personalizado</label><input type="number" id="cm-custom-rate" min="0.01" max="5" step="0.01" placeholder="Ej: 2.5"></div><div class="cm-form-row"><button class="cm-action-btn cm-action-btn-primary" data-action="cm-save-rate">Guardar</button><button class="cm-action-btn" data-action="cm-cancel-rate">Cancelar</button></div></div><div class="cm-member-list" id="cm-member-list"><h4>Miembros</h4><div id="cm-members"></div></div></div></div></div>';
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', function(e) {
+                var action = e.target.closest('[data-action]');
+                if (!action) {
+                    if (e.target === overlay) { cmClose(); }
+                    return;
+                }
+                var act = action.getAttribute('data-action');
+                if (act === 'cm-close') cmClose();
+                else if (act === 'cm-change-rate') cmToggleForm();
+                else if (act === 'cm-save-rate') cmSaveRate();
+                else if (act === 'cm-cancel-rate') cmCancelForm();
+                else if (act === 'cm-notify') cmNotify();
+            });
+
+            var typeSelect = document.getElementById('cm-rate-type');
+            if (typeSelect) {
+                typeSelect.addEventListener('change', function() {
+                    var wrap = document.getElementById('cm-custom-wrap');
+                    if (wrap) wrap.style.display = this.value === 'custom' ? 'block' : 'none';
+                });
+            }
+
+            await cmLoadData();
+        }
+
+        function cmClose() {
+            var overlay = document.getElementById('cm-overlay');
+            if (overlay) overlay.remove();
+            cmState = { groupId: null, rate: null, type: null, members: [], summary: {} };
+        }
+
+        async function cmLoadData() {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) { showError('Sesion expirada'); cmClose(); return; }
+            var loading = document.getElementById('cm-loading');
+            var content = document.getElementById('cm-content');
+            if (loading) loading.style.display = 'flex';
+            if (content) content.style.display = 'none';
+            try {
+                var resp = await fetch('/api/groups/' + encodeURIComponent(cmState.groupId) + '/commission/members', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await resp.json();
+                if (!data.success) { showError('Error al cargar datos'); cmClose(); return; }
+                var d = data.data;
+                cmState.rate = d.commission_rate;
+                cmState.type = d.commission_type;
+                cmState.members = d.members || [];
+                cmState.summary = d.summary || {};
+                var gn = document.getElementById('cm-group-name');
+                if (gn) gn.textContent = d.group_name || '';
+                cmRenderBadge();
+                cmRenderStats();
+                cmRenderMembers();
+                if (loading) loading.style.display = 'none';
+                if (content) content.style.display = 'block';
+            } catch (e) {
+                showError('Error de conexion');
+                cmClose();
+            }
+        }
+
+        function cmRenderBadge() {
+            var el = document.getElementById('cm-rate-badge');
+            if (!el) return;
+            var cls, text;
+            if (cmState.type === 'none') { cls = 'cm-rate-none'; text = 'Sin Comision (0%)'; }
+            else if (cmState.type === 'custom') { cls = 'cm-rate-custom'; text = cmState.rate + '%'; }
+            else { cls = 'cm-rate-default'; text = 'Estandar (1-3%)'; }
+            el.className = 'cm-rate-badge ' + cls;
+            el.textContent = text;
+        }
+
+        function cmRenderStats() {
+            var el = document.getElementById('cm-stats');
+            if (!el) return;
+            var s = cmState.summary;
+            el.innerHTML = '<div class="cm-stat"><strong>' + (s.accepted || 0) + '</strong>Aceptaron</div>' +
+                '<div class="cm-stat"><strong>' + (s.declined || 0) + '</strong>Rechazaron</div>' +
+                '<div class="cm-stat"><strong>' + (s.undecided || 0) + '</strong>Sin decidir</div>';
+            var btn = document.getElementById('cm-notify-btn');
+            if (btn) btn.disabled = (s.undecided || 0) === 0;
+        }
+
+        function cmRenderMembers() {
+            var el = document.getElementById('cm-members');
+            if (!el) return;
+            if (cmState.members.length === 0) { el.innerHTML = '<div class="cm-empty">No hay miembros activos</div>'; return; }
+            var html = '';
+            for (var i = 0; i < cmState.members.length; i++) {
+                var m = cmState.members[i];
+                var name = escapeHtml(m.user_name || '');
+                var initial = name.charAt(0).toUpperCase();
+                var avatarHtml;
+                if (m.avatar_url && m.avatar_url !== '/uploads/avatars/default.jpg') {
+                    avatarHtml = '<img src="' + escapeHtml(m.avatar_url) + '" alt="">';
+                } else {
+                    avatarHtml = initial;
+                }
+                var roleCls = m.role === 'creator' ? 'cm-role-creator' : (m.role === 'coordinator' ? 'cm-role-coordinator' : 'cm-role-member');
+                var roleLabel = m.role === 'creator' ? 'Creador' : (m.role === 'coordinator' ? 'Coordinador' : 'Miembro');
+                var badgeCls, badgeText;
+                if (m.commission_accepted === true) { badgeCls = 'cm-badge-accepted'; badgeText = 'Aceptada'; }
+                else if (m.commission_accepted === false) { badgeCls = 'cm-badge-declined'; badgeText = 'Rechazada'; }
+                else { badgeCls = 'cm-badge-undecided'; badgeText = 'Sin decidir'; }
+                html += '<div class="cm-member-row">' +
+                    '<div class="cm-member-avatar">' + avatarHtml + '</div>' +
+                    '<div class="cm-member-info"><div class="cm-member-name">' + name + '</div><span class="cm-member-role ' + roleCls + '">' + roleLabel + '</span></div>' +
+                    '<span class="' + badgeCls + '">' + badgeText + '</span></div>';
+            }
+            el.innerHTML = html;
+        }
+
+        function cmToggleForm() {
+            var form = document.getElementById('cm-rate-form');
+            if (!form) return;
+            form.classList.toggle('cm-visible');
+            if (form.classList.contains('cm-visible')) {
+                var sel = document.getElementById('cm-rate-type');
+                var inp = document.getElementById('cm-custom-rate');
+                var wrap = document.getElementById('cm-custom-wrap');
+                if (cmState.type === 'none') { if (sel) sel.value = 'none'; if (wrap) wrap.style.display = 'none'; }
+                else if (cmState.type === 'custom') { if (sel) sel.value = 'custom'; if (wrap) wrap.style.display = 'block'; if (inp) inp.value = cmState.rate; }
+                else { if (sel) sel.value = 'platform_default'; if (wrap) wrap.style.display = 'none'; }
+            }
+        }
+
+        function cmCancelForm() {
+            var form = document.getElementById('cm-rate-form');
+            if (form) form.classList.remove('cm-visible');
+        }
+
+        async function cmSaveRate() {
             var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
             if (!token) { showError('Sesion expirada'); return; }
+            var sel = document.getElementById('cm-rate-type');
+            if (!sel) return;
+            var rateValue = null;
+            if (sel.value === 'none') { rateValue = 0; }
+            else if (sel.value === 'custom') {
+                var inp = document.getElementById('cm-custom-rate');
+                if (!inp || !inp.value) { showError('Ingresa un porcentaje'); return; }
+                var parsed = parseFloat(inp.value);
+                if (isNaN(parsed) || parsed < 0.01 || parsed > 5) { showError('El porcentaje debe ser entre 0.01% y 5%'); return; }
+                rateValue = parsed;
+            }
             try {
-                var resp = await fetch('/api/groups/' + encodeURIComponent(groupId) + '/commission/notify', {
+                var resp = await fetch('/api/groups/' + encodeURIComponent(cmState.groupId) + '/commission/rate', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ commission_rate: rateValue, auto_notify: true })
+                });
+                var data = await resp.json();
+                if (data.success) {
+                    showSuccess(data.data.message || 'Comision actualizada');
+                    cmCancelForm();
+                    await cmLoadData();
+                } else {
+                    showError('Error al cambiar comision');
+                }
+            } catch (e) {
+                showError('Error de conexion');
+            }
+        }
+
+        async function cmNotify() {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) { showError('Sesion expirada'); return; }
+            var btn = document.getElementById('cm-notify-btn');
+            if (btn) btn.disabled = true;
+            try {
+                var resp = await fetch('/api/groups/' + encodeURIComponent(cmState.groupId) + '/commission/notify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
                 });
@@ -9023,8 +9199,8 @@ function renderTurnsList() {
             } catch (e) {
                 showError('Error de conexion');
             }
+            if (btn) btn.disabled = false;
         }
-
     </script>
 
 <!-- FASE 2: Group Notification Helpers (Toast-based) - Added 2025-11-27 -->
