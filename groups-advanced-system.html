@@ -252,7 +252,9 @@
                 has_active_tanda: pgGroup.has_active_tanda || false,
                 current_cycle: parseInt(pgGroup.current_cycle) || 0,
                 current_turn_number: null,
-                current_turn_recipient: null
+                current_turn_recipient: null,
+                tanda_status: pgGroup.tanda_status || null,
+                tanda_id: pgGroup.tanda_id || null
             };
         }
 
@@ -363,6 +365,57 @@
             // Roles
             el = document.getElementById('grpRoleCreator'); if (el) el.textContent = roleCreator;
             el = document.getElementById('grpRoleCoord'); if (el) el.textContent = roleCoord;
+
+            // v4.10.8: Tanda balance now shown via updateSidebarHubCards (below Mi Wallet)
+            // This secondary path is disabled to avoid duplicates
+            (async function() {
+                return; // disabled — single source: updateSidebarHubCards
+                try {
+                    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    if (!token) return;
+                    var tandaGroups = allGroups.filter(function(g) { return g.tanda_status === 'active'; });
+                    if (tandaGroups.length === 0) return;
+                    var pg = tandaGroups[0];
+                    var tbResp = await fetch('/api/groups/' + encodeURIComponent(pg.group_id) + '/tanda-balances', {
+                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                    });
+                    if (!tbResp.ok) return;
+                    var tbData = await tbResp.json();
+                    if (!tbData.success || !tbData.data || !tbData.data.members) return;
+                    var uid = USER_ID || localStorage.getItem('latanda_user_id') || localStorage.getItem('user_id');
+                    var me = tbData.data.members.find(function(m) { return m.user_id === uid; });
+                    if (!me) return;
+                    var tb = me.tanda_balance;
+                    var sign = tb >= 0 ? '+' : '';
+                    var color = tb >= 0 ? '#34d399' : '#f87171';
+                    // Update inline row in Resumen
+                    var inlineRow = document.getElementById('grpTandaRow');
+                    var inlineVal = document.getElementById('grpTandaInline');
+                    if (inlineRow && inlineVal) {
+                        inlineRow.style.display = 'flex';
+                        inlineVal.textContent = sign + 'L. ' + Math.abs(tb).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
+                        inlineVal.style.color = color;
+                    }
+                    // Also update separate card if visible
+                    var card = document.getElementById('grpTandaBalanceCard');
+                    if (card) {
+                        card.style.display = '';
+                        var label = tb >= 0 ? 'Ahorro acumulado' : 'Prestamo pendiente';
+                        var balEl = document.getElementById('grpTandaBalance');
+                        if (balEl) { balEl.textContent = sign + 'L. ' + Math.abs(tb).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}); balEl.style.color = color; }
+                        var lblEl = document.getElementById('grpTandaLabel');
+                        if (lblEl) { lblEl.textContent = label; lblEl.style.color = color; }
+                        var turnoEl = document.getElementById('grpTandaTurno');
+                        if (turnoEl) turnoEl.textContent = 'Turno #' + (me.turn_position || '--');
+                        var pagosEl = document.getElementById('grpTandaPagos');
+                        if (pagosEl) pagosEl.textContent = (me.payments_count || 0) + ' pagos';
+                        var grpEl = document.getElementById('grpTandaGroup');
+                        if (grpEl) grpEl.textContent = pg.name || '--';
+                    }
+                    var distEl = document.getElementById('grpTandaDist');
+                    if (distEl) distEl.textContent = (tbData.data.distributions_completed || 0) + ' dist.';
+                } catch(e) { /* tanda balance is non-blocking */ }
+            })();
             el = document.getElementById('grpRoleMember'); if (el) el.textContent = roleMember;
 
             // Next payment due
@@ -2200,6 +2253,43 @@ async function loadUsersWithoutPositions(groupId) {
                             </span>
                             <span class="gs-row-label">Ciclo actual</span>
                             <span class="gs-row-val gs-cyan" id="grpCurrentCycle">--</span>
+                        </div>
+                        <div class="gs-row" id="grpTandaRow" style="display:none">
+                            <span class="gs-row-icon" style="color:#00FFFF;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </span>
+                            <span class="gs-row-label">Saldo Tanda</span>
+                            <span class="gs-row-val" id="grpTandaInline" style="color:#34d399">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mi Saldo Tanda Card -->
+                <div class="grp-sidebar-stats" id="grpTandaBalanceCard" style="display:none">
+                    <h4 class="grp-sidebar-stats-title">Mi Tanda</h4>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                        <div style="width:32px;height:32px;background:rgba(0,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        </div>
+                        <div>
+                            <div id="grpTandaBalance" style="font-size:1.2rem;font-weight:700;color:#34d399">--</div>
+                            <div id="grpTandaLabel" style="font-size:0.72rem;color:#64748b">Cargando...</div>
+                        </div>
+                    </div>
+                    <div class="gs-rows">
+                        <div class="gs-row">
+                            <span class="gs-row-icon" style="color:#00FFFF;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
+                            </span>
+                            <span class="gs-row-label" id="grpTandaTurno">Turno --</span>
+                            <span class="gs-row-val" id="grpTandaPagos" style="color:#888">--</span>
+                        </div>
+                        <div class="gs-row">
+                            <span class="gs-row-icon" style="color:#f59e0b;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            </span>
+                            <span class="gs-row-label" id="grpTandaGroup">--</span>
+                            <span class="gs-row-val" id="grpTandaDist" style="color:#888">--</span>
                         </div>
                     </div>
                 </div>
@@ -10829,8 +10919,8 @@ function renderTurnsList() {
                     '</div>' +
                 '</div>' +
                 '<div class="dist-admin-note">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
-                    '<span>Saldo administrativo - no se acredita a wallet. Coordinador distribuye manualmente.</span>' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+                    '<span>Al distribuir, el saldo de tanda del beneficiario se vuelve negativo (prestamo). Los demas miembros acumulan ahorro positivo.</span>' +
                 '</div>' +
             '</div>';
 
@@ -11041,7 +11131,7 @@ function renderTurnsList() {
                 '</div>' +
                 '<div class="tb-admin-note">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
-                    '<span>Saldos administrativos &mdash; no transferibles</span>' +
+                    '<span>Positivo = ahorro acumulado &middot; Negativo = prestamo pendiente</span>' +
                 '</div>' +
             '</div>';
 
@@ -11586,24 +11676,72 @@ function renderTurnsList() {
             try {
                 var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
                 if (!token) return;
-                var resp = await fetch('/api/wallet/balance', {
-                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-                });
-                if (!resp.ok) return;
-                var data = await resp.json();
                 var container = document.getElementById('sidebarHubCards');
-                if (!container || !data.success) return;
-                var balance = data.data ? data.data.balance : data.balance || 0;
-                var ltdBalance = data.data ? data.data.ltd_balance : data.ltd_balance || 0;
-                container.innerHTML = '<div class="sidebar-hub-card">' +
-                    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
-                    '<div style="width:40px;height:40px;background:rgba(0,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center">' +
-                    '<i class="fas fa-wallet" style="color:#00FFFF"></i></div>' +
-                    '<div><div style="font-weight:600;color:#fff">Mi Wallet</div>' +
-                    '<div style="font-size:0.8rem;color:#888">Saldo disponible</div></div></div>' +
-                    '<div style="font-size:1.4rem;font-weight:700;color:#00FFFF">L. ' + Number(balance).toFixed(2) + '</div>' +
-                    '<div style="font-size:0.85rem;color:#888;margin-top:4px">' + Number(ltdBalance).toFixed(2) + ' LTD</div>' +
-                    '</div>';
+                if (!container) return;
+                // Wallet balance card (non-blocking — Mi Tanda renders even if this fails)
+                try {
+                    var resp = await fetch('/api/wallet/balance', {
+                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                    });
+                    if (resp.ok) {
+                        var data = await resp.json();
+                        if (data.success) {
+                            var balance = data.data ? data.data.balance : data.balance || 0;
+                            var ltdBalance = data.data ? data.data.ltd_balance : data.ltd_balance || 0;
+                            container.innerHTML = '<div class="sidebar-hub-card">' +
+                                '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
+                                '<div style="width:40px;height:40px;background:rgba(0,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center">' +
+                                '<i class="fas fa-wallet" style="color:#00FFFF"></i></div>' +
+                                '<div><div style="font-weight:600;color:#fff">Mi Wallet</div>' +
+                                '<div style="font-size:0.8rem;color:#888">Saldo disponible</div></div></div>' +
+                                '<div style="font-size:1.4rem;font-weight:700;color:#00FFFF">L. ' + Number(balance).toFixed(2) + '</div>' +
+                                '<div style="font-size:0.85rem;color:#888;margin-top:4px">' + Number(ltdBalance).toFixed(2) + ' LTD</div>' +
+                                '</div>';
+                        }
+                    }
+                } catch(ew) { /* wallet balance is non-blocking */ }
+                // v4.10.8: Fetch tanda balance for user's active group
+                try {
+                    var grpResp = await fetch('/api/groups/my-groups-pg', {
+                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                    });
+                    if (grpResp.ok) {
+                        var grpData = await grpResp.json();
+                        var allGroups = grpData.data ? (grpData.data.groups || grpData.data || []) : (grpData.groups || grpData || []);
+                        var activeGroups = (Array.isArray(allGroups) ? allGroups : []).filter(function(g) { return g.tanda_status === 'active'; });
+                        if (activeGroups.length > 0) {
+                            var primaryGroup = activeGroups[0];
+                            var tbResp = await fetch('/api/groups/' + encodeURIComponent(primaryGroup.group_id) + '/tanda-balances', {
+                                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                            });
+                            if (tbResp.ok) {
+                                var tbData = await tbResp.json();
+                                if (tbData.success && tbData.data && tbData.data.members) {
+                                    var userId = (function(){ try { var lu = localStorage.getItem('latanda_user'); if(lu){var p=JSON.parse(lu); return String(p.user_id||p.id||'')} } catch(e){} return localStorage.getItem('latanda_user_id')||localStorage.getItem('user_id')||''; })();
+                                    var myEntry = tbData.data.members.find(function(m) { return m.user_id === userId; });
+                                    if (myEntry) {
+                                        var tb = myEntry.tanda_balance;
+                                        var tbSign = tb >= 0 ? '+' : '';
+                                        var tbColor = tb >= 0 ? '#34d399' : '#f87171';
+                                        var tbLabel = tb >= 0 ? 'Ahorro' : 'Prestamo';
+                                        container.innerHTML += '<div class="sidebar-hub-card" style="margin-top:10px">' +
+                                            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+                                            '<div style="width:40px;height:40px;background:rgba(0,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center">' +
+                                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
+                                            '<div><div style="font-weight:600;color:#fff">Mi Tanda</div>' +
+                                            '<div style="font-size:0.78rem;color:#888">' + escapeHtml(tbLabel) + ' &mdash; ' + escapeHtml(primaryGroup.name || '') + '</div></div></div>' +
+                                            '<div style="font-size:1.3rem;font-weight:700;color:' + tbColor + '">' + (tb < 0 ? '-' : '+') + 'L. ' + Math.abs(tb).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>' +
+                                            '<div style="display:flex;align-items:center;gap:12px;margin-top:8px;font-size:0.78rem;color:#64748b">' +
+                                            '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg> Turno #' + escapeHtml(String(myEntry.turn_position || '--')) + '</span>' +
+                                            '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> ' + escapeHtml(String(myEntry.payments_count || 0)) + ' pagos</span>' +
+                                            '</div>' +
+                                            '</div>';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch(e2) { /* tanda balance fetch is non-blocking */ }
             } catch(e) { }
         }
         if (document.readyState === 'loading') {

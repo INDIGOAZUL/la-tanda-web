@@ -583,11 +583,15 @@ const getGroupContributions = async (groupId, options = {}) => {
                 c.paid_date,
                 c.cycle_number,
                 c.created_at,
+                c.verified_by,
+                c.verification_method,
                 COALESCE(u.name, 'Usuario') as user_name,
                 u.email as user_email,
-                u.avatar_url as user_avatar
+                u.avatar_url as user_avatar,
+                COALESCE(v.name, 'Sistema') as verified_by_name
             FROM contributions c
             LEFT JOIN users u ON c.user_id = u.user_id
+            LEFT JOIN users v ON c.verified_by = v.user_id
             WHERE c.group_id = $1
         `;
         

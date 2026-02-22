@@ -1230,7 +1230,7 @@ function createResponse(success, data, meta = {}) {
         data,
         meta: {
             timestamp: new Date().toISOString(),
-            version: '4.10.6',
+            version: '4.10.8',
             server: 'production',
             environment: 'production',
             ...meta
@@ -3224,7 +3224,7 @@ const server = http.createServer(async (req, res) => {
             sendSuccess(res, {
                 message: "La Tanda Complete Mobile API",
                 deployment: "Production - Complete Mobile Integration (140+ endpoints)",
-                version: "4.10.6",
+                version: "4.10.8",
                 environment: "production",
                 mobile_optimized: true,
                 features: [
@@ -3267,7 +3267,7 @@ const server = http.createServer(async (req, res) => {
                 
                 const statsResponseData = {
                     platform: 'La Tanda',
-                    version: '4.10.6',
+                    version: '4.10.8',
                     stats: {
                         active_users: parseInt(users.rows[0].count),
                         active_groups: parseInt(groups.rows[0].count),
@@ -3388,7 +3388,7 @@ const server = http.createServer(async (req, res) => {
         if (pathname === '/api/public/info' && (method === 'GET' || method === 'HEAD')) {
             sendSuccess(res, {
                 name: 'La Tanda API',
-                version: '4.10.6',
+                version: '4.10.8',
                 description: 'Web3 collaborative savings platform API',
                 authentication: {
                     type: 'JWT Bearer Token',
@@ -3422,7 +3422,7 @@ const server = http.createServer(async (req, res) => {
 
                 sendSuccess(res, {
                     status: "operational",
-                    version: "4.10.6",
+                    version: "4.10.8",
                     database: { status: dbStatus },
                     timestamp: new Date().toISOString()
                 });
@@ -3572,7 +3572,7 @@ const server = http.createServer(async (req, res) => {
         if (pathname === '/docs' || path === '/api/docs') {
             sendSuccess(res, {
                 title: 'La Tanda Complete Mobile API Documentation',
-                version: '4.10.6',
+                version: '4.10.8',
                 description: 'Complete API for La Tanda mobile ecosystem (140+ endpoints)',
                 endpoints: {
                     core_system: 4,
@@ -6663,8 +6663,9 @@ const server = http.createServer(async (req, res) => {
 
                 // VALIDATION: Check tanda is active and lottery executed (Added 2025-12-31)
                 const tandaCheck = await dbPostgres.pool.query(`
-                    SELECT status, lottery_executed_at FROM tandas
-                    WHERE group_id = $1 ORDER BY created_at DESC LIMIT 1
+                    SELECT t.status, t.lottery_executed_at, t.turns_order, t.current_turn
+                    FROM tandas t
+                    WHERE t.group_id = $1 ORDER BY t.created_at DESC LIMIT 1
                 `, [groupId]);
 
                 if (tandaCheck.rows.length === 0 || tandaCheck.rows[0].status === 'recruiting') {
@@ -6677,10 +6678,15 @@ const server = http.createServer(async (req, res) => {
                     return;
                 }
 
+                const turnsOrder = tandaCheck.rows[0].turns_order || [];
+
                 // Get group info
                 const groupResult = await dbPostgres.pool.query(`
-                    SELECT g.group_id, g.name, g.contribution_amount, g.frequency, g.member_count, g.max_members, g.total_amount_collected, g.admin_id, g.status, g.created_at, g.location, g.description, g.image_url, g.category, g.meeting_schedule, g.updated_at, g.is_demo, g.start_date, g.grace_period, g.penalty_amount, g.current_cycle, g.lottery_executed, g.lottery_executed_at, g.lottery_scheduled_at, g.deleted_at, g.deleted_by, g.approval_settings, g.last_recruitment_notification_at,
-                           (SELECT COUNT(*) FROM group_members WHERE group_id = g.group_id AND status = 'active') as member_count
+                    SELECT g.group_id, g.name, g.contribution_amount, g.frequency, g.max_members,
+                           g.current_cycle, g.commission_rate,
+                           g.admin_id, g.status,
+                           (SELECT COUNT(*) FROM group_members WHERE group_id = g.group_id AND status = 'active') as active_member_count,
+                           (SELECT SUM(COALESCE(num_positions, 1)) FROM group_members WHERE group_id = g.group_id AND status = 'active') as active_positions
                     FROM groups g WHERE g.group_id = $1
                 `, [groupId]);
 
@@ -6690,10 +6696,45 @@ const server = http.createServer(async (req, res) => {
                 }
 
                 const group = groupResult.rows[0];
-                const memberCount = parseInt(group.member_count) || 0;
+                const maxMembers = parseInt(group.max_members) || 0;
                 const contributionAmount = parseFloat(group.contribution_amount) || 0;
+                const activePositions = parseInt(group.active_positions) || 0;
 
-                // Get completed contributions for current cycle
+                // v4.10.8: Target total based on max_members (designed capacity), not active members
+                const targetTotal = maxMembers * contributionAmount;
+
+                // v4.10.8: Distribution cycle = next after last completed distribution
+                const distResult = await dbPostgres.pool.query(
+                    'SELECT COALESCE(MAX(cycle_number), 0) + 1 AS next_dist_cycle FROM cycle_distributions WHERE group_id = $1',
+                    [groupId]
+                );
+                const nextDistCycle = distResult.rows[0].next_dist_cycle;
+
+                // v4.10.8: Beneficiary from turns_order[nextDistCycle - 1] (0-indexed)
+                const turnIndex = nextDistCycle - 1;
+                let beneficiaryUserId = null;
+                let beneficiaryName = 'Por asignar';
+                let beneficiaryTurnPosition = turnIndex + 1;
+
+                if (turnIndex < turnsOrder.length) {
+                    const turnEntry = turnsOrder[turnIndex];
+                    // turns_order is text[] with JSON strings like {"user_id":"...","slot":0}
+                    try {
+                        const parsed = typeof turnEntry === 'string' ? JSON.parse(turnEntry) : turnEntry;
+                        beneficiaryUserId = parsed.user_id || parsed;
+                    } catch (e) {
+                        beneficiaryUserId = turnEntry; // plain user_id string
+                    }
+
+                    if (beneficiaryUserId) {
+                        const userResult = await dbPostgres.pool.query(
+                            'SELECT name FROM users WHERE user_id = $1', [beneficiaryUserId]
+                        );
+                        beneficiaryName = userResult.rows[0]?.name || 'Desconocido';
+                    }
+                }
+
+                // Get completed contributions for current active cycle
                 const contribResult = await dbPostgres.pool.query(`
                     SELECT
                         COUNT(*) as total_contributions,
@@ -6701,7 +6742,7 @@ const server = http.createServer(async (req, res) => {
                         SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END) as cash_collected,
                         SUM(CASE WHEN payment_method != 'cash' THEN amount ELSE 0 END) as transfer_collected
                     FROM contributions
-                    WHERE group_id = $1 AND status = 'completed'
+                    WHERE group_id = $1 AND status IN ('completed', 'coordinator_approved', 'archived')
                 `, [groupId]);
 
                 const contrib = contribResult.rows[0];
@@ -6710,17 +6751,16 @@ const server = http.createServer(async (req, res) => {
                 const transferCollected = parseFloat(contrib.transfer_collected) || 0;
                 const totalContributions = parseInt(contrib.total_contributions) || 0;
 
-                // v4.10.4: Per-group commission rate (democratic per-member)
-                // If group has custom commission_rate, use it. Otherwise tiered default.
+                // v4.10.8: Commissions based on targetTotal (not totalCollected)
                 let commissionRate;
                 const groupCommissionRate = group.commission_rate;
                 if (groupCommissionRate !== null && groupCommissionRate !== undefined) {
                     commissionRate = parseFloat(groupCommissionRate) / 100;
                 } else {
-                    // Platform default tiered: <50k=3%, 50k-100k=2%, >100k=1%
+                    // Platform default tiered
                     commissionRate = 0.03;
-                    if (totalCollected >= 100000) commissionRate = 0.01;
-                    else if (totalCollected >= 50000) commissionRate = 0.02;
+                    if (targetTotal >= 100000) commissionRate = 0.01;
+                    else if (targetTotal >= 50000) commissionRate = 0.02;
                 }
 
                 // v4.10.4: Count members who accepted commission (democratic)
@@ -6730,48 +6770,43 @@ const server = http.createServer(async (req, res) => {
                 );
                 const commAcceptedCount = parseInt(commAcceptResult.rows[0].accepted_count) || 0;
 
-                const coordinatorFee = totalCollected * commissionRate;
+                // v4.10.8: Fees based on targetTotal
+                const coordinatorFee = targetTotal * commissionRate;
                 const platformFee = coordinatorFee * 0.10;  // Platform gets 10% of coordinator fee
                 const coordinatorNetFee = coordinatorFee - platformFee;
-                
-                // Get current beneficiary (next in turn) - MUST query before using beneficiary
-                const beneficiaryResult = await dbPostgres.pool.query(`
-                    SELECT gm.id, gm.group_id, gm.user_id, gm.role, gm.status, gm.turn_position, gm.joined_at, gm.num_positions, u.name as user_name
-                    FROM group_members gm
-                    LEFT JOIN users u ON gm.user_id = u.user_id
-                    WHERE gm.group_id = $1 AND gm.status = 'active'
-                    ORDER BY gm.turn_position ASC
-                    LIMIT 1
-                `, [groupId]);
 
-                const beneficiary = beneficiaryResult.rows[0];
-                
-                // Check if coordinator is the beneficiary (turn #1)
-                const isCoordinatorTurn = beneficiary?.turn_position === 1;
-                
+                // Check if beneficiary is the group creator (coordinator)
+                const isCoordinatorTurn = beneficiaryUserId === group.admin_id;
+
                 // Calculate what each party receives
                 let beneficiaryReceives, coordinatorReceives;
                 if (isCoordinatorTurn) {
-                    // Coordinator is beneficiary - only platform fee applies
-                    beneficiaryReceives = totalCollected - platformFee;
-                    coordinatorReceives = 0;  // Coordinator IS the beneficiary
+                    beneficiaryReceives = targetTotal - platformFee;
+                    coordinatorReceives = 0;
                 } else {
-                    // Normal case - coordinator takes commission, platform takes 10% of that
-                    beneficiaryReceives = totalCollected - coordinatorFee;
+                    beneficiaryReceives = targetTotal - coordinatorFee;
                     coordinatorReceives = coordinatorNetFee;
                 }
+
+                const collectionPercentage = targetTotal > 0 ? Math.round((totalCollected / targetTotal) * 1000) / 10 : 0;
 
                 sendSuccess(res, {
                     group_id: groupId,
                     group_name: group.name,
                     cycle_number: group.current_cycle || 1,
+                    next_distribution_cycle: nextDistCycle,
+                    target_total: targetTotal,
+                    actual_collected: totalCollected,
+                    positions_filled: activePositions,
+                    positions_total: maxMembers,
+                    collection_percentage: collectionPercentage,
                     collection: {
                         total_contributions: totalContributions,
-                        expected_contributions: memberCount,
+                        expected_contributions: activePositions,
                         total_collected: totalCollected,
                         cash_collected: cashCollected,
                         transfer_collected: transferCollected,
-                        is_complete: totalContributions >= memberCount
+                        is_complete: totalContributions >= activePositions
                     },
                     fees: {
                         coordinator_fee: isCoordinatorTurn ? 0 : coordinatorFee,
@@ -6784,9 +6819,9 @@ const server = http.createServer(async (req, res) => {
                         commission_source: groupCommissionRate !== null && groupCommissionRate !== undefined ? 'custom' : 'platform_default'
                     },
                     commission_acceptance: {
-                        total_active_members: memberCount,
+                        total_active_members: parseInt(group.active_member_count) || 0,
                         accepted: commAcceptedCount,
-                        pending: memberCount - commAcceptedCount,
+                        pending: (parseInt(group.active_member_count) || 0) - commAcceptedCount,
                         applies_to_accepted_only: true
                     },
                     distribution: {
@@ -6798,13 +6833,14 @@ const server = http.createServer(async (req, res) => {
                         },
                         beneficiary_receives: {
                             amount: beneficiaryReceives,
-                            user_id: beneficiary?.user_id,
-                            user_name: beneficiary?.user_name || 'Por asignar',
-                            method: 'Transferencia bancaria',
+                            user_id: beneficiaryUserId,
+                            user_name: beneficiaryName,
+                            turn_number: beneficiaryTurnPosition,
+                            method: 'Distribucion manual por coordinador',
                             is_coordinator: isCoordinatorTurn
                         }
                     },
-                    can_distribute: totalContributions >= memberCount && totalCollected > 0
+                    can_distribute: totalContributions >= activePositions && totalCollected > 0
                 });
             } catch (error) {
                 log("error", 'Error calculating distribution preview:', error);
@@ -6820,7 +6856,7 @@ const server = http.createServer(async (req, res) => {
             if (!authUser) return;
 
             const groupId = pathname.split('/')[3];
-            const { beneficiary_user_id, transfer_reference } = body;
+            const { transfer_reference } = body;
             const executed_by = authUser.userId;
 
             try {
@@ -6838,8 +6874,9 @@ const server = http.createServer(async (req, res) => {
 
                 // VALIDATION: Check tanda is active and lottery executed (Added 2025-12-31)
                 const tandaCheck = await dbPostgres.pool.query(`
-                    SELECT status, lottery_executed_at FROM tandas
-                    WHERE group_id = $1 ORDER BY created_at DESC LIMIT 1
+                    SELECT t.tanda_id, t.status, t.lottery_executed_at, t.turns_order, t.current_turn
+                    FROM tandas t
+                    WHERE t.group_id = $1 ORDER BY t.created_at DESC LIMIT 1
                 `, [groupId]);
 
                 if (tandaCheck.rows.length === 0 || tandaCheck.rows[0].status === 'recruiting') {
@@ -6852,10 +6889,15 @@ const server = http.createServer(async (req, res) => {
                     return;
                 }
 
+                const turnsOrder = tandaCheck.rows[0].turns_order || [];
+                const tandaId = tandaCheck.rows[0].tanda_id;
+
                 // Get group and verify
                 const groupResult = await dbPostgres.pool.query(`
-                    SELECT g.group_id, g.name, g.contribution_amount, g.frequency, g.member_count, g.max_members, g.total_amount_collected, g.admin_id, g.status, g.created_at, g.location, g.description, g.image_url, g.category, g.meeting_schedule, g.updated_at, g.is_demo, g.start_date, g.grace_period, g.penalty_amount, g.current_cycle, g.lottery_executed, g.lottery_executed_at, g.lottery_scheduled_at, g.deleted_at, g.deleted_by, g.approval_settings, g.last_recruitment_notification_at,
-                           (SELECT COUNT(*) FROM group_members WHERE group_id = g.group_id AND status = 'active') as member_count
+                    SELECT g.group_id, g.name, g.contribution_amount, g.frequency, g.max_members,
+                           g.current_cycle, g.commission_rate, g.admin_id, g.status,
+                           (SELECT COUNT(*) FROM group_members WHERE group_id = g.group_id AND status = 'active') as active_member_count,
+                           (SELECT SUM(COALESCE(num_positions, 1)) FROM group_members WHERE group_id = g.group_id AND status = 'active') as active_positions
                     FROM groups g WHERE g.group_id = $1
                 `, [groupId]);
 
@@ -6865,8 +6907,38 @@ const server = http.createServer(async (req, res) => {
                 }
 
                 const group = groupResult.rows[0];
-                const memberCount = parseInt(group.member_count) || 0;
-                const cycleNumber = group.current_cycle || 1;
+                const maxMembers = parseInt(group.max_members) || 0;
+                const contributionAmount = parseFloat(group.contribution_amount) || 0;
+                const activePositions = parseInt(group.active_positions) || 0;
+
+                // v4.10.8: Target total based on max_members
+                const targetTotal = maxMembers * contributionAmount;
+
+                // v4.10.8: Distribution cycle from cycle_distributions (not groups.current_cycle)
+                const distResult = await dbPostgres.pool.query(
+                    'SELECT COALESCE(MAX(cycle_number), 0) + 1 AS next_dist_cycle FROM cycle_distributions WHERE group_id = $1',
+                    [groupId]
+                );
+                const nextDistCycle = distResult.rows[0].next_dist_cycle;
+
+                // v4.10.8: Beneficiary from turns_order[nextDistCycle - 1]
+                const turnIndex = nextDistCycle - 1;
+                let finalBeneficiary = null;
+
+                if (turnIndex < turnsOrder.length) {
+                    const turnEntry = turnsOrder[turnIndex];
+                    try {
+                        const parsed = typeof turnEntry === 'string' ? JSON.parse(turnEntry) : turnEntry;
+                        finalBeneficiary = parsed.user_id || parsed;
+                    } catch (e) {
+                        finalBeneficiary = turnEntry;
+                    }
+                }
+
+                if (!finalBeneficiary) {
+                    sendError(res, 400, 'No se pudo determinar el beneficiario para el turno ' + nextDistCycle);
+                    return;
+                }
 
                 // Get contributions summary
                 const contribResult = await dbPostgres.pool.query(`
@@ -6876,7 +6948,7 @@ const server = http.createServer(async (req, res) => {
                         SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END) as cash_collected,
                         SUM(CASE WHEN payment_method != 'cash' THEN amount ELSE 0 END) as transfer_collected
                     FROM contributions
-                    WHERE group_id = $1 AND status = 'completed'
+                    WHERE group_id = $1 AND status IN ('completed', 'coordinator_approved', 'archived')
                 `, [groupId]);
 
                 const contrib = contribResult.rows[0];
@@ -6885,101 +6957,249 @@ const server = http.createServer(async (req, res) => {
                 const transferCollected = parseFloat(contrib.transfer_collected) || 0;
                 const totalContributions = parseInt(contrib.total_contributions) || 0;
 
-                if (totalContributions < memberCount) {
+                if (totalContributions < activePositions) {
                     sendError(res, 400, 'No todas las contribuciones han sido completadas');
                     return;
                 }
 
-                // Determine beneficiary first - need this for fee calculation
-                let finalBeneficiary = beneficiary_user_id;
-                let beneficiaryTurnPosition = null;
-                if (!finalBeneficiary) {
-                    const beneficiaryResult = await dbPostgres.pool.query(`
-                        SELECT user_id, turn_position FROM group_members
-                        WHERE group_id = $1 AND status = 'active'
-                        ORDER BY turn_position ASC LIMIT 1
-                    `, [groupId]);
-                    finalBeneficiary = beneficiaryResult.rows[0]?.user_id;
-                    beneficiaryTurnPosition = beneficiaryResult.rows[0]?.turn_position;
+                // v4.10.8: Fees based on targetTotal
+                let commissionRate;
+                const groupCommissionRate = group.commission_rate;
+                if (groupCommissionRate !== null && groupCommissionRate !== undefined) {
+                    commissionRate = parseFloat(groupCommissionRate) / 100;
                 } else {
-                    // Get turn position for provided beneficiary
-                    const posResult = await dbPostgres.pool.query(`
-                        SELECT turn_position FROM group_members
-                        WHERE group_id = $1 AND user_id = $2
-                    `, [groupId, finalBeneficiary]);
-                    beneficiaryTurnPosition = posResult.rows[0]?.turn_position;
+                    commissionRate = 0.03;
+                    if (targetTotal >= 100000) commissionRate = 0.01;
+                    else if (targetTotal >= 50000) commissionRate = 0.02;
                 }
-                
-                // Calculate fees - Rate based on pool size
-                let commissionRate = 0.03;
-                if (totalCollected >= 100000) commissionRate = 0.01;
-                else if (totalCollected >= 50000) commissionRate = 0.02;
-                
-                const coordinatorFee = totalCollected * commissionRate;
+
+                const isCoordinatorTurn = finalBeneficiary === group.admin_id;
+                const coordinatorFee = targetTotal * commissionRate;
                 const platformFee = coordinatorFee * 0.10;
-                const isCoordinatorTurn = beneficiaryTurnPosition === 1;
                 const coordinatorNet = isCoordinatorTurn ? 0 : (coordinatorFee - platformFee);
-                const beneficiaryNet = isCoordinatorTurn ? (totalCollected - platformFee) : (totalCollected - coordinatorFee);
+                const beneficiaryNet = isCoordinatorTurn ? (targetTotal - platformFee) : (targetTotal - coordinatorFee);
 
-                if (!finalBeneficiary) {
-                    sendError(res, 400, 'No se pudo determinar el beneficiario');
-                    return;
+                // v4.10.8: Wrap in transaction to prevent double-distribution
+                const client = await dbPostgres.pool.connect();
+                try {
+                    await client.query('BEGIN');
+
+                    // Lock: check no distribution already exists for this cycle
+                    const dupCheck = await client.query(
+                        'SELECT id FROM cycle_distributions WHERE group_id = $1 AND cycle_number = $2 FOR UPDATE',
+                        [groupId, nextDistCycle]
+                    );
+                    if (dupCheck.rows.length > 0) {
+                        await client.query('ROLLBACK');
+                        sendError(res, 409, 'La distribución del ciclo ' + nextDistCycle + ' ya fue ejecutada');
+                        return;
+                    }
+
+                    // Create distribution record with target_total
+                    const distributionResult = await client.query(`
+                        INSERT INTO cycle_distributions (
+                            group_id, cycle_number, beneficiary_user_id,
+                            total_collected, target_total, platform_fee, coordinator_fee, coordinator_net,
+                            net_amount, cash_amount, transfer_amount,
+                            member_count, contribution_amount,
+                            status, transfer_reference, distributed_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'completed', $14, NOW())
+                        RETURNING id
+                    `, [
+                        groupId, nextDistCycle, finalBeneficiary,
+                        totalCollected, targetTotal, platformFee, coordinatorFee, coordinatorNet,
+                        beneficiaryNet, cashCollected, transferCollected,
+                        activePositions, group.contribution_amount || 0,
+                        transfer_reference || null
+                    ]);
+
+                    // Archive current contributions
+                    await client.query(`
+                        UPDATE contributions
+                        SET status = 'archived', notes = COALESCE(notes, '') || ' [Ciclo ' || $2 || ' completado]'
+                        WHERE group_id = $1 AND status IN ('completed', 'coordinator_approved')
+                    `, [groupId, nextDistCycle]);
+
+                    // v4.10.8: Increment tandas.current_turn (NOT groups.current_cycle — record-bulk handles that)
+                    await client.query(`
+                        UPDATE tandas SET current_turn = current_turn + 1, updated_at = NOW()
+                        WHERE tanda_id = $1
+                    `, [tandaId]);
+
+                    await client.query('COMMIT');
+
+                    log('info', 'Cycle distribution executed', {
+                        group_id: groupId,
+                        distribution_cycle: nextDistCycle,
+                        beneficiary: finalBeneficiary,
+                        target_total: targetTotal,
+                        total_collected: totalCollected,
+                        executed_by
+                    });
+
+                    sendSuccess(res, {
+                        distribution_id: distributionResult.rows[0].id,
+                        cycle_number: nextDistCycle,
+                        beneficiary_user_id: finalBeneficiary,
+                        target_total: targetTotal,
+                        total_collected: totalCollected,
+                        coordinator_net: coordinatorNet,
+                        beneficiary_net: beneficiaryNet,
+                        next_distribution_cycle: nextDistCycle + 1,
+                        status: 'completed',
+                        message: 'Distribucion ejecutada exitosamente'
+                    });
+                } catch (txError) {
+                    await client.query('ROLLBACK');
+                    throw txError;
+                } finally {
+                    client.release();
                 }
-
-                // Create distribution record
-                const distributionResult = await dbPostgres.pool.query(`
-                    INSERT INTO cycle_distributions (
-                        group_id, cycle_number, beneficiary_user_id,
-                        total_collected, platform_fee, coordinator_fee, coordinator_net,
-                        net_amount, cash_amount, transfer_amount,
-                        member_count, contribution_amount,
-                        status, transfer_reference, distributed_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'completed', $13, NOW())
-                    RETURNING id
-                `, [
-                    groupId, cycleNumber, finalBeneficiary,
-                    totalCollected, platformFee, coordinatorFee, coordinatorNet,
-                    beneficiaryNet, cashCollected, transferCollected,
-                    memberCount, group.contribution_amount || 0,
-                    transfer_reference || null
-                ]);
-
-                // Archive current contributions and increment cycle
-                await dbPostgres.pool.query(`
-                    UPDATE contributions
-                    SET status = 'archived', notes = COALESCE(notes, '') || ' [Ciclo ' || $2 || ' completado]'
-                    WHERE group_id = $1 AND status = 'completed'
-                `, [groupId, cycleNumber]);
-
-                await dbPostgres.pool.query(`
-                    UPDATE groups SET current_cycle = $1 WHERE group_id = $2
-                `, [cycleNumber + 1, groupId]);
-
-                log('info', 'Cycle distribution executed', {
-                    group_id: groupId,
-                    cycle_number: cycleNumber,
-                    beneficiary: finalBeneficiary,
-                    total_collected: totalCollected,
-                    executed_by
-                });
-
-                sendSuccess(res, {
-                    distribution_id: distributionResult.rows[0].id,
-                    cycle_number: cycleNumber,
-                    beneficiary_user_id: finalBeneficiary,
-                    total_collected: totalCollected,
-                    coordinator_net: coordinatorNet,
-                    beneficiary_net: beneficiaryNet,
-                    next_cycle: cycleNumber + 1,
-                    status: 'completed',
-                    message: 'Distribucion ejecutada exitosamente'
-                });
             } catch (error) {
-                log("error", 'Error executing distribution:', error);
+                log('error', 'Error executing distribution: ' + String(error.message) + ' | Stack: ' + String(error.stack));
                 sendError(res, 500, 'Error al ejecutar distribucion');
             }
             return;
         }
+
+
+        // v4.10.8: Get tanda balances (administrative tracking)
+        if (pathname.match(/^\/api\/groups\/[^/]+\/tanda-balances$/) && (method === 'GET' || method === 'HEAD')) {
+            const authUser = requireAuth(req, res);
+            if (!authUser) return;
+
+            const groupId = pathname.split('/')[3];
+
+            try {
+                // Verify membership or admin
+                const permCheck = await dbPostgres.pool.query(`
+                    SELECT gm.role FROM group_members gm
+                    WHERE gm.group_id = $1 AND gm.user_id = $2 AND gm.status IN ('active', 'suspended')
+                `, [groupId, authUser.userId]);
+
+                const isAdmin = authUser.role === 'admin';
+                if (permCheck.rows.length === 0 && !isAdmin) {
+                    sendError(res, 403, 'No tienes acceso a este grupo');
+                    return;
+                }
+
+                // Group info
+                const groupResult = await dbPostgres.pool.query(`
+                    SELECT g.group_id, g.name, g.max_members, g.contribution_amount
+                    FROM groups g WHERE g.group_id = $1
+                `, [groupId]);
+
+                if (groupResult.rows.length === 0) {
+                    sendError(res, 404, 'Grupo no encontrado');
+                    return;
+                }
+
+                const group = groupResult.rows[0];
+                const maxMembers = parseInt(group.max_members) || 0;
+                const contributionAmount = parseFloat(group.contribution_amount) || 0;
+                const targetPerCycle = maxMembers * contributionAmount;
+
+                // All contributions per member (completed + archived)
+                const contribResult = await dbPostgres.pool.query(`
+                    SELECT user_id, SUM(amount) as total_contributed, COUNT(*) as payments
+                    FROM contributions
+                    WHERE group_id = $1 AND status IN ('completed', 'coordinator_approved', 'archived')
+                    GROUP BY user_id
+                `, [groupId]);
+
+                const contribMap = {};
+                for (const row of contribResult.rows) {
+                    contribMap[row.user_id] = {
+                        total: parseFloat(row.total_contributed) || 0,
+                        payments: parseInt(row.payments) || 0
+                    };
+                }
+
+                // Distributions received per member (as beneficiary)
+                const distribResult = await dbPostgres.pool.query(`
+                    SELECT beneficiary_user_id,
+                           SUM(COALESCE(target_total, total_collected)) as total_received,
+                           COUNT(*) as times_received
+                    FROM cycle_distributions
+                    WHERE group_id = $1 AND status = 'completed'
+                    GROUP BY beneficiary_user_id
+                `, [groupId]);
+
+                const distribMap = {};
+                for (const row of distribResult.rows) {
+                    distribMap[row.beneficiary_user_id] = {
+                        total: parseFloat(row.total_received) || 0,
+                        times: parseInt(row.times_received) || 0
+                    };
+                }
+
+                // Completed distribution count
+                const distCountResult = await dbPostgres.pool.query(
+                    'SELECT COUNT(*) as dist_count FROM cycle_distributions WHERE group_id = $1 AND status = $2',
+                    [groupId, 'completed']
+                );
+                const distributionsCompleted = parseInt(distCountResult.rows[0].dist_count) || 0;
+
+                // Active members
+                const membersResult = await dbPostgres.pool.query(`
+                    SELECT gm.user_id, gm.turn_position, gm.num_positions, gm.role,
+                           u.name, u.avatar_url
+                    FROM group_members gm
+                    LEFT JOIN users u ON gm.user_id = u.user_id
+                    WHERE gm.group_id = $1 AND gm.status = 'active'
+                    ORDER BY gm.turn_position ASC
+                `, [groupId]);
+
+                let totalContributedAll = 0;
+                let totalDistributedAll = 0;
+                let totalPositions = 0;
+
+                const members = membersResult.rows.map(m => {
+                    const contributed = contribMap[m.user_id]?.total || 0;
+                    const received = distribMap[m.user_id]?.total || 0;
+                    const balance = contributed - received;
+                    const numPositions = parseInt(m.num_positions) || 1;
+
+                    totalContributedAll += contributed;
+                    totalDistributedAll += received;
+                    totalPositions += numPositions;
+
+                    return {
+                        user_id: m.user_id,
+                        name: m.name || 'Desconocido',
+                        avatar_url: m.avatar_url || null,
+                        role: m.role,
+                        turn_position: m.turn_position,
+                        num_positions: numPositions,
+                        total_contributed: contributed,
+                        total_received: received,
+                        tanda_balance: balance,
+                        has_received: (distribMap[m.user_id]?.times || 0) > 0,
+                        payments_count: contribMap[m.user_id]?.payments || 0
+                    };
+                });
+
+                sendSuccess(res, {
+                    group_id: groupId,
+                    group_name: group.name,
+                    target_per_cycle: targetPerCycle,
+                    distributions_completed: distributionsCompleted,
+                    members: members,
+                    summary: {
+                        total_contributed_all: totalContributedAll,
+                        total_distributed_all: totalDistributedAll,
+                        positions_filled: totalPositions,
+                        positions_total: maxMembers,
+                        note: 'Positivo = ahorro acumulado. Negativo = prestamo pendiente'
+                    }
+                });
+            } catch (error) {
+                log("error", 'Error fetching tanda balances:', error);
+                sendError(res, 500, 'Error al obtener saldos');
+            }
+            return;
+        }
+
 
         // Get distribution history for a group
         if (pathname.match(/^\/api\/groups\/[^/]+\/distributions$/) && (method === 'GET' || method === 'HEAD')) {
@@ -9512,7 +9732,7 @@ const server = http.createServer(async (req, res) => {
                         g.contribution_amount,
                         g.frequency,
                         (SELECT MAX(paid_date) FROM contributions
-                         WHERE group_id = gm.group_id AND user_id = gm.user_id AND status IN ('completed', 'coordinator_approved', 'verified')) as last_payment,
+                         WHERE group_id = gm.group_id AND user_id = gm.user_id AND status IN ('completed', 'coordinator_approved', 'verified', 'archived')) as last_payment,
                         g.start_date,
                         (SELECT cm.user_id FROM group_members cm
                          WHERE cm.group_id = gm.group_id AND cm.role = 'creator' AND cm.status IN ('active', 'suspended') LIMIT 1) as creator_user_id,
@@ -9523,7 +9743,7 @@ const server = http.createServer(async (req, res) => {
                         (SELECT COUNT(*) FROM contributions c
                          WHERE c.group_id = gm.group_id AND c.user_id = gm.user_id
                          AND c.cycle_number = g.current_cycle
-                         AND c.status IN ('completed', 'coordinator_approved', 'verified')) as contributions_this_cycle
+                         AND c.status IN ('completed', 'coordinator_approved', 'verified', 'archived')) as contributions_this_cycle
                     FROM group_members gm
                     JOIN groups g ON gm.group_id = g.group_id
                     JOIN users u ON gm.user_id = u.user_id
@@ -10300,7 +10520,8 @@ const server = http.createServer(async (req, res) => {
                 
                 const tanda = tandaResult.rows[0];
                 const turnsOrder = tanda && tanda.turns_order ? tanda.turns_order : [];
-                const totalPerTurn = tanda ? parseFloat(tanda.total_per_turn) || 0 : 0;
+                // Calculate dynamically from group data: contribution * max_members (total designed positions)
+                const totalPerTurn = (tanda ? parseFloat(tanda.contribution_amount) || parseFloat(groupData.contribution_amount) || 0 : parseFloat(groupData.contribution_amount) || 0) * (parseInt(groupData.max_members) || parseInt(groupData.total_positions) || 1);
                 let expandedOrder = [];
                 const contributionAmount = tanda ? parseFloat(tanda.contribution_amount) || parseFloat(groupData.contribution_amount) || 0 : parseFloat(groupData.contribution_amount) || 0;
                 const frequency = tanda ? tanda.frequency || groupData.frequency || 'monthly' : groupData.frequency || 'monthly';
@@ -10762,7 +10983,10 @@ const server = http.createServer(async (req, res) => {
                         due_date: c.due_date,
                         paid_date: c.paid_date,
                         cycle_number: c.cycle_number,
-                        created_at: c.created_at
+                        created_at: c.created_at,
+                        verified_by: c.verified_by || null,
+                        verified_by_name: c.verified_by_name || null,
+                        verification_method: c.verification_method || null
                     })),
                     totals: {
                         total_count: parseInt(result.totals.total_count),
@@ -11130,11 +11354,16 @@ const server = http.createServer(async (req, res) => {
                         c.created_at,
                         c.verified_at,
                         c.verified_by,
+                        c.verification_method,
+                        c.cycle_number,
                         u.name as user_name,
                         u.email as user_email,
-                        u.phone as user_phone
+                        u.phone as user_phone,
+                        u.avatar_url as user_avatar,
+                        COALESCE(v.name, 'Sistema') as verified_by_name
                     FROM contributions c
                     LEFT JOIN users u ON c.user_id = u.user_id
+                    LEFT JOIN users v ON c.verified_by = v.user_id
                     WHERE c.group_id = $1
                     AND c.status IN ('pending', 'pending_verification', 'awaiting_payment')
                     ORDER BY c.created_at DESC
@@ -11214,7 +11443,7 @@ const server = http.createServer(async (req, res) => {
                     WHERE (
                         SELECT COUNT(*) FROM contributions
                         WHERE user_id = $1 AND group_id = $2 AND cycle_number = s.num
-                        AND status IN ('completed', 'coordinator_approved')
+                        AND status IN ('completed', 'coordinator_approved', 'archived')
                     ) < $4
                     ORDER BY s.num ASC LIMIT 1
                 `, [member_user_id, groupId, currentCycle, memberPositions]);
@@ -11239,7 +11468,7 @@ const server = http.createServer(async (req, res) => {
                         [groupId]
                     );
                     const paidCount = await dbPostgres.pool.query(
-                        "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved')",
+                        "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')",
                         [groupId, targetCycle]
                     );
                     if (parseInt(paidCount.rows[0].cnt) >= parseInt(activeCount.rows[0].cnt) && targetCycle >= currentCycle) {
@@ -11376,12 +11605,12 @@ const server = http.createServer(async (req, res) => {
                                 MAX(c.created_at) AS last_date,
                                 (SELECT c2.payment_method FROM contributions c2
                                  WHERE c2.user_id = gm.user_id AND c2.group_id = $1
-                                 AND c2.status IN ('completed','coordinator_approved')
+                                 AND c2.status IN ('completed','coordinator_approved','archived')
                                  ORDER BY c2.created_at DESC LIMIT 1) AS last_method
                             FROM contributions c
                             WHERE c.group_id = $1 AND c.user_id = gm.user_id
                             AND c.cycle_number BETWEEN 1 AND $2
-                            AND c.status IN ('completed','coordinator_approved')
+                            AND c.status IN ('completed','coordinator_approved','archived')
                             GROUP BY c.user_id, c.cycle_number
                         ) c_agg
                         GROUP BY c_agg.user_id, c_agg.total_contributions, c_agg.last_method
@@ -11552,7 +11781,7 @@ const server = http.createServer(async (req, res) => {
                             WHERE (
                                 SELECT COUNT(*) FROM contributions
                                 WHERE user_id = $1 AND group_id = $2 AND cycle_number = s.num
-                                AND status IN ('completed', 'coordinator_approved')
+                                AND status IN ('completed', 'coordinator_approved', 'archived')
                             ) < $4
                             ORDER BY s.num ASC LIMIT 1
                         `, [item.member_user_id, groupId, currentCycle, itemPositions]);
@@ -11596,7 +11825,7 @@ const server = http.createServer(async (req, res) => {
                             [groupId]
                         );
                         const paidCount = await dbPostgres.pool.query(
-                            "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved')",
+                            "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')",
                             [groupId, currentCycle]
                         );
                         if (parseInt(paidCount.rows[0].cnt) >= parseInt(activeCount.rows[0].cnt)) {
