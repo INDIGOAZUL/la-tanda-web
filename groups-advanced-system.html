@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=1.6">
+    <link rel="stylesheet" href="css/groups-page.css?v=1.8">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -238,6 +238,7 @@
                 // Field with different name
                 members_count: pgGroup.member_count || 0,
                 total_positions: pgGroup.total_positions || pgGroup.member_count || 0,
+                commission_rate: pgGroup.commission_rate !== undefined ? pgGroup.commission_rate : null,
                 
                 // Default values for missing fields (to prevent errors)
                 my_role: pgGroup.my_role || 'creator',  // Assume creator for now (user is admin_id)
@@ -249,6 +250,7 @@
                 turns_until_mine: pgGroup.turns_until_mine,
                 my_alerts: pgGroup.my_alerts || [],  // Empty array to prevent .length error
                 has_active_tanda: pgGroup.has_active_tanda || false,
+                current_cycle: parseInt(pgGroup.current_cycle) || 0,
                 current_turn_number: null,
                 current_turn_recipient: null
             };
@@ -301,38 +303,128 @@
             }
         }
 
-        // ===== UPDATE STATS =====
+// ===== UPDATE STATS =====
         function updateStats() {
             // Calculate real stats from allGroups data
-            
+
             const activeGroups = allGroups.filter(g => g.status === 'active');
-            
+
             // Count pending payments (groups where my_payment_status is pending, late, or suspension_recommended)
             const pendingCount = allGroups.filter(g =>
                 g.my_payment_status === 'pending' || g.my_payment_status === 'late' || g.my_payment_status === 'suspension_recommended'
             ).length;
-            
+
             // Sum total paid across all groups
             const totalPaidSum = allGroups.reduce((sum, g) => sum + (g.my_total_paid || 0), 0);
-            
+
             // Count total alerts
             const alertsCount = allGroups.reduce((sum, g) => sum + (g.my_alerts?.length || 0), 0);
-            
-            const stats = {
-                total: allGroups.length,
-                active: activeGroups.length,
-                pendingPayments: pendingCount,
-                totalPaid: totalPaidSum,
-                totalAlerts: alertsCount
-            };
+
+            // Total amount owed (contribution_amount for groups with pending/late status)
+            const totalOwed = allGroups.reduce(function(sum, g) {
+                if (g.my_payment_status === 'pending' || g.my_payment_status === 'late' || g.my_payment_status === 'suspension_recommended') {
+                    return sum + (parseFloat(g.contribution_amount) || 0);
+                }
+                return sum;
+            }, 0);
+
+            // Max current_cycle across active groups
+            var maxCycle = 0;
+            activeGroups.forEach(function(g) {
+                var c = parseInt(g.current_cycle) || 0;
+                if (c > maxCycle) maxCycle = c;
+            });
+
+            // Role breakdown
+            var roleCreator = 0, roleCoord = 0, roleMember = 0;
+            allGroups.forEach(function(g) {
+                if (g.my_role === 'creator') roleCreator++;
+                else if (g.my_role === 'coordinator') roleCoord++;
+                else roleMember++;
+            });
 
             var el;
-            // Desktop sidebar stats
-            el = document.getElementById('totalGroups'); if (el) el.textContent = stats.total;
-            el = document.getElementById('activeGroups'); if (el) el.textContent = stats.active;
-            el = document.getElementById('pendingPayments'); if (el) el.textContent = stats.pendingPayments;
-            el = document.getElementById('grpTotalPaid'); if (el) el.textContent = 'L. ' + stats.totalPaid.toLocaleString();
-            el = document.getElementById('totalAlerts'); if (el) el.textContent = stats.totalAlerts;
+            // 2x2 grid
+            el = document.getElementById('totalGroups'); if (el) el.textContent = allGroups.length;
+            el = document.getElementById('activeGroups'); if (el) el.textContent = activeGroups.length;
+            el = document.getElementById('pendingPayments'); if (el) el.textContent = pendingCount;
+            el = document.getElementById('totalAlerts'); if (el) el.textContent = alertsCount;
+
+            // Detail rows
+            el = document.getElementById('grpTotalPaid'); if (el) el.textContent = 'L. ' + totalPaidSum.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            el = document.getElementById('grpTotalOwed'); if (el) {
+                el.textContent = 'L. ' + totalOwed.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                // Hide row if nothing owed
+                var owedRow = el.closest('.gs-row');
+                if (owedRow) owedRow.style.display = totalOwed > 0 ? 'flex' : 'none';
+            }
+            el = document.getElementById('grpCurrentCycle'); if (el) el.textContent = maxCycle > 0 ? 'Ciclo ' + maxCycle : '--';
+
+            // Roles
+            el = document.getElementById('grpRoleCreator'); if (el) el.textContent = roleCreator;
+            el = document.getElementById('grpRoleCoord'); if (el) el.textContent = roleCoord;
+            el = document.getElementById('grpRoleMember'); if (el) el.textContent = roleMember;
+
+            // Next payment due
+            updateNextPaymentCard();
+        }
+
+        function updateNextPaymentCard() {
+            var card = document.getElementById('grpSidebarNextPayment');
+            if (!card) return;
+
+            // Find the group with the earliest next payment due among pending/upcoming
+            var now = new Date();
+            var nextGroup = null;
+            var nextDate = null;
+
+            allGroups.forEach(function(g) {
+                if (g.status !== 'active') return;
+                if (!g.my_next_payment_due) return;
+                var d = new Date(g.my_next_payment_due.split('T')[0] + 'T12:00:00');
+                if (!nextDate || d < nextDate) {
+                    nextDate = d;
+                    nextGroup = g;
+                }
+            });
+
+            if (!nextGroup || !nextDate) {
+                card.style.display = 'none';
+                return;
+            }
+
+            card.style.display = 'block';
+            var nameEl = document.getElementById('grpNextPayGroup');
+            var amountEl = document.getElementById('grpNextPayAmount');
+            var dateEl = document.getElementById('grpNextPayDate');
+            var countdownEl = document.getElementById('grpNextPayCountdown');
+
+            if (nameEl) nameEl.textContent = nextGroup.name || 'Grupo';
+            if (amountEl) amountEl.textContent = 'L. ' + (parseFloat(nextGroup.contribution_amount) || 0).toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            var dateStr = nextDate.toLocaleDateString('es-HN', { day: '2-digit', month: 'short' });
+            if (dateEl) dateEl.textContent = dateStr;
+
+            // Countdown
+            var diffMs = nextDate - now;
+            var diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+            if (countdownEl) {
+                if (diffDays < 0) {
+                    var absDays = Math.abs(diffDays);
+                    countdownEl.textContent = 'Vencido hace ' + absDays + ' dia' + (absDays !== 1 ? 's' : '');
+                    countdownEl.className = 'gs-next-countdown gs-countdown-late';
+                } else if (diffDays === 0) {
+                    countdownEl.textContent = 'Vence hoy';
+                    countdownEl.className = 'gs-next-countdown gs-countdown-soon';
+                } else if (diffDays <= 3) {
+                    countdownEl.textContent = 'En ' + diffDays + ' dia' + (diffDays !== 1 ? 's' : '');
+                    countdownEl.className = 'gs-next-countdown gs-countdown-soon';
+                } else {
+                    countdownEl.textContent = 'En ' + diffDays + ' dias';
+                    countdownEl.className = 'gs-next-countdown gs-countdown-ok';
+                }
+            }
         }
 
         // ===== RENDER GROUPS =====
@@ -554,7 +646,7 @@
             var freqLabel = frequencyLabels[group.frequency] || group.frequency || '--';
 
             // Members display
-            var membersDisplay = (group.members_count || 0) + '/' + (group.max_members || '?');
+            var membersDisplay = (group.total_positions || group.members_count || 0) + '/' + (group.max_members || '?');
 
             // Role pill colors
             var roleClass = group.my_role === 'creator' ? 'gc-role-creator' : group.my_role === 'coordinator' ? 'gc-role-coord' : 'gc-role-member';
@@ -2058,30 +2150,104 @@ async function loadUsersWithoutPositions(groupId) {
         </main>
 
         <!-- RIGHT SIDEBAR -->
-        <aside class="right-sidebar" id="rightSidebar">
+<aside class="right-sidebar" id="rightSidebar">
             <div class="right-sidebar-sticky">
                 <div class="sidebar-hub-cards" id="sidebarHubCards"></div>
+
+                <!-- Resumen Stats Card -->
                 <div class="grp-sidebar-stats" id="grpSidebarStats">
                     <h4 class="grp-sidebar-stats-title">Resumen</h4>
-                    <div class="grp-stat-row">
-                        <span>Total grupos</span>
-                        <span class="grp-stat-val" id="totalGroups">0</span>
+
+                    <!-- Top 2x2 grid -->
+                    <div class="gs-grid">
+                        <div class="gs-cell">
+                            <span class="gs-cell-val" id="totalGroups">0</span>
+                            <span class="gs-cell-label">Grupos</span>
+                        </div>
+                        <div class="gs-cell">
+                            <span class="gs-cell-val gs-cyan" id="activeGroups">0</span>
+                            <span class="gs-cell-label">Activos</span>
+                        </div>
+                        <div class="gs-cell">
+                            <span class="gs-cell-val gs-amber" id="pendingPayments">0</span>
+                            <span class="gs-cell-label">Pendientes</span>
+                        </div>
+                        <div class="gs-cell">
+                            <span class="gs-cell-val gs-red" id="totalAlerts">0</span>
+                            <span class="gs-cell-label">Alertas</span>
+                        </div>
                     </div>
-                    <div class="grp-stat-row">
-                        <span>Activos</span>
-                        <span class="grp-stat-val" id="activeGroups">0</span>
+
+                    <!-- Detail rows -->
+                    <div class="gs-rows">
+                        <div class="gs-row">
+                            <span class="gs-row-icon" style="color:#00FFFF;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </span>
+                            <span class="gs-row-label">Total pagado</span>
+                            <span class="gs-row-val gs-cyan" id="grpTotalPaid">L. 0</span>
+                        </div>
+                        <div class="gs-row">
+                            <span class="gs-row-icon" style="color:#ef4444;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            </span>
+                            <span class="gs-row-label">Total pendiente</span>
+                            <span class="gs-row-val gs-red" id="grpTotalOwed">L. 0</span>
+                        </div>
+                        <div class="gs-row">
+                            <span class="gs-row-icon" style="color:#22c55e;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+                            </span>
+                            <span class="gs-row-label">Ciclo actual</span>
+                            <span class="gs-row-val gs-cyan" id="grpCurrentCycle">--</span>
+                        </div>
                     </div>
-                    <div class="grp-stat-row">
-                        <span>Pagos pendientes</span>
-                        <span class="grp-stat-val grp-stat-warn" id="pendingPayments">0</span>
+                </div>
+
+                <!-- Roles Card -->
+                <div class="grp-sidebar-stats" id="grpSidebarRoles">
+                    <h4 class="grp-sidebar-stats-title">Mis Roles</h4>
+                    <div class="gs-roles">
+                        <div class="gs-role-pill gs-role-creator">
+                            <span class="gs-role-count" id="grpRoleCreator">0</span>
+                            <span class="gs-role-label">Creador</span>
+                        </div>
+                        <div class="gs-role-pill gs-role-coord">
+                            <span class="gs-role-count" id="grpRoleCoord">0</span>
+                            <span class="gs-role-label">Coord.</span>
+                        </div>
+                        <div class="gs-role-pill gs-role-member">
+                            <span class="gs-role-count" id="grpRoleMember">0</span>
+                            <span class="gs-role-label">Miembro</span>
+                        </div>
                     </div>
-                    <div class="grp-stat-row">
-                        <span>Total pagado</span>
-                        <span class="grp-stat-val" id="grpTotalPaid">L. 0</span>
+                </div>
+
+                <!-- Next Payment Card -->
+                <div class="grp-sidebar-stats" id="grpSidebarNextPayment" style="display:none;">
+                    <h4 class="grp-sidebar-stats-title">Proximo Pago</h4>
+                    <div class="gs-next-payment">
+                        <div class="gs-next-group" id="grpNextPayGroup">--</div>
+                        <div class="gs-next-details">
+                            <div class="gs-next-amount" id="grpNextPayAmount">L. 0</div>
+                            <div class="gs-next-date" id="grpNextPayDate">--</div>
+                        </div>
+                        <div class="gs-next-countdown" id="grpNextPayCountdown"></div>
                     </div>
-                    <div class="grp-stat-row">
-                        <span>Alertas</span>
-                        <span class="grp-stat-val grp-stat-warn" id="totalAlerts">0</span>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grp-sidebar-stats" id="grpSidebarActions">
+                    <h4 class="grp-sidebar-stats-title">Acciones</h4>
+                    <div class="gs-actions">
+                        <button class="gs-action-btn" data-action="switch-groups-tab" data-tab="create">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            Crear Grupo
+                        </button>
+                        <button class="gs-action-btn gs-action-secondary" data-action="gs-view-invitations">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            Ver Invitaciones
+                        </button>
                     </div>
                 </div>
             </div>
@@ -5682,141 +5848,349 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
-    <div id="groupPaymentsModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 700px; max-height: 85vh; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
+    <div id="groupPaymentsModal" class="ph-overlay" style="display: none;">
+        <div class="ph-modal">
+            <div class="ph-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <div class="ph-header-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                         </svg>
                     </div>
                     <div>
-                        <h3 id="paymentsModalTitle" style="margin: 0; font-size: 1.25rem; font-weight: 600;">Historial de Pagos</h3>
-                        <p id="paymentsModalSubtitle" style="margin: 4px 0 0; font-size: 0.875rem; opacity: 0.9;">Contribuciones del grupo</p>
+                        <h3 id="paymentsModalTitle" class="ph-title">Historial de Pagos</h3>
+                        <p id="paymentsModalSubtitle" class="ph-subtitle">Contribuciones del grupo</p>
                     </div>
                 </div>
-                <button data-action="grp-close-payments" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <button data-action="grp-close-payments" class="ph-close-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 </button>
             </div>
 
-            <!-- Stats Summary -->
-            <div id="paymentsSummary" style="padding: 16px 20px; background: #f0fdf4; border-bottom: 1px solid #d1fae5; display: none;">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center;">
-                    <div>
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #059669;" id="totalPayments">0</div>
-                        <div style="font-size: 0.75rem; color: #6b7280;">Total Pagos</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #059669;" id="totalAmount">L. 0</div>
-                        <div style="font-size: 0.75rem; color: #6b7280;">Monto Total</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.25rem; font-weight: 600; color: #059669;" id="completedPayments">0</div>
-                        <div style="font-size: 0.75rem; color: #6b7280;">Completados</div>
-                    </div>
+            <!-- Tabs -->
+            <div class="ph-tabs">
+                <button class="ph-tab ph-tab-active" data-action="ph-tab-resumen">Resumen</button>
+                <button class="ph-tab" data-action="ph-tab-historial">Historial</button>
+                <div class="ph-cycle-filter">
+                    <select id="phCycleFilter" class="ph-cycle-select">
+                        <option value="0">Todos los ciclos</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="modal-body" style="padding: 20px; max-height: calc(85vh - 220px); overflow-y: auto;">
+            <!-- Stats Summary Bar -->
+            <div id="phStatsBar" class="ph-stats-bar" style="display: none;">
+                <div class="ph-stat"><span id="phStatAlDia" class="ph-stat-val ph-stat-ok">0</span><span class="ph-stat-label">Al dia</span></div>
+                <div class="ph-stat"><span id="phStatPendientes" class="ph-stat-val ph-stat-warn">0</span><span class="ph-stat-label">Pendientes</span></div>
+                <div class="ph-stat"><span id="phStatAtrasados" class="ph-stat-val ph-stat-danger">0</span><span class="ph-stat-label">Atrasados</span></div>
+            </div>
+
+            <div class="ph-body">
                 <!-- Loading -->
-                <div id="paymentsLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-                    <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #059669; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 16px; color: #6b7280;">Cargando historial...</p>
+                <div id="phLoading" class="ph-loading">
+                    <div class="ph-spinner"></div>
+                    <p>Cargando...</p>
                 </div>
 
-                <!-- Payments List -->
-                <div id="paymentsList" style="display: none;"></div>
+                <!-- Resumen Tab Content -->
+                <div id="phResumenContent" style="display: none;"></div>
+
+                <!-- Historial Tab Content -->
+                <div id="phHistorialContent" style="display: none;"></div>
 
                 <!-- Empty State -->
-                <div id="paymentsEmpty" style="display: none; text-align: center; padding: 40px;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" style="margin-bottom: 16px;">
+                <div id="phEmpty" class="ph-empty" style="display: none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" style="margin-bottom: 12px;">
                         <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                     </svg>
-                    <p style="color: #6b7280; margin: 0;">No hay pagos registrados</p>
+                    <p>No hay pagos registrados</p>
                 </div>
             </div>
         </div>
     </div>
 
+
     <style>
-        #groupPaymentsModal {
+        /* Payment History Modal (ph-) */
+        .ph-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
             z-index: 10000;
         }
-
-        #groupPaymentsModal .modal-content {
-            background: white;
+        .ph-modal {
+            background: #0f172a;
             border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
             width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             animation: modalSlideIn 0.3s ease-out;
         }
-
-        .payment-card {
+        .ph-header {
+            background: linear-gradient(135deg, #0e2a47 0%, #0f172a 100%);
+            color: #e2e8f0;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(0,255,255,0.15);
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f9fafb;
-            border-radius: 12px;
-            margin-bottom: 8px;
+            justify-content: space-between;
+            position: relative;
         }
-
-        .payment-icon {
-            width: 40px;
-            height: 40px;
+        .ph-header-icon {
+            background: rgba(0,255,255,0.12);
+            padding: 9px;
             border-radius: 10px;
+            color: #00FFFF;
+        }
+        .ph-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: #f1f5f9; }
+        .ph-subtitle { margin: 3px 0 0; font-size: 0.8rem; color: #64748b; }
+        .ph-close-btn {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.2s, color 0.2s;
         }
+        .ph-close-btn:hover { background: rgba(255,255,255,0.15); color: #e2e8f0; }
 
-        .payment-icon.completed { background: #d1fae5; color: #059669; }
-        .payment-icon.pending { background: #fef3c7; color: #d97706; }
-        .payment-icon.failed { background: #fee2e2; color: #dc2626; }
+        /* Tabs */
+        .ph-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 20px;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+        }
+        .ph-tab {
+            padding: 7px 16px;
+            background: transparent;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .ph-tab:hover { background: #1e293b; color: #e2e8f0; }
+        .ph-tab-active { background: rgba(0,255,255,0.1); border-color: #00FFFF; color: #00FFFF; }
+        .ph-cycle-filter { margin-left: auto; }
+        .ph-cycle-select {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+        .ph-cycle-select:focus { outline: 1px solid #00FFFF; border-color: #00FFFF; }
 
-        .payment-info {
+        /* Stats Bar */
+        .ph-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 10px 20px;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+        }
+        .ph-stat {
+            text-align: center;
+            padding: 6px 0;
+            background: rgba(30,41,59,0.5);
+            border-radius: 8px;
+        }
+        .ph-stat-val { display: block; font-size: 1.2rem; font-weight: 700; }
+        .ph-stat-label { font-size: 0.7rem; color: #64748b; }
+        .ph-stat-ok { color: #00FFFF; }
+        .ph-stat-warn { color: #f59e0b; }
+        .ph-stat-danger { color: #ef4444; }
+
+        /* Body */
+        .ph-body {
+            padding: 16px 20px;
+            overflow-y: auto;
             flex: 1;
+            max-height: calc(85vh - 200px);
         }
-
-        .payment-user {
-            font-weight: 500;
-            color: #111827;
-            margin-bottom: 2px;
+        .ph-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #64748b;
         }
-
-        .payment-method {
-            font-size: 0.8125rem;
-            color: #6b7280;
+        .ph-spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #1e293b;
+            border-top-color: #00FFFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
         }
+        .ph-empty { text-align: center; padding: 40px; color: #475569; }
 
-        .payment-amount {
+        /* Resumen tab: member rows */
+        .ph-member-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border: 1px solid #334155;
+        }
+        .ph-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.85rem;
+            flex-shrink: 0;
         }
+        .ph-member-info { flex: 1; min-width: 0; }
+        .ph-member-name {
+            font-weight: 500;
+            font-size: 0.88rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ph-member-meta { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+        .ph-member-right { text-align: right; flex-shrink: 0; }
+        .ph-member-progress { font-size: 0.78rem; color: #94a3b8; }
+        .ph-member-debt { font-size: 0.75rem; color: #ef4444; margin-top: 2px; }
+        .ph-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .ph-pill-paid { background: rgba(0,255,255,0.12); color: #00FFFF; }
+        .ph-pill-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .ph-pill-late { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .ph-pill-suspended { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .ph-pill-ahead { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .ph-pill-numpos { background: rgba(0,255,255,0.1); color: #67e8f9; font-size: 0.65rem; margin-left: 4px; }
 
-        .payment-amount.completed { color: #059669; }
-        .payment-amount.pending { color: #d97706; }
-
-        .payment-date {
+        /* Historial tab: contribution cards */
+        .ph-cycle-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 14px 0 8px;
+            color: #64748b;
             font-size: 0.75rem;
-            color: #9ca3af;
-            text-align: right;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        .ph-cycle-header:first-child { margin-top: 0; }
+        .ph-cycle-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #334155;
+        }
+        .ph-cycle-badge-hdr {
+            background: rgba(0,255,255,0.1);
+            color: #00FFFF;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+        }
+        .ph-contrib-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #1e293b;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border: 1px solid #334155;
+        }
+        .ph-contrib-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .ph-contrib-icon.completed { background: rgba(0,255,255,0.12); color: #00FFFF; }
+        .ph-contrib-icon.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .ph-contrib-info { flex: 1; min-width: 0; }
+        .ph-contrib-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ph-contrib-detail { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
+        .ph-contrib-right { text-align: right; flex-shrink: 0; }
+        .ph-contrib-amount { font-weight: 600; font-size: 0.92rem; color: #00FFFF; }
+        .ph-contrib-date { font-size: 0.7rem; color: #475569; margin-top: 2px; }
+        .ph-method-pill {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.62rem;
+            background: rgba(100,116,139,0.2);
+            color: #94a3b8;
+            margin-left: 4px;
+        }
+        .ph-verified-line { font-size: 0.68rem; color: #475569; margin-top: 3px; }
+        .ph-verified-badge {
+            display: inline-block;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            background: rgba(0,255,255,0.08);
+            color: #67e8f9;
+            margin-left: 3px;
+        }
+
+        @media (max-width: 480px) {
+            .ph-modal { width: 96%; max-height: 92vh; border-radius: 12px; }
+            .ph-header { padding: 14px 16px; }
+            .ph-tabs { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
+            .ph-cycle-filter { margin-left: 0; width: 100%; }
+            .ph-cycle-select { width: 100%; }
+            .ph-stats-bar { padding: 8px 12px; gap: 6px; }
+            .ph-body { padding: 12px; }
+            .ph-member-row, .ph-contrib-card { padding: 8px 10px; gap: 8px; }
+            .ph-member-name, .ph-contrib-name { font-size: 0.82rem; }
+        }
+
     </style>
+
 
 
     <!-- Invite Members Modal -->
@@ -6474,8 +6848,13 @@ if (document.readyState === "loading") {
         });
 
         // ============================================
-        // VIEW PAYMENTS MODAL
+        // VIEW PAYMENTS MODAL (Redesigned v4.10.7)
         // ============================================
+        var phCurrentGroupId = null;
+        var phCurrentTab = 'resumen';
+        var phResumenData = null;
+        var phHistorialData = null;
+
         function viewGroupPayments(groupId) {
             closeModal(); // Close admin modal first
             setTimeout(function() {
@@ -6484,94 +6863,338 @@ if (document.readyState === "loading") {
         }
         window.viewGroupPayments = viewGroupPayments;
 
-        async function showPaymentsModal(groupId) {
-            currentPaymentsGroupId = groupId;
-            var modal = document.getElementById('groupPaymentsModal');
-            var loading = document.getElementById('paymentsLoading');
-            var list = document.getElementById('paymentsList');
-            var empty = document.getElementById('paymentsEmpty');
-            var summary = document.getElementById('paymentsSummary');
+        var phMethodLabels = {
+            'cash': 'Efectivo',
+            'bank_transfer': 'Transferencia',
+            'mobile_money': 'Tigo Money',
+            'card': 'Tarjeta',
+            'crypto': 'Crypto',
+            'coordinator_manual': 'Manual',
+            'coordinator_bulk': 'Masivo'
+        };
 
-            // Reset state
+        function phFormatAmount(amount) {
+            var n = parseFloat(amount) || 0;
+            return 'L. ' + n.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        function phFormatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                return new Date(dateStr).toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch(e) { return ''; }
+        }
+
+        function phGetStatusPill(paymentStatus, cyclesPaid, currentCycle) {
+            if (cyclesPaid > currentCycle) return '<span class="ph-pill ph-pill-ahead">Adelantado</span>';
+            switch(paymentStatus) {
+                case 'paid': return '<span class="ph-pill ph-pill-paid">Al dia</span>';
+                case 'pending': return '<span class="ph-pill ph-pill-pending">Pendiente</span>';
+                case 'late': return '<span class="ph-pill ph-pill-late">Atrasado</span>';
+                case 'suspended': return '<span class="ph-pill ph-pill-suspended">Suspendido</span>';
+                default: return '<span class="ph-pill ph-pill-pending">Pendiente</span>';
+            }
+        }
+
+        function phGetAvatarColor(status) {
+            switch(status) {
+                case 'paid': return 'background:rgba(0,255,255,0.15);color:#00FFFF;';
+                case 'late': return 'background:rgba(239,68,68,0.15);color:#ef4444;';
+                case 'suspended': return 'background:rgba(239,68,68,0.2);color:#fca5a5;';
+                default: return 'background:rgba(245,158,11,0.15);color:#f59e0b;';
+            }
+        }
+
+        function phGetVerificationLabel(method) {
+            if (method === 'coordinator_bulk') return 'Masivo';
+            if (method === 'coordinator_manual') return 'Manual';
+            if (method === 'ocr_auto') return 'OCR';
+            return 'Verificado';
+        }
+
+        async function showPaymentsModal(groupId) {
+            phCurrentGroupId = groupId;
+            currentPaymentsGroupId = groupId;
+            phCurrentTab = 'resumen';
+            phResumenData = null;
+            phHistorialData = null;
+
+            var modal = document.getElementById('groupPaymentsModal');
+            var loading = document.getElementById('phLoading');
+            var resumenDiv = document.getElementById('phResumenContent');
+            var historialDiv = document.getElementById('phHistorialContent');
+            var emptyDiv = document.getElementById('phEmpty');
+            var statsBar = document.getElementById('phStatsBar');
+
+            // Reset
             loading.style.display = 'flex';
-            list.style.display = 'none';
-            empty.style.display = 'none';
-            summary.style.display = 'none';
-            list.innerHTML = '';
+            resumenDiv.style.display = 'none';
+            historialDiv.style.display = 'none';
+            emptyDiv.style.display = 'none';
+            statsBar.style.display = 'none';
+            resumenDiv.innerHTML = '';
+            historialDiv.innerHTML = '';
+
+            // Reset tabs
+            var tabs = modal.querySelectorAll('.ph-tab');
+            tabs.forEach(function(t) { t.classList.remove('ph-tab-active'); });
+            var resumenTab = modal.querySelector('[data-action="ph-tab-resumen"]');
+            if (resumenTab) resumenTab.classList.add('ph-tab-active');
 
             // Show modal
-            modal.style.display = 'flex'; modal.classList.add('active');
+            modal.style.display = 'flex';
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Load payments
+            // Load both datasets in parallel
             try {
                 var apiBase = window.API_BASE_URL || 'https://latanda.online';
-                var response = await fetch(apiBase + '/api/groups/' + groupId + '/contributions', { headers: getAuthHeaders() });
-                var data = await response.json();
+                var headers = getAuthHeaders();
+
+                var results = await Promise.allSettled([
+                    fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/members/payment-status', { headers: headers }).then(function(r) { return r.json(); }),
+                    fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/contributions?limit=100', { headers: headers }).then(function(r) { return r.json(); })
+                ]);
 
                 loading.style.display = 'none';
 
-                if (data.success && data.data.contributions && data.data.contributions.length > 0) {
-                    var contributions = data.data.contributions;
-                    var html = '';
-                    var totalAmount = 0;
-                    var completedCount = 0;
-
-                    contributions.forEach(function(payment) {
-                        var statusClass = payment.status || 'pending';
-                        var icon = statusClass === 'completed' ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' :
-                                   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
-
-                        var methodText = {
-                            'cash': 'Efectivo',
-                            'bank_transfer': 'Transferencia',
-                            'mobile_money': 'Tigo Money',
-                            'card': 'Tarjeta',
-                            'crypto': 'Crypto'
-                        }[payment.payment_method] || payment.payment_method || 'N/A';
-
-                        var amount = parseFloat(payment.amount) || 0;
-                        totalAmount += amount;
-                        if (statusClass === 'completed') completedCount++;
-
-                        var dateStr = payment.created_at ? new Date(payment.created_at).toLocaleDateString('es-HN') : '';
-
-                        html += '<div class="payment-card">' +
-                            '<div class="payment-icon ' + statusClass + '">' + icon + '</div>' +
-                            '<div class="payment-info">' +
-                                '<div class="payment-user">' + (payment.user_name || 'Usuario') + '</div>' +
-                                '<div class="payment-method">' + methodText + '</div>' +
-                            '</div>' +
-                            '<div style="text-align: right;">' +
-                                '<div class="payment-amount ' + statusClass + '">L. ' + amount.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
-                                '<div class="payment-date">' + dateStr + '</div>' +
-                            '</div>' +
-                        '</div>';
-                    });
-
-                    list.innerHTML = html;
-                    list.style.display = 'block';
-
-                    // Update summary
-                    document.getElementById('totalPayments').textContent = contributions.length;
-                    document.getElementById('totalAmount').textContent = 'L. ' + totalAmount.toLocaleString('es-HN', {minimumFractionDigits: 2});
-                    document.getElementById('completedPayments').textContent = completedCount;
-                    summary.style.display = 'block';
-                } else {
-                    empty.style.display = 'block';
+                // Process resumen data
+                if (results[0].status === 'fulfilled' && results[0].value.success) {
+                    phResumenData = results[0].value.data;
                 }
+
+                // Process historial data
+                if (results[1].status === 'fulfilled' && results[1].value.success) {
+                    phHistorialData = results[1].value.data;
+                }
+
+                // Populate cycle filter
+                phPopulateCycleFilter();
+
+                // Render default tab
+                phRenderResumen();
+
             } catch (err) {
-                loading.innerHTML = '<p style="color: #ef4444;">Error al cargar pagos</p>';
+                loading.innerHTML = '<p style="color: #ef4444;">Error al cargar datos de pagos</p>';
+            }
+        }
+
+        function phPopulateCycleFilter() {
+            var select = document.getElementById('phCycleFilter');
+            if (!select) return;
+            select.innerHTML = '<option value="0">Todos los ciclos</option>';
+            var maxCycle = 1;
+            if (phResumenData && phResumenData.cycle_number) {
+                maxCycle = phResumenData.cycle_number;
+            }
+            if (phHistorialData && phHistorialData.contributions) {
+                phHistorialData.contributions.forEach(function(c) {
+                    if (c.cycle_number && c.cycle_number > maxCycle) maxCycle = c.cycle_number;
+                });
+            }
+            for (var i = 1; i <= maxCycle; i++) {
+                var opt = document.createElement('option');
+                opt.value = String(i);
+                opt.textContent = 'Ciclo ' + i;
+                select.appendChild(opt);
+            }
+        }
+
+        function phRenderResumen(cycleFilter) {
+            var container = document.getElementById('phResumenContent');
+            var historialDiv = document.getElementById('phHistorialContent');
+            var emptyDiv = document.getElementById('phEmpty');
+            var statsBar = document.getElementById('phStatsBar');
+
+            historialDiv.style.display = 'none';
+
+            if (!phResumenData || !phResumenData.members || phResumenData.members.length === 0) {
+                container.style.display = 'none';
+                emptyDiv.style.display = 'block';
+                statsBar.style.display = 'none';
+                return;
+            }
+
+            var members = phResumenData.members;
+            var currentCycle = phResumenData.cycle_number || 1;
+            var alDia = 0, pendientes = 0, atrasados = 0;
+
+            var html = '';
+            members.forEach(function(m) {
+                var name = escapeHtml(m.name || 'Usuario');
+                var initial = name.charAt(0).toUpperCase();
+                var positions = parseInt(m.num_positions) || 1;
+                var cyclesPaid = parseInt(m.cycles_paid) || 0;
+                var status = m.payment_status;
+
+                // Adelantos detection
+                var isAhead = cyclesPaid > currentCycle;
+                if (isAhead) status = 'ahead';
+
+                // Count stats
+                if (status === 'paid' || status === 'ahead') alDia++;
+                else if (status === 'late' || status === 'suspended') atrasados++;
+                else pendientes++;
+
+                var avatarStyle = isAhead ? 'background:rgba(34,197,94,0.15);color:#22c55e;' : phGetAvatarColor(m.payment_status);
+                var statusPill = phGetStatusPill(m.payment_status, cyclesPaid, currentCycle);
+                var turnLabel = m.turn_position ? 'Turno ' + escapeHtml(String(m.turn_position)) : '';
+                var numPosBadge = positions > 1 ? ' <span class="ph-pill ph-pill-numpos">' + positions + ' num.</span>' : '';
+                var progress = cyclesPaid + '/' + currentCycle + ' ciclos';
+                var amountPending = parseFloat(m.amount_pending) || 0;
+                var debtLine = amountPending > 0 ? '<div class="ph-member-debt">Debe: ' + phFormatAmount(amountPending) + '</div>' : '';
+
+                html += '<div class="ph-member-row">' +
+                    '<div class="ph-avatar" style="' + avatarStyle + '">' + escapeHtml(initial) + '</div>' +
+                    '<div class="ph-member-info">' +
+                        '<div class="ph-member-name">' + name + numPosBadge + '</div>' +
+                        '<div class="ph-member-meta">' + turnLabel + (turnLabel ? ' &middot; ' : '') + statusPill + '</div>' +
+                    '</div>' +
+                    '<div class="ph-member-right">' +
+                        '<div class="ph-member-progress">' + escapeHtml(progress) + '</div>' +
+                        debtLine +
+                    '</div>' +
+                '</div>';
+            });
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+            emptyDiv.style.display = 'none';
+
+            // Update stats bar
+            document.getElementById('phStatAlDia').textContent = alDia;
+            document.getElementById('phStatPendientes').textContent = pendientes;
+            document.getElementById('phStatAtrasados').textContent = atrasados;
+            statsBar.style.display = 'grid';
+        }
+
+        function phRenderHistorial(cycleFilter) {
+            var container = document.getElementById('phHistorialContent');
+            var resumenDiv = document.getElementById('phResumenContent');
+            var emptyDiv = document.getElementById('phEmpty');
+            var statsBar = document.getElementById('phStatsBar');
+
+            resumenDiv.style.display = 'none';
+            statsBar.style.display = 'none';
+
+            if (!phHistorialData || !phHistorialData.contributions || phHistorialData.contributions.length === 0) {
+                container.style.display = 'none';
+                emptyDiv.style.display = 'block';
+                return;
+            }
+
+            var contributions = phHistorialData.contributions;
+            var filterCycle = parseInt(cycleFilter) || 0;
+
+            // Filter by cycle if selected
+            if (filterCycle > 0) {
+                contributions = contributions.filter(function(c) { return c.cycle_number === filterCycle; });
+            }
+
+            if (contributions.length === 0) {
+                container.innerHTML = '<div class="ph-empty"><p>No hay pagos en este ciclo</p></div>';
+                container.style.display = 'block';
+                emptyDiv.style.display = 'none';
+                return;
+            }
+
+            // Group by cycle (sort by cycle desc, then date desc)
+            var sorted = contributions.slice().sort(function(a, b) {
+                var ca = (a.cycle_number || 0);
+                var cb = (b.cycle_number || 0);
+                if (cb !== ca) return cb - ca;
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            });
+
+            var html = '';
+            var lastCycle = null;
+
+            sorted.forEach(function(c) {
+                var cycle = c.cycle_number || 0;
+
+                // Cycle header separator
+                if (cycle !== lastCycle && filterCycle === 0) {
+                    html += '<div class="ph-cycle-header"><span class="ph-cycle-badge-hdr">Ciclo ' + cycle + '</span></div>';
+                    lastCycle = cycle;
+                }
+
+                var statusClass = (c.status === 'completed' || c.status === 'coordinator_approved') ? 'completed' : 'pending';
+                var statusIcon = statusClass === 'completed' ?
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' :
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+
+                var name = escapeHtml(c.user_name || 'Usuario');
+                var initial = name.charAt(0).toUpperCase();
+                var amount = phFormatAmount(c.amount);
+                var dateStr = phFormatDate(c.created_at);
+                var methodKey = c.payment_method || '';
+                var methodLabel = escapeHtml(phMethodLabels[methodKey] || methodKey || 'N/A');
+
+                // Verification line
+                var verifiedLine = '';
+                if (c.verified_by_name) {
+                    var verifierName = escapeHtml(c.verified_by_name);
+                    var vmLabel = phGetVerificationLabel(c.verification_method);
+                    verifiedLine = '<div class="ph-verified-line">Registrado por ' + verifierName + '<span class="ph-verified-badge">' + escapeHtml(vmLabel) + '</span></div>';
+                }
+
+                html += '<div class="ph-contrib-card">' +
+                    '<div class="ph-contrib-icon ' + statusClass + '">' + statusIcon + '</div>' +
+                    '<div class="ph-contrib-info">' +
+                        '<div class="ph-contrib-name">' + escapeHtml(initial) + ' &middot; ' + name + '</div>' +
+                        '<div class="ph-contrib-detail">' + methodLabel + '<span class="ph-method-pill">Ciclo ' + cycle + '</span></div>' +
+                        verifiedLine +
+                    '</div>' +
+                    '<div class="ph-contrib-right">' +
+                        '<div class="ph-contrib-amount">' + amount + '</div>' +
+                        '<div class="ph-contrib-date">' + escapeHtml(dateStr) + '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+
+            // Totals summary at bottom
+            if (phHistorialData.totals) {
+                var t = phHistorialData.totals;
+                html += '<div style="margin-top:12px;padding:10px 12px;background:#0f172a;border-radius:8px;border:1px solid #334155;display:flex;justify-content:space-between;font-size:0.78rem;">' +
+                    '<span style="color:#64748b;">Total: <strong style="color:#e2e8f0;">' + (parseInt(t.total_count) || 0) + ' pagos</strong></span>' +
+                    '<span style="color:#64748b;">Completado: <strong style="color:#00FFFF;">' + phFormatAmount(t.total_completed) + '</strong></span>' +
+                '</div>';
+            }
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+            emptyDiv.style.display = 'none';
+        }
+
+        function phSwitchTab(tab) {
+            phCurrentTab = tab;
+            var modal = document.getElementById('groupPaymentsModal');
+            var tabs = modal.querySelectorAll('.ph-tab');
+            tabs.forEach(function(t) { t.classList.remove('ph-tab-active'); });
+            var activeTab = modal.querySelector('[data-action="ph-tab-' + tab + '"]');
+            if (activeTab) activeTab.classList.add('ph-tab-active');
+
+            var cycleFilter = document.getElementById('phCycleFilter');
+            var cycleVal = cycleFilter ? cycleFilter.value : '0';
+
+            if (tab === 'resumen') {
+                phRenderResumen(cycleVal);
+            } else {
+                phRenderHistorial(cycleVal);
             }
         }
 
         function closePaymentsModal() {
             var modal = document.getElementById('groupPaymentsModal');
             if (modal) {
-                modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+                modal.style.display = 'none';
+                modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
+            phCurrentGroupId = null;
             currentPaymentsGroupId = null;
+            phResumenData = null;
+            phHistorialData = null;
         }
 
         // Close on overlay click
@@ -6582,7 +7205,20 @@ if (document.readyState === "loading") {
                     if (e.target === modal) closePaymentsModal();
                 });
             }
+            // Cycle filter change
+            var cycleSelect = document.getElementById('phCycleFilter');
+            if (cycleSelect) {
+                cycleSelect.addEventListener('change', function() {
+                    if (phCurrentTab === 'resumen') {
+                        phRenderResumen(this.value);
+                    } else {
+                        phRenderHistorial(this.value);
+                    }
+                });
+            }
         });
+
+
 
         // ============================================
         // INVITE MEMBERS MODAL
@@ -6598,11 +7234,14 @@ if (document.readyState === "loading") {
         function showInviteModal(groupId) {
             currentInviteGroupId = groupId;
             var modal = document.getElementById('inviteMembersModal');
+            if (!modal) return;
 
             // Reset form
             resetInviteForm();
 
             // Show modal
+            modal.style.display = 'flex';
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
@@ -8947,6 +9586,7 @@ function renderTurnsList() {
                 buttons += _gmBtn('gm-verify-payments', svgVerify, warnBg, 'Verificar Pagos', 'Aprobar pagos pendientes', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-distribute', svgDistribute, greenBg, 'Distribuir Ciclo', 'Repartir fondos del ciclo', '#34d399', '#059669', greenBg, greenBorder);
                 buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
+                buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
                 buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente la tanda', '#f87171', '#ef4444', redBg, redBorder);
             }
             if (canManage) {
@@ -8993,6 +9633,7 @@ function renderTurnsList() {
                     case 'gm-distribute': if (typeof showDistributionPreview === 'function') showDistributionPreview(gid); break;
                     case 'gm-manage-turns': if (typeof manageTurns === 'function') manageTurns(gid); break;
                     case 'gm-toggle-pause': if (typeof toggleTandaPause === 'function') toggleTandaPause(gid); break;
+                    case 'gm-show-balances': if (typeof showTandaBalances === 'function') showTandaBalances(gid); break;
                     case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
                     case 'gm-edit-group': if (typeof editGroup === 'function') editGroup(gid); break;
                     case 'gm-delete-group': if (typeof confirmDeleteGroup === 'function') confirmDeleteGroup(gid); break;
@@ -9456,47 +10097,274 @@ function renderTurnsList() {
 </div>
 <!-- ===== FIN MODAL DE HISTORIAL ===== -->
 
-<!-- PAYMENT VERIFICATION MODAL - Added for coordinator verification -->
-<div id="verifyPaymentsModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10001;">
-    <div class="modal-content" style="background: white; border-radius: 16px; max-width: 600px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
-        <div class="modal-header" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
+<!-- PAYMENT VERIFICATION MODAL - Redesigned v4.10.7 dark theme -->
+<div id="verifyPaymentsModal" class="vp-overlay" style="display: none;">
+    <div class="vp-modal">
+        <div class="vp-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="vp-header-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                     </svg>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Verificar Pagos</h3>
-                    <p id="verifyModalGroupName" style="margin: 4px 0 0; font-size: 0.875rem; opacity: 0.9;">Pagos pendientes de aprobacion</p>
+                    <h3 class="vp-title">Verificar Pagos</h3>
+                    <p id="verifyModalGroupName" class="vp-subtitle">Pagos pendientes de aprobacion</p>
                 </div>
             </div>
-            <button data-action="grp-close-verify-payments" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            <button data-action="grp-close-verify-payments" class="vp-close-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
             </button>
         </div>
-        <div id="verifyPaymentsContent" class="modal-body" style="padding: 20px; flex: 1; overflow-y: auto;">
-            <div style="text-align: center; padding: 40px;">
-                <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #d97706; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                <p style="margin-top: 16px; color: #6b7280;">Cargando pagos pendientes...</p>
+        <!-- Summary bar -->
+        <div id="vpStatsBar" class="vp-stats-bar" style="display: none;">
+            <div class="vp-stat"><span id="vpStatTotal" class="vp-stat-val" style="color:#f59e0b;">0</span><span class="vp-stat-label">Pendientes</span></div>
+            <div class="vp-stat"><span id="vpStatVerif" class="vp-stat-val" style="color:#00FFFF;">0</span><span class="vp-stat-label">Por verificar</span></div>
+            <div class="vp-stat"><span id="vpStatAwait" class="vp-stat-val" style="color:#64748b;">0</span><span class="vp-stat-label">Sin comprobante</span></div>
+        </div>
+        <div id="verifyPaymentsContent" class="vp-body">
+            <div class="vp-loading">
+                <div class="vp-spinner"></div>
+                <p>Cargando pagos pendientes...</p>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.pending-payment-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-.pending-payment-card:hover { border-color: #d97706; }
-.payment-proof-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #e5e7eb; }
-.payment-proof-thumb:hover { border-color: #d97706; }
-.verify-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; font-size: 0.875rem; }
-.verify-btn.approve { background: #059669; color: white; }
-.verify-btn.approve:hover { background: #047857; }
-.verify-btn.reject { background: #dc2626; color: white; }
-.verify-btn.reject:hover { background: #b91c1c; }
+    /* Verify Payments Modal (vp-) */
+    .vp-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        justify-content: center;
+        align-items: center;
+        z-index: 10001;
+    }
+    .vp-modal {
+        background: #0f172a;
+        border-radius: 16px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+        width: 95%;
+        max-width: 620px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    .vp-header {
+        background: linear-gradient(135deg, #0e2a47 0%, #0f172a 100%);
+        color: #e2e8f0;
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(245,158,11,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .vp-header-icon {
+        background: rgba(245,158,11,0.15);
+        padding: 9px;
+        border-radius: 10px;
+        color: #f59e0b;
+    }
+    .vp-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: #f1f5f9; }
+    .vp-subtitle { margin: 3px 0 0; font-size: 0.8rem; color: #64748b; }
+    .vp-close-btn {
+        background: rgba(255,255,255,0.08);
+        border: none;
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        color: #94a3b8;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, color 0.2s;
+    }
+    .vp-close-btn:hover { background: rgba(255,255,255,0.15); color: #e2e8f0; }
+    .vp-stats-bar {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 10px 20px;
+        background: #0f172a;
+        border-bottom: 1px solid #1e293b;
+    }
+    .vp-stat {
+        text-align: center;
+        padding: 6px 0;
+        background: rgba(30,41,59,0.5);
+        border-radius: 8px;
+    }
+    .vp-stat-val { display: block; font-size: 1.2rem; font-weight: 700; }
+    .vp-stat-label { font-size: 0.7rem; color: #64748b; }
+    .vp-body {
+        padding: 16px 20px;
+        overflow-y: auto;
+        flex: 1;
+        max-height: calc(90vh - 160px);
+    }
+    .vp-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #64748b;
+    }
+    .vp-spinner {
+        width: 36px; height: 36px;
+        border: 3px solid #1e293b;
+        border-top-color: #f59e0b;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 12px;
+    }
+    .vp-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 10px;
+        transition: border-color 0.2s;
+    }
+    .vp-card:hover { border-color: #475569; }
+    .vp-card-top {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .vp-card-avatar {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        background: rgba(245,158,11,0.15);
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+    .vp-card-body { flex: 1; min-width: 0; }
+    .vp-card-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .vp-card-contact { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
+    .vp-card-right { text-align: right; flex-shrink: 0; }
+    .vp-card-amount { font-weight: 600; font-size: 1rem; color: #f59e0b; }
+    .vp-card-date { font-size: 0.7rem; color: #475569; margin-top: 2px; }
+    .vp-card-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(51,65,85,0.5);
+    }
+    .vp-detail {
+        font-size: 0.72rem;
+        color: #94a3b8;
+    }
+    .vp-detail strong { color: #cbd5e1; font-weight: 500; }
+    .vp-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.68rem;
+        font-weight: 600;
+    }
+    .vp-badge-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .vp-badge-awaiting { background: rgba(100,116,139,0.2); color: #94a3b8; }
+    .vp-badge-cycle { background: rgba(0,255,255,0.1); color: #67e8f9; }
+    .vp-badge-method { background: rgba(100,116,139,0.15); color: #94a3b8; }
+    .vp-proof-thumb {
+        width: 56px; height: 56px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid #334155;
+        flex-shrink: 0;
+        transition: border-color 0.2s;
+    }
+    .vp-proof-thumb:hover { border-color: #f59e0b; }
+    .vp-proof-placeholder {
+        width: 56px; height: 56px;
+        background: rgba(30,41,59,0.8);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        font-size: 0.65rem;
+        text-align: center;
+        flex-shrink: 0;
+        line-height: 1.2;
+    }
+    .vp-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .vp-btn {
+        padding: 7px 14px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.82rem;
+        transition: opacity 0.2s;
+    }
+    .vp-btn:hover { opacity: 0.85; }
+    .vp-btn-approve { background: rgba(0,255,255,0.15); color: #00FFFF; }
+    .vp-btn-reject { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .vp-verified-line { font-size: 0.68rem; color: #475569; margin-top: 6px; }
+    .vp-verified-badge {
+        display: inline-block;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.6rem;
+        background: rgba(0,255,255,0.08);
+        color: #67e8f9;
+        margin-left: 3px;
+    }
+    .vp-empty {
+        text-align: center;
+        padding: 40px;
+        color: #64748b;
+    }
+    .vp-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
+    .vp-awaiting-note {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(30,41,59,0.5);
+        border-radius: 8px;
+    }
+
+    @media (max-width: 480px) {
+        .vp-modal { width: 98%; max-height: 94vh; border-radius: 12px; }
+        .vp-header { padding: 14px 16px; }
+        .vp-stats-bar { padding: 8px 12px; gap: 6px; }
+        .vp-body { padding: 12px; }
+        .vp-card { padding: 12px; }
+        .vp-card-name { font-size: 0.84rem; }
+        .vp-card-details { gap: 6px; }
+    }
 </style>
 
 <script>
@@ -9504,6 +10372,47 @@ function renderTurnsList() {
     'use strict';
 
     var currentVerifyGroupId = null;
+    var vpClickHandler = null;
+
+    var vpMethodLabels = {
+        'cash': 'Efectivo',
+        'bank_transfer': 'Transferencia',
+        'mobile_money': 'Tigo Money',
+        'card': 'Tarjeta',
+        'crypto': 'Crypto',
+        'wallet': 'Billetera'
+    };
+
+    var vpMethodIcons = {
+        'cash': '\uD83D\uDCB5',
+        'bank_transfer': '\uD83C\uDFE6',
+        'mobile_money': '\uD83D\uDCF1',
+        'card': '\uD83D\uDCB3',
+        'crypto': '\u20BF',
+        'wallet': '\uD83D\uDC5B'
+    };
+
+    function vpEsc(text) {
+        return typeof escapeHtml === 'function' ? escapeHtml(String(text || '')) : String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function vpFormatAmount(amount) {
+        var n = parseFloat(amount) || 0;
+        return 'L. ' + n.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function vpFormatDate(dateStr) {
+        if (!dateStr) return '';
+        try { return new Date(dateStr).toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+        catch(e) { return ''; }
+    }
+
+    function vpGetVerifLabel(method) {
+        if (method === 'coordinator_bulk') return 'Masivo';
+        if (method === 'coordinator_manual') return 'Manual';
+        if (method === 'ocr_auto') return 'OCR';
+        return 'Verificado';
+    }
 
     window.verifyPendingPayments = async function(groupId) {
         currentVerifyGroupId = groupId;
@@ -9511,10 +10420,11 @@ function renderTurnsList() {
 
         setTimeout(async function() {
             var modal = document.getElementById('verifyPaymentsModal');
-            modal.style.display = 'flex'; modal.classList.add('active');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Load pending payments
             await loadPendingPayments(groupId);
         }, 100);
     };
@@ -9522,273 +10432,290 @@ function renderTurnsList() {
     async function loadPendingPayments(groupId) {
         var contentDiv = document.getElementById('verifyPaymentsContent');
 
+        // Show loading
+        contentDiv.innerHTML = '<div class="vp-loading"><div class="vp-spinner"></div><p>Cargando pagos pendientes...</p></div>';
+
         try {
             var apiBase = window.API_BASE_URL || 'https://latanda.online';
-            var response = await fetch(apiBase + '/api/groups/' + groupId + '/contributions/pending', { headers: getAuthHeaders() });
+            var response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/contributions/pending', { headers: getAuthHeaders() });
             var result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.error || 'Error al cargar pagos');
+                throw new Error('Error al cargar pagos');
             }
 
             var contributions = result.data.contributions || [];
 
             if (contributions.length === 0) {
                 contentDiv.innerHTML =
-                    '<div style="text-align: center; padding: 40px;">' +
-                        '<div style="font-size: 48px; margin-bottom: 16px;">✅</div>' +
-                        '<h4 style="margin: 0 0 8px; color: #111827;">No hay pagos pendientes</h4>' +
-                        '<p style="color: #6b7280; margin: 0;">Todos los pagos han sido verificados</p>' +
+                    '<div class="vp-empty">' +
+                        '<div class="vp-empty-icon">\u2705</div>' +
+                        '<h4 style="margin: 0 0 8px; color: #e2e8f0;">No hay pagos pendientes</h4>' +
+                        '<p style="margin: 0;">Todos los pagos han sido verificados</p>' +
                     '</div>';
+                document.getElementById('vpStatsBar').style.display = 'none';
                 return;
             }
 
-            var html = '<div style="margin-bottom: 16px;">' +
-                '<p style="margin: 0; color: #6b7280; font-size: 0.875rem;">' + contributions.length + ' pago(s) pendiente(s) de verificacion</p>' +
-            '</div>';
+            // Stats
+            var pendingVerif = 0, awaiting = 0;
+            contributions.forEach(function(c) {
+                if (c.status === 'pending_verification') pendingVerif++;
+                else awaiting++;
+            });
+
+            document.getElementById('vpStatTotal').textContent = contributions.length;
+            document.getElementById('vpStatVerif').textContent = pendingVerif;
+            document.getElementById('vpStatAwait').textContent = awaiting;
+            document.getElementById('vpStatsBar').style.display = 'grid';
+
+            var html = '';
 
             contributions.forEach(function(c) {
+                var safeId = vpEsc(c.id);
+                var safeName = vpEsc(c.user_name || 'Usuario');
+                var initial = safeName.charAt(0).toUpperCase();
+                var safeContact = vpEsc(c.user_email || c.user_phone || '');
+                var safeRef = vpEsc(c.reference_code || 'N/A');
+                var methodKey = c.payment_method || '';
+                var methodLabel = vpEsc(vpMethodLabels[methodKey] || methodKey || 'N/A');
+                var methodIcon = vpMethodIcons[methodKey] || '\uD83D\uDCB0';
+                var amount = vpFormatAmount(c.amount);
+                var dateStr = vpFormatDate(c.created_at);
+                var cycle = c.cycle_number || 0;
+
                 var statusBadge = c.status === 'pending_verification'
-                    ? '<span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;">Esperando verificacion</span>'
-                    : '<span style="background: #dbeafe; color: #2563eb; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;">Esperando pago</span>';
+                    ? '<span class="vp-badge vp-badge-pending">Por verificar</span>'
+                    : '<span class="vp-badge vp-badge-awaiting">Sin comprobante</span>';
 
-                var methodIcon = {
-                    'cash': '💵',
-                    'bank_transfer': '🏦',
-                    'mobile_money': '📱',
-                    'card': '💳',
-                    'crypto': '₿',
-                    'wallet': '👛'
-                }[c.payment_method] || '💰';
-
-                var _lpEsc = typeof escapeHtml === 'function' ? escapeHtml : function(s) {
-                    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-                };
-                var safeProofUrl = c.proof_url ? _lpEsc(String(c.proof_url)) : '';
+                // Proof thumbnail
+                var safeProofUrl = c.proof_url ? vpEsc(c.proof_url) : '';
                 var proofHtml = c.proof_url
-                    ? '<img loading="lazy" src="' + (window.API_BASE_URL || 'https://latanda.online') + safeProofUrl + '" class="payment-proof-thumb" data-action="grp-show-proof" data-proof-url="' + safeProofUrl + '" alt="Comprobante" style="cursor:pointer;">'
-                    : '<div style="width: 60px; height: 60px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 0.75rem;">Sin comprobante</div>';
+                    ? '<img loading="lazy" src="' + vpEsc((window.API_BASE_URL || 'https://latanda.online')) + safeProofUrl + '" class="vp-proof-thumb" data-action="vp-show-proof" data-proof-url="' + safeProofUrl + '" alt="Comprobante">'
+                    : '<div class="vp-proof-placeholder">Sin<br>prueba</div>';
 
-                var safeId = _lpEsc(String(c.id));
-                var safeName = _lpEsc(c.user_name || 'Usuario');
-                var safeContact = _lpEsc(c.user_email || c.user_phone || '');
-                var safeRef = _lpEsc(c.reference_code || 'N/A');
+                // Verification line
+                var verifiedLine = '';
+                if (c.verified_by_name && c.verified_by) {
+                    verifiedLine = '<div class="vp-verified-line">Registrado por ' + vpEsc(c.verified_by_name) + '<span class="vp-verified-badge">' + vpEsc(vpGetVerifLabel(c.verification_method)) + '</span></div>';
+                }
 
-                html += '<div class="pending-payment-card" data-contribution-id="' + safeId + '">' +
-                    '<div style="display: flex; gap: 16px;">' +
-                        '<div>' + proofHtml + '</div>' +
-                        '<div style="flex: 1;">' +
-                            '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">' +
+                html += '<div class="vp-card" data-contribution-id="' + safeId + '">' +
+                    '<div class="vp-card-top">' +
+                        proofHtml +
+                        '<div class="vp-card-body">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
                                 '<div>' +
-                                    '<div style="font-weight: 600; color: #111827;">' + safeName + '</div>' +
-                                    '<div style="font-size: 0.75rem; color: #6b7280;">' + safeContact + '</div>' +
+                                    '<div class="vp-card-name">' + safeName + '</div>' +
+                                    '<div class="vp-card-contact">' + safeContact + '</div>' +
                                 '</div>' +
+                                '<div class="vp-card-right">' +
+                                    '<div class="vp-card-amount">' + amount + '</div>' +
+                                    '<div class="vp-card-date">' + vpEsc(dateStr) + '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="vp-card-details">' +
                                 statusBadge +
+                                (cycle > 0 ? '<span class="vp-badge vp-badge-cycle">Ciclo ' + cycle + '</span>' : '') +
+                                '<span class="vp-badge vp-badge-method">' + methodIcon + ' ' + methodLabel + '</span>' +
+                                '<span class="vp-detail">Ref: <strong>' + safeRef + '</strong></span>' +
                             '</div>' +
-                            '<div style="display: flex; gap: 16px; margin-bottom: 8px;">' +
-                                '<div>' +
-                                    '<div style="font-size: 0.75rem; color: #6b7280;">Monto</div>' +
-                                    '<div style="font-weight: 600; color: #059669;">L. ' + parseFloat(c.amount).toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
-                                '</div>' +
-                                '<div>' +
-                                    '<div style="font-size: 0.75rem; color: #6b7280;">Metodo</div>' +
-                                    '<div style="font-weight: 500;">' + methodIcon + ' ' + formatPaymentMethod(c.payment_method) + '</div>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 12px;">' +
-                                'Ref: ' + safeRef + ' · ' + new Date(c.created_at).toLocaleString('es-HN') +
-                            '</div>' +
-                            (c.status === 'pending_verification' ?
-                            '<div style="display: flex; gap: 8px;">' +
-                                '<button class="verify-btn approve" data-action="grp-approve-payment" data-contribution-id="' + safeId + '">&#x2713; Aprobar</button>' +
-                                '<button class="verify-btn reject" data-action="grp-reject-payment" data-contribution-id="' + safeId + '">&#x2717; Rechazar</button>' +
-                            '</div>' :
-                            '<div style="font-size: 0.875rem; color: #6b7280; font-style: italic;">Esperando que el usuario suba comprobante</div>') +
+                            verifiedLine +
                         '</div>' +
                     '</div>' +
+
+                    (c.status === 'pending_verification' ?
+                    '<div class="vp-actions">' +
+                        '<button class="vp-btn vp-btn-approve" data-action="vp-approve" data-contribution-id="' + safeId + '">\u2713 Aprobar</button>' +
+                        '<button class="vp-btn vp-btn-reject" data-action="vp-reject" data-contribution-id="' + safeId + '">\u2717 Rechazar</button>' +
+                    '</div>' :
+                    '<div class="vp-awaiting-note">Esperando que el miembro suba comprobante de pago</div>') +
+
                 '</div>';
             });
 
             contentDiv.innerHTML = html;
 
-            // Delegated listener for payment verification actions
-            contentDiv.addEventListener('click', function(e) {
+            // Remove old delegated handler to prevent stacking
+            if (vpClickHandler) {
+                contentDiv.removeEventListener('click', vpClickHandler);
+            }
+            vpClickHandler = function(e) {
                 var el = e.target.closest('[data-action]');
                 if (!el) return;
                 var action = el.getAttribute('data-action');
-                if (action === 'grp-approve-payment') {
-                    var cid = el.getAttribute('data-contribution-id');
-                    if (cid && typeof window.approvePayment === 'function') window.approvePayment(cid);
-                } else if (action === 'grp-reject-payment') {
-                    var cid = el.getAttribute('data-contribution-id');
-                    if (cid && typeof window.rejectPayment === 'function') window.rejectPayment(cid);
-                } else if (action === 'grp-show-proof') {
+                var cid = el.getAttribute('data-contribution-id');
+                if (action === 'vp-approve' && cid) {
+                    window.approvePayment(cid);
+                } else if (action === 'vp-reject' && cid) {
+                    window.rejectPayment(cid);
+                } else if (action === 'vp-show-proof') {
                     var url = el.getAttribute('data-proof-url');
                     if (url && typeof window.showProofFullscreen === 'function') window.showProofFullscreen(url);
                 }
-            });
+            };
+            contentDiv.addEventListener('click', vpClickHandler);
 
         } catch (err) {
             contentDiv.innerHTML =
-                '<div style="text-align: center; padding: 40px;">' +
-                    '<div style="font-size: 48px; margin-bottom: 16px;">❌</div>' +
-                    '<h4 style="margin: 0 0 8px; color: #dc2626;">Error al cargar</h4>' +
-                    '<p style="color: #6b7280; margin: 0;">Intenta de nuevo</p>' +
+                '<div class="vp-empty">' +
+                    '<div class="vp-empty-icon" style="opacity:0.5;">\u274C</div>' +
+                    '<h4 style="margin: 0 0 8px; color: #ef4444;">Error al cargar</h4>' +
+                    '<p style="margin: 0;">Intenta de nuevo</p>' +
                 '</div>';
         }
     }
 
     function formatPaymentMethod(method) {
-        var methods = {
-            'cash': 'Efectivo',
-            'bank_transfer': 'Transferencia',
-            'mobile_money': 'Tigo Money',
-            'card': 'Tarjeta',
-            'crypto': 'Crypto',
-            'wallet': 'Billetera'
-        };
-        return methods[method] || method;
+        return vpMethodLabels[method] || method;
     }
 
     window.approvePayment = async function(contributionId) {
-        if (!confirm('¿Confirmas que este pago es válido?')) return;
+        if (!confirm('\u00BFConfirmas que este pago es valido?')) return;
 
         try {
             var apiBase = window.API_BASE_URL || 'https://latanda.online';
-            var userId = (function() {
-                var latandaUser = localStorage.getItem('latanda_user');
-                if (latandaUser) {
-                    try {
-                        var userData = JSON.parse(latandaUser);
-                        if (userData.user_id) return userData.user_id;
-                        if (userData.id) return userData.id;
-                    } catch(e) {}
-                }
-                return localStorage.getItem('latanda_user_id') || 
-                       sessionStorage.getItem('latanda_user_id') ||
-                       localStorage.getItem('userId') ||
-                       window.currentUserId ||
-                       'coordinator';
-            })();
-
-            var response = await fetch(apiBase + '/api/contributions/' + contributionId + '/verify', {
+            var response = await fetch(apiBase + '/api/contributions/' + encodeURIComponent(contributionId) + '/verify', {
                 method: 'POST',
-                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'approve'
-                })
+                headers: Object.assign({}, getAuthHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ action: 'approve' })
             });
 
             var result = await response.json();
-
-            if (!result.success) {
-                throw new Error('Error al aprobar pago');
-            }
+            if (!result.success) throw new Error('Error al aprobar pago');
 
             if (window.showSuccess) window.showSuccess('Pago aprobado exitosamente');
-
-            // Reload payments
             await loadPendingPayments(currentVerifyGroupId);
-
         } catch (err) {
-            showError('No se pudo aprobar el pago');
+            if (typeof showError === 'function') showError('No se pudo aprobar el pago');
         }
     };
 
     window.rejectPayment = async function(contributionId) {
         var reason = prompt('Motivo del rechazo (opcional):');
-        if (reason === null) return; // Cancelled
+        if (reason === null) return;
 
         try {
             var apiBase = window.API_BASE_URL || 'https://latanda.online';
-            var userId = localStorage.getItem('latanda_user_id') || 'coordinator';
-
-            var response = await fetch(apiBase + '/api/contributions/' + contributionId + '/verify', {
+            var response = await fetch(apiBase + '/api/contributions/' + encodeURIComponent(contributionId) + '/verify', {
                 method: 'POST',
-                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'reject',
-                    rejection_reason: reason || 'Rechazado por coordinador'
-                })
+                headers: Object.assign({}, getAuthHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ action: 'reject', rejection_reason: reason || 'Rechazado por coordinador' })
             });
 
             var result = await response.json();
-
-            if (!result.success) {
-                throw new Error('Error al rechazar pago');
-            }
+            if (!result.success) throw new Error('Error al rechazar pago');
 
             if (window.showSuccess) window.showSuccess('Pago rechazado');
-
-            // Reload payments
             await loadPendingPayments(currentVerifyGroupId);
-
         } catch (err) {
-            showError('No se pudo rechazar el pago');
+            if (typeof showError === 'function') showError('No se pudo rechazar el pago');
         }
     };
 
     window.showProofFullscreen = function(proofUrl) {
-        var fullUrl = (window.API_BASE_URL || 'https://latanda.online') + proofUrl;
-
+        var fullUrl = vpEsc((window.API_BASE_URL || 'https://latanda.online') + proofUrl);
         var overlay = document.createElement('div');
-        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100000; display: flex; align-items: center; justify-content: center; cursor: pointer;';
-        overlay.onclick = function() { overlay.remove(); };
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:100000;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+        overlay.addEventListener('click', function() { overlay.remove(); });
 
         var img = document.createElement('img');
         img.src = fullUrl;
-        img.style.cssText = 'max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px;';
+        img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;';
 
         overlay.appendChild(img);
         document.body.appendChild(overlay);
     };
 
+    // Close on overlay click
+    var vpModal = document.getElementById('verifyPaymentsModal');
+    if (vpModal) {
+        vpModal.addEventListener('click', function(e) {
+            if (e.target === vpModal) window.closeVerifyPaymentsModal();
+        });
+    }
+
     window.closeVerifyPaymentsModal = function() {
         var modal = document.getElementById('verifyPaymentsModal');
         if (modal) {
-            modal.style.display = 'none'; modal.classList.remove('active');
+            modal.style.display = 'none';
             modal.classList.remove('active');
             document.body.style.overflow = '';
         }
         currentVerifyGroupId = null;
+        // Cleanup listener
+        if (vpClickHandler) {
+            var contentDiv = document.getElementById('verifyPaymentsContent');
+            if (contentDiv) contentDiv.removeEventListener('click', vpClickHandler);
+            vpClickHandler = null;
+        }
     };
 
 })();
 </script>
 
 
-<!-- CYCLE DISTRIBUTION MODAL - Added for coordinator distribution view -->
-<div id="distributionModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10001;">
-    <div class="modal-content" style="background: white; border-radius: 16px; max-width: 550px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
-        <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
+
+
+<!-- CYCLE DISTRIBUTION MODAL - v4.10.8 Dark theme with target_total -->
+<div id="distributionModal" class="dist-overlay" style="display: none;">
+    <div class="dist-modal">
+        <div class="dist-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div style="background: rgba(0,255,255,0.15); padding: 10px; border-radius: 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2">
                         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                     </svg>
                 </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Distribucion de Ciclo</h3>
-                    <p id="distributionGroupName" style="margin: 4px 0 0; font-size: 0.875rem; opacity: 0.9;">Resumen de distribucion</p>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #f8fafc;">Distribucion de Ciclo</h3>
+                    <p id="distributionGroupName" style="margin: 4px 0 0; font-size: 0.875rem; color: #94a3b8;">Resumen de distribucion</p>
                 </div>
             </div>
-            <button data-action="grp-close-distribution" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+            <button data-action="grp-close-distribution" class="dist-close-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
             </button>
         </div>
-        <div id="distributionContent" class="modal-body" style="padding: 20px; flex: 1; overflow-y: auto;">
+        <div id="distributionContent" style="padding: 20px; flex: 1; overflow-y: auto;">
             <div style="text-align: center; padding: 40px;">
-                <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid #059669; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-                <p style="margin-top: 16px; color: #6b7280;">Calculando distribucion...</p>
+                <div class="dist-spinner"></div>
+                <p style="margin-top: 16px; color: #64748b;">Calculando distribucion...</p>
             </div>
         </div>
-        <div id="distributionFooter" class="modal-footer" style="display: none; padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 16px 16px;">
-            <button data-action="grp-close-distribution" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
-            <button id="executeDistributionBtn" data-action="grp-execute-distribution" style="padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+        <div id="distributionFooter" class="dist-footer" style="display: none;">
+            <button data-action="grp-close-distribution" class="dist-btn-cancel">Cancelar</button>
+            <button id="executeDistributionBtn" data-action="grp-execute-distribution" class="dist-btn-execute">
                 Ejecutar Distribucion
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- TANDA BALANCES MODAL - v4.10.8 -->
+<div id="tandaBalancesModal" class="tb-overlay" style="display: none;">
+    <div class="tb-modal">
+        <div class="tb-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(0,255,255,0.15); padding: 10px; border-radius: 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2">
+                        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #f8fafc;">Saldos de Tanda</h3>
+                    <p id="tbGroupName" style="margin: 4px 0 0; font-size: 0.875rem; color: #94a3b8;">Cargando...</p>
+                </div>
+            </div>
+            <button data-action="grp-close-balances" class="tb-close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div id="tbContent" style="padding: 20px; flex: 1; overflow-y: auto;">
+            <div class="tb-spinner-wrap"><div class="dist-spinner"></div></div>
         </div>
     </div>
 </div>
@@ -9799,6 +10726,10 @@ function renderTurnsList() {
 
     var currentDistributionGroupId = null;
     var currentDistributionData = null;
+
+    function _distFmt(n) {
+        return (parseFloat(n) || 0).toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
 
     window.showDistributionPreview = async function(groupId) {
         currentDistributionGroupId = groupId;
@@ -9819,7 +10750,7 @@ function renderTurnsList() {
 
         try {
             var apiBase = window.API_BASE_URL || 'https://latanda.online';
-            var response = await fetch(apiBase + '/api/groups/' + groupId + '/distribution/preview', { headers: getAuthHeaders() });
+            var response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/distribution/preview', { headers: getAuthHeaders() });
             var result = await response.json();
 
             if (!result.success) {
@@ -9829,73 +10760,92 @@ function renderTurnsList() {
             currentDistributionData = result.data;
             var d = result.data;
 
-            // Update group name
-            document.getElementById('distributionGroupName').textContent = d.group_name + ' - Ciclo ' + d.cycle_number;
+            // Update header
+            document.getElementById('distributionGroupName').textContent =
+                escapeHtml(d.group_name) + ' \u2014 Ciclo ' + d.next_distribution_cycle + ' de distribucion';
 
-            // Build the preview HTML
             var html = '';
 
-            // Collection summary
-            html += '<div style="background: #f9fafb; border-radius: 12px; padding: 16px; margin-bottom: 16px;">' +
-                '<h4 style="margin: 0 0 12px; color: #374151; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Recaudacion</h4>' +
-                '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">' +
-                    '<div><div style="font-size: 0.75rem; color: #6b7280;">Total Recaudado</div><div style="font-size: 1.5rem; font-weight: 700; color: #059669;">L. ' + d.collection.total_collected.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div></div>' +
-                    '<div><div style="font-size: 0.75rem; color: #6b7280;">Contribuciones</div><div style="font-size: 1.5rem; font-weight: 700; color: #374151;">' + d.collection.total_contributions + '/' + d.collection.expected_contributions + '</div></div>' +
-                    '<div><div style="font-size: 0.75rem; color: #6b7280;">Efectivo</div><div style="font-size: 1rem; font-weight: 600; color: #4b5563;">L. ' + d.collection.cash_collected.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div></div>' +
-                    '<div><div style="font-size: 0.75rem; color: #6b7280;">Transferencias</div><div style="font-size: 1rem; font-weight: 600; color: #4b5563;">L. ' + d.collection.transfer_collected.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div></div>' +
+            // v4.10.8: Target total section with progress bar
+            var pct = Math.min(d.collection_percentage, 100);
+            var offlineAmount = Math.max(d.target_total - d.actual_collected, 0);
+
+            html += '<div class="dist-section">' +
+                '<div class="dist-section-title">Meta del Ciclo</div>' +
+                '<div class="dist-target-amount">L. ' + _distFmt(d.target_total) + '</div>' +
+                '<div style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 10px;">' +
+                    escapeHtml(String(d.positions_total)) + ' posiciones &times; L. ' + _distFmt(d.target_total / d.positions_total) +
+                '</div>' +
+                '<div class="dist-progress-bar"><div class="dist-progress-fill" style="width: ' + Math.min(pct, 100) + '%;"></div></div>' +
+                '<div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-top: 6px;">' +
+                    '<span style="color: #94a3b8;">' + pct.toFixed(1) + '% recaudado</span>' +
+                    '<span style="color: #64748b;">' + escapeHtml(String(d.positions_filled)) + '/' + escapeHtml(String(d.positions_total)) + ' posiciones</span>' +
+                '</div>' +
+                '<div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 8px;">' +
+                    '<span style="color: #34d399;">Recaudado: L. ' + _distFmt(d.actual_collected) + '</span>' +
+                    (offlineAmount > 0 ? '<span style="color: #fbbf24;">Offline: L. ' + _distFmt(offlineAmount) + '</span>' : '') +
                 '</div>' +
             '</div>';
 
-            // Fees - Platform gets 10% of coordinator fee
+            // Fees section
             var isCoordTurn = d.fees.is_coordinator_turn;
-            html += '<div style="background: #fef3c7; border-radius: 12px; padding: 16px; margin-bottom: 16px;">' +
-                '<h4 style="margin: 0 0 12px; color: #92400e; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Comisiones</h4>' +
-                '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
-                    '<span style="color: #78350f;">Plataforma (' + d.fees.platform_rate + '% de comision)</span>' +
-                    '<span style="font-weight: 600; color: #92400e;">L. ' + d.fees.platform_fee.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</span>' +
-                '</div>' +
-                (isCoordTurn ? '' :
-                '<div style="display: flex; justify-content: space-between;">' +
-                    '<span style="color: #78350f;">Coordinador (' + d.fees.coordinator_rate + '%)</span>' +
-                    '<span style="font-weight: 600; color: #92400e;">L. ' + d.fees.coordinator_fee.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</span>' +
-                '</div>') +
-            '</div>';
+            var feeRate = d.fees.coordinator_rate;
+            if (feeRate > 0 || !isCoordTurn) {
+                html += '<div class="dist-section" style="border-color: rgba(251,191,36,0.15);">' +
+                    '<div class="dist-section-title" style="color: #fbbf24;">Comisiones</div>';
+                if (!isCoordTurn && feeRate > 0) {
+                    html += '<div class="dist-fee-row">' +
+                        '<span>Coordinador (' + feeRate + '%)</span>' +
+                        '<span style="font-weight: 600;">L. ' + _distFmt(d.fees.coordinator_fee) + '</span>' +
+                    '</div>' +
+                    '<div class="dist-fee-row">' +
+                        '<span>Plataforma (10% de comision)</span>' +
+                        '<span style="font-weight: 600;">L. ' + _distFmt(d.fees.platform_fee) + '</span>' +
+                    '</div>' +
+                    '<div class="dist-fee-row" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px; margin-top: 4px;">' +
+                        '<span>Neto coordinador</span>' +
+                        '<span style="font-weight: 600; color: #34d399;">L. ' + _distFmt(d.fees.coordinator_net) + '</span>' +
+                    '</div>';
+                } else if (isCoordTurn) {
+                    html += '<div style="font-size: 0.82rem; color: #94a3b8;">Es turno del coordinador. Solo aplica comision de plataforma: L. ' + _distFmt(d.fees.platform_fee) + '</div>';
+                }
+                html += '</div>';
+            }
 
-            // Distribution
-            html += '<div style="background: #d1fae5; border-radius: 12px; padding: 16px; margin-bottom: 16px;">' +
-                '<h4 style="margin: 0 0 12px; color: #065f46; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Distribucion</h4>' +
-                (isCoordTurn ? '' : 
-                '<div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px; margin-bottom: 12px;">' +
-                    '<div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">👤</div>' +
+            // Distribution section
+            html += '<div class="dist-section" style="border-color: rgba(0,255,255,0.15);">' +
+                '<div class="dist-section-title" style="color: #00FFFF;">Distribucion</div>' +
+                '<div class="dist-beneficiary-card">' +
+                    '<div class="dist-beneficiary-avatar">' + escapeHtml((d.distribution.beneficiary_receives.user_name || '?').charAt(0)) + '</div>' +
                     '<div style="flex: 1;">' +
-                        '<div style="font-weight: 600; color: #374151;">Coordinador recibe</div>' +
-                        '<div style="font-size: 0.75rem; color: #6b7280;">' + d.distribution.coordinator_receives.method + '</div>' +
+                        '<div style="font-weight: 600; color: #f8fafc;">' +
+                            escapeHtml(d.distribution.beneficiary_receives.user_name || 'Beneficiario') +
+                            (isCoordTurn ? ' <span style="font-size: 0.7rem; color: #a78bfa;">(Coordinador)</span>' : '') +
+                        '</div>' +
+                        '<div style="font-size: 0.75rem; color: #94a3b8;">Turno #' + escapeHtml(String(d.distribution.beneficiary_receives.turn_number || '?')) + '</div>' +
                     '</div>' +
-                    '<div style="font-size: 1.25rem; font-weight: 700; color: #059669;">L. ' + d.distribution.coordinator_receives.net_commission.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
-                '</div>') +
-                '<div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 8px;">' +
-                    '<div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">' + (isCoordTurn ? '👤' : '🎯') + '</div>' +
-                    '<div style="flex: 1;">' +
-                        '<div style="font-weight: 600; color: #374151;">' + (d.distribution.beneficiary_receives.user_name || 'Beneficiario') + (isCoordTurn ? ' (Coordinador)' : '') + '</div>' +
-                        '<div style="font-size: 0.75rem; color: #6b7280;">' + d.distribution.beneficiary_receives.method + '</div>' +
+                    '<div style="text-align: right;">' +
+                        '<div style="font-size: 1.25rem; font-weight: 700; color: #00FFFF;">L. ' + _distFmt(d.distribution.beneficiary_receives.amount) + '</div>' +
                     '</div>' +
-                    '<div style="font-size: 1.25rem; font-weight: 700; color: #2563eb;">L. ' + d.distribution.beneficiary_receives.amount.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
+                '</div>' +
+                '<div class="dist-admin-note">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+                    '<span>Saldo administrativo - no se acredita a wallet. Coordinador distribuye manualmente.</span>' +
                 '</div>' +
             '</div>';
 
             // Status
             if (!d.can_distribute) {
-                html += '<div style="background: #fee2e2; border-radius: 12px; padding: 16px; color: #dc2626; text-align: center;">' +
-                    '<strong>⚠️ No se puede distribuir</strong><br>' +
-                    '<span style="font-size: 0.875rem;">Faltan contribuciones por completar</span>' +
+                html += '<div class="dist-status dist-status-warning">' +
+                    '<strong>No se puede distribuir</strong><br>' +
+                    '<span style="font-size: 0.82rem;">Faltan contribuciones por completar (' + escapeHtml(String(d.collection.total_contributions)) + '/' + escapeHtml(String(d.collection.expected_contributions)) + ')</span>' +
                 '</div>';
                 footerDiv.style.display = 'none';
             } else {
-                html += '<div style="background: #d1fae5; border-radius: 12px; padding: 12px; color: #065f46; text-align: center; font-size: 0.875rem;">' +
-                    '✅ Todas las contribuciones completadas. Listo para distribuir.' +
+                html += '<div class="dist-status dist-status-ok">' +
+                    'Todas las contribuciones completadas. Listo para distribuir.' +
                 '</div>';
                 footerDiv.style.display = 'flex';
-                footerDiv.style.justifyContent = 'space-between';
             }
 
             contentDiv.innerHTML = html;
@@ -9903,9 +10853,9 @@ function renderTurnsList() {
         } catch (err) {
             contentDiv.innerHTML =
                 '<div style="text-align: center; padding: 40px;">' +
-                    '<div style="font-size: 48px; margin-bottom: 16px;">❌</div>' +
-                    '<h4 style="margin: 0 0 8px; color: #dc2626;">Error al cargar</h4>' +
-                    '<p style="color: #6b7280; margin: 0;">Error al cargar la vista previa. Intenta de nuevo.</p>' +
+                    '<div style="font-size: 48px; margin-bottom: 16px;">&#10060;</div>' +
+                    '<h4 style="margin: 0 0 8px; color: #f87171;">Error al cargar</h4>' +
+                    '<p style="color: #64748b; margin: 0;">Error al cargar la vista previa. Intenta de nuevo.</p>' +
                 '</div>';
             footerDiv.style.display = 'none';
         }
@@ -9917,12 +10867,13 @@ function renderTurnsList() {
             return;
         }
 
-        var isCoordTurn = currentDistributionData.fees.is_coordinator_turn;
-        var confirmMsg = '¿Confirmas la distribucion del Ciclo ' + currentDistributionData.cycle_number + '?\n\n';
-        if (!isCoordTurn) {
-            confirmMsg += '• Coordinador recibe: L. ' + currentDistributionData.distribution.coordinator_receives.net_commission.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '\n';
+        var d = currentDistributionData;
+        var isCoordTurn = d.fees.is_coordinator_turn;
+        var confirmMsg = 'Confirmas la distribucion del Ciclo ' + d.next_distribution_cycle + '?\n\n';
+        if (!isCoordTurn && d.fees.coordinator_net > 0) {
+            confirmMsg += 'Coordinador recibe: L. ' + _distFmt(d.distribution.coordinator_receives.net_commission) + '\n';
         }
-        confirmMsg += '• ' + (currentDistributionData.distribution.beneficiary_receives.user_name || 'Beneficiario') + ' recibe: L. ' + currentDistributionData.distribution.beneficiary_receives.amount.toLocaleString('es-HN', {minimumFractionDigits: 2});
+        confirmMsg += (escapeHtml(d.distribution.beneficiary_receives.user_name) || 'Beneficiario') + ' recibe: L. ' + _distFmt(d.distribution.beneficiary_receives.amount) + '\n\nEsta accion no se puede deshacer.';
 
         if (!confirm(confirmMsg)) return;
 
@@ -9932,11 +10883,10 @@ function renderTurnsList() {
 
         try {
             var apiBase = window.API_BASE_URL || 'https://latanda.online';
-            var userId = localStorage.getItem('latanda_user_id') || 'coordinator';
 
-            var response = await fetch(apiBase + '/api/groups/' + currentDistributionGroupId + '/distribution/execute', {
+            var response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(currentDistributionGroupId) + '/distribution/execute', {
                 method: 'POST',
-                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                headers: Object.assign({}, getAuthHeaders(), { 'Content-Type': 'application/json' }),
                 body: JSON.stringify({})
             });
 
@@ -9950,20 +10900,34 @@ function renderTurnsList() {
             var contentDiv = document.getElementById('distributionContent');
             contentDiv.innerHTML =
                 '<div style="text-align: center; padding: 40px;">' +
-                    '<div style="width: 70px; height: 70px; background: #d1fae5; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">' +
-                        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' +
+                    '<div style="width: 70px; height: 70px; background: rgba(0,255,255,0.1); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">' +
+                        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' +
                     '</div>' +
-                    '<h4 style="margin: 0 0 8px; color: #111827; font-size: 1.25rem;">Distribucion Exitosa!</h4>' +
-                    '<p style="margin: 0 0 16px; color: #6b7280;">Ciclo ' + result.data.cycle_number + ' completado</p>' +
-                    '<div style="background: #f3f4f6; padding: 12px; border-radius: 8px; font-size: 0.875rem; text-align: left;">' +
-                        '<div style="margin-bottom: 8px;"><strong>Coordinador:</strong> L. ' + result.data.coordinator_net.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
-                        '<div><strong>Beneficiario:</strong> L. ' + result.data.beneficiary_net.toLocaleString('es-HN', {minimumFractionDigits: 2}) + '</div>' +
+                    '<h4 style="margin: 0 0 8px; color: #f8fafc; font-size: 1.25rem;">Distribucion Exitosa</h4>' +
+                    '<p style="margin: 0 0 16px; color: #94a3b8;">Ciclo ' + escapeHtml(String(result.data.cycle_number)) + ' completado</p>' +
+                    '<div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; font-size: 0.88rem; text-align: left; border: 1px solid rgba(255,255,255,0.06);">' +
+                        '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
+                            '<span style="color: #94a3b8;">Meta del ciclo</span>' +
+                            '<span style="color: #f8fafc; font-weight: 600;">L. ' + _distFmt(result.data.target_total) + '</span>' +
+                        '</div>' +
+                        '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
+                            '<span style="color: #94a3b8;">Recaudado</span>' +
+                            '<span style="color: #34d399; font-weight: 600;">L. ' + _distFmt(result.data.total_collected) + '</span>' +
+                        '</div>' +
+                        '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
+                            '<span style="color: #94a3b8;">Coordinador</span>' +
+                            '<span style="color: #f8fafc; font-weight: 600;">L. ' + _distFmt(result.data.coordinator_net) + '</span>' +
+                        '</div>' +
+                        '<div style="display: flex; justify-content: space-between;">' +
+                            '<span style="color: #94a3b8;">Beneficiario</span>' +
+                            '<span style="color: #00FFFF; font-weight: 600;">L. ' + _distFmt(result.data.beneficiary_net) + '</span>' +
+                        '</div>' +
                     '</div>' +
-                    '<p style="margin: 16px 0 0; color: #6b7280; font-size: 0.875rem;">Siguiente ciclo: ' + result.data.next_cycle + '</p>' +
+                    '<p style="margin: 16px 0 0; color: #64748b; font-size: 0.82rem;">Siguiente distribucion: Ciclo ' + escapeHtml(String(result.data.next_distribution_cycle)) + '</p>' +
                 '</div>';
 
             var footerDiv = document.getElementById('distributionFooter');
-            footerDiv.innerHTML = '<button data-action="grp-close-distribution" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cerrar</button>';
+            footerDiv.innerHTML = '<button data-action="grp-close-distribution" class="dist-btn-execute" style="width: 100%;">Cerrar</button>';
 
             if (window.showSuccess) window.showSuccess('Distribucion ejecutada exitosamente');
 
@@ -9983,15 +10947,128 @@ function renderTurnsList() {
         var modal = document.getElementById('distributionModal');
         if (modal) {
             modal.style.display = 'none'; modal.classList.remove('active');
-            modal.classList.remove('active');
             document.body.style.overflow = '';
         }
         currentDistributionGroupId = null;
         currentDistributionData = null;
     };
 
+    // === TANDA BALANCES MODAL ===
+
+    var currentBalancesGroupId = null;
+
+    window.showTandaBalances = async function(groupId) {
+        currentBalancesGroupId = groupId;
+        closeModal(); // Close manage modal
+
+        setTimeout(async function() {
+            var modal = document.getElementById('tandaBalancesModal');
+            modal.style.display = 'flex'; modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            await loadTandaBalances(groupId);
+        }, 100);
+    };
+
+    async function loadTandaBalances(groupId) {
+        var contentDiv = document.getElementById('tbContent');
+        contentDiv.innerHTML = '<div class="tb-spinner-wrap"><div class="dist-spinner"></div></div>';
+
+        try {
+            var apiBase = window.API_BASE_URL || 'https://latanda.online';
+            var response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/tanda-balances', { headers: getAuthHeaders() });
+            var result = await response.json();
+
+            if (!result.success) throw new Error('Error');
+
+            var d = result.data;
+            document.getElementById('tbGroupName').textContent = escapeHtml(d.group_name);
+
+            var html = '';
+
+            // Summary stats
+            html += '<div class="tb-stats">' +
+                '<div class="tb-stat"><div class="tb-stat-value">L. ' + _distFmt(d.target_per_cycle) + '</div><div class="tb-stat-label">Meta/ciclo</div></div>' +
+                '<div class="tb-stat"><div class="tb-stat-value">' + escapeHtml(String(d.distributions_completed)) + '</div><div class="tb-stat-label">Distribuciones</div></div>' +
+                '<div class="tb-stat"><div class="tb-stat-value">' + escapeHtml(String(d.summary.positions_filled)) + '/' + escapeHtml(String(d.summary.positions_total)) + '</div><div class="tb-stat-label">Posiciones</div></div>' +
+            '</div>';
+
+            // Members table
+            html += '<div class="tb-table-header">' +
+                '<span class="tb-col-num">#</span>' +
+                '<span class="tb-col-name">Miembro</span>' +
+                '<span class="tb-col-amount">Contribuido</span>' +
+                '<span class="tb-col-balance">Saldo</span>' +
+            '</div>';
+
+            for (var i = 0; i < d.members.length; i++) {
+                var m = d.members[i];
+                var balanceClass = m.tanda_balance > 0 ? 'tb-balance-positive' : m.tanda_balance < 0 ? 'tb-balance-negative' : 'tb-balance-zero';
+                var balancePrefix = m.tanda_balance > 0 ? '+' : '';
+                var initial = (m.name || '?').charAt(0).toUpperCase();
+                var posLabel = m.num_positions > 1 ? ' <span class="tb-multi-pos">x' + escapeHtml(String(m.num_positions)) + '</span>' : '';
+
+                html += '<div class="tb-member-row">' +
+                    '<span class="tb-col-num">' + escapeHtml(String(m.turn_position || '-')) + '</span>' +
+                    '<div class="tb-col-name">' +
+                        '<div class="tb-member-avatar">' + escapeHtml(initial) + '</div>' +
+                        '<div class="tb-member-info">' +
+                            '<div class="tb-member-name">' + escapeHtml(m.name || 'Desconocido') + posLabel + '</div>' +
+                            (m.has_received ? '<div class="tb-received-tag">Recibio L. ' + _distFmt(m.total_received) + '</div>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<span class="tb-col-amount">L. ' + _distFmt(m.total_contributed) + '</span>' +
+                    '<span class="tb-col-balance ' + balanceClass + '">' + balancePrefix + _distFmt(m.tanda_balance) + '</span>' +
+                '</div>';
+            }
+
+            // Empty positions indicator
+            var emptyPositions = d.summary.positions_total - d.summary.positions_filled;
+            if (emptyPositions > 0) {
+                html += '<div class="tb-empty-positions">' +
+                    escapeHtml(String(emptyPositions)) + ' posiciones vacias' +
+                '</div>';
+            }
+
+            // Summary footer
+            html += '<div class="tb-summary">' +
+                '<div class="tb-summary-row">' +
+                    '<span>Total contribuido</span>' +
+                    '<span style="color: #34d399; font-weight: 600;">L. ' + _distFmt(d.summary.total_contributed_all) + '</span>' +
+                '</div>' +
+                '<div class="tb-summary-row">' +
+                    '<span>Total distribuido</span>' +
+                    '<span style="color: #00FFFF; font-weight: 600;">L. ' + _distFmt(d.summary.total_distributed_all) + '</span>' +
+                '</div>' +
+                '<div class="tb-admin-note">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
+                    '<span>Saldos administrativos &mdash; no transferibles</span>' +
+                '</div>' +
+            '</div>';
+
+            contentDiv.innerHTML = html;
+
+        } catch (err) {
+            contentDiv.innerHTML =
+                '<div style="text-align: center; padding: 40px;">' +
+                    '<div style="font-size: 48px; margin-bottom: 16px;">&#10060;</div>' +
+                    '<h4 style="margin: 0 0 8px; color: #f87171;">Error al cargar saldos</h4>' +
+                    '<p style="color: #64748b; margin: 0;">Intenta de nuevo.</p>' +
+                '</div>';
+        }
+    }
+
+    window.closeTandaBalancesModal = function() {
+        var modal = document.getElementById('tandaBalancesModal');
+        if (modal) {
+            modal.style.display = 'none'; modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        currentBalancesGroupId = null;
+    };
+
 })();
 </script>
+
 
 <script src="member-management-frontend.js?v=12.1"></script>
 <script src="coordinator-panel.js?v=1771545601"></script>
@@ -10744,6 +11821,17 @@ function renderTurnsList() {
                 case 'grp-close-payments':
                     if (typeof closePaymentsModal === 'function') closePaymentsModal();
                     break;
+                case 'ph-tab-resumen':
+                    if (typeof phSwitchTab === 'function') phSwitchTab('resumen');
+                    break;
+                case 'ph-tab-historial':
+                    if (typeof phSwitchTab === 'function') phSwitchTab('historial');
+                    break;
+
+                // Sidebar quick actions
+                case 'gs-view-invitations':
+                    window.location.href = '/notificaciones.html';
+                    break;
 
                 // Invite modal
                 case 'grp-close-invite':
@@ -10787,6 +11875,10 @@ function renderTurnsList() {
                     break;
 
                 // Distribution modal
+                case 'grp-close-balances':
+                    if (typeof closeTandaBalancesModal === 'function') closeTandaBalancesModal();
+                    break;
+
                 case 'grp-close-distribution':
                     if (typeof closeDistributionModal === 'function') closeDistributionModal();
                     break;
