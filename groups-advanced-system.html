@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.0">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.1">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -1228,8 +1228,7 @@ async function assignPositionManually(groupId, positionNumber, userId, userName)
                 group_id: groupId,
                 user_id: userId,
                 user_name: userName,
-                position: positionNumber,
-                // assigned_by removed (server uses JWT)
+                position: positionNumber
             })
         });
 
@@ -1443,7 +1442,7 @@ function createRejectModal() {
 function closeRejectModal() {
     const modal = document.getElementById('rejectModal');
     if (modal) {
-        modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+        modal.style.display = 'none'; modal.classList.remove('active');
         document.getElementById('rejectReason').value = '';
     }
 }
@@ -1487,7 +1486,7 @@ function createManualAssignModal() {
 function closeManualAssignModal() {
     const modal = document.getElementById('manualAssignModal');
     if (modal) {
-        modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+        modal.style.display = 'none'; modal.classList.remove('active');
     }
 }
 
@@ -2145,7 +2144,7 @@ async function loadUsersWithoutPositions(groupId) {
                 <div class="tandas-filters">
                     <div class="filter-group">
                         <label>Filtrar por estado:</label>
-                        <select id="tandasStatusFilter" onchange="advancedGroupsSystem.filterTandas()">
+                        <select id="tandasStatusFilter">
                             <option value="all">Todas las tandas</option>
                             <option value="active">Activas</option>
                             <option value="waiting-turn">Esperando turno</option>
@@ -2155,7 +2154,7 @@ async function loadUsersWithoutPositions(groupId) {
                     </div>
                     <div class="filter-group">
                         <label>Ordenar por:</label>
-                        <select id="tandasSortOrder" onchange="advancedGroupsSystem.sortTandas()">
+                        <select id="tandasSortOrder">
                             <option value="next-payment">Próximo pago</option>
                             <option value="amount">Monto</option>
                             
@@ -2430,7 +2429,7 @@ async function loadUsersWithoutPositions(groupId) {
             if (modal) {
                 modal.classList.remove('active');
                 setTimeout(() => {
-                    modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+                    modal.style.display = 'none'; modal.classList.remove('active');
                 }, 300);
             }
         }
@@ -2997,7 +2996,7 @@ async function quickPay(tandaId) {
         <div class="payment-summary" style="background: rgba(0,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
             <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <span style="color: #888;">Tanda:</span>
-                <strong style="color: #fff;">${tanda.name || tanda.group_name}</strong>
+                <strong style="color: #fff;">${escapeHtml(tanda.name || tanda.group_name || '')}</strong>
             </div>
             <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <span style="color: #888;">Monto:</span>
@@ -3005,7 +3004,7 @@ async function quickPay(tandaId) {
             </div>
             <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <span style="color: #888;">Beneficiario:</span>
-                <strong style="color: #fff;">${beneficiaryName}</strong>
+                <strong style="color: #fff;">${escapeHtml(beneficiaryName)}</strong>
             </div>
             <div class="summary-row" style="display: flex; justify-content: space-between; padding: 10px 0;">
                 <span style="color: #888;">Vencimiento:</span>
@@ -3066,15 +3065,13 @@ async function processModalPayment() {
         const payload = {
             tanda_id: tandaId,
             amount: amount,
-            payment_method: selectedMethod.value,
-            user_id: getCurrentUserId()
+            payment_method: selectedMethod.value
         };
         
         const response = await fetch("/api/tandas/pay", {
             method: "POST",
             headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
@@ -3089,7 +3086,7 @@ async function processModalPayment() {
                 refreshTandas();
             }
         } else {
-            throw new Error(result.message || "Error al procesar el pago");
+            throw new Error("Error al procesar el pago");
         }
     } catch (error) {
         showToast("Error al procesar el pago", "error");
@@ -3160,15 +3157,13 @@ async function confirmQuickPay() {
         const payload = {
             tanda_id: tandaId,
             amount: amount,
-            payment_method: selectedMethod,
-            user_id: getCurrentUserId()
+            payment_method: selectedMethod
         };
         
         const response = await fetch("/api/tandas/pay", {
             method: "POST",
             headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
@@ -3182,7 +3177,7 @@ async function confirmQuickPay() {
                 refreshTandas();
             }
         } else {
-            throw new Error(result.message || "Error al procesar el pago");
+            throw new Error("Error al procesar el pago");
         }
     } catch (error) {
         showToast("Error al procesar el pago", "error");
@@ -3280,8 +3275,8 @@ async function openHistoryModal() {
             ${payments.length ? payments.map(p => `
                 <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 10px;">
                     <div style="flex: 1;">
-                        <div style="color: #fff; font-weight: bold;">${p.tanda_name || p.group_name || 'Tanda'}</div>
-                        <div style="color: #888; font-size: 12px;">${p.recipient || 'Participante'}</div>
+                        <div style="color: #fff; font-weight: bold;">${escapeHtml(p.tanda_name || p.group_name || 'Tanda')}</div>
+                        <div style="color: #888; font-size: 12px;">${escapeHtml(p.recipient || 'Participante')}</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="color: #ff6b6b; font-weight: bold;">-L. ${parseFloat(p.amount || 0).toLocaleString('es-HN', {minimumFractionDigits: 2})}</div>
@@ -3295,8 +3290,8 @@ async function openHistoryModal() {
             ${collections.length ? collections.map(c => `
                 <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 10px;">
                     <div style="flex: 1;">
-                        <div style="color: #fff; font-weight: bold;">${c.tanda_name || c.group_name || 'Tanda'}</div>
-                        <div style="color: #888; font-size: 12px;">${c.sender || 'Participante'}</div>
+                        <div style="color: #fff; font-weight: bold;">${escapeHtml(c.tanda_name || c.group_name || 'Tanda')}</div>
+                        <div style="color: #888; font-size: 12px;">${escapeHtml(c.sender || 'Participante')}</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="color: #00ff88; font-weight: bold;">+L. ${parseFloat(c.amount || 0).toLocaleString('es-HN', {minimumFractionDigits: 2})}</div>
@@ -3407,7 +3402,7 @@ function populateTandaFilter() {
     
     select.innerHTML = "<option value=\"all\">Todas las tandas</option>";
     tandaNames.forEach(function(name) {
-        select.innerHTML += "<option value=\"" + name + "\">" + name + "</option>";
+        select.innerHTML += "<option value=\"" + escapeHtml(name) + "\">" + escapeHtml(name) + "</option>";
     });
 }
 
@@ -3511,7 +3506,7 @@ function renderHistoryList() {
         html += "<div class=\"history-item " + type + "\">";
         html += "  <div class=\"item-icon\"><i class=\"fas fa-" + icon + "\"></i></div>";
         html += "  <div class=\"item-info\">";
-        html += "    <div class=\"item-tanda\">" + tandaName + "</div>";
+        html += "    <div class=\"item-tanda\">" + escapeHtml(tandaName) + "</div>";
         html += "    <div class=\"item-date\">" + dateStr + "</div>";
         html += "  </div>";
         html += "  <div class=\"item-amount\">" + prefix + " L. " + amount.toLocaleString("es-HN", { minimumFractionDigits: 2 }) + "</div>";
@@ -3717,7 +3712,7 @@ function renderTandaCard(tanda) {
     return '<div class="tanda-card status-' + tanda.status + '" data-tanda-id="' + tanda.tanda_id + '">' +
         '<div class="tanda-header">' +
             '<div class="tanda-title">' +
-                '<h3>' + tanda.group_name + '</h3>' +
+                '<h3>' + escapeHtml(tanda.group_name || '') + '</h3>' +
                 '<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">' +
                     '<span class="status-badge ' + statusClass + '">' + statusLabel + '</span>' +
                     getLotteryBadge(tanda) + getGoalBadge(tanda) +
@@ -3750,7 +3745,7 @@ function renderTandaCard(tanda) {
                 '<i class="fas fa-user-check"></i>' +
                 '<div>' +
                     '<small>' + (isRecruiting ? "Coordinador" : "Cobrando") + '</small>' +
-                    '<strong>' + (isRecruiting ? (isCoordinator ? "Tú" : (tanda.coordinator_name || "—")) : collectingMember) + '</strong>' +
+                    '<strong>' + (isRecruiting ? (isCoordinator ? "Tú" : escapeHtml(tanda.coordinator_name || "—")) : escapeHtml(collectingMember)) + '</strong>' +
                 '</div>' +
             '</div>' +
             '<div class="info-item">' +
@@ -3903,12 +3898,10 @@ async function confirmStartTandaNow() {
         const response = await fetch("/api/tandas/start", {
             method: "POST",
             headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token") || "")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                tanda_id: currentStartTandaId,
-                user_id: userId
+                tanda_id: currentStartTandaId
             })
         });
         
@@ -3940,12 +3933,10 @@ async function confirmScheduleTandaStart() {
         const response = await fetch("/api/tandas/" + currentStartTandaId + "/schedule-start", {
             method: "POST",
             headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token") || "")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                start_at: new Date(dateInput).toISOString(),
-                user_id: userId
+                start_at: new Date(dateInput).toISOString()
             })
         });
         
@@ -4036,8 +4027,7 @@ async function executeLotteryFromModal() {
         const response = await fetch("/api/groups/" + currentStartGroupId + "/lottery-assign", {
             method: "POST",
             headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token") || "")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({})
         });
@@ -4418,7 +4408,7 @@ function attachTandasFunctions() {
                     var btnStyle = btn.class === "btn-primary" 
                         ? "background:linear-gradient(135deg,#00ffff,#00d4aa);color:#000;" 
                         : "background:rgba(255,255,255,0.1);color:#fff;";
-                    buttonsHtml += "<button class=\"" + (btn.class || "btn-secondary") + "\" data-action=\"" + (btn.action || "grp-hide-modal") + "\" style=\"padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:500;" + btnStyle + "\">" + btn.text + "</button>";
+                    buttonsHtml += "<button class=\"" + (btn.class || "btn-secondary") + "\" data-action=\"" + (btn.action || "grp-hide-modal") + "\" style=\"padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:500;" + btnStyle + "\">" + escapeHtml(btn.text || '') + "</button>";
                 });
                 buttonsHtml += "</div>";
             }
@@ -4426,7 +4416,7 @@ function attachTandasFunctions() {
             var modalHTML = "<div class=\"modal-overlay active\" id=\"modalOverlay\" style=\"visibility:visible;opacity:1;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);\">" +
                 "<div class=\"modal-container " + size + "\" id=\"modalContainer\" style=\"background:rgba(15,23,42,0.98);border:1px solid rgba(0,255,255,0.3);border-radius:16px;max-width:" + maxWidth + ";width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.5);\">" +
                     "<div class=\"modal-header\" style=\"padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;\">" +
-                        "<h3 style=\"color:#fff;margin:0;font-size:1.25rem;\">" + title + "</h3>" +
+                        "<h3 style=\"color:#fff;margin:0;font-size:1.25rem;\">" + escapeHtml(title || '') + "</h3>" +
                         "<button data-action=\"grp-hide-modal\" style=\"background:none;border:none;color:#888;font-size:28px;cursor:pointer;line-height:1;\">&times;</button>" +
                     "</div>" +
                     "<div class=\"modal-content\" style=\"padding:20px;color:#fff;\">" + content + "</div>" +
@@ -4788,6 +4778,45 @@ function attachTandasFunctions() {
 
 // Attach immediately AND on DOM load (defensive)
 attachTandasFunctions();
+
+// === Phase 4: Delegated event listeners for converted inline handlers ===
+(function() {
+    // Form submits
+    var editForm = document.getElementById('editGroupForm');
+    if (editForm) editForm.addEventListener('submit', function(e) { submitGroupEdit(e); });
+
+    var inviteForm = document.getElementById('inviteForm');
+    if (inviteForm) inviteForm.addEventListener('submit', function(e) { submitSimpleInvitation(e); });
+
+    // User search with debounce
+    var userSearchInput = document.getElementById('userSearchInput');
+    if (userSearchInput) {
+        var _userSearchTimer = null;
+        userSearchInput.addEventListener('input', function() {
+            clearTimeout(_userSearchTimer);
+            var val = this.value;
+            _userSearchTimer = setTimeout(function() { searchUsersToInvite(val); }, 300);
+        });
+    }
+
+    // Proof file upload
+    var proofFileInput = document.getElementById('proofFileInput');
+    if (proofFileInput) proofFileInput.addEventListener('change', function(e) { handleProofUpload(e); });
+
+    // Tanda filters
+    var tandasStatusFilter = document.getElementById('tandasStatusFilter');
+    if (tandasStatusFilter) tandasStatusFilter.addEventListener('change', function() { if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.filterTandas === 'function') window.advancedGroupsSystem.filterTandas(); });
+
+    var tandasSortOrder = document.getElementById('tandasSortOrder');
+    if (tandasSortOrder) tandasSortOrder.addEventListener('change', function() { if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.sortTandas === 'function') window.advancedGroupsSystem.sortTandas(); });
+
+    // History filters
+    var historyTandaFilter = document.getElementById('historyTandaFilter');
+    if (historyTandaFilter) historyTandaFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
+
+    var historyPeriodFilter = document.getElementById('historyPeriodFilter');
+    if (historyPeriodFilter) historyPeriodFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
+})();
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", attachTandasFunctions);
 } else {
@@ -5003,7 +5032,7 @@ if (document.readyState === "loading") {
 
         /* Skeleton loading */
         .skeleton {
-            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
             background-size: 200% 100%;
             animation: skeletonLoading 1.5s infinite;
             border-radius: 4px;
@@ -5159,7 +5188,7 @@ if (document.readyState === "loading") {
                 </button>
             </div>
 
-            <form id="editGroupForm" onsubmit="submitGroupEdit(event)">
+            <form id="editGroupForm">
                 <div class="modal-body" style="padding: 24px; max-height: calc(85vh - 180px); overflow-y: auto;">
                     <!-- Loading -->
                     <div id="editGroupLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
@@ -5447,52 +5476,52 @@ if (document.readyState === "loading") {
             </div>
 
             <!-- Step Indicator -->
-            <div id="paymentStepIndicator" style="display: flex; justify-content: center; gap: 8px; padding: 16px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+            <div id="paymentStepIndicator" style="display: flex; justify-content: center; gap: 8px; padding: 16px; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <div class="step-dot active" data-step="1" style="width: 10px; height: 10px; border-radius: 50%; background: #059669;"></div>
-                <div class="step-dot" data-step="2" style="width: 10px; height: 10px; border-radius: 50%; background: #d1d5db;"></div>
-                <div class="step-dot" data-step="3" style="width: 10px; height: 10px; border-radius: 50%; background: #d1d5db;"></div>
+                <div class="step-dot" data-step="2" style="width: 10px; height: 10px; border-radius: 50%; background: #334155;"></div>
+                <div class="step-dot" data-step="3" style="width: 10px; height: 10px; border-radius: 50%; background: #334155;"></div>
             </div>
 
             <div class="modal-body" style="padding: 24px; flex: 1; overflow-y: auto;">
                 
                 <!-- STEP 1: Select Method and Amount -->
                 <div id="paymentStep1" class="payment-step">
-                    <h4 style="margin: 0 0 16px; color: #111827; font-size: 1rem;">Paso 1: Selecciona metodo y monto</h4>
+                    <h4 style="margin: 0 0 16px; color: #f8fafc; font-size: 1rem;">Paso 1: Selecciona metodo y monto</h4>
                     
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Monto de Contribucion (L.) *</label>
-                        <input type="number" id="paymentAmount" required min="1" step="0.01" placeholder="0.00" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 1rem; box-sizing: border-box;">
+                        <input type="number" id="paymentAmount" required min="1" step="0.01" placeholder="0.00" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Metodo de Pago *</label>
                         <div id="paymentMethodCards" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                            <div class="payment-method-card" data-method="bank_transfer" data-action="grp-select-payment-method" data-method="bank_transfer" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <div class="payment-method-card" data-method="bank_transfer" data-action="grp-select-payment-method" style="border: 2px solid #334155; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: background 0.2s, border-color 0.2s;">
                                 <div style="font-size: 24px; margin-bottom: 8px;">🏦</div>
-                                <div style="font-weight: 500; color: #374151; font-size: 0.875rem;">Transferencia</div>
+                                <div style="font-weight: 500; color: #e2e8f0; font-size: 0.875rem;">Transferencia</div>
                             </div>
-                            <div class="payment-method-card" data-method="mobile_money" data-action="grp-select-payment-method" data-method="mobile_money" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <div class="payment-method-card" data-method="mobile_money" data-action="grp-select-payment-method" style="border: 2px solid #334155; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: background 0.2s, border-color 0.2s;">
                                 <div style="font-size: 24px; margin-bottom: 8px;">📱</div>
-                                <div style="font-weight: 500; color: #374151; font-size: 0.875rem;">Tigo Money</div>
+                                <div style="font-weight: 500; color: #e2e8f0; font-size: 0.875rem;">Tigo Money</div>
                             </div>
-                            <div class="payment-method-card" data-method="cash" data-action="grp-select-payment-method" data-method="cash" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <div class="payment-method-card" data-method="cash" data-action="grp-select-payment-method" style="border: 2px solid #334155; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: background 0.2s, border-color 0.2s;">
                                 <div style="font-size: 24px; margin-bottom: 8px;">💵</div>
-                                <div style="font-weight: 500; color: #374151; font-size: 0.875rem;">Efectivo</div>
+                                <div style="font-weight: 500; color: #e2e8f0; font-size: 0.875rem;">Efectivo</div>
                             </div>
-                            <div class="payment-method-card" data-method="crypto" data-action="grp-select-payment-method" data-method="crypto" style="border: 2px solid #e5e7eb; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: all 0.2s;">
+                            <div class="payment-method-card" data-method="crypto" data-action="grp-select-payment-method" style="border: 2px solid #334155; border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: background 0.2s, border-color 0.2s;">
                                 <div style="font-size: 24px; margin-bottom: 8px;">₿</div>
-                                <div style="font-weight: 500; color: #374151; font-size: 0.875rem;">Crypto</div>
+                                <div style="font-weight: 500; color: #e2e8f0; font-size: 0.875rem;">Crypto</div>
                             </div>
                         </div>
                         <input type="hidden" id="paymentMethod" value="">
                     </div>
 
-                    <div id="paymentStep1Error" style="display: none; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem;"></div>
+                    <div id="paymentStep1Error" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem;"></div>
                 </div>
 
                 <!-- STEP 2: Instructions -->
                 <div id="paymentStep2" class="payment-step" style="display: none;">
-                    <h4 style="margin: 0 0 16px; color: #111827; font-size: 1rem;">Paso 2: Realiza el pago</h4>
+                    <h4 style="margin: 0 0 16px; color: #f8fafc; font-size: 1rem;">Paso 2: Realiza el pago</h4>
                     
                     <!-- Reference Code Box -->
                     <div id="referenceCodeBox" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); border-radius: 12px; padding: 16px; margin-bottom: 20px; color: white; text-align: center;">
@@ -5504,69 +5533,69 @@ if (document.readyState === "loading") {
                     </div>
 
                     <!-- Instructions List -->
-                    <div id="paymentInstructionsList" style="background: #f9fafb; border-radius: 12px; padding: 16px;">
-                        <div style="font-weight: 600; color: #374151; margin-bottom: 12px;" id="instructionsTitle">Instrucciones</div>
-                        <ol id="instructionsSteps" style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 0.875rem; line-height: 1.8;"></ol>
+                    <div id="paymentInstructionsList" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px;">
+                        <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 12px;" id="instructionsTitle">Instrucciones</div>
+                        <ol id="instructionsSteps" style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 0.875rem; line-height: 1.8;"></ol>
                     </div>
 
                     <!-- Bank Details (for transfers) -->
-                    <div id="bankDetailsBox" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin-top: 16px;">
-                        <div style="font-weight: 600; color: #1e40af; margin-bottom: 12px;">📋 Datos Bancarios</div>
-                        <div id="bankDetailsContent" style="font-size: 0.875rem; color: #1e3a8a;"></div>
+                    <div id="bankDetailsBox" style="display: none; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 16px; margin-top: 16px;">
+                        <div style="font-weight: 600; color: #60a5fa; margin-bottom: 12px;">📋 Datos Bancarios</div>
+                        <div id="bankDetailsContent" style="font-size: 0.875rem; color: #93c5fd;"></div>
                     </div>
 
                     <!-- Time indicator -->
-                    <div id="verificationTimeBox" style="display: flex; align-items: center; gap: 8px; margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;">
+                    <div id="verificationTimeBox" style="display: flex; align-items: center; gap: 8px; margin-top: 16px; padding: 12px; background: rgba(245,158,11,0.1); border-radius: 8px;">
                         <span style="font-size: 1.2rem;">⏱️</span>
-                        <span id="verificationTimeText" style="font-size: 0.875rem; color: #92400e;"></span>
+                        <span id="verificationTimeText" style="font-size: 0.875rem; color: #fbbf24;"></span>
                     </div>
                 </div>
 
                 <!-- STEP 3: Upload Proof -->
                 <div id="paymentStep3" class="payment-step" style="display: none;">
-                    <h4 style="margin: 0 0 16px; color: #111827; font-size: 1rem;">Paso 3: Sube tu comprobante</h4>
+                    <h4 style="margin: 0 0 16px; color: #f8fafc; font-size: 1rem;">Paso 3: Sube tu comprobante</h4>
                     
-                    <div id="proofUploadArea" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s;" data-action="grp-upload-proof">
+                    <div id="proofUploadArea" style="border: 2px dashed #334155; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s;" data-action="grp-upload-proof">
                         <div id="proofPreview" style="display: none;">
-                            <img id="proofPreviewImage" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 12px;" alt=>
+                            <img id="proofPreviewImage" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 12px;" alt="">
                         </div>
                         <div id="proofUploadPrompt">
                             <div style="font-size: 48px; margin-bottom: 12px;">📷</div>
-                            <div style="font-weight: 500; color: #374151; margin-bottom: 4px;">Subir comprobante</div>
-                            <div style="font-size: 0.875rem; color: #6b7280;">Toca para seleccionar imagen</div>
+                            <div style="font-weight: 500; color: #e2e8f0; margin-bottom: 4px;">Subir comprobante</div>
+                            <div style="font-size: 0.875rem; color: #64748b;">Toca para seleccionar imagen</div>
                         </div>
-                        <input type="file" id="proofFileInput" accept="image/*" style="display: none;" onchange="handleProofUpload(event)">
+                        <input type="file" id="proofFileInput" accept="image/*" style="display: none;" >
                     </div>
 
-                    <div id="paymentStep3Error" style="display: none; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; margin-top: 16px; font-size: 0.875rem;"></div>
+                    <div id="paymentStep3Error" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; margin-top: 16px; font-size: 0.875rem;"></div>
 
-                    <div style="margin-top: 16px; padding: 12px; background: #ecfdf5; border-radius: 8px; font-size: 0.875rem; color: #065f46;">
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(0,255,255,0.05); border-radius: 8px; font-size: 0.875rem; color: #94a3b8;">
                         <strong>Importante:</strong> El comprobante es obligatorio para verificar tu pago.
                     </div>
                 </div>
 
                 <!-- SUCCESS State -->
                 <div id="paymentSuccess" class="payment-step" style="display: none; text-align: center; padding: 20px;">
-                    <div style="width: 70px; height: 70px; background: #d1fae5; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 70px; height: 70px; background: rgba(0,255,255,0.15); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"/>
                         </svg>
                     </div>
-                    <h4 style="margin: 0 0 8px; color: #111827; font-size: 1.25rem;">Pago Registrado!</h4>
-                    <p id="paymentSuccessMessage" style="margin: 0 0 8px; color: #6b7280; font-size: 0.875rem;">Tu pago ha sido registrado exitosamente.</p>
-                    <div id="paymentSuccessCode" style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin: 16px 0; font-family: monospace; font-size: 0.875rem; color: #374151;"></div>
-                    <p style="margin: 0 0 20px; color: #6b7280; font-size: 0.8rem;" id="paymentSuccessStatus">Estado: Esperando verificacion</p>
+                    <h4 style="margin: 0 0 8px; color: #f8fafc; font-size: 1.25rem;">Pago Registrado!</h4>
+                    <p id="paymentSuccessMessage" style="margin: 0 0 8px; color: #94a3b8; font-size: 0.875rem;">Tu pago ha sido registrado exitosamente.</p>
+                    <div id="paymentSuccessCode" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin: 16px 0; font-family: monospace; font-size: 0.875rem; color: #f8fafc;"></div>
+                    <p style="margin: 0 0 20px; color: #94a3b8; font-size: 0.8rem;" id="paymentSuccessStatus">Estado: Esperando verificacion</p>
                 </div>
 
             </div>
 
             <!-- Footer with navigation buttons -->
-            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 16px 16px; display: flex; gap: 12px; justify-content: space-between;" id="paymentFormFooter">
-                <button type="button" id="paymentBackBtn" data-action="grp-payment-prev" style="display: none; padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+            <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.95); border-radius: 0 0 16px 16px; display: flex; gap: 12px; justify-content: space-between;" id="paymentFormFooter">
+                <button type="button" id="paymentBackBtn" data-action="grp-payment-prev" style="display: none; padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                     ← Atras
                 </button>
                 <div style="flex: 1;"></div>
-                <button type="button" id="paymentCancelBtn" data-action="grp-close-register-payment" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
+                <button type="button" id="paymentCancelBtn" data-action="grp-close-register-payment" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
                 <button type="button" id="paymentNextBtn" data-action="grp-payment-next" style="padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                     Continuar →
                 </button>
@@ -5578,9 +5607,9 @@ if (document.readyState === "loading") {
     </div>
 
     <style>
-        .payment-method-card:hover { border-color: #059669 !important; background: #ecfdf5; }
-        .payment-method-card.selected { border-color: #059669 !important; background: #d1fae5; }
-        #proofUploadArea:hover { border-color: #059669; background: #f9fafb; }
+        .payment-method-card:hover { border-color: #00FFFF !important; background: rgba(0,255,255,0.05); }
+        .payment-method-card.selected { border-color: #00FFFF !important; background: rgba(0,255,255,0.1); }
+        #proofUploadArea:hover { border-color: #00FFFF; background: rgba(0,255,255,0.05); }
         .step-dot.active { background: #059669 !important; }
         .step-dot.completed { background: #059669 !important; }
         #registerPaymentModal {
@@ -5590,14 +5619,15 @@ if (document.readyState === "loading") {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.85);
             justify-content: center;
             align-items: center;
             z-index: 10000;
         }
 
         #registerPaymentModal .modal-content {
-            background: white;
+            background: #0f172a;
+            border: 1px solid rgba(0,255,255,0.15);
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             width: 90%;
@@ -5621,8 +5651,8 @@ if (document.readyState === "loading") {
         #registerPaymentModal select:focus,
         #registerPaymentModal textarea:focus {
             outline: none;
-            border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+            border-color: #00FFFF;
+            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
         }
 
         #paymentSubmitBtn:disabled {
@@ -5661,8 +5691,8 @@ if (document.readyState === "loading") {
             <div class="modal-body" style="padding: 20px; max-height: calc(85vh - 140px); overflow-y: auto;">
                 <!-- Loading -->
                 <div id="membersLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-                    <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 16px; color: #6b7280;">Cargando miembros...</p>
+                    <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 16px; color: #94a3b8;">Cargando miembros...</p>
                 </div>
 
                 <!-- Members List -->
@@ -5674,7 +5704,7 @@ if (document.readyState === "loading") {
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                     </svg>
-                    <p style="color: #6b7280; margin: 0;">No hay miembros en este grupo</p>
+                    <p style="color: #94a3b8; margin: 0;">No hay miembros en este grupo</p>
                 </div>
             </div>
         </div>
@@ -5688,14 +5718,15 @@ if (document.readyState === "loading") {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.85);
             justify-content: center;
             align-items: center;
             z-index: 10000;
         }
 
         #groupMembersModal .modal-content {
-            background: white;
+            background: #0f172a;
+            border: 1px solid rgba(0,255,255,0.15);
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             width: 90%;
@@ -5707,7 +5738,7 @@ if (document.readyState === "loading") {
             align-items: center;
             gap: 12px;
             padding: 12px;
-            background: #f9fafb;
+            background: rgba(255,255,255,0.05);
             border-radius: 12px;
             margin-bottom: 8px;
         }
@@ -5731,7 +5762,7 @@ if (document.readyState === "loading") {
 
         .member-name {
             font-weight: 500;
-            color: #111827;
+            color: #f8fafc;
             margin-bottom: 2px;
         }
 
@@ -5742,18 +5773,18 @@ if (document.readyState === "loading") {
             display: inline-block;
         }
 
-        .member-role.creator { background: #fef3c7; color: #d97706; }
-        .member-role.coordinator { background: #dbeafe; color: #2563eb; }
-        .member-role.member { background: #f3f4f6; color: #6b7280; }
+        .member-role.creator { background: rgba(217,119,6,0.15); color: #fbbf24; }
+        .member-role.coordinator { background: rgba(37,99,235,0.15); color: #60a5fa; }
+        .member-role.member { background: rgba(255,255,255,0.1); color: #94a3b8; }
 
         .member-position {
             font-size: 0.8125rem;
-            color: #6b7280;
+            color: #94a3b8;
         }
 
         /* Current user highlight */
         .member-card.current-user {
-            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));
             border: 2px solid #8b5cf6;
         }
 
@@ -5767,11 +5798,11 @@ if (document.readyState === "loading") {
             flex-wrap: wrap;
             gap: 8px;
             padding: 12px;
-            background: #f9fafb;
+            background: rgba(255,255,255,0.03);
             border-radius: 0 0 12px 12px;
             margin-top: -8px;
             margin-bottom: 8px;
-            border-top: 1px dashed #e5e7eb;
+            border-top: 1px dashed rgba(255,255,255,0.1);
         }
 
         .action-btn {
@@ -5783,44 +5814,44 @@ if (document.readyState === "loading") {
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
 
         .action-btn.anonymous-btn {
-            background: #fef3c7;
-            color: #d97706;
+            background: rgba(217,119,6,0.15);
+            color: #fbbf24;
         }
         .action-btn.anonymous-btn:hover {
-            background: #fde68a;
+            background: rgba(217,119,6,0.25);
         }
 
         .action-btn.role-btn {
-            background: #dbeafe;
-            color: #2563eb;
+            background: rgba(37,99,235,0.15);
+            color: #60a5fa;
         }
         .action-btn.role-btn:hover {
-            background: #bfdbfe;
+            background: rgba(37,99,235,0.25);
         }
 
         .action-btn.leave-btn {
-            background: #fee2e2;
-            color: #dc2626;
+            background: rgba(220,38,38,0.15);
+            color: #f87171;
         }
         .action-btn.leave-btn:hover {
-            background: #fecaca;
+            background: rgba(220,38,38,0.25);
         }
 
         .action-btn.leave-btn.warning {
-            background: #ffedd5;
-            color: #ea580c;
+            background: rgba(234,88,12,0.15);
+            color: #fb923c;
         }
         .action-btn.leave-btn.warning:hover {
-            background: #fed7aa;
+            background: rgba(234,88,12,0.25);
         }
 
         .member-position {
             font-size: 0.8125rem;
-            color: #6b7280;
+            color: #94a3b8;
         }
     </style>
 
@@ -6310,22 +6341,22 @@ if (document.readyState === "loading") {
                 </button>
             </div>
 
-            <form id="inviteForm" onsubmit="submitSimpleInvitation(event)" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+            <form id="inviteForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                 <div class="modal-body" style="padding: 24px; flex: 1; overflow-y: auto; min-height: 0;">
                     <!-- Success Message -->
                     <!-- Success Message with Link -->
                     <div id="inviteSuccess" style="display: none; text-align: center; padding: 20px;">
-                        <div style="width: 60px; height: 60px; background: #d1fae5; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 60px; height: 60px; background: rgba(0,255,255,0.15); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"/>
                             </svg>
                         </div>
-                        <h4 style="margin: 0 0 8px; color: #111827;">Invitacion Creada!</h4>
-                        <p style="margin: 0 0 16px; color: #6b7280; font-size: 0.875rem;">Comparte el siguiente link con el invitado:</p>
+                        <h4 style="margin: 0 0 8px; color: #f8fafc;">Invitacion Creada!</h4>
+                        <p style="margin: 0 0 16px; color: #94a3b8; font-size: 0.875rem;">Comparte el siguiente link con el invitado:</p>
                         
                         <!-- Invite Link Display -->
-                        <div style="background: #f3f4f6; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                            <input type="text" id="generatedInviteLink" readonly style="width: 100%; background: transparent; border: none; text-align: center; color: #374151; font-size: 0.8125rem; font-family: monospace;">
+                        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                            <input type="text" id="generatedInviteLink" readonly style="width: 100%; background: transparent; border: none; text-align: center; color: #f8fafc; font-size: 0.8125rem; font-family: monospace;">
                         </div>
                         
                         <!-- Action Buttons -->
@@ -6344,21 +6375,20 @@ if (document.readyState === "loading") {
                             </button>
                         </div>
                         
-                        <p id="inviteLinkCopied" style="display: none; color: #059669; font-size: 0.8125rem; margin-bottom: 12px;">Link copiado al portapapeles!</p>
+                        <p id="inviteLinkCopied" style="display: none; color: #00FFFF; font-size: 0.8125rem; margin-bottom: 12px;">Link copiado al portapapeles!</p>
                         
-                        <button type="button" data-action="grp-reset-invite" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer;">Enviar Otra Invitacion</button>
+                        <button type="button" data-action="grp-reset-invite" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Enviar Otra Invitacion</button>
                     </div>
 
 
                     <!-- User Search Section -->
-                    <div id="userSearchSection" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
-                        <label style="display: block; font-weight: 600; color: #374151; margin-bottom: 8px; font-size: 0.9375rem;">
+                    <div id="userSearchSection" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <label style="display: block; font-weight: 600; color: #e2e8f0; margin-bottom: 8px; font-size: 0.9375rem;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             Buscar usuario registrado
                         </label>
                         <div style="position: relative;">
                             <input type="text" id="userSearchInput" placeholder="Buscar por nombre o email..."
-                                   oninput="searchUsersToInvite(this.value)"
                                    style="width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"
                                  style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">
@@ -6366,10 +6396,10 @@ if (document.readyState === "loading") {
                             </svg>
                         </div>
                         <div id="userSearchResults" style="margin-top: 8px; max-height: 200px; overflow-y: auto;"></div>
-                        <div id="selectedUserDisplay" style="display: none; margin-top: 12px; padding: 12px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+                        <div id="selectedUserDisplay" style="display: none; margin-top: 12px; padding: 12px; background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.2); border-radius: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <span style="font-weight: 500; color: #166534;" id="selectedUserName"></span>
+                                    <span style="font-weight: 500; color: #00FFFF;" id="selectedUserName"></span>
                                     <span style="font-size: 0.8125rem; color: #6b7280; margin-left: 8px;" id="selectedUserEmail"></span>
                                 </div>
                                 <button type="button" data-action="grp-clear-selected-user" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 1.25rem;">&times;</button>
@@ -6390,14 +6420,14 @@ if (document.readyState === "loading") {
                         <!-- Message (Optional) -->
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Mensaje Personal <span style="color: #9ca3af; font-weight: 400;">(opcional)</span></label>
-                            <textarea id="inviteMessage" rows="3" placeholder="Te invito a unirte a nuestra tanda..." style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9375rem; resize: vertical; box-sizing: border-box;"></textarea>
+                            <textarea id="inviteMessage" rows="3" placeholder="Te invito a unirte a nuestra tanda..." style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; resize: vertical; box-sizing: border-box; background: #1e293b; color: #f8fafc;"></textarea>
                         </div>
 
-                        <div id="inviteError" style="display: none; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem;"></div>
+                        <div id="inviteError" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem;"></div>
                     </div>
                     <!-- Pending Invitations Section -->
-                    <div id="pendingInvitationsSection" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                        <h4 style="margin: 0 0 12px; font-size: 0.9375rem; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 8px;">
+                    <div id="pendingInvitationsSection" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <h4 style="margin: 0 0 12px; font-size: 0.9375rem; font-weight: 600; color: #e2e8f0; display: flex; align-items: center; gap: 8px;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             Invitaciones Pendientes
                         </h4>
@@ -6408,8 +6438,8 @@ if (document.readyState === "loading") {
 
                 </div>
 
-                <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 16px 16px; display: flex; gap: 12px; justify-content: flex-end; flex-shrink: 0;" id="inviteFormFooter">
-                    <button type="button" data-action="grp-close-invite" style="padding: 10px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
+                <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.95); border-radius: 0 0 16px 16px; display: flex; gap: 12px; justify-content: flex-end; flex-shrink: 0;" id="inviteFormFooter">
+                    <button type="button" data-action="grp-close-invite" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
                     <button type="submit" id="inviteSubmitBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Generar Link</button>
                 </div>
             </form>
@@ -6424,14 +6454,15 @@ if (document.readyState === "loading") {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.85);
             justify-content: center;
             align-items: center;
             z-index: 10000;
         }
 
         #inviteMembersModal .modal-content {
-            background: white;
+            background: #0f172a;
+            border: 1px solid rgba(0,255,255,0.15);
             border-radius: 16px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             width: 90%;
@@ -6464,8 +6495,8 @@ if (document.readyState === "loading") {
         #inviteMembersModal input:focus,
         #inviteMembersModal textarea:focus {
             outline: none;
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+            border-color: #00FFFF;
+            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
         }
 
         .invite-method-btn.active {
@@ -6572,7 +6603,7 @@ if (document.readyState === "loading") {
                         html += '<div class="member-card' + (isCurrentUser ? ' current-user' : '') + '" data-user-id="' + member.user_id + '">' +
                             '<div class="member-avatar' + (isAnonymous ? ' anonymous' : '') + '">' + initials + '</div>' +
                             '<div class="member-info">' +
-                                '<div class="member-name">' + displayName + anonymousIndicator + (isCurrentUser ? ' <span style="color:#8b5cf6;font-size:0.75rem;">(Tu)</span>' : '') + '</div>' +
+                                '<div class="member-name">' + escapeHtml(displayName) + anonymousIndicator + (isCurrentUser ? ' <span style="color:#8b5cf6;font-size:0.75rem;">(Tu)</span>' : '') + '</div>' +
                                 '<span class="member-role ' + roleClass + '">' + roleText + '</span>' +
                             '</div>' +
                             '<div class="member-position">' + (function() { var pos = userPositions[member.user_id] || (member.turn_position ? [member.turn_position] : []); if (pos.length === 0) return 'Sin turno'; if (pos.length === 1) return 'Turno #' + pos[0]; return 'Turnos #' + pos.join(', #'); })() + '</div>' +
@@ -6657,7 +6688,7 @@ if (document.readyState === "loading") {
                     // Reload members list
                     showMembersModal(groupId);
                 } else {
-                    showNotification(result.error || 'Error al cambiar modo anonimo', 'error');
+                    showNotification('Error al cambiar modo anonimo', 'error');
                 }
             } catch (err) {
                 showNotification('Error de conexion', 'error');
@@ -6743,7 +6774,7 @@ if (document.readyState === "loading") {
                         refreshTandas();
                     }
                 } else {
-                    showNotification(result.error || 'No se pudo salir del grupo', 'error');
+                    showNotification('No se pudo salir del grupo', 'error');
                 }
             } catch (err) {
                 showNotification('Error de conexion', 'error');
@@ -6809,7 +6840,6 @@ if (document.readyState === "loading") {
                     method: 'POST',
                     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: userId,
                         requested_role: selectedRole.value,
                         reason: reason
                     })
@@ -6820,7 +6850,7 @@ if (document.readyState === "loading") {
                     showNotification('Solicitud enviada. El administrador la revisara pronto.', 'success');
                     closeRequestRoleModal();
                 } else {
-                    showNotification(result.error || 'Error al enviar solicitud', 'error');
+                    showNotification('Error al enviar solicitud', 'error');
                 }
             } catch (err) {
                 showNotification('Error de conexion', 'error');
@@ -6906,7 +6936,7 @@ if (document.readyState === "loading") {
                     // Now can leave group
                     confirmLeaveGroup(pendingTransferGroupId);
                 } else {
-                    showNotification(result.error || 'Error al transferir propiedad', 'error');
+                    showNotification('Error al transferir propiedad', 'error');
                 }
             } catch (err) {
                 showNotification('Error de conexion', 'error');
@@ -6922,7 +6952,7 @@ if (document.readyState === "loading") {
         function closeMembersModal() {
             var modal = document.getElementById('groupMembersModal');
             if (modal) {
-                modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+                modal.style.display = 'none'; modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             currentMembersGroupId = null;
@@ -7577,7 +7607,7 @@ if (document.readyState === "loading") {
         function closeInviteModal() {
             var modal = document.getElementById('inviteMembersModal');
             if (modal) {
-                modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+                modal.style.display = 'none'; modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             currentInviteGroupId = null;
@@ -7634,11 +7664,11 @@ if (document.readyState === "loading") {
                             canRemind = hoursSince >= 24;
                         }
                         
-                        html += "<div class=\"invitation-card\" style=\"background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;\">";
+                        html += "<div class=\"invitation-card\" style=\"background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between;\">";
                         html += "<div style=\"flex: 1;\">";
-                        html += "<div style=\"font-weight: 500; font-size: 0.875rem; color: #111827;\">" + name + "</div>";
+                        html += "<div style=\"font-weight: 500; font-size: 0.875rem; color: #e2e8f0;\">" + escapeHtml(name) + "</div>";
                         if (contact) {
-                            html += "<div style=\"font-size: 0.75rem; color: #6b7280;\">" + contact + "</div>";
+                            html += "<div style=\"font-size: 0.75rem; color: #94a3b8;\">" + escapeHtml(contact) + "</div>";
                         }
                         if (reminderCount > 0) {
                             html += "<div style=\"font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem;\">Recordatorios enviados: " + reminderCount + "</div>";
@@ -7746,7 +7776,7 @@ if (document.readyState === "loading") {
                     
                     loadPendingInvitations(groupId);
                 } else {
-                    showNotification(result.error || "Error al enviar recordatorio", "error");
+                    showNotification("Error al enviar recordatorio", "error");
                 }
             } catch (err) {
                 showNotification("Error de conexion", "error");
@@ -7860,7 +7890,7 @@ if (document.readyState === "loading") {
                     showMembersModal(pendingRemoveMember.groupId);
                     pendingRemoveMember = { groupId: null, userId: null, userName: null };
                 } else {
-                    showNotification(result.error || "No se pudo remover al miembro", "error");
+                    showNotification("No se pudo remover al miembro", "error");
                 }
             } catch (err) {
                 showNotification("Error de conexion", "error");
@@ -7943,7 +7973,7 @@ if (document.readyState === "loading") {
 
             } catch (err) {
                 if (loading) {
-                    loading.innerHTML = '<p style="color: #ef4444;">Error al cargar datos</p><button type="button" data-action="grp-retry-edit-load" style="margin-top: 16px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Reintentar</button>';
+                    loading.innerHTML = '<p style="color: #ef4444;">Error al cargar datos</p><button type="button" data-action="grp-retry-edit-load" style="margin-top: 16px; padding: 10px 20px; background: rgba(0,255,255,0.2); color: #00FFFF; border: 1px solid rgba(0,255,255,0.3); border-radius: 8px; cursor: pointer;">Reintentar</button>';
                 }
             }
         }
@@ -7951,7 +7981,7 @@ if (document.readyState === "loading") {
         function closeEditGroupModal() {
             var modal = document.getElementById('editGroupModal');
             if (modal) {
-                modal.style.display = 'none'; modal.classList.remove('active'); modal.classList.remove('active');
+                modal.style.display = 'none'; modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             currentEditGroupId = null;
@@ -7989,7 +8019,6 @@ if (document.readyState === "loading") {
             var modal = document.getElementById('deleteGroupModal');
             if (modal) {
                 modal.style.display = 'none'; modal.classList.remove('active');
-                modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             deleteGroupId = null;
@@ -8030,7 +8059,7 @@ if (document.readyState === "loading") {
                         refreshTandas();
                     }
                 } else {
-                    var errorMsg = result.error || result.message || 'No se pudo eliminar el grupo';
+                    var errorMsg = 'No se pudo eliminar el grupo';
                     
                     // Special handling for groups with contributions
                     if (errorMsg.includes('contribuciones') || errorMsg.includes('contributions')) {
@@ -8328,7 +8357,6 @@ function renderTurnsList() {
             var modal = document.getElementById('manageTurnsModal');
             if (modal) {
                 modal.style.display = 'none'; modal.classList.remove('active');
-                modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             manageTurnsGroupId = null;
@@ -8379,7 +8407,7 @@ function renderTurnsList() {
                         refreshTandas();
                     }
                 } else {
-                    showNotification(result.error || 'Error al guardar turnos', 'error');
+                    showNotification('Error al guardar turnos', 'error');
                 }
             } catch (error) {
                 showNotification('Error de conexion al guardar', 'error');
@@ -8584,7 +8612,7 @@ function renderTurnsList() {
                         }).catch(function() {});
                     }
                 } else {
-                    errorDiv.textContent = result.error || result.message || "Error al programar";
+                    errorDiv.textContent = "Error al programar la loteria";
                     errorDiv.style.display = "block";
                 }
             } catch (error) {
@@ -8691,7 +8719,7 @@ function renderTurnsList() {
 
             } catch (err) {
                 if (errorDiv) {
-                    errorDiv.textContent = err.message || 'Error al actualizar el grupo';
+                    errorDiv.textContent = 'Error al actualizar el grupo';
                     errorDiv.style.display = 'block';
                 }
                 if (submitBtn) {
@@ -9683,7 +9711,6 @@ function renderTurnsList() {
                         method: 'POST',
                         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            user_id: userId,
                             group_id: currentPaymentGroupId,
                             amount: amount,
                             payment_method: method
@@ -9854,7 +9881,7 @@ function renderTurnsList() {
                 var result = await response.json();
 
                 if (!response.ok || !result.success) {
-                    throw new Error(result.error || result.message || 'Error al subir comprobante');
+                    throw new Error('Error al subir comprobante');
                 }
 
                 // Show success
@@ -9894,7 +9921,6 @@ function renderTurnsList() {
             var modal = document.getElementById('registerPaymentModal');
             if (modal) {
                 modal.style.display = 'none'; modal.classList.remove('active');
-                modal.classList.remove('active');
                 document.body.style.overflow = '';
             }
             currentPaymentGroupId = null;
@@ -10362,14 +10388,14 @@ function renderTurnsList() {
             // Create export section
             var exportSection = document.createElement('div');
             exportSection.className = 'export-section';
-            exportSection.style.cssText = 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;';
+            exportSection.style.cssText = 'margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);';
             exportSection.innerHTML = 
-                '<div style="padding: 8px 0; color: #6b7280; font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Exportar Datos</div>' +
+                '<div style="padding: 8px 0; color: #94a3b8; font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Exportar Datos</div>' +
                 '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">' +
-                    '<button id="export-members-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #374151;"><span>📄</span> Miembros PDF</button>' +
-                    '<button id="export-members-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #374151;"><span>📊</span> Miembros CSV</button>' +
-                    '<button id="export-payments-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #374151;"><span>📄</span> Pagos PDF</button>' +
-                    '<button id="export-payments-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #374151;"><span>📊</span> Pagos CSV</button>' +
+                    '<button id="export-members-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📄</span> Miembros PDF</button>' +
+                    '<button id="export-members-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📊</span> Miembros CSV</button>' +
+                    '<button id="export-payments-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📄</span> Pagos PDF</button>' +
+                    '<button id="export-payments-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📊</span> Pagos CSV</button>' +
                 '</div>';
             
             modalBody.appendChild(exportSection);
@@ -10476,10 +10502,10 @@ function renderTurnsList() {
             </div>
             
             <div class="history-filters">
-                <select id="historyTandaFilter" onchange="filterHistory()">
+                <select id="historyTandaFilter">
                     <option value="all">Todas las tandas</option>
                 </select>
-                <select id="historyPeriodFilter" onchange="filterHistory()">
+                <select id="historyPeriodFilter">
                     <option value="all">Todo el tiempo</option>
                     <option value="month">Este mes</option>
                     <option value="3months">Ultimos 3 meses</option>
@@ -11178,7 +11204,7 @@ function renderTurnsList() {
             var result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.error || 'Error al calcular distribucion');
+                throw new Error('Error al calcular distribucion');
             }
 
             currentDistributionData = result.data;
@@ -11316,7 +11342,7 @@ function renderTurnsList() {
             var result = await response.json();
 
             if (!result.success) {
-                throw new Error(result.error || 'Error al ejecutar distribucion');
+                throw new Error('Error al ejecutar distribucion');
             }
 
             // Show success
@@ -11582,8 +11608,8 @@ function renderTurnsList() {
             // Create calendar button before export section
             var calendarBtn = document.createElement('button');
             calendarBtn.className = 'admin-option-btn';
-            calendarBtn.style.cssText = 'display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px;';
-            calendarBtn.innerHTML = '<div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-calendar-alt" style="color: #d97706; font-size: 18px;"></i></div><div style="text-align: left;"><div style="font-weight: 500; color: #111827;">Calendario de Pagos</div><div style="font-size: 0.75rem; color: #6b7280;">Ver proximas fechas y turnos</div></div>';
+            calendarBtn.style.cssText = 'display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px;';
+            calendarBtn.innerHTML = '<div style="width: 40px; height: 40px; background: rgba(217,119,6,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-calendar-alt" style="color: #d97706; font-size: 18px;"></i></div><div style="text-align: left;"><div style="font-weight: 500; color: #f8fafc;">Calendario de Pagos</div><div style="font-size: 0.75rem; color: #94a3b8;">Ver proximas fechas y turnos</div></div>';
             
             calendarBtn.onclick = function() {
                 showCalendarModal(window.currentManagedGroupId);
