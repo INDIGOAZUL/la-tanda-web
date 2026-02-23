@@ -1589,7 +1589,7 @@ async function loadUsersWithoutPositions(groupId) {
 
             } else {
                 // Fallback: poll for updates every 60 seconds
-                setInterval(() => {
+                window._groupsPollInterval = setInterval(function() {
                     fetchMyGroups();
                 }, 60000);
             }
@@ -1598,7 +1598,11 @@ async function loadUsersWithoutPositions(groupId) {
         // ===== EVENT LISTENERS =====
         document.getElementById('filterRole').addEventListener('change', applyFilters);
         document.getElementById('filterPayment').addEventListener('change', applyFilters);
-        document.getElementById('searchGroups').addEventListener('input', applyFilters);
+        var _searchDebounce;
+        document.getElementById('searchGroups').addEventListener('input', function() {
+            clearTimeout(_searchDebounce);
+            _searchDebounce = setTimeout(applyFilters, 300);
+        });
 
         // ===== INITIALIZE =====
         fetchMyGroups();
@@ -2622,16 +2626,7 @@ async function loadUsersWithoutPositions(groupId) {
         });
     }
 
-    // Wait for DOM and groups to load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(initializePositionRequests, 1000);
-        });
-    } else {
-        setTimeout(initializePositionRequests, 1000);
-    }
-    
-    // Also listen for groups render events
+    // Re-init position requests when groups re-render
     window.addEventListener('groupsRendered', () => {
         setTimeout(initializePositionRequests, 500);
     });
@@ -3044,8 +3039,8 @@ async function quickPay(tandaId) {
         content: content,
         size: 'medium',
         buttons: [
-            { text: 'Cancelar', class: 'btn-secondary', onclick: 'advancedGroupsSystem.hideModal()' },
-            { text: 'Pagar Ahora', class: 'btn-primary', onclick: 'processModalPayment()' }
+            { text: 'Cancelar', class: 'btn-secondary', action: 'grp-hide-modal' },
+            { text: 'Pagar Ahora', class: 'btn-primary', action: 'modal-process-payment' }
         ]
     });
 }
@@ -3321,7 +3316,7 @@ async function openHistoryModal() {
         content: content,
         size: 'large',
         buttons: [
-            { text: 'Cerrar', class: 'btn-secondary', onclick: 'advancedGroupsSystem.hideModal()' }
+            { text: 'Cerrar', class: 'btn-secondary', action: 'grp-hide-modal' }
         ]
     });
 }
@@ -3531,8 +3526,7 @@ function renderHistoryList() {
 }
 
 function exportHistory() {
-    showToast("Funcion de exportar en desarrollo", "info");
-    // TODO: Implementar exportacion a PDF
+    showNotification("Exportar historial estara disponible pronto", "info");
 }
 
 // ===== FIN FASE 6 =====
@@ -3823,8 +3817,7 @@ function sortTandas() {
 
 // 6. SHOW TANDA HISTORY
 function showTandaHistory() {
-    openHistoryModal();  // Usar modal existente
-    // TODO: Implement modal with tanda history
+    openHistoryModal();
 }
 
 // 7. VIEW TANDA DETAILS
@@ -4067,7 +4060,7 @@ async function executeLotteryFromModal() {
             if (typeof fetchMyGroups === 'function') {
                 fetchMyGroups().then(() => {
                     if (typeof renderGroups === 'function') renderGroups();
-                });
+                }).catch(function() {});
             }
         } else {
             showError("Error al ejecutar la tombola");
@@ -4091,8 +4084,7 @@ function viewTandaDetails(tandaId) {
         return;
     }
 
-    showInfo(`Detalles de ${tanda.group_name} - Funcion en desarrollo`);
-    // TODO: Implement modal with full tanda details
+    showNotification("Detalles de tanda en desarrollo", "info");
 }
 
 // 8. MAKE TANDA PAYMENT
@@ -4102,8 +4094,7 @@ function makeTandaPayment(tandaId) {
         return;
     }
 
-    quickPay(tandaId);  // Usar el modal de pago existente
-    // TODO: Integrate with payment system
+    quickPay(tandaId);
 }
 
 // HELPER FUNCTIONS
@@ -4431,7 +4422,7 @@ function attachTandasFunctions() {
                     var btnStyle = btn.class === "btn-primary" 
                         ? "background:linear-gradient(135deg,#00ffff,#00d4aa);color:#000;" 
                         : "background:rgba(255,255,255,0.1);color:#fff;";
-                    buttonsHtml += "<button class=\"" + (btn.class || "btn-secondary") + "\" onclick=\"" + (btn.onclick || "advancedGroupsSystem.hideModal()") + "\" style=\"padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:500;" + btnStyle + "\">" + btn.text + "</button>";
+                    buttonsHtml += "<button class=\"" + (btn.class || "btn-secondary") + "\" data-action=\"" + (btn.action || "grp-hide-modal") + "\" style=\"padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-weight:500;" + btnStyle + "\">" + btn.text + "</button>";
                 });
                 buttonsHtml += "</div>";
             }
@@ -4731,8 +4722,8 @@ function attachTandasFunctions() {
                 content: "<textarea id=\"feedbackText\" placeholder=\"Tu opinión nos ayuda a mejorar...\" style=\"width:100%;height:150px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;padding:12px;resize:none;\"></textarea>",
                 size: "medium",
                 buttons: [
-                    { text: "Cancelar", class: "btn-secondary", onclick: "advancedGroupsSystem.hideModal()" },
-                    { text: "Enviar", class: "btn-primary", onclick: "advancedGroupsSystem.submitFeedback()" }
+                    { text: "Cancelar", class: "btn-secondary", action: "grp-hide-modal" },
+                    { text: "Enviar", class: "btn-primary", action: "modal-submit-feedback" }
                 ]
             });
         };
@@ -6749,7 +6740,7 @@ if (document.readyState === "loading") {
                     if (typeof fetchMyGroups === 'function') {
                         fetchMyGroups().then(() => {
                             if (typeof renderGroups === 'function') renderGroups();
-                        });
+                        }).catch(function() {});
                     }
                     if (typeof refreshTandas === 'function') {
                         refreshTandas();
@@ -8094,7 +8085,7 @@ if (document.readyState === "loading") {
             // Load members with their turn positions
             // Load expanded turns system if not loaded
             try { if (!window.expandMembersToPositions && window.LaTandaComponentLoader) {
-                await LaTandaComponentLoader.loadExpandedTurns(); } } catch(e) { }
+                await LaTandaComponentLoader.loadExpandedTurns(); } } catch(e) { /* expanded turns optional — fails silently if not available */ }
             
             await loadTurnsMembers(groupId);
         }
@@ -8597,7 +8588,7 @@ function renderTurnsList() {
                     if (typeof fetchMyGroups === "function") {
                         fetchMyGroups().then(function() {
                             if (typeof renderGroups === "function") renderGroups();
-                        });
+                        }).catch(function() {});
                     }
                 } else {
                     errorDiv.textContent = result.error || result.message || "Error al programar";
@@ -9271,7 +9262,7 @@ function renderTurnsList() {
                 var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId), { headers: getAuthHeaders() });
                 var d = await resp.json();
                 groupData = d.data?.data || d.data;
-            } catch (e) {}
+            } catch (e) { /* group data parse failure handled by null check below */ }
 
             var groupName = groupData ? escapeHtml(groupData.name || 'Grupo') : 'Grupo';
             var cycle = groupData ? (groupData.current_cycle || 1) : '?';
@@ -9685,7 +9676,7 @@ function renderTurnsList() {
                                 var userData = JSON.parse(latandaUser);
                                 if (userData.user_id) return userData.user_id;
                                 if (userData.id) return userData.id;
-                            } catch(e) {}
+                            } catch(e) { /* localStorage parse may fail in private browsing */ }
                         }
                         return localStorage.getItem('latanda_user_id') || 
                                sessionStorage.getItem('latanda_user_id') ||
@@ -9801,7 +9792,7 @@ function renderTurnsList() {
                 } else {
                     showSuccess('Codigo copiado!');
                 }
-            });
+            }).catch(function() { /* clipboard API may not be available */ });
         }
 
         function handleProofUpload(event) {
@@ -11962,7 +11953,7 @@ function renderTurnsList() {
             // Call original switchTab if it exists (for integration hooks)
             if (typeof window.switchTab === 'function') {
                 window._groupsTabSwitching = true;
-                try { window.switchTab(tabName); } catch(e) {}
+                try { window.switchTab(tabName); } catch(e) { /* switchTab may not be defined yet during init */ }
                 window._groupsTabSwitching = false;
             }
         });
@@ -12092,7 +12083,7 @@ function renderTurnsList() {
                         }
                     }
                 } catch(e2) { /* tanda balance fetch is non-blocking */ }
-            } catch(e) { }
+            } catch(e) { /* sidebar hub cards fetch is non-blocking */ }
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', updateSidebarHubCards);
@@ -12279,6 +12270,12 @@ function renderTurnsList() {
                 // Modal
                 case 'grp-hide-modal':
                     if (window.advancedGroupsSystem) advancedGroupsSystem.hideModal();
+                    break;
+                case 'modal-process-payment':
+                    if (typeof processModalPayment === 'function') processModalPayment();
+                    break;
+                case 'modal-submit-feedback':
+                    if (window.advancedGroupsSystem && typeof advancedGroupsSystem.submitFeedback === 'function') advancedGroupsSystem.submitFeedback();
                     break;
 
                 // Members modal
