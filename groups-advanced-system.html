@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.1">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.2">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -1584,6 +1584,7 @@ async function loadUsersWithoutPositions(groupId) {
 
             } else {
                 // Fallback: poll for updates every 60 seconds
+                if (window._groupsPollInterval) clearInterval(window._groupsPollInterval);
                 window._groupsPollInterval = setInterval(function() {
                     fetchMyGroups();
                 }, 60000);
@@ -2971,8 +2972,7 @@ async function quickPay(tandaId) {
     try {
         const userId = getCurrentUserId();
         const response = await fetch("/api/wallet/balance?user_id=" + userId, {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         if (response.ok) {
@@ -3099,8 +3099,7 @@ async function fetchWalletBalance() {
     try {
         const userId = getCurrentUserId();
         const response = await fetch("/api/wallet/balance?user_id=" + userId, {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         
@@ -3234,8 +3233,7 @@ async function openHistoryModal() {
     try {
         // Fetch payments sent
         const paymentsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=sent", {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         if (paymentsResponse.ok) {
@@ -3245,8 +3243,7 @@ async function openHistoryModal() {
         
         // Fetch collections received
         const collectionsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=received", {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         if (collectionsResponse.ok) {
@@ -3346,8 +3343,7 @@ async function loadHistoryData() {
     try {
         // Cargar pagos realizados
         const paymentsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=sent", {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         
@@ -3359,8 +3355,7 @@ async function loadHistoryData() {
         
         // Cargar cobros recibidos
         const collectionsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=received", {
-            headers: { ...getAuthHeaders(),
-                "Authorization": "Bearer " + (localStorage.getItem("auth_token") || localStorage.getItem("token") || "")
+            headers: { ...getAuthHeaders()
             }
         });
         
@@ -4281,7 +4276,7 @@ function pollForLotteryExecution(tandaId, groupId) {
         }
 
         try {
-            const token = localStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
             const response = await fetch('/api/groups/' + groupId + '/lottery-results', {
                 headers: { 'Authorization': 'Bearer ' + token }
             });
@@ -4974,7 +4969,7 @@ if (document.readyState === "loading") {
 
         .loading-text {
             margin-top: 16px;
-            color: #6b7280;
+            color: #94a3b8;
             font-size: 0.9375rem;
         }
 
@@ -5125,7 +5120,7 @@ if (document.readyState === "loading") {
             var overlay = document.createElement('div');
             overlay.id = 'loadingOverlay';
             overlay.className = 'loading-overlay';
-            overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">' + (text || 'Cargando...') + '</div>';
+            overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">' + escapeHtml(text || 'Cargando...') + '</div>';
             document.body.appendChild(overlay);
         };
 
@@ -5422,7 +5417,7 @@ if (document.readyState === "loading") {
                 </div>
                 
                 <!-- Error -->
-                <div id="turnsError" style="display: none; padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #dc2626; text-align: center;"></div>
+                <div id="turnsError" style="display: none; padding: 16px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; color: #fca5a5; text-align: center;"></div>
                 
                 <!-- Turns List -->
                 <div id="turnsContent" style="display: none;"></div>
@@ -5555,7 +5550,7 @@ if (document.readyState === "loading") {
                 <div id="paymentStep3" class="payment-step" style="display: none;">
                     <h4 style="margin: 0 0 16px; color: #f8fafc; font-size: 1rem;">Paso 3: Sube tu comprobante</h4>
                     
-                    <div id="proofUploadArea" style="border: 2px dashed #334155; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s;" data-action="grp-upload-proof">
+                    <div id="proofUploadArea" style="border: 2px dashed #334155; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; transition: border-color 0.2s, background-color 0.2s;" data-action="grp-upload-proof">
                         <div id="proofPreview" style="display: none;">
                             <img id="proofPreviewImage" style="max-width: 100%; max-height: 200px; border-radius: 8px; margin-bottom: 12px;" alt="">
                         </div>
@@ -6400,7 +6395,7 @@ if (document.readyState === "loading") {
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <span style="font-weight: 500; color: #00FFFF;" id="selectedUserName"></span>
-                                    <span style="font-size: 0.8125rem; color: #6b7280; margin-left: 8px;" id="selectedUserEmail"></span>
+                                    <span style="font-size: 0.8125rem; color: #94a3b8; margin-left: 8px;" id="selectedUserEmail"></span>
                                 </div>
                                 <button type="button" data-action="grp-clear-selected-user" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 1.25rem;">&times;</button>
                             </div>
@@ -7801,7 +7796,7 @@ if (document.readyState === "loading") {
 
             userSearchTimeout = setTimeout(async function() {
                 try {
-                    resultsDiv.innerHTML = '<p style="font-size: 0.8125rem; color: #6b7280; padding: 8px;">Buscando...</p>';
+                    resultsDiv.innerHTML = '<p style="font-size: 0.8125rem; color: #94a3b8; padding: 8px;">Buscando...</p>';
 
                     var apiBase = window.API_BASE_URL || 'https://latanda.online';
                     var groupId = currentInviteGroupId || '';
@@ -7814,12 +7809,12 @@ if (document.readyState === "loading") {
                         var html = '';
                         result.data.users.forEach(function(user) {
                             html += '<div data-action="grp-select-invite-user" data-user-id="' + escapeHtml(user.user_id) + '" data-user-name="' + escapeHtml(user.name) + '" data-user-email="' + escapeHtml(user.email_masked) + '" ';
-                            html += 'class="grp-search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;">';
+                            html += 'class="grp-search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">';
                             html += '<div>';
-                            html += '<div style="font-weight: 500; color: #111827;">' + escapeHtml(user.name) + '</div>';
-                            html += '<div style="font-size: 0.75rem; color: #6b7280;">' + escapeHtml(user.email_masked) + '</div>';
+                            html += '<div style="font-weight: 500; color: #f8fafc;">' + escapeHtml(user.name) + '</div>';
+                            html += '<div style="font-size: 0.75rem; color: #94a3b8;">' + escapeHtml(user.email_masked) + '</div>';
                             html += '</div>';
-                            html += '<span style="font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; ' + (user.status === 'verified' ? 'background: #dcfce7; color: #166534;' : 'background: #fef3c7; color: #92400e;') + '">' + (user.status === 'verified' ? 'Verificado' : 'Sin verificar') + '</span>';
+                            html += '<span style="font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; ' + (user.status === 'verified' ? 'background: rgba(16,185,129,0.15); color: #10b981;' : 'background: rgba(245,158,11,0.15); color: #f59e0b;') + '">' + (user.status === 'verified' ? 'Verificado' : 'Sin verificar') + '</span>';
                             html += '</div>';
                         });
                         resultsDiv.innerHTML = html;
@@ -10413,7 +10408,7 @@ function renderTurnsList() {
 </script>
 
 <!-- ===== MODAL DE PAGO RÁPIDO ===== -->
-<div id="quickPayModal" class="modal" style="display:none; position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; background:rgba(255,0,0,0.9) !important; z-index:999999 !important; justify-content:center !important; align-items:center !important;">
+<div id="quickPayModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
     <div class="modal-content quick-pay-modal" style="background:#1a2332; border-radius:12px; padding:20px; max-width:500px; width:90%; color:white;">
         <div class="modal-header">
             <h3><i class="fas fa-credit-card"></i> Realizar Pago</h3>
