@@ -9,11 +9,11 @@
     style.textContent = `
         /* Payout Methods Section */
         .payout-methods-section {
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            background: rgba(16,185,129,0.08);
             border-radius: 16px;
             padding: 20px;
             margin: 20px 0;
-            border: 1px solid #86efac;
+            border: 1px solid rgba(16,185,129,0.3);
         }
 
         .payout-methods-header {
@@ -25,7 +25,7 @@
 
         .payout-methods-header h3 {
             margin: 0;
-            color: #166534;
+            color: #10b981;
             font-size: 1.1rem;
             display: flex;
             align-items: center;
@@ -50,11 +50,11 @@
         }
 
         .payout-method-card {
-            background: white;
+            background: #1e293b;
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 12px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid rgba(255,255,255,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -81,20 +81,20 @@
             font-size: 1.5rem;
         }
 
-        .payout-method-icon.bank { background: #dbeafe; }
-        .payout-method-icon.tigo { background: #fef3c7; }
-        .payout-method-icon.crypto { background: #f3e8ff; }
+        .payout-method-icon.bank { background: rgba(59,130,246,0.15); }
+        .payout-method-icon.tigo { background: rgba(245,158,11,0.15); }
+        .payout-method-icon.crypto { background: rgba(168,85,247,0.15); }
 
         .payout-method-details h4 {
             margin: 0 0 4px 0;
             font-size: 1rem;
-            color: #1f2937;
+            color: #f8fafc;
         }
 
         .payout-method-details p {
             margin: 0;
             font-size: 0.85rem;
-            color: #6b7280;
+            color: #94a3b8;
         }
 
         .default-badge {
@@ -114,18 +114,19 @@
         .payout-method-actions button {
             padding: 6px 12px;
             border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            background: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #e2e8f0;
             cursor: pointer;
             font-size: 0.8rem;
         }
 
         .payout-method-actions button:hover {
-            background: #f3f4f6;
+            background: rgba(255,255,255,0.1);
         }
 
         .payout-method-actions .delete-btn:hover {
-            background: #fee2e2;
+            background: rgba(239,68,68,0.15);
             border-color: #fca5a5;
             color: #dc2626;
         }
@@ -137,7 +138,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -153,7 +154,9 @@
         }
 
         .payout-modal {
-            background: white;
+            background: #0f172a;
+            border: 1px solid rgba(0,255,255,0.15);
+            color: #f8fafc;
             border-radius: 16px;
             width: 90%;
             max-width: 500px;
@@ -169,7 +172,7 @@
 
         .payout-modal-header {
             padding: 20px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -178,7 +181,7 @@
         .payout-modal-header h3 {
             margin: 0;
             font-size: 1.2rem;
-            color: #1f2937;
+            color: #f8fafc;
         }
 
         .payout-modal-close {
@@ -186,7 +189,7 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: #6b7280;
+            color: #94a3b8;
         }
 
         .payout-modal-body {
@@ -201,16 +204,18 @@
             display: block;
             margin-bottom: 6px;
             font-weight: 500;
-            color: #374151;
+            color: #e2e8f0;
         }
 
         .payout-form-group input,
         .payout-form-group select {
             width: 100%;
             padding: 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #334155;
             border-radius: 8px;
             font-size: 1rem;
+            background: #1e293b;
+            color: #f8fafc;
         }
 
         .payout-form-group input:focus,
@@ -229,7 +234,7 @@
         .method-type-option {
             flex: 1;
             padding: 16px;
-            border: 2px solid #e5e7eb;
+            border: 2px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             text-align: center;
             cursor: pointer;
@@ -242,7 +247,7 @@
 
         .method-type-option.selected {
             border-color: #16a34a;
-            background: #f0fdf4;
+            background: rgba(22,163,74,0.1);
         }
 
         .method-type-option .icon {
@@ -252,12 +257,12 @@
 
         .method-type-option .label {
             font-weight: 500;
-            color: #374151;
+            color: #e2e8f0;
         }
 
         .payout-modal-footer {
             padding: 16px 20px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
             gap: 12px;
             justify-content: flex-end;
@@ -272,8 +277,8 @@
         }
 
         .payout-btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
+            background: rgba(255,255,255,0.05);
+            color: #e2e8f0;
         }
 
         .payout-btn-primary {
@@ -287,7 +292,7 @@
 
         /* Collect Tanda Button */
         .collect-tanda-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            background: rgba(245,158,11,0.08);
             border-radius: 16px;
             padding: 20px;
             margin: 20px 0;
@@ -296,19 +301,19 @@
         }
 
         .collect-tanda-section h3 {
-            color: #92400e;
+            color: #f59e0b;
             margin: 0 0 8px 0;
         }
 
         .collect-tanda-section p {
-            color: #a16207;
+            color: #fbbf24;
             margin: 0 0 16px 0;
         }
 
         .collect-tanda-amount {
             font-size: 2rem;
             font-weight: bold;
-            color: #166534;
+            color: #00FFFF;
             margin-bottom: 16px;
         }
 
@@ -336,11 +341,11 @@
 
         /* Payout Status */
         .payout-status-card {
-            background: white;
+            background: #1e293b;
             border-radius: 12px;
             padding: 20px;
             margin: 20px 0;
-            border: 1px solid #e5e7eb;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .payout-status-header {
@@ -357,17 +362,17 @@
             font-weight: 500;
         }
 
-        .payout-status-badge.pending { background: #fef3c7; color: #92400e; }
-        .payout-status-badge.auto_approved { background: #dbeafe; color: #1e40af; }
-        .payout-status-badge.processing { background: #e0e7ff; color: #4338ca; }
-        .payout-status-badge.awaiting_confirmation { background: #fce7f3; color: #9d174d; }
-        .payout-status-badge.completed { background: #d1fae5; color: #065f46; }
-        .payout-status-badge.rejected { background: #fee2e2; color: #991b1b; }
+        .payout-status-badge.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .payout-status-badge.auto_approved { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .payout-status-badge.processing { background: rgba(99,102,241,0.15); color: #818cf8; }
+        .payout-status-badge.awaiting_confirmation { background: rgba(236,72,153,0.15); color: #f472b6; }
+        .payout-status-badge.completed { background: rgba(16,185,129,0.15); color: #10b981; }
+        .payout-status-badge.rejected { background: rgba(239,68,68,0.15); color: #f87171; }
 
         .no-payout-methods {
             text-align: center;
             padding: 40px 20px;
-            color: #6b7280;
+            color: #94a3b8;
         }
 
         .no-payout-methods .icon {
@@ -829,7 +834,7 @@ window.renderCollectTandaSection = function(containerId, groupId) {
             <div class="payout-status-card">
                 <h3>Tu Turno de Cobrar</h3>
                 <p>El ciclo aún no está completo. Faltan ${eligibility.members_count - eligibility.contributions_received} contribuciones.</p>
-                <div style="margin-top: 12px; background: #f3f4f6; border-radius: 8px; height: 8px; overflow: hidden;">
+                <div style="margin-top: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; height: 8px; overflow: hidden;">
                     <div style="background: #16a34a; height: 100%; width: ${(eligibility.contributions_received / eligibility.members_count) * 100}%;"></div>
                 </div>
             </div>
@@ -871,7 +876,7 @@ window.openCollectTandaModal = async function(groupId) {
             <div style="text-align: center; padding: 20px;">
                 <div style="font-size: 3rem; margin-bottom: 16px;">💳</div>
                 <h3>Registra tu método de cobro</h3>
-                <p style="color: #6b7280; margin-bottom: 20px;">
+                <p style="color: #94a3b8; margin-bottom: 20px;">
                     Para poder recibir tu tanda, primero debes registrar cómo quieres que te paguemos.
                 </p>
                 <button class="payout-btn payout-btn-primary" data-action="payout-add-method-from-collect">
@@ -893,7 +898,7 @@ window.openCollectTandaModal = async function(groupId) {
 
                 <div style="text-align: left; margin: 20px 0;">
                     <label style="font-weight: 500; margin-bottom: 8px; display: block;">Método de pago:</label>
-                    <select id="selectedPayoutMethod" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db;">
+                    <select id="selectedPayoutMethod" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #f8fafc;">
                         ${methods.map(m => `
                             <option value="${escapeHtml(m.id)}" ${m.id === defaultMethod.id ? 'selected' : ''}>
                                 ${m.method_type === 'bank_transfer' ? '🏦 ' + escapeHtml(m.bank_name) + ' - ****' + escapeHtml(m.bank_account_number?.slice(-4) || '') :
@@ -904,7 +909,7 @@ window.openCollectTandaModal = async function(groupId) {
                     </select>
                 </div>
 
-                <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 20px;">
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">
                     El pago será procesado y recibirás una notificación cuando esté listo.
                 </p>
 
