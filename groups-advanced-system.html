@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.2">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.3">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -271,7 +271,7 @@
                     return;
                 }
 
-                const response = await fetch(`${API_BASE}/api/groups/my-groups-pg?user_id=${USER_ID}`, {
+                const response = await fetch(`${API_BASE}/api/groups/my-groups-pg`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + authToken
@@ -2848,11 +2848,11 @@ function renderUrgentPayments(tandas) {
             <div class="urgent-payment-row ${urgencyClass}">
                 <span class="urgency-indicator">${urgencyIcon}</span>
                 <div class="payment-info">
-                    <span class="tanda-name" style="font-weight: 600; color: var(--text-primary);">${tanda.name || tanda.group_name}</span>
+                    <span class="tanda-name" style="font-weight: 600; color: var(--text-primary);">${escapeHtml(tanda.name || tanda.group_name)}</span>
                     <span class="payment-details">${formattedAmount} • Vence ${dueDateStr}</span>
                 </div>
                 <span class="days-left" style="font-weight: 600; color: ${urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'warning' ? '#f59e0b' : '#10b981'};">${daysText}</span>
-                <button class="btn-quick-pay" data-action="grp-quick-pay" data-tanda-id="${tanda.tanda_id || tanda.id || tanda.group_id}">
+                <button class="btn-quick-pay" data-action="grp-quick-pay" data-tanda-id="${escapeHtml(String(tanda.tanda_id || tanda.id || tanda.group_id))}">
                     <i class="fas fa-credit-card"></i> PAGAR
                 </button>
             </div>
@@ -2892,7 +2892,7 @@ function renderCurrentCollectors(tandas) {
                 <div class="collector-row recruiting" style="margin-top: 12px; border-left: 3px solid #f59e0b;">
                     <div class="collector-info">
                         <span class="collector-name" style="color: var(--text-primary);">
-                            ${tanda.name || tanda.group_name}
+                            ${escapeHtml(tanda.name || tanda.group_name)}
                             ${isCoordinator ? '<span style="background: #f59e0b; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;">COORDINADOR</span>' : ''}
                         </span>
                         <span class="tanda-ref" style="color: var(--text-secondary);">
@@ -2935,9 +2935,9 @@ function renderCurrentCollectors(tandas) {
             <div class="collector-row ${isMe ? 'is-me' : ''}">
                 <div class="collector-info">
                     <span class="collector-name">
-                        ${isMe ? '⭐ TÚ - ¡Te toca cobrar!' : collectorName}
+                        ${isMe ? '⭐ TÚ - ¡Te toca cobrar!' : escapeHtml(collectorName)}
                     </span>
-                    <span class="tanda-ref">${tanda.name || tanda.group_name}</span>
+                    <span class="tanda-ref">${escapeHtml(tanda.name || tanda.group_name)}</span>
                 </div>
                 <span class="turn-info">Turno ${currentTurn} de ${totalTurns}</span>
             </div>
@@ -3095,123 +3095,6 @@ async function processModalPayment() {
 }
 
 
-async function fetchWalletBalance() {
-    try {
-        const userId = getCurrentUserId();
-        const response = await fetch("/api/wallet/balance?user_id=" + userId, {
-            headers: { ...getAuthHeaders()
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            userWalletBalance = parseFloat(data.balance || data.available || 0);
-        } else {
-            userWalletBalance = 0;
-        }
-    } catch (error) {
-        userWalletBalance = 0;
-    }
-    
-    document.getElementById("qp-wallet-balance").textContent = 
-        "Saldo: L. " + userWalletBalance.toLocaleString("es-HN", { minimumFractionDigits: 2 });
-}
-
-function checkSufficientFunds(amount) {
-    const walletRadio = document.querySelector("input[name=\"paymentMethod\"][value=\"wallet\"]");
-    const insufficientWarning = document.getElementById("qp-insufficient");
-    const confirmBtn = document.getElementById("qp-confirm-btn");
-    
-    if (userWalletBalance < amount) {
-        insufficientWarning.style.display = "flex";
-        if (walletRadio.checked) {
-            confirmBtn.disabled = true;
-        }
-    } else {
-        insufficientWarning.style.display = "none";
-        confirmBtn.disabled = false;
-    }
-}
-
-function closeQuickPayModal() {
-    document.getElementById("quickPayModal").style.display = "none";
-    currentPaymentTanda = null;
-}
-
-async function confirmQuickPay() {
-    if (!currentPaymentTanda) {
-        showToast("Error: No hay tanda seleccionada", "error");
-        return;
-    }
-    
-    const selectedMethod = document.querySelector("input[name=\"paymentMethod\"]:checked").value;
-    const amount = parseFloat(currentPaymentTanda.contribution_amount || currentPaymentTanda.amount || 0);
-    const tandaId = currentPaymentTanda.id || currentPaymentTanda.group_id;
-    
-    const confirmBtn = document.getElementById("qp-confirm-btn");
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = "Procesando...";
-    
-    try {
-        const payload = {
-            tanda_id: tandaId,
-            amount: amount,
-            payment_method: selectedMethod
-        };
-        
-        const response = await fetch("/api/tandas/pay", {
-            method: "POST",
-            headers: { ...getAuthHeaders(),
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            showToast("Pago realizado exitosamente!", "success");
-            closeQuickPayModal();
-            if (typeof refreshTandas === "function") {
-                refreshTandas();
-            }
-        } else {
-            throw new Error("Error al procesar el pago");
-        }
-    } catch (error) {
-        showToast("Error al procesar el pago", "error");
-    } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "CONFIRMAR PAGO";
-    }
-}
-
-// Event listener para cambio de metodo de pago
-document.addEventListener("DOMContentLoaded", function() {
-    const methodRadios = document.querySelectorAll("input[name=\"paymentMethod\"]");
-    methodRadios.forEach(function(radio) {
-        radio.addEventListener("change", function() {
-            const confirmBtn = document.getElementById("qp-confirm-btn");
-            const insufficientWarning = document.getElementById("qp-insufficient");
-            
-            if (this.value === "wallet" && currentPaymentTanda) {
-                const amount = parseFloat(currentPaymentTanda.contribution_amount || currentPaymentTanda.amount || 0);
-                if (userWalletBalance < amount) {
-                    confirmBtn.disabled = true;
-                    insufficientWarning.style.display = "flex";
-                } else {
-                    confirmBtn.disabled = false;
-                    insufficientWarning.style.display = "none";
-                }
-            } else {
-                confirmBtn.disabled = false;
-                insufficientWarning.style.display = "none";
-            }
-        });
-    });
-});
-
-// ===== FIN FASE 5 =====
 
 // ===== FASE 6: HISTORIAL PERSONAL =====
 let historyData = { payments: [], collections: [] };
@@ -3309,213 +3192,6 @@ async function openHistoryModal() {
     });
 }
 
-function switchHistoryTab(tab) {
-    const paymentsDiv = document.getElementById('history-payments');
-    const collectionsDiv = document.getElementById('history-collections');
-    const tabPayments = document.getElementById('tab-payments');
-    const tabCollections = document.getElementById('tab-collections');
-    
-    if (tab === 'payments') {
-        paymentsDiv.style.display = 'block';
-        collectionsDiv.style.display = 'none';
-        tabPayments.style.background = '#00ffff';
-        tabPayments.style.color = '#000';
-        tabCollections.style.background = 'rgba(255,255,255,0.1)';
-        tabCollections.style.color = '#fff';
-    } else {
-        paymentsDiv.style.display = 'none';
-        collectionsDiv.style.display = 'block';
-        tabCollections.style.background = '#00ffff';
-        tabCollections.style.color = '#000';
-        tabPayments.style.background = 'rgba(255,255,255,0.1)';
-        tabPayments.style.color = '#fff';
-    }
-}
-
-
-function closeHistoryModal() {
-    document.getElementById("personalHistoryModal").style.display = "none";
-}
-
-async function loadHistoryData() {
-    const userId = getCurrentUserId();
-    
-    try {
-        // Cargar pagos realizados
-        const paymentsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=sent", {
-            headers: { ...getAuthHeaders()
-            }
-        });
-        
-        if (paymentsResponse.ok) {
-            const paymentsData = await paymentsResponse.json();
-            const paymentsArr = paymentsData.payments || (paymentsData.data && paymentsData.data.payments) || [];
-            historyData.payments = Array.isArray(paymentsArr) ? paymentsArr : [];
-        }
-        
-        // Cargar cobros recibidos
-        const collectionsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=received", {
-            headers: { ...getAuthHeaders()
-            }
-        });
-        
-        if (collectionsResponse.ok) {
-            const collectionsData = await collectionsResponse.json();
-            const collectionsArr = collectionsData.payments || (collectionsData.data && collectionsData.data.payments) || [];
-            historyData.collections = Array.isArray(collectionsArr) ? collectionsArr : [];
-        }
-        
-    } catch (error) {
-        historyData = { payments: [], collections: [] };
-    }
-    
-    // Llenar filtro de tandas
-    populateTandaFilter();
-    
-    // Actualizar resumen
-    updateHistorySummary();
-    
-    // Renderizar lista
-    renderHistoryList();
-}
-
-function populateTandaFilter() {
-    const select = document.getElementById("historyTandaFilter");
-    const tandaNames = new Set();
-    
-    historyData.payments.forEach(function(p) {
-        if (p.tanda_name || p.group_name) {
-            tandaNames.add(p.tanda_name || p.group_name);
-        }
-    });
-    
-    historyData.collections.forEach(function(c) {
-        if (c.tanda_name || c.group_name) {
-            tandaNames.add(c.tanda_name || c.group_name);
-        }
-    });
-    
-    select.innerHTML = "<option value=\"all\">Todas las tandas</option>";
-    tandaNames.forEach(function(name) {
-        select.innerHTML += "<option value=\"" + escapeHtml(name) + "\">" + escapeHtml(name) + "</option>";
-    });
-}
-
-function updateHistorySummary() {
-    let totalPaid = 0;
-    let totalCollected = 0;
-    
-    historyData.payments.forEach(function(p) {
-        totalPaid += parseFloat(p.amount || 0);
-    });
-    
-    historyData.collections.forEach(function(c) {
-        totalCollected += parseFloat(c.amount || 0);
-    });
-    
-    document.getElementById("hist-total-paid").textContent = 
-        "L. " + totalPaid.toLocaleString("es-HN", { minimumFractionDigits: 2 });
-    document.getElementById("hist-total-collected").textContent = 
-        "L. " + totalCollected.toLocaleString("es-HN", { minimumFractionDigits: 2 });
-    document.getElementById("hist-transactions").textContent = 
-        historyData.payments.length + historyData.collections.length;
-}
-
-function switchHistoryTab(tab) {
-    currentHistoryTab = tab;
-    
-    // Actualizar tabs
-    document.querySelectorAll(".history-tab").forEach(function(t) {
-        t.classList.remove("active");
-    });
-    document.querySelector(".history-tab[data-tab=\"" + tab + "\"]").classList.add("active");
-    
-    // Mostrar lista correcta
-    document.getElementById("paymentsList").style.display = tab === "payments" ? "flex" : "none";
-    document.getElementById("collectionsList").style.display = tab === "collections" ? "flex" : "none";
-    
-    renderHistoryList();
-}
-
-function filterHistory() {
-    renderHistoryList();
-}
-
-function renderHistoryList() {
-    const tandaFilter = document.getElementById("historyTandaFilter").value;
-    const periodFilter = document.getElementById("historyPeriodFilter").value;
-    
-    const isPayments = currentHistoryTab === "payments";
-    const data = isPayments ? historyData.payments : historyData.collections;
-    const container = document.getElementById(isPayments ? "paymentsList" : "collectionsList");
-    
-    // Filtrar datos
-    let filtered = data.filter(function(item) {
-        // Filtro por tanda
-        if (tandaFilter !== "all") {
-            const itemTanda = item.tanda_name || item.group_name || "";
-            if (itemTanda !== tandaFilter) return false;
-        }
-        
-        // Filtro por periodo
-        if (periodFilter !== "all") {
-            const itemDate = new Date(item.date || item.created_at);
-            const now = new Date();
-            
-            if (periodFilter === "month") {
-                if (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear()) {
-                    return false;
-                }
-            } else if (periodFilter === "3months") {
-                const threeMonthsAgo = new Date();
-                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-                if (itemDate < threeMonthsAgo) return false;
-            } else if (periodFilter === "year") {
-                if (itemDate.getFullYear() !== now.getFullYear()) return false;
-            }
-        }
-        
-        return true;
-    });
-    
-    // Ordenar por fecha (mas reciente primero)
-    filtered.sort(function(a, b) {
-        return new Date(b.date || b.created_at) - new Date(a.date || a.created_at);
-    });
-    
-    if (filtered.length === 0) {
-        container.innerHTML = "<div class=\"history-empty\"><i class=\"fas fa-inbox\"></i><p>No hay " + (isPayments ? "pagos" : "cobros") + " en este periodo</p></div>";
-        return;
-    }
-    
-    let html = "";
-    filtered.forEach(function(item) {
-        const amount = parseFloat(item.amount || 0);
-        const date = new Date(item.date || item.created_at);
-        const dateStr = date.toLocaleDateString("es-HN", { day: "numeric", month: "short", year: "numeric" });
-        const tandaName = item.tanda_name || item.group_name || "Tanda";
-        const icon = isPayments ? "arrow-up" : "arrow-down";
-        const type = isPayments ? "payment" : "collection";
-        const prefix = isPayments ? "-" : "+";
-        
-        html += "<div class=\"history-item " + type + "\">";
-        html += "  <div class=\"item-icon\"><i class=\"fas fa-" + icon + "\"></i></div>";
-        html += "  <div class=\"item-info\">";
-        html += "    <div class=\"item-tanda\">" + escapeHtml(tandaName) + "</div>";
-        html += "    <div class=\"item-date\">" + dateStr + "</div>";
-        html += "  </div>";
-        html += "  <div class=\"item-amount\">" + prefix + " L. " + amount.toLocaleString("es-HN", { minimumFractionDigits: 2 }) + "</div>";
-        html += "</div>";
-    });
-    
-    container.innerHTML = html;
-}
-
-function exportHistory() {
-    showNotification("Exportar historial estara disponible pronto", "info");
-}
-
-// ===== FIN FASE 6 =====
 window.tandasData = [];
 window.filteredTandas = [];
 
@@ -3550,12 +3226,9 @@ async function refreshTandas() {
         // 1. Try to get tandas from API
         try {
             const response = await fetch(
-                `/api/tandas/my-tandas?user_id=${userId}`,
+                `/api/tandas/my-tandas`,
                 {
-                    headers: { ...getAuthHeaders(),
-                        "Authorization": `Bearer ${authToken}`,
-                        "Content-Type": "application/json"
-                    }
+                    headers: { ...getAuthHeaders() }
                 }
             );
 
@@ -3591,13 +3264,6 @@ async function refreshTandas() {
         renderTandas();
         startTandaLotteryCountdowns();
 
-        // Broadcast tandas refreshed event
-        if (window.tandaEventBus) {
-            window.tandaEventBus.broadcast("tandasRefreshed", {
-                tandas: window.tandasData,
-                count: window.tandasData.length
-            });
-        }
 
     } catch (error) {
         showTandasEmptyState("Error al cargar tandas:  Intenta de nuevo.");
@@ -3905,7 +3571,7 @@ async function confirmStartTandaNow() {
         if (result.success) {
             closeStartTandaModal();
             showSuccess("Tanda iniciada exitosamente! El primer turno ha comenzado.");
-            loadTandas();
+            refreshTandas();
         } else {
             showError("No se pudo iniciar la tanda");
         }
@@ -3940,7 +3606,7 @@ async function confirmScheduleTandaStart() {
         if (result.success) {
             closeStartTandaModal();
             showSuccess("Tanda programada! Iniciara el " + new Date(dateInput).toLocaleString("es-ES"));
-            loadTandas();
+            refreshTandas();
         } else {
             showError("No se pudo programar la tanda");
         }
@@ -4120,7 +3786,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
             <div class="tandas-empty-state">
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">💰</div>
                 <h3 style="color: #f3f4f6; margin-bottom: 12px;">No hay tandas</h3>
-                <p style="color: #9ca3af; margin-bottom: 24px;">${stateOrMessage}</p>
+                <p style="color: #9ca3af; margin-bottom: 24px;">${escapeHtml(stateOrMessage)}</p>
                 <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
                     <i class="fas fa-search"></i> Explorar Grupos
                 </button>
@@ -4307,6 +3973,10 @@ function pollForLotteryExecution(tandaId, groupId) {
 // getCurrentUserId() - Now provided by LaTandaAuth in shared-components.js (removed duplicate)
 
 function startTandaLotteryCountdowns() {
+    if (window._countdownIntervals) {
+        window._countdownIntervals.forEach(function(id) { clearInterval(id); });
+    }
+    window._countdownIntervals = [];
     const countdownElements = document.querySelectorAll('[data-countdown]');
 
     countdownElements.forEach(el => {
@@ -4351,7 +4021,7 @@ function startTandaLotteryCountdowns() {
         }
 
         updateCountdown();
-        setInterval(updateCountdown, 1000);
+        window._countdownIntervals.push(setInterval(updateCountdown, 1000));
     });
 }
 
@@ -4377,10 +4047,6 @@ function attachTandasFunctions() {
     window.makeTandaPayment = makeTandaPayment;
     window.quickPay = quickPay;
     window.openHistoryModal = openHistoryModal;
-    window.closeHistoryModal = closeHistoryModal;
-    window.switchHistoryTab = switchHistoryTab;
-    window.filterHistory = filterHistory;
-    window.loadHistoryData = loadHistoryData;
     window.advancedGroupsSystem.makeTandaPayment = makeTandaPayment;
 
     // ========== SHOWMODAL / HIDEMODAL ==========
@@ -10407,140 +10073,7 @@ function renderTurnsList() {
 })();
 </script>
 
-<!-- ===== MODAL DE PAGO RÁPIDO ===== -->
-<div id="quickPayModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
-    <div class="modal-content quick-pay-modal" style="background:#1a2332; border-radius:12px; padding:20px; max-width:500px; width:90%; color:white;">
-        <div class="modal-header">
-            <h3><i class="fas fa-credit-card"></i> Realizar Pago</h3>
-            <button class="close-btn" data-action="grp-close-quick-pay">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="payment-summary">
-                <div class="summary-row">
-                    <span class="label">Tanda:</span>
-                    <span class="value" id="qp-tanda-name">--</span>
-                </div>
-                <div class="summary-row">
-                    <span class="label">Monto:</span>
-                    <span class="value amount" id="qp-amount">L. 0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span class="label">Beneficiario:</span>
-                    <span class="value" id="qp-beneficiary">--</span>
-                </div>
-                <div class="summary-row">
-                    <span class="label">Vencimiento:</span>
-                    <span class="value" id="qp-due-date">--</span>
-                </div>
-            </div>
-            
-            <div class="payment-methods">
-                <h4>Método de Pago</h4>
-                <div class="method-options">
-                    <label class="method-option">
-                        <input type="radio" name="paymentMethod" value="wallet" checked>
-                        <span class="method-icon"><i class="fas fa-wallet"></i></span>
-                        <span class="method-info">
-                            <span class="method-name">Billetera La Tanda</span>
-                            <span class="method-balance" id="qp-wallet-balance">Saldo: L. 0.00</span>
-                        </span>
-                    </label>
-                    <label class="method-option">
-                        <input type="radio" name="paymentMethod" value="transfer">
-                        <span class="method-icon"><i class="fas fa-university"></i></span>
-                        <span class="method-info">
-                            <span class="method-name">Transferencia Bancaria</span>
-                            <span class="method-desc">Se generará referencia</span>
-                        </span>
-                    </label>
-                    <label class="method-option">
-                        <input type="radio" name="paymentMethod" value="cash">
-                        <span class="method-icon"><i class="fas fa-money-bill-wave"></i></span>
-                        <span class="method-info">
-                            <span class="method-name">Pago en Efectivo</span>
-                            <span class="method-desc">Registrar pago manual</span>
-                        </span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="insufficient-funds-warning" id="qp-insufficient" style="display:none;">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>Saldo insuficiente. Selecciona otro método de pago.</span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" data-action="grp-close-quick-pay">Cancelar</button>
-            <button class="btn btn-primary" id="qp-confirm-btn" data-action="grp-confirm-quick-pay">
-                <i class="fas fa-check"></i> CONFIRMAR PAGO
-            </button>
-        </div>
-    </div>
-</div>
-<!-- ===== FIN MODAL DE PAGO RÁPIDO ===== -->
 
-<!-- ===== MODAL DE HISTORIAL PERSONAL ===== -->
-<div id="personalHistoryModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center;">
-    <div class="modal-content history-modal">
-        <div class="modal-header">
-            <h3><i class="fas fa-history"></i> Mi Historial</h3>
-            <button class="close-btn" data-action="grp-close-history">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="history-tabs">
-                <button class="history-tab active" data-tab="payments" data-action="grp-switch-history-tab" data-htab="payments">
-                    <i class="fas fa-arrow-up"></i> Mis Pagos
-                </button>
-                <button class="history-tab" data-tab="collections" data-action="grp-switch-history-tab" data-htab="collections">
-                    <i class="fas fa-arrow-down"></i> Mis Cobros
-                </button>
-            </div>
-            
-            <div class="history-filters">
-                <select id="historyTandaFilter">
-                    <option value="all">Todas las tandas</option>
-                </select>
-                <select id="historyPeriodFilter">
-                    <option value="all">Todo el tiempo</option>
-                    <option value="month">Este mes</option>
-                    <option value="3months">Ultimos 3 meses</option>
-                    <option value="year">Este ano</option>
-                </select>
-            </div>
-            
-            <div class="history-summary">
-                <div class="summary-stat">
-                    <span class="stat-value" id="hist-total-paid">L. 0.00</span>
-                    <span class="stat-label">Total Pagado</span>
-                </div>
-                <div class="summary-stat">
-                    <span class="stat-value" id="hist-total-collected">L. 0.00</span>
-                    <span class="stat-label">Total Cobrado</span>
-                </div>
-                <div class="summary-stat">
-                    <span class="stat-value" id="hist-transactions">0</span>
-                    <span class="stat-label">Transacciones</span>
-                </div>
-            </div>
-            
-            <div id="historyContent" class="history-content">
-                <div class="history-list" id="paymentsList">
-                    <!-- Se genera dinamicamente -->
-                </div>
-                <div class="history-list" id="collectionsList" style="display:none;">
-                    <!-- Se genera dinamicamente -->
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" data-action="grp-close-history">Cerrar</button>
-            <button class="btn btn-outline" data-action="grp-export-history">
-                <i class="fas fa-download"></i> Exportar PDF
-            </button>
-        </div>
-    </div>
-</div>
-<!-- ===== FIN MODAL DE HISTORIAL ===== -->
 
 <!-- PAYMENT VERIFICATION MODAL - Redesigned v4.10.7 dark theme -->
 <div id="verifyPaymentsModal" class="vp-overlay" style="display: none;">
@@ -12355,22 +11888,6 @@ function renderTurnsList() {
                     break;
                 case 'grp-clear-selected-user':
                     if (typeof clearSelectedUser === 'function') clearSelectedUser();
-                    break;
-
-                // Quick pay modal
-                case 'grp-close-quick-pay':
-                    if (typeof closeQuickPayModal === 'function') closeQuickPayModal();
-                    break;
-                case 'grp-confirm-quick-pay':
-                    if (typeof confirmQuickPay === 'function') confirmQuickPay();
-                    break;
-
-                // History modal
-                case 'grp-close-history':
-                    if (typeof closeHistoryModal === 'function') closeHistoryModal();
-                    break;
-                case 'grp-export-history':
-                    if (typeof exportHistory === 'function') exportHistory();
                     break;
 
                 // Verify payments modal
