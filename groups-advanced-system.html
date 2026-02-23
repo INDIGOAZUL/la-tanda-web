@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.3">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.4">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -2970,8 +2970,7 @@ async function quickPay(tandaId) {
     // Fetch wallet balance
     let walletBalance = 0;
     try {
-        const userId = getCurrentUserId();
-        const response = await fetch("/api/wallet/balance?user_id=" + userId, {
+        const response = await fetch("/api/wallet/balance", {
             headers: { ...getAuthHeaders()
             }
         });
@@ -3109,13 +3108,12 @@ async function openHistoryModal() {
         size: 'large'
     });
     
-    const userId = getCurrentUserId();
     let payments = [];
     let collections = [];
     
     try {
         // Fetch payments sent
-        const paymentsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=sent", {
+        const paymentsResponse = await fetch("/api/payments/history?type=sent", {
             headers: { ...getAuthHeaders()
             }
         });
@@ -3125,7 +3123,7 @@ async function openHistoryModal() {
         }
         
         // Fetch collections received
-        const collectionsResponse = await fetch("/api/payments/history?user_id=" + userId + "&type=received", {
+        const collectionsResponse = await fetch("/api/payments/history?type=received", {
             headers: { ...getAuthHeaders()
             }
         });
@@ -3755,7 +3753,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
         html = `
             <div class="tandas-empty-state">
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">👥</div>
-                <h3 style="color: #f3f4f6; margin-bottom: 12px;">Aún no perteneces a ningún grupo</h3>
+                <h3 style="color: #f8fafc; margin-bottom: 12px;">Aún no perteneces a ningún grupo</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Únete a un grupo existente o crea uno nuevo para comenzar tu primera tanda.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
@@ -3771,7 +3769,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
         html = `
             <div class="tandas-empty-state">
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">⏳</div>
-                <h3 style="color: #f3f4f6; margin-bottom: 12px;">Tus grupos aún no tienen tandas activas</h3>
+                <h3 style="color: #f8fafc; margin-bottom: 12px;">Tus grupos aún no tienen tandas activas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Estás en ${groupCount || 1} grupo(s). El coordinador debe activar la tanda para comenzar.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="my-groups" style="padding: 12px 24px;">
@@ -3785,7 +3783,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
         html = `
             <div class="tandas-empty-state">
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">💰</div>
-                <h3 style="color: #f3f4f6; margin-bottom: 12px;">No hay tandas</h3>
+                <h3 style="color: #f8fafc; margin-bottom: 12px;">No hay tandas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">${escapeHtml(stateOrMessage)}</p>
                 <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
                     <i class="fas fa-search"></i> Explorar Grupos
@@ -5020,7 +5018,7 @@ if (document.readyState === "loading") {
                             <line x1="12" y1="16" x2="12.01" y2="16"/>
                         </svg>
                     </div>
-                    <h4 style="margin: 0 0 8px; color: #f3f4f6; font-size: 1.1rem;">¿Estas seguro?</h4>
+                    <h4 style="margin: 0 0 8px; color: #f8fafc; font-size: 1.1rem;">¿Estas seguro?</h4>
                     <p style="margin: 0; color: #9ca3af; font-size: 0.9rem;">Vas a eliminar el grupo:</p>
                     <p id="deleteGroupName" style="margin: 8px 0 0; color: #f97316; font-weight: 600; font-size: 1rem;">Nombre del Grupo</p>
                 </div>
@@ -6162,7 +6160,7 @@ if (document.readyState === "loading") {
 
         .invite-method-btn.active {
             border-color: #f59e0b !important;
-            background: #fffbeb !important;
+            background: rgba(245,158,11,0.1) !important;
             color: #d97706 !important;
         }
 
@@ -7869,7 +7867,7 @@ function renderTurnsList() {
                     'style="display: flex; align-items: center; gap: 12px; padding: 12px; background: ' + itemBg + '; border: 1px solid ' + itemBorder + '; border-radius: 10px; cursor: ' + (!isLocked ? 'grab' : 'default') + ';">' +
                     '<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 0.875rem;">' + position + '</div>' +
                     '<div style="flex: 1;">' +
-                        '<div style="font-weight: 500; color: #f3f4f6;">' + displayName + '</div>' +
+                        '<div style="font-weight: 500; color: #f8fafc;">' + displayName + '</div>' +
                         '<div style="font-size: 0.75rem; color: #9ca3af;">' + roleText + '</div>' +
                     '</div>' +
                     '<button data-action="grp-toggle-lock" data-index="' + index + '" style="width: 32px; height: 32px; background: ' + lockBg + '; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="' + (isLocked ? 'Desbloquear' : 'Anclar posicion') + '">' + lockIcon + '</button>' +
@@ -11465,7 +11463,7 @@ function renderTurnsList() {
 })();
 </script>
 
-    <script src="payout-frontend.js?v=1.4"></script>
+    <script src="payout-frontend.js?v=1.5"></script>
 
     <!-- Tab Switching (delegated, no inline onclick) -->
     <script>
