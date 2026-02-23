@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=1.8">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.0">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -732,6 +732,11 @@
                 actionsHtml += '<button class="btn btn-secondary" data-action="grp-view-group" data-group-id="' + escapeHtml(group.id) + '">Ver Grupo</button>';
             }
 
+            // v4.11.0: Solicitar Prórroga button for members with pending/late payments
+            if (!isAdmin && (effectivePaymentStatus === 'pending' || effectivePaymentStatus === 'late' || effectivePaymentStatus === 'suspension_recommended')) {
+                actionsHtml += '<button class="btn pr-request-btn" data-action="grp-request-extension" data-group-id="' + escapeHtml(group.id) + '">Solicitar Prorroga</button>';
+            }
+
             return '<div class="group-card" data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
                 '<div class="gc-header">' +
                     '<div class="gc-avatar" style="background:' + statusColor + ';color:' + (st === 'suspended' || st === 'cancelled' ? '#fff' : '#0f172a') + '">' + avatarLetter + '</div>' +
@@ -1024,16 +1029,16 @@ function renderPositionAssignmentSection(group) {
 
             <div class="position-actions">
                 ${!isComplete ? `
-                    <button class="btn btn-secondary btn-sm" onclick="autoAssignPositions('${group.id}', 'random')">
+                    <button class="btn btn-secondary btn-sm" data-action="grp-auto-assign-random" data-group-id="${group.id}">
                         🎲 Asignar Aleatorio
                     </button>
-                    <button class="btn btn-secondary btn-sm" onclick="autoAssignPositions('${group.id}', 'order')">
+                    <button class="btn btn-secondary btn-sm" data-action="grp-auto-assign-order" data-group-id="${group.id}">
                         📋 Asignar por Orden
                     </button>
                 ` : ''}
 
                 ${isComplete ? `
-                    <button class="btn btn-primary" onclick="activateTanda('${group.id}')">
+                    <button class="btn btn-primary" data-action="grp-activate-tanda" data-group-id="${group.id}">
                         ✅ Activar Grupo
                     </button>
                 ` : `
@@ -1067,10 +1072,10 @@ function renderRequestCard(request, groupId) {
                 </div>
             </div>
             <div class="request-actions">
-                <button class="btn btn-success btn-sm" onclick="approvePositionRequest('${groupId}', '${request.id}')">
+                <button class="btn btn-success btn-sm" data-action="grp-approve-position" data-group-id="${groupId}" data-request-id="${request.id}">
                     ✓ Aprobar
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="openRejectModal('${groupId}', '${request.id}')">
+                <button class="btn btn-danger btn-sm" data-action="grp-reject-position" data-group-id="${groupId}" data-request-id="${request.id}">
                     ✕ Rechazar
                 </button>
             </div>
@@ -1085,7 +1090,7 @@ function renderPositionCell(positionNumber, positionData, groupId) {
     if (!positionData || positionData.status !== 'confirmed') {
         // Available position
         return `
-            <div class="position-cell available" onclick="openManualAssignModal('${groupId}', ${positionNumber})">
+            <div class="position-cell available" data-action="grp-open-manual-assign" data-group-id="${groupId}" data-position="${positionNumber}">
                 <div class="position-number">${positionNumber}</div>
                 <div class="position-status">Disponible</div>
             </div>
@@ -1103,7 +1108,7 @@ function renderPositionCell(positionNumber, positionData, groupId) {
     return `
         <div class="position-cell assigned ${positionData.assignment_type}">
             <div class="position-number">${positionNumber}</div>
-            <div class="position-user">${positionData.user_name || positionData.user_id}</div>
+            <div class="position-user">${escapeHtml(positionData.user_name || positionData.user_id)}</div>
             <div class="position-type">${assignmentTypeLabel}</div>
         </div>
     `;
@@ -1127,7 +1132,7 @@ async function approvePositionRequest(groupId, requestId) {
             body: JSON.stringify({
                 request_id: requestId,
                 group_id: groupId,
-                approved_by: USER_ID
+                // approved_by removed (server uses JWT)
             })
         });
 
@@ -1138,7 +1143,7 @@ async function approvePositionRequest(groupId, requestId) {
             showNotification('✅ Solicitud aprobada exitosamente', 'success');
             await fetchMyGroups(); // Reload groups to show updated state
         } else {
-            showNotification('❌ Error: ' + (data.error || 'No se pudo aprobar'), 'error');
+            showNotification('No se pudo aprobar la solicitud', 'error');
         }
     } catch (error) {
         hideLoading();
@@ -1172,7 +1177,7 @@ async function rejectPositionRequest(groupId, requestId, reason) {
             body: JSON.stringify({
                 request_id: requestId,
                 group_id: groupId,
-                rejected_by: USER_ID,
+                // rejected_by removed (server uses JWT)
                 reason: reason
             })
         });
@@ -1185,7 +1190,7 @@ async function rejectPositionRequest(groupId, requestId, reason) {
             closeRejectModal();
             await fetchMyGroups();
         } else {
-            showNotification('❌ Error: ' + (data.error || 'No se pudo rechazar'), 'error');
+            showNotification('No se pudo rechazar la solicitud', 'error');
         }
     } catch (error) {
         hideLoading();
@@ -1224,7 +1229,7 @@ async function assignPositionManually(groupId, positionNumber, userId, userName)
                 user_id: userId,
                 user_name: userName,
                 position: positionNumber,
-                assigned_by: USER_ID
+                // assigned_by removed (server uses JWT)
             })
         });
 
@@ -1236,7 +1241,7 @@ async function assignPositionManually(groupId, positionNumber, userId, userName)
             closeManualAssignModal();
             await fetchMyGroups();
         } else {
-            showNotification('❌ Error: ' + (data.error || 'No se pudo asignar'), 'error');
+            showNotification('No se pudo asignar la posicion', 'error');
         }
     } catch (error) {
         hideLoading();
@@ -1264,7 +1269,7 @@ async function autoAssignPositions(groupId, method = 'random') {
             body: JSON.stringify({
                 group_id: groupId,
                 method: method,
-                assigned_by: USER_ID
+                // assigned_by removed (server uses JWT)
             })
         });
 
@@ -1275,7 +1280,7 @@ async function autoAssignPositions(groupId, method = 'random') {
             showNotification(`✅ ${data.data.assigned_count} posiciones asignadas`, 'success');
             await fetchMyGroups();
         } else {
-            showNotification('❌ Error: ' + (data.error || 'No se pudo auto-asignar'), 'error');
+            showNotification('No se pudo auto-asignar las posiciones', 'error');
         }
     } catch (error) {
         hideLoading();
@@ -1314,7 +1319,7 @@ async function activateTanda(groupId) {
             },
             body: JSON.stringify({
                 group_id: groupId,
-                activated_by: USER_ID
+                // activated_by removed (server uses JWT)
             })
         });
 
@@ -1325,7 +1330,7 @@ async function activateTanda(groupId) {
             showNotification('✅ ¡Grupo activado exitosamente! El ciclo ha comenzado.', 'success');
             await fetchMyGroups();
         } else {
-            showNotification('❌ Error: ' + (data.error || 'No se pudo activar'), 'error');
+            showNotification('No se pudo activar el grupo', 'error');
         }
     } catch (error) {
         hideLoading();
@@ -1423,15 +1428,15 @@ function createRejectModal() {
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Rechazar Solicitud</h3>
-                <button class="modal-close" onclick="closeRejectModal()">×</button>
+                <button class="modal-close" data-action="grp-close-reject">×</button>
             </div>
             <div class="modal-body">
                 <label for="rejectReason">Razón del rechazo (opcional):</label>
                 <textarea id="rejectReason" rows="3" placeholder="Explica por qué se rechaza esta solicitud..."></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRejectModal()">Cancelar</button>
-                <button class="btn btn-danger" onclick="confirmReject()">Rechazar Solicitud</button>
+                <button class="btn btn-secondary" data-action="grp-close-reject">Cancelar</button>
+                <button class="btn btn-danger" data-action="grp-confirm-reject">Rechazar Solicitud</button>
             </div>
         </div>
     `;
@@ -1464,7 +1469,7 @@ function createManualAssignModal() {
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Asignar Posición Manualmente</h3>
-                <button class="modal-close" onclick="closeManualAssignModal()">×</button>
+                <button class="modal-close" data-action="grp-close-manual-assign">×</button>
             </div>
             <div class="modal-body">
                 <p>Posición: <strong id="assignPositionNumber">-</strong></p>
@@ -1474,8 +1479,8 @@ function createManualAssignModal() {
                 </select>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeManualAssignModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="confirmManualAssign()">Asignar</button>
+                <button class="btn btn-secondary" data-action="grp-close-manual-assign">Cancelar</button>
+                <button class="btn btn-primary" data-action="grp-confirm-manual-assign">Asignar</button>
             </div>
         </div>
     `;
@@ -1546,7 +1551,7 @@ async function loadUsersWithoutPositions(groupId) {
                     <div class="empty-state-icon">⚠️</div>
                     <h3>Error</h3>
                     <p>${message}</p>
-                    <button class="btn btn-primary" onclick="fetchMyGroups()">Reintentar</button>
+                    <button class="btn btn-primary" data-action="grp-retry-load">Reintentar</button>
                 </div>
             `;
         }
@@ -2590,8 +2595,8 @@ async function loadUsersWithoutPositions(groupId) {
                             </div>
                         </div>
                         <div class="request-actions">
-                            <button class="btn-approve" onclick="approvePositionRequest('${groupId}', '${request.id}')">✓</button>
-                            <button class="btn-reject" onclick="openRejectModal('${groupId}', '${request.id}')">✕</button>
+                            <button class="btn-approve" data-action="grp-approve-position" data-group-id="${groupId}" data-request-id="${request.id}">✓</button>
+                            <button class="btn-reject" data-action="grp-reject-position" data-group-id="${groupId}" data-request-id="${request.id}">✕</button>
                         </div>
                     </div>
                     ${request.reason ? `<div class="request-reason">"${escapeHtml(request.reason)}"</div>` : ''}
@@ -2856,7 +2861,7 @@ function renderUrgentPayments(tandas) {
                     <span class="payment-details">${formattedAmount} • Vence ${dueDateStr}</span>
                 </div>
                 <span class="days-left" style="font-weight: 600; color: ${urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'warning' ? '#f59e0b' : '#10b981'};">${daysText}</span>
-                <button class="btn-quick-pay" onclick="quickPay('${tanda.tanda_id || tanda.id || tanda.group_id}')">
+                <button class="btn-quick-pay" data-action="grp-quick-pay" data-tanda-id="${tanda.tanda_id || tanda.id || tanda.group_id}">
                     <i class="fas fa-credit-card"></i> PAGAR
                 </button>
             </div>
@@ -3270,11 +3275,11 @@ async function openHistoryModal() {
     
     const content = `
         <div class="history-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button class="history-tab active" onclick="switchHistoryTab('payments')" id="tab-payments" 
+            <button class="history-tab active" data-action="grp-switch-history-tab" data-htab="payments" id="tab-payments" 
                 style="flex: 1; padding: 12px; background: #00ffff; color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
                 📤 Pagos Enviados (${payments.length})
             </button>
-            <button class="history-tab" onclick="switchHistoryTab('collections')" id="tab-collections"
+            <button class="history-tab" data-action="grp-switch-history-tab" data-htab="collections" id="tab-collections"
                 style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); color: #fff; border: none; border-radius: 8px; cursor: pointer;">
                 📥 Cobros Recibidos (${collections.length})
             </button>
@@ -3703,13 +3708,13 @@ function renderTandaCard(tanda) {
 
     let actionsHtml = "";
     if (isRecruiting && isCoordinator) {
-        actionsHtml = '<button class="btn btn-sm btn-success" onclick="startTanda(\'' + tanda.tanda_id + '\')"><i class="fas fa-play"></i> Iniciar Tanda</button><button class="btn btn-sm btn-outline" onclick="inviteToTanda(\'' + tanda.tanda_id + '\')"><i class="fas fa-user-plus"></i> Invitar</button>';
+        actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-play"></i> Iniciar Tanda</button><button class="btn btn-sm btn-outline" data-action="grp-invite-to-tanda" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-user-plus"></i> Invitar</button>';
     } else if (isRecruiting && tanda.has_turn_assigned) {
-        actionsHtml = '<button class="btn btn-sm btn-outline" onclick="viewTandaDetails(\'' + tanda.tanda_id + '\')"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-clock"></i> Esperando inicio</span>';
+        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-clock"></i> Esperando inicio</span>';
     } else if (isRecruiting) {
-        actionsHtml = '<button class="btn btn-sm btn-outline" onclick="viewTandaDetails(\'' + tanda.tanda_id + '\')"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-hourglass-half"></i> Esperando asignación de turno</span>';
+        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-hourglass-half"></i> Esperando asignación de turno</span>';
     } else {
-        actionsHtml = '<button class="btn btn-sm btn-secondary" onclick="openHistoryModal()"><i class="fas fa-history"></i> Historial</button><button class="btn btn-sm btn-outline" onclick="viewTandaDetails(\'' + tanda.tanda_id + '\')"><i class="fas fa-eye"></i> Ver Detalles</button><button class="btn btn-sm btn-primary" onclick="makeTandaPayment(\'' + tanda.tanda_id + '\')"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
+        actionsHtml = '<button class="btn btn-sm btn-secondary" data-action="grp-open-history"><i class="fas fa-history"></i> Historial</button><button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
     }
 
     const totalAmount = tanda.total_per_turn || tanda.contribution_amount;
@@ -3853,7 +3858,7 @@ async function openStartTandaModal(tandaId, groupId) {
         
         const result = await response.json();
         if (!result.success) {
-            showError("Error al cargar informacion: " + (result.data?.error?.message || "Error desconocido"));
+            showError("Error al cargar la informacion del grupo");
             return;
         }
         
@@ -3925,7 +3930,7 @@ async function confirmStartTandaNow() {
             showSuccess("Tanda iniciada exitosamente! El primer turno ha comenzado.");
             loadTandas();
         } else {
-            showError(result.data?.error?.message || "No se pudo iniciar la tanda");
+            showError("No se pudo iniciar la tanda");
         }
     } catch (error) {
         showError("Error de conexion:  Intenta de nuevo.");
@@ -3962,7 +3967,7 @@ async function confirmScheduleTandaStart() {
             showSuccess("Tanda programada! Iniciara el " + new Date(dateInput).toLocaleString("es-ES"));
             loadTandas();
         } else {
-            showError(result.data?.error?.message || "No se pudo programar");
+            showError("No se pudo programar la tanda");
         }
     } catch (error) {
         showError("Error de conexion:  Intenta de nuevo.");
@@ -4045,7 +4050,7 @@ async function executeLotteryFromModal() {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + (localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token") || "")
             },
-            body: JSON.stringify({ user_id: userId })
+            body: JSON.stringify({})
         });
         
         const result = await response.json();
@@ -4065,7 +4070,7 @@ async function executeLotteryFromModal() {
                 });
             }
         } else {
-            showError(result.data?.error?.message || "Error en tombola");
+            showError("Error al ejecutar la tombola");
         }
     } catch (error) {
         showError("Error de conexion:  Intenta de nuevo.");
@@ -4115,10 +4120,10 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <h3 style="color: #f3f4f6; margin-bottom: 12px;">Aún no perteneces a ningún grupo</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Únete a un grupo existente o crea uno nuevo para comenzar tu primera tanda.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="switchTab('groups')" style="padding: 12px 24px;">
+                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
                         <i class="fas fa-search"></i> Explorar Grupos
                     </button>
-                    <button class="btn btn-outline" onclick="switchTab('create')" style="padding: 12px 24px;">
+                    <button class="btn btn-outline" data-action="grp-switch-tab" data-tab="create" style="padding: 12px 24px;">
                         <i class="fas fa-plus"></i> Crear Grupo
                     </button>
                 </div>
@@ -4131,7 +4136,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <h3 style="color: #f3f4f6; margin-bottom: 12px;">Tus grupos aún no tienen tandas activas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Estás en ${groupCount || 1} grupo(s). El coordinador debe activar la tanda para comenzar.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="switchTab('my-groups')" style="padding: 12px 24px;">
+                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="my-groups" style="padding: 12px 24px;">
                         <i class="fas fa-users"></i> Ver Mis Grupos
                     </button>
                 </div>
@@ -4144,7 +4149,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">💰</div>
                 <h3 style="color: #f3f4f6; margin-bottom: 12px;">No hay tandas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">${stateOrMessage}</p>
-                <button class="btn btn-primary" onclick="switchTab('groups')" style="padding: 12px 24px;">
+                <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
                     <i class="fas fa-search"></i> Explorar Grupos
                 </button>
             </div>
@@ -4201,15 +4206,15 @@ function // Show animation with updated data structure
         const result = results.find(r => r.member_id === member.id);
         const turnNum = result ? result.turn_number : '?';
         return '<div class="lottery-member" data-member-id="' + member.id + '">' +
-               '<span class="member-name">' + member.name + '</span>' +
-               '<span class="turn-number">#' + turnNum + '</span>' +
+               '<span class="member-name">' + escapeHtml(member.name) + '</span>' +
+               '<span class="turn-number">#' + escapeHtml(String(turnNum)) + '</span>' +
                '</div>';
     }).join('');
 
     overlay.innerHTML =
         '<div class="lottery-container">' +
             '<h2 class="lottery-title"><i class="fas fa-dice"></i> TOMBOLA EN VIVO</h2>' +
-            '<p style="color: #9ca3af; margin-bottom: 1rem;">' + groupName + '</p>' +
+            '<p style="color: #9ca3af; margin-bottom: 1rem;">' + escapeHtml(groupName) + '</p>' +
             '<div class="lottery-wheel">' +
                 '<div class="lottery-pointer"></div>' +
                 '<div class="lottery-wheel-inner">' +
@@ -4225,7 +4230,7 @@ function // Show animation with updated data structure
                         '<h3><i class="fas fa-trophy"></i> #' + myTurn + '</h3>' +
                     '</div>'
                 : '') +
-                '<button class="lottery-close-btn" onclick="closeLotteryAnimation()"><i class="fas fa-check"></i> Continuar</button>' +
+                '<button class="lottery-close-btn" data-action="grp-close-lottery"><i class="fas fa-check"></i> Continuar</button>' +
             '</div>' +
         '</div>';
 
@@ -4435,7 +4440,7 @@ function attachTandasFunctions() {
                 "<div class=\"modal-container " + size + "\" id=\"modalContainer\" style=\"background:rgba(15,23,42,0.98);border:1px solid rgba(0,255,255,0.3);border-radius:16px;max-width:" + maxWidth + ";width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.5);\">" +
                     "<div class=\"modal-header\" style=\"padding:20px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;\">" +
                         "<h3 style=\"color:#fff;margin:0;font-size:1.25rem;\">" + title + "</h3>" +
-                        "<button onclick=\"advancedGroupsSystem.hideModal()\" style=\"background:none;border:none;color:#888;font-size:28px;cursor:pointer;line-height:1;\">&times;</button>" +
+                        "<button data-action=\"grp-hide-modal\" style=\"background:none;border:none;color:#888;font-size:28px;cursor:pointer;line-height:1;\">&times;</button>" +
                     "</div>" +
                     "<div class=\"modal-content\" style=\"padding:20px;color:#fff;\">" + content + "</div>" +
                     buttonsHtml +
@@ -5065,7 +5070,7 @@ if (document.readyState === "loading") {
                 '<div class="toast-title">' + titles[type] + '</div>' +
                 '<div class="toast-message">' + escapeHtml(message) + '</div>' +
                 '</div>' +
-                '<button class="toast-close" onclick="this.parentElement.classList.add(\'removing\'); setTimeout(function() { this.parentElement.remove(); }.bind(this), 300);">' +
+                '<button class="toast-close" data-action="grp-toast-close">' +
                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
                 '</button>';
 
@@ -5123,8 +5128,8 @@ if (document.readyState === "loading") {
                 '<h3 style="margin: 0 0 8px; color: #111827;">Confirmar Accion</h3>' +
                 '<p style="margin: 0 0 24px; color: #6b7280;">' + message + '</p>' +
                 '<div style="display: flex; gap: 12px; justify-content: center;">' +
-                '<button onclick="this.closest(\'.modal-overlay\').remove(); if(typeof confirmCancel === \'function\') confirmCancel();" style="padding: 10px 24px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer;">Cancelar</button>' +
-                '<button onclick="this.closest(\'.modal-overlay\').remove(); if(typeof confirmAction === \'function\') confirmAction();" style="padding: 10px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">Confirmar</button>' +
+                '<button data-action="grp-confirm-cancel" style="padding: 10px 24px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer;">Cancelar</button>' +
+                '<button data-action="grp-confirm-action" style="padding: 10px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">Confirmar</button>' +
                 '</div></div>';
 
             window.confirmAction = onConfirm || function(){};
@@ -5243,6 +5248,14 @@ if (document.readyState === "loading") {
                                 <option value="paused">Pausado</option>
                                 <option value="completed">Completado</option>
                             </select>
+                        </div>
+
+
+                        <!-- v4.11.0: Advance Threshold -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 6px; font-size: 0.875rem;">Umbral de Avance (%)</label>
+                            <input type="number" id="editGroupThreshold" min="50" max="100" value="80" placeholder="80" style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box;">
+                            <p style="margin: 4px 0 0; font-size: 0.75rem; color: #6b7280;">El ciclo avanza cuando este porcentaje de miembros ha pagado (50-100)</p>
                         </div>
 
                         <div id="editGroupError" style="display: none; padding: 12px; background: #fee2e2; color: #dc2626; border-radius: 8px; font-size: 0.875rem;"></div>
@@ -6582,14 +6595,14 @@ if (document.readyState === "loading") {
                             html += '<div class="member-actions">';
                             
                             // Toggle Anonymous button
-                            html += '<button onclick="toggleMemberAnonymous(\'' + groupId + '\', \'' + member.user_id + '\', ' + !isAnonymous + ')" class="action-btn anonymous-btn">' +
+                            html += '<button data-action="grp-toggle-anonymous" data-group-id="' + groupId + '" data-user-id="' + member.user_id + '" data-value="' + !isAnonymous + '" class="action-btn anonymous-btn">' +
                                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>' +
                                 (isAnonymous ? ' Mostrar Nombre' : ' Ocultar Nombre') +
                             '</button>';
                             
                             // Request Role button (only for members and coordinators)
                             if (member.role === 'member' || member.role === 'coordinator') {
-                                html += '<button onclick="showRequestRoleModal(\'' + groupId + '\', \'' + member.role + '\')" class="action-btn role-btn">' +
+                                html += '<button data-action="grp-request-role" data-group-id="' + groupId + '" data-current-role="' + member.role + '" class="action-btn role-btn">' +
                                     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>' +
                                     ' Solicitar Rol' +
                                 '</button>';
@@ -6597,12 +6610,12 @@ if (document.readyState === "loading") {
                             
                             // Leave Group button
                             if (member.role === 'creator') {
-                                html += '<button onclick="showTransferOwnershipModal(\'' + groupId + '\')" class="action-btn leave-btn warning">' +
+                                html += '<button data-action="grp-transfer-ownership" data-group-id="' + groupId + '" class="action-btn leave-btn warning">' +
                                     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
                                     ' Transferir y Salir' +
                                 '</button>';
                             } else {
-                                html += '<button onclick="confirmLeaveGroup(\'' + groupId + '\')" class="action-btn leave-btn">' +
+                                html += '<button data-action="grp-leave-group" data-group-id="' + groupId + '" class="action-btn leave-btn">' +
                                     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
                                     ' Salir del Grupo' +
                                 '</button>';
@@ -6613,9 +6626,9 @@ if (document.readyState === "loading") {
                         } else if (!isCurrentUser && (currentUserRole === "creator" || currentUserRole === "coordinator" || currentUserRole === "admin")) {
                             // Cannot remove creator
                             if (member.role !== "creator") {
-                                var safeName = displayName.replace(/\x27/g, "\\\x27");
+                                // safeName removed — using data-attributes with escapeHtml
                                 html += "<div class=\"member-actions\">";
-                                html += "<button onclick=\"confirmRemoveMember(\x27" + groupId + "\x27, \x27" + member.user_id + "\x27, \x27" + safeName + "\x27)\" class=\"action-btn leave-btn\" style=\"background: rgba(239, 68, 68, 0.1); color: #ef4444;\">" +
+                                html += "<button data-action=\"grp-remove-member\" data-group-id=\"" + groupId + "\" data-user-id=\"" + member.user_id + "\" data-user-name=\"" + escapeHtml(displayName) + "\" class=\"action-btn leave-btn\" style=\"background: rgba(239, 68, 68, 0.1); color: #ef4444;\">" +
                                     "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"18\" y1=\"8\" x2=\"23\" y2=\"13\"/><line x1=\"23\" y1=\"8\" x2=\"18\" y2=\"13\"/></svg>" +
                                     " Remover" +
                                 "</button>";
@@ -7645,7 +7658,7 @@ if (document.readyState === "loading") {
                         html += "</div>";
                         
                         if (!isExpired && canRemind) {
-                            html += "<button type=\"button\" onclick=\"sendInvitationReminder(\x27" + groupId + "\x27, \x27" + inv.id + "\x27, \x27" + safeName + "\x27)\" class=\"action-btn\" style=\"background: rgba(139, 92, 246, 0.1); color: #8b5cf6; font-size: 0.8rem; padding: 0.5rem 0.75rem;\">";
+                            html += "<button type=\"button\" data-action=\"grp-send-reminder\" data-group-id=\"" + groupId + "\" data-invitation-id=\"" + inv.id + "\" data-invitee-name=\"" + escapeHtml(safeName) + "\" class=\"action-btn\" style=\"background: rgba(139, 92, 246, 0.1); color: #8b5cf6; font-size: 0.8rem; padding: 0.5rem 0.75rem;\">";
                             html += "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/></svg>";
                             html += " Recordar";
                             html += "</button>";
@@ -7656,7 +7669,7 @@ if (document.readyState === "loading") {
                         }
 
                         // Delete button - always show for pending invitations
-                        html += "<button type=\"button\" onclick=\"deleteInvitation('" + groupId + "', '" + inv.id + "', '" + safeName + "')\" style=\"background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 6px 8px; border: none; border-radius: 6px; cursor: pointer; margin-left: 8px; display: inline-flex; align-items: center;\" title=\"Eliminar\">";                        html += "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/></svg>";                        html += "</button>";
+                        html += "<button type=\"button\" data-action=\"grp-delete-invitation\" data-group-id=\"" + groupId + "\" data-invitation-id=\"" + inv.id + "\" data-invitee-name=\"" + escapeHtml(safeName) + "\" style=\"background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 6px 8px; border: none; border-radius: 6px; cursor: pointer; margin-left: 8px; display: inline-flex; align-items: center;\" title=\"Eliminar\">";                        html += "<svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"3 6 5 6 21 6\"/><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"/></svg>";                        html += "</button>";
                         
                         html += "</div>";
                     });
@@ -7686,7 +7699,7 @@ if (document.readyState === "loading") {
                     showNotification("Invitación eliminada", "success");
                     loadPendingInvitations(groupId);
                 } else {
-                    showNotification(result.error || result.data?.error || "Error al eliminar invitación", "error");
+                    showNotification("Error al eliminar la invitacion", "error");
                 }
             } catch (err) {
                 showNotification("Error al eliminar invitación", "error");
@@ -7785,12 +7798,11 @@ if (document.readyState === "loading") {
                     if (result.success && result.data.users.length > 0) {
                         var html = '';
                         result.data.users.forEach(function(user) {
-                            html += '<div onclick="selectUserToInvite(\'' + user.user_id + '\', \'' + user.name.replace(/'/g, "\\'") + '\', \'' + user.email_masked + '\')" ';
-                            html += 'style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;" ';
-                            html += 'onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'transparent\'">';
+                            html += '<div data-action="grp-select-invite-user" data-user-id="' + escapeHtml(user.user_id) + '" data-user-name="' + escapeHtml(user.name) + '" data-user-email="' + escapeHtml(user.email_masked) + '" ';
+                            html += 'class="grp-search-result-item" style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;">';
                             html += '<div>';
-                            html += '<div style="font-weight: 500; color: #111827;">' + user.name + '</div>';
-                            html += '<div style="font-size: 0.75rem; color: #6b7280;">' + user.email_masked + '</div>';
+                            html += '<div style="font-weight: 500; color: #111827;">' + escapeHtml(user.name) + '</div>';
+                            html += '<div style="font-size: 0.75rem; color: #6b7280;">' + escapeHtml(user.email_masked) + '</div>';
                             html += '</div>';
                             html += '<span style="font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; ' + (user.status === 'verified' ? 'background: #dcfce7; color: #166534;' : 'background: #fef3c7; color: #92400e;') + '">' + (user.status === 'verified' ? 'Verificado' : 'Sin verificar') + '</span>';
                             html += '</div>';
@@ -7939,12 +7951,15 @@ if (document.readyState === "loading") {
                 document.getElementById('editGroupStartDate').value = group.start_date ? group.start_date.split('T')[0] : '';
                 document.getElementById('editGroupStatus').value = group.status || 'active';
 
+                var thresholdField = document.getElementById('editGroupThreshold');
+                if (thresholdField) thresholdField.value = group.advance_threshold || 80;
+
                 if (loading) loading.style.display = 'none';
                 if (formFields) formFields.style.display = 'block';
 
             } catch (err) {
                 if (loading) {
-                    loading.innerHTML = '<p style="color: #ef4444;">Error al cargar datos</p><button type="button" onclick="showEditGroupModal(currentEditGroupId)" style="margin-top: 16px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Reintentar</button>';
+                    loading.innerHTML = '<p style="color: #ef4444;">Error al cargar datos</p><button type="button" data-action="grp-retry-edit-load" style="margin-top: 16px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Reintentar</button>';
                 }
             }
         }
@@ -8151,8 +8166,8 @@ function renderTurnsList() {
             
             // Lottery action bar
             var actionsHtml = '<div style="display: flex; gap: 10px; margin-bottom: 16px; padding: 12px; background: rgba(245,158,11,0.1); border-radius: 10px; border: 1px solid rgba(245,158,11,0.3); flex-wrap: wrap;">' +
-                '<button onclick="startLotteryCountdown()" style="flex: 1; min-width: 140px; padding: 10px 16px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2rem;">🎲</span> Iniciar Ahora</button>' +
-                '<button onclick="openScheduleLotteryModal()" style="flex: 1; min-width: 140px; padding: 10px 16px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2rem;">📅</span> Programar</button>' +
+                '<button data-action="grp-start-lottery-countdown" style="flex: 1; min-width: 140px; padding: 10px 16px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2rem;">🎲</span> Iniciar Ahora</button>' +
+                '<button data-action="grp-open-schedule-lottery" style="flex: 1; min-width: 140px; padding: 10px 16px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;"><span style="font-size: 1.2rem;">📅</span> Programar</button>' +
             '</div>';
             
             var html = actionsHtml + '<div id="turnsList" style="display: flex; flex-direction: column; gap: 8px;">';
@@ -8183,21 +8198,21 @@ function renderTurnsList() {
                         '<div style="font-weight: 500; color: #f3f4f6;">' + displayName + '</div>' +
                         '<div style="font-size: 0.75rem; color: #9ca3af;">' + roleText + '</div>' +
                     '</div>' +
-                    '<button onclick="toggleExpandedLock(' + index + ')" style="width: 32px; height: 32px; background: ' + lockBg + '; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="' + (isLocked ? 'Desbloquear' : 'Anclar posicion') + '">' + lockIcon + '</button>' +
+                    '<button data-action="grp-toggle-lock" data-index="' + index + '" style="width: 32px; height: 32px; background: ' + lockBg + '; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="' + (isLocked ? 'Desbloquear' : 'Anclar posicion') + '">' + lockIcon + '</button>' +
                     '<div style="display: flex; align-items: center; gap: 3px; background: #374151; padding: 4px 6px; border-radius: 6px;" title="Posiciones">' +
-                        '<button onclick="removeExpandedPosition(\'' + pos.user_id + '\', ' + pos.slot_index + ')" style="width: 22px; height: 22px; background: ' + (pos.total_slots > 1 ? '#dc2626' : '#4b5563') + '; border: none; border-radius: 4px; color: white; cursor: ' + (pos.total_slots > 1 ? 'pointer' : 'not-allowed') + '; font-size: 1rem; opacity: ' + (pos.total_slots > 1 ? '1' : '0.4') + ';" ' + (pos.total_slots > 1 ? '' : 'disabled') + '>-</button>' +
+                        '<button data-action="grp-remove-position" data-user-id="' + pos.user_id + '" data-slot="' + pos.slot_index + '" style="width: 22px; height: 22px; background: ' + (pos.total_slots > 1 ? '#dc2626' : '#4b5563') + '; border: none; border-radius: 4px; color: white; cursor: ' + (pos.total_slots > 1 ? 'pointer' : 'not-allowed') + '; font-size: 1rem; opacity: ' + (pos.total_slots > 1 ? '1' : '0.4') + ';" ' + (pos.total_slots > 1 ? '' : 'disabled') + '>-</button>' +
                         '<span style="min-width: 20px; text-align: center; color: #f59e0b; font-weight: 600; font-size: 0.85rem;">' + pos.total_slots + '</span>' +
-                        '<button onclick="addExpandedPosition(\'' + pos.user_id + '\')" style="width: 22px; height: 22px; background: #059669; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 1rem;">+</button>' +
+                        '<button data-action="grp-add-position" data-user-id="' + pos.user_id + '" style="width: 22px; height: 22px; background: #059669; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 1rem;">+</button>' +
                     '</div>' +
                     '<div style="display: flex; gap: 4px;">' +
-                        '<button onclick="moveExpandedUp(' + index + ')" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === 0 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === 0 ? '0.3' : '1') + ';" ' + (isLocked || index === 0 ? 'disabled' : '') + '>' +
+                        '<button data-action="grp-move-up" data-index="' + index + '" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === 0 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === 0 ? '0.3' : '1') + ';" ' + (isLocked || index === 0 ? 'disabled' : '') + '>' +
                             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>' +
                         '</button>' +
-                        '<button onclick="moveExpandedDown(' + index + ')" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === displayList.length - 1 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === displayList.length - 1 ? '0.3' : '1') + ';" ' + (isLocked || index === displayList.length - 1 ? 'disabled' : '') + '>' +
+                        '<button data-action="grp-move-down" data-index="' + index + '" style="width: 28px; height: 28px; background: #374151; border: none; border-radius: 6px; color: ' + (isLocked ? '#4b5563' : '#9ca3af') + '; cursor: ' + (isLocked || index === displayList.length - 1 ? 'not-allowed' : 'pointer') + '; display: flex; align-items: center; justify-content: center; opacity: ' + (isLocked || index === displayList.length - 1 ? '0.3' : '1') + ';" ' + (isLocked || index === displayList.length - 1 ? 'disabled' : '') + '>' +
                             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>' +
                         '</button>' +
                     '</div>' +
-                    (pos.slot_index === 0 ? '<button onclick="removeMemberFromTurns(\'' + pos.user_id + '\')" style="width: 28px; height: 28px; background: #dc2626; border: none; border-radius: 6px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; margin-left: 2px;" title="Eliminar del turno">&#x2715;</button>' : '') +
+                    (pos.slot_index === 0 ? '<button data-action="grp-remove-from-turns" data-user-id="' + pos.user_id + '" style="width: 28px; height: 28px; background: #dc2626; border: none; border-radius: 6px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; margin-left: 2px;" title="Eliminar del turno">&#x2715;</button>' : '') +
                 '</div>';
             });
             
@@ -8475,7 +8490,7 @@ function renderTurnsList() {
                                     "<p style=\"margin: 4px 0 0; font-size: 0.875rem; opacity: 0.9; color: white;\">Los miembros seran notificados</p>" +
                                 "</div>" +
                             "</div>" +
-                            "<button onclick=\"closeScheduleLotteryModal()\" style=\"position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer;\">✕</button>" +
+                            "<button data-action=\"grp-close-schedule-lottery\" style=\"position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer;\">✕</button>" +
                         "</div>" +
                         "<div style=\"padding: 24px;\">" +
                             "<div style=\"margin-bottom: 20px;\">" +
@@ -8497,8 +8512,8 @@ function renderTurnsList() {
                             "</div>" +
                             "<div id=\"scheduleLotteryError\" style=\"display: none; padding: 12px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: #fca5a5; margin-bottom: 16px;\"></div>" +
                             "<div style=\"display: flex; gap: 12px;\">" +
-                                "<button onclick=\"closeScheduleLotteryModal()\" style=\"flex: 1; padding: 12px; background: #374151; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 500;\">Cancelar</button>" +
-                                "<button onclick=\"submitScheduleLottery()\" id=\"scheduleLotteryBtn\" style=\"flex: 1; padding: 12px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;\">Programar</button>" +
+                                "<button data-action=\"grp-close-schedule-lottery\" style=\"flex: 1; padding: 12px; background: #374151; border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 500;\">Cancelar</button>" +
+                                "<button data-action=\"grp-submit-schedule-lottery\" id=\"scheduleLotteryBtn\" style=\"flex: 1; padding: 12px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600;\">Programar</button>" +
                             "</div>" +
                         "</div>" +
                     "</div>" +
@@ -8656,7 +8671,10 @@ function renderTurnsList() {
                 if (maxMembers) updateData.max_members = parseInt(maxMembers);
                 if (start_date) updateData.start_date = start_date;
                 if (location) updateData.location = location;
-                updateData.updated_by = userId;
+
+                var thresholdVal = document.getElementById('editGroupThreshold') ? document.getElementById('editGroupThreshold').value : null;
+                if (thresholdVal) updateData.advanceThreshold = parseInt(thresholdVal);
+                // updated_by removed (server uses JWT identity)
 
                 var response = await fetch(apiBase + '/api/groups/' + currentEditGroupId + '/update', {
                     method: 'PATCH',
@@ -8667,7 +8685,7 @@ function renderTurnsList() {
                 var data = await response.json();
 
                 if (!response.ok || !data.success) {
-                    throw new Error(data.error || data.message || 'Error al actualizar grupo');
+                    throw new Error('Error al actualizar el grupo');
                 }
 
                 // Show success
@@ -8750,6 +8768,7 @@ function renderTurnsList() {
                     '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid ' + darkBorder + ';">' +
                         '<div>' +
                             '<h3 style="margin:0;font-size:1.15rem;font-weight:600;color:#f8fafc;">Registrar Pagos</h3>' +
+                            '<div id="cpThresholdBar" style="margin-top:8px;"></div>' +
                             '<p style="margin:4px 0 0;font-size:0.8rem;color:#64748b;">' + groupName + '</p>' +
                         '</div>' +
                         '<button data-action="cp-close" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;">&times;</button>' +
@@ -8808,6 +8827,7 @@ function renderTurnsList() {
                     cpState.selectedMembers = {};
                     cpUpdateSummary();
                     cpRenderTab();
+                    cpRenderThresholdBar();
                 } catch (err) {
                     document.getElementById('cpTabContent').innerHTML = '<div style="text-align:center;padding:40px 0;color:#ef4444;">Error de conexion</div>';
                 }
@@ -8896,7 +8916,8 @@ function renderTurnsList() {
                                     '<div style="font-size:0.8rem;font-weight:600;color:#cbd5e1;">' + amountDisplay + '</div>' +
                                     cpGetStatusPill(m.payment_status) + posLabel + cuotasLabel +
                                 '</div>' +
-                                (canPay ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.1);color:#00FFFF;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Registrar</button>' : '') +
+                                (canPay ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.1);color:#00FFFF;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Registrar</button>' +
+                                '<button data-action="cp-mark-mora" data-uid="' + escapeHtml(m.user_id) + '" data-name="' + escapeHtml(m.name || 'Usuario') + '" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#f87171;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;">Mora</button>' : '') +
                             '</div>' +
                         '</div>' +
                         '<div id="cp-form-' + escapeHtml(m.user_id) + '" style="display:none;"></div>';
@@ -8976,7 +8997,7 @@ function renderTurnsList() {
                         cpUpdateSummary();
                         cpRenderTab();
                     } else {
-                        alert('Error: ' + (json.data?.error?.message || 'No se pudo registrar el pago'));
+                        alert('No se pudo registrar el pago');
                     }
                 } catch (err) {
                     alert('Error de conexion');
@@ -9107,7 +9128,7 @@ function renderTurnsList() {
                         cpState.selectedMembers = {};
                         await cpLoadData();
                     } else {
-                        alert('Error: ' + (json.data?.error?.message || 'No se pudieron registrar los pagos'));
+                        alert('No se pudieron registrar los pagos');
                     }
                 } catch (err) {
                     alert('Error de conexion');
@@ -9154,6 +9175,12 @@ function renderTurnsList() {
                     case 'cp-confirm-single':
                         cpConfirmSingle(uid);
                         break;
+                    case 'cp-mark-mora':
+                        var moraName = btn.getAttribute('data-name') || 'este miembro';
+                        if (confirm('Marcar a ' + moraName + ' en mora para este ciclo?')) {
+                            cpMarkMora(uid);
+                        }
+                        break;
                     case 'cp-cancel-single':
                         var formEl = document.getElementById('cp-form-' + uid);
                         if (formEl) formEl.style.display = 'none';
@@ -9182,8 +9209,329 @@ function renderTurnsList() {
 
             // Load data
             cpLoadData();
+
+            // =============================================
+            // v4.11.0: COORDINATOR MARK MORA
+            // =============================================
+            async function cpMarkMora(userId) {
+                try {
+                    var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                    var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(cpState.groupId) + '/members/' + encodeURIComponent(userId) + '/mark-mora', {
+                        method: 'POST',
+                        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    var data = await resp.json();
+                    if (!resp.ok || !data.success) throw new Error('Error');
+                    if (typeof window.showSuccess === 'function') window.showSuccess('Mora registrada');
+                    await cpLoadData();
+                    cpRenderTab();
+                } catch (e) {
+                    if (typeof window.showError === 'function') window.showError('Error al registrar mora');
+                }
+            }
+
+            // =============================================
+            // v4.11.0: THRESHOLD PROGRESS BAR IN COORDINATOR VIEW
+            // =============================================
+            function cpRenderThresholdBar() {
+                var bar = document.getElementById('cpThresholdBar');
+                if (!bar || !cpState.members) return;
+                var total = 0, paid = 0;
+                cpState.members.forEach(function(m) {
+                    var pos = m.num_positions || 1;
+                    total += pos;
+                    if (m.payment_status === 'paid') paid += pos;
+                });
+                var threshold = cpState.threshold || 80;
+                var pct = total > 0 ? Math.round(paid / total * 100) : 0;
+                var needed = Math.ceil(total * threshold / 100);
+                var color = pct >= threshold ? '#22c55e' : '#f59e0b';
+                bar.innerHTML = '<div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#94a3b8;">' +
+                    '<div style="flex:1;height:6px;border-radius:3px;background:rgba(100,116,139,0.2);overflow:hidden;">' +
+                        '<div style="width:' + Math.min(pct, 100) + '%;height:100%;background:' + color + ';border-radius:3px;transition:width 0.3s;"></div>' +
+                    '</div>' +
+                    '<span>Pagos: ' + paid + '/' + total + ' (' + pct + '%) — Umbral: ' + threshold + '% (' + needed + ' necesarios)</span>' +
+                '</div>';
+            }
+
         }
         window.showCoordinatorPaymentView = showCoordinatorPaymentView;
+
+
+
+        // =============================================
+        // v4.11.0: EXTENSION REQUEST MODAL (pr- prefix)
+        // =============================================
+        async function showExtensionRequestModal(groupId) {
+            // Fetch group info
+            var apiBase = window.API_BASE_URL || 'https://latanda.online';
+            var groupData = null;
+            try {
+                var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId), { headers: getAuthHeaders() });
+                var d = await resp.json();
+                groupData = d.data?.data || d.data;
+            } catch (e) {}
+
+            var groupName = groupData ? escapeHtml(groupData.name || 'Grupo') : 'Grupo';
+            var cycle = groupData ? (groupData.current_cycle || 1) : '?';
+            var amount = groupData ? parseFloat(groupData.contribution_amount || 0).toLocaleString('es-HN', {minimumFractionDigits:2}) : '0.00';
+
+            // Calculate next quincena
+            var now = new Date();
+            var quinDay = now.getDate() < 15 ? 15 : new Date(now.getFullYear(), now.getMonth() + 1, 15).getDate();
+            var quinMonth = now.getDate() < 15 ? now.getMonth() : now.getMonth() + 1;
+            var quinDate = new Date(now.getFullYear(), quinMonth, 15);
+            var quinLabel = quinDate.toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            var overlay = document.createElement('div');
+            overlay.id = 'prOverlay';
+            overlay.className = 'pr-overlay';
+            overlay.innerHTML =
+                '<div class="pr-modal">' +
+                    '<div class="pr-header">' +
+                        '<h3>Solicitar Prorroga</h3>' +
+                        '<button data-action="pr-close" class="pr-close-btn">&times;</button>' +
+                    '</div>' +
+                    '<div class="pr-body">' +
+                        '<div class="pr-info">' +
+                            '<div class="pr-info-row"><span>' + groupName + '</span><span>Ciclo ' + escapeHtml(String(cycle)) + '</span></div>' +
+                            '<div class="pr-info-row"><span>Monto pendiente:</span><span style="color:#f59e0b;font-weight:600;">L. ' + amount + '</span></div>' +
+                        '</div>' +
+                        '<div class="pr-section">' +
+                            '<label class="pr-label">Cuando podras pagar?</label>' +
+                            '<label class="pr-radio-label"><input type="radio" name="prDateType" value="quincena" checked> Proxima Quincena: ' + escapeHtml(quinLabel) + '</label>' +
+                            '<label class="pr-radio-label"><input type="radio" name="prDateType" value="custom"> Otra fecha:</label>' +
+                            '<input type="date" id="prCustomDate" class="pr-input" style="display:none;" min="' + now.toISOString().split('T')[0] + '">' +
+                        '</div>' +
+                        '<div class="pr-section">' +
+                            '<label class="pr-label">Motivo (requerido):</label>' +
+                            '<textarea id="prReason" class="pr-textarea" maxlength="500" placeholder="Explica brevemente por que necesitas la prorroga..."></textarea>' +
+                            '<div class="pr-char-count"><span id="prCharCount">0</span>/500</div>' +
+                        '</div>' +
+                        '<div id="prError" class="pr-error" style="display:none;"></div>' +
+                    '</div>' +
+                    '<div class="pr-footer">' +
+                        '<button data-action="pr-close" class="pr-btn-cancel">Cancelar</button>' +
+                        '<button data-action="pr-submit" class="pr-btn-submit" data-group-id="' + escapeHtml(groupId) + '">Enviar Solicitud</button>' +
+                    '</div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(function() { overlay.classList.add('active'); });
+
+            // Toggle custom date visibility
+            overlay.addEventListener('change', function(e) {
+                if (e.target.name === 'prDateType') {
+                    document.getElementById('prCustomDate').style.display = e.target.value === 'custom' ? 'block' : 'none';
+                }
+            });
+
+            // Char counter
+            var ta = document.getElementById('prReason');
+            if (ta) ta.addEventListener('input', function() {
+                document.getElementById('prCharCount').textContent = ta.value.length;
+            });
+        }
+
+        async function prSubmitRequest(groupId) {
+            var errDiv = document.getElementById('prError');
+            var submitBtn = document.querySelector('[data-action="pr-submit"]');
+            var reason = (document.getElementById('prReason') || {}).value || '';
+            if (reason.trim().length < 1) {
+                if (errDiv) { errDiv.textContent = 'El motivo es requerido'; errDiv.style.display = 'block'; }
+                return;
+            }
+
+            var dateType = document.querySelector('input[name="prDateType"]:checked');
+            var bodyData = { reason: reason.trim() };
+            if (dateType && dateType.value === 'quincena') {
+                bodyData.next_quincena = true;
+            } else {
+                var customDate = (document.getElementById('prCustomDate') || {}).value;
+                if (customDate) bodyData.proposed_date = customDate;
+            }
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+            if (errDiv) errDiv.style.display = 'none';
+
+            try {
+                var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/extensions/request', {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+                var data = await resp.json();
+                if (!resp.ok || !data.success) throw new Error(data?.data?.error?.message || 'Error');
+
+                // Success
+                prClose();
+                if (typeof window.showSuccess === 'function') window.showSuccess('Solicitud de prorroga enviada');
+            } catch (e) {
+                if (errDiv) { errDiv.textContent = 'Error al enviar solicitud'; errDiv.style.display = 'block'; }
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Enviar Solicitud'; }
+            }
+        }
+
+        function prClose() {
+            var overlay = document.getElementById('prOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(function() { overlay.remove(); document.body.style.overflow = ''; }, 300);
+            }
+        }
+
+        // =============================================
+        // v4.11.0: EXTENSION MANAGER PANEL (ext- prefix)
+        // =============================================
+        async function showExtensionManager(groupId) {
+            var apiBase = window.API_BASE_URL || 'https://latanda.online';
+            var overlay = document.createElement('div');
+            overlay.id = 'extOverlay';
+            overlay.className = 'ext-overlay';
+            overlay.innerHTML =
+                '<div class="ext-modal">' +
+                    '<div class="ext-header">' +
+                        '<h3>Prorrogas y Moras</h3>' +
+                        '<button data-action="ext-close" class="ext-close-btn">&times;</button>' +
+                    '</div>' +
+                    '<div class="ext-tabs">' +
+                        '<button class="ext-tab active" data-action="ext-filter" data-filter="active">Pendientes</button>' +
+                        '<button class="ext-tab" data-action="ext-filter" data-filter="approved">Aprobadas</button>' +
+                        '<button class="ext-tab" data-action="ext-filter" data-filter="all">Todas</button>' +
+                    '</div>' +
+                    '<div id="extContent" class="ext-content"><div class="ext-loading">Cargando...</div></div>' +
+                    '<div id="extSummary" class="ext-summary"></div>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(function() { overlay.classList.add('active'); });
+
+            overlay.setAttribute('data-group-id', groupId);
+
+            // Load data
+            await extLoadData(groupId, 'active');
+
+            // Delegated events
+            overlay.addEventListener('click', async function(e) {
+                var btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                var action = btn.getAttribute('data-action');
+                if (action === 'ext-close') {
+                    extClose();
+                } else if (action === 'ext-filter') {
+                    overlay.querySelectorAll('.ext-tab').forEach(function(t) { t.classList.remove('active'); });
+                    btn.classList.add('active');
+                    await extLoadData(groupId, btn.getAttribute('data-filter'));
+                } else if (action === 'ext-approve' || action === 'ext-reject') {
+                    var defId = btn.getAttribute('data-id');
+                    var act = action === 'ext-approve' ? 'approve' : 'reject';
+                    btn.disabled = true;
+                    try {
+                        var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/extensions/' + encodeURIComponent(defId), {
+                            method: 'PATCH',
+                            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: act })
+                        });
+                        var data = await resp.json();
+                        if (!resp.ok || !data.success) throw new Error('Error');
+                        if (typeof window.showSuccess === 'function') window.showSuccess(act === 'approve' ? 'Prorroga aprobada' : 'Prorroga rechazada');
+                        var filter = overlay.querySelector('.ext-tab.active');
+                        await extLoadData(groupId, filter ? filter.getAttribute('data-filter') : 'active');
+                    } catch (err) {
+                        btn.disabled = false;
+                        if (typeof window.showError === 'function') window.showError('Error al procesar');
+                    }
+                }
+            });
+        }
+
+        async function extLoadData(groupId, status) {
+            var apiBase = window.API_BASE_URL || 'https://latanda.online';
+            var contentEl = document.getElementById('extContent');
+            var summaryEl = document.getElementById('extSummary');
+            if (!contentEl) return;
+            contentEl.innerHTML = '<div class="ext-loading">Cargando...</div>';
+
+            try {
+                var url = apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/extensions?status=' + (status || 'active');
+                var resp = await fetch(url, { headers: getAuthHeaders() });
+                var data = await resp.json();
+                if (!resp.ok || !data.success) throw new Error('Error');
+
+                var deferrals = data.data?.deferrals || [];
+                var summary = data.data?.summary || {};
+
+                // Render summary
+                if (summaryEl) {
+                    summaryEl.innerHTML = '<span>' + (summary.active_moras || 0) + ' moras activas</span> · <span>' + (summary.pending_extensions || 0) + ' prorrogas pendientes</span> · <span>' + (summary.approved_extensions || 0) + ' aprobadas</span>';
+                }
+
+                if (deferrals.length === 0) {
+                    contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:#64748b;">Sin registros</div>';
+                    return;
+                }
+
+                var html = '';
+                deferrals.forEach(function(d) {
+                    var isMora = d.type === 'mora';
+                    var icon = isMora ? '<span style="color:#ef4444;">&#x1F534;</span>' : '<span style="color:#f59e0b;">&#x1F536;</span>';
+                    var typeLabel = isMora ? 'MORA' : 'PRORROGA';
+                    var name = escapeHtml(d.user_name || 'Usuario');
+                    var amount = d.amount_owed ? 'L. ' + parseFloat(d.amount_owed).toLocaleString('es-HN', {minimumFractionDigits:2}) : '';
+                    var dateStr = '';
+                    if (d.proposed_date) {
+                        dateStr = 'Fecha: ' + new Date(d.proposed_date).toLocaleDateString('es-HN');
+                    } else if (d.mora_method) {
+                        dateStr = d.mora_method === 'auto_threshold' ? 'Auto (umbral)' : 'Manual';
+                    }
+
+                    html += '<div class="ext-item ext-item-' + d.type + '">' +
+                        '<div class="ext-item-header">' +
+                            icon + ' <strong>' + typeLabel + '</strong> — ' + name +
+                        '</div>' +
+                        '<div class="ext-item-meta">Ciclo ' + escapeHtml(String(d.cycle_number)) + ' | ' + amount + (dateStr ? ' | ' + escapeHtml(dateStr) : '') + '</div>' +
+                        (d.reason ? '<div class="ext-item-reason">"' + escapeHtml(d.reason) + '"</div>' : '') +
+                        '<div class="ext-item-status">Estado: <span class="ext-status-' + d.status + '">' + escapeHtml(d.status) + '</span></div>';
+
+                    // Action buttons for active extensions
+                    if (!isMora && d.status === 'active') {
+                        html += '<div class="ext-item-actions">' +
+                            '<button data-action="ext-approve" data-id="' + escapeHtml(d.id) + '" class="ext-btn-approve">Aprobar</button>' +
+                            '<button data-action="ext-reject" data-id="' + escapeHtml(d.id) + '" class="ext-btn-reject">Rechazar</button>' +
+                        '</div>';
+                    }
+                    html += '</div>';
+                });
+
+                contentEl.innerHTML = html;
+            } catch (e) {
+                contentEl.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error al cargar datos</div>';
+            }
+        }
+
+        function extClose() {
+            var overlay = document.getElementById('extOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(function() { overlay.remove(); document.body.style.overflow = ''; }, 300);
+            }
+        }
+
+        // Delegated handlers for pr- and ext- actions
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            var action = btn.getAttribute('data-action');
+            if (action === 'pr-close') prClose();
+            else if (action === 'pr-submit') {
+                var gid = btn.getAttribute('data-group-id');
+                if (gid) prSubmitRequest(gid);
+            }
+        });
 
         async function showRegisterPaymentModal(groupId) {
             currentPaymentGroupId = groupId;
@@ -9677,6 +10025,7 @@ function renderTurnsList() {
                 buttons += _gmBtn('gm-distribute', svgDistribute, greenBg, 'Distribuir Ciclo', 'Repartir fondos del ciclo', '#34d399', '#059669', greenBg, greenBorder);
                 buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-show-extensions', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(245,158,11,0.1)', 'Gestionar Prorrogas', 'Moras y solicitudes', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
                 buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente la tanda', '#f87171', '#ef4444', redBg, redBorder);
             }
             if (canManage) {
@@ -9724,6 +10073,7 @@ function renderTurnsList() {
                     case 'gm-manage-turns': if (typeof manageTurns === 'function') manageTurns(gid); break;
                     case 'gm-toggle-pause': if (typeof toggleTandaPause === 'function') toggleTandaPause(gid); break;
                     case 'gm-show-balances': if (typeof showTandaBalances === 'function') showTandaBalances(gid); break;
+                    case 'gm-show-extensions': if (typeof showExtensionManager === 'function') showExtensionManager(gid); break;
                     case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
                     case 'gm-edit-group': if (typeof editGroup === 'function') editGroup(gid); break;
                     case 'gm-delete-group': if (typeof confirmDeleteGroup === 'function') confirmDeleteGroup(gid); break;
@@ -11786,6 +12136,11 @@ function renderTurnsList() {
                     var gid2 = btn.getAttribute('data-group-id');
                     if (gid2 && typeof manageGroup === 'function') manageGroup(gid2);
                     break;
+
+                case 'grp-request-extension':
+                    var extGid = btn.getAttribute('data-group-id');
+                    if (extGid && typeof showExtensionRequestModal === 'function') showExtensionRequestModal(extGid);
+                    break;
                 case 'grp-manage-members':
                     if (typeof openMemberManagementSafe === 'function') openMemberManagementSafe(btn);
                     break;
@@ -12027,6 +12382,172 @@ function renderTurnsList() {
                 // Calendar modal
                 case 'grp-close-calendar':
                     if (typeof closeCalendarModal === 'function') closeCalendarModal();
+                    break;
+
+                // Position management (Phase 1)
+                case 'grp-auto-assign-random':
+                    var aarGid = btn.getAttribute('data-group-id');
+                    if (aarGid && typeof autoAssignPositions === 'function') autoAssignPositions(aarGid, 'random');
+                    break;
+                case 'grp-auto-assign-order':
+                    var aaoGid = btn.getAttribute('data-group-id');
+                    if (aaoGid && typeof autoAssignPositions === 'function') autoAssignPositions(aaoGid, 'order');
+                    break;
+                case 'grp-activate-tanda':
+                    var atGid = btn.getAttribute('data-group-id');
+                    if (atGid && typeof activateTanda === 'function') activateTanda(atGid);
+                    break;
+                case 'grp-approve-position':
+                    var apGid = btn.getAttribute('data-group-id');
+                    var apRid = btn.getAttribute('data-request-id');
+                    if (apGid && apRid && typeof approvePositionRequest === 'function') approvePositionRequest(apGid, apRid);
+                    break;
+                case 'grp-reject-position':
+                    var rpGid = btn.getAttribute('data-group-id');
+                    var rpRid = btn.getAttribute('data-request-id');
+                    if (rpGid && rpRid && typeof openRejectModal === 'function') openRejectModal(rpGid, rpRid);
+                    break;
+                case 'grp-open-manual-assign':
+                    var omaGid = btn.getAttribute('data-group-id');
+                    var omaPos = btn.getAttribute('data-position');
+                    if (omaGid && omaPos && typeof openManualAssignModal === 'function') openManualAssignModal(omaGid, parseInt(omaPos));
+                    break;
+                case 'grp-quick-pay':
+                    var qpTid = btn.getAttribute('data-tanda-id');
+                    if (qpTid && typeof quickPay === 'function') quickPay(qpTid);
+                    break;
+
+                // Tanda card actions (Phase 1)
+                case 'grp-start-tanda':
+                    var stTid = btn.getAttribute('data-tanda-id');
+                    if (stTid && typeof startTanda === 'function') startTanda(stTid);
+                    break;
+                case 'grp-invite-to-tanda':
+                    var itTid = btn.getAttribute('data-tanda-id');
+                    if (itTid && typeof inviteToTanda === 'function') inviteToTanda(itTid);
+                    break;
+                case 'grp-view-tanda-details':
+                    var vtTid = btn.getAttribute('data-tanda-id');
+                    if (vtTid && typeof viewTandaDetails === 'function') viewTandaDetails(vtTid);
+                    break;
+                case 'grp-make-tanda-payment':
+                    var mtTid = btn.getAttribute('data-tanda-id');
+                    if (mtTid && typeof makeTandaPayment === 'function') makeTandaPayment(mtTid);
+                    break;
+
+                // Toast close (Phase 1)
+                case 'grp-toast-close':
+                    var toast = btn.closest('.toast-notification');
+                    if (toast) { toast.classList.add('removing'); setTimeout(function() { toast.remove(); }, 300); }
+                    break;
+
+                // Confirm dialog (Phase 1)
+                case 'grp-confirm-cancel':
+                    var cOverlay = btn.closest('.modal-overlay');
+                    if (cOverlay) cOverlay.remove();
+                    if (typeof confirmCancel === 'function') confirmCancel();
+                    break;
+                case 'grp-confirm-action':
+                    var aOverlay = btn.closest('.modal-overlay');
+                    if (aOverlay) aOverlay.remove();
+                    if (typeof confirmAction === 'function') confirmAction();
+                    break;
+
+                // Member management (Phase 1)
+                case 'grp-toggle-anonymous':
+                    var taGid = btn.getAttribute('data-group-id');
+                    var taUid = btn.getAttribute('data-user-id');
+                    var taVal = btn.getAttribute('data-value') === 'true';
+                    if (taGid && taUid && typeof toggleMemberAnonymous === 'function') toggleMemberAnonymous(taGid, taUid, taVal);
+                    break;
+                case 'grp-request-role':
+                    var rrGid = btn.getAttribute('data-group-id');
+                    var rrRole = btn.getAttribute('data-current-role');
+                    if (rrGid && typeof showRequestRoleModal === 'function') showRequestRoleModal(rrGid, rrRole);
+                    break;
+                case 'grp-transfer-ownership':
+                    var toGid = btn.getAttribute('data-group-id');
+                    if (toGid && typeof showTransferOwnershipModal === 'function') showTransferOwnershipModal(toGid);
+                    break;
+                case 'grp-leave-group':
+                    var lgGid = btn.getAttribute('data-group-id');
+                    if (lgGid && typeof confirmLeaveGroup === 'function') confirmLeaveGroup(lgGid);
+                    break;
+                case 'grp-remove-member':
+                    var rmGid = btn.getAttribute('data-group-id');
+                    var rmUid = btn.getAttribute('data-user-id');
+                    var rmName = btn.getAttribute('data-user-name') || 'Usuario';
+                    if (rmGid && rmUid && typeof confirmRemoveMember === 'function') confirmRemoveMember(rmGid, rmUid, rmName);
+                    break;
+
+                // Invitation actions (Phase 1)
+                case 'grp-send-reminder':
+                    var srGid = btn.getAttribute('data-group-id');
+                    var srIid = btn.getAttribute('data-invitation-id');
+                    var srName = btn.getAttribute('data-invitee-name') || '';
+                    if (srGid && srIid && typeof sendInvitationReminder === 'function') sendInvitationReminder(srGid, srIid, srName);
+                    break;
+                case 'grp-delete-invitation':
+                    var diGid = btn.getAttribute('data-group-id');
+                    var diIid = btn.getAttribute('data-invitation-id');
+                    var diName = btn.getAttribute('data-invitee-name') || '';
+                    if (diGid && diIid && typeof deleteInvitation === 'function') deleteInvitation(diGid, diIid, diName);
+                    break;
+
+                // User search result select (Phase 1)
+                case 'grp-select-invite-user':
+                    var siUid = btn.getAttribute('data-user-id');
+                    var siName = btn.getAttribute('data-user-name') || '';
+                    var siEmail = btn.getAttribute('data-user-email') || '';
+                    if (siUid && typeof selectUserToInvite === 'function') selectUserToInvite(siUid, siName, siEmail);
+                    break;
+
+                // Edit group retry (Phase 1)
+                case 'grp-retry-edit-load':
+                    if (typeof currentEditGroupId !== 'undefined' && typeof showEditGroupModal === 'function') showEditGroupModal(currentEditGroupId);
+                    break;
+
+                // Lottery in turn management (Phase 1)
+                case 'grp-start-lottery-countdown':
+                    if (typeof startLotteryCountdown === 'function') startLotteryCountdown();
+                    break;
+                case 'grp-open-schedule-lottery':
+                    if (typeof openScheduleLotteryModal === 'function') openScheduleLotteryModal();
+                    break;
+
+                // Turn management buttons (Phase 1)
+                case 'grp-toggle-lock':
+                    var tlIdx = parseInt(btn.getAttribute('data-index'));
+                    if (!isNaN(tlIdx) && typeof toggleExpandedLock === 'function') toggleExpandedLock(tlIdx);
+                    break;
+                case 'grp-remove-position':
+                    var rpUid2 = btn.getAttribute('data-user-id');
+                    var rpSlot = parseInt(btn.getAttribute('data-slot'));
+                    if (rpUid2 && !isNaN(rpSlot) && typeof removeExpandedPosition === 'function') removeExpandedPosition(rpUid2, rpSlot);
+                    break;
+                case 'grp-add-position':
+                    var apUid2 = btn.getAttribute('data-user-id');
+                    if (apUid2 && typeof addExpandedPosition === 'function') addExpandedPosition(apUid2);
+                    break;
+                case 'grp-move-up':
+                    var muIdx = parseInt(btn.getAttribute('data-index'));
+                    if (!isNaN(muIdx) && typeof moveExpandedUp === 'function') moveExpandedUp(muIdx);
+                    break;
+                case 'grp-move-down':
+                    var mdIdx = parseInt(btn.getAttribute('data-index'));
+                    if (!isNaN(mdIdx) && typeof moveExpandedDown === 'function') moveExpandedDown(mdIdx);
+                    break;
+                case 'grp-remove-from-turns':
+                    var rftUid = btn.getAttribute('data-user-id');
+                    if (rftUid && typeof removeMemberFromTurns === 'function') removeMemberFromTurns(rftUid);
+                    break;
+
+                // Schedule lottery modal (Phase 1)
+                case 'grp-close-schedule-lottery':
+                    if (typeof closeScheduleLotteryModal === 'function') closeScheduleLotteryModal();
+                    break;
+                case 'grp-submit-schedule-lottery':
+                    if (typeof submitScheduleLottery === 'function') submitScheduleLottery();
                     break;
             }
         });
