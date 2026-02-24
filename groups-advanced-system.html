@@ -4377,36 +4377,43 @@ function attachTandasFunctions() {
 attachTandasFunctions();
 
 // === Phase 4: Delegated event listeners for converted inline handlers ===
+// Wrapped in DOMContentLoaded because form/modal HTML is below this script block
 (function() {
-    // Form submits
-    var editForm = document.getElementById('editGroupForm');
-    if (editForm) editForm.addEventListener('submit', function(e) { submitGroupEdit(e); });
+    function _attachPhase4Listeners() {
+        // Form submits
+        var editForm = document.getElementById('editGroupForm');
+        if (editForm) editForm.addEventListener('submit', function(e) { submitGroupEdit(e); });
 
-    var inviteForm = document.getElementById('inviteForm');
-    if (inviteForm) inviteForm.addEventListener('submit', function(e) { submitSimpleInvitation(e); });
+        var inviteForm = document.getElementById('inviteForm');
+        if (inviteForm) inviteForm.addEventListener('submit', function(e) { submitSimpleInvitation(e); });
 
-    // User search with debounce
-    var userSearchInput = document.getElementById('userSearchInput');
-    if (userSearchInput) {
-        var _userSearchTimer = null;
-        userSearchInput.addEventListener('input', function() {
-            clearTimeout(_userSearchTimer);
-            var val = this.value;
-            _userSearchTimer = setTimeout(function() { searchUsersToInvite(val); }, 300);
-        });
+        // User search with debounce
+        var userSearchInput = document.getElementById('userSearchInput');
+        if (userSearchInput) {
+            var _userSearchTimer = null;
+            userSearchInput.addEventListener('input', function() {
+                clearTimeout(_userSearchTimer);
+                var val = this.value;
+                _userSearchTimer = setTimeout(function() { searchUsersToInvite(val); }, 300);
+            });
+        }
+
+        // Proof file upload
+        var proofFileInput = document.getElementById('proofFileInput');
+        if (proofFileInput) proofFileInput.addEventListener('change', function(e) { handleProofUpload(e); });
+
+        // History filters
+        var historyTandaFilter = document.getElementById('historyTandaFilter');
+        if (historyTandaFilter) historyTandaFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
+
+        var historyPeriodFilter = document.getElementById('historyPeriodFilter');
+        if (historyPeriodFilter) historyPeriodFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
     }
-
-    // Proof file upload
-    var proofFileInput = document.getElementById('proofFileInput');
-    if (proofFileInput) proofFileInput.addEventListener('change', function(e) { handleProofUpload(e); });
-
-
-    // History filters
-    var historyTandaFilter = document.getElementById('historyTandaFilter');
-    if (historyTandaFilter) historyTandaFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
-
-    var historyPeriodFilter = document.getElementById('historyPeriodFilter');
-    if (historyPeriodFilter) historyPeriodFilter.addEventListener('change', function() { if (typeof filterHistory === 'function') filterHistory(); });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _attachPhase4Listeners);
+    } else {
+        _attachPhase4Listeners();
+    }
 })();
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", attachTandasFunctions);
