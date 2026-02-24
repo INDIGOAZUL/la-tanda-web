@@ -232,6 +232,15 @@ class CreateGroupFormHandler {
         const prevButton = document.getElementById('previous-step');
         const nextButton = document.getElementById('next-step');
 
+        // Notify sidebar of step change
+        try {
+            document.dispatchEvent(new CustomEvent('cgs-step-changed', { detail: { step: this.currentStep } }));
+        } catch(e) { /* IE fallback not needed */ }
+
+        // Update contract + calculator on every step display
+        if (typeof window.updateCgsContract === 'function') window.updateCgsContract();
+        if (typeof window.updateCgsCalculator === 'function') window.updateCgsCalculator();
+
         if (prevButton) {
             prevButton.style.display = this.currentStep === 1 ? 'none' : 'flex';
         }
@@ -627,66 +636,85 @@ class CreateGroupFormHandler {
     }
 
     async createGroup() {
+        var nextButton = document.getElementById('next-step');
         try {
             // Show loading state
-            var nextButton = document.getElementById('next-step');
             if (nextButton) {
                 nextButton.disabled = true;
                 nextButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Creando Grupo...</span>';
             }
 
-            // Create group using the complete system
-            if (!window.laTandaSystemComplete) {
-                throw new Error('Sistema no inicializado');
+            var fd = this.formData;
+            var response = await fetch('/api/registration/groups/create', {
+                method: 'POST',
+                headers: Object.assign({ 'Content-Type': 'application/json' },
+                    window.getAuthHeaders ? window.getAuthHeaders() : {}),
+                body: JSON.stringify({
+                    name: fd.name,
+                    description: fd.description || '',
+                    category: fd.type || 'general',
+                    location: fd.location || '',
+                    contribution_amount: parseFloat(fd.contribution) || 0,
+                    frequency: fd.paymentFrequency || 'biweekly',
+                    max_members: parseInt(fd.maxParticipants) || 10,
+                    grace_period: parseInt(fd.gracePeriod) || 5,
+                    start_date: fd.startDate || null,
+                    latePaymentPenalty: parseFloat(fd.penaltyAmount) || 0,
+                    commissionRate: fd.commissionRate !== undefined ? fd.commissionRate : null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('request_failed');
             }
 
-            var newGroup = await window.laTandaSystemComplete.createRealGroup(this.formData);
+            var savedGroup = await response.json();
+            var groupName = (savedGroup.data && savedGroup.data.name) || fd.name;
 
-            if (newGroup) {
-                // Success - redirect to groups view
-                this.showSuccessMessage(newGroup);
+            // Success
+            this.showSuccessMessage({ name: groupName, id: savedGroup.data && savedGroup.data.id });
 
-                var self = this;
-                setTimeout(async function() {
-                    // Reset button state
-                    var btn = document.getElementById('next-step');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-plus-circle"></i><span>Crear Grupo</span>';
-                    }
-
-                    // DIRECT CALL to switchTab to bypass integration.js cache issue
-
-                    // Hide all content sections
-                    document.querySelectorAll('.content-section').forEach(function(section) {
-                        section.classList.remove('active');
-                    });
-
-                    // Show My Groups section
-                    var groupsSection = document.getElementById('groups');
-                    if (groupsSection) {
-                        groupsSection.classList.add('active');
-                    }
-
-                    // Update nav tabs
-                    document.querySelectorAll('.nav-tab').forEach(function(tab) {
-                        tab.classList.remove('active');
-                    });
-                    var groupsTab = document.querySelector('[data-tab="groups"]');
-                    if (groupsTab) {
-                        groupsTab.classList.add('active');
-                    }
-
-                    self.resetForm();
-                }, 2000);
+            if (typeof window.showNotification === 'function') {
+                window.showNotification('Grupo creado exitosamente', 'success');
             }
+
+            // Refresh groups list and switch to Mis Grupos tab
+            var self = this;
+            setTimeout(function() {
+                if (nextButton) {
+                    nextButton.disabled = false;
+                    nextButton.innerHTML = '<i class="fas fa-plus-circle"></i><span>Crear Grupo</span>';
+                }
+
+                document.querySelectorAll('.content-section').forEach(function(s) { s.classList.remove('active'); });
+                var groupsSection = document.getElementById('groups');
+                if (groupsSection) groupsSection.classList.add('active');
+
+                document.querySelectorAll('.nav-tab, .groups-tab').forEach(function(t) { t.classList.remove('active'); });
+                var groupsTab = document.querySelector('[data-tab="groups"]');
+                if (groupsTab) {
+                    groupsTab.classList.add('active');
+                    groupsTab.setAttribute('aria-selected', 'true');
+                }
+
+                // Toggle sidebar cards back to grupos mode
+                var tandasSidebar = document.getElementById('tandasSidebarCards');
+                if (tandasSidebar) tandasSidebar.style.display = 'none';
+                var createSidebar = document.getElementById('createGroupSidebar');
+                if (createSidebar) createSidebar.style.display = 'none';
+                ['grpSidebarStats','grpTandaBalanceCard','grpSidebarRoles','grpSidebarActions','grpSidebarNextPayment','sidebarHubCards'].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.style.display = '';
+                });
+
+                if (typeof window.fetchMyGroups === 'function') {
+                    window.fetchMyGroups();
+                }
+                self.resetForm();
+            }, 2000);
 
         } catch (error) {
-            // Generic error message — never expose error.message to UI
             this.showErrorMessage();
-
-            // Reset button
-            var nextButton = document.getElementById('next-step');
             if (nextButton) {
                 nextButton.disabled = false;
                 nextButton.innerHTML = '<i class="fas fa-plus-circle"></i><span>Crear Grupo</span>';

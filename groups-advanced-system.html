@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.6">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.7">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -2316,6 +2316,36 @@ async function loadUsersWithoutPositions(groupId) {
                         </button>
                     </div>
                 </div>
+
+                <!-- Create Group Tab Sidebar -->
+                <div id="createGroupSidebar" style="display:none;">
+                    <!-- Card 1: Simulador Financiero -->
+                    <div class="grp-sidebar-stats" id="cgsCalculator">
+                        <h4 class="grp-sidebar-stats-title">Simulador Financiero</h4>
+                        <div id="cgsCalcContent">
+                            <div class="cgs-placeholder">Completa el paso 2 para ver la simulacion</div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Contrato de Tanda -->
+                    <div class="grp-sidebar-stats" id="cgsContract">
+                        <h4 class="grp-sidebar-stats-title">Contrato de Tanda</h4>
+                        <div id="cgsContractContent">
+                            <div class="cgs-contract-items" id="cgsContractItems"></div>
+                            <div class="cgs-contract-progress">
+                                <div class="cgs-contract-progress-label"><span id="cgsContractCount">0</span>/8 clausulas definidas</div>
+                                <div class="cgs-contract-progress-bar"><div class="cgs-contract-progress-fill" id="cgsContractFill" style="width:0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Guia Contextual -->
+                    <div class="grp-sidebar-stats" id="cgsTips">
+                        <h4 class="grp-sidebar-stats-title">Guia</h4>
+                        <div id="cgsTipsContent"></div>
+                    </div>
+                </div>
+
             </div>
         </aside>
 
@@ -2325,7 +2355,7 @@ async function loadUsersWithoutPositions(groupId) {
     <script src="notification-system.js"></script>
     <script src="loading-manager.js"></script>
     <script src="error-handler.js"></script>
-    <script src="create-group-form-handler-v2.js?v=20260221001"></script>
+    <script src="create-group-form-handler-v2.js?v=20260224002"></script>
     <script src="group-duplication-system.js"></script>
 
     <!-- Group Templates System -->
@@ -11405,6 +11435,7 @@ function renderTurnsList() {
             var grpActions = document.getElementById('grpSidebarActions');
             var grpNextPay = document.getElementById('grpSidebarNextPayment');
             var hubCards = document.getElementById('sidebarHubCards');
+            var createSidebar = document.getElementById('createGroupSidebar');
             if (tabName === 'tandas') {
                 if (tandasSidebar) tandasSidebar.style.display = '';
                 if (grpStats) grpStats.style.display = 'none';
@@ -11413,10 +11444,25 @@ function renderTurnsList() {
                 if (grpActions) grpActions.style.display = 'none';
                 if (grpNextPay) grpNextPay.style.display = 'none';
                 if (hubCards) hubCards.style.display = 'none';
+                if (createSidebar) createSidebar.style.display = 'none';
                 // Always re-fetch tandas data on tab switch for fresh data
                 if (typeof refreshTandas === 'function') { refreshTandas().catch(function(){}); }
+            } else if (tabName === 'create') {
+                if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (grpStats) grpStats.style.display = 'none';
+                if (grpTandaBalance) grpTandaBalance.style.display = 'none';
+                if (grpRoles) grpRoles.style.display = 'none';
+                if (grpActions) grpActions.style.display = 'none';
+                if (grpNextPay) grpNextPay.style.display = 'none';
+                if (hubCards) hubCards.style.display = '';
+                if (createSidebar) createSidebar.style.display = '';
+                // Initialize sidebar content
+                if (typeof updateCgsCalculator === 'function') updateCgsCalculator();
+                if (typeof updateCgsContract === 'function') updateCgsContract();
+                if (typeof updateCgsTips === 'function') updateCgsTips(1);
             } else {
                 if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (createSidebar) createSidebar.style.display = 'none';
                 if (grpStats) grpStats.style.display = '';
                 if (grpRoles) grpRoles.style.display = '';
                 if (grpActions) grpActions.style.display = '';
@@ -11450,6 +11496,7 @@ function renderTurnsList() {
             var grpActions = document.getElementById('grpSidebarActions');
             var grpNextPay = document.getElementById('grpSidebarNextPayment');
             var hubCards = document.getElementById('sidebarHubCards');
+            var createSidebar = document.getElementById('createGroupSidebar');
             if (tabName === 'tandas') {
                 if (tandasSidebar) tandasSidebar.style.display = '';
                 if (grpStats) grpStats.style.display = 'none';
@@ -11457,8 +11504,18 @@ function renderTurnsList() {
                 if (grpActions) grpActions.style.display = 'none';
                 if (grpNextPay) grpNextPay.style.display = 'none';
                 if (hubCards) hubCards.style.display = 'none';
+                if (createSidebar) createSidebar.style.display = 'none';
+            } else if (tabName === 'create') {
+                if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (grpStats) grpStats.style.display = 'none';
+                if (grpRoles) grpRoles.style.display = 'none';
+                if (grpActions) grpActions.style.display = 'none';
+                if (grpNextPay) grpNextPay.style.display = 'none';
+                if (hubCards) hubCards.style.display = '';
+                if (createSidebar) createSidebar.style.display = '';
             } else {
                 if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (createSidebar) createSidebar.style.display = 'none';
                 if (grpStats) grpStats.style.display = '';
                 if (grpRoles) grpRoles.style.display = '';
                 if (grpActions) grpActions.style.display = '';
@@ -11492,6 +11549,209 @@ function renderTurnsList() {
                 }, 300);
             }
         });
+    })();
+
+    // ===== CREATE GROUP SIDEBAR FUNCTIONS =====
+    (function() {
+        'use strict';
+
+        function _cgsEsc(text) {
+            if (text == null) return '';
+            var div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function _cgsFmtL(val) {
+            var n = parseFloat(val);
+            if (isNaN(n) || !isFinite(n)) return '--';
+            return 'L. ' + n.toLocaleString('es-HN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        // Card 1: Simulador Financiero
+        window.updateCgsCalculator = function() {
+            var container = document.getElementById('cgsCalcContent');
+            if (!container) return;
+
+            var contribEl = document.getElementById('contribution');
+            var membersEl = document.getElementById('max-participants');
+            var freqEl = document.getElementById('payment-frequency');
+            var commTypeEl = document.querySelector('input[name="commission-type"]:checked');
+            var customRateEl = document.getElementById('custom-commission-rate');
+
+            var contribution = contribEl ? parseFloat(contribEl.value) : NaN;
+            var members = membersEl ? parseInt(membersEl.value) : NaN;
+            var frequency = freqEl ? freqEl.value : '';
+
+            if (isNaN(contribution) || isNaN(members) || !frequency) {
+                container.innerHTML = '<div class="cgs-placeholder">Completa el paso 2 para ver la simulacion</div>';
+                return;
+            }
+
+            var pool = contribution * members;
+            var commType = commTypeEl ? commTypeEl.value : 'default';
+            var coordRate = 0;
+            if (commType === 'default') coordRate = 0.02;
+            else if (commType === 'custom') coordRate = (customRateEl ? parseFloat(customRateEl.value) : 2) / 100 || 0;
+            var platformRate = 0.03;
+            var coordFee = pool * coordRate;
+            var platformFee = pool * platformRate;
+            var netPayout = pool - coordFee - platformFee;
+
+            var freqDays = { weekly: 7, biweekly: 14, monthly: 30 };
+            var totalDays = members * (freqDays[frequency] || 30);
+            var totalMonths = Math.round(totalDays / 30);
+            var durationLabel = totalMonths < 12
+                ? '~' + totalMonths + ' meses'
+                : '~' + Math.floor(totalMonths / 12) + ' a' + (totalMonths % 12 > 0 ? ' ' + (totalMonths % 12) + 'm' : '');
+
+            var freqLabels = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+
+            container.innerHTML =
+                '<div class="gs-grid">' +
+                    '<div class="gs-cell"><span class="gs-cell-val gs-cyan">' + _cgsEsc(_cgsFmtL(pool)) + '</span><span class="gs-cell-label">Pool Total</span></div>' +
+                    '<div class="gs-cell"><span class="gs-cell-val gs-green">' + _cgsEsc(_cgsFmtL(netPayout)) + '</span><span class="gs-cell-label">Tu Cobro</span></div>' +
+                    '<div class="gs-cell"><span class="gs-cell-val gs-amber">' + _cgsEsc(durationLabel) + '</span><span class="gs-cell-label">Duracion</span></div>' +
+                    '<div class="gs-cell"><span class="gs-cell-val">' + _cgsEsc(String(members)) + '</span><span class="gs-cell-label">Miembros</span></div>' +
+                '</div>' +
+                '<div class="gs-rows">' +
+                    '<div class="gs-row">' +
+                        '<span class="gs-row-icon" style="color:#00FFFF"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>' +
+                        '<span class="gs-row-label">Aporte (' + _cgsEsc(freqLabels[frequency] || frequency) + ')</span>' +
+                        '<span class="gs-row-val gs-cyan">' + _cgsEsc(_cgsFmtL(contribution)) + '</span>' +
+                    '</div>' +
+                    '<div class="gs-row">' +
+                        '<span class="gs-row-icon" style="color:#f59e0b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>' +
+                        '<span class="gs-row-label">Comision coordinador</span>' +
+                        '<span class="gs-row-val gs-amber">' + _cgsEsc(_cgsFmtL(coordFee)) + ' (' + _cgsEsc(Math.round(coordRate * 100)) + '%)</span>' +
+                    '</div>' +
+                    '<div class="gs-row">' +
+                        '<span class="gs-row-icon" style="color:#94a3b8"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>' +
+                        '<span class="gs-row-label">Comision plataforma</span>' +
+                        '<span class="gs-row-val" style="color:#94a3b8">' + _cgsEsc(_cgsFmtL(platformFee)) + ' (3%)</span>' +
+                    '</div>' +
+                '</div>';
+        };
+
+        // Card 2: Contrato de Tanda
+        window.updateCgsContract = function() {
+            var itemsEl = document.getElementById('cgsContractItems');
+            var countEl = document.getElementById('cgsContractCount');
+            var fillEl = document.getElementById('cgsContractFill');
+            if (!itemsEl) return;
+
+            var clauses = [
+                { label: 'Nombre', val: (document.getElementById('group-name') || {}).value },
+                { label: 'Tipo', val: (document.getElementById('group-type') || {}).value },
+                { label: 'Ubicacion', val: (document.getElementById('location') || {}).value },
+                { label: 'Aporte', val: (document.getElementById('contribution') || {}).value },
+                { label: 'Frecuencia', val: (document.getElementById('payment-frequency') || {}).value },
+                { label: 'Miembros', val: (document.getElementById('max-participants') || {}).value },
+                { label: 'Periodo de gracia', val: (document.getElementById('grace-period') || {}).value },
+                { label: 'Penalidad', val: (document.getElementById('penalty-amount') || {}).value }
+            ];
+
+            var freqLabels = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+            var typeLabels = { familiar: 'Familiar', laboral: 'Laboral', comunitario: 'Comunitario', comercial: 'Comercial' };
+            var filled = 0;
+            var html = '';
+
+            for (var i = 0; i < clauses.length; i++) {
+                var c = clauses[i];
+                var hasVal = c.val && String(c.val).trim().length > 0;
+                if (hasVal) filled++;
+                var icon = hasVal ? '<span class="cgs-ci-icon cgs-ci-done">&#10003;</span>' : '<span class="cgs-ci-icon cgs-ci-pending">&#9203;</span>';
+                var displayVal = '--';
+                if (hasVal) {
+                    if (c.label === 'Frecuencia') displayVal = freqLabels[c.val] || c.val;
+                    else if (c.label === 'Tipo') displayVal = typeLabels[c.val] || c.val;
+                    else if (c.label === 'Aporte') displayVal = _cgsFmtL(c.val);
+                    else if (c.label === 'Penalidad' && parseFloat(c.val) > 0) displayVal = _cgsFmtL(c.val);
+                    else if (c.label === 'Penalidad') displayVal = 'Sin multa';
+                    else if (c.label === 'Periodo de gracia') displayVal = c.val + ' dias';
+                    else displayVal = c.val;
+                }
+
+                html += '<div class="cgs-contract-item ' + (hasVal ? 'cgs-ci-filled' : '') + '">' +
+                    icon +
+                    '<span class="cgs-ci-label">' + _cgsEsc(c.label) + ':</span>' +
+                    '<span class="cgs-ci-val">' + _cgsEsc(displayVal) + '</span>' +
+                '</div>';
+            }
+
+            itemsEl.innerHTML = html;
+            if (countEl) countEl.textContent = filled;
+            if (fillEl) fillEl.style.width = Math.round((filled / 8) * 100) + '%';
+        };
+
+        // Card 3: Guia Contextual
+        var _cgsTipsData = {
+            1: [
+                'Un nombre descriptivo atrae mas miembros',
+                'Las tandas familiares tienen 95% de cumplimiento',
+                'Agregar ubicacion facilita encontrar miembros cercanos'
+            ],
+            2: [
+                'Aportes quincenales son los mas populares en Honduras',
+                'Entre 10-25 miembros es el rango optimo',
+                'Fecha de inicio minimo 7 dias para reclutar miembros'
+            ],
+            3: [
+                'Un periodo de gracia de 5 dias reduce conflictos',
+                'La verificacion KYC aumenta la confianza del grupo',
+                'Las penalidades disuaden pagos tardios'
+            ],
+            4: [
+                'Revisa todos los datos antes de confirmar',
+                'Podras editar la configuracion despues de crear',
+                'Invita miembros desde la pestana Mis Grupos'
+            ]
+        };
+
+        window.updateCgsTips = function(step) {
+            var container = document.getElementById('cgsTipsContent');
+            if (!container) return;
+            var tips = _cgsTipsData[step] || _cgsTipsData[1];
+            var html = '';
+            for (var i = 0; i < tips.length; i++) {
+                html += '<div class="cgs-tip"><span class="cgs-tip-icon">&#128161;</span><span class="cgs-tip-text">' + _cgsEsc(tips[i]) + '</span></div>';
+            }
+            container.innerHTML = html;
+        };
+
+        // Listen for form inputs to update calculator + contract in real time
+        document.addEventListener('input', function(e) {
+            var id = e.target.id;
+            var name = e.target.name;
+            if (id === 'contribution' || id === 'max-participants' || id === 'custom-commission-rate' ||
+                id === 'group-name' || id === 'location' || id === 'grace-period' || id === 'penalty-amount') {
+                updateCgsCalculator();
+                updateCgsContract();
+            }
+            if (name === 'commission-type') {
+                updateCgsCalculator();
+            }
+        });
+        document.addEventListener('change', function(e) {
+            var id = e.target.id;
+            var name = e.target.name;
+            if (id === 'payment-frequency' || id === 'group-type') {
+                updateCgsCalculator();
+                updateCgsContract();
+            }
+            if (name === 'commission-type') {
+                updateCgsCalculator();
+            }
+        });
+
+        // Listen for step changes from form handler
+        document.addEventListener('cgs-step-changed', function(e) {
+            var step = e.detail && e.detail.step;
+            if (step) updateCgsTips(step);
+        });
+
+        // Initialize tips for step 1
+        updateCgsTips(1);
     })();
     </script>
 
