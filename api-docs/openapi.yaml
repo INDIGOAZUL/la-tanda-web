@@ -1,0 +1,2018 @@
+openapi: 3.0.3
+info:
+  title: La Tanda Platform API
+  description: |
+    API REST completa para la plataforma La Tanda - Sistema de tandas y grupos de ahorro.
+    
+    ## Autenticacion
+    La mayoria de endpoints requieren autenticacion JWT. Incluye el token en el header:
+    ```
+    Authorization: Bearer <token>
+    ```
+    
+    ## Limites de Rate
+    - 100 requests/minuto para endpoints publicos
+    - 300 requests/minuto para endpoints autenticados
+    
+  version: 3.5.0
+  contact:
+    name: La Tanda Support
+    email: soporte@latanda.online
+    url: https://latanda.online
+
+servers:
+  - url: https://latanda.online/api
+    description: Production Server
+  - url: http://localhost:3002/api
+    description: Development Server
+
+tags:
+  - name: Health
+    description: System health and status checks
+  - name: Authentication
+    description: User authentication and session management
+  - name: Users
+    description: User profile and settings management
+  - name: Groups
+    description: Savings groups management
+  - name: Tandas
+    description: Tanda (rotating savings) specific operations
+  - name: Wallet
+    description: Digital wallet operations
+  - name: Payments
+    description: Payment processing
+  - name: Notifications
+    description: User notifications
+  - name: KYC
+    description: Know Your Customer verification
+  - name: Admin
+    description: Administrative operations
+  - name: Mining
+    description: LTD token mining
+  - name: Referrals
+    description: Referral program
+  - name: MIA
+    description: AI Assistant endpoints
+  - name: Mobile
+    description: Mobile app specific endpoints
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /status:
+    get:
+      tags: [Health]
+      summary: System status
+      operationId: systemStatus
+      responses:
+        "200":
+          description: System status details
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: "Juan Perez"
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                phone:
+                  type: string
+                referral_code:
+                  type: string
+      responses:
+        "201":
+          description: User registered
+        "400":
+          description: Validation error
+        "409":
+          description: Email already registered
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Token refreshed
+
+  /auth/send-verification:
+    post:
+      tags: [Authentication]
+      summary: Send email verification
+      operationId: sendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Verification email sent
+
+  /auth/verify-email:
+    post:
+      tags: [Authentication]
+      summary: Verify email
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Email verified
+
+  /auth/request-reset:
+    post:
+      tags: [Authentication]
+      summary: Request password reset
+      operationId: requestReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Reset email sent
+
+  /auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset password
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: Password reset successful
+
+  /user/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+    put:
+      tags: [Users]
+      summary: Update user profile
+      operationId: updateUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        "200":
+          description: Profile updated
+
+  /user/settings:
+    get:
+      tags: [Users]
+      summary: Get user settings
+      operationId: getUserSettings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User settings
+    put:
+      tags: [Users]
+      summary: Update user settings
+      operationId: updateUserSettings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Settings updated
+
+  /user/2fa/setup:
+    post:
+      tags: [Users]
+      summary: Setup 2FA
+      operationId: setup2FA
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA setup data
+
+  /user/2fa/verify:
+    post:
+      tags: [Users]
+      summary: Verify 2FA code
+      operationId: verify2FA
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        "200":
+          description: 2FA enabled
+
+  /user/2fa/status:
+    get:
+      tags: [Users]
+      summary: Get 2FA status
+      operationId: get2FAStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: 2FA status
+
+  /user/change-password:
+    post:
+      tags: [Users]
+      summary: Change password
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        "200":
+          description: Password changed
+
+  /user/activity:
+    get:
+      tags: [Users]
+      summary: Get user activity
+      operationId: getUserActivity
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Activity log
+
+  /user/devices:
+    get:
+      tags: [Users]
+      summary: Get user devices
+      operationId: getUserDevices
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Device list
+
+  /user/achievements:
+    get:
+      tags: [Users]
+      summary: Get user achievements
+      operationId: getUserAchievements
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Achievements list
+
+  /groups:
+    get:
+      tags: [Groups]
+      summary: List groups
+      operationId: listGroups
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, pending, completed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of groups
+    post:
+      tags: [Groups]
+      summary: Create group
+      operationId: createGroup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, contribution_amount, frequency, max_members]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                contribution_amount:
+                  type: number
+                  minimum: 50
+                frequency:
+                  type: string
+                  enum: [weekly, biweekly, monthly]
+                max_members:
+                  type: integer
+                  minimum: 2
+                  maximum: 50
+      responses:
+        "201":
+          description: Group created
+
+  /groups/my-groups:
+    get:
+      tags: [Groups]
+      summary: Get my groups
+      operationId: getMyGroups
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User groups
+
+  /groups/public-pg:
+    get:
+      tags: [Groups]
+      summary: Get public groups
+      operationId: getPublicGroups
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Public groups list
+
+  /groups/my-pending-requests:
+    get:
+      tags: [Groups]
+      summary: Get pending join requests
+      operationId: getMyPendingRequests
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Pending requests
+
+  /tandas/create:
+    post:
+      tags: [Tandas]
+      summary: Create tanda
+      operationId: createTanda
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, contribution_amount, frequency, total_positions]
+              properties:
+                name:
+                  type: string
+                contribution_amount:
+                  type: number
+                  minimum: 100
+                frequency:
+                  type: string
+                  enum: [weekly, biweekly, monthly]
+                total_positions:
+                  type: integer
+                  minimum: 2
+                  maximum: 20
+                start_date:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Tanda created
+
+  /tandas:
+    get:
+      tags: [Tandas]
+      summary: List tandas
+      operationId: listTandas
+      responses:
+        "200":
+          description: Tandas list
+
+  /tandas/my-tandas:
+    get:
+      tags: [Tandas]
+      summary: Get my tandas
+      operationId: getMyTandas
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User tandas
+
+  /tandas/start:
+    post:
+      tags: [Tandas]
+      summary: Start tanda
+      operationId: startTanda
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tanda_id]
+              properties:
+                tanda_id:
+                  type: string
+      responses:
+        "200":
+          description: Tanda started
+
+  /tandas/pay:
+    post:
+      tags: [Tandas]
+      summary: Make tanda payment
+      operationId: makeTandaPayment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tanda_id, amount]
+              properties:
+                tanda_id:
+                  type: string
+                amount:
+                  type: number
+                  minimum: 0
+      responses:
+        "200":
+          description: Payment processed
+
+  /tandas/available-positions:
+    get:
+      tags: [Tandas]
+      summary: Get available positions
+      operationId: getAvailablePositions
+      responses:
+        "200":
+          description: Available positions
+
+  /tandas/request-position:
+    post:
+      tags: [Tandas]
+      summary: Request position
+      operationId: requestPosition
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Position requested
+
+  /wallet/balance:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      operationId: getWalletBalance
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Wallet balance
+
+  /wallet/deposit/bank-transfer:
+    post:
+      tags: [Wallet]
+      summary: Deposit via bank transfer
+      operationId: depositBankTransfer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+                  minimum: 50
+      responses:
+        "200":
+          description: Deposit instructions
+
+  /wallet/deposit/mobile:
+    post:
+      tags: [Wallet]
+      summary: Deposit via mobile money
+      operationId: depositMobile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, provider]
+              properties:
+                amount:
+                  type: number
+                  minimum: 10
+                provider:
+                  type: string
+                  enum: [tigo_money, claro_money]
+      responses:
+        "200":
+          description: Deposit instructions
+
+  /wallet/deposit/crypto:
+    post:
+      tags: [Wallet]
+      summary: Deposit via crypto
+      operationId: depositCrypto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount:
+                  type: number
+                currency:
+                  type: string
+                  enum: [USDT, USDC, BTC, ETH]
+      responses:
+        "200":
+          description: Deposit address
+
+  /wallet/withdraw/bank:
+    post:
+      tags: [Wallet]
+      summary: Withdraw to bank
+      operationId: withdrawBank
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, bank_account]
+              properties:
+                amount:
+                  type: number
+                  minimum: 100
+                bank_account:
+                  type: string
+                bank_name:
+                  type: string
+      responses:
+        "200":
+          description: Withdrawal initiated
+
+  /wallet/withdraw/mobile:
+    post:
+      tags: [Wallet]
+      summary: Withdraw to mobile money
+      operationId: withdrawMobile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, phone, provider]
+              properties:
+                amount:
+                  type: number
+                  minimum: 50
+                phone:
+                  type: string
+                provider:
+                  type: string
+                  enum: [tigo_money, claro_money]
+      responses:
+        "200":
+          description: Withdrawal initiated
+
+  /wallet/withdraw/crypto:
+    post:
+      tags: [Wallet]
+      summary: Withdraw to crypto
+      operationId: withdrawCrypto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, address, currency]
+              properties:
+                amount:
+                  type: number
+                address:
+                  type: string
+                currency:
+                  type: string
+      responses:
+        "200":
+          description: Withdrawal initiated
+
+  /wallet/withdraw/fees:
+    get:
+      tags: [Wallet]
+      summary: Get withdrawal fees
+      operationId: getWithdrawFees
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Fee structure
+
+  /wallet/withdrawals:
+    get:
+      tags: [Wallet]
+      summary: Get withdrawal history
+      operationId: getWithdrawals
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Withdrawal history
+
+  /wallet/balance-history:
+    get:
+      tags: [Wallet]
+      summary: Get balance history
+      operationId: getBalanceHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Transaction history
+
+  /wallet/pin/set:
+    post:
+      tags: [Wallet]
+      summary: Set wallet PIN
+      operationId: setWalletPin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+                  pattern: "^[0-9]{4}$"
+      responses:
+        "200":
+          description: PIN set
+
+  /wallet/pin/verify:
+    post:
+      tags: [Wallet]
+      summary: Verify wallet PIN
+      operationId: verifyWalletPin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pin]
+              properties:
+                pin:
+                  type: string
+      responses:
+        "200":
+          description: PIN verified
+
+  /wallet/pin/status:
+    get:
+      tags: [Wallet]
+      summary: Get PIN status
+      operationId: getPinStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: PIN status
+
+  /wallet/limits:
+    get:
+      tags: [Wallet]
+      summary: Get wallet limits
+      operationId: getWalletLimits
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Wallet limits
+    put:
+      tags: [Wallet]
+      summary: Update wallet limits
+      operationId: updateWalletLimits
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Limits updated
+
+  /wallet/whitelist:
+    get:
+      tags: [Wallet]
+      summary: Get withdrawal whitelist
+      operationId: getWhitelist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Whitelist addresses
+    post:
+      tags: [Wallet]
+      summary: Add to whitelist
+      operationId: addToWhitelist
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Address added
+
+  /contributions:
+    post:
+      tags: [Payments]
+      summary: Make contribution
+      operationId: makeContribution
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [group_id, amount]
+              properties:
+                group_id:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        "200":
+          description: Contribution made
+
+  /contributions/request:
+    post:
+      tags: [Payments]
+      summary: Request contribution
+      operationId: requestContribution
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Contribution requested
+
+  /payments/methods/available:
+    post:
+      tags: [Payments]
+      summary: Get available payment methods
+      operationId: getPaymentMethods
+      responses:
+        "200":
+          description: Payment methods
+
+  /payments/process:
+    post:
+      tags: [Payments]
+      summary: Process payment
+      operationId: processPayment
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payment processed
+
+  /payments/history:
+    get:
+      tags: [Payments]
+      summary: Get payment history
+      operationId: getPaymentHistory
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payment history
+
+  /deposit/upload-receipt:
+    post:
+      tags: [Payments]
+      summary: Upload payment receipt
+      operationId: uploadReceipt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                receipt:
+                  type: string
+                  format: binary
+                deposit_id:
+                  type: string
+      responses:
+        "200":
+          description: Receipt uploaded
+
+  /deposit/update-status:
+    post:
+      tags: [Payments]
+      summary: Update deposit status
+      operationId: updateDepositStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Status updated
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Get notifications
+      operationId: getNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Notifications list
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread count
+      operationId: getUnreadCount
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Unread count
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all as read
+      operationId: markAllRead
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All marked as read
+
+  /notifications/preferences:
+    get:
+      tags: [Notifications]
+      summary: Get notification preferences
+      operationId: getNotificationPrefs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preferences
+    put:
+      tags: [Notifications]
+      summary: Update notification preferences
+      operationId: updateNotificationPrefs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preferences updated
+
+  /search:
+    get:
+      tags: [Search]
+      summary: Global search
+      operationId: globalSearch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [all, users, groups, tandas]
+      responses:
+        "200":
+          description: Search results
+
+  /kyc/upload-document:
+    post:
+      tags: [KYC]
+      summary: Upload KYC document
+      operationId: uploadKycDocument
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  type: string
+                  format: binary
+                document_type:
+                  type: string
+                  enum: [dni, passport, license]
+      responses:
+        "200":
+          description: Document uploaded
+
+  /kyc/process-ocr:
+    post:
+      tags: [KYC]
+      summary: Process document OCR
+      operationId: processKycOcr
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OCR processed
+
+  /kyc/status:
+    get:
+      tags: [KYC]
+      summary: Get KYC status
+      operationId: getKycStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: KYC status
+
+  /kyc/upload-selfie:
+    post:
+      tags: [KYC]
+      summary: Upload selfie for verification
+      operationId: uploadKycSelfie
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Selfie uploaded
+
+  /mining/status:
+    get:
+      tags: [Mining]
+      summary: Get mining status
+      operationId: getMiningStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Mining status
+
+  /mining/claim:
+    post:
+      tags: [Mining]
+      summary: Claim mined tokens
+      operationId: claimTokens
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Tokens claimed
+
+  /conversion/request:
+    post:
+      tags: [Mining]
+      summary: Request LTD conversion
+      operationId: requestConversion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Conversion requested
+
+  /referrals/my-code:
+    get:
+      tags: [Referrals]
+      summary: Get referral code
+      operationId: getReferralCode
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Referral code
+
+  /referrals/list:
+    get:
+      tags: [Referrals]
+      summary: List referrals
+      operationId: listReferrals
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Referrals list
+
+  /referrals/send:
+    post:
+      tags: [Referrals]
+      summary: Send referral invitation
+      operationId: sendReferral
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Invitation sent
+
+  /referrals/apply:
+    post:
+      tags: [Referrals]
+      summary: Apply referral code
+      operationId: applyReferral
+      responses:
+        "200":
+          description: Code applied
+
+  /mia/conversation/start:
+    post:
+      tags: [MIA]
+      summary: Start MIA conversation
+      operationId: startMiaConversation
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Conversation started
+
+  /mia/message/send:
+    post:
+      tags: [MIA]
+      summary: Send message to MIA
+      operationId: sendMiaMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conversation_id, message]
+              properties:
+                conversation_id:
+                  type: string
+                message:
+                  type: string
+      responses:
+        "200":
+          description: AI response
+
+  /mia/context/update:
+    post:
+      tags: [MIA]
+      summary: Update MIA context
+      operationId: updateMiaContext
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Context updated
+
+  /mia/capabilities:
+    get:
+      tags: [MIA]
+      summary: Get MIA capabilities
+      operationId: getMiaCapabilities
+      responses:
+        "200":
+          description: Capabilities list
+
+  /admin/login:
+    post:
+      tags: [Admin]
+      summary: Admin login
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Admin authenticated
+        "401":
+          description: Invalid credentials
+
+  /admin/verify:
+    post:
+      tags: [Admin]
+      summary: Verify admin token
+      operationId: verifyAdmin
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Token valid
+
+  /admin/logout:
+    post:
+      tags: [Admin]
+      summary: Admin logout
+      operationId: adminLogout
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Logged out
+
+  /admin/2fa/setup:
+    post:
+      tags: [Admin]
+      summary: Setup admin 2FA
+      operationId: setupAdmin2FA
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: 2FA setup data
+
+  /admin/2fa/verify:
+    post:
+      tags: [Admin]
+      summary: Verify admin 2FA
+      operationId: verifyAdmin2FA
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: 2FA verified
+
+  /admin/dashboard/stats:
+    get:
+      tags: [Admin]
+      summary: Get dashboard stats
+      operationId: getAdminStats
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Dashboard statistics
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users
+      operationId: adminListUsers
+      security:
+        - adminAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Users list
+
+  /admin/users/stats:
+    get:
+      tags: [Admin]
+      summary: Get user statistics
+      operationId: getUserStats
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: User statistics
+
+  /admin/deposits/pending:
+    get:
+      tags: [Admin]
+      summary: Get pending deposits
+      operationId: getPendingDeposits
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Pending deposits
+
+  /admin/deposits/confirm:
+    post:
+      tags: [Admin]
+      summary: Confirm deposit
+      operationId: confirmDeposit
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deposit_id]
+              properties:
+                deposit_id:
+                  type: string
+      responses:
+        "200":
+          description: Deposit confirmed
+
+  /admin/deposits/reject:
+    post:
+      tags: [Admin]
+      summary: Reject deposit
+      operationId: rejectDeposit
+      security:
+        - adminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deposit_id]
+              properties:
+                deposit_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Deposit rejected
+
+  /admin/withdrawals/pending:
+    get:
+      tags: [Admin]
+      summary: Get pending withdrawals
+      operationId: getPendingWithdrawals
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Pending withdrawals
+
+  /admin/payouts/pending:
+    get:
+      tags: [Admin]
+      summary: Get pending payouts
+      operationId: getPendingPayouts
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Pending payouts
+
+  /admin/payouts/history:
+    get:
+      tags: [Admin]
+      summary: Get payout history
+      operationId: getPayoutHistory
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Payout history
+
+  /admin/contributions/pending:
+    get:
+      tags: [Admin]
+      summary: Get pending contributions
+      operationId: getPendingContributions
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Pending contributions
+
+  /admin/groups/deleted:
+    get:
+      tags: [Admin]
+      summary: Get deleted groups
+      operationId: getDeletedGroups
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Deleted groups
+
+  /admin/audit-logs:
+    get:
+      tags: [Admin]
+      summary: Get audit logs
+      operationId: getAuditLogs
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Audit logs
+
+  /admin/metrics:
+    get:
+      tags: [Admin]
+      summary: Get system metrics
+      operationId: getMetrics
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: System metrics
+
+  /admin/failed-joins:
+    get:
+      tags: [Admin]
+      summary: Get failed join attempts
+      operationId: getFailedJoins
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Failed joins
+
+  /mobile/init:
+    post:
+      tags: [Mobile]
+      summary: Initialize mobile app
+      operationId: mobileInit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_id:
+                  type: string
+                app_version:
+                  type: string
+                platform:
+                  type: string
+                  enum: [ios, android]
+      responses:
+        "200":
+          description: App initialized
+
+  /mobile/settings:
+    post:
+      tags: [Mobile]
+      summary: Update mobile settings
+      operationId: updateMobileSettings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Settings updated
+
+  /mobile/session/start:
+    post:
+      tags: [Mobile]
+      summary: Start mobile session
+      operationId: startMobileSession
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Session started
+
+  /mobile/session/end:
+    post:
+      tags: [Mobile]
+      summary: End mobile session
+      operationId: endMobileSession
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Session ended
+
+  /mobile/feedback:
+    post:
+      tags: [Mobile]
+      summary: Submit feedback
+      operationId: submitFeedback
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Feedback submitted
+
+  /mobile/analytics:
+    post:
+      tags: [Mobile]
+      summary: Submit analytics
+      operationId: submitAnalytics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Analytics received
+
+  /push/register:
+    post:
+      tags: [Mobile]
+      summary: Register push token
+      operationId: registerPushToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                platform:
+                  type: string
+                  enum: [ios, android]
+      responses:
+        "200":
+          description: Token registered
+
+  /push/send:
+    post:
+      tags: [Mobile]
+      summary: Send push notification
+      operationId: sendPush
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Push sent
+
+  /sync/status:
+    post:
+      tags: [Mobile]
+      summary: Get sync status
+      operationId: getSyncStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Sync status
+
+  /sync/upload:
+    post:
+      tags: [Mobile]
+      summary: Upload sync data
+      operationId: uploadSyncData
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Data uploaded
+
+  /sync/download:
+    post:
+      tags: [Mobile]
+      summary: Download sync data
+      operationId: downloadSyncData
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Data downloaded
+
+  /monitoring/analyze-transaction:
+    post:
+      tags: [Monitoring]
+      summary: Analyze transaction for fraud
+      operationId: analyzeTransaction
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Analysis result
+
+  /monitoring/alerts:
+    get:
+      tags: [Monitoring]
+      summary: Get monitoring alerts
+      operationId: getAlerts
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Alerts list
+
+  /monitoring/dashboard:
+    get:
+      tags: [Monitoring]
+      summary: Get monitoring dashboard
+      operationId: getMonitoringDashboard
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Dashboard data
+
+  /recovery/backup-codes/generate:
+    post:
+      tags: [Recovery]
+      summary: Generate backup codes
+      operationId: generateBackupCodes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Backup codes generated
+
+  /recovery/backup-codes/verify:
+    post:
+      tags: [Recovery]
+      summary: Verify backup code
+      operationId: verifyBackupCode
+      responses:
+        "200":
+          description: Code verified
+
+  /recovery/backup-codes/status:
+    get:
+      tags: [Recovery]
+      summary: Get backup codes status
+      operationId: getBackupCodesStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Status returned
+
+  /recovery/security-questions/set:
+    post:
+      tags: [Recovery]
+      summary: Set security questions
+      operationId: setSecurityQuestions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Questions set
+
+  /recovery/security-questions/verify:
+    post:
+      tags: [Recovery]
+      summary: Verify security answers
+      operationId: verifySecurityAnswers
+      responses:
+        "200":
+          description: Answers verified
+
+  /auth/webauthn/register-options:
+    post:
+      tags: [Authentication]
+      summary: Get WebAuthn registration options
+      operationId: getWebAuthnRegisterOptions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Registration options
+
+  /auth/webauthn/register:
+    post:
+      tags: [Authentication]
+      summary: Register WebAuthn credential
+      operationId: registerWebAuthn
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Credential registered
+
+  /auth/webauthn/authenticate-options:
+    post:
+      tags: [Authentication]
+      summary: Get WebAuthn auth options
+      operationId: getWebAuthnAuthOptions
+      responses:
+        "200":
+          description: Auth options
+
+  /auth/webauthn/authenticate:
+    post:
+      tags: [Authentication]
+      summary: Authenticate with WebAuthn
+      operationId: authenticateWebAuthn
+      responses:
+        "200":
+          description: Authenticated
+
+  /auth/webauthn/credentials:
+    get:
+      tags: [Authentication]
+      summary: Get WebAuthn credentials
+      operationId: getWebAuthnCredentials
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Credentials list
+
+  /rewards/onboarding/claim:
+    post:
+      tags: [Rewards]
+      summary: Claim onboarding reward
+      operationId: claimOnboardingReward
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reward claimed
+
+  /rewards/onboarding/status:
+    get:
+      tags: [Rewards]
+      summary: Get onboarding reward status
+      operationId: getOnboardingStatus
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reward status
+
+  /dashboard/summary:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard summary
+      operationId: getDashboardSummary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+
+  /platform/state:
+    get:
+      tags: [Health]
+      summary: Get platform state
+      operationId: getPlatformState
+      responses:
+        "200":
+          description: Platform state
+
+  /matching/preferences:
+    post:
+      tags: [Groups]
+      summary: Set matching preferences
+      operationId: setMatchingPrefs
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Preferences set
+
+  /users/payout-methods:
+    get:
+      tags: [Users]
+      summary: Get payout methods
+      operationId: getPayoutMethods
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payout methods
+    post:
+      tags: [Users]
+      summary: Add payout method
+      operationId: addPayoutMethod
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Method added
+
+  /business/analytics/revenue:
+    post:
+      tags: [Business]
+      summary: Get revenue analytics
+      operationId: getRevenueAnalytics
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Revenue data
+
+  /business/performance/dashboard:
+    get:
+      tags: [Business]
+      summary: Get performance dashboard
+      operationId: getPerformanceDashboard
+      security:
+        - adminAuth: []
+      responses:
+        "200":
+          description: Performance data
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+    adminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin JWT token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, pending, suspended]
+        created_at:
+          type: string
+          format: date-time
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        contribution_amount:
+          type: number
+        frequency:
+          type: string
+        member_count:
+          type: integer
+        status:
+          type: string
+
+    Tanda:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        contribution_amount:
+          type: number
+        current_turn:
+          type: integer
+        total_turns:
+          type: integer
+        status:
+          type: string
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time

@@ -1230,7 +1230,7 @@ function createResponse(success, data, meta = {}) {
         data,
         meta: {
             timestamp: new Date().toISOString(),
-            version: '4.10.8',
+            version: '4.11.0',
             server: 'production',
             environment: 'production',
             ...meta
@@ -2285,8 +2285,170 @@ function calculateDueDate(group, round) {
     return dueDate.toISOString();
 }
 
+// ============================================================
+// Payment Date Helper — Single source of truth for due dates
+// Used by: my-tandas, my-groups-pg, calendar, cron
+// ============================================================
+function getLastDayOfMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Calculate the payment due date for a specific cycle number.
+ * @param {string} frequency - 'weekly' | 'biweekly' | 'monthly'
+ * @param {Date|string} startDate - Group start date
+ * @param {number} cycleNumber - 1-based cycle number
+ * @param {number} gracePeriod - Grace days (default 5 for biweekly/monthly, 0 for weekly)
+ * @returns {{ dueDate: string, graceDeadline: string, label: string }}
+ *   dueDate: 'YYYY-MM-DD', graceDeadline: 'YYYY-MM-DD', label: Spanish description
+ */
+function getPaymentDueDate(frequency, startDate, cycleNumber, gracePeriod) {
+    var start = typeof startDate === 'string' ? new Date(startDate + (startDate.includes('T') ? '' : 'T12:00:00')) : new Date(startDate);
+    var cycle = Math.max(1, cycleNumber || 1);
+    var grace = parseInt(gracePeriod) || 0;
+    var freq = (frequency || 'monthly').toLowerCase();
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function toDateStr(y, m, d) { return y + '-' + pad2(m + 1) + '-' + pad2(d); }
+    function addGrace(dateStr, days) {
+        if (!days) return dateStr;
+        var d = new Date(dateStr + 'T12:00:00');
+        d.setDate(d.getDate() + days);
+        return d.toISOString().split('T')[0];
+    }
+
+    if (freq === 'biweekly' || freq === 'quincenal') {
+        // Fixed dates: 15th and last day of each month
+        var baseDay = start.getDate();
+        var startOnSecondHalf = baseDay > 15;
+        var curYear = start.getFullYear();
+        var curMonth = start.getMonth();
+        var onSecondHalf = startOnSecondHalf;
+
+        for (var i = 0; i < cycle; i++) {
+            if (i === cycle - 1) {
+                // This is the target cycle
+                var payDay, label;
+                if (!onSecondHalf) {
+                    payDay = toDateStr(curYear, curMonth, 15);
+                    label = 'Quincena (dia 15)';
+                } else {
+                    var lastDay = getLastDayOfMonth(curYear, curMonth);
+                    payDay = toDateStr(curYear, curMonth, lastDay);
+                    label = 'Fin de mes (dia ' + lastDay + ')';
+                }
+                return { dueDate: payDay, graceDeadline: addGrace(payDay, grace || 5), label: label };
+            }
+            // Advance to next half
+            if (onSecondHalf) {
+                curMonth++;
+                if (curMonth > 11) { curMonth = 0; curYear++; }
+            }
+            onSecondHalf = !onSecondHalf;
+        }
+    } else if (freq === 'weekly' || freq === 'semanal') {
+        // Every 7 days from start_date, no grace period
+        var d = new Date(start);
+        d.setDate(d.getDate() + ((cycle - 1) * 7));
+        var payDay = d.toISOString().split('T')[0];
+        return { dueDate: payDay, graceDeadline: payDay, label: 'Semana ' + cycle };
+
+    } else {
+        // Monthly: same day each month, clamped to last day
+        var anchorDay = start.getDate();
+        var d = new Date(start);
+        d.setMonth(start.getMonth() + (cycle - 1));
+        var maxDay = getLastDayOfMonth(d.getFullYear(), d.getMonth());
+        if (anchorDay > maxDay) d.setDate(maxDay);
+        var payDay = d.toISOString().split('T')[0];
+        return { dueDate: payDay, graceDeadline: addGrace(payDay, grace || 5), label: 'Mes ' + cycle };
+    }
+
+    // Fallback (should not reach here)
+    return { dueDate: null, graceDeadline: null, label: '' };
+}
+// ============================================================
+
 // =============================================================================
 
+
+        // =============================================
+        // v4.11.0: HELPER — Check cycle advance with mora (threshold-based)
+        // Replaces duplicated auto-advance logic in record-for-member and record-bulk
+        // =============================================
+        async function checkCycleAdvanceWithMora(groupId, targetCycle, currentCycle, contributionAmount) {
+            try {
+                const thresholdResult = await dbPostgres.pool.query(
+                    "SELECT COALESCE(advance_threshold, 80) as threshold FROM groups WHERE group_id = $1",
+                    [groupId]
+                );
+                const threshold = parseInt(thresholdResult.rows[0]?.threshold || 80);
+
+                const activeCount = await dbPostgres.pool.query(
+                    "SELECT COALESCE(SUM(COALESCE(num_positions, 1)), 0) as cnt FROM group_members WHERE group_id = $1 AND status IN ('active', 'suspended')",
+                    [groupId]
+                );
+                const paidCount = await dbPostgres.pool.query(
+                    "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')",
+                    [groupId, targetCycle]
+                );
+
+                const activeRequired = parseInt(activeCount.rows[0].cnt);
+                const paid = parseInt(paidCount.rows[0].cnt);
+                const thresholdCount = Math.ceil(activeRequired * threshold / 100);
+
+                let advanced = false;
+                let moraCount = 0;
+
+                if (paid >= thresholdCount && targetCycle >= currentCycle) {
+                    // Advance the cycle
+                    await dbPostgres.pool.query(
+                        "UPDATE groups SET current_cycle = $1, updated_at = NOW() WHERE group_id = $2",
+                        [currentCycle + 1, groupId]
+                    );
+                    advanced = true;
+                    log("info", "Auto-advanced group cycle (threshold)", { groupId, from: currentCycle, to: currentCycle + 1, paid, required: activeRequired, threshold });
+
+                    // If not all paid, mark unpaid members as mora
+                    if (paid < activeRequired) {
+                        const unpaidMembers = await dbPostgres.pool.query(`
+                            SELECT gm.user_id, COALESCE(gm.num_positions, 1) as num_positions
+                            FROM group_members gm
+                            WHERE gm.group_id = $1 AND gm.status IN ('active', 'suspended')
+                            AND (
+                                SELECT COUNT(*) FROM contributions c
+                                WHERE c.user_id = gm.user_id AND c.group_id = $1 AND c.cycle_number = $2
+                                AND c.status IN ('completed', 'coordinator_approved', 'archived')
+                            ) < COALESCE(gm.num_positions, 1)
+                        `, [groupId, targetCycle]);
+
+                        for (const unpaid of unpaidMembers.rows) {
+                            try {
+                                await dbPostgres.pool.query(`
+                                    INSERT INTO payment_deferrals (group_id, user_id, cycle_number, type, status, mora_applied_by, mora_applied_at, mora_method, positions_count, amount_owed, created_at, updated_at)
+                                    VALUES ($1, $2, $3, 'mora', 'active', NULL, NOW(), 'auto_threshold', $4, $5, NOW(), NOW())
+                                    ON CONFLICT (group_id, user_id, cycle_number, type) DO NOTHING
+                                `, [groupId, unpaid.user_id, targetCycle, unpaid.num_positions, contributionAmount * unpaid.num_positions]);
+
+                                await notificationsUtils.createNotification(dbPostgres.pool, unpaid.user_id, 'mora_applied',
+                                    'Pago en Mora',
+                                    'Tu pago fue marcado en mora porque el ciclo avanzó sin completar tu cuota.',
+                                    { group_id: groupId, cycle_number: targetCycle }
+                                );
+                                moraCount++;
+                            } catch (moraErr) {
+                                log("warn", "Could not create mora for member", { groupId, userId: unpaid.user_id, error: moraErr.message });
+                            }
+                        }
+                    }
+                }
+
+                return { advanced, moraCount, paid, activeRequired, thresholdCount };
+            } catch (advErr) {
+                log("warn", "Could not check cycle advance with mora", { groupId, error: advErr.message });
+                return { advanced: false, moraCount: 0 };
+            }
+        }
 const server = http.createServer(async (req, res) => {
     requestCount++;
     metricsModule.startRequest(req);
@@ -3224,7 +3386,7 @@ const server = http.createServer(async (req, res) => {
             sendSuccess(res, {
                 message: "La Tanda Complete Mobile API",
                 deployment: "Production - Complete Mobile Integration (140+ endpoints)",
-                version: "4.10.8",
+                version: "4.11.0",
                 environment: "production",
                 mobile_optimized: true,
                 features: [
@@ -3267,7 +3429,7 @@ const server = http.createServer(async (req, res) => {
                 
                 const statsResponseData = {
                     platform: 'La Tanda',
-                    version: '4.10.8',
+                    version: '4.11.0',
                     stats: {
                         active_users: parseInt(users.rows[0].count),
                         active_groups: parseInt(groups.rows[0].count),
@@ -3388,7 +3550,7 @@ const server = http.createServer(async (req, res) => {
         if (pathname === '/api/public/info' && (method === 'GET' || method === 'HEAD')) {
             sendSuccess(res, {
                 name: 'La Tanda API',
-                version: '4.10.8',
+                version: '4.11.0',
                 description: 'Web3 collaborative savings platform API',
                 authentication: {
                     type: 'JWT Bearer Token',
@@ -3422,7 +3584,7 @@ const server = http.createServer(async (req, res) => {
 
                 sendSuccess(res, {
                     status: "operational",
-                    version: "4.10.8",
+                    version: "4.11.0",
                     database: { status: dbStatus },
                     timestamp: new Date().toISOString()
                 });
@@ -3572,7 +3734,7 @@ const server = http.createServer(async (req, res) => {
         if (pathname === '/docs' || path === '/api/docs') {
             sendSuccess(res, {
                 title: 'La Tanda Complete Mobile API Documentation',
-                version: '4.10.8',
+                version: '4.11.0',
                 description: 'Complete API for La Tanda mobile ecosystem (140+ endpoints)',
                 endpoints: {
                     core_system: 4,
@@ -5694,39 +5856,40 @@ const server = http.createServer(async (req, res) => {
                     new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at)
                 )[0];
 
-                // Calculate next payment due date
+                // Calculate next payment due date using centralized helper
                 let nextPaymentDue = null;
+                let nextPaymentGraceDeadline = null;
                 let paymentStatus = "up_to_date";
                 let daysLate = 0;
 
                 if (group.frequency) {
                     const today = new Date();
-                    const lastPaymentDate = latestPayment ? new Date(latestPayment.payment_date || latestPayment.created_at) : new Date(group.created_at);
+                    const groupStartDate = group.start_date || group.created_at;
+                    const cyclesPaid = userPayments.filter(p => p.status === "approved" || p.status === "completed" || p.status === "coordinator_approved" || p.status === "archived").length;
+                    const userNextCycle = cyclesPaid + 1;
+                    const gracePeriod = parseInt(group.grace_period) || 5;
+                    const dueDateInfo = getPaymentDueDate(group.frequency, groupStartDate, userNextCycle, gracePeriod);
 
-                    let daysBetweenPayments = 30; // default monthly
-                    if (group.frequency === "weekly") daysBetweenPayments = 7;
-                    else if (group.frequency === "biweekly") daysBetweenPayments = 14;
+                    if (dueDateInfo.dueDate) {
+                        nextPaymentDue = new Date(dueDateInfo.dueDate + "T12:00:00");
+                        nextPaymentGraceDeadline = dueDateInfo.graceDeadline;
+                    }
 
-                    nextPaymentDue = new Date(lastPaymentDate);
-                    nextPaymentDue.setDate(nextPaymentDue.getDate() + daysBetweenPayments);
+                    if (nextPaymentDue) {
+                        var graceDate = nextPaymentGraceDeadline ? new Date(nextPaymentGraceDeadline + "T23:59:59") : nextPaymentDue;
+                        if (today > graceDate) {
+                            paymentStatus = "late";
+                            daysLate = Math.floor((today - graceDate) / (1000 * 60 * 60 * 24));
 
-                    // Check if payment is late
-                    const gracePeriod = 3; // 3 days grace period
-                    const dueWithGrace = new Date(nextPaymentDue);
-                    dueWithGrace.setDate(dueWithGrace.getDate() + gracePeriod);
-
-                    if (today > dueWithGrace) {
-                        paymentStatus = "late";
-                        daysLate = Math.floor((today - dueWithGrace) / (1000 * 60 * 60 * 24));
-
-                        // v4.10.3: No auto-suspend — display as "suspension_recommended" for coordinator awareness
-                        const autoSuspendDays = 5;
-                        if (daysLate >= autoSuspendDays) {
-                            paymentStatus = "suspension_recommended";
+                            // v4.10.3: No auto-suspend — display as "suspension_recommended" for coordinator awareness
+                            const autoSuspendDays = 5;
+                            if (daysLate >= autoSuspendDays) {
+                                paymentStatus = "suspension_recommended";
+                            }
+                        } else if (today > nextPaymentDue) {
+                            paymentStatus = "pending";
+                            daysLate = Math.floor((today - nextPaymentDue) / (1000 * 60 * 60 * 24));
                         }
-                    } else if (today > nextPaymentDue) {
-                        paymentStatus = "pending";
-                        daysLate = Math.floor((today - nextPaymentDue) / (1000 * 60 * 60 * 24));
                     }
 
                     // Only show "suspended" if creator/coordinator manually suspended this member
@@ -5770,37 +5933,50 @@ const server = http.createServer(async (req, res) => {
 
                 // 5. GENERATE ALERTS FOR THIS USER
                 const alerts = [];
+                const today = new Date();
 
-                // Alert: Payment due soon
+                // Alert: Payment due soon (up_to_date, <= 5 days before due)
                 if (paymentStatus === "up_to_date" && nextPaymentDue) {
-                    const today = new Date();
                     const daysUntilDue = Math.floor((new Date(nextPaymentDue) - today) / (1000 * 60 * 60 * 24));
-
-                    if (daysUntilDue <= 3 && daysUntilDue > 0) {
+                    if (daysUntilDue <= 5 && daysUntilDue > 0) {
                         alerts.push({
                             type: "payment_due",
-                            severity: "warning",
-                            message: `Tu pago vence en ${daysUntilDue} día${daysUntilDue !== 1 ? 's' : ''}`,
-                            action_url: "/register-payment",
-                            metadata: {
-                                days_until: daysUntilDue,
-                                amount: group.contribution_amount
-                            }
+                            severity: daysUntilDue <= 2 ? "warning" : "info",
+                            message: "Tu pago vence en " + daysUntilDue + " dia" + (daysUntilDue !== 1 ? "s" : ""),
+                            metadata: { days_until: daysUntilDue, amount: group.contribution_amount }
                         });
                     }
                 }
 
-                // Alert: Payment overdue
+                // Alert: In grace period (pending — between due date and grace deadline)
+                if (paymentStatus === "pending" && nextPaymentDue && nextPaymentGraceDeadline) {
+                    const graceEnd = new Date(nextPaymentGraceDeadline + "T23:59:59");
+                    const daysOfGraceLeft = Math.ceil((graceEnd - today) / (1000 * 60 * 60 * 24));
+                    if (daysOfGraceLeft > 0) {
+                        var graceMsg = "Pago vencido. Tienes " + daysOfGraceLeft + " dia" + (daysOfGraceLeft !== 1 ? "s" : "") + " de gracia";
+                        alerts.push({
+                            type: "payment_grace",
+                            severity: "warning",
+                            message: graceMsg,
+                            metadata: { grace_days_left: daysOfGraceLeft, grace_deadline: nextPaymentGraceDeadline, amount: group.contribution_amount }
+                        });
+                    } else {
+                        alerts.push({
+                            type: "payment_overdue",
+                            severity: "danger",
+                            message: "Pago atrasado. Periodo de gracia vencido",
+                            metadata: { amount: group.contribution_amount }
+                        });
+                    }
+                }
+
+                // Alert: Payment overdue (late — past grace deadline)
                 if (paymentStatus === "late") {
                     alerts.push({
                         type: "payment_overdue",
                         severity: "danger",
-                        message: `Tienes un pago atrasado (${daysLate} día${daysLate !== 1 ? 's' : ''})`,
-                        action_url: "/pay-debt",
-                        metadata: {
-                            days_late: daysLate,
-                            amount: group.contribution_amount
-                        }
+                        message: "Pago atrasado por " + daysLate + " dia" + (daysLate !== 1 ? "s" : ""),
+                        metadata: { days_late: daysLate, amount: group.contribution_amount }
                     });
                 }
 
@@ -5960,6 +6136,7 @@ const server = http.createServer(async (req, res) => {
                     // MY PAYMENT STATUS (NEW)
                     my_payment_status: paymentStatus,
                     my_next_payment_due: nextPaymentDue ? nextPaymentDue.toISOString().split('T')[0] : null,
+                    my_next_payment_grace_deadline: nextPaymentGraceDeadline || null,
                     my_days_late: daysLate,
                     my_total_paid: userPayments.filter(p => p.status === "approved")
                         .reduce((sum, p) => sum + (p.amount || 0), 0),
@@ -6160,7 +6337,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
 
-            const { name, description, contribution_amount, max_members, frequency, start_date, status, location, commissionRate } = body;
+            const { name, description, contribution_amount, max_members, frequency, start_date, status, location, commissionRate, advanceThreshold } = body;
 
             // ============================================
             // VALIDATION: Check if tanda has started before allowing certain changes (Added 2025-12-31)
@@ -6256,6 +6433,16 @@ const server = http.createServer(async (req, res) => {
                 }
             }
                 
+            if (advanceThreshold !== undefined) {
+                if (advanceThreshold === null) {
+                    pgUpdateData.advance_threshold = 80;
+                } else {
+                    const parsedThreshold = parseInt(advanceThreshold);
+                    if (!isNaN(parsedThreshold) && Number.isFinite(parsedThreshold) && parsedThreshold >= 50 && parsedThreshold <= 100) {
+                        pgUpdateData.advance_threshold = parsedThreshold;
+                    }
+                }
+            }
                 await db.updateGroup(groupId, pgUpdateData);
                 pgWriteSuccess = true;
                 log('info', `✅ [DUAL-WRITE] Group updated in PostgreSQL: ${groupId}`);
@@ -7037,6 +7224,43 @@ const server = http.createServer(async (req, res) => {
                         executed_by
                     });
 
+                    // v4.11.0: Notify beneficiary (in-app + email)
+                    notificationsUtils.createNotification(dbPostgres.pool, finalBeneficiary, 'distribution_executed',
+                        'Distribucion Completada',
+                        'Recibiste la distribucion del ciclo ' + nextDistCycle + ' en ' + group.name + '.',
+                        { group_id: groupId, cycle_number: nextDistCycle, amount: beneficiaryNet }
+                    ).catch(function(){});
+
+                    (async function() {
+                        try {
+                            var prefResult = await dbPostgres.pool.query(
+                                "SELECT email_enabled, payment_reminders FROM notification_preferences WHERE user_id = ",
+                                [finalBeneficiary]
+                            );
+                            var emailOk = !prefResult.rows.length || prefResult.rows[0].email_enabled !== false;
+                            if (emailOk) {
+                                var bInfo = await dbPostgres.pool.query(
+                                    "SELECT email, name FROM users WHERE user_id = ",
+                                    [finalBeneficiary]
+                                );
+                                if (bInfo.rows[0] && bInfo.rows[0].email) {
+                                    var tpl = emailTemplates.distributionExecutedEmail({
+                                        beneficiaryName: bInfo.rows[0].name || 'Miembro',
+                                        beneficiaryEmail: bInfo.rows[0].email,
+                                        groupName: group.name || 'Grupo',
+                                        grossAmount: targetTotal,
+                                        netAmount: beneficiaryNet,
+                                        coordinatorFee: coordinatorFee,
+                                        platformFee: platformFee,
+                                        cycle: nextDistCycle,
+                                        date: new Date()
+                                    });
+                                    sendEmail(bInfo.rows[0].email, tpl.subject, tpl.html, 'pagos');
+                                }
+                            }
+                        } catch (emailErr) { /* non-blocking */ }
+                    })();
+
                     sendSuccess(res, {
                         distribution_id: distributionResult.rows[0].id,
                         cycle_number: nextDistCycle,
@@ -7245,7 +7469,7 @@ const server = http.createServer(async (req, res) => {
 
         // ========== END CYCLE DISTRIBUTION ENDPOINTS ==========
 
-        if (pathname.startsWith("/api/groups/") && !pathname.includes("/update") && !pathname.includes("/members") && !pathname.includes("/notifications") && !pathname.includes("/finances") && !pathname.includes("/join") && !pathname.includes("/my-groups") && !pathname.includes("/position-requests") && !pathname.includes("/approve-position-request") && !pathname.includes("/reject-position-request") && !pathname.includes("/assign-position-manually") && !pathname.includes("/auto-assign-positions") && !pathname.includes("/activate-tanda") && !pathname.includes("/contributions") && !pathname.includes("/export") && !pathname.includes("/stats") && !pathname.includes("/calendar") && !pathname.includes("/start-summary") && !pathname.includes("/settings") && !pathname.includes("/lottery-schedule") && !pathname.includes("/lottery-status") && !pathname.includes("/lottery-results") && !pathname.includes("/lottery-assign") && !pathname.includes("/lottery-live") && !pathname.includes("/toggle-pause") && !pathname.includes("/payout") && method === "GET") {
+        if (pathname.startsWith("/api/groups/") && !pathname.includes("/update") && !pathname.includes("/members") && !pathname.includes("/notifications") && !pathname.includes("/finances") && !pathname.includes("/join") && !pathname.includes("/my-groups") && !pathname.includes("/position-requests") && !pathname.includes("/approve-position-request") && !pathname.includes("/reject-position-request") && !pathname.includes("/assign-position-manually") && !pathname.includes("/auto-assign-positions") && !pathname.includes("/activate-tanda") && !pathname.includes("/contributions") && !pathname.includes("/export") && !pathname.includes("/stats") && !pathname.includes("/calendar") && !pathname.includes("/start-summary") && !pathname.includes("/settings") && !pathname.includes("/lottery-schedule") && !pathname.includes("/lottery-status") && !pathname.includes("/lottery-results") && !pathname.includes("/lottery-assign") && !pathname.includes("/lottery-live") && !pathname.includes("/toggle-pause") && !pathname.includes("/payout") && !pathname.includes("/extensions") && !pathname.includes("/mark-mora") && !pathname.includes("/tanda-balances") && method === "GET") {
             const groupId = pathname.split("/")[3];
 
             // SECURITY: Require authentication (v4.10.1)
@@ -9763,24 +9987,25 @@ const server = http.createServer(async (req, res) => {
                 const lateByGroup = {};
 
                 for (const membership of membershipsResult.rows) {
-                    // Calculate next payment due
-                    const frequencyDays = {
-                        'weekly': 7, 'biweekly': 14, 'monthly': 30, 'quarterly': 90
-                    };
-                    const daysInterval = frequencyDays[membership.frequency] || 30;
+                    // Calculate next payment due using centralized helper
+                    const memberGracePeriod = parseInt(membership.grace_period) || gracePeriod || 5;
+                    const memberStartDate = membership.start_date || membership.created_at;
+                    if (!memberStartDate) continue; // Skip if no date info
+                    
+                    const contribsThisMember = parseInt(membership.contributions_this_cycle) || 0;
+                    const memberNextCycle = contribsThisMember + 1;
+                    const dueDateInfo = getPaymentDueDate(membership.frequency, memberStartDate, memberNextCycle, memberGracePeriod);
                     
                     let nextPaymentDue;
-                    if (membership.last_payment) {
-                        nextPaymentDue = new Date(membership.last_payment);
-                        nextPaymentDue.setDate(nextPaymentDue.getDate() + daysInterval);
+                    if (dueDateInfo.dueDate) {
+                        nextPaymentDue = new Date(dueDateInfo.dueDate + "T12:00:00");
                     } else if (membership.start_date) {
                         nextPaymentDue = new Date(membership.start_date);
                     } else {
                         continue; // Skip if no payment info
                     }
 
-                    const dueWithGrace = new Date(nextPaymentDue);
-                    dueWithGrace.setDate(dueWithGrace.getDate() + gracePeriod);
+                    const dueWithGrace = dueDateInfo.graceDeadline ? new Date(dueDateInfo.graceDeadline + "T23:59:59") : new Date(nextPaymentDue.getTime() + gracePeriod * 86400000);
                     
                     // Calculate status
                     let paymentStatus = 'up_to_date';
@@ -9824,6 +10049,18 @@ const server = http.createServer(async (req, res) => {
                     let notificationType = null;
                     let notificationTitle = null;
                     let notificationMessage = null;
+
+
+                    // v4.11.0: Skip late/suspension notifications for members with approved extension
+                    try {
+                        const approvedExt = await dbPostgres.pool.query(
+                            "SELECT id FROM payment_deferrals WHERE group_id = $1 AND user_id = $2 AND type = 'extension' AND status = 'approved' AND (proposed_date IS NULL OR proposed_date >= CURRENT_DATE) LIMIT 1",
+                            [membership.group_id, membership.user_id]
+                        );
+                        if (approvedExt.rows.length > 0 && (paymentStatus === 'late' || paymentStatus === 'suspended' || paymentStatus === 'pending')) {
+                            continue;
+                        }
+                    } catch (extErr) { /* non-blocking */ }
 
                     // Determine notification to send
                     if (paymentStatus === 'up_to_date' && daysUntilDue <= 3 && daysUntilDue > 0) {
@@ -10557,123 +10794,28 @@ const server = http.createServer(async (req, res) => {
                 const startDate = groupData.start_date ? new Date(groupData.start_date) : new Date(groupData.created_at);
                 const graceDays = parseInt(groupData.grace_period) || 5;
                 
-                // Helper: get last day of a given month
-                function getLastDayOfMonth(year, month) {
-                    return new Date(year, month + 1, 0).getDate();
-                }
-                
-                // Helper: add grace days to a date
-                function addGraceDays(dateStr, days) {
-                    var d = new Date(dateStr + 'T12:00:00');
-                    d.setDate(d.getDate() + days);
-                    return d.toISOString().split('T')[0];
-                }
-                
+                                // Date helpers now use centralized getPaymentDueDate()
                 // Generate dates for each turn
                 const turnsToShow = Math.max(membersInOrder.length, totalTurns);
                 
-                if (frequency === 'biweekly') {
-                    // Fixed dates: 15th and last day of each month
-                    // Grace period: 5 days -> deadlines are 20th and 5th of next month
-                    var baseYear = startDate.getFullYear();
-                    var baseMonth = startDate.getMonth();
-                    var baseDay = startDate.getDate();
-                    // Determine if we start on the 15th cycle or end-of-month cycle
-                    var startOnSecondHalf = baseDay > 15;
-                    var dateIndex = 0;
-                    var curYear = baseYear;
-                    var curMonth = baseMonth;
-                    var onSecondHalf = startOnSecondHalf;
-                    
-                    while (dateIndex < turnsToShow) {
-                        var payDay;
-                        if (!onSecondHalf) {
-                            // First half: payment on the 15th
-                            payDay = curYear + '-' + String(curMonth + 1).padStart(2, '0') + '-15';
-                        } else {
-                            // Second half: payment on last day of month
-                            var lastDay = getLastDayOfMonth(curYear, curMonth);
-                            payDay = curYear + '-' + String(curMonth + 1).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
-                        }
-                        
-                        var deadlineDate = addGraceDays(payDay, graceDays);
-                        
-                        var member = membersInOrder[dateIndex] || null;
-                        upcomingDates.push({
-                            date: payDay,
-                            payment_date: payDay,
-                            deadline_date: deadlineDate,
-                            grace_days: graceDays,
-                            position: dateIndex + 1,
-                            beneficiary: member ? {
-                                user_id: member.user_id,
-                                name: member.name
-                            } : null,
-                            amount: totalPerTurn,
-                            status: dateIndex === currentTurn ? 'current' : (dateIndex < currentTurn ? 'completed' : 'upcoming'),
-                            label: !onSecondHalf ? 'Quincena (dia 15)' : 'Fin de mes (dia ' + getLastDayOfMonth(curYear, curMonth) + ')'
-                        });
-                        
-                        // Advance to next cycle
-                        if (onSecondHalf) {
-                            curMonth++;
-                            if (curMonth > 11) { curMonth = 0; curYear++; }
-                        }
-                        onSecondHalf = !onSecondHalf;
-                        dateIndex++;
-                    }
-                } else if (frequency === 'weekly') {
-                    // Weekly: every 7 days from start_date, no grace period
-                    for (var i = 0; i < turnsToShow; i++) {
-                        var nextDate = new Date(startDate);
-                        nextDate.setDate(startDate.getDate() + (i * 7));
-                        var payDay = nextDate.toISOString().split('T')[0];
-                        
-                        var member = membersInOrder[i] || null;
-                        upcomingDates.push({
-                            date: payDay,
-                            payment_date: payDay,
-                            deadline_date: payDay,
-                            grace_days: 0,
-                            position: i + 1,
-                            beneficiary: member ? {
-                                user_id: member.user_id,
-                                name: member.name
-                            } : null,
-                            amount: totalPerTurn,
-                            status: i === currentTurn ? 'current' : (i < currentTurn ? 'completed' : 'upcoming'),
-                            label: 'Semana ' + (i + 1)
-                        });
-                    }
-                } else {
-                    // Monthly: payment on 15th and last day logic does not apply
-                    // Use same day each month from start_date, with grace period
-                    var anchorDay = startDate.getDate();
-                    for (var i = 0; i < turnsToShow; i++) {
-                        var d = new Date(startDate);
-                        d.setMonth(startDate.getMonth() + i);
-                        // Clamp to last day of target month if anchor exceeds it
-                        var maxDay = getLastDayOfMonth(d.getFullYear(), d.getMonth());
-                        if (anchorDay > maxDay) d.setDate(maxDay);
-                        var payDay = d.toISOString().split('T')[0];
-                        var deadlineDate = addGraceDays(payDay, graceDays);
-                        
-                        var member = membersInOrder[i] || null;
-                        upcomingDates.push({
-                            date: payDay,
-                            payment_date: payDay,
-                            deadline_date: deadlineDate,
-                            grace_days: graceDays,
-                            position: i + 1,
-                            beneficiary: member ? {
-                                user_id: member.user_id,
-                                name: member.name
-                            } : null,
-                            amount: totalPerTurn,
-                            status: i === currentTurn ? 'current' : (i < currentTurn ? 'completed' : 'upcoming'),
-                            label: 'Mes ' + (i + 1)
-                        });
-                    }
+                // Use centralized helper for all frequency types
+                for (var i = 0; i < turnsToShow; i++) {
+                    var dueDateInfo = getPaymentDueDate(frequency, startDate, i + 1, graceDays);
+                    var member = membersInOrder[i] || null;
+                    upcomingDates.push({
+                        date: dueDateInfo.dueDate,
+                        payment_date: dueDateInfo.dueDate,
+                        deadline_date: dueDateInfo.graceDeadline,
+                        grace_days: (frequency === 'weekly') ? 0 : graceDays,
+                        position: i + 1,
+                        beneficiary: member ? {
+                            user_id: member.user_id,
+                            name: member.name
+                        } : null,
+                        amount: totalPerTurn,
+                        status: i === currentTurn ? 'current' : (i < currentTurn ? 'completed' : 'upcoming'),
+                        label: dueDateInfo.label
+                    });
                 }
                 // Translate frequency to Spanish
                 const frequencyMap = {
@@ -11461,26 +11603,18 @@ const server = http.createServer(async (req, res) => {
 
                 log("info", "Contribution recorded for member", { groupId, member_user_id, amount: parsedAmount, by: authUser.userId });
 
-                // v4.10.6: Auto-advance current_cycle if all active members completed this cycle
+                // v4.11.0: Resolve any active mora/extension for this user+group+cycle
                 try {
-                    const activeCount = await dbPostgres.pool.query(
-                        "SELECT COALESCE(SUM(COALESCE(num_positions, 1)), 0) as cnt FROM group_members WHERE group_id = $1 AND status IN ('active', 'suspended')",
-                        [groupId]
+                    await dbPostgres.pool.query(
+                        "UPDATE payment_deferrals SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE group_id = $1 AND user_id = $2 AND cycle_number = $3 AND status IN ('active', 'approved')",
+                        [groupId, member_user_id, targetCycle]
                     );
-                    const paidCount = await dbPostgres.pool.query(
-                        "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')",
-                        [groupId, targetCycle]
-                    );
-                    if (parseInt(paidCount.rows[0].cnt) >= parseInt(activeCount.rows[0].cnt) && targetCycle >= currentCycle) {
-                        await dbPostgres.pool.query(
-                            "UPDATE groups SET current_cycle = $1, updated_at = NOW() WHERE group_id = $2",
-                            [currentCycle + 1, groupId]
-                        );
-                        log("info", "Auto-advanced group cycle", { groupId, from: currentCycle, to: currentCycle + 1 });
-                    }
-                } catch (advErr) {
-                    log("warn", "Could not auto-advance cycle", { groupId, error: advErr.message });
+                } catch (resolveErr) {
+                    log('warn', 'Could not resolve deferral on payment', { groupId, userId: member_user_id, error: resolveErr.message });
                 }
+
+                // v4.11.0: Auto-advance with threshold + mora
+                await checkCycleAdvanceWithMora(groupId, targetCycle, currentCycle, parsedAmount);
 
                 // v4.10.3: Auto-reactivate suspended member when coordinator records their payment
                 try {
@@ -11800,6 +11934,12 @@ const server = http.createServer(async (req, res) => {
                             [groupId, item.member_user_id]
                         );
 
+
+                        // v4.11.0: Resolve mora/extension on payment
+                        await client.query(
+                            "UPDATE payment_deferrals SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE group_id = $1 AND user_id = $2 AND cycle_number = $3 AND status IN ('active', 'approved')",
+                            [groupId, item.member_user_id, targetCycle]
+                        );
                         results.push({
                             user_id: item.member_user_id,
                             status: 'recorded',
@@ -11815,29 +11955,9 @@ const server = http.createServer(async (req, res) => {
                 } finally {
                     client.release();
                 }
-
-
-                // v4.10.6: Auto-advance current_cycle if all active members completed this cycle
+                // v4.11.0: Auto-advance with threshold + mora
                 if (recordedCount > 0) {
-                    try {
-                        const activeCount = await dbPostgres.pool.query(
-                            "SELECT COALESCE(SUM(COALESCE(num_positions, 1)), 0) as cnt FROM group_members WHERE group_id = $1 AND status IN ('active', 'suspended')",
-                            [groupId]
-                        );
-                        const paidCount = await dbPostgres.pool.query(
-                            "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')",
-                            [groupId, currentCycle]
-                        );
-                        if (parseInt(paidCount.rows[0].cnt) >= parseInt(activeCount.rows[0].cnt)) {
-                            await dbPostgres.pool.query(
-                                "UPDATE groups SET current_cycle = $1, updated_at = NOW() WHERE group_id = $2",
-                                [currentCycle + 1, groupId]
-                            );
-                            log("info", "Auto-advanced group cycle after bulk", { groupId, from: currentCycle, to: currentCycle + 1 });
-                        }
-                    } catch (advErr) {
-                        log("warn", "Could not auto-advance cycle after bulk", { groupId, error: advErr.message });
-                    }
+                    await checkCycleAdvanceWithMora(groupId, currentCycle, currentCycle, parseFloat(groupResult.rows[0].contribution_amount) || 0);
                 }
                 // Send notifications asynchronously (outside transaction)
                 for (const result of results) {
@@ -14442,7 +14562,6 @@ if (pathname === '/api/users/payout-methods' && method === 'POST') {
     }
 
     const {
-        user_id,
         method_type,
         is_default,
         bank_name,
@@ -14454,9 +14573,9 @@ if (pathname === '/api/users/payout-methods' && method === 'POST') {
         crypto_address,
         crypto_network
     } = body;
-    
-    if (!user_id || !method_type) {
-        sendError(res, 400, 'user_id y method_type son requeridos');
+    const user_id = authUser.userId;
+    if (!method_type) {
+        sendError(res, 400, 'method_type es requerido');
         return;
     }
     
@@ -14674,7 +14793,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/eligibility$/) && method === 
         const contribResult = await dbPostgres.pool.query(
             `SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total 
              FROM contributions 
-             WHERE group_id = $1 AND cycle_number = $2 AND status = 'completed'`,
+             WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')`,
             [groupId, currentCycle]
         );
         
@@ -14688,7 +14807,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/eligibility$/) && method === 
         
         // Check existing payout request
         const existingPayout = await dbPostgres.pool.query(
-            'SELECT id, group_id, user_id, cycle_number, amount, status, requested_at FROM payout_requests WHERE group_id = $1 AND cycle_number = $2',
+            'SELECT id, group_id, user_id, cycle_number, gross_amount, status, requested_at FROM payout_requests WHERE group_id = $1 AND cycle_number = $2',
             [groupId, currentCycle]
         );
         
@@ -14718,7 +14837,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/eligibility$/) && method === 
             existing_request: existingPayout.rows[0] || null
         });
     } catch (error) {
-        log("error", 'Error checking eligibility:', error);
+        log("error", "Error checking eligibility: " + error.message);
         sendError(res, 500, 'Error al verificar elegibilidad');
     }
     return;
@@ -14789,10 +14908,11 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/request$/) && method === 'POS
             return;
         }
         
+        await dbPostgres.pool.query("BEGIN");
         // Check completion
         const contribResult = await dbPostgres.pool.query(
             `SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total 
-             FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status = 'completed'`,
+             FROM contributions WHERE group_id = $1 AND cycle_number = $2 AND status IN ('completed', 'coordinator_approved', 'archived')`,
             [groupId, currentCycle]
         );
         
@@ -14807,7 +14927,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/request$/) && method === 'POS
         
         // Check existing
         const existingResult = await dbPostgres.pool.query(
-            'SELECT id FROM payout_requests WHERE group_id = $1 AND cycle_number = $2',
+            'SELECT id FROM payout_requests WHERE group_id = $1 AND cycle_number = $2 FOR UPDATE',
             [groupId, currentCycle]
         );
         
@@ -14868,6 +14988,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/request$/) && method === 'POS
              payout_method_id, JSON.stringify(payoutMethod), status]
         );
         
+        await dbPostgres.pool.query("COMMIT");
         
         // v4.1.0: Fixed undefined variables (autoApproved, payoutRequest)
         const payoutRow = result.rows[0];
@@ -14895,6 +15016,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/request$/) && method === 'POS
             auto_approved: true
         });
     } catch (error) {
+        await dbPostgres.pool.query("ROLLBACK").catch(function(){});
         log("error", 'Error creating payout request:', error);
         sendError(res, 500, 'Error al crear solicitud');
     }
@@ -14967,12 +15089,7 @@ if (pathname.match(/^\/api\/groups\/[^/]+\/payout\/confirm$/) && method === 'POS
             [confirmation_url || null, payout_request_id]
         );
         
-        // Advance cycle
-        await dbPostgres.pool.query(
-            'UPDATE groups SET current_cycle = COALESCE(current_cycle, 1) + 1 WHERE group_id = $1',
-            [groupId]
-        );
-        
+        // Cycle advance removed — handled by checkCycleAdvanceWithMora() in record-for-member/record-bulk (v4.11.0)
         log('info', 'Payout confirmed', { payout_request_id, group_id: groupId });
         
         // Notify completion
@@ -23265,7 +23382,16 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                 
                 // Pre-load user names for collecting_member display
                 const allMemberIds = new Set();
-                userTandas.forEach(t => (t.turns_order || []).forEach(uid => { const oderId = typeof uid === "object" ? uid.user_id : uid; if (oderId) allMemberIds.add(oderId); }));
+                const allGroupIds = new Set();
+                userTandas.forEach(t => {
+                    if (t.group_id) allGroupIds.add(t.group_id);
+                    (t.turns_order || []).forEach(function(uid) {
+                        var parsed = uid;
+                        if (typeof uid === "string") { try { parsed = JSON.parse(uid); } catch(e) {} }
+                        var memberId = typeof parsed === "object" && parsed !== null ? parsed.user_id : uid;
+                        if (memberId) allMemberIds.add(memberId);
+                    });
+                });
                 const userNamesLookup = {};
                 if (allMemberIds.size > 0) {
                     try {
@@ -23276,15 +23402,42 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     } catch (e) { log("error", "User names lookup failed", { error: e.message }); }
                 }
                 
+                // Batch-query real contribution counts per group for this user
+                const contributionsByGroup = {};
+                if (allGroupIds.size > 0) {
+                    try {
+                        const gidsArr = Array.from(allGroupIds);
+                        const gph = gidsArr.map((_, i) => "$" + (i + 2)).join(", ");
+                        const contribRes = await dbPostgres.pool.query(
+                            "SELECT group_id, COUNT(*) as paid_count FROM contributions WHERE user_id = $1 AND group_id IN (" + gph + ") AND status IN ('completed','coordinator_approved','archived') GROUP BY group_id",
+                            [userId].concat(gidsArr)
+                        );
+                        contribRes.rows.forEach(r => contributionsByGroup[r.group_id] = parseInt(r.paid_count));
+                    } catch (e) { log("error", "Contributions lookup failed", { error: e.message }); }
+                }
+                
                 const enrichedTandas = userTandas.map(t => {
-                    const rawTurnsOrder = t.turns_order || []; const turnsOrder = rawTurnsOrder.map(item => typeof item === "object" ? item.user_id : item);
+                    const rawTurnsOrder = t.turns_order || [];
+                    const turnsOrder = rawTurnsOrder.map(function(item) {
+                        if (typeof item === "object" && item !== null) return item.user_id || item;
+                        if (typeof item === "string") { try { var p = JSON.parse(item); return p.user_id || item; } catch(e) { return item; } }
+                        return item;
+                    });
                     const myTurnPosition = turnsOrder.indexOf(userId) + 1 || 1;
                     const currentTurn = t.current_turn || 0;
                     const totalTurns = t.total_turns || turnsOrder.length || 1;
+                    const maxMembers = t.max_members || totalTurns;
+                    const currentCycle = t.current_cycle || currentTurn;
+                    const commissionRate = t.commission_rate !== null && t.commission_rate !== undefined ? parseFloat(t.commission_rate) : null;
                     let status = t.status || "active";
                     const isCoordinator = t.coordinator_id === userId;
                     const hasTurnAssigned = turnsOrder.includes(userId) || isCoordinator;
-                    let expandedOrder = [];
+                    
+                    // Real contribution count from DB
+                    const myContributionsPaid = contributionsByGroup[t.group_id] || 0;
+                    
+                    // Pool uses max_members (personas), not total_turns (posiciones)
+                    const poolAmount = t.max_members ? (parseFloat(t.contribution_amount) * maxMembers) : (parseFloat(t.total_per_turn) || (parseFloat(t.contribution_amount) * totalTurns));
                     
                     // For recruiting/pending tandas - no payment dates yet
                     if (status === "recruiting" || status === "pending" || status === "scheduled" || status === "paused") {
@@ -23294,10 +23447,12 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                             group_name: t.name,
                             status: status,
                             contribution_amount: parseFloat(t.contribution_amount) || 0,
-                            total_per_turn: parseFloat(t.total_per_turn) || (parseFloat(t.contribution_amount) * totalTurns),
-                            frequency: t.frequency,
+                            total_per_turn: poolAmount,
+                            frequency: t.group_frequency || t.frequency,
                             total_participants: totalTurns,
+                            max_members: maxMembers,
                             current_turn: 0,
+                            current_cycle: 0,
                             my_turn_position: myTurnPosition,
                             next_payment_date: null,
                             next_payment_amount: parseFloat(t.contribution_amount),
@@ -23306,12 +23461,15 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                             progress_percentage: 0,
                             my_contributions_paid: 0,
                             my_contributions_total: totalTurns,
+                            commission_rate: commissionRate,
+                            payment_status: null,
+                            advance_threshold: t.advance_threshold || 80,
                             is_demo: t.is_demo,
                             is_coordinator: isCoordinator,
                             coordinator_name: t.coordinator_name || null,
                             members_joined: t.group_member_count || turnsOrder.length,
                             turns_assigned: turnsOrder.length,
-                    expanded_order: expandedOrder,
+                            expanded_order: [],
                             members_needed: totalTurns,
                             has_turn_assigned: hasTurnAssigned,
                             lottery_scheduled_at: t.lottery_scheduled_at || null,
@@ -23321,13 +23479,36 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     
                     // Active tanda logic
                     if (status === "active" && currentTurn === myTurnPosition) status = "collecting";
+                    
                     const cycleStart = t.start_date ? new Date(t.start_date) : new Date(t.created_at);
-                    let nextPaymentDate = new Date(cycleStart);
-                    if (t.frequency === "weekly") nextPaymentDate.setDate(nextPaymentDate.getDate() + (currentTurn * 7));
-                    else if (t.frequency === "biweekly") nextPaymentDate.setDate(nextPaymentDate.getDate() + (currentTurn * 14));
-                    else nextPaymentDate.setMonth(nextPaymentDate.getMonth() + currentTurn);
+                    const freq = (t.group_frequency || t.frequency || "monthly").toLowerCase();
+                    
+                    // Next payment date from centralized helper (15/ultimo for biweekly)
+                    const userNextCycle = myContributionsPaid + 1;
+                    const gracePeriod = parseInt(t.grace_period) || 5;
+                    const dueDateInfo = getPaymentDueDate(freq, cycleStart, userNextCycle, gracePeriod);
+                    let nextPaymentDate = dueDateInfo.dueDate ? new Date(dueDateInfo.dueDate + "T12:00:00") : new Date();
+                    const nextPaymentGraceDeadline = dueDateInfo.graceDeadline || null;
+                    
+                    // Payment status based on real data + grace period + date check
+                    var paymentStatus = "up_to_date";
+                    if (myContributionsPaid < currentCycle) {
+                        var now = new Date();
+                        var graceDate = nextPaymentGraceDeadline ? new Date(nextPaymentGraceDeadline + "T23:59:59") : nextPaymentDate;
+                        if (now > graceDate) {
+                            paymentStatus = "late";
+                        } else if (now > nextPaymentDate) {
+                            // Past due date but within grace period
+                            paymentStatus = "pending";
+                        }
+                        // else: payment needed but due date hasn't arrived yet -> up_to_date
+                    }
+                    
                     const collectingMemberId = currentTurn > 0 ? (turnsOrder[currentTurn - 1] || null) : (turnsOrder[0] || null);
-                    const collectingMember = collectingMemberId ? (userNamesLookup[collectingMemberId] || collectingMemberId) : "—";
+                    const collectingMember = collectingMemberId ? (userNamesLookup[collectingMemberId] || collectingMemberId) : "\u2014";
+                    
+                    // Progress: current_cycle / total_turns (how far through all rounds)
+                    const progressPercent = Math.round(((currentCycle > 0 ? currentCycle - 1 : 0) / totalTurns) * 100) || 0;
                     
                     return {
                         tanda_id: t.id || t.tanda_id,
@@ -23335,24 +23516,30 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                         group_name: t.name,
                         status: status,
                         contribution_amount: parseFloat(t.contribution_amount) || 0,
-                        total_per_turn: parseFloat(t.total_per_turn) || (parseFloat(t.contribution_amount) * totalTurns),
-                        frequency: t.frequency,
+                        total_per_turn: poolAmount,
+                        frequency: t.group_frequency || t.frequency,
                         total_participants: totalTurns,
+                        max_members: maxMembers,
                         current_turn: currentTurn,
+                        current_cycle: currentCycle,
                         my_turn_position: myTurnPosition,
-                        next_payment_date: nextPaymentDate.toISOString(),
+                        next_payment_date: dueDateInfo.dueDate || nextPaymentDate.toISOString().split("T")[0],
+                        next_payment_grace_deadline: nextPaymentGraceDeadline,
                         next_payment_amount: parseFloat(t.contribution_amount),
                         collecting_member: collectingMember,
                         cycle_start_date: cycleStart.toISOString(),
-                        progress_percentage: Math.round((currentTurn / totalTurns) * 100) || 0,
-                        my_contributions_paid: currentTurn > 0 ? currentTurn - 1 : 0,
+                        progress_percentage: progressPercent,
+                        my_contributions_paid: myContributionsPaid,
                         my_contributions_total: totalTurns,
+                        commission_rate: commissionRate,
+                        payment_status: paymentStatus,
+                        advance_threshold: t.advance_threshold || 80,
                         is_demo: t.is_demo,
                         is_coordinator: isCoordinator,
-                            coordinator_name: t.coordinator_name || null,
+                        coordinator_name: t.coordinator_name || null,
                         has_turn_assigned: hasTurnAssigned,
-                            lottery_scheduled_at: t.lottery_scheduled_at || null,
-                            lottery_executed_at: t.lottery_executed_at || null
+                        lottery_scheduled_at: t.lottery_scheduled_at || null,
+                        lottery_executed_at: t.lottery_executed_at || null
                     };
                 });
                 log("info", `Returning ${enrichedTandas.length} tandas for ${userId} from PostgreSQL`);
@@ -23363,8 +23550,6 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
             }
             return;
         }
-
-
         if (pathname === "/api/tandas" && method === "GET") {
             const authUser = requireAuth(req, res);
             if (!authUser) return;
@@ -26074,22 +26259,23 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     });
                 }
 
-                // Obtener cobros recibidos desde tanda_turn_payments
+                // Obtener cobros recibidos desde cycle_distributions (distribuciones donde el usuario es beneficiario)
                 if (type === "received" || type === "all") {
                     const receivedResult = await dbPostgres.pool.query(
-                        "SELECT tp.id, tp.amount, tp.status, tp.paid_at as date, t.name as tanda_name, t.tanda_id, t.coordinator_id FROM tanda_turn_payments tp JOIN tandas t ON tp.tanda_id = t.tanda_id WHERE t.coordinator_id = $1 ORDER BY tp.paid_at DESC LIMIT 50",
+                        "SELECT cd.id, cd.net_amount, cd.cycle_number, cd.status, cd.distributed_at as date, cd.group_id, g.name as group_name FROM cycle_distributions cd LEFT JOIN groups g ON cd.group_id = g.group_id WHERE cd.beneficiary_user_id = $1 AND cd.status = 'completed' ORDER BY cd.distributed_at DESC LIMIT 50",
                         [userId]
                     );
-                    
+
                     receivedResult.rows.forEach(row => {
                         payments.push({
                             id: row.id,
-                            amount: parseFloat(row.amount || 0),
-                            payment_method: "tanda",
+                            amount: parseFloat(row.net_amount || 0),
+                            payment_method: "distribucion",
                             status: row.status || "completed",
                             date: row.date,
-                            tanda_name: row.tanda_name || "Tanda",
-                            tanda_id: row.tanda_id,
+                            tanda_name: row.group_name || "Tanda",
+                            group_name: row.group_name,
+                            cycle_number: row.cycle_number,
                             direction: "received"
                         });
                     });
@@ -27014,6 +27200,391 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     userId: authUser.userId
                 });
                 sendError(res, 500, 'Error al obtener estado de onboarding');
+            }
+            return;
+        }
+
+
+
+        // =============================================
+        // v4.11.0: MARK MEMBER AS MORA (Manual by coordinator)
+        // POST /api/groups/:id/members/:userId/mark-mora
+        // =============================================
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/members\/[^\/]+\/mark-mora$/) && method === 'POST') {
+            const authUser = requireAuth(req, res, query);
+            if (!authUser) return;
+
+            const parts = pathname.split('/');
+            const groupId = decodeURIComponent(parts[3]);
+            const targetUserId = decodeURIComponent(parts[5]);
+
+            try {
+                // Check requester is creator/coordinator/admin
+                const requesterMember = await dbPostgres.pool.query(
+                    "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('active', 'suspended')",
+                    [groupId, authUser.userId]
+                );
+                const isAdmin = authUser.role === 'admin';
+                const requesterRole = requesterMember.rows[0]?.role;
+                if (!isAdmin && requesterRole !== 'creator' && requesterRole !== 'coordinator') {
+                    sendError(res, 403, 'Solo el coordinador o creador puede marcar mora');
+                    return;
+                }
+
+                // Get group info
+                const groupResult = await dbPostgres.pool.query(
+                    "SELECT current_cycle, contribution_amount FROM groups WHERE group_id = $1 AND status = 'active'",
+                    [groupId]
+                );
+                if (groupResult.rows.length === 0) {
+                    sendError(res, 404, 'Grupo no encontrado');
+                    return;
+                }
+
+                const cycleNumber = body.cycle_number ? parseInt(body.cycle_number) : (groupResult.rows[0].current_cycle || 1);
+                const contributionAmount = parseFloat(groupResult.rows[0].contribution_amount);
+
+                // Validate target is active/suspended member
+                const targetMember = await dbPostgres.pool.query(
+                    "SELECT user_id, COALESCE(num_positions, 1) as num_positions FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('active', 'suspended')",
+                    [groupId, targetUserId]
+                );
+                if (targetMember.rows.length === 0) {
+                    sendError(res, 404, 'Miembro no encontrado en el grupo');
+                    return;
+                }
+
+                const positions = parseInt(targetMember.rows[0].num_positions);
+
+                // Check if already paid for this cycle
+                const paidCheck = await dbPostgres.pool.query(
+                    "SELECT COUNT(*) as cnt FROM contributions WHERE group_id = $1 AND user_id = $2 AND cycle_number = $3 AND status IN ('completed', 'coordinator_approved', 'archived')",
+                    [groupId, targetUserId, cycleNumber]
+                );
+                if (parseInt(paidCheck.rows[0].cnt) >= positions) {
+                    sendError(res, 400, 'El miembro ya completo sus pagos para este ciclo');
+                    return;
+                }
+
+                // Insert mora record
+                const moraResult = await dbPostgres.pool.query(`
+                    INSERT INTO payment_deferrals (group_id, user_id, cycle_number, type, status, mora_applied_by, mora_applied_at, mora_method, positions_count, amount_owed, created_at, updated_at)
+                    VALUES ($1, $2, $3, 'mora', 'active', $4, NOW(), 'manual_coordinator', $5, $6, NOW(), NOW())
+                    ON CONFLICT (group_id, user_id, cycle_number, type) DO NOTHING
+                    RETURNING id
+                `, [groupId, targetUserId, cycleNumber, authUser.userId, positions, contributionAmount * positions]);
+
+                if (moraResult.rows.length === 0) {
+                    sendError(res, 409, 'Ya existe un registro de mora para este miembro y ciclo');
+                    return;
+                }
+
+                // Notify member
+                await notificationsUtils.createNotification(dbPostgres.pool, targetUserId, 'mora_applied',
+                    'Pago en Mora',
+                    'Tu coordinador ha marcado tu pago como mora.',
+                    { group_id: groupId, cycle_number: cycleNumber }
+                );
+
+                log("info", "Mora marked manually", { groupId, targetUserId, cycleNumber, by: authUser.userId });
+                sendSuccess(res, { message: 'Mora registrada', deferral_id: moraResult.rows[0].id });
+            } catch (error) {
+                log('error', 'Error marking mora', { error: error.message });
+                sendError(res, 500, 'Error al registrar mora');
+            }
+            return;
+        }
+
+
+        // =============================================
+        // v4.11.0: REQUEST EXTENSION (Member requests prórroga)
+        // POST /api/groups/:id/extensions/request
+        // =============================================
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/extensions\/request$/) && method === 'POST') {
+            const authUser = requireAuth(req, res, query);
+            if (!authUser) return;
+
+            const parts = pathname.split('/');
+            const groupId = decodeURIComponent(parts[3]);
+
+            try {
+                // Check requester is active member
+                const memberCheck = await dbPostgres.pool.query(
+                    "SELECT user_id, COALESCE(num_positions, 1) as num_positions FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('active', 'suspended')",
+                    [groupId, authUser.userId]
+                );
+                if (memberCheck.rows.length === 0) {
+                    sendError(res, 403, 'No eres miembro activo de este grupo');
+                    return;
+                }
+
+                // Get group info
+                const groupResult = await dbPostgres.pool.query(
+                    "SELECT current_cycle, contribution_amount, name, admin_id FROM groups WHERE group_id = $1 AND status = 'active'",
+                    [groupId]
+                );
+                if (groupResult.rows.length === 0) {
+                    sendError(res, 404, 'Grupo no encontrado');
+                    return;
+                }
+
+                const currentCycle = groupResult.rows[0].current_cycle || 1;
+                const contributionAmount = parseFloat(groupResult.rows[0].contribution_amount);
+                const positions = parseInt(memberCheck.rows[0].num_positions);
+
+                // Validate reason
+                const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+                if (reason.length < 1 || reason.length > 500) {
+                    sendError(res, 400, 'El motivo es requerido (1-500 caracteres)');
+                    return;
+                }
+
+                // Calculate proposed date
+                let proposedDate = null;
+                if (body.next_quincena) {
+                    const now = new Date();
+                    const day = now.getDate();
+                    const month = now.getMonth();
+                    const year = now.getFullYear();
+                    if (day < 15) {
+                        proposedDate = new Date(year, month, 15);
+                    } else {
+                        // Last day of current month or 15th of next month
+                        proposedDate = new Date(year, month + 1, 15);
+                    }
+                } else if (body.proposed_date) {
+                    proposedDate = new Date(body.proposed_date);
+                    if (isNaN(proposedDate.getTime())) {
+                        sendError(res, 400, 'Fecha propuesta invalida');
+                        return;
+                    }
+                    // Don't allow dates more than 60 days in the future
+                    const maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + 60);
+                    if (proposedDate > maxDate) {
+                        sendError(res, 400, 'La fecha propuesta no puede ser mayor a 60 dias');
+                        return;
+                    }
+                }
+
+                // Check no existing active extension for this cycle
+                const existingCheck = await dbPostgres.pool.query(
+                    "SELECT id FROM payment_deferrals WHERE group_id = $1 AND user_id = $2 AND cycle_number = $3 AND type = 'extension' AND status IN ('active', 'approved')",
+                    [groupId, authUser.userId, currentCycle]
+                );
+                if (existingCheck.rows.length > 0) {
+                    sendError(res, 409, 'Ya tienes una prorroga activa para este ciclo');
+                    return;
+                }
+
+                // Insert extension request
+                const extResult = await dbPostgres.pool.query(`
+                    INSERT INTO payment_deferrals (group_id, user_id, cycle_number, type, status, requested_at, proposed_date, reason, positions_count, amount_owed, created_at, updated_at)
+                    VALUES ($1, $2, $3, 'extension', 'active', NOW(), $4, $5, $6, $7, NOW(), NOW())
+                    RETURNING id, proposed_date, created_at
+                `, [groupId, authUser.userId, currentCycle, proposedDate, reason, positions, contributionAmount * positions]);
+
+                // Notify group creator
+                const creatorId = groupResult.rows[0].admin_id;
+                if (creatorId && creatorId !== authUser.userId) {
+                    await notificationsUtils.createNotification(dbPostgres.pool, creatorId, 'extension_requested',
+                        'Solicitud de Prorroga',
+                        'Un miembro ha solicitado una prorroga para su pago.',
+                        { group_id: groupId, deferral_id: extResult.rows[0].id, cycle_number: currentCycle }
+                    );
+                }
+
+                log("info", "Extension requested", { groupId, userId: authUser.userId, cycle: currentCycle });
+                sendSuccess(res, {
+                    message: 'Solicitud de prorroga enviada',
+                    extension: {
+                        id: extResult.rows[0].id,
+                        proposed_date: extResult.rows[0].proposed_date,
+                        created_at: extResult.rows[0].created_at
+                    }
+                });
+            } catch (error) {
+                log('error', 'Error requesting extension', { error: error.message });
+                sendError(res, 500, 'Error al solicitar prorroga');
+            }
+            return;
+        }
+
+
+        // =============================================
+        // v4.11.0: GET EXTENSIONS/MORAS for a group
+        // GET /api/groups/:id/extensions
+        // =============================================
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/extensions$/) && (method === 'GET' || method === 'HEAD')) {
+            const authUser = requireAuth(req, res, query);
+            if (!authUser) return;
+
+            const parts = pathname.split('/');
+            const groupId = decodeURIComponent(parts[3]);
+
+            try {
+                // Check membership
+                const memberCheck = await dbPostgres.pool.query(
+                    "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('active', 'suspended')",
+                    [groupId, authUser.userId]
+                );
+                const isAdmin = authUser.role === 'admin';
+                if (!isAdmin && memberCheck.rows.length === 0) {
+                    sendError(res, 403, 'No tienes acceso a este grupo');
+                    return;
+                }
+
+                const isCoordinator = isAdmin || memberCheck.rows[0]?.role === 'creator' || memberCheck.rows[0]?.role === 'coordinator';
+
+                // Build query with filters
+                const statusFilter = query.status || 'all';
+                const typeFilter = query.type || 'all';
+                const cycleFilter = query.cycle ? parseInt(query.cycle) : null;
+
+                let whereClauses = ['pd.group_id = $1'];
+                let params = [groupId];
+                let paramIdx = 2;
+
+                // Members can only see their own
+                if (!isCoordinator) {
+                    whereClauses.push('pd.user_id = $' + paramIdx);
+                    params.push(authUser.userId);
+                    paramIdx++;
+                }
+
+                if (statusFilter !== 'all') {
+                    whereClauses.push('pd.status = $' + paramIdx);
+                    params.push(statusFilter);
+                    paramIdx++;
+                }
+
+                if (typeFilter !== 'all') {
+                    whereClauses.push('pd.type = $' + paramIdx);
+                    params.push(typeFilter);
+                    paramIdx++;
+                }
+
+                if (cycleFilter) {
+                    whereClauses.push('pd.cycle_number = $' + paramIdx);
+                    params.push(cycleFilter);
+                    paramIdx++;
+                }
+
+                const result = await dbPostgres.pool.query(`
+                    SELECT pd.id, pd.group_id, pd.user_id, pd.cycle_number, pd.type, pd.status,
+                        pd.mora_applied_by, pd.mora_applied_at, pd.mora_method,
+                        pd.requested_at, pd.proposed_date, pd.reason,
+                        pd.responded_by, pd.responded_at, pd.response_notes,
+                        pd.positions_count, pd.amount_owed, pd.resolved_at,
+                        pd.created_at, pd.updated_at,
+                        u.name as user_name, u.avatar_url as user_avatar
+                    FROM payment_deferrals pd
+                    LEFT JOIN users u ON pd.user_id = u.user_id
+                    WHERE ${whereClauses.join(' AND ')}
+                    ORDER BY pd.created_at DESC
+                    LIMIT 100
+                `, params);
+
+                // Summary counts
+                const summaryResult = await dbPostgres.pool.query(`
+                    SELECT
+                        COUNT(*) FILTER (WHERE type = 'mora' AND status = 'active') as active_moras,
+                        COUNT(*) FILTER (WHERE type = 'extension' AND status = 'active') as pending_extensions,
+                        COUNT(*) FILTER (WHERE type = 'extension' AND status = 'approved') as approved_extensions,
+                        COUNT(*) FILTER (WHERE status = 'resolved') as resolved
+                    FROM payment_deferrals WHERE group_id = $1
+                `, [groupId]);
+
+                sendSuccess(res, {
+                    deferrals: result.rows,
+                    summary: summaryResult.rows[0]
+                });
+            } catch (error) {
+                log('error', 'Error fetching extensions', { error: error.message });
+                sendError(res, 500, 'Error al obtener prorrogas');
+            }
+            return;
+        }
+
+
+        // =============================================
+        // v4.11.0: APPROVE/REJECT EXTENSION
+        // PATCH /api/groups/:id/extensions/:extensionId
+        // =============================================
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/extensions\/[0-9a-f-]+$/) && (method === 'PATCH' || method === 'PUT')) {
+            const authUser = requireAuth(req, res, query);
+            if (!authUser) return;
+
+            const parts = pathname.split('/');
+            const groupId = decodeURIComponent(parts[3]);
+            const extensionId = decodeURIComponent(parts[5]);
+
+            try {
+                // Check requester is creator/coordinator/admin
+                const requesterMember = await dbPostgres.pool.query(
+                    "SELECT role FROM group_members WHERE group_id = $1 AND user_id = $2 AND status IN ('active', 'suspended')",
+                    [groupId, authUser.userId]
+                );
+                const isAdmin = authUser.role === 'admin';
+                const requesterRole = requesterMember.rows[0]?.role;
+                if (!isAdmin && requesterRole !== 'creator' && requesterRole !== 'coordinator') {
+                    sendError(res, 403, 'Solo el coordinador o creador puede gestionar prorrogas');
+                    return;
+                }
+
+                const action = body.action;
+                if (action !== 'approve' && action !== 'reject') {
+                    sendError(res, 400, 'Accion invalida. Use approve o reject');
+                    return;
+                }
+
+                // Get the deferral
+                const deferral = await dbPostgres.pool.query(
+                    "SELECT id, user_id, type, status FROM payment_deferrals WHERE id = $1 AND group_id = $2",
+                    [extensionId, groupId]
+                );
+                if (deferral.rows.length === 0) {
+                    sendError(res, 404, 'Prorroga no encontrada');
+                    return;
+                }
+
+                if (deferral.rows[0].type !== 'extension') {
+                    sendError(res, 400, 'Solo se pueden aprobar/rechazar prorrogas, no moras');
+                    return;
+                }
+
+                if (deferral.rows[0].status !== 'active') {
+                    sendError(res, 400, 'Esta prorroga ya fue procesada');
+                    return;
+                }
+
+                const newStatus = action === 'approve' ? 'approved' : 'rejected';
+                const responseNotes = typeof body.response_notes === 'string' ? body.response_notes.trim().slice(0, 500) : null;
+
+                await dbPostgres.pool.query(`
+                    UPDATE payment_deferrals
+                    SET status = $1, responded_by = $2, responded_at = NOW(), response_notes = $3, updated_at = NOW()
+                    WHERE id = $4
+                `, [newStatus, authUser.userId, responseNotes, extensionId]);
+
+                // Notify the member
+                const targetUserId = deferral.rows[0].user_id;
+                const notifType = action === 'approve' ? 'extension_approved' : 'extension_rejected';
+                const notifTitle = action === 'approve' ? 'Prorroga Aprobada' : 'Prorroga Rechazada';
+                const notifMessage = action === 'approve'
+                    ? 'Tu solicitud de prorroga ha sido aprobada por el coordinador.'
+                    : 'Tu solicitud de prorroga ha sido rechazada por el coordinador.';
+
+                await notificationsUtils.createNotification(dbPostgres.pool, targetUserId, notifType,
+                    notifTitle, notifMessage,
+                    { group_id: groupId, deferral_id: extensionId }
+                );
+
+                log("info", `Extension ${action}d`, { groupId, extensionId, by: authUser.userId });
+                sendSuccess(res, { message: action === 'approve' ? 'Prorroga aprobada' : 'Prorroga rechazada', status: newStatus });
+            } catch (error) {
+                log('error', 'Error updating extension', { error: error.message });
+                sendError(res, 500, 'Error al procesar prorroga');
             }
             return;
         }

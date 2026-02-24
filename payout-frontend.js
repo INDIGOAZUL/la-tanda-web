@@ -423,7 +423,7 @@ async function loadPayoutMethods() {
     try {
         const apiBase = window.API_BASE_URL || 'https://latanda.online';
         const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
-        const response = await fetch(`${apiBase}/api/users/payout-methods?user_id=${userId}`, {
+        const response = await fetch(`${apiBase}/api/users/payout-methods`, {
             headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         const result = await response.json();
@@ -662,7 +662,6 @@ window.savePayoutMethod = async function() {
     const type = window.PayoutSystem.selectedMethodType;
 
     const data = {
-        user_id: userId,
         method_type: type,
         is_default: document.getElementById('setAsDefault').checked
     };
@@ -674,7 +673,7 @@ window.savePayoutMethod = async function() {
         data.bank_account_holder = document.getElementById('bankAccountHolder').value;
 
         if (!data.bank_name || !data.bank_account_number || !data.bank_account_holder) {
-            alert('Por favor completa todos los campos del banco');
+            showNotification('Por favor completa todos los campos del banco', 'error');
             return;
         }
     } else if (type === 'mobile_money') {
@@ -682,7 +681,7 @@ window.savePayoutMethod = async function() {
         data.tigo_name = document.getElementById('tigoName').value;
 
         if (!data.tigo_phone || !data.tigo_name) {
-            alert('Por favor completa todos los campos de Tigo Money');
+            showNotification('Por favor completa todos los campos de Tigo Money', 'error');
             return;
         }
     } else if (type === 'crypto') {
@@ -690,7 +689,7 @@ window.savePayoutMethod = async function() {
         data.crypto_address = document.getElementById('cryptoAddress').value;
 
         if (!data.crypto_address) {
-            alert('Por favor ingresa la dirección de wallet');
+            showNotification('Por favor ingresa la dirección de wallet', 'error');
             return;
         }
     }
@@ -712,10 +711,10 @@ window.savePayoutMethod = async function() {
             renderPayoutMethodsSection('payoutMethodsContainer');
             if (window.showSuccess) window.showSuccess('Método de cobro agregado');
         } else {
-            alert('Error al guardar el método de cobro');
+            showNotification('Error al guardar el método de cobro', 'error');
         }
     } catch (error) {
-        alert('Error al guardar el método de cobro');
+        showNotification('Error al guardar el método de cobro', 'error');
     }
 };
 
@@ -741,26 +740,27 @@ window.setDefaultPayoutMethod = async function(methodId) {
 };
 
 // Delete payout method
-window.deletePayoutMethod = async function(methodId) {
-    if (!confirm('¿Eliminar este método de cobro?')) return;
+window.deletePayoutMethod = function(methodId) {
+    showConfirm('¿Eliminar este método de cobro?', async function() {
 
-    try {
-        const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const delToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
-        const response = await fetch(`${apiBase}/api/users/payout-methods/${methodId}`, {
-            method: 'DELETE',
-            headers: delToken ? { 'Authorization': `Bearer ${delToken}` } : {}
-        });
+        try {
+            const apiBase = window.API_BASE_URL || 'https://latanda.online';
+            const delToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+            const response = await fetch(`${apiBase}/api/users/payout-methods/${methodId}`, {
+                method: 'DELETE',
+                headers: delToken ? { 'Authorization': `Bearer ${delToken}` } : {}
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (result.success) {
-            await loadPayoutMethods();
-            renderPayoutMethodsSection('payoutMethodsContainer');
+            if (result.success) {
+                await loadPayoutMethods();
+                renderPayoutMethodsSection('payoutMethodsContainer');
+            }
+        } catch (error) {
+            /* Network error deleting payout method */
         }
-    } catch (error) {
-        /* Network error deleting payout method */
-    }
+    });
 };
 
 // Check payout eligibility
@@ -956,48 +956,46 @@ window.requestPayout = async function(groupId) {
             await checkPayoutEligibility(groupId);
             renderCollectTandaSection('collectTandaContainer', groupId);
         } else {
-            alert('No se pudo procesar la solicitud de cobro');
+            showNotification('No se pudo procesar la solicitud de cobro', 'error');
         }
     } catch (error) {
-        alert('Error al solicitar cobro');
+        showNotification('Error al solicitar cobro', 'error');
     }
 };
 
 // Confirm receipt
-window.confirmPayoutReceipt = async function(groupId, payoutRequestId) {
-    if (!confirm('¿Confirmas que recibiste el pago de tu tanda?')) return;
+window.confirmPayoutReceipt = function(groupId, payoutRequestId) {
+    showConfirm('¿Confirmas que recibiste el pago de tu tanda?', async function() {
 
-    const userId = getPayoutUserId();
+        const userId = getPayoutUserId();
 
-    try {
-        const apiBase = window.API_BASE_URL || 'https://latanda.online';
-        const confToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
-        const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/payout/confirm`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...(confToken ? { 'Authorization': `Bearer ${confToken}` } : {}) },
-            body: JSON.stringify({
-                payout_request_id: payoutRequestId
-            })
-        });
+        try {
+            const apiBase = window.API_BASE_URL || 'https://latanda.online';
+            const confToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+            const response = await fetch(`${apiBase}/api/groups/${encodeURIComponent(groupId)}/payout/confirm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...(confToken ? { 'Authorization': `Bearer ${confToken}` } : {}) },
+                body: JSON.stringify({
+                    payout_request_id: payoutRequestId
+                })
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (result.success) {
-            if (window.showSuccess) window.showSuccess('¡Recepción confirmada! Ciclo cerrado.');
-            await checkPayoutEligibility(groupId);
-            renderCollectTandaSection('collectTandaContainer', groupId);
-        } else {
-            alert('No se pudo confirmar la recepción del pago');
+            if (result.success) {
+                if (window.showSuccess) window.showSuccess('¡Recepción confirmada! Ciclo cerrado.');
+                await checkPayoutEligibility(groupId);
+                renderCollectTandaSection('collectTandaContainer', groupId);
+            } else {
+                showNotification('No se pudo confirmar la recepción del pago', 'error');
+            }
+        } catch (error) {
+            showNotification('Error al confirmar la recepción', 'error');
         }
-    } catch (error) {
-        alert('Error al confirmar la recepción');
-    }
+    });
 };
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadPayoutMethods();
-});
 
 
 // ============================================

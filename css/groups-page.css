@@ -1515,15 +1515,24 @@
         .gc-stat {
             background: rgba(255, 255, 255, 0.04);
             border-radius: 8px;
-            padding: 10px;
+            padding: 10px 6px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .gc-stat-val {
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: #f8fafc;
-            line-height: 1.2;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .gc-stat-val.cyan {
@@ -1531,12 +1540,12 @@
         }
 
         .gc-stat-label {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             color: #94a3b8;
-            margin-top: 3px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
-            line-height: 1.2;
+            line-height: 1.1;
+            white-space: nowrap;
         }
 
         /* ===== ALERT BANNER ===== */
@@ -1767,13 +1776,13 @@
                 gap: 6px;
             }
             .gc-stat {
-                padding: 8px;
+                padding: 8px 4px;
             }
             .gc-stat-val {
-                font-size: 0.9rem;
+                font-size: 0.82rem;
             }
             .gc-stat-label {
-                font-size: 0.62rem;
+                font-size: 0.58rem;
             }
             .gc-alert {
                 font-size: 0.75rem;
@@ -2345,15 +2354,39 @@
 
 /* MOBILE PERFORMANCE OPTIMIZED */
 
+        /* ===== Tanda Sections ===== */
+        .tc-section { margin-bottom: 24px; }
+        .tc-section-header { display: flex; align-items: center; gap: 10px; padding: 0 4px 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,255,255,0.12); }
+        .tc-section-title { color: #e2e8f0; font-size: 0.95rem; font-weight: 600; }
+        .tc-section-count { background: rgba(0,255,255,0.12); color: #00FFFF; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; min-width: 20px; text-align: center; }
+
+        /* ===== Tanda Card Identity ===== */
+        .tc-card { border-left: none; border-radius: 12px; overflow: hidden; position: relative; }
+        .tc-top-border { height: 3px; width: 100%; border-radius: 12px 12px 0 0; }
+
+        /* ===== Tanda Pill Buttons ===== */
+        .tc-pill-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 50px; border: 1px solid rgba(0,255,255,0.25); background: rgba(0,255,255,0.06); color: #94a3b8; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+        .tc-pill-btn:hover { background: rgba(0,255,255,0.12); border-color: rgba(0,255,255,0.5); color: #00FFFF; }
+        .tc-pill-btn:active { background: rgba(0,255,255,0.18); }
+
         /* ===== Tanda Card Specific (tc-*) ===== */
-        .tc-payout { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; margin: 0 16px 8px; background: rgba(0,255,255,0.06); border-radius: 8px; }
-        .tc-payout-label { color: #94a3b8; font-size: 0.8rem; }
-        .tc-payout-amount { color: #00FFFF; font-weight: 600; font-size: 0.95rem; }
+        .tc-payout-inline { color: #00FFFF; font-weight: 600; }
         .tc-progress { padding: 4px 16px 8px; }
         .tc-progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
-        .tc-progress-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-        .tc-progress-fill { height: 100%; background: linear-gradient(90deg, #00FFFF, #0ea5e9); border-radius: 3px; transition: width 0.5s ease; }
+        .tc-progress-bar { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+        .tc-progress-fill { height: 100%; background: linear-gradient(90deg, #00FFFF, #0ea5e9); border-radius: 4px; transition: width 0.5s ease; }
+        .tc-progress-fill-amber { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .tc-progress-fill-green { background: linear-gradient(90deg, #10b981, #22c55e); }
         .tc-waiting { font-size: 0.78rem; color: #94a3b8; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* ===== Tanda Card Status Classes ===== */
+        .tc-collecting { box-shadow: 0 0 12px rgba(16,185,129,0.15); }
+        .tc-late { box-shadow: 0 0 12px rgba(239,68,68,0.15); }
+        .tc-completed { opacity: 0.75; filter: saturate(0.7); }
+
+        /* ===== Tanda Dark Outline Button ===== */
+        .tc-btn-dark { background: rgba(255,255,255,0.06); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.12); }
+        .tc-btn-dark:hover { background: rgba(0,255,255,0.1); border-color: rgba(0,255,255,0.3); color: #00FFFF; }
 
 .tanda-card {
     background: var(--bg-card);
@@ -3066,3 +3099,75 @@
 
 /* Phase 1 audit: replaces onmouseover/onmouseout on search results */
 .grp-search-result-item:hover { background: rgba(255,255,255,0.05); }
+
+/* =============================================
+   Payout Methods — Compact Sidebar Override
+   ============================================= */
+#tandasSidebarCards .payout-methods-section {
+    background: rgba(16,185,129,0.06);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 0 0 12px 0;
+    border: 1px solid rgba(16,185,129,0.2);
+}
+#tandasSidebarCards .payout-methods-header {
+    margin-bottom: 0;
+}
+#tandasSidebarCards .payout-methods-header h3 {
+    font-size: 0.82rem;
+    gap: 6px;
+}
+#tandasSidebarCards .payout-methods-header h3 span {
+    font-size: 1rem;
+}
+#tandasSidebarCards .add-payout-method-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+/* Empty state — compact single line */
+#tandasSidebarCards .no-payout-methods {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0 2px;
+}
+#tandasSidebarCards .no-payout-methods p {
+    font-size: 0.75rem;
+    margin: 0;
+    color: #94a3b8;
+}
+#tandasSidebarCards .no-payout-methods p:last-child {
+    display: none;
+}
+/* Method cards — compact */
+#tandasSidebarCards .payout-method-card {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+#tandasSidebarCards .payout-method-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+}
+#tandasSidebarCards .payout-method-info {
+    gap: 8px;
+}
+#tandasSidebarCards .payout-method-details h4 {
+    font-size: 0.8rem;
+    margin-bottom: 1px;
+}
+#tandasSidebarCards .payout-method-details p {
+    font-size: 0.72rem;
+}
+#tandasSidebarCards .payout-method-actions button {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+}
+#tandasSidebarCards .no-payout-methods .icon {
+    display: none;
+}
