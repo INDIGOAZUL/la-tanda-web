@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.5">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.6">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -1911,11 +1911,11 @@ async function loadUsersWithoutPositions(groupId) {
                                             <input type="number" id="custom-commission-rate" min="0.5" max="5" step="0.5" value="2" style="max-width:120px;">
                                             <div class="help-text">Entre 0.5% y 5%. Los miembros deciden individualmente si aceptan.</div>
                                         </div>
-                                        <div id="commission-live-calc" class="commission-calc-panel" style="margin-top:12px;padding:14px;background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.15);border-radius:10px;">
-                                            <div style="font-size:0.82rem;color:#94a3b8;margin-bottom:8px;font-weight:600;">Vista previa de comision</div>
-                                            <div id="commission-calc-body" style="font-size:0.85rem;color:#e2e8f0;line-height:1.7;"></div>
+                                        <div id="commission-live-calc" class="commission-calc-panel">
+                                            <div class="commission-calc-label">Vista previa de comision</div>
+                                            <div id="commission-calc-body" class="commission-calc-body"></div>
                                         </div>
-                                        <div style="margin-top:10px;padding:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:0.8rem;color:#f59e0b;">
+                                        <div class="commission-democratic-note">
                                             <strong>Democratico:</strong> Cada miembro decide si acepta la comision. Solo se cobra a quienes acepten.
                                         </div>
                                     </div>
@@ -2883,7 +2883,8 @@ function mergeTandaWithGroup(tanda) {
         location: group.location || tanda.location,
         frequency_label: group.frequency || tanda.frequency,
         max_members: group.max_members || tanda.max_members,
-        group_status: group.status || tanda.group_status
+        group_status: group.status || tanda.group_status,
+        lottery_executed: tanda.lottery_executed || group.lottery_executed || false
     });
 }
 
@@ -2945,12 +2946,12 @@ function updateTandasSidebar(tandas) {
 
     var myCollection = activeTandas.find(function(t) { return t.is_my_turn || t.isMyTurn; });
     if (myCollection) {
-        var total = (myCollection.contribution_amount || 0) * (myCollection.total_participants || 1);
+        var total = (myCollection.contribution_amount || 0) * (myCollection.max_members || myCollection.total_participants || 1);
         if (collAmountEl) collAmountEl.textContent = 'L. ' + total.toLocaleString('es-HN');
         if (collInfoEl) collInfoEl.textContent = '¡Te toca cobrar!';
     } else if (activeTandas.length > 0) {
         var turnsAway = activeTandas
-            .map(function(t) { return { turns: Math.max(0, (t.my_turn_position || 1) - (t.current_turn || 1)), amount: (t.contribution_amount || 0) * (t.total_participants || 1) }; })
+            .map(function(t) { return { turns: Math.max(0, (t.my_turn_position || 1) - (t.current_turn || 1)), amount: (t.contribution_amount || 0) * (t.max_members || t.total_participants || 1) }; })
             .filter(function(t) { return t.turns > 0; })
             .sort(function(a, b) { return a.turns - b.turns; })[0];
         if (turnsAway) {
