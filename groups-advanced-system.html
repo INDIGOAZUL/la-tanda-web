@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.4">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.5">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -2104,105 +2104,36 @@ async function loadUsersWithoutPositions(groupId) {
                 </div>
             </div>
 
+            <!-- Filter Bar (matches Mis Grupos pattern) -->
+            <div class="filter-bar" id="tandasFilterBar">
+                <select id="tandasStatusFilter">
+                    <option value="all">Estado: Todas</option>
+                    <option value="active">Activas</option>
+                    <option value="recruiting">Reclutando</option>
+                    <option value="completed">Completadas</option>
+                    <option value="paused">Pausadas</option>
+                </select>
+                <select id="tandasSortOrder">
+                    <option value="next-payment">Próximo pago</option>
+                    <option value="amount">Monto</option>
+                    <option value="turn-position">Mi turno</option>
+                </select>
+                <input type="text" id="searchTandas" placeholder="Buscar tanda...">
+            </div>
 
-            <!-- Dashboard de Resumen Personal -->
-            <div class="tandas-dashboard">
-                <div class="dashboard-card urgent" id="nextPaymentCard">
-                    <div class="card-icon"><i class="fas fa-exclamation-circle"></i></div>
-                    <div class="card-content">
-                        <span class="card-label">Próximo Pago</span>
-                        <span class="card-value" id="nextPaymentAmount">L. 0.00</span>
-                        <span class="card-subtitle" id="nextPaymentDue">Sin pagos pendientes</span>
-                    </div>
-                    <button class="btn-pay-now" id="btnPayNow" data-action="grp-pay-next" style="display:none;">
-                        PAGAR AHORA
-                    </button>
-                </div>
-
-                <div class="dashboard-card success" id="myCollectionCard">
-                    <div class="card-icon"><i class="fas fa-hand-holding-usd"></i></div>
-                    <div class="card-content">
-                        <span class="card-label">Mi Próximo Cobro</span>
-                        <span class="card-value" id="myNextCollection">--</span>
-                        <span class="card-subtitle" id="myCollectionDate">--</span>
-                    </div>
-                </div>
-
-                <div class="dashboard-card info clickable" id="summaryCard" data-action="grp-open-history" title="Ver historial completo">
-                    <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
-                    <div class="card-content">
-                        <span class="card-label">Resumen</span>
-                        <span class="card-value" id="paymentProgress">0/0</span>
-                        <span class="card-subtitle" id="totalPaid">L. 0 pagado</span>
-                        <div class="summary-progress-bar"><div class="summary-progress-fill" id="summaryProgressFill" style="width: 0%"></div></div>
-                    </div>
+            <!-- Tanda Cards Container -->
+            <div id="tandasList" class="tandas-grid">
+                <div class="loading-state" id="tandasLoading">
+                    <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
+                    <p class="loading-text">Cargando tus tandas...</p>
                 </div>
             </div>
 
-
-            <!-- Filtros y Controles -->
-            <div class="tandas-controls">
-                <div class="tandas-filters">
-                    <div class="filter-group">
-                        <label>Filtrar por estado:</label>
-                        <select id="tandasStatusFilter">
-                            <option value="all">Todas las tandas</option>
-                            <option value="active">Activas</option>
-                            <option value="waiting-turn">Esperando turno</option>
-                            <option value="collecting">Cobrando este mes</option>
-                            <option value="completed">Completadas</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Ordenar por:</label>
-                        <select id="tandasSortOrder">
-                            <option value="next-payment">Próximo pago</option>
-                            <option value="amount">Monto</option>
-                            
-                            <option value="turn-position">Posición en turno</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pagos Pendientes por Urgencia -->
-            <div class="payments-urgent-section">
-                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--text-primary);">
-                    <i class="fas fa-clock" style="color: var(--tanda-cyan);"></i> Pagos Pendientes
-                </h3>
-                <div id="urgentPaymentsList" class="urgent-payments-list">
-                    <!-- Se genera dinámicamente -->
-                </div>
-            </div>
-
-            <!-- Quién Cobra Este Mes -->
-            <div class="collectors-section" style="margin-top: 24px;">
-                <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--text-primary);">
-                    <i class="fas fa-user-check" style="color: #10b981;"></i> Quién Cobra Este Mes
-                </h3>
-                <div id="currentCollectorsList" class="collectors-list">
-                    <!-- Se genera dinámicamente -->
-                </div>
-            </div>
-
-            <!-- ====== PAYOUT SYSTEM - Cobro de Tandas ====== -->
+            
+    
+            <!-- Payout containers (preserved for payout-frontend.js) -->
             <div id="collectTandaContainer"></div>
             <div id="payoutMethodsContainer"></div>
-            <!-- ====== END PAYOUT SYSTEM ======  -->
-
-            <!-- Lista de Tandas (legacy) -->
-            <div class="tandas-container">
-                <div id="tandasList" class="tandas-grid">
-                    <!-- Las tandas se cargan dinámicamente aquí -->
-                    <div class="loading-state" id="tandasLoading">
-                        <div class="loading-spinner">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </div>
-                        <p>Cargando tus tandas...</p>
-                    </div>
-                </div>
-            </div>
-
         </section>
 
         </main>
@@ -2300,6 +2231,75 @@ async function loadUsersWithoutPositions(groupId) {
                 </div>
 
                 <!-- Roles Card -->
+                
+                <!-- Tandas Tab Sidebar Cards -->
+                <div id="tandasSidebarCards" style="display:none;">
+                    <!-- Próximo Pago card -->
+                    <div class="grp-sidebar-stats" id="tscNextPayment">
+                        <h4 class="grp-sidebar-stats-title">Próximo Pago</h4>
+                        <div id="tscNextPaymentContent">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                                <div style="width:32px;height:32px;background:rgba(239,68,68,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i class="fas fa-exclamation-circle" style="color:#ef4444;font-size:14px;"></i>
+                                </div>
+                                <div>
+                                    <div id="tscPaymentAmount" style="font-size:1.1rem;font-weight:700;color:#f8fafc">--</div>
+                                    <div id="tscPaymentDue" style="font-size:0.72rem;color:#94a3b8">Sin pagos pendientes</div>
+                                </div>
+                            </div>
+                            <div id="tscPaymentGroup" style="font-size:0.75rem;color:#64748b;padding-top:4px;border-top:1px solid rgba(255,255,255,0.06)"></div>
+                        </div>
+                    </div>
+                    <!-- Mi Próximo Cobro card -->
+                    <div class="grp-sidebar-stats" id="tscMyCollection">
+                        <h4 class="grp-sidebar-stats-title">Mi Próximo Cobro</h4>
+                        <div id="tscMyCollectionContent">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                                <div style="width:32px;height:32px;background:rgba(16,185,129,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i class="fas fa-hand-holding-usd" style="color:#10b981;font-size:14px;"></i>
+                                </div>
+                                <div>
+                                    <div id="tscCollectionAmount" style="font-size:1.1rem;font-weight:700;color:#f8fafc">--</div>
+                                    <div id="tscCollectionInfo" style="font-size:0.72rem;color:#94a3b8">Sin tandas</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Resumen card -->
+                    <div class="grp-sidebar-stats" id="tscSummary">
+                        <h4 class="grp-sidebar-stats-title">Resumen Tandas</h4>
+                        <div id="tscSummaryContent">
+                            <div class="gs-grid">
+                                <div class="gs-cell">
+                                    <span class="gs-cell-val" id="tscTotalTandas">0</span>
+                                    <span class="gs-cell-label">Tandas</span>
+                                </div>
+                                <div class="gs-cell">
+                                    <span class="gs-cell-val gs-cyan" id="tscActiveTandas">0</span>
+                                    <span class="gs-cell-label">Activas</span>
+                                </div>
+                                <div class="gs-cell">
+                                    <span class="gs-cell-val" style="color:#10b981" id="tscPaidCycles">0</span>
+                                    <span class="gs-cell-label">Pagados</span>
+                                </div>
+                                <div class="gs-cell">
+                                    <span class="gs-cell-val gs-amber" id="tscPendingCycles">0</span>
+                                    <span class="gs-cell-label">Pendientes</span>
+                                </div>
+                            </div>
+                            <div class="gs-rows" style="margin-top:8px">
+                                <div class="gs-row">
+                                    <span class="gs-row-icon" style="color:#00FFFF;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                    </span>
+                                    <span class="gs-row-label">Total pagado</span>
+                                    <span class="gs-row-val gs-cyan" id="tscTotalPaid">L. 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grp-sidebar-stats" id="grpSidebarRoles">
                     <h4 class="grp-sidebar-stats-title">Mis Roles</h4>
                     <div class="gs-roles">
@@ -2645,311 +2645,13 @@ if (typeof advancedGroupsSystem === 'undefined') {
 // Global state for tandas
 
 // ========== DASHBOARD UPDATE FUNCTION ==========
-function updateTandasDashboard(tandas) {
-    // Separar tandas por estado
-    const recruitingTandas = tandas.filter(t => t.status === "recruiting" || t.status === "pending" || t.status === "scheduled");
-    const activeTandas = tandas.filter(t => t.status === "active" || t.status === "waiting-turn" || t.status === "collecting" || t.status === "scheduled" || t.status === "paused");
-    const pendingPayments = activeTandas.filter(t => t.next_payment_date).sort((a, b) => new Date(a.next_payment_date) - new Date(b.next_payment_date));
+// [REMOVED] updateTandasDashboard + payNextDue — replaced by updateTandasSidebar
 
-    // ========== TARJETA 1: PRÓXIMO PAGO ==========
-    const nextPaymentCard = document.getElementById("nextPaymentCard");
-    const nextPaymentAmount = document.getElementById("nextPaymentAmount");
-    const nextPaymentDue = document.getElementById("nextPaymentDue");
-    const btnPayNow = document.getElementById("btnPayNow");
-
-    if (pendingPayments.length > 0 && nextPaymentCard) {
-        // Hay pagos pendientes
-        const next = pendingPayments[0];
-        const daysLeft = Math.ceil((new Date(next.next_payment_date) - new Date()) / (1000*60*60*24));
-
-        if (nextPaymentAmount) nextPaymentAmount.textContent = "L. " + (next.contribution_amount || 0).toLocaleString();
-        if (nextPaymentDue) nextPaymentDue.textContent = daysLeft <= 0 ? "¡VENCIDO!" : "Vence en " + daysLeft + " días";
-        if (btnPayNow) {
-            btnPayNow.style.display = "block";
-            btnPayNow.dataset.tandaId = next.tanda_id || next.id;
-        }
-
-        nextPaymentCard.classList.remove("urgent", "warning", "ok", "recruiting");
-        if (daysLeft <= 3) nextPaymentCard.classList.add("urgent");
-        else if (daysLeft <= 7) nextPaymentCard.classList.add("warning");
-        else nextPaymentCard.classList.add("ok");
-
-    } else if (recruitingTandas.length > 0 && nextPaymentCard) {
-        // Solo hay tandas en reclutamiento
-        if (nextPaymentAmount) nextPaymentAmount.textContent = "Pendiente";
-        if (nextPaymentDue) nextPaymentDue.textContent = "Esperando inicio de tanda";
-        if (btnPayNow) btnPayNow.style.display = "none";
-        nextPaymentCard.classList.remove("urgent", "warning", "ok");
-        nextPaymentCard.classList.add("recruiting");
-
-    } else if (nextPaymentCard) {
-        // No hay tandas
-        if (nextPaymentAmount) nextPaymentAmount.textContent = "L. 0.00";
-        if (nextPaymentDue) nextPaymentDue.textContent = "Sin pagos pendientes";
-        if (btnPayNow) btnPayNow.style.display = "none";
-        nextPaymentCard.classList.remove("urgent", "warning", "recruiting");
-        nextPaymentCard.classList.add("ok");
-    }
-
-    // ========== TARJETA 2: MI PRÓXIMO COBRO ==========
-    const myNextCollection = document.getElementById("myNextCollection");
-    const myCollectionDate = document.getElementById("myCollectionDate");
-    const myCollectionCard = document.getElementById("myCollectionCard");
-
-    // Buscar si el usuario está cobrando ahora
-    const myCollection = activeTandas.find(t => t.is_my_turn || t.isMyTurn);
-
-    if (myCollection && myNextCollection) {
-        // ¡Me toca cobrar!
-        const total = (myCollection.contribution_amount || 0) * (myCollection.total_participants || 1);
-        myNextCollection.textContent = "L. " + total.toLocaleString();
-        if (myCollectionDate) myCollectionDate.textContent = "¡Te toca cobrar!";
-        if (myCollectionCard) myCollectionCard.classList.add("highlight");
-
-    } else if (activeTandas.length > 0 && myNextCollection) {
-        // Calcular turnos restantes
-        const turnsAway = activeTandas
-            .map(t => ({ 
-                name: t.group_name || t.name, 
-                turns: Math.max(0, (t.my_turn_position || 1) - (t.current_turn || 1)),
-                amount: (t.contribution_amount || 0) * (t.total_participants || 1)
-            }))
-            .filter(t => t.turns > 0)
-            .sort((a, b) => a.turns - b.turns)[0];
-
-        if (turnsAway) {
-            myNextCollection.textContent = "En " + turnsAway.turns + " turno" + (turnsAway.turns > 1 ? "s" : "");
-            if (myCollectionDate) myCollectionDate.textContent = "~L. " + turnsAway.amount.toLocaleString();
-        } else {
-            myNextCollection.textContent = "--";
-            if (myCollectionDate) myCollectionDate.textContent = "Ciclo completado";
-        }
-        if (myCollectionCard) myCollectionCard.classList.remove("highlight");
-
-    } else if (recruitingTandas.length > 0 && myNextCollection) {
-        // Solo tandas en reclutamiento - mostrar posición
-        const firstRecruiting = recruitingTandas[0];
-        myNextCollection.textContent = firstRecruiting.has_turn_assigned ? "Pos #" + (firstRecruiting.my_turn_position || 1) : "Pendiente";
-        if (myCollectionDate) myCollectionDate.textContent = firstRecruiting.has_turn_assigned ? "Esperando inicio" : "Esperando asignación";
-        if (myCollectionCard) myCollectionCard.classList.remove("highlight");
-
-    } else if (myNextCollection) {
-        myNextCollection.textContent = "--";
-        if (myCollectionDate) myCollectionDate.textContent = "Sin tandas";
-        if (myCollectionCard) myCollectionCard.classList.remove("highlight");
-    }
-
-    // ========== TARJETA 3: RESUMEN ==========
-    const paymentProgress = document.getElementById("paymentProgress");
-    const totalPaidEl = document.getElementById("totalPaid");
-    const summaryCard = document.getElementById("summaryCard");
-
-    const paidCount = tandas.reduce((sum, t) => sum + (t.my_contributions_paid || 0), 0);
-    const totalCount = tandas.reduce((sum, t) => sum + (t.my_contributions_total || t.total_participants || 0), 0);
-    const totalPaid = tandas.reduce((sum, t) => sum + ((t.my_contributions_paid || 0) * (t.contribution_amount || 0)), 0);
-    const percent = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
-
-    if (paymentProgress) paymentProgress.textContent = paidCount + "/" + totalCount + " (" + percent + "%)";
-    if (totalPaidEl) totalPaidEl.textContent = "L. " + totalPaid.toLocaleString();
-
-    // Actualizar barra de progreso si existe
-    const progressBarFill = document.getElementById("summaryProgressFill");
-    if (progressBarFill) {
-        progressBarFill.style.width = percent + "%";
-    }
-
-}
-function payNextDue() {
-    const btn = document.getElementById("btnPayNow");
-    if (btn && btn.dataset.tandaId) {
-        quickPay(btn.dataset.tandaId);
-    }
-}
-// ========== END DASHBOARD UPDATE FUNCTION ==========
 
 
 // ===== FASE 3: LISTA DE PAGOS URGENTES =====
-function renderUrgentPayments(tandas) {
-    const container = document.getElementById("urgentPaymentsList");
-    if (!container) return;
-    
-    // Separar tandas por estado
-    const recruitingTandas = tandas.filter(t => t.status === "recruiting" || t.status === "pending" || t.status === "scheduled");
-    const activeTandas = tandas.filter(t => t.status === "active" || t.status === "waiting-turn" || t.status === "collecting" || t.status === "scheduled" || t.status === "paused");
-    
-    // Filtrar tandas activas con pagos pendientes
-    const pendingPayments = activeTandas
-        .filter(t => t.next_payment_date)
-        .map(t => {
-            const dueDate = new Date(t.next_payment_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-            return {
-                        ...t, daysLeft, dueDate };
-        })
-        .sort((a, b) => a.daysLeft - b.daysLeft);
-    
-    // Si solo hay tandas en reclutamiento
-    if (pendingPayments.length === 0 && recruitingTandas.length > 0) {
-        container.innerHTML = `
-            <div class="recruiting-state">
-                <i class="fas fa-users" style="font-size: 32px; color: #f59e0b; margin-bottom: 12px;"></i>
-                <p style="color: var(--text-primary); font-weight: 500;">Tandas en Reclutamiento</p>
-                <p style="color: var(--text-secondary); font-size: 14px;">${recruitingTandas.length} tanda(s) esperando más miembros para iniciar</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Si no hay tandas
-    if (pendingPayments.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-check-circle" style="font-size: 32px; color: #10b981; margin-bottom: 12px;"></i>
-                <p style="color: var(--text-primary);">¡No tienes pagos pendientes!</p>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = "";
-    pendingPayments.forEach(tanda => {
-        // Determinar urgencia (colores según días restantes)
-        let urgencyClass = "ok";
-        let urgencyIcon = "🟢";
-        if (tanda.daysLeft <= 0) {
-            urgencyClass = "urgent";
-            urgencyIcon = "🔴";
-        } else if (tanda.daysLeft <= 3) {
-            urgencyClass = "urgent";
-            urgencyIcon = "🔴";
-        } else if (tanda.daysLeft <= 7) {
-            urgencyClass = "warning";
-            urgencyIcon = "🟡";
-        }
-        
-        const amount = parseFloat(tanda.contribution_amount || tanda.amount || 0);
-        const formattedAmount = "L. " + amount.toLocaleString("es-HN", { minimumFractionDigits: 2 });
-        const dueDateStr = tanda.dueDate.toLocaleDateString("es-HN", { day: "numeric", month: "short" });
-        
-        let daysText = "";
-        if (tanda.daysLeft < 0) {
-            daysText = "¡VENCIDO!";
-        } else if (tanda.daysLeft === 0) {
-            daysText = "¡HOY!";
-        } else if (tanda.daysLeft === 1) {
-            daysText = "Mañana";
-        } else {
-            daysText = tanda.daysLeft + " días";
-        }
-        
-        html += `
-            <div class="urgent-payment-row ${urgencyClass}">
-                <span class="urgency-indicator">${urgencyIcon}</span>
-                <div class="payment-info">
-                    <span class="tanda-name" style="font-weight: 600; color: var(--text-primary);">${escapeHtml(tanda.name || tanda.group_name)}</span>
-                    <span class="payment-details">${formattedAmount} • Vence ${dueDateStr}</span>
-                </div>
-                <span class="days-left" style="font-weight: 600; color: ${urgencyClass === 'urgent' ? '#ef4444' : urgencyClass === 'warning' ? '#f59e0b' : '#10b981'};">${daysText}</span>
-                <button class="btn-quick-pay" data-action="grp-quick-pay" data-tanda-id="${escapeHtml(String(tanda.tanda_id || tanda.id || tanda.group_id))}">
-                    <i class="fas fa-credit-card"></i> PAGAR
-                </button>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
-function renderCurrentCollectors(tandas) {
-    const container = document.getElementById("currentCollectorsList");
-    if (!container) return;
-    
-    const currentUserId = getCurrentUserId();
-    
-    // Separar tandas por estado
-    const recruitingTandas = tandas.filter(t => t.status === "recruiting" || t.status === "pending" || t.status === "scheduled");
-    const activeTandas = tandas.filter(t => t.status === "active" || t.status === "waiting-turn" || t.status === "collecting" || t.status === "scheduled" || t.status === "paused");
-    
-    // Si solo hay tandas en reclutamiento
-    if (activeTandas.length === 0 && recruitingTandas.length > 0) {
-        let html = '<div class="recruiting-collectors">';
-        html += '<div style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent); border-radius: 12px; border: 1px dashed #f59e0b;">';
-        html += '<i class="fas fa-hourglass-half" style="font-size: 24px; color: #f59e0b; margin-bottom: 8px;"></i>';
-        html += '<p style="color: var(--text-primary); font-weight: 500; margin: 8px 0 4px;">Tandas en Reclutamiento</p>';
-        html += '<p style="color: var(--text-secondary); font-size: 13px;">Los turnos se asignarán cuando inicien las tandas</p>';
-        html += '</div>';
-        
-        // Mostrar lista de tandas recruiting con posición del usuario
-        recruitingTandas.forEach(tanda => {
-            const isCoordinator = tanda.is_coordinator === true;
-            const myPosition = tanda.has_turn_assigned ? (tanda.my_turn_position || 1) : null;
-            const totalMembers = tanda.members_needed || tanda.total_participants || "?";
-            const membersJoined = tanda.members_joined || 1;
-    const turnsAssigned = tanda.turns_assigned || 0;
-            
-            html += `
-                <div class="collector-row recruiting" style="margin-top: 12px; border-left: 3px solid #f59e0b;">
-                    <div class="collector-info">
-                        <span class="collector-name" style="color: var(--text-primary);">
-                            ${escapeHtml(tanda.name || tanda.group_name)}
-                            ${isCoordinator ? '<span style="background: #f59e0b; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 8px;">COORDINADOR</span>' : ''}
-                        </span>
-                        <span class="tanda-ref" style="color: var(--text-secondary);">
-                            <i class="fas fa-users" style="margin-right: 4px;"></i> ${turnsAssigned}/${totalMembers} turnos asignados
-                        </span>
-                    </div>
-                    <span class="turn-info" style="color: #f59e0b;">${myPosition ? "Pos #" + myPosition : "Pendiente"}</span>
-                </div>
-            `;
-        });
-        
-        html += '</div>';
-        container.innerHTML = html;
-        return;
-    }
-    
-    // Si no hay tandas
-    if (activeTandas.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-users" style="color: var(--text-secondary);"></i>
-                <p>No hay tandas activas</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Mostrar tandas activas con cobrador actual
-    let html = "";
-    activeTandas.forEach(tanda => {
-        const collector = tanda.current_collector || tanda.collecting_member;
-        const collectorName = typeof collector === "string" ? collector : (collector ? (collector.name || collector.full_name || "Participante") : "Por definir");
-        const currentTurn = tanda.current_turn || tanda.turn_number || 1;
-        const totalTurns = tanda.total_turns || tanda.total_participants || tanda.num_participants || "?";
-        
-        // Verificar si el usuario actual es el cobrador
-        const isMe = collector && (collector.id === currentUserId || collector.user_id === currentUserId);
-        
-        html += `
-            <div class="collector-row ${isMe ? 'is-me' : ''}">
-                <div class="collector-info">
-                    <span class="collector-name">
-                        ${isMe ? '⭐ TÚ - ¡Te toca cobrar!' : escapeHtml(collectorName)}
-                    </span>
-                    <span class="tanda-ref">${escapeHtml(tanda.name || tanda.group_name)}</span>
-                </div>
-                <span class="turn-info">Turno ${currentTurn} de ${totalTurns}</span>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-}
-
-// Función auxiliar para obtener ID del usuario actual
-// [ELIMINADO] Definicion 3 - funcion duplicada removida
-
+// [REMOVED] renderUrgentPayments — info now in tanda card alerts
+// [REMOVED] renderCurrentCollectors — info now in tanda card stats
 // ===== FIN FASE 3 & 4 =====
 
 // ===== FASE 5: MODAL DE PAGO RAPIDO =====
@@ -3194,93 +2896,187 @@ window.tandasData = [];
 window.filteredTandas = [];
 
 // 1. REFRESH TANDAS (Main loader)
+// ===== mergeTandaWithGroup helper =====
+function mergeTandaWithGroup(tanda) {
+    var group = (window.currentGroupsData || []).find(function(g) { return g.id === tanda.group_id; });
+    if (!group) return tanda;
+    return Object.assign({}, tanda, {
+        role: group.my_role || tanda.role || 'member',
+        // Tanda API is authoritative for payment data (uses centralized helper + correct grace period)
+        payment_status: tanda.payment_status || group.my_payment_status || 'unknown',
+        // Let renderTandaCard generate alerts from correct tanda data
+        alerts: [],
+        commission_rate_custom: group.commission_rate,
+        next_payment_grace_deadline: tanda.next_payment_grace_deadline || group.my_next_payment_grace_deadline || null,
+        category: group.category || tanda.category,
+        location: group.location || tanda.location,
+        frequency_label: group.frequency || tanda.frequency,
+        max_members: group.max_members || tanda.max_members,
+        group_status: group.status || tanda.group_status
+    });
+}
+
+// ===== updateTandasSidebar =====
+function updateTandasSidebar(tandas) {
+    var recruitingTandas = tandas.filter(function(t) { return t.status === 'recruiting' || t.status === 'pending' || t.status === 'scheduled'; });
+    var activeTandas = tandas.filter(function(t) { return t.status === 'active' || t.status === 'waiting-turn' || t.status === 'collecting' || t.status === 'paused'; });
+
+    // === Próximo Pago ===
+    var payAmountEl = document.getElementById('tscPaymentAmount');
+    var payDueEl = document.getElementById('tscPaymentDue');
+    var payGroupEl = document.getElementById('tscPaymentGroup');
+    var payCard = document.getElementById('tscNextPayment');
+
+    var pendingPayments = activeTandas.filter(function(t) { return t.next_payment_date; }).sort(function(a, b) { return new Date(a.next_payment_date) - new Date(b.next_payment_date); });
+
+    if (pendingPayments.length > 0) {
+        var next = pendingPayments[0];
+        var dateStr = next.next_payment_date;
+        var dueDate = new Date(typeof dateStr === 'string' && dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
+        var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
+        var daysLeft = Math.round((dueDate - todayNoon) / 86400000);
+        if (payAmountEl) payAmountEl.textContent = 'L. ' + (next.contribution_amount || 0).toLocaleString('es-HN');
+        if (payDueEl) {
+            if (daysLeft <= 0) {
+                var graceDeadline = next.next_payment_grace_deadline || next.my_next_payment_grace_deadline;
+                if (graceDeadline) {
+                    var graceDaysLeft = Math.ceil((new Date(graceDeadline + 'T23:59:59') - new Date()) / 86400000);
+                    if (graceDaysLeft > 0) {
+                        payDueEl.textContent = 'Vencido. Gracia: ' + graceDaysLeft + 'd';
+                        payDueEl.style.color = '#f59e0b';
+                    } else {
+                        payDueEl.textContent = 'Atrasado';
+                        payDueEl.style.color = '#ef4444';
+                    }
+                } else {
+                    payDueEl.textContent = 'Vencido';
+                    payDueEl.style.color = '#ef4444';
+                }
+            } else {
+                payDueEl.textContent = 'Vence en ' + daysLeft + ' d\u00eda' + (daysLeft !== 1 ? 's' : '');
+                payDueEl.style.color = daysLeft <= 3 ? '#ef4444' : daysLeft <= 7 ? '#f59e0b' : '#94a3b8';
+            }
+        }
+        if (payGroupEl) payGroupEl.textContent = next.group_name || '';
+    } else if (recruitingTandas.length > 0) {
+        if (payAmountEl) payAmountEl.textContent = 'Pendiente';
+        if (payDueEl) { payDueEl.textContent = 'Esperando inicio'; payDueEl.style.color = '#94a3b8'; }
+        if (payGroupEl) payGroupEl.textContent = '';
+    } else {
+        if (payAmountEl) payAmountEl.textContent = '--';
+        if (payDueEl) { payDueEl.textContent = 'Sin pagos pendientes'; payDueEl.style.color = '#94a3b8'; }
+        if (payGroupEl) payGroupEl.textContent = '';
+    }
+
+    // === Mi Próximo Cobro ===
+    var collAmountEl = document.getElementById('tscCollectionAmount');
+    var collInfoEl = document.getElementById('tscCollectionInfo');
+
+    var myCollection = activeTandas.find(function(t) { return t.is_my_turn || t.isMyTurn; });
+    if (myCollection) {
+        var total = (myCollection.contribution_amount || 0) * (myCollection.total_participants || 1);
+        if (collAmountEl) collAmountEl.textContent = 'L. ' + total.toLocaleString('es-HN');
+        if (collInfoEl) collInfoEl.textContent = '¡Te toca cobrar!';
+    } else if (activeTandas.length > 0) {
+        var turnsAway = activeTandas
+            .map(function(t) { return { turns: Math.max(0, (t.my_turn_position || 1) - (t.current_turn || 1)), amount: (t.contribution_amount || 0) * (t.total_participants || 1) }; })
+            .filter(function(t) { return t.turns > 0; })
+            .sort(function(a, b) { return a.turns - b.turns; })[0];
+        if (turnsAway) {
+            if (collAmountEl) collAmountEl.textContent = 'En ' + turnsAway.turns + ' turno' + (turnsAway.turns > 1 ? 's' : '');
+            if (collInfoEl) collInfoEl.textContent = '~L. ' + turnsAway.amount.toLocaleString('es-HN');
+        } else {
+            if (collAmountEl) collAmountEl.textContent = '--';
+            if (collInfoEl) collInfoEl.textContent = 'Ciclo completado';
+        }
+    } else {
+        if (collAmountEl) collAmountEl.textContent = '--';
+        if (collInfoEl) collInfoEl.textContent = 'Sin tandas';
+    }
+
+    // === Resumen ===
+    var totalEl = document.getElementById('tscTotalTandas');
+    var activeEl = document.getElementById('tscActiveTandas');
+    var paidEl = document.getElementById('tscPaidCycles');
+    var pendEl = document.getElementById('tscPendingCycles');
+    var totalPaidEl = document.getElementById('tscTotalPaid');
+
+    var paidCount = tandas.reduce(function(s, t) { return s + (t.my_contributions_paid || 0); }, 0);
+    var totalCount = tandas.reduce(function(s, t) { return s + (t.my_contributions_total || t.total_participants || 0); }, 0);
+    var totalPaid = tandas.reduce(function(s, t) { return s + ((t.my_contributions_paid || 0) * (t.contribution_amount || 0)); }, 0);
+
+    if (totalEl) totalEl.textContent = tandas.length;
+    if (activeEl) activeEl.textContent = activeTandas.length;
+    if (paidEl) paidEl.textContent = paidCount;
+    if (pendEl) pendEl.textContent = Math.max(0, totalCount - paidCount);
+    if (totalPaidEl) totalPaidEl.textContent = 'L. ' + totalPaid.toLocaleString('es-HN');
+}
+
+// ===== refreshTandas (rewritten with merge + sidebar) =====
 async function refreshTandas() {
     try {
-        // Show loading
-        const container = document.getElementById("tandasList");
-        if (!container) {
-            return;
-        }
+        var container = document.getElementById('tandasList');
+        if (!container) return;
 
-        container.innerHTML = `
-            <div class="loading-state">
-                <div class="loading-spinner">
-                    <i class="fas fa-spinner fa-spin"></i>
-                </div>
-                <p>Cargando tus tandas...</p>
-            </div>
-        `;
+        container.innerHTML = '<div class="loading-state"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div><p class="loading-text">Cargando tus tandas...</p></div>';
 
-        // Get user ID - use unified getCurrentUserId function
-        const authToken = localStorage.getItem("auth_token") || "";
-        const userId = getCurrentUserId();
-        
-        if (!userId) {
-        }
-        
-
-        let allTandas = [];
-
-        // 1. Try to get tandas from API
+        var allTandas = [];
         try {
-            const response = await fetch(
-                `/api/tandas/my-tandas`,
-                {
-                    headers: { ...getAuthHeaders() }
-                }
-            );
-
+            var response = await fetch('/api/tandas/my-tandas', { headers: Object.assign({}, getAuthHeaders()) });
             if (response.ok) {
-                const data = await response.json();
-                
-                if (data.success && (data.tandas || data.data?.tandas)) {
-                    allTandas = data.tandas || data.data?.tandas || [];
+                var data = await response.json();
+                if (data.success && (data.tandas || (data.data && data.data.tandas))) {
+                    allTandas = data.tandas || data.data.tandas || [];
                 }
             }
-        } catch(apiError) {
-        }
+        } catch(apiError) { /* network error */ }
 
-        // Store tandas
+        // Merge with group data
+        allTandas = allTandas.map(mergeTandaWithGroup);
+
         window.tandasData = allTandas;
         window.filteredTandas = allTandas.slice();
-        
 
         if (window.tandasData.length === 0) {
-            // Check if user has any groups
-            const userGroupCount = window.currentGroupsData ? window.currentGroupsData.length : 0;
+            var userGroupCount = window.currentGroupsData ? window.currentGroupsData.length : 0;
             if (userGroupCount === 0) {
-                showTandasEmptyState("NO_GROUPS");
+                showTandasEmptyState('NO_GROUPS');
             } else {
-                showTandasEmptyState("NO_TANDAS", userGroupCount);
+                showTandasEmptyState('NO_TANDAS', userGroupCount);
             }
+            updateTandasSidebar([]);
             return;
         }
 
-        updateTandasDashboard(window.tandasData);
-        renderUrgentPayments(window.tandasData);
-        renderCurrentCollectors(window.tandasData);
+        updateTandasSidebar(window.tandasData);
         renderTandas();
         startTandaLotteryCountdowns();
 
-
     } catch (error) {
-        showTandasEmptyState("Error al cargar tandas:  Intenta de nuevo.");
+        showTandasEmptyState('Error al cargar tandas. Intenta de nuevo.');
     }
 }
 
-
 // 2. RENDER TANDAS
 function renderTandas() {
-    const container = document.getElementById("tandasList");
+    var container = document.getElementById('tandasList');
     if (!container) return;
 
-    if (window.filteredTandas.length === 0) {
-        showTandasEmptyState("No tienes tandas activas. ¡Únete a un grupo para empezar!");
+    if (!window.filteredTandas || window.filteredTandas.length === 0) {
+        // Check if there are tandas but filtered to 0
+        if (window.tandasData && window.tandasData.length > 0) {
+            container.innerHTML = '<div class="tandas-empty-state"><div class="empty-icon" style="font-size:3rem;margin-bottom:16px;">🔍</div><h3 style="color:#f8fafc;margin-bottom:8px;">Sin resultados</h3><p style="color:#94a3b8;margin-bottom:16px;">Ninguna tanda coincide con tus filtros.</p><button class="btn btn-outline" data-action="grp-clear-tanda-filters"><i class="fas fa-times"></i> Limpiar Filtros</button></div>';
+        } else {
+            showTandasEmptyState('No tienes tandas activas.');
+        }
         return;
     }
 
-    const html = window.filteredTandas.map(tanda => renderTandaCard(tanda)).join("");
-    container.innerHTML = html;
+    var htmlParts = [];
+    for (var i = 0; i < window.filteredTandas.length; i++) {
+        htmlParts.push(renderTandaCard(window.filteredTandas[i]));
+    }
+    container.innerHTML = htmlParts.join('');
 }
 
 // 3. RENDER TANDA CARD
@@ -3321,149 +3117,214 @@ function getGoalBadge(tanda) {
 }
 
 function renderTandaCard(tanda) {
-    const statusLabels = {
-        "active": "Activa",
-        "waiting-turn": "Esperando Turno",
-        "collecting": "Cobrando Este Mes",
-        "completed": "Completada",
-        "recruiting": "Reclutando",
-        "pending": "Pendiente",
-        "scheduled": "Programada",
-        "paused": "Pausada"
+    var statusLabels = {
+        'active': 'Activa', 'waiting-turn': 'Esperando Turno', 'collecting': 'Cobrando',
+        'completed': 'Completada', 'recruiting': 'Reclutando', 'pending': 'Pendiente',
+        'scheduled': 'Programada', 'paused': 'Pausada'
     };
+    var statusColors = {
+        'active': '#00FFFF', 'waiting-turn': '#f59e0b', 'collecting': '#10b981',
+        'completed': '#22c55e', 'recruiting': '#f59e0b', 'pending': '#f59e0b',
+        'scheduled': '#f59e0b', 'paused': '#94a3b8'
+    };
+    var roleLabels = { 'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro' };
+    var roleClasses = { 'creator': 'gc-role-creator', 'coordinator': 'gc-role-coord', 'member': 'gc-role-member' };
 
-    const statusLabel = statusLabels[tanda.status] || tanda.status;
-    const statusClass = tanda.status.replace(/-/g, "");
-    const isRecruiting = tanda.status === "recruiting" || tanda.status === "pending" || tanda.status === "scheduled";
-    const isCoordinator = tanda.is_coordinator === true;
-    
-    const membersJoined = tanda.members_joined || 1;
-    const turnsAssigned = tanda.turns_assigned || 0;
-    const membersNeeded = tanda.members_needed || tanda.total_participants;
-    
-    const nextPaymentFormatted = isRecruiting ? "Pendiente" : formatTandaDate(tanda.next_payment_date);
-    const collectingMember = isRecruiting ? "—" : (tanda.collecting_member || "—");
-    const progressText = isRecruiting 
-        ? "Miembros " + membersJoined + "/" + membersNeeded
-        : "Turno " + tanda.current_turn + "/" + tanda.total_participants;
-    const progressPercent = isRecruiting
-        ? Math.round((membersJoined / membersNeeded) * 100)
-        : tanda.progress_percentage;
+    var statusLabel = statusLabels[tanda.status] || tanda.status;
+    var statusColor = statusColors[tanda.status] || '#94a3b8';
+    var isRecruiting = tanda.status === 'recruiting' || tanda.status === 'pending' || tanda.status === 'scheduled';
+    var isCoordinator = tanda.is_coordinator === true;
 
-    let actionsHtml = "";
-    if (isRecruiting && isCoordinator) {
-        actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-play"></i> Iniciar Tanda</button><button class="btn btn-sm btn-outline" data-action="grp-invite-to-tanda" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-user-plus"></i> Invitar</button>';
-    } else if (isRecruiting && tanda.has_turn_assigned) {
-        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-clock"></i> Esperando inicio</span>';
-    } else if (isRecruiting) {
-        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><span class="waiting-text"><i class="fas fa-hourglass-half"></i> Esperando asignación de turno</span>';
+    // Role from merged group data or fallback
+    var role = tanda.role || (isCoordinator ? 'coordinator' : 'member');
+    var roleLabel = roleLabels[role] || 'Miembro';
+    var roleClass = roleClasses[role] || 'gc-role-member';
+
+    // Avatar
+    var groupName = tanda.group_name || 'T';
+    var avatarLetter = groupName.charAt(0).toUpperCase();
+    var avatarBg = statusColor;
+
+    // Payout breakdown
+    var effectiveCommRate = tanda.commission_rate != null ? tanda.commission_rate : (tanda.commission_rate_custom != null ? tanda.commission_rate_custom : null);
+    var tandaPayout = calculatePayoutBreakdown(tanda.contribution_amount || 0, tanda.max_members || tanda.total_participants || 1, effectiveCommRate);
+
+    // Progress
+    var membersJoined = tanda.members_joined || 1;
+    var membersNeeded = tanda.members_needed || tanda.total_participants || 1;
+    var progressText, progressPercent;
+    if (isRecruiting) {
+        progressText = 'Miembros ' + membersJoined + '/' + membersNeeded;
+        progressPercent = Math.round((membersJoined / membersNeeded) * 100);
     } else {
-        actionsHtml = '<button class="btn btn-sm btn-secondary" data-action="grp-open-history"><i class="fas fa-history"></i> Historial</button><button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-eye"></i> Ver Detalles</button><button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
+        progressText = 'Ciclo ' + (tanda.current_cycle || tanda.current_turn || 1) + '/' + (tanda.total_participants || 1);
+        progressPercent = tanda.progress_percentage || 0;
     }
 
-    const totalAmount = tanda.total_per_turn || tanda.contribution_amount;
-    const paidCount = tanda.my_contributions_paid || 0;
-    const totalCount = tanda.my_contributions_total || tanda.total_participants;
-    
-    // Calcular desglose con comision
-    const tandaPayout = calculatePayoutBreakdown(tanda.contribution_amount || 0, tanda.total_participants || 1);
+    // Collecting member name (fix raw JSON)
+    var collectingMember = isRecruiting ? '—' : (tanda.collecting_member || '—');
 
-    return '<div class="tanda-card status-' + tanda.status + '" data-tanda-id="' + tanda.tanda_id + '">' +
-        '<div class="tanda-header">' +
-            '<div class="tanda-title">' +
-                '<h3>' + escapeHtml(tanda.group_name || '') + '</h3>' +
-                '<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">' +
-                    '<span class="status-badge ' + statusClass + '">' + statusLabel + '</span>' +
-                    getLotteryBadge(tanda) + getGoalBadge(tanda) +
-                '</div>' +
+    // Stats
+    var paidCount = tanda.my_contributions_paid || 0;
+    var totalCount = tanda.my_contributions_total || tanda.total_participants || 0;
+    var nextPaymentFormatted = isRecruiting ? 'Pendiente' : formatTandaDate(tanda.next_payment_date);
+
+    // Stat 1 + 2 (top row)
+    var stat1Label, stat1Val, stat2Label, stat2Val;
+    if (isRecruiting) {
+        stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
+        stat2Label = 'Turnos Asignados'; stat2Val = (tanda.turns_assigned || 0) + '/' + membersNeeded;
+    } else {
+        stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
+        stat2Label = 'Mi Turno'; stat2Val = tanda.has_turn_assigned ? 'Pos #' + tanda.my_turn_position : 'Pendiente';
+    }
+    // Stat 3 + 4 (bottom row)
+    var stat3Label, stat3Val, stat4Label, stat4Val;
+    if (isRecruiting) {
+        stat3Label = 'Frecuencia'; stat3Val = escapeHtml(tanda.frequency_label || tanda.frequency || '--');
+        stat4Label = 'Estado'; stat4Val = statusLabel;
+    } else {
+        stat3Label = 'Pagado'; stat3Val = paidCount + '/' + totalCount;
+        stat4Label = 'Prox. Pago'; stat4Val = nextPaymentFormatted;
+    }
+
+    // Alert banners — API alerts cover the full cycle, no frontend duplication needed
+    var alertsHtml = '';
+    var alerts = tanda.alerts || [];
+    // Only add frontend-generated alerts if API didn't already provide them
+    if (!isRecruiting && alerts.length === 0) {
+        if (tanda.payment_status === 'late' || tanda.payment_status === 'suspension_recommended') {
+            alerts = [{ severity: 'danger', message: 'Pago atrasado' }];
+        } else if (tanda.payment_status === 'pending') {
+            // In grace period — due date passed but grace deadline hasn't
+            var graceDeadline = tanda.next_payment_grace_deadline || tanda.my_next_payment_grace_deadline;
+            if (graceDeadline) {
+                var graceDaysLeft = Math.ceil((new Date(graceDeadline + 'T23:59:59') - new Date()) / 86400000);
+                if (graceDaysLeft > 0) {
+                    alerts = [{ severity: 'warning', message: 'Pago vencido. ' + graceDaysLeft + ' d\u00eda' + (graceDaysLeft !== 1 ? 's' : '') + ' de gracia restantes' }];
+                } else {
+                    alerts = [{ severity: 'danger', message: 'Pago atrasado. Periodo de gracia vencido' }];
+                }
+            }
+        } else if (tanda.payment_status === 'up_to_date') {
+            var dueDate = tanda.next_payment_date;
+            if (dueDate) {
+                var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
+                var daysUntil = Math.round((new Date(dueDate.length === 10 ? dueDate + 'T12:00:00' : dueDate) - todayNoon) / 86400000);
+                if (daysUntil <= 5 && daysUntil > 0) {
+                    var sev = daysUntil <= 2 ? 'warning' : 'info';
+                    alerts = [{ severity: sev, message: 'Tu pago vence en ' + daysUntil + ' d\u00eda' + (daysUntil !== 1 ? 's' : '') }];
+                }
+            }
+        }
+    }
+    alerts.forEach(function(a) {
+        var sevClass = a.severity === 'danger' ? 'gc-alert-danger' : a.severity === 'warning' ? 'gc-alert-warning' : a.severity === 'success' ? 'gc-alert-success' : 'gc-alert-info';
+        var icon = a.severity === 'danger' ? '&#9888;' : a.severity === 'warning' ? '&#9888;' : a.severity === 'success' ? '&#10003;' : '&#8505;';
+        alertsHtml += '<div class="gc-alert ' + sevClass + '">' + icon + ' ' + escapeHtml(a.message || '') + '</div>';
+    });
+
+    // Action buttons
+    var actionsHtml = '';
+    if (isRecruiting && isCoordinator) {
+        actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-play"></i> Iniciar</button>' +
+            '<button class="btn btn-sm btn-outline" data-action="grp-invite-to-tanda" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-user-plus"></i> Invitar</button>';
+    } else if (isRecruiting) {
+        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
+            '<span class="tc-waiting"><i class="fas fa-clock"></i> ' + (tanda.has_turn_assigned ? 'Esperando inicio' : 'Sin turno') + '</span>';
+    } else {
+        actionsHtml = '<button class="btn btn-sm btn-secondary" data-action="grp-open-history"><i class="fas fa-history"></i> Historial</button>' +
+            '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-eye"></i> Detalles</button>' +
+            '<button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
+    }
+
+    // Lottery/goal badges
+    var badgesHtml = getLotteryBadge(tanda) + getGoalBadge(tanda);
+
+    return '<div class="group-card" style="border-left:4px solid ' + statusColor + ';" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '">' +
+        // Header: Avatar + Name + Role
+        '<div class="gc-header">' +
+            '<div class="gc-avatar" style="background:' + avatarBg + ';color:#000;">' + avatarLetter + '</div>' +
+            '<div class="gc-header-text">' +
+                '<h3 class="gc-name">' + escapeHtml(groupName) + '</h3>' +
+                '<div class="gc-sub">' + escapeHtml(({'weekly':'Semanal','biweekly':'Quincenal','monthly':'Mensual','daily':'Diario'})[((tanda.frequency_label || tanda.frequency || '')).toLowerCase()] || tanda.frequency_label || tanda.frequency || '') + (statusLabel ? ' &middot; ' + statusLabel : '') + '</div>' +
             '</div>' +
-            '<div class="tanda-amount">L. ' + formatTandaNumber(totalAmount) + '</div>' +
+            '<span class="gc-role ' + roleClass + '">' + roleLabel + '</span>' +
         '</div>' +
-        '<div style="padding: 8px 16px; background: rgba(0,212,255,0.1); border-radius: 8px; margin: 8px 16px; display: flex; justify-content: space-between; align-items: center;">' +
-            '<span style="color: #9ca3af; font-size: 0.85rem;">Recibes (- ' + tandaPayout.commission_rate + '% comisión)</span>' +
-            '<span style="color: var(--tanda-cyan); font-weight: 600;">L. ' + formatTandaNumber(tandaPayout.user_receives) + '</span>' +
+        // Payout bar (tc-specific)
+        '<div class="tc-payout">' +
+            '<span class="tc-payout-label">Recibes (' + (tandaPayout.commission_rate > 0 ? '-' + parseFloat(tandaPayout.commission_rate.toFixed(1)) + '% comisión' : 'sin comisión') + ')</span>' +
+            '<span class="tc-payout-amount">L. ' + formatTandaNumber(tandaPayout.user_receives) + '</span>' +
         '</div>' +
-        '<div class="tanda-progress">' +
-            '<div class="progress-info">' +
-                '<span>' + progressText + '</span>' +
-                '<span>' + progressPercent + '%</span>' +
-            '</div>' +
-            '<div class="progress-bar">' +
-                '<div class="progress-fill" style="width: ' + progressPercent + '%"></div>' +
-            '</div>' +
+        // Progress bar
+        '<div class="tc-progress">' +
+            '<div class="tc-progress-info"><span>' + progressText + '</span><span>' + progressPercent + '%</span></div>' +
+            '<div class="tc-progress-bar"><div class="tc-progress-fill" style="width:' + progressPercent + '%;"></div></div>' +
         '</div>' +
-        '<div class="tanda-info-grid">' +
-            '<div class="info-item">' +
-                '<i class="fas fa-calendar"></i>' +
-                '<div>' +
-                    '<small>' + (isRecruiting ? "Estado" : "Próximo pago") + '</small>' +
-                    '<strong>' + (isRecruiting ? "Reclutando miembros" : nextPaymentFormatted) + '</strong>' +
-                '</div>' +
-            '</div>' +
-            '<div class="info-item">' +
-                '<i class="fas fa-user-check"></i>' +
-                '<div>' +
-                    '<small>' + (isRecruiting ? "Coordinador" : "Cobrando") + '</small>' +
-                    '<strong>' + (isRecruiting ? (isCoordinator ? "Tú" : escapeHtml(tanda.coordinator_name || "—")) : escapeHtml(collectingMember)) + '</strong>' +
-                '</div>' +
-            '</div>' +
-            '<div class="info-item">' +
-                '<i class="fas fa-trophy"></i>' +
-                '<div>' +
-                    '<small>Mi turno</small>' +
-                    '<strong>' + (tanda.has_turn_assigned ? 'Pos #' + tanda.my_turn_position : 'Pendiente') + '</strong>' +
-                '</div>' +
-            '</div>' +
-            '<div class="info-item">' +
-                '<i class="fas fa-coins"></i>' +
-                '<div>' +
-                    '<small>Pagado</small>' +
-                    '<strong>' + paidCount + '/' + totalCount + '</strong>' +
-                '</div>' +
-            '</div>' +
+        // Badges (lottery/goal) - only for recruiting
+        (badgesHtml ? '<div style="padding:0 16px 4px;display:flex;gap:6px;flex-wrap:wrap;">' + badgesHtml + '</div>' : '') +
+        // Stats grid 2x2
+        '<div class="gc-stats">' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat1Val + '</span><span class="gc-stat-label">' + stat1Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat2Val + '</span><span class="gc-stat-label">' + stat2Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat3Val + '</span><span class="gc-stat-label">' + stat3Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat4Val + '</span><span class="gc-stat-label">' + stat4Label + '</span></div>' +
         '</div>' +
-        '<div class="tanda-actions">' + actionsHtml + '</div>' +
+        // Alerts
+        alertsHtml +
+        // Actions
+        '<div class="gc-actions">' + actionsHtml + '</div>' +
     '</div>';
 }
-function filterTandas() {
-    const statusFilter = document.getElementById("tandasStatusFilter");
-    if (!statusFilter) return;
 
-    const filterValue = statusFilter.value;
+function filterAndSortTandas() {
+    if (!window.tandasData) return;
 
-    if (filterValue === "all") {
-        window.filteredTandas = [...window.tandasData];
-    } else {
-        window.filteredTandas = window.tandasData.filter(t => t.status === filterValue);
+    var statusFilter = document.getElementById('tandasStatusFilter');
+    var sortOrder = document.getElementById('tandasSortOrder');
+    var searchInput = document.getElementById('searchTandas');
+
+    var statusVal = statusFilter ? statusFilter.value : 'all';
+    var sortVal = sortOrder ? sortOrder.value : 'next-payment';
+    var searchQuery = (searchInput ? searchInput.value : '').toLowerCase().trim();
+
+    var filtered = window.tandasData.slice();
+
+    // Status filter
+    if (statusVal !== 'all') {
+        filtered = filtered.filter(function(t) {
+            if (statusVal === 'recruiting') return t.status === 'recruiting' || t.status === 'pending' || t.status === 'scheduled';
+            return t.status === statusVal;
+        });
     }
 
+    // Search filter
+    if (searchQuery) {
+        filtered = filtered.filter(function(t) {
+            return (t.group_name || '').toLowerCase().indexOf(searchQuery) !== -1;
+        });
+    }
+
+    // Sort
+    switch(sortVal) {
+        case 'next-payment':
+            filtered.sort(function(a, b) { return new Date(a.next_payment_date || '9999') - new Date(b.next_payment_date || '9999'); });
+            break;
+        case 'amount':
+            filtered.sort(function(a, b) { return (b.contribution_amount || 0) - (a.contribution_amount || 0); });
+            break;
+        case 'turn-position':
+            filtered.sort(function(a, b) { return (a.my_turn_position || 999) - (b.my_turn_position || 999); });
+            break;
+    }
+
+    window.filteredTandas = filtered;
     renderTandas();
 }
 
-// 5. SORT TANDAS
-function sortTandas() {
-    const sortOrder = document.getElementById("tandasSortOrder");
-    if (!sortOrder) return;
-
-    const sortBy = sortOrder.value;
-
-    switch(sortBy) {
-        case "next-payment":
-            window.filteredTandas.sort((a, b) => new Date(a.next_payment_date) - new Date(b.next_payment_date));
-            break;
-        case "amount":
-            window.filteredTandas.sort((a, b) => b.contribution_amount - a.contribution_amount);
-            break;
-        case "group-name":
-            window.filteredTandas.sort((a, b) => a.group_name.localeCompare(b.group_name));
-            break;
-        case "turn-position":
-            window.filteredTandas.sort((a, b) => a.my_turn_position - b.my_turn_position);
-            break;
-    }
-
-    renderTandas();
-}
+// Keep legacy names for compatibility
+function filterTandas() { filterAndSortTandas(); }
+function sortTandas() { filterAndSortTandas(); }
 
 // 6. SHOW TANDA HISTORY
 function showTandaHistory() {
@@ -3798,7 +3659,14 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
 function formatTandaDate(dateString) {
     if (!dateString || dateString === "null") return "Pendiente";
     try {
-        const date = new Date(dateString);
+        // Handle YYYY-MM-DD (no timezone shift) and ISO strings
+        var date;
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            // Pure date string — parse at noon to avoid timezone shift
+            date = new Date(dateString + 'T12:00:00');
+        } else {
+            date = new Date(dateString);
+        }
         return date.toLocaleDateString("es-HN", {
             day: "numeric",
             month: "short",
@@ -11495,6 +11363,24 @@ function renderTurnsList() {
             var section = document.getElementById(tabName);
             if (section) section.classList.add('active');
 
+            // Toggle sidebar cards based on active tab
+            var tandasSidebar = document.getElementById('tandasSidebarCards');
+            var grpStats = document.getElementById('grpSidebarStats');
+            var grpTandaBalance = document.getElementById('grpTandaBalanceCard');
+            var grpRoles = document.getElementById('grpSidebarRoles');
+            if (tabName === 'tandas') {
+                if (tandasSidebar) tandasSidebar.style.display = '';
+                if (grpStats) grpStats.style.display = 'none';
+                if (grpTandaBalance) grpTandaBalance.style.display = 'none';
+                if (grpRoles) grpRoles.style.display = 'none';
+                // Always re-fetch tandas data on tab switch for fresh data
+                if (typeof refreshTandas === 'function') { refreshTandas().catch(function(){}); }
+            } else {
+                if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (grpStats) grpStats.style.display = '';
+                if (grpRoles) grpRoles.style.display = '';
+            }
+
             // Call original switchTab if it exists (for integration hooks)
             if (typeof window.switchTab === 'function') {
                 window._groupsTabSwitching = true;
@@ -11523,6 +11409,24 @@ function renderTurnsList() {
             // Call original for hooks
             if (origSwitch) origSwitch.call(this, tabName);
         };
+    })();
+
+    // Tandas filter bar — delegated change + debounced search
+    (function() {
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'tandasStatusFilter' || e.target.id === 'tandasSortOrder') {
+                if (typeof filterAndSortTandas === 'function') filterAndSortTandas();
+            }
+        });
+        var _tandasSearchTimeout;
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'searchTandas') {
+                clearTimeout(_tandasSearchTimeout);
+                _tandasSearchTimeout = setTimeout(function() {
+                    if (typeof filterAndSortTandas === 'function') filterAndSortTandas();
+                }, 300);
+            }
+        });
     })();
     </script>
 
@@ -11722,6 +11626,15 @@ function renderTurnsList() {
                 // Tandas
                 case 'grp-refresh-tandas':
                     if (window.advancedGroupsSystem) advancedGroupsSystem.refreshTandas();
+                    break;
+                case 'grp-clear-tanda-filters':
+                    var sf = document.getElementById('tandasStatusFilter');
+                    var so = document.getElementById('tandasSortOrder');
+                    var si = document.getElementById('searchTandas');
+                    if (sf) sf.value = 'all';
+                    if (so) so.value = 'next-payment';
+                    if (si) si.value = '';
+                    if (typeof filterAndSortTandas === 'function') filterAndSortTandas();
                     break;
                 case 'grp-show-tanda-history':
                     if (window.advancedGroupsSystem) advancedGroupsSystem.showTandaHistory();
