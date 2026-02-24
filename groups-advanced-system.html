@@ -2979,7 +2979,8 @@ function updateTandasSidebar(tandas) {
     if (totalEl) totalEl.textContent = tandas.length;
     if (activeEl) activeEl.textContent = activeTandas.length;
     if (paidEl) paidEl.textContent = paidCount;
-    if (pendEl) pendEl.textContent = Math.max(0, totalCount - paidCount);
+    var pendingDue = tandas.reduce(function(s, t) { var cycle = t.current_cycle || 0; var paid = t.my_contributions_paid || 0; return s + Math.max(0, cycle - paid); }, 0);
+    if (pendEl) pendEl.textContent = pendingDue;
     if (totalPaidEl) totalPaidEl.textContent = 'L. ' + totalPaid.toLocaleString('es-HN');
 }
 
