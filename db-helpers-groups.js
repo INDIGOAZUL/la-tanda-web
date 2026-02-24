@@ -111,7 +111,8 @@ async function getEnrichedGroupsByUser(userId) {
             COALESCE(ps.total_paid, 0) AS my_total_paid,
             COALESCE(ps.pending_payments, 0) AS pending_payments,
             COALESCE(ps.cycles_paid, 0) AS cycles_paid,
-            COALESCE(pos.total_positions, 1) AS total_positions
+            COALESCE(pos.total_positions, 1) AS total_positions,
+            ug.grace_period
         FROM user_groups ug
         LEFT JOIN latest_tanda lt ON ug.group_id = lt.group_id
         LEFT JOIN position_stats pos ON ug.group_id = pos.group_id
@@ -148,10 +149,10 @@ function getPaymentDueDate(startDate, frequency, cycleIndex) {
         }
 
         if (!onSecondHalf) {
-            return new Date(curYear, curMonth, 15);
+            return new Date(curYear, curMonth, 15, 12, 0, 0);
         } else {
             var lastDay = new Date(curYear, curMonth + 1, 0).getDate();
-            return new Date(curYear, curMonth, lastDay);
+            return new Date(curYear, curMonth, lastDay, 12, 0, 0);
         }
     } else if (frequency === 'weekly') {
         // Every 7 days from start_date
@@ -171,6 +172,7 @@ function getPaymentDueDate(startDate, frequency, cycleIndex) {
 
 function enrichGroupWithPaymentStatus(group) {
     const today = new Date();
+    today.setHours(12, 0, 0, 0); // Normalize to noon for consistent day counting
 
     let daysInterval = 30; // monthly default
     if (group.frequency === 'weekly') daysInterval = 7;
@@ -195,10 +197,11 @@ function enrichGroupWithPaymentStatus(group) {
         }
     }
 
-    // Calculate payment status with grace period
-    const gracePeriod = 3;
+    // Calculate payment status with grace period from DB (default 5)
+    const gracePeriod = parseInt(group.grace_period) || 5;
     const dueWithGrace = new Date(nextPaymentDue);
     dueWithGrace.setDate(dueWithGrace.getDate() + gracePeriod);
+    const graceDeadlineDate = new Date(dueWithGrace);
 
     let paymentStatus = 'up_to_date';
     let daysLate = 0;
@@ -226,11 +229,11 @@ function enrichGroupWithPaymentStatus(group) {
     const alerts = [];
 
     if (paymentStatus === 'up_to_date') {
-        const daysUntilDue = Math.floor((nextPaymentDue - today) / (1000 * 60 * 60 * 24));
-        if (daysUntilDue <= 3 && daysUntilDue > 0) {
+        const daysUntilDue = Math.round((nextPaymentDue - today) / (1000 * 60 * 60 * 24));
+        if (daysUntilDue <= 5 && daysUntilDue > 0) {
             alerts.push({
                 type: 'payment_due',
-                severity: 'warning',
+                severity: daysUntilDue <= 2 ? 'warning' : 'info',
                 message: `Tu pago vence en ${daysUntilDue} d\u00eda${daysUntilDue !== 1 ? 's' : ''}`
             });
         }
@@ -255,19 +258,32 @@ function enrichGroupWithPaymentStatus(group) {
             severity: 'danger',
             message: 'Tu membres\u00eda est\u00e1 suspendida por falta de pago'
         });
-    } else if (paymentStatus === 'pending' && group.pending_payments > 0) {
-        alerts.push({
-            type: 'payment_pending',
-            severity: 'info',
-            message: `Tienes ${group.pending_payments} pago${group.pending_payments !== 1 ? 's' : ''} pendiente${group.pending_payments !== 1 ? 's' : ''}`
-        });
+    } else if (paymentStatus === 'pending') {
+        if (group.pending_payments > 0) {
+            alerts.push({
+                type: 'payment_pending',
+                severity: 'info',
+                message: `Tienes ${group.pending_payments} pago${group.pending_payments !== 1 ? 's' : ''} pendiente${group.pending_payments !== 1 ? 's' : ''}`
+            });
+        } else {
+            // In grace period — due date passed but grace deadline hasn't
+            const daysOfGraceLeft = Math.ceil((dueWithGrace - today) / (1000 * 60 * 60 * 24));
+            if (daysOfGraceLeft > 0) {
+                alerts.push({
+                    type: 'payment_grace',
+                    severity: 'warning',
+                    message: `Pago vencido. ${daysOfGraceLeft} día${daysOfGraceLeft !== 1 ? 's' : ''} de gracia`
+                });
+            }
+        }
     }
 
     return {
         ...group,
         my_payment_status: paymentStatus,
         my_days_late: daysLate,
-        my_next_payment_due: nextPaymentDue.toISOString(),
+        my_next_payment_due: nextPaymentDue.toISOString().split('T')[0],
+        my_next_payment_grace_deadline: graceDeadlineDate.toISOString().split('T')[0],
         my_total_paid: parseFloat(group.my_total_paid || 0),
         my_alerts: alerts,
         has_active_tanda: !!group.tanda_id,

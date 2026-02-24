@@ -315,7 +315,8 @@ const getGroups = async () => {
                 meeting_schedule,
                 is_demo,
                 start_date,
-                commission_rate
+                commission_rate,
+                advance_threshold
             FROM groups
             ORDER BY created_at DESC
         `);
@@ -348,7 +349,8 @@ const getGroupById = async (groupId) => {
                 meeting_schedule,
                 is_demo,
                 start_date,
-                commission_rate
+                commission_rate,
+                advance_threshold
             FROM groups
             WHERE group_id = $1
         `, [groupId]);
@@ -369,8 +371,9 @@ const createGroup = async (groupData) => {
                 admin_id, status, created_at, location, description,
                 image_url, category, meeting_schedule,
                 is_demo, start_date, grace_period, penalty_amount,
-                commission_rate
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                commission_rate,
+                advance_threshold
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
             RETURNING group_id as id
         `, [
             groupData.id,
@@ -392,7 +395,8 @@ const createGroup = async (groupData) => {
             groupData.start_date || null,
             groupData.grace_period || 3,
             groupData.penalty_amount || 50,
-            groupData.commission_rate !== undefined ? groupData.commission_rate : null
+            groupData.commission_rate !== undefined ? groupData.commission_rate : null,
+            groupData.advance_threshold || 80
         ]);
         
         log('info', 'Group created', { groupId: result.rows[0].id });
@@ -412,7 +416,7 @@ const updateGroup = async (groupId, updates) => {
         // v4.3.0: Column allowlist
         const ALLOWED_GROUP_COLS = ['name', 'description', 'contribution_amount',
             'max_members', 'frequency', 'location', 'status', 'type', 'privacy',
-            'start_date', 'rules', 'coordinators', 'updated_at', 'commission_rate'];
+            'start_date', 'rules', 'coordinators', 'updated_at', 'commission_rate', 'advance_threshold'];
         Object.keys(updates).forEach(key => {
             if (key === "id" || key === "updated_at") return;
             if (!ALLOWED_GROUP_COLS.includes(key)) return;
@@ -851,11 +855,18 @@ const getTandasByUser = async (userId) => {
                 g.lottery_executed,
                 g.lottery_executed_at,
                 g.lottery_scheduled_at,
-                g.start_date
+                g.start_date,
+                g.max_members,
+                g.current_cycle,
+                g.commission_rate,
+                g.advance_threshold,
+                g.grace_period,
+                g.contribution_amount as group_contribution_amount,
+                g.frequency as group_frequency
             FROM tandas t
             LEFT JOIN users u ON t.coordinator_id = u.user_id
             LEFT JOIN groups g ON t.group_id = g.group_id
-            WHERE $1 = ANY(t.turns_order) OR t.coordinator_id = $1 OR (t.status IN ('recruiting', 'pending') AND t.group_id IN (SELECT group_id FROM group_members WHERE user_id = $1 AND status = 'active'))
+            WHERE EXISTS (SELECT 1 FROM unnest(t.turns_order) AS elem WHERE elem LIKE '%"user_id":"' || $1 || '"%') OR t.coordinator_id = $1 OR (t.status IN ('recruiting', 'pending') AND t.group_id IN (SELECT group_id FROM group_members WHERE user_id = $1 AND status = 'active'))
             ORDER BY t.created_at DESC
         `, [userId]);
         return result.rows;

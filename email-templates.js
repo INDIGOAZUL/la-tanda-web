@@ -404,10 +404,47 @@ ${ctaButton('Ver Panel de Grupo', 'https://latanda.online/groups', '#00FFFF', '#
     };
 }
 
+
+function distributionExecutedEmail(data) {
+    const subject = 'Distribución de Ciclo ' + esc(String(data.cycle)) + ' - ' + esc(data.groupName);
+    const preheader = 'Recibiste ' + fmtL(data.netAmount) + ' de la distribución del ciclo ' + data.cycle;
+
+    const body = `
+<h2 style="margin:0 0 6px;font-size:22px;color:#f8fafc;font-weight:700;">Distribución Completada</h2>
+<p style="margin:0 0 24px;font-size:15px;color:#94a3b8;">Hola ${esc(data.beneficiaryName)}, se ejecutó la distribución de tu grupo.</p>
+
+<div style="background:#0f172a;border-radius:8px;overflow:hidden;margin:0 0 24px;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+${infoRow('Grupo', esc(data.groupName))}
+${infoRow('Monto Bruto', fmtL(data.grossAmount))}
+${infoRow('Comisión Coordinador', '- ' + fmtL(data.coordinatorFee), '#f59e0b')}
+${infoRow('Comisión Plataforma', '- ' + fmtL(data.platformFee), '#f59e0b')}
+${infoRow('Monto Neto', fmtL(data.netAmount), '#00FFFF')}
+${infoRow('Ciclo', String(data.cycle))}
+${infoRow('Fecha', fmtDate(data.date))}
+</table>
+</div>
+
+<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:16px;margin:0 0 24px;text-align:center;">
+<p style="margin:0;font-size:15px;color:#10b981;font-weight:600;">&#10003; Distribución acreditada exitosamente</p>
+<p style="margin:8px 0 0;font-size:13px;color:#94a3b8;">El monto neto ha sido registrado en tu grupo.</p>
+</div>
+
+${ctaButton('Ver Mi Grupo', 'https://latanda.online/groups', '#00FFFF', '#0f172a')}
+
+<p style="margin:20px 0 0;font-size:13px;color:#64748b;text-align:center;line-height:1.4;">Si tienes preguntas, contacta al coordinador de tu grupo.</p>`;
+
+    return {
+        subject,
+        html: baseLayout(subject, preheader, body, data.beneficiaryEmail)
+    };
+}
+
 module.exports = {
     paymentRecordedEmail,
     paymentReminderEmail,
     paymentLateEmail,
     suspensionWarningEmail,
-    coordinatorLateAlertEmail
+    coordinatorLateAlertEmail,
+    distributionExecutedEmail
 };

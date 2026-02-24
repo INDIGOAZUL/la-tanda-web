@@ -2094,11 +2094,11 @@ async function loadUsersWithoutPositions(groupId) {
                     <h2><i class="fas fa-coins"></i> Mis Tandas</h2>
                     <p class="section-description">Tu centro de pagos y cobros</p>
                 </div>
-                <div class="section-actions">
-                    <button class="btn btn-outline" data-action="grp-refresh-tandas">
+                <div class="section-actions" style="display:flex;gap:8px;">
+                    <button class="tc-pill-btn" data-action="grp-refresh-tandas">
                         <i class="fas fa-sync-alt"></i> Actualizar
                     </button>
-                    <button class="btn btn-primary" data-action="grp-show-tanda-history">
+                    <button class="tc-pill-btn" data-action="grp-show-tanda-history">
                         <i class="fas fa-history"></i> Historial
                     </button>
                 </div>
@@ -2131,9 +2131,6 @@ async function loadUsersWithoutPositions(groupId) {
 
             
     
-            <!-- Payout containers (preserved for payout-frontend.js) -->
-            <div id="collectTandaContainer"></div>
-            <div id="payoutMethodsContainer"></div>
         </section>
 
         </main>
@@ -2200,40 +2197,14 @@ async function loadUsersWithoutPositions(groupId) {
                     </div>
                 </div>
 
-                <!-- Mi Saldo Tanda Card -->
-                <div class="grp-sidebar-stats" id="grpTandaBalanceCard" style="display:none">
-                    <h4 class="grp-sidebar-stats-title">Mi Tanda</h4>
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                        <div style="width:32px;height:32px;background:rgba(0,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        </div>
-                        <div>
-                            <div id="grpTandaBalance" style="font-size:1.2rem;font-weight:700;color:#34d399">--</div>
-                            <div id="grpTandaLabel" style="font-size:0.72rem;color:#64748b">Cargando...</div>
-                        </div>
-                    </div>
-                    <div class="gs-rows">
-                        <div class="gs-row">
-                            <span class="gs-row-icon" style="color:#00FFFF;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>
-                            </span>
-                            <span class="gs-row-label" id="grpTandaTurno">Turno --</span>
-                            <span class="gs-row-val" id="grpTandaPagos" style="color:#888">--</span>
-                        </div>
-                        <div class="gs-row">
-                            <span class="gs-row-icon" style="color:#f59e0b;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            </span>
-                            <span class="gs-row-label" id="grpTandaGroup">--</span>
-                            <span class="gs-row-val" id="grpTandaDist" style="color:#888">--</span>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Roles Card -->
                 
                 <!-- Tandas Tab Sidebar Cards -->
                 <div id="tandasSidebarCards" style="display:none;">
+                    <!-- Payout methods (compact in sidebar) -->
+                    <div id="collectTandaContainer"></div>
+                    <div id="payoutMethodsContainer"></div>
                     <!-- Próximo Pago card -->
                     <div class="grp-sidebar-stats" id="tscNextPayment">
                         <h4 class="grp-sidebar-stats-title">Próximo Pago</h4>
@@ -2871,7 +2842,7 @@ async function openHistoryModal() {
                 <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 10px;">
                     <div style="flex: 1;">
                         <div style="color: #fff; font-weight: bold;">${escapeHtml(c.tanda_name || c.group_name || 'Tanda')}</div>
-                        <div style="color: #888; font-size: 12px;">${escapeHtml(c.sender || 'Participante')}</div>
+                        <div style="color: #888; font-size: 12px;">${c.cycle_number ? 'Ciclo ' + c.cycle_number : escapeHtml(c.sender || 'Distribuci\u00f3n')}</div>
                     </div>
                     <div style="text-align: right;">
                         <div style="color: #00ff88; font-weight: bold;">+L. ${parseFloat(c.amount || 0).toLocaleString('es-HN', {minimumFractionDigits: 2})}</div>
@@ -3058,12 +3029,23 @@ async function refreshTandas() {
 }
 
 // 2. RENDER TANDAS
+function formatRelativeDate(dateStr) {
+    if (!dateStr || dateStr === 'null') return 'Pendiente';
+    var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
+    var target = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
+    if (isNaN(target.getTime())) return 'Pendiente';
+    var days = Math.round((target - todayNoon) / 86400000);
+    if (days < 0) return 'Vencido';
+    if (days === 0) return 'Hoy';
+    if (days === 1) return 'Ma\u00f1ana';
+    return 'En ' + days + ' d\u00edas';
+}
+
 function renderTandas() {
     var container = document.getElementById('tandasList');
     if (!container) return;
 
     if (!window.filteredTandas || window.filteredTandas.length === 0) {
-        // Check if there are tandas but filtered to 0
         if (window.tandasData && window.tandasData.length > 0) {
             container.innerHTML = '<div class="tandas-empty-state"><div class="empty-icon" style="font-size:3rem;margin-bottom:16px;">🔍</div><h3 style="color:#f8fafc;margin-bottom:8px;">Sin resultados</h3><p style="color:#94a3b8;margin-bottom:16px;">Ninguna tanda coincide con tus filtros.</p><button class="btn btn-outline" data-action="grp-clear-tanda-filters"><i class="fas fa-times"></i> Limpiar Filtros</button></div>';
         } else {
@@ -3072,11 +3054,34 @@ function renderTandas() {
         return;
     }
 
-    var htmlParts = [];
+    var activas = [], reclutamiento = [], completadas = [];
+    var activeStatuses = { 'active': 1, 'waiting-turn': 1, 'collecting': 1, 'paused': 1 };
+    var recruitStatuses = { 'recruiting': 1, 'pending': 1, 'scheduled': 1 };
+
     for (var i = 0; i < window.filteredTandas.length; i++) {
-        htmlParts.push(renderTandaCard(window.filteredTandas[i]));
+        var t = window.filteredTandas[i];
+        if (t.status === 'completed') completadas.push(t);
+        else if (recruitStatuses[t.status]) reclutamiento.push(t);
+        else activas.push(t);
     }
-    container.innerHTML = htmlParts.join('');
+
+    var html = '';
+    if (activas.length > 0) {
+        html += '<div class="tc-section"><div class="tc-section-header"><span class="tc-section-title">\ud83d\udcca Activas</span><span class="tc-section-count">' + activas.length + '</span></div><div class="groups-grid">';
+        for (var a = 0; a < activas.length; a++) html += renderTandaCard(activas[a]);
+        html += '</div></div>';
+    }
+    if (reclutamiento.length > 0) {
+        html += '<div class="tc-section"><div class="tc-section-header"><span class="tc-section-title">\ud83d\udd0e En Reclutamiento</span><span class="tc-section-count">' + reclutamiento.length + '</span></div><div class="groups-grid">';
+        for (var r = 0; r < reclutamiento.length; r++) html += renderTandaCard(reclutamiento[r]);
+        html += '</div></div>';
+    }
+    if (completadas.length > 0) {
+        html += '<div class="tc-section"><div class="tc-section-header"><span class="tc-section-title">\u2705 Completadas</span><span class="tc-section-count">' + completadas.length + '</span></div><div class="groups-grid">';
+        for (var c = 0; c < completadas.length; c++) html += renderTandaCard(completadas[c]);
+        html += '</div></div>';
+    }
+    container.innerHTML = html;
 }
 
 // 3. RENDER TANDA CARD
@@ -3094,7 +3099,7 @@ function getLotteryBadge(tanda) {
     }
 
     if (tanda.lottery_scheduled_at) {
-        return '<span style="background: rgba(245,158,11,0.2); color: #f59e0b; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;" data-countdown="' + tanda.lottery_scheduled_at + '" data-tanda-id="' + tanda.tanda_id + '"><i class="fas fa-dice"></i> <span class="countdown-timer">Cargando...</span></span>';
+        return '<span style="background: rgba(245,158,11,0.2); color: #f59e0b; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;" data-countdown="' + escapeHtml(String(tanda.lottery_scheduled_at || '')) + '" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-dice"></i> <span class="countdown-timer">Cargando...</span></span>';
     }
 
     return '<span style="background: rgba(107,114,128,0.2); color: #9ca3af; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-clock"></i> Tómbola pendiente</span>';
@@ -3130,9 +3135,10 @@ function renderTandaCard(tanda) {
     var roleLabels = { 'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro' };
     var roleClasses = { 'creator': 'gc-role-creator', 'coordinator': 'gc-role-coord', 'member': 'gc-role-member' };
 
-    var statusLabel = statusLabels[tanda.status] || tanda.status;
+    var statusLabel = statusLabels[tanda.status] || escapeHtml(tanda.status);
     var statusColor = statusColors[tanda.status] || '#94a3b8';
     var isRecruiting = tanda.status === 'recruiting' || tanda.status === 'pending' || tanda.status === 'scheduled';
+    var isCompleted = tanda.status === 'completed';
     var isCoordinator = tanda.is_coordinator === true;
 
     // Role from merged group data or fallback
@@ -3154,49 +3160,75 @@ function renderTandaCard(tanda) {
     var membersNeeded = tanda.members_needed || tanda.total_participants || 1;
     var progressText, progressPercent;
     if (isRecruiting) {
-        progressText = 'Miembros ' + membersJoined + '/' + membersNeeded;
+        progressText = membersJoined + ' de ' + membersNeeded + ' miembros';
         progressPercent = Math.round((membersJoined / membersNeeded) * 100);
     } else {
-        progressText = 'Ciclo ' + (tanda.current_cycle || tanda.current_turn || 1) + '/' + (tanda.total_participants || 1);
-        progressPercent = tanda.progress_percentage || 0;
+        var currentCycle = tanda.current_cycle || tanda.current_turn || 1;
+        var totalCycles = tanda.max_members || tanda.total_participants || 1;
+        progressText = 'Ciclo ' + currentCycle + ' de ' + totalCycles + ' \u2014 ' + (tanda.progress_percentage || Math.round((currentCycle / totalCycles) * 100)) + '%';
+        progressPercent = tanda.progress_percentage || Math.round((currentCycle / totalCycles) * 100);
     }
 
-    // Collecting member name (fix raw JSON)
-    var collectingMember = isRecruiting ? '—' : (tanda.collecting_member || '—');
+    // Frequency label
+    var freqMap = {'weekly':'Semanal','biweekly':'Quincenal','monthly':'Mensual','daily':'Diario'};
+    var freqLabel = freqMap[((tanda.frequency_label || tanda.frequency || '')).toLowerCase()] || tanda.frequency_label || tanda.frequency || '';
 
-    // Stats
+    // Subtitle: frequency + status + payout inline
+    var subtitleParts = [];
+    if (freqLabel) subtitleParts.push(escapeHtml(freqLabel));
+    if (statusLabel) subtitleParts.push(statusLabel);
+    var subtitleHtml = subtitleParts.join(' &middot; ');
+    if (!isRecruiting && tandaPayout.user_receives > 0) {
+        subtitleHtml += ' &middot; <span class="tc-payout-inline">Recibes L. ' + formatTandaNumber(tandaPayout.user_receives) + '</span>';
+    }
+
+    // Stats — context-aware by status
     var paidCount = tanda.my_contributions_paid || 0;
-    var totalCount = tanda.my_contributions_total || tanda.total_participants || 0;
-    var nextPaymentFormatted = isRecruiting ? 'Pendiente' : formatTandaDate(tanda.next_payment_date);
+    var maxMembers = tanda.max_members || tanda.total_participants || 0;
+    var totalCount = tanda.my_contributions_total || maxMembers || 0;
+    var stat1Label, stat1Val, stat2Label, stat2Val, stat3Label, stat3Val, stat4Label, stat4Val;
 
-    // Stat 1 + 2 (top row)
-    var stat1Label, stat1Val, stat2Label, stat2Val;
-    if (isRecruiting) {
+    if (isCompleted) {
         stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
-        stat2Label = 'Turnos Asignados'; stat2Val = (tanda.turns_assigned || 0) + '/' + membersNeeded;
-    } else {
+        stat2Label = 'Cobr\u00e9'; stat2Val = 'L. ' + formatTandaNumber(tandaPayout.user_receives);
+        stat3Label = 'Pagu\u00e9'; stat3Val = 'L. ' + formatTandaNumber((tanda.contribution_amount || 0) * totalCount);
+        stat4Label = 'Duraci\u00f3n'; stat4Val = totalCount + ' ciclos';
+    } else if (isRecruiting) {
         stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
-        stat2Label = 'Mi Turno'; stat2Val = tanda.has_turn_assigned ? 'Pos #' + tanda.my_turn_position : 'Pendiente';
-    }
-    // Stat 3 + 4 (bottom row)
-    var stat3Label, stat3Val, stat4Label, stat4Val;
-    if (isRecruiting) {
-        stat3Label = 'Frecuencia'; stat3Val = escapeHtml(tanda.frequency_label || tanda.frequency || '--');
-        stat4Label = 'Estado'; stat4Val = statusLabel;
+        stat2Label = 'Miembros'; stat2Val = membersJoined + '/' + membersNeeded;
+        stat3Label = 'Turnos'; stat3Val = (tanda.turns_assigned || 0) + '/' + membersNeeded;
+        stat4Label = 'Mi Turno'; stat4Val = tanda.has_turn_assigned ? '#' + tanda.my_turn_position : 'Pendiente';
     } else {
-        stat3Label = 'Pagado'; stat3Val = paidCount + '/' + totalCount;
-        stat4Label = 'Prox. Pago'; stat4Val = nextPaymentFormatted;
+        // Active/collecting/waiting-turn/paused — cycles = max_members
+        stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
+        stat2Label = 'Mi Turno'; stat2Val = tanda.has_turn_assigned ? '#' + tanda.my_turn_position + ' de ' + maxMembers : 'Sin turno';
+        stat3Label = 'Pagado'; stat3Val = paidCount + '/' + maxMembers;
+        stat4Label = 'Pr\u00f3x. Pago'; stat4Val = formatRelativeDate(tanda.next_payment_date);
     }
 
-    // Alert banners — API alerts cover the full cycle, no frontend duplication needed
+    // Progress bar color class
+    var progressColorClass = '';
+    if (isRecruiting) progressColorClass = ' tc-progress-fill-amber';
+    else if (isCompleted) progressColorClass = ' tc-progress-fill-green';
+    else if (tanda.status === 'collecting') progressColorClass = ' tc-progress-fill-green';
+
+    // Card status class for left border + visual treatment
+    var cardStatusClass = '';
+    if (tanda.status === 'collecting') cardStatusClass = ' tc-collecting';
+    else if (tanda.payment_status === 'late' || tanda.payment_status === 'suspension_recommended') cardStatusClass = ' tc-late';
+    else if (isCompleted) cardStatusClass = ' tc-completed';
+
+    // Override border color for late payments
+    var borderColor = statusColor;
+    if (tanda.payment_status === 'late' || tanda.payment_status === 'suspension_recommended') borderColor = '#ef4444';
+
+    // Alert banners
     var alertsHtml = '';
     var alerts = tanda.alerts || [];
-    // Only add frontend-generated alerts if API didn't already provide them
-    if (!isRecruiting && alerts.length === 0) {
+    if (!isRecruiting && !isCompleted && alerts.length === 0) {
         if (tanda.payment_status === 'late' || tanda.payment_status === 'suspension_recommended') {
             alerts = [{ severity: 'danger', message: 'Pago atrasado' }];
         } else if (tanda.payment_status === 'pending') {
-            // In grace period — due date passed but grace deadline hasn't
             var graceDeadline = tanda.next_payment_grace_deadline || tanda.my_next_payment_grace_deadline;
             if (graceDeadline) {
                 var graceDaysLeft = Math.ceil((new Date(graceDeadline + 'T23:59:59') - new Date()) / 86400000);
@@ -3224,55 +3256,56 @@ function renderTandaCard(tanda) {
         alertsHtml += '<div class="gc-alert ' + sevClass + '">' + icon + ' ' + escapeHtml(a.message || '') + '</div>';
     });
 
-    // Action buttons
+    // Action buttons — one clear CTA per state
     var actionsHtml = '';
+    var eid = escapeHtml(String(tanda.tanda_id || ''));
     if (isRecruiting && isCoordinator) {
-        actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-play"></i> Iniciar</button>' +
-            '<button class="btn btn-sm btn-outline" data-action="grp-invite-to-tanda" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-user-plus"></i> Invitar</button>';
+        actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + eid + '"><i class="fas fa-play"></i> Iniciar</button>' +
+            '<button class="btn btn-sm tc-btn-dark" data-action="grp-invite-to-tanda" data-tanda-id="' + eid + '"><i class="fas fa-user-plus"></i> Invitar</button>';
     } else if (isRecruiting) {
-        actionsHtml = '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
+        actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
             '<span class="tc-waiting"><i class="fas fa-clock"></i> ' + (tanda.has_turn_assigned ? 'Esperando inicio' : 'Sin turno') + '</span>';
+    } else if (isCompleted) {
+        actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>';
     } else {
-        actionsHtml = '<button class="btn btn-sm btn-secondary" data-action="grp-open-history"><i class="fas fa-history"></i> Historial</button>' +
-            '<button class="btn btn-sm btn-outline" data-action="grp-view-tanda-details" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-eye"></i> Detalles</button>' +
-            '<button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
+        actionsHtml = '<button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + eid + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
     }
 
     // Lottery/goal badges
     var badgesHtml = getLotteryBadge(tanda) + getGoalBadge(tanda);
 
-    return '<div class="group-card" style="border-left:4px solid ' + statusColor + ';" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '">' +
-        // Header: Avatar + Name + Role
+    // Stat icons by context
+    var s1Icon = '', s2Icon = '', s3Icon = '', s4Icon = '';
+    if (isCompleted) {
+        s1Icon = '&#x1F4B5; '; s2Icon = '&#x1F4B0; '; s3Icon = '&#x1F4B8; '; s4Icon = '&#x23F1; ';
+    } else if (isRecruiting) {
+        s1Icon = '&#x1F4B5; '; s2Icon = '&#x1F465; '; s3Icon = '&#x1F3B0; '; s4Icon = '&#35; ';
+    } else {
+        s1Icon = '&#x1F4B5; '; s2Icon = '&#35; '; s3Icon = '&#x2705; '; s4Icon = '&#x1F4C5; ';
+    }
+
+    return '<div class="group-card tc-card' + cardStatusClass + '" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '">' +
+        '<div class="tc-top-border" style="background:linear-gradient(90deg,' + borderColor + ',' + (borderColor === '#ef4444' ? '#dc2626' : borderColor === '#f59e0b' ? '#d97706' : borderColor === '#22c55e' ? '#10b981' : '#0ea5e9') + ');"></div>' +
         '<div class="gc-header">' +
             '<div class="gc-avatar" style="background:' + avatarBg + ';color:#000;">' + avatarLetter + '</div>' +
             '<div class="gc-header-text">' +
                 '<h3 class="gc-name">' + escapeHtml(groupName) + '</h3>' +
-                '<div class="gc-sub">' + escapeHtml(({'weekly':'Semanal','biweekly':'Quincenal','monthly':'Mensual','daily':'Diario'})[((tanda.frequency_label || tanda.frequency || '')).toLowerCase()] || tanda.frequency_label || tanda.frequency || '') + (statusLabel ? ' &middot; ' + statusLabel : '') + '</div>' +
+                '<div class="gc-sub">' + subtitleHtml + '</div>' +
             '</div>' +
             '<span class="gc-role ' + roleClass + '">' + roleLabel + '</span>' +
         '</div>' +
-        // Payout bar (tc-specific)
-        '<div class="tc-payout">' +
-            '<span class="tc-payout-label">Recibes (' + (tandaPayout.commission_rate > 0 ? '-' + parseFloat(tandaPayout.commission_rate.toFixed(1)) + '% comisión' : 'sin comisión') + ')</span>' +
-            '<span class="tc-payout-amount">L. ' + formatTandaNumber(tandaPayout.user_receives) + '</span>' +
-        '</div>' +
-        // Progress bar
         '<div class="tc-progress">' +
-            '<div class="tc-progress-info"><span>' + progressText + '</span><span>' + progressPercent + '%</span></div>' +
-            '<div class="tc-progress-bar"><div class="tc-progress-fill" style="width:' + progressPercent + '%;"></div></div>' +
+            '<div class="tc-progress-info"><span>' + progressText + '</span></div>' +
+            '<div class="tc-progress-bar"><div class="tc-progress-fill' + progressColorClass + '" style="width:' + progressPercent + '%;"></div></div>' +
         '</div>' +
-        // Badges (lottery/goal) - only for recruiting
         (badgesHtml ? '<div style="padding:0 16px 4px;display:flex;gap:6px;flex-wrap:wrap;">' + badgesHtml + '</div>' : '') +
-        // Stats grid 2x2
         '<div class="gc-stats">' +
-            '<div class="gc-stat"><span class="gc-stat-val">' + stat1Val + '</span><span class="gc-stat-label">' + stat1Label + '</span></div>' +
-            '<div class="gc-stat"><span class="gc-stat-val">' + stat2Val + '</span><span class="gc-stat-label">' + stat2Label + '</span></div>' +
-            '<div class="gc-stat"><span class="gc-stat-val">' + stat3Val + '</span><span class="gc-stat-label">' + stat3Label + '</span></div>' +
-            '<div class="gc-stat"><span class="gc-stat-val">' + stat4Val + '</span><span class="gc-stat-label">' + stat4Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat1Val + '</span><span class="gc-stat-label">' + s1Icon + stat1Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat2Val + '</span><span class="gc-stat-label">' + s2Icon + stat2Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat3Val + '</span><span class="gc-stat-label">' + s3Icon + stat3Label + '</span></div>' +
+            '<div class="gc-stat"><span class="gc-stat-val">' + stat4Val + '</span><span class="gc-stat-label">' + s4Icon + stat4Label + '</span></div>' +
         '</div>' +
-        // Alerts
         alertsHtml +
-        // Actions
         '<div class="gc-actions">' + actionsHtml + '</div>' +
     '</div>';
 }
@@ -3585,7 +3618,7 @@ function inviteToTanda(tandaId) {
 }
 
 function viewTandaDetails(tandaId) {
-    const tanda = (window.tandasData || tandasData).find(t => t.tanda_id === tandaId);
+    const tanda = (window.tandasData || []).find(t => t.tanda_id === tandaId);
     if (!tanda) {
         return;
     }
@@ -3595,7 +3628,7 @@ function viewTandaDetails(tandaId) {
 
 // 8. MAKE TANDA PAYMENT
 function makeTandaPayment(tandaId) {
-    const tanda = (window.tandasData || tandasData).find(t => t.tanda_id === tandaId);
+    const tanda = (window.tandasData || []).find(t => t.tanda_id === tandaId);
     if (!tanda) {
         return;
     }
@@ -3857,10 +3890,14 @@ function startTandaLotteryCountdowns() {
 
             if (diff <= 0) {
                 timerSpan.textContent = 'Iniciando...';
+                clearInterval(intervalId);
                 // Start polling for lottery results
                 const tandaId = el.dataset.tandaId;
                 if (tandaId) {
-                    const groupId = el.closest('.tanda-card')?.dataset?.groupId;
+                    const card = el.closest('.tc-card');
+                    const cardTandaId = card?.dataset?.tandaId;
+                    const tandaData = (window.tandasData || []).find(function(t) { return t.tanda_id === cardTandaId; });
+                    const groupId = tandaData?.group_id;
                     if (groupId) pollForLotteryExecution(tandaId, groupId);
                 }
                 // Refresh tandas after a short delay
@@ -3887,7 +3924,8 @@ function startTandaLotteryCountdowns() {
         }
 
         updateCountdown();
-        window._countdownIntervals.push(setInterval(updateCountdown, 1000));
+        var intervalId = setInterval(updateCountdown, 1000);
+        window._countdownIntervals.push(intervalId);
     });
 }
 
@@ -4330,12 +4368,6 @@ attachTandasFunctions();
     var proofFileInput = document.getElementById('proofFileInput');
     if (proofFileInput) proofFileInput.addEventListener('change', function(e) { handleProofUpload(e); });
 
-    // Tanda filters
-    var tandasStatusFilter = document.getElementById('tandasStatusFilter');
-    if (tandasStatusFilter) tandasStatusFilter.addEventListener('change', function() { if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.filterTandas === 'function') window.advancedGroupsSystem.filterTandas(); });
-
-    var tandasSortOrder = document.getElementById('tandasSortOrder');
-    if (tandasSortOrder) tandasSortOrder.addEventListener('change', function() { if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.sortTandas === 'function') window.advancedGroupsSystem.sortTandas(); });
 
     // History filters
     var historyTandaFilter = document.getElementById('historyTandaFilter');
@@ -11331,7 +11363,7 @@ function renderTurnsList() {
 })();
 </script>
 
-    <script src="payout-frontend.js?v=1.5"></script>
+    <script src="payout-frontend.js?v=1.6"></script>
 
     <!-- Tab Switching (delegated, no inline onclick) -->
     <script>
@@ -11368,17 +11400,26 @@ function renderTurnsList() {
             var grpStats = document.getElementById('grpSidebarStats');
             var grpTandaBalance = document.getElementById('grpTandaBalanceCard');
             var grpRoles = document.getElementById('grpSidebarRoles');
+            var grpActions = document.getElementById('grpSidebarActions');
+            var grpNextPay = document.getElementById('grpSidebarNextPayment');
+            var hubCards = document.getElementById('sidebarHubCards');
             if (tabName === 'tandas') {
                 if (tandasSidebar) tandasSidebar.style.display = '';
                 if (grpStats) grpStats.style.display = 'none';
                 if (grpTandaBalance) grpTandaBalance.style.display = 'none';
                 if (grpRoles) grpRoles.style.display = 'none';
+                if (grpActions) grpActions.style.display = 'none';
+                if (grpNextPay) grpNextPay.style.display = 'none';
+                if (hubCards) hubCards.style.display = 'none';
                 // Always re-fetch tandas data on tab switch for fresh data
                 if (typeof refreshTandas === 'function') { refreshTandas().catch(function(){}); }
             } else {
                 if (tandasSidebar) tandasSidebar.style.display = 'none';
                 if (grpStats) grpStats.style.display = '';
                 if (grpRoles) grpRoles.style.display = '';
+                if (grpActions) grpActions.style.display = '';
+                if (grpNextPay) grpNextPay.style.display = '';
+                if (hubCards) hubCards.style.display = '';
             }
 
             // Call original switchTab if it exists (for integration hooks)
@@ -11400,6 +11441,28 @@ function renderTurnsList() {
             document.querySelectorAll('.content-section').forEach(function(s) { s.classList.remove('active'); });
             var section = document.getElementById(tabName);
             if (section) section.classList.add('active');
+            // Toggle sidebar cards
+            var tandasSidebar = document.getElementById('tandasSidebarCards');
+            var grpStats = document.getElementById('grpSidebarStats');
+            var grpRoles = document.getElementById('grpSidebarRoles');
+            var grpActions = document.getElementById('grpSidebarActions');
+            var grpNextPay = document.getElementById('grpSidebarNextPayment');
+            var hubCards = document.getElementById('sidebarHubCards');
+            if (tabName === 'tandas') {
+                if (tandasSidebar) tandasSidebar.style.display = '';
+                if (grpStats) grpStats.style.display = 'none';
+                if (grpRoles) grpRoles.style.display = 'none';
+                if (grpActions) grpActions.style.display = 'none';
+                if (grpNextPay) grpNextPay.style.display = 'none';
+                if (hubCards) hubCards.style.display = 'none';
+            } else {
+                if (tandasSidebar) tandasSidebar.style.display = 'none';
+                if (grpStats) grpStats.style.display = '';
+                if (grpRoles) grpRoles.style.display = '';
+                if (grpActions) grpActions.style.display = '';
+                if (grpNextPay) grpNextPay.style.display = '';
+                if (hubCards) hubCards.style.display = '';
+            }
             // Update new tab buttons
             document.querySelectorAll('.groups-tab').forEach(function(t) {
                 var isActive = t.getAttribute('data-tab') === tabName;
@@ -11615,7 +11678,23 @@ function renderTurnsList() {
                     break;
                 case 'grp-switch-history-tab':
                     var htab = btn.getAttribute('data-htab');
-                    if (htab && typeof switchHistoryTab === 'function') switchHistoryTab(htab);
+                    if (htab) {
+                        var hPayments = document.getElementById('history-payments');
+                        var hCollections = document.getElementById('history-collections');
+                        var tPayments = document.getElementById('tab-payments');
+                        var tCollections = document.getElementById('tab-collections');
+                        if (htab === 'payments') {
+                            if (hPayments) hPayments.style.display = '';
+                            if (hCollections) hCollections.style.display = 'none';
+                            if (tPayments) { tPayments.style.background = '#00ffff'; tPayments.style.color = '#000'; tPayments.classList.add('active'); }
+                            if (tCollections) { tCollections.style.background = 'rgba(255,255,255,0.1)'; tCollections.style.color = '#fff'; tCollections.classList.remove('active'); }
+                        } else {
+                            if (hPayments) hPayments.style.display = 'none';
+                            if (hCollections) hCollections.style.display = '';
+                            if (tCollections) { tCollections.style.background = '#00ffff'; tCollections.style.color = '#000'; tCollections.classList.add('active'); }
+                            if (tPayments) { tPayments.style.background = 'rgba(255,255,255,0.1)'; tPayments.style.color = '#fff'; tPayments.classList.remove('active'); }
+                        }
+                    }
                     break;
 
                 // Payment
