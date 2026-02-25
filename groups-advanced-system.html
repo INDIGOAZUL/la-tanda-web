@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.8">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.9">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -2217,36 +2217,15 @@ async function loadUsersWithoutPositions(groupId) {
                     <!-- Payout methods (compact in sidebar) -->
                     <div id="collectTandaContainer"></div>
                     <div id="payoutMethodsContainer"></div>
-                    <!-- Próximo Pago card -->
+                    <!-- Próximos Pagos card -->
                     <div class="grp-sidebar-stats" id="tscNextPayment">
-                        <h4 class="grp-sidebar-stats-title">Próximo Pago</h4>
-                        <div id="tscNextPaymentContent">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                                <div style="width:32px;height:32px;background:rgba(239,68,68,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                    <i class="fas fa-exclamation-circle" style="color:#ef4444;font-size:14px;"></i>
-                                </div>
-                                <div>
-                                    <div id="tscPaymentAmount" style="font-size:1.1rem;font-weight:700;color:#f8fafc">--</div>
-                                    <div id="tscPaymentDue" style="font-size:0.72rem;color:#94a3b8">Sin pagos pendientes</div>
-                                </div>
-                            </div>
-                            <div id="tscPaymentGroup" style="font-size:0.75rem;color:#64748b;padding-top:4px;border-top:1px solid rgba(255,255,255,0.06)"></div>
-                        </div>
+                        <h4 class="grp-sidebar-stats-title">Proximos Pagos</h4>
+                        <div class="gs-payments-list" id="tscPaymentsList"></div>
                     </div>
-                    <!-- Mi Próximo Cobro card -->
+                    <!-- Próximos Cobros card -->
                     <div class="grp-sidebar-stats" id="tscMyCollection">
-                        <h4 class="grp-sidebar-stats-title">Mi Próximo Cobro</h4>
-                        <div id="tscMyCollectionContent">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                                <div style="width:32px;height:32px;background:rgba(16,185,129,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                    <i class="fas fa-hand-holding-usd" style="color:#10b981;font-size:14px;"></i>
-                                </div>
-                                <div>
-                                    <div id="tscCollectionAmount" style="font-size:1.1rem;font-weight:700;color:#f8fafc">--</div>
-                                    <div id="tscCollectionInfo" style="font-size:0.72rem;color:#94a3b8">Sin tandas</div>
-                                </div>
-                            </div>
-                        </div>
+                        <h4 class="grp-sidebar-stats-title">Proximos Cobros</h4>
+                        <div class="gs-cobros-list" id="tscCollectionList"></div>
                     </div>
                     <!-- Resumen card -->
                     <div class="grp-sidebar-stats" id="tscSummary">
@@ -2919,7 +2898,8 @@ function mergeTandaWithGroup(tanda) {
         frequency_label: group.frequency || tanda.frequency,
         max_members: group.max_members || tanda.max_members,
         group_status: group.status || tanda.group_status,
-        lottery_executed: tanda.lottery_executed || group.lottery_executed || false
+        lottery_executed: tanda.lottery_executed || group.lottery_executed || false,
+        num_positions: group.my_num_positions || tanda.num_positions || 1
     });
 }
 
@@ -2928,77 +2908,77 @@ function updateTandasSidebar(tandas) {
     var recruitingTandas = tandas.filter(function(t) { return t.status === 'recruiting' || t.status === 'pending' || t.status === 'scheduled'; });
     var activeTandas = tandas.filter(function(t) { return t.status === 'active' || t.status === 'waiting-turn' || t.status === 'collecting' || t.status === 'paused'; });
 
-    // === Próximo Pago ===
-    var payAmountEl = document.getElementById('tscPaymentAmount');
-    var payDueEl = document.getElementById('tscPaymentDue');
-    var payGroupEl = document.getElementById('tscPaymentGroup');
+    // === Proximos Pagos (H1: multi-tanda list) ===
     var payCard = document.getElementById('tscNextPayment');
+    var payListEl = document.getElementById('tscPaymentsList');
 
     var pendingPayments = activeTandas.filter(function(t) { return t.next_payment_date; }).sort(function(a, b) { return new Date(a.next_payment_date) - new Date(b.next_payment_date); });
 
-    if (pendingPayments.length > 0) {
-        var next = pendingPayments[0];
-        var dateStr = next.next_payment_date;
-        var dueDate = new Date(typeof dateStr === 'string' && dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
-        var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
-        var daysLeft = Math.round((dueDate - todayNoon) / 86400000);
-        if (payAmountEl) payAmountEl.textContent = 'L. ' + (next.contribution_amount || 0).toLocaleString('es-HN');
-        if (payDueEl) {
-            if (daysLeft <= 0) {
-                var graceDeadline = next.next_payment_grace_deadline || next.my_next_payment_grace_deadline;
-                if (graceDeadline) {
-                    var graceDaysLeft = Math.ceil((new Date(graceDeadline + 'T23:59:59') - new Date()) / 86400000);
-                    if (graceDaysLeft > 0) {
-                        payDueEl.textContent = 'Vencido. Gracia: ' + graceDaysLeft + 'd';
-                        payDueEl.style.color = '#f59e0b';
-                    } else {
-                        payDueEl.textContent = 'Atrasado';
-                        payDueEl.style.color = '#ef4444';
-                    }
+    if (payListEl) {
+        if (pendingPayments.length > 0) {
+            var payHtml = '';
+            var payCap = Math.min(pendingPayments.length, 5);
+            for (var pi = 0; pi < payCap; pi++) {
+                var pp = pendingPayments[pi];
+                var ppNumPos = parseInt(pp.num_positions) || 1;
+                var ppAmount = (pp.contribution_amount || 0) * ppNumPos;
+                var ppDateStr = pp.next_payment_date;
+                var ppDueDate = new Date(typeof ppDateStr === 'string' && ppDateStr.length === 10 ? ppDateStr + 'T12:00:00' : ppDateStr);
+                var ppTodayNoon = new Date(); ppTodayNoon.setHours(12, 0, 0, 0);
+                var ppDaysLeft = Math.round((ppDueDate - ppTodayNoon) / 86400000);
+                var ppCountdownText = '';
+                var ppCountdownClass = 'gs-countdown-ok';
+                if (ppDaysLeft <= 0) {
+                    var ppGrace = pp.next_payment_grace_deadline || pp.my_next_payment_grace_deadline;
+                    if (ppGrace) {
+                        var ppGraceDays = Math.ceil((new Date(ppGrace + 'T23:59:59') - new Date()) / 86400000);
+                        if (ppGraceDays > 0) { ppCountdownText = 'Gracia: ' + ppGraceDays + 'd'; ppCountdownClass = 'gs-countdown-soon'; }
+                        else { ppCountdownText = 'Atrasado'; ppCountdownClass = 'gs-countdown-late'; }
+                    } else { ppCountdownText = 'Vencido'; ppCountdownClass = 'gs-countdown-late'; }
                 } else {
-                    payDueEl.textContent = 'Vencido';
-                    payDueEl.style.color = '#ef4444';
+                    ppCountdownText = ppDaysLeft + 'd';
+                    ppCountdownClass = ppDaysLeft <= 3 ? 'gs-countdown-late' : ppDaysLeft <= 7 ? 'gs-countdown-soon' : 'gs-countdown-ok';
                 }
-            } else {
-                payDueEl.textContent = 'Vence en ' + daysLeft + ' d\u00eda' + (daysLeft !== 1 ? 's' : '');
-                payDueEl.style.color = daysLeft <= 3 ? '#ef4444' : daysLeft <= 7 ? '#f59e0b' : '#94a3b8';
+                var ppDateLabel = ppDueDate.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+                payHtml += '<div class="gs-pay-item"><div class="gs-pay-item-left"><div class="gs-next-group">' + escapeHtml(pp.group_name || '') + '</div><div class="gs-next-date">' + escapeHtml(ppDateLabel) + '</div></div><div class="gs-pay-item-right"><div class="gs-next-amount">L. ' + ppAmount.toLocaleString('es-HN') + '</div><span class="gs-next-countdown ' + ppCountdownClass + '">' + escapeHtml(ppCountdownText) + '</span></div></div>';
             }
+            payListEl.innerHTML = payHtml;
+            if (payCard) payCard.style.display = '';
+        } else if (recruitingTandas.length > 0) {
+            payListEl.innerHTML = '<div style="font-size:0.78rem;color:#94a3b8;padding:4px 0">Esperando inicio</div>';
+            if (payCard) payCard.style.display = '';
+        } else {
+            payListEl.innerHTML = '';
+            if (payCard) payCard.style.display = 'none';
         }
-        if (payGroupEl) payGroupEl.textContent = next.group_name || '';
-    } else if (recruitingTandas.length > 0) {
-        if (payAmountEl) payAmountEl.textContent = 'Pendiente';
-        if (payDueEl) { payDueEl.textContent = 'Esperando inicio'; payDueEl.style.color = '#94a3b8'; }
-        if (payGroupEl) payGroupEl.textContent = '';
-    } else {
-        if (payAmountEl) payAmountEl.textContent = '--';
-        if (payDueEl) { payDueEl.textContent = 'Sin pagos pendientes'; payDueEl.style.color = '#94a3b8'; }
-        if (payGroupEl) payGroupEl.textContent = '';
     }
 
-    // === Mi Próximo Cobro ===
-    var collAmountEl = document.getElementById('tscCollectionAmount');
-    var collInfoEl = document.getElementById('tscCollectionInfo');
+    // === Proximos Cobros (H2: multi-tanda list) ===
+    var collCard = document.getElementById('tscMyCollection');
+    var collListEl = document.getElementById('tscCollectionList');
 
-    var myCollection = activeTandas.find(function(t) { return t.is_my_turn || t.isMyTurn; });
-    if (myCollection) {
-        var total = (myCollection.contribution_amount || 0) * (myCollection.max_members || myCollection.total_participants || 1);
-        if (collAmountEl) collAmountEl.textContent = 'L. ' + total.toLocaleString('es-HN');
-        if (collInfoEl) collInfoEl.textContent = '¡Te toca cobrar!';
-    } else if (activeTandas.length > 0) {
-        var turnsAway = activeTandas
-            .map(function(t) { return { turns: Math.max(0, (t.my_turn_position || 1) - (t.current_turn || 1)), amount: (t.contribution_amount || 0) * (t.max_members || t.total_participants || 1) }; })
-            .filter(function(t) { return t.turns > 0; })
-            .sort(function(a, b) { return a.turns - b.turns; })[0];
-        if (turnsAway) {
-            if (collAmountEl) collAmountEl.textContent = 'En ' + turnsAway.turns + ' turno' + (turnsAway.turns > 1 ? 's' : '');
-            if (collInfoEl) collInfoEl.textContent = '~L. ' + turnsAway.amount.toLocaleString('es-HN');
+    if (collListEl) {
+        var cobros = activeTandas.map(function(t) {
+            var ta = Math.max(0, (t.my_turn_position || 0) - (t.current_turn || 0));
+            var pool = (t.contribution_amount || 0) * (t.max_members || t.total_participants || 1);
+            return { turnsAway: ta, pool: pool, group_name: t.group_name || '', is_my_turn: t.is_my_turn || false };
+        }).filter(function(c) { return c.is_my_turn || c.turnsAway > 0; }).sort(function(a, b) { return a.turnsAway - b.turnsAway; });
+
+        if (cobros.length > 0) {
+            var cobHtml = '';
+            var cobCap = Math.min(cobros.length, 5);
+            for (var ci = 0; ci < cobCap; ci++) {
+                var cb = cobros[ci];
+                var cbBadgeClass = cb.turnsAway === 0 ? 'gs-cobro-now' : 'gs-cobro-soon';
+                var cbBadgeText = cb.turnsAway === 0 ? '\u00a1Te toca!' : 'En ' + cb.turnsAway + ' turno' + (cb.turnsAway > 1 ? 's' : '');
+                cobHtml += '<div class="gs-cobro-item"><div class="gs-pay-item-left"><div class="gs-next-group">' + escapeHtml(cb.group_name) + '</div><div class="gs-next-date">~L. ' + cb.pool.toLocaleString('es-HN') + '</div></div><div class="gs-pay-item-right"><span class="gs-cobro-badge ' + cbBadgeClass + '">' + escapeHtml(cbBadgeText) + '</span></div></div>';
+            }
+            collListEl.innerHTML = cobHtml;
+            if (collCard) collCard.style.display = '';
         } else {
-            if (collAmountEl) collAmountEl.textContent = '--';
-            if (collInfoEl) collInfoEl.textContent = 'Ciclo completado';
+            collListEl.innerHTML = '';
+            if (collCard) collCard.style.display = 'none';
         }
-    } else {
-        if (collAmountEl) collAmountEl.textContent = '--';
-        if (collInfoEl) collInfoEl.textContent = 'Sin tandas';
     }
 
     // === Resumen ===
@@ -3009,13 +2989,13 @@ function updateTandasSidebar(tandas) {
     var totalPaidEl = document.getElementById('tscTotalPaid');
 
     var paidCount = tandas.reduce(function(s, t) { return s + (t.my_contributions_paid || 0); }, 0);
-    var totalCount = tandas.reduce(function(s, t) { return s + (t.my_contributions_total || t.total_participants || 0); }, 0);
     var totalPaid = tandas.reduce(function(s, t) { return s + ((t.my_contributions_paid || 0) * (t.contribution_amount || 0)); }, 0);
 
     if (totalEl) totalEl.textContent = tandas.length;
     if (activeEl) activeEl.textContent = activeTandas.length;
     if (paidEl) paidEl.textContent = paidCount;
-    var pendingDue = tandas.reduce(function(s, t) { var cycle = t.current_cycle || 0; var paid = t.my_contributions_paid || 0; return s + Math.max(0, cycle - paid); }, 0);
+    // M2: pendientes x num_positions
+    var pendingDue = tandas.reduce(function(s, t) { var cycle = t.current_cycle || 0; var paid = t.my_contributions_paid || 0; var numPos = parseInt(t.num_positions) || 1; return s + Math.max(0, (cycle * numPos) - paid); }, 0);
     if (pendEl) pendEl.textContent = pendingDue;
     if (totalPaidEl) totalPaidEl.textContent = 'L. ' + totalPaid.toLocaleString('es-HN');
 }
