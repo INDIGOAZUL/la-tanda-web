@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.7">
+    <link rel="stylesheet" href="css/groups-page.css?v=2.8">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -249,6 +249,7 @@
                 my_turn_number: pgGroup.my_turn_number,
                 turns_until_mine: pgGroup.turns_until_mine,
                 my_alerts: pgGroup.my_alerts || [],  // Empty array to prevent .length error
+                my_num_positions: parseInt(pgGroup.my_num_positions) || 1,
                 has_active_tanda: pgGroup.has_active_tanda || false,
                 current_cycle: parseInt(pgGroup.current_cycle) || 0,
                 current_turn_number: null,
@@ -325,17 +326,19 @@
             // Total amount owed (contribution_amount for groups with pending/late status)
             const totalOwed = allGroups.reduce(function(sum, g) {
                 if (g.my_payment_status === 'pending' || g.my_payment_status === 'late' || g.my_payment_status === 'suspension_recommended') {
-                    return sum + (parseFloat(g.contribution_amount) || 0);
+                    return sum + (parseFloat(g.contribution_amount) || 0) * (parseInt(g.my_num_positions) || 1);
                 }
                 return sum;
             }, 0);
 
-            // Max current_cycle across active groups
-            var maxCycle = 0;
-            activeGroups.forEach(function(g) {
-                var c = parseInt(g.current_cycle) || 0;
-                if (c > maxCycle) maxCycle = c;
-            });
+            // Cycle range across active groups
+            var cycleValues = activeGroups.map(function(g) { return parseInt(g.current_cycle) || 0; }).filter(function(c) { return c > 0; });
+            var cycleDisplay = '--';
+            if (cycleValues.length > 0) {
+                var minCycle = Math.min.apply(null, cycleValues);
+                var maxCycle = Math.max.apply(null, cycleValues);
+                cycleDisplay = minCycle === maxCycle ? 'Ciclo ' + minCycle : 'Ciclos ' + minCycle + '-' + maxCycle;
+            }
 
             // Role breakdown
             var roleCreator = 0, roleCoord = 0, roleMember = 0;
@@ -360,7 +363,7 @@
                 var owedRow = el.closest('.gs-row');
                 if (owedRow) owedRow.style.display = totalOwed > 0 ? 'flex' : 'none';
             }
-            el = document.getElementById('grpCurrentCycle'); if (el) el.textContent = maxCycle > 0 ? 'Ciclo ' + maxCycle : '--';
+            el = document.getElementById('grpCurrentCycle'); if (el) el.textContent = cycleDisplay;
 
             // Roles
             el = document.getElementById('grpRoleCreator'); if (el) el.textContent = roleCreator;
@@ -425,59 +428,68 @@
         function updateNextPaymentCard() {
             var card = document.getElementById('grpSidebarNextPayment');
             if (!card) return;
+            var listEl = document.getElementById('grpPaymentsList');
+            if (!listEl) return;
 
-            // Find the group with the earliest next payment due among pending/upcoming
+            // Collect ALL active groups with a next payment due
             var now = new Date();
-            var nextGroup = null;
-            var nextDate = null;
-
+            var entries = [];
             allGroups.forEach(function(g) {
                 if (g.status !== 'active') return;
                 if (!g.my_next_payment_due) return;
                 var d = new Date(g.my_next_payment_due.split('T')[0] + 'T12:00:00');
-                if (!nextDate || d < nextDate) {
-                    nextDate = d;
-                    nextGroup = g;
-                }
+                entries.push({ group: g, date: d });
             });
 
-            if (!nextGroup || !nextDate) {
+            // Sort by date ascending (most urgent first), cap at 5
+            entries.sort(function(a, b) { return a.date - b.date; });
+            entries = entries.slice(0, 5);
+
+            if (entries.length === 0) {
                 card.style.display = 'none';
                 return;
             }
 
             card.style.display = 'block';
-            var nameEl = document.getElementById('grpNextPayGroup');
-            var amountEl = document.getElementById('grpNextPayAmount');
-            var dateEl = document.getElementById('grpNextPayDate');
-            var countdownEl = document.getElementById('grpNextPayCountdown');
+            var html = '';
+            entries.forEach(function(entry) {
+                var g = entry.group;
+                var d = entry.date;
+                var amt = (parseFloat(g.contribution_amount) || 0) * (parseInt(g.my_num_positions) || 1);
+                var amtStr = 'L. ' + amt.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                var dateStr = d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short' });
 
-            if (nameEl) nameEl.textContent = nextGroup.name || 'Grupo';
-            if (amountEl) amountEl.textContent = 'L. ' + (parseFloat(nextGroup.contribution_amount) || 0).toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-            var dateStr = nextDate.toLocaleDateString('es-HN', { day: '2-digit', month: 'short' });
-            if (dateEl) dateEl.textContent = dateStr;
-
-            // Countdown
-            var diffMs = nextDate - now;
-            var diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-            if (countdownEl) {
+                var diffMs = d - now;
+                var diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                var countdownText = '';
+                var countdownClass = 'gs-next-countdown gs-countdown-ok';
                 if (diffDays < 0) {
                     var absDays = Math.abs(diffDays);
-                    countdownEl.textContent = 'Vencido hace ' + absDays + ' dia' + (absDays !== 1 ? 's' : '');
-                    countdownEl.className = 'gs-next-countdown gs-countdown-late';
+                    countdownText = 'Vencido ' + absDays + 'd';
+                    countdownClass = 'gs-next-countdown gs-countdown-late';
                 } else if (diffDays === 0) {
-                    countdownEl.textContent = 'Vence hoy';
-                    countdownEl.className = 'gs-next-countdown gs-countdown-soon';
+                    countdownText = 'Hoy';
+                    countdownClass = 'gs-next-countdown gs-countdown-soon';
                 } else if (diffDays <= 3) {
-                    countdownEl.textContent = 'En ' + diffDays + ' dia' + (diffDays !== 1 ? 's' : '');
-                    countdownEl.className = 'gs-next-countdown gs-countdown-soon';
+                    countdownText = diffDays + 'd';
+                    countdownClass = 'gs-next-countdown gs-countdown-soon';
                 } else {
-                    countdownEl.textContent = 'En ' + diffDays + ' dias';
-                    countdownEl.className = 'gs-next-countdown gs-countdown-ok';
+                    countdownText = diffDays + 'd';
+                    countdownClass = 'gs-next-countdown gs-countdown-ok';
                 }
-            }
+
+                html += '<div class="gs-pay-item">' +
+                    '<div class="gs-pay-item-left">' +
+                        '<div class="gs-next-group">' + escapeHtml(g.name || 'Grupo') + '</div>' +
+                        '<div class="gs-next-date">' + escapeHtml(dateStr) + '</div>' +
+                    '</div>' +
+                    '<div class="gs-pay-item-right">' +
+                        '<div class="gs-next-amount">' + escapeHtml(amtStr) + '</div>' +
+                        '<div class="' + countdownClass + '">' + escapeHtml(countdownText) + '</div>' +
+                    '</div>' +
+                '</div>';
+            });
+            listEl.innerHTML = html;
         }
 
         // ===== RENDER GROUPS =====
@@ -2184,7 +2196,7 @@ async function loadUsersWithoutPositions(groupId) {
                             <span class="gs-row-icon" style="color:#22c55e;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
                             </span>
-                            <span class="gs-row-label">Ciclo actual</span>
+                            <span class="gs-row-label">Ciclos</span>
                             <span class="gs-row-val gs-cyan" id="grpCurrentCycle">--</span>
                         </div>
                         <div class="gs-row" id="grpTandaRow" style="display:none">
@@ -2291,15 +2303,8 @@ async function loadUsersWithoutPositions(groupId) {
 
                 <!-- Next Payment Card -->
                 <div class="grp-sidebar-stats" id="grpSidebarNextPayment" style="display:none;">
-                    <h4 class="grp-sidebar-stats-title">Proximo Pago</h4>
-                    <div class="gs-next-payment">
-                        <div class="gs-next-group" id="grpNextPayGroup">--</div>
-                        <div class="gs-next-details">
-                            <div class="gs-next-amount" id="grpNextPayAmount">L. 0</div>
-                            <div class="gs-next-date" id="grpNextPayDate">--</div>
-                        </div>
-                        <div class="gs-next-countdown" id="grpNextPayCountdown"></div>
-                    </div>
+                    <h4 class="grp-sidebar-stats-title">Proximos Pagos</h4>
+                    <div class="gs-payments-list" id="grpPaymentsList"></div>
                 </div>
 
                 <!-- Quick Actions -->
@@ -11822,45 +11827,46 @@ function renderTurnsList() {
                         }
                     }
                 } catch(ew) { /* wallet balance is non-blocking */ }
-                // v4.10.8: Fetch tanda balance for user's active group
+                // v4.11.0: Fetch tanda balances for ALL active tandas (uses window.currentGroupsData to avoid duplicate API call)
                 try {
-                    var grpResp = await fetch('/api/groups/my-groups-pg', {
-                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-                    });
-                    if (grpResp.ok) {
-                        var grpData = await grpResp.json();
-                        var allGroups = grpData.data ? (grpData.data.groups || grpData.data || []) : (grpData.groups || grpData || []);
-                        var activeGroups = (Array.isArray(allGroups) ? allGroups : []).filter(function(g) { return g.tanda_status === 'active'; });
-                        if (activeGroups.length > 0) {
-                            var primaryGroup = activeGroups[0];
-                            var tbResp = await fetch('/api/groups/' + encodeURIComponent(primaryGroup.group_id) + '/tanda-balances', {
-                                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-                            });
-                            if (tbResp.ok) {
+                    var grpList = window.currentGroupsData || [];
+                    // If groups haven't loaded yet, wait briefly and retry once
+                    if (grpList.length === 0) {
+                        await new Promise(function(r) { setTimeout(r, 2000); });
+                        grpList = window.currentGroupsData || [];
+                    }
+                    var activeTandas = (Array.isArray(grpList) ? grpList : []).filter(function(g) { return g.tanda_status === 'active'; });
+                    if (activeTandas.length > 0) {
+                        var userId = (function(){ try { var lu = localStorage.getItem('latanda_user'); if(lu){var p=JSON.parse(lu); return String(p.user_id||p.id||'')} } catch(e){} return localStorage.getItem('latanda_user_id')||localStorage.getItem('user_id')||''; })();
+                        // Fetch tanda-balances for each active tanda (cap 5)
+                        var tandaSlice = activeTandas.slice(0, 5);
+                        for (var ti = 0; ti < tandaSlice.length; ti++) {
+                            try {
+                                var tg = tandaSlice[ti];
+                                var tbResp = await fetch('/api/groups/' + encodeURIComponent(tg.group_id || tg.id) + '/tanda-balances', {
+                                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                                });
+                                if (!tbResp.ok) continue;
                                 var tbData = await tbResp.json();
-                                if (tbData.success && tbData.data && tbData.data.members) {
-                                    var userId = (function(){ try { var lu = localStorage.getItem('latanda_user'); if(lu){var p=JSON.parse(lu); return String(p.user_id||p.id||'')} } catch(e){} return localStorage.getItem('latanda_user_id')||localStorage.getItem('user_id')||''; })();
-                                    var myEntry = tbData.data.members.find(function(m) { return m.user_id === userId; });
-                                    if (myEntry) {
-                                        var tb = myEntry.tanda_balance;
-                                        var tbSign = tb >= 0 ? '+' : '';
-                                        var tbColor = tb >= 0 ? '#34d399' : '#f87171';
-                                        var tbLabel = tb >= 0 ? 'Ahorro' : 'Prestamo';
-                                        container.innerHTML += '<div class="sidebar-hub-card" style="margin-top:10px">' +
-                                            '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
-                                            '<div style="width:40px;height:40px;background:rgba(0,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center">' +
-                                            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
-                                            '<div><div style="font-weight:600;color:#fff">Mi Tanda</div>' +
-                                            '<div style="font-size:0.78rem;color:#888">' + escapeHtml(tbLabel) + ' &mdash; ' + escapeHtml(primaryGroup.name || '') + '</div></div></div>' +
-                                            '<div style="font-size:1.3rem;font-weight:700;color:' + tbColor + '">' + (tb < 0 ? '-' : '+') + 'L. ' + Math.abs(tb).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>' +
-                                            '<div style="display:flex;align-items:center;gap:12px;margin-top:8px;font-size:0.78rem;color:#64748b">' +
-                                            '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg> Turno #' + escapeHtml(String(myEntry.turn_position || '--')) + '</span>' +
-                                            '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> ' + escapeHtml(String(myEntry.payments_count || 0)) + ' pagos</span>' +
-                                            '</div>' +
-                                            '</div>';
-                                    }
-                                }
-                            }
+                                if (!tbData.success || !tbData.data || !tbData.data.members) continue;
+                                var myEntry = tbData.data.members.find(function(m) { return m.user_id === userId; });
+                                if (!myEntry) continue;
+                                var tb = myEntry.tanda_balance;
+                                var tbColor = tb >= 0 ? '#34d399' : '#f87171';
+                                var tbLabel = tb >= 0 ? 'Ahorro' : 'Prestamo';
+                                container.innerHTML += '<div class="sidebar-hub-card" style="margin-top:10px">' +
+                                    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+                                    '<div style="width:40px;height:40px;background:rgba(0,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center">' +
+                                    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>' +
+                                    '<div><div style="font-weight:600;color:#fff">Mi Tanda</div>' +
+                                    '<div style="font-size:0.78rem;color:#888">' + escapeHtml(tbLabel) + ' &mdash; ' + escapeHtml(tg.name || '') + '</div></div></div>' +
+                                    '<div style="font-size:1.3rem;font-weight:700;color:' + tbColor + '">' + (tb < 0 ? '-' : '+') + 'L. ' + Math.abs(tb).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>' +
+                                    '<div style="display:flex;align-items:center;gap:12px;margin-top:8px;font-size:0.78rem;color:#64748b">' +
+                                    '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg> Turno #' + escapeHtml(String(myEntry.turn_position || '--')) + '</span>' +
+                                    '<span style="display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> ' + escapeHtml(String(myEntry.payments_count || 0)) + ' pagos</span>' +
+                                    '</div>' +
+                                    '</div>';
+                            } catch(et) { /* individual tanda balance fetch is non-blocking */ }
                         }
                     }
                 } catch(e2) { /* tanda balance fetch is non-blocking */ }
