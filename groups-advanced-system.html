@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=2.9">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.0">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -292,6 +292,31 @@
                         refreshTandas();
                     }
 
+                    // Non-blocking fetch of public groups for discovery
+                    (async function() {
+                        try {
+                            var pubRes = await fetch(API_BASE + '/api/groups/public-pg', {
+                                headers: { 'Authorization': 'Bearer ' + authToken }
+                            });
+                            var pubData = await pubRes.json();
+                            if (pubData.success) {
+                                window.publicGroupsData = (pubData.data.groups || []).map(function(g) {
+                                    var adapted = adaptPostgreSQLGroup(g);
+                                    adapted.my_role = 'open';
+                                    adapted.my_payment_status = null;
+                                    adapted.my_alerts = [];
+                                    adapted.is_public = true;
+                                    adapted.admin_name = g.admin_name || null;
+                                    return adapted;
+                                });
+                            } else {
+                                window.publicGroupsData = [];
+                            }
+                        } catch(e) {
+                            window.publicGroupsData = [];
+                        }
+                    })();
+
                     // ✅ Check if there's a newly created group to highlight
                     const newlyCreatedId = sessionStorage.getItem('newly_created_group_id');
                     if (newlyCreatedId) {
@@ -496,7 +521,7 @@
         function renderGroups() {
             const container = document.getElementById('groupsContainer');
 
-            if (allGroups.length === 0) {
+            if (allGroups.length === 0 && (!window.publicGroupsData || window.publicGroupsData.length === 0)) {
                 container.innerHTML = '<div class="empty-state">' +
                     '<div class="empty-state-icon"><i class="fas fa-users" style="font-size:3rem;color:#00FFFF;"></i></div>' +
                     '<h3>Comienza tu primera tanda</h3>' +
@@ -518,13 +543,22 @@
                 return;
             }
 
-            const html = `
-                <div class="groups-grid">
-                    ${filteredGroups.map(group => renderGroupCard(group)).join('')}
-                </div>
-            `;
+            var myCards = '';
+            var pubCards = '';
+            filteredGroups.forEach(function(group) {
+                if (group.is_public) {
+                    pubCards += renderGroupCard(group);
+                } else {
+                    myCards += renderGroupCard(group);
+                }
+            });
+            var finalHtml = '<div class="groups-grid">' + myCards;
+            if (pubCards) {
+                finalHtml += '</div><div class="gc-section-divider"><span>Grupos Abiertos</span></div><div class="groups-grid">' + pubCards;
+            }
+            finalHtml += '</div>';
 
-            container.innerHTML = html;
+            container.innerHTML = finalHtml;
             
             // Dispatch event for position requests to load
             setTimeout(() => {
@@ -672,7 +706,7 @@
                 'weekly': 'Semanal', 'biweekly': 'Quincenal', 'monthly': 'Mensual'
             };
             const roleLabels = {
-                'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro'
+                'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro', 'open': 'Abierto'
             };
             const alertIcons = {
                 'success': '&#10003;', 'warning': '&#9888;', 'danger': '&#10007;', 'info': '&#8505;'
@@ -749,6 +783,18 @@
                 actionsHtml += '<button class="btn pr-request-btn" data-action="grp-request-extension" data-group-id="' + escapeHtml(group.id) + '">Solicitar Prorroga</button>';
             }
 
+            // Public group card overrides (discover open groups)
+            if (group.is_public) {
+                statusColor = '#f59e0b';
+                roleClass = 'gc-role-open';
+                if (group.admin_name) {
+                    var adminPart = 'Creado por: ' + escapeHtml(group.admin_name);
+                    subtitle = subtitle ? subtitle + ' &middot; ' + adminPart : adminPart;
+                }
+                alertsHtml = '';
+                actionsHtml = '<button class="btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">Solicitar unirse</button>';
+            }
+
             return '<div class="group-card" data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
                 '<div class="gc-header">' +
                     '<div class="gc-avatar" style="background:' + statusColor + ';color:' + (st === 'suspended' || st === 'cancelled' ? '#fff' : '#0f172a') + '">' + avatarLetter + '</div>' +
@@ -795,6 +841,16 @@
 
                 return matchesRole && matchesPayment && matchesSearch;
             });
+
+            // Append public groups only when both filters are "Todos"
+            if (roleFilter === 'all' && paymentFilter === 'all') {
+                var pubGroups = (window.publicGroupsData || []).filter(function(g) {
+                    return !searchTerm || (g.name && g.name.toLowerCase().includes(searchTerm));
+                });
+                if (pubGroups.length > 0) {
+                    filteredGroups = filteredGroups.concat(pubGroups);
+                }
+            }
 
             renderGroups();
 
@@ -3667,10 +3723,10 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <h3 style="color: #f8fafc; margin-bottom: 12px;">Aún no perteneces a ningún grupo</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Únete a un grupo existente o crea uno nuevo para comenzar tu primera tanda.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
+                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 8px 18px; font-size: 0.85rem;">
                         <i class="fas fa-search"></i> Explorar Grupos
                     </button>
-                    <button class="btn btn-outline" data-action="grp-switch-tab" data-tab="create" style="padding: 12px 24px;">
+                    <button class="btn btn-outline" data-action="grp-switch-tab" data-tab="create" style="padding: 8px 18px; font-size: 0.85rem;">
                         <i class="fas fa-plus"></i> Crear Grupo
                     </button>
                 </div>
@@ -3683,7 +3739,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <h3 style="color: #f8fafc; margin-bottom: 12px;">Tus grupos aún no tienen tandas activas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">Estás en ${groupCount || 1} grupo(s). El coordinador debe activar la tanda para comenzar.</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="my-groups" style="padding: 12px 24px;">
+                    <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="my-groups" style="padding: 8px 18px; font-size: 0.85rem;">
                         <i class="fas fa-users"></i> Ver Mis Grupos
                     </button>
                 </div>
@@ -3696,7 +3752,7 @@ function showTandasEmptyState(stateOrMessage, groupCount) {
                 <div class="empty-icon" style="font-size: 4rem; margin-bottom: 20px;">💰</div>
                 <h3 style="color: #f8fafc; margin-bottom: 12px;">No hay tandas</h3>
                 <p style="color: #9ca3af; margin-bottom: 24px;">${escapeHtml(stateOrMessage)}</p>
-                <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 12px 24px;">
+                <button class="btn btn-primary" data-action="grp-switch-tab" data-tab="groups" style="padding: 8px 18px; font-size: 0.85rem;">
                     <i class="fas fa-search"></i> Explorar Grupos
                 </button>
             </div>
@@ -11904,6 +11960,48 @@ function renderTurnsList() {
                     break;
 
                 // Filter & Retry
+                case 'grp-join-request':
+                    (function() {
+                        var joinBtn = btn;
+                        var joinGid = joinBtn.getAttribute('data-group-id');
+                        var joinName = joinBtn.getAttribute('data-group-name') || 'este grupo';
+                        if (!joinGid) return;
+                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?', function() {
+                            joinBtn.disabled = true;
+                            joinBtn.textContent = 'Enviando...';
+                            var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                            fetch(API_BASE + '/api/groups/' + encodeURIComponent(joinGid) + '/join-pg', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + authTk
+                                },
+                                body: JSON.stringify({})
+                            })
+                            .then(function(r) { return r.json(); })
+                            .then(function(result) {
+                                if (result.success) {
+                                    var msg = result.data && result.data.auto_approved
+                                        ? 'Te has unido a ' + escapeHtml(joinName)
+                                        : 'Solicitud enviada a ' + escapeHtml(joinName) + '. El administrador la revisara';
+                                    showNotification(msg, 'success');
+                                    // Remove from public list
+                                    window.publicGroupsData = (window.publicGroupsData || []).filter(function(g) { return g.id !== joinGid; });
+                                    fetchMyGroups();
+                                } else {
+                                    showNotification(result.error || 'Error al solicitar ingreso', 'error');
+                                    joinBtn.disabled = false;
+                                    joinBtn.textContent = 'Solicitar unirse';
+                                }
+                            })
+                            .catch(function() {
+                                showNotification('Error de conexion', 'error');
+                                joinBtn.disabled = false;
+                                joinBtn.textContent = 'Solicitar unirse';
+                            });
+                        });
+                    })();
+                    break;
                 case 'grp-reset-filters':
                     if (typeof resetFilters === 'function') resetFilters();
                     break;
