@@ -1,5 +1,5 @@
 // providers types - handles marketplace business registration and profile management
-// aligned with La Tanda v4.6.1+
+// aligned with La Tanda v4.11.0+
 
 export interface ProviderRegistration {
     business_name: string;
@@ -17,13 +17,11 @@ export interface ProviderRegistration {
         tiktok?: string;
     };
     shop_type: 'products' | 'services' | 'both';
-    store_layout?: 'classic' | 'modern' | 'minimal';
-    store_theme?: 'light' | 'dark' | 'system';
 }
 
 export interface ProviderProfile extends ProviderRegistration {
     id: string;
-    userId: string;
+    user_id: string;
     status: 'pending' | 'active' | 'suspended';
     verified: boolean;
     rating: number;
@@ -33,3 +31,10 @@ export interface ProviderProfile extends ProviderRegistration {
 }
 
 export interface ProviderUpdate extends Partial<ProviderRegistration> { }
+
+export interface ProviderFilters {
+    city?: string;
+    verified?: boolean;
+    limit?: number;
+    offset?: number;
+}

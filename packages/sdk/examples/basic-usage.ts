@@ -72,7 +72,7 @@ async function main() {
         // 8. Phase 2: Notifications
         console.log('\n🔔 Checking Notifications...');
         const unread = await client.notifications.getUnreadCount();
-        console.log(`unread notifications: ${unread.count}`);
+        console.log(`unread notifications: ${unread.unread_count}`);
 
         console.log('\n✨ Demo completed successfully!');
         console.log('\n💡 Tip: Check out our documentation @ https://latanda.online/docs for the full API reference.');
