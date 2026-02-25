@@ -1,5 +1,5 @@
 // verification types - handles identity verification and KYC flows
-// aligned with La Tanda v4.6.1+
+// aligned with La Tanda v4.11.0+
 
 export type KycStatus = 'not_started' | 'pending' | 'verified' | 'rejected';
 export type DocumentType = 'id_card' | 'passport' | 'drivers_license' | 'residence_permit';
@@ -30,14 +30,6 @@ export interface OcrResult {
         expiry_date?: string;
         nationality: string;
     };
-}
-
-export interface PhoneVerificationRequest {
-    phone: string;
-}
-
-export interface OtpVerificationRequest {
-    otp: string;
 }
 
 export interface VerificationResult {

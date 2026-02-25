@@ -1,8 +1,13 @@
 // notification module - handles user alerts, unread counts, and preferences
-// aligned with La Tanda v4.6.1+
+// aligned with La Tanda v4.11.0+
 
 import { HttpClient } from '../utils/http'
-import type { Notification, NotificationPreferences, UnreadCount } from '../types/notifications'
+import type {
+    NotificationPreferences,
+    UnreadCount,
+    NotificationListResponse,
+    NotificationFilters
+} from '../types/notifications'
 
 /**
  * The NotificationModule manages the user's alert lifecycle and communication channels.
@@ -20,10 +25,11 @@ export class NotificationModule {
     /**
      * Retrieves a paginated list of notifications for the user.
      * 
-     * @param params - Optional filters, such as pagination or notification type.
+     * @param params - Optional filters, such as pagination or unread status.
+     * @returns Object containing notifications list, total count, and unread count.
      */
-    async list(params?: any): Promise<Notification[]> {
-        return this._http.get<Notification[]>('/notifications', params)
+    async list(params?: NotificationFilters): Promise<NotificationListResponse> {
+        return this._http.get<NotificationListResponse>('/notifications', params)
     }
 
     /**
@@ -32,7 +38,7 @@ export class NotificationModule {
      * @param id - The unique identifier of the notification.
      */
     async markRead(id: string): Promise<{ success: boolean }> {
-        return this._http.put<{ success: boolean }>(`/notifications/${id}/read`)
+        return this._http.post<{ success: boolean }>(`/notifications/read/${id}`)
     }
 
     /**
@@ -52,7 +58,7 @@ export class NotificationModule {
     }
 
     /**
-     * Fetches the user's global notification dispatch settings (Email, Push, SMS).
+     * Fetches the user's global notification dispatch settings.
      */
     async getPreferences(): Promise<NotificationPreferences> {
         return this._http.get<NotificationPreferences>('/notifications/preferences')

@@ -30,6 +30,25 @@ describe('ProvidersModule', () => {
         expect(result.id).toBe('p1')
     })
 
+    test('listProviders calls GET /api/marketplace/providers with filters', async () => {
+        const filters = { city: 'TEG', verified: true }
+        mockHttp.get.mockResolvedValue([{ id: 'p1', business_name: 'Test Shop' }])
+
+        const result = await client.providers.listProviders(filters)
+
+        expect(mockHttp.get).toHaveBeenCalledWith('/marketplace/providers', filters)
+        expect(result[0].business_name).toBe('Test Shop')
+    })
+
+    test('getProviderById calls GET /api/marketplace/providers/:id', async () => {
+        mockHttp.get.mockResolvedValue({ id: 'p123', business_name: 'Specific Shop' })
+
+        const result = await client.providers.getProviderById('p123')
+
+        expect(mockHttp.get).toHaveBeenCalledWith('/marketplace/providers/p123')
+        expect(result.id).toBe('p123')
+    })
+
     test('getProfile calls GET /api/marketplace/providers/me', async () => {
         mockHttp.get.mockResolvedValue({ id: 'p1', business_name: 'Test Shop' })
 

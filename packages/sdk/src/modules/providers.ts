@@ -1,8 +1,8 @@
 // providers module - handles marketplace business registration and profile management
-// aligned with La Tanda v4.6.1+
+// aligned with La Tanda v4.11.0+
 
 import { HttpClient } from '../utils/http'
-import type { ProviderRegistration, ProviderProfile, ProviderUpdate } from '../types/providers'
+import type { ProviderRegistration, ProviderProfile, ProviderUpdate, ProviderFilters } from '../types/providers'
 
 /**
  * The ProvidersModule handles the lifecycle of a "Mi Tienda" business account.
@@ -25,12 +25,31 @@ export class ProvidersModule {
      * registration will transition the user's role and allow them to start 
      * listing products/services.
      * 
-     * @param data - The full registration payload including business identity 
-     *               and store preferences.
+     * @param data - The full registration payload including business identity.
      * @returns The newly created provider profile.
      */
     async register(data: ProviderRegistration): Promise<ProviderProfile> {
         return this._http.post<ProviderProfile>('/marketplace/providers/register', data)
+    }
+
+    /**
+     * Retrieves a paginated list of marketplace providers.
+     * 
+     * @param filters - Optional search criteria like city and verification status.
+     * @returns A list of matching provider profiles.
+     */
+    async listProviders(filters?: ProviderFilters): Promise<ProviderProfile[]> {
+        return this._http.get<ProviderProfile[]>('/marketplace/providers', filters)
+    }
+
+    /**
+     * Retrieves a specific provider profile by its unique ID.
+     * 
+     * @param id - The UUID of the provider to fetch.
+     * @returns The requested provider profile.
+     */
+    async getProviderById(id: string): Promise<ProviderProfile> {
+        return this._http.get<ProviderProfile>(`/marketplace/providers/${id}`)
     }
 
     /**
@@ -48,8 +67,8 @@ export class ProvidersModule {
     /**
      * Performs a partial update on the user's provider profile.
      * 
-     * Ideal for updating opening hours, description, or social links 
-     * without resubmitting the entire registration record.
+     * Ideal for updating description or social links without 
+     * resubmitting the entire registration record.
      * 
      * @param data - The subset of fields to update.
      * @returns The updated provider profile.
