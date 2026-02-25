@@ -315,6 +315,8 @@
                         } catch(e) {
                             window.publicGroupsData = [];
                         }
+                        // Re-render to include public groups
+                        if (typeof applyFilters === 'function') applyFilters();
                     })();
 
                     // ✅ Check if there's a newly created group to highlight
@@ -527,19 +529,31 @@
                     '<h3>Comienza tu primera tanda</h3>' +
                     '<p>Crea un grupo de ahorro con amigos, familia o companeros de trabajo.</p>' +
                     '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">' +
-                        '<button class="btn btn-primary" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
+                        '<button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;border-radius:10px;" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
                     '</div>' +
                 '</div>';
                 return;
             }
 
             if (filteredGroups.length === 0) {
-                container.innerHTML = '<div class="empty-state">' +
-                    '<div class="empty-state-icon" style="font-size:3rem;">&#x1F50D;</div>' +
-                    '<h3>Sin resultados</h3>' +
-                    '<p>No se encontraron grupos con estos filtros.</p>' +
-                    '<button class="btn btn-secondary" data-action="grp-reset-filters">Limpiar Filtros</button>' +
-                '</div>';
+                var roleF = document.getElementById('filterRole') ? document.getElementById('filterRole').value : 'all';
+                if (roleF === 'creator') {
+                    container.innerHTML = '<div class="empty-state">' +
+                        '<div class="empty-state-icon"><i class="fas fa-users" style="font-size:3rem;color:#00FFFF;"></i></div>' +
+                        '<h3>Aun no has creado ningun grupo</h3>' +
+                        '<p>Crea tu primer grupo de ahorro y empieza a administrar tu tanda.</p>' +
+                        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">' +
+                            '<button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;border-radius:10px;" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
+                        '</div>' +
+                    '</div>';
+                } else {
+                    container.innerHTML = '<div class="empty-state">' +
+                        '<div class="empty-state-icon" style="font-size:3rem;">&#x1F50D;</div>' +
+                        '<h3>Sin resultados</h3>' +
+                        '<p>No se encontraron grupos con estos filtros.</p>' +
+                        '<button class="btn btn-secondary" data-action="grp-reset-filters">Limpiar Filtros</button>' +
+                    '</div>';
+                }
                 return;
             }
 
