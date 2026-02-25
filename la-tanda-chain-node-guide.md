@@ -88,7 +88,7 @@ wget -q https://latanda.online/chain/genesis.json -O ~/.latanda/config/genesis.j
 
 # Verify the hash matches
 sha256sum ~/.latanda/config/genesis.json
-# Expected: defeeddaa99e8968fd7b65ae20380068015505138171e6cbea94cac195c34cc3
+# Expected: 98fc9871d6a3b7b12b3f7fcaa1ca3303ffcfad0f209d61355975a15069ac3907
 ```
 
 The genesis file defines the initial state of the chain — accounts, validators, token supply. Every node must have the exact same genesis file.
@@ -301,7 +301,7 @@ pm2 restart latanda-chain
 # Redownload genesis
 wget -q https://latanda.online/chain/genesis.json -O ~/.latanda/config/genesis.json
 sha256sum ~/.latanda/config/genesis.json
-# Must match: defeeddaa99e8968fd7b65ae20380068015505138171e6cbea94cac195c34cc3
+# Must match: 98fc9871d6a3b7b12b3f7fcaa1ca3303ffcfad0f209d61355975a15069ac3907
 ```
 
 ---
@@ -318,7 +318,7 @@ sha256sum ~/.latanda/config/genesis.json
 | P2P Seed | `483a8110c3cd93c8dd3801d935151e98656f5b67@168.231.67.201:26656` |
 | Chain ID | `latanda-testnet-1` |
 | Denom | `ultd` (1 LTD = 1,000,000 ultd) |
-| Genesis Hash | `defeeddaa99e8968fd7b65ae20380068015505138171e6cbea94cac195c34cc3` |
+| Genesis Hash | `98fc9871d6a3b7b12b3f7fcaa1ca3303ffcfad0f209d61355975a15069ac3907` |
 
 ---
 
