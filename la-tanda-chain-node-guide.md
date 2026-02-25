@@ -313,8 +313,9 @@ sha256sum ~/.latanda/config/genesis.json
 | Genesis File | https://latanda.online/chain/genesis.json |
 | Setup Script | https://latanda.online/chain/node-setup.sh |
 | Chain Source | https://latanda.online/chain/latanda-chain-source.tar.gz |
-| RPC Endpoint | http://168.231.67.201:26657 |
-| REST API | http://168.231.67.201:1317 |
+| RPC Endpoint | https://latanda.online/chain/rpc/ |
+| REST API | https://latanda.online/chain/api/ |
+| Chain Explorer | https://latanda.online/chain/ |
 | P2P Seed | `483a8110c3cd93c8dd3801d935151e98656f5b67@168.231.67.201:26656` |
 | Chain ID | `latanda-testnet-1` |
 | Denom | `ultd` (1 LTD = 1,000,000 ultd) |
