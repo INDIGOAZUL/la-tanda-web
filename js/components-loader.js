@@ -518,7 +518,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
         // Load CSS
         await this.loadCSS('css/hub/hub-sections.css');
         await this.loadCSS('css/hub/mia-assistant.css');
-        await this.loadCSS('css/hub/social-feed.css?v=11.7');
+        await this.loadCSS('css/hub/social-feed.css?v=11.8');
         
         // Load JS modules
         const modules = [
@@ -527,7 +527,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=12.0'
+            'js/hub/social-feed.js?v=12.1'
         ];
         
         for (const module of modules) {
