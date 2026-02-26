@@ -1,0 +1,5623 @@
+openapi: 3.0.3
+info:
+  title: La Tanda API
+  description: 'API completa para la plataforma La Tanda - Sistema de Tandas/ROSCAs (Rotating Savings and Credit Associations).
+
+
+    ## Autenticación
+
+    La mayoría de endpoints requieren autenticación JWT. Incluir el token en el header:
+
+    ```
+
+    Authorization: Bearer <token>
+
+    ```
+
+
+    ## Códigos de Error
+
+    - `400` - Bad Request (datos inválidos)
+
+    - `401` - Unauthorized (token inválido o expirado)
+
+    - `403` - Forbidden (sin permisos)
+
+    - `404` - Not Found
+
+    - `429` - Too Many Requests (rate limit)
+
+    - `500` - Internal Server Error
+
+    '
+  version: 4.6.1
+  contact:
+    name: La Tanda Support
+    email: support@latanda.online
+    url: https://latanda.online
+  license:
+    name: Proprietary
+    url: https://latanda.online/terms
+servers:
+- url: https://latanda.online
+  description: Production Server
+tags:
+- name: Auth
+  description: Autenticación y gestión de sesiones
+- name: Users
+  description: Gestión de usuarios y perfiles
+- name: Groups
+  description: Gestión de grupos/tandas
+- name: Wallet
+  description: Billetera digital y transacciones
+- name: Contributions
+  description: Contribuciones y pagos
+- name: KYC
+  description: Verificación de identidad
+- name: Notifications
+  description: Sistema de notificaciones
+- name: Mining
+  description: Sistema de minería LTD
+- name: Rewards
+  description: Sistema de recompensas
+- name: Feed
+  description: Feed social y publicaciones
+- name: Upload
+  description: Subida de archivos multimedia
+- name: GIFs
+  description: Búsqueda y trending de GIFs
+- name: Hub
+  description: Dashboard hub - resumen, actividad e insights
+- name: Marketplace
+  description: Marketplace de servicios y productos
+- name: Payments
+  description: Procesamiento de pagos
+- name: Deposits
+  description: Gestión de depósitos
+- name: Recovery
+  description: Recuperación de cuenta
+- name: Push
+  description: Notificaciones push
+- name: Referrals
+  description: Sistema de referidos
+- name: Mobile
+  description: Endpoints de app móvil
+- name: Monitoring
+  description: Monitoreo de transacciones
+- name: Public
+  description: Endpoints públicos sin autenticación
+- name: Sync
+  description: Sincronización offline
+- name: Business
+  description: Analíticas de negocio (admin)
+- name: Verification
+  description: Verificación telefónica
+- name: Matching
+  description: Preferencias de matching
+- name: Utilities
+  description: Utilidades (link preview, búsqueda)
+paths:
+  /api/auth/check-duplicates:
+    post:
+      tags:
+      - Auth
+      summary: Verificar si email/teléfono ya existe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Resultado de verificación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email_exists:
+                    type: boolean
+                  phone_exists:
+                    type: boolean
+  /api/auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Credenciales inválidas
+  /api/auth/logout:
+    post:
+      tags:
+      - Auth
+      summary: Cerrar sesión
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Sesión cerrada
+  /api/auth/merge-accounts:
+    post:
+      tags:
+      - Auth
+      summary: Fusionar cuentas duplicadas
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - secondary_email
+              - secondary_password
+              properties:
+                secondary_email:
+                  type: string
+                  format: email
+                secondary_password:
+                  type: string
+      responses:
+        '200':
+          description: Cuentas fusionadas exitosamente
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/auth/refresh:
+    post:
+      tags:
+      - Auth
+      summary: Renovar token de acceso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/register:
+    post:
+      tags:
+      - Auth
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - email
+              - password
+              properties:
+                name:
+                  type: string
+                  example: Juan Pérez
+                email:
+                  type: string
+                  format: email
+                  example: juan@email.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: SecurePass123!
+                phone:
+                  type: string
+                  example: +504 9999-9999
+                referral_code:
+                  type: string
+                  example: REF123ABC
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Datos inválidos o email ya existe
+  /api/auth/request-reset:
+    post:
+      tags:
+      - Auth
+      summary: Solicitar restablecimiento de contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Email de recuperación enviado
+  /api/auth/reset-password:
+    post:
+      tags:
+      - Auth
+      summary: Restablecer contraseña con token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              - new_password
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Contraseña actualizada
+  /api/auth/send-verification:
+    post:
+      tags:
+      - Auth
+      summary: Enviar código de verificación de email
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Código enviado
+  /api/auth/verify-email:
+    post:
+      tags:
+      - Auth
+      summary: Verificar email con código
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: Email verificado
+  /api/auth/verify-reset-token:
+    post:
+      tags:
+      - Auth
+      summary: Validar token de reset de contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+                  description: Token recibido por email
+      responses:
+        '200':
+          description: Token válido
+        '400':
+          description: Token inválido o expirado
+  /api/auth/webauthn/authenticate:
+    post:
+      tags:
+      - Auth
+      summary: Autenticar con WebAuthn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                credential:
+                  type: object
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/webauthn/authenticate-options:
+    post:
+      tags:
+      - Auth
+      summary: Obtener opciones para autenticar con WebAuthn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Opciones de autenticación
+  /api/auth/webauthn/credentials:
+    get:
+      tags:
+      - Auth
+      summary: Listar credenciales WebAuthn del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de credenciales
+  /api/auth/webauthn/register:
+    post:
+      tags:
+      - Auth
+      summary: Registrar credencial WebAuthn
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credential:
+                  type: object
+                  description: Credencial WebAuthn del navegador
+      responses:
+        '201':
+          description: Credencial registrada
+  /api/auth/webauthn/register-options:
+    post:
+      tags:
+      - Auth
+      summary: Obtener opciones para registrar WebAuthn
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Opciones de registro WebAuthn
+  /api/business/analytics/revenue:
+    post:
+      tags:
+      - Business
+      summary: Obtener analíticas de ingresos (solo admin)
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Analíticas de ingresos
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/business/performance/dashboard:
+    get:
+      tags:
+      - Business
+      summary: Obtener dashboard de rendimiento (solo admin)
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard de rendimiento
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/contributions:
+    get:
+      tags:
+      - Contributions
+      summary: Listar contribuciones
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: group_id
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - completed
+          - overdue
+      responses:
+        '200':
+          description: Lista de contribuciones
+  /api/contributions/request:
+    post:
+      tags:
+      - Contributions
+      summary: Solicitar contribución
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              - amount
+              properties:
+                group_id:
+                  type: string
+                amount:
+                  type: number
+                payment_method:
+                  type: string
+                  enum:
+                  - bank_transfer
+                  - mobile_money
+                  - cash
+      responses:
+        '200':
+          description: Contribución registrada
+  /api/conversion/request:
+    post:
+      tags:
+      - Wallet
+      summary: Solicitar conversión de moneda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - from_currency
+              - to_currency
+              - amount
+              properties:
+                from_currency:
+                  type: string
+                to_currency:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Conversión procesada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/dashboard/summary:
+    get:
+      tags:
+      - Users
+      summary: Resumen del dashboard
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Datos del dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                  balance:
+                    type: object
+                    properties:
+                      amount:
+                        type: number
+                      currency:
+                        type: string
+                  active_tandas:
+                    type: integer
+                  total_savings:
+                    type: number
+  /api/deposit/cancel:
+    post:
+      tags:
+      - Deposits
+      summary: Cancelar un depósito pendiente
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - deposit_id
+              properties:
+                deposit_id:
+                  type: string
+                amount:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Depósito actualizado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/deposit/extend:
+    post:
+      tags:
+      - Deposits
+      summary: Extender plazo de un depósito
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - deposit_id
+              properties:
+                deposit_id:
+                  type: string
+                amount:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Depósito actualizado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/deposit/modify:
+    post:
+      tags:
+      - Deposits
+      summary: Modificar monto de un depósito
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - deposit_id
+              properties:
+                deposit_id:
+                  type: string
+                amount:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Depósito actualizado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/deposit/update-status:
+    post:
+      tags:
+      - Deposits
+      summary: Actualizar estado de un depósito
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - deposit_id
+              properties:
+                deposit_id:
+                  type: string
+                amount:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Depósito actualizado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/deposit/upload-receipt:
+    post:
+      tags:
+      - Deposits
+      summary: Subir comprobante de depósito
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                deposit_id:
+                  type: string
+      responses:
+        '200':
+          description: Comprobante subido
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/feed/social:
+    get:
+      tags:
+      - Feed
+      summary: Obtener feed social principal
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Buscar en titulo/descripcion/actor
+      - name: tab
+        in: query
+        schema:
+          type: string
+          enum:
+          - todos
+          - grupos
+          - mercado
+          - comunidad
+          - finanzas
+      responses:
+        '200':
+          description: Feed obtenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            event_type:
+                              type: string
+                            title:
+                              type: string
+                            description:
+                              type: string
+                            image_url:
+                              type: string
+                              nullable: true
+                            metadata:
+                              type: object
+                            created_at:
+                              type: string
+                              format: date-time
+                            time_ago:
+                              type: string
+                            actor:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                avatar_url:
+                                  type: string
+                                  nullable: true
+                                verified:
+                                  type: boolean
+                            engagement:
+                              type: object
+                              properties:
+                                likes:
+                                  type: integer
+                                comments:
+                                  type: integer
+                                views:
+                                  type: integer
+                                shares:
+                                  type: integer
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          limit:
+                            type: integer
+                          offset:
+                            type: integer
+                          has_more:
+                            type: boolean
+        '401':
+          description: Autenticación requerida
+  /api/feed/social/bookmarks:
+    get:
+      tags:
+      - Feed
+      summary: Obtener publicaciones guardadas
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Bookmarks obtenidos
+        '401':
+          description: Autenticación requerida
+  /api/feed/social/following:
+    get:
+      tags:
+      - Feed
+      summary: Obtener feed de usuarios seguidos
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Feed de seguidos
+        '401':
+          description: Autenticación requerida
+  /api/feed/social/suggestions:
+    get:
+      tags:
+      - Feed
+      summary: Obtener sugerencias de usuarios para seguir
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+      responses:
+        '200':
+          description: Sugerencias obtenidas
+        '401':
+          description: Autenticación requerida
+  /api/feed/social/trending:
+    get:
+      tags:
+      - Feed
+      summary: Obtener publicaciones en tendencia
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Trending obtenido
+        '401':
+          description: Autenticación requerida
+  /api/gifs/search:
+    get:
+      tags:
+      - GIFs
+      summary: Buscar GIFs vía proxy Klipy
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 50
+      responses:
+        '200':
+          description: GIFs encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            url:
+                              type: string
+                            preview:
+                              type: string
+        '400':
+          description: Parámetro q requerido
+  /api/gifs/trending:
+    get:
+      tags:
+      - GIFs
+      summary: Obtener GIFs en tendencia
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 50
+      responses:
+        '200':
+          description: GIFs trending
+  /api/groups:
+    get:
+      tags:
+      - Groups
+      summary: Listar grupos públicos
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - pending
+          - completed
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Lista de grupos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+    post:
+      tags:
+      - Groups
+      summary: Crear nuevo grupo/tanda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - max_members
+              - contribution_amount
+              - frequency
+              properties:
+                name:
+                  type: string
+                  example: Tanda Familiar
+                max_members:
+                  type: integer
+                  minimum: 2
+                  maximum: 50
+                  example: 10
+                contribution_amount:
+                  type: number
+                  minimum: 10
+                  example: 500
+                frequency:
+                  type: string
+                  enum:
+                  - weekly
+                  - biweekly
+                  - monthly
+                description:
+                  type: string
+                is_private:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Grupo creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+  /api/groups/activate-tanda:
+    post:
+      tags:
+      - Groups
+      summary: Activar tanda de un grupo
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              properties:
+                group_id:
+                  type: string
+      responses:
+        '200':
+          description: Tanda activada
+  /api/groups/approve-position-request:
+    post:
+      tags:
+      - Groups
+      summary: Aprobar solicitud de posición
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - request_id
+              properties:
+                request_id:
+                  type: string
+                position:
+                  type: integer
+      responses:
+        '200':
+          description: Posición aprobada
+  /api/groups/assign-position-manually:
+    post:
+      tags:
+      - Groups
+      summary: Asignar posición de tanda manualmente
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              - user_id
+              - position
+              properties:
+                group_id:
+                  type: string
+                user_id:
+                  type: string
+                position:
+                  type: integer
+      responses:
+        '200':
+          description: Posición asignada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Sin permisos
+  /api/groups/auto-assign-positions:
+    post:
+      tags:
+      - Groups
+      summary: Asignar posiciones automáticamente
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              properties:
+                group_id:
+                  type: string
+                method:
+                  type: string
+                  enum:
+                  - random
+                  - order
+                  default: random
+      responses:
+        '200':
+          description: Posiciones asignadas
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/groups/my-groups:
+    get:
+      tags:
+      - Groups
+      summary: Obtener mis grupos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de grupos del usuario
+  /api/groups/my-groups-pg:
+    get:
+      tags:
+      - Groups
+      summary: Obtener mis grupos desde PostgreSQL
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Mis grupos
+        '401':
+          description: Autenticación requerida
+  /api/groups/my-pending-requests:
+    get:
+      tags:
+      - Groups
+      summary: Obtener mis solicitudes pendientes de unión
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Solicitudes pendientes
+        '401':
+          description: Autenticación requerida
+  /api/groups/position-requests:
+    get:
+      tags:
+      - Groups
+      summary: Listar solicitudes de posición pendientes
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: group_id
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Lista de solicitudes
+  /api/groups/public-pg:
+    get:
+      tags:
+      - Groups
+      summary: Obtener grupos públicos desde PostgreSQL
+      responses:
+        '200':
+          description: Grupos públicos
+  /api/groups/reject-position-request:
+    post:
+      tags:
+      - Groups
+      summary: Rechazar solicitud de posición
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - request_id
+              properties:
+                request_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Posición rechazada
+  /api/groups/{groupId}:
+    get:
+      tags:
+      - Groups
+      summary: Obtener detalles de un grupo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Detalles del grupo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+    put:
+      tags:
+      - Groups
+      summary: Actualizar grupo (admin del grupo)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                max_members:
+                  type: integer
+                start_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Grupo actualizado
+  /api/groups/{groupId}/lottery-results:
+    get:
+      tags:
+      - Groups
+      summary: Resultados de la tombola
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Resultados con posiciones asignadas
+  /api/groups/{groupId}/lottery-schedule:
+    post:
+      tags:
+      - Groups
+      summary: Programar tombola/sorteo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - scheduled_at
+              properties:
+                scheduled_at:
+                  type: string
+                  format: date-time
+                countdown_seconds:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Tombola programada
+  /api/groups/{groupId}/lottery-status:
+    get:
+      tags:
+      - Groups
+      summary: Estado de la tombola
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Estado de la tombola
+  /api/groups/{groupId}/members:
+    get:
+      tags:
+      - Groups
+      summary: Listar miembros del grupo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Lista de miembros
+  /api/groups/{groupId}/members/{userId}/approve:
+    post:
+      tags:
+      - Groups
+      summary: Aprobar solicitud de miembro
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Miembro aprobado
+  /api/groups/{groupId}/members/{userId}/reject:
+    post:
+      tags:
+      - Groups
+      summary: Rechazar solicitud de miembro
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Miembro rechazado
+  /api/groups/{groupId}/settings:
+    get:
+      tags:
+      - Groups
+      summary: Obtener configuración del grupo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Configuración del grupo
+    put:
+      tags:
+      - Groups
+      summary: Actualizar configuración del grupo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: groupId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auto_approve:
+                  type: boolean
+                min_kyc_level:
+                  type: string
+                require_payment_proof:
+                  type: boolean
+      responses:
+        '200':
+          description: Configuración actualizada
+  /api/hub/activity:
+    get:
+      tags:
+      - Hub
+      summary: Obtener actividad unificada de todos los módulos
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+          maximum: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      - name: source
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - tandas
+          - marketplace
+          - lottery
+          - mining
+          default: all
+      responses:
+        '200':
+          description: Actividades obtenidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      activities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            source:
+                              type: string
+                            type:
+                              type: string
+                            title:
+                              type: string
+                            amount:
+                              type: number
+                            status:
+                              type: string
+                            timestamp:
+                              type: string
+                              format: date-time
+                            formatted_amount:
+                              type: string
+                      pagination:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          limit:
+                            type: integer
+                          offset:
+                            type: integer
+                          has_more:
+                            type: boolean
+        '401':
+          description: Autenticación requerida
+  /api/hub/insights:
+    get:
+      tags:
+      - Hub
+      summary: Obtener insights personalizados basados en datos del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Insights generados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      insights:
+                        type: array
+                        maxItems: 4
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            icon:
+                              type: string
+                            text:
+                              type: string
+                            action_text:
+                              type: string
+                            action_url:
+                              type: string
+                            priority:
+                              type: integer
+                            color:
+                              type: string
+                      generated_at:
+                        type: string
+                        format: date-time
+        '401':
+          description: Autenticación requerida
+  /api/hub/summary:
+    get:
+      tags:
+      - Hub
+      summary: Obtener resumen agregado de todos los módulos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Resumen obtenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      wallet:
+                        type: object
+                        properties:
+                          ltd_balance:
+                            type: number
+                          hnl_balance:
+                            type: number
+                          currency:
+                            type: string
+                      tandas:
+                        type: object
+                        properties:
+                          active_count:
+                            type: integer
+                          next_payment:
+                            type: object
+                            nullable: true
+                            properties:
+                              date:
+                                type: string
+                                format: date-time
+                              amount:
+                                type: number
+                      marketplace:
+                        type: object
+                        properties:
+                          products:
+                            type: integer
+                          sales_today:
+                            type: integer
+                          pending_orders:
+                            type: integer
+                          views_today:
+                            type: integer
+                      lottery:
+                        type: object
+                        properties:
+                          spins_left:
+                            type: integer
+                          hot_numbers:
+                            type: array
+                            items:
+                              type: integer
+                          next_draw:
+                            type: string
+                            format: date-time
+                      mining:
+                        type: object
+                        properties:
+                          tier:
+                            type: string
+                            enum:
+                            - bronze
+                            - silver
+                            - gold
+                          streak:
+                            type: integer
+                          daily_reward:
+                            type: number
+                          total_mined:
+                            type: number
+                      alerts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            priority:
+                              type: string
+                            message:
+                              type: string
+                            action_url:
+                              type: string
+                            color:
+                              type: string
+        '401':
+          description: Autenticación requerida
+  /api/kyc/process-ocr:
+    post:
+      tags:
+      - KYC
+      summary: Procesar OCR de documento de identidad
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                document_url:
+                  type: string
+                document_type:
+                  type: string
+      responses:
+        '200':
+          description: OCR procesado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/kyc/status:
+    get:
+      tags:
+      - KYC
+      summary: Obtener estado de verificación KYC
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de verificación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verification_level:
+                    type: string
+                    enum:
+                    - none
+                    - basic
+                    - intermediate
+                    - full
+                  documents_submitted:
+                    type: boolean
+                  selfie_verified:
+                    type: boolean
+  /api/kyc/upload-document:
+    post:
+      tags:
+      - KYC
+      summary: Subir documento de identidad
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                document:
+                  type: string
+                  format: binary
+                document_type:
+                  type: string
+                  enum:
+                  - id_card
+                  - passport
+                  - drivers_license
+      responses:
+        '200':
+          description: Documento subido y procesado
+  /api/kyc/upload-selfie:
+    post:
+      tags:
+      - KYC
+      summary: Subir selfie para verificación facial
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                selfie:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Selfie procesada
+  /api/link-preview:
+    get:
+      tags:
+      - Utilities
+      summary: Obtener vista previa de enlace (Open Graph)
+      description: Protección SSRF contra hosts privados. Máximo 3 redirecciones. Timeout 6s.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: url
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uri
+      responses:
+        '200':
+          description: Vista previa obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                      title:
+                        type: string
+                        nullable: true
+                      description:
+                        type: string
+                        nullable: true
+                      image:
+                        type: string
+                        nullable: true
+                      site_name:
+                        type: string
+                      domain:
+                        type: string
+        '400':
+          description: URL inválida o host privado
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/bookings:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener reservas de servicios
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - customer
+          - provider
+      - name: status
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Reservas listadas
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Marketplace
+      summary: Crear reserva de servicio
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - service_id
+              - booking_date
+              properties:
+                service_id:
+                  type: integer
+                booking_date:
+                  type: string
+                  format: date-time
+                notes:
+                  type: string
+                referral_id:
+                  type: integer
+      responses:
+        '201':
+          description: Reserva creada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/categories:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener categorías del marketplace
+      responses:
+        '200':
+          description: Lista de categorías
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      categories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                            icon:
+                              type: string
+                            service_count:
+                              type: integer
+  /api/marketplace/favorites:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mis favoritos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Favoritos listados
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Marketplace
+      summary: Agregar a favoritos
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service_id:
+                  type: integer
+                provider_id:
+                  type: integer
+      responses:
+        '200':
+          description: Agregado a favoritos
+        '401':
+          description: Autenticación requerida
+    delete:
+      tags:
+      - Marketplace
+      summary: Eliminar de favoritos
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service_id:
+                  type: integer
+                provider_id:
+                  type: integer
+      responses:
+        '200':
+          description: Eliminado de favoritos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/messages:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mensajes con un usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: other_user_id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: product_id
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Mensajes obtenidos
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Marketplace
+      summary: Enviar mensaje
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - recipient_id
+              - content
+              properties:
+                recipient_id:
+                  type: string
+                content:
+                  type: string
+                  maxLength: 2000
+                product_id:
+                  type: integer
+                service_id:
+                  type: integer
+      responses:
+        '201':
+          description: Mensaje enviado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/messages/conversations:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener lista de conversaciones
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Conversaciones listadas
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/messages/read:
+    put:
+      tags:
+      - Marketplace
+      summary: Marcar mensajes como leídos
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - other_user_id
+              properties:
+                other_user_id:
+                  type: string
+                product_id:
+                  type: integer
+      responses:
+        '200':
+          description: Mensajes marcados como leídos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/messages/unread:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener conteo de mensajes no leídos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Conteo obtenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/portfolio/cv/generate-summary:
+    post:
+      tags:
+      - Marketplace
+      summary: Generar resumen profesional con IA
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                professional_title:
+                  type: string
+                experience:
+                  type: array
+                  items:
+                    type: object
+                skills:
+                  type: array
+                  items:
+                    type: object
+                education:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Resumen generado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      summary:
+                        type: string
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Debes tener tienda activa
+  /api/marketplace/portfolio/cv/me:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mi portafolio/CV
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Portafolio obtenido
+        '401':
+          description: Autenticación requerida
+    put:
+      tags:
+      - Marketplace
+      summary: Crear o actualizar mi portafolio/CV
+      description: Upsert con INSERT ON CONFLICT DO UPDATE. Sanitiza todos los campos.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                professional_title:
+                  type: string
+                  maxLength: 255
+                summary:
+                  type: string
+                  maxLength: 2000
+                experience:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: object
+                    properties:
+                      company:
+                        type: string
+                      position:
+                        type: string
+                      start_date:
+                        type: string
+                      end_date:
+                        type: string
+                        nullable: true
+                      current:
+                        type: boolean
+                      description:
+                        type: string
+                education:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: object
+                skills:
+                  type: array
+                  maxItems: 30
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      level:
+                        type: string
+                        enum:
+                        - basico
+                        - intermedio
+                        - avanzado
+                        - experto
+                certifications:
+                  type: array
+                  maxItems: 15
+                  items:
+                    type: object
+                projects:
+                  type: array
+                  maxItems: 15
+                  items:
+                    type: object
+                languages:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: object
+                    properties:
+                      language:
+                        type: string
+                      level:
+                        type: string
+                        enum:
+                        - basico
+                        - intermedio
+                        - avanzado
+                        - nativo
+                allow_downloads:
+                  type: boolean
+                is_public:
+                  type: boolean
+      responses:
+        '200':
+          description: Portafolio guardado
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Debes tener tienda activa
+    delete:
+      tags:
+      - Marketplace
+      summary: Eliminar mi portafolio/CV
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Portafolio eliminado
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/portfolio/cv/parse:
+    post:
+      tags:
+      - Marketplace
+      summary: Analizar CV en PDF con IA
+      description: Sube un PDF (max 5MB), extrae texto y analiza con IA (Groq Llama 3.3 70B).
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: CV analizado
+        '400':
+          description: PDF inválido o sin texto
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Debes tener tienda activa
+  /api/marketplace/portfolio/{handle}:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener portafolio público por handle
+      parameters:
+      - name: handle
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Portafolio público
+        '404':
+          description: Portafolio no encontrado
+  /api/marketplace/product-orders:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener órdenes de productos
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - buyer
+          - seller
+      - name: status
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Órdenes listadas
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Marketplace
+      summary: Crear orden de producto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - product_id
+              - quantity
+              properties:
+                product_id:
+                  type: integer
+                quantity:
+                  type: integer
+                  minimum: 1
+                delivery_address:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '201':
+          description: Orden creada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/products:
+    get:
+      tags:
+      - Marketplace
+      summary: Listar productos del marketplace
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+      - name: sellerId
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Productos listados
+    post:
+      tags:
+      - Marketplace
+      summary: Crear nuevo producto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - title
+              - price
+              properties:
+                title:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  maxLength: 5000
+                price:
+                  type: number
+                currency:
+                  type: string
+                  default: HNL
+                condition:
+                  type: string
+                  enum:
+                  - new
+                  - like_new
+                  - good
+                  - fair
+                category_id:
+                  type: integer
+                stock:
+                  type: integer
+                  default: 1
+                images:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Producto creado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/products/my:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mis productos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Mis productos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/products/upload-images:
+    post:
+      tags:
+      - Marketplace
+      summary: Subir imágenes para un producto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Imágenes subidas
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/providers:
+    get:
+      tags:
+      - Marketplace
+      summary: Listar proveedores activos
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+      - name: city
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Proveedores listados
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/providers/me:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mi perfil de proveedor
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil de proveedor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      provider:
+                        type: object
+                        properties:
+                          provider_id:
+                            type: integer
+                          user_id:
+                            type: string
+                          business_name:
+                            type: string
+                          description:
+                            type: string
+                          phone:
+                            type: string
+                          whatsapp:
+                            type: string
+                          email:
+                            type: string
+                          city:
+                            type: string
+                          neighborhood:
+                            type: string
+                          service_areas:
+                            type: string
+                          social_links:
+                            type: object
+                          shop_type:
+                            type: string
+                          store_layout:
+                            type: string
+                            enum:
+                            - classic
+                            - showcase
+                            - compact
+                          store_theme:
+                            type: string
+                            enum:
+                            - dark
+                            - cyan
+                            - gold
+                            - green
+                            - coral
+                            - purple
+                          status:
+                            type: string
+                          avg_rating:
+                            type: number
+                          total_reviews:
+                            type: integer
+                          completed_jobs:
+                            type: integer
+        '401':
+          description: Autenticación requerida
+    put:
+      tags:
+      - Marketplace
+      summary: Actualizar mi perfil de proveedor
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                business_name:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  maxLength: 2000
+                phone:
+                  type: string
+                whatsapp:
+                  type: string
+                email:
+                  type: string
+                city:
+                  type: string
+                neighborhood:
+                  type: string
+                service_areas:
+                  type: string
+                social_links:
+                  type: object
+                store_layout:
+                  type: string
+                  enum:
+                  - classic
+                  - showcase
+                  - compact
+                store_theme:
+                  type: string
+                  enum:
+                  - dark
+                  - cyan
+                  - gold
+                  - green
+                  - coral
+                  - purple
+      responses:
+        '200':
+          description: Proveedor actualizado
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/providers/register:
+    post:
+      tags:
+      - Marketplace
+      summary: Registrar nueva tienda/proveedor
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - business_name
+              properties:
+                business_name:
+                  type: string
+                description:
+                  type: string
+                phone:
+                  type: string
+                whatsapp:
+                  type: string
+                email:
+                  type: string
+                city:
+                  type: string
+                neighborhood:
+                  type: string
+                service_areas:
+                  type: string
+                social_links:
+                  type: object
+                shop_type:
+                  type: string
+                  enum:
+                  - products
+                  - services
+                  - both
+                store_layout:
+                  type: string
+                  enum:
+                  - classic
+                  - showcase
+                  - compact
+                store_theme:
+                  type: string
+                  enum:
+                  - dark
+                  - cyan
+                  - gold
+                  - green
+                  - coral
+                  - purple
+      responses:
+        '201':
+          description: Proveedor registrado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/referrals/history:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener historial de referidos marketplace
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Historial de referidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/referrals/my-code:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener mi código de referido marketplace
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Código de referido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      referral_code:
+                        type: string
+                      is_active:
+                        type: boolean
+                      total_clicks:
+                        type: integer
+                      total_conversions:
+                        type: integer
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/referrals/payout:
+    post:
+      tags:
+      - Marketplace
+      summary: Solicitar retiro de comisiones
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              properties:
+                amount:
+                  type: number
+                payment_method:
+                  type: string
+                  default: wallet
+      responses:
+        '200':
+          description: Solicitud de retiro creada
+        '400':
+          description: Saldo insuficiente
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/referrals/payouts:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener historial de retiros de comisiones
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Historial de retiros
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/referrals/track:
+    post:
+      tags:
+      - Marketplace
+      summary: Registrar click de referido
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - referral_code
+              properties:
+                referral_code:
+                  type: string
+                service_id:
+                  type: integer
+      responses:
+        '200':
+          description: Click registrado
+        '400':
+          description: Datos inválidos
+  /api/marketplace/reviews:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener reseñas de un proveedor
+      parameters:
+      - name: provider_id
+        in: query
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Reseñas listadas
+    post:
+      tags:
+      - Marketplace
+      summary: Crear reseña
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - booking_id
+              - overall_rating
+              properties:
+                booking_id:
+                  type: integer
+                overall_rating:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                quality_rating:
+                  type: number
+                punctuality_rating:
+                  type: number
+                communication_rating:
+                  type: number
+                value_rating:
+                  type: number
+                title:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Reseña creada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/services:
+    get:
+      tags:
+      - Marketplace
+      summary: Listar servicios del marketplace
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+      - name: provider_id
+        in: query
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      responses:
+        '200':
+          description: Servicios listados
+  /api/marketplace/services/upload-images:
+    post:
+      tags:
+      - Marketplace
+      summary: Subir imágenes para un servicio
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Imágenes subidas
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/stats:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener estadísticas del marketplace
+      responses:
+        '200':
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      total_services:
+                        type: integer
+                      total_providers:
+                        type: integer
+                      completed_bookings:
+                        type: integer
+                      total_volume:
+                        type: number
+                      avg_rating:
+                        type: number
+  /api/marketplace/subscription:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener suscripción actual
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Suscripción obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      tier:
+                        type: string
+                        enum:
+                        - free
+                        - plan
+                        - premium
+                        - tanda_member
+                      price_monthly:
+                        type: number
+                      status:
+                        type: string
+                      is_tanda_benefit:
+                        type: boolean
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/subscription/upgrade:
+    post:
+      tags:
+      - Marketplace
+      summary: Upgrade de suscripción
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tier
+              properties:
+                tier:
+                  type: string
+                  enum:
+                  - free
+                  - plan
+                  - premium
+                payment_method:
+                  type: string
+      responses:
+        '200':
+          description: Suscripción actualizada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/wallet/balance:
+    get:
+      tags:
+      - Marketplace
+      summary: Obtener balance de billetera marketplace
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Balance obtenido
+        '401':
+          description: Autenticación requerida
+  /api/marketplace/wallet/check-commission:
+    get:
+      tags:
+      - Marketplace
+      summary: Verificar comisión aplicable
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Comisión calculada
+        '401':
+          description: Autenticación requerida
+  /api/matching/preferences:
+    get:
+      tags:
+      - Matching
+      summary: Obtener preferencias de matching para tandas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Preferencias obtenidas
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Matching
+      summary: Actualizar preferencias de matching
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferred_amount:
+                  type: number
+                preferred_frequency:
+                  type: string
+                preferred_group_size:
+                  type: integer
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Preferencias actualizadas
+        '401':
+          description: Autenticación requerida
+  /api/mining/claim:
+    post:
+      tags:
+      - Mining
+      summary: Reclamar tokens minados
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Tokens reclamados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  claimed_amount:
+                    type: number
+                  new_balance:
+                    type: number
+  /api/mining/status:
+    get:
+      tags:
+      - Mining
+      summary: Obtener estado de minería
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de minería
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tier:
+                    type: string
+                    enum:
+                    - bronze
+                    - silver
+                    - gold
+                    - platinum
+                    - diamond
+                  mining_power:
+                    type: number
+                  total_mined:
+                    type: number
+                  next_claim_available:
+                    type: string
+                    format: date-time
+  /api/mobile/analytics:
+    post:
+      tags:
+      - Mobile
+      summary: Enviar analíticas de la app móvil
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Analíticas recibidas
+        '401':
+          description: Autenticación requerida
+  /api/mobile/feedback:
+    post:
+      tags:
+      - Mobile
+      summary: Enviar feedback de la app
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - message
+              properties:
+                message:
+                  type: string
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                category:
+                  type: string
+      responses:
+        '200':
+          description: Feedback recibido
+        '401':
+          description: Autenticación requerida
+  /api/mobile/init:
+    post:
+      tags:
+      - Mobile
+      summary: Inicializar sesión de app móvil
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                device_type:
+                  type: string
+                os_version:
+                  type: string
+                app_version:
+                  type: string
+                push_token:
+                  type: string
+      responses:
+        '200':
+          description: Sesión inicializada
+        '401':
+          description: Autenticación requerida
+  /api/mobile/session/end:
+    post:
+      tags:
+      - Mobile
+      summary: Finalizar sesión de uso
+      security:
+      - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration:
+                  type: integer
+                  description: Duración en segundos
+      responses:
+        '200':
+          description: Sesión finalizada
+        '401':
+          description: Autenticación requerida
+  /api/mobile/session/start:
+    post:
+      tags:
+      - Mobile
+      summary: Iniciar sesión de uso
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Sesión iniciada
+        '401':
+          description: Autenticación requerida
+  /api/mobile/settings:
+    get:
+      tags:
+      - Mobile
+      summary: Obtener configuración de la app
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Configuración obtenida
+        '401':
+          description: Autenticación requerida
+    put:
+      tags:
+      - Mobile
+      summary: Actualizar configuración de la app
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Configuración actualizada
+        '401':
+          description: Autenticación requerida
+  /api/monitoring/alerts:
+    get:
+      tags:
+      - Monitoring
+      summary: Obtener alertas de monitoreo
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Alertas obtenidas
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/monitoring/analyze-transaction:
+    post:
+      tags:
+      - Monitoring
+      summary: Analizar transacción sospechosa
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - transaction_id
+              properties:
+                transaction_id:
+                  type: string
+      responses:
+        '200':
+          description: Análisis completado
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/monitoring/dashboard:
+    get:
+      tags:
+      - Monitoring
+      summary: Obtener dashboard de monitoreo
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard de monitoreo
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/notifications:
+    get:
+      tags:
+      - Notifications
+      summary: Obtener notificaciones
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: unread_only
+        in: query
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Lista de notificaciones
+  /api/notifications/create:
+    post:
+      tags:
+      - Notifications
+      summary: Crear notificación interna
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user_id
+              - type
+              - title
+              - message
+              properties:
+                user_id:
+                  type: string
+                type:
+                  type: string
+                title:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Notificación creada
+        '401':
+          description: Autenticación requerida
+  /api/notifications/preferences:
+    get:
+      tags:
+      - Notifications
+      summary: Obtener preferencias de notificaciones
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Preferencias obtenidas
+        '401':
+          description: Autenticación requerida
+    put:
+      tags:
+      - Notifications
+      summary: Actualizar preferencias de notificaciones
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Preferencias actualizadas
+        '401':
+          description: Autenticación requerida
+  /api/notifications/read-all:
+    post:
+      tags:
+      - Notifications
+      summary: Marcar todas como leídas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Notificaciones marcadas
+  /api/notifications/send:
+    post:
+      tags:
+      - Notifications
+      summary: Enviar notificación a un usuario (admin)
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                type:
+                  type: string
+                title:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Notificación enviada
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/notifications/unread-count:
+    get:
+      tags:
+      - Notifications
+      summary: Obtener conteo de no leídas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Conteo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+  /api/payments/approve:
+    post:
+      tags:
+      - Payments
+      summary: Aprobar un pago pendiente
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - payment_id
+              properties:
+                payment_id:
+                  type: string
+      responses:
+        '200':
+          description: Pago aprobado
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Sin permisos
+  /api/payments/history:
+    get:
+      tags:
+      - Payments
+      summary: Obtener historial de pagos
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: group_id
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Historial de pagos
+        '401':
+          description: Autenticación requerida
+  /api/payments/methods/available:
+    get:
+      tags:
+      - Payments
+      summary: Obtener métodos de pago disponibles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Métodos disponibles
+        '401':
+          description: Autenticación requerida
+  /api/payments/process:
+    post:
+      tags:
+      - Payments
+      summary: Procesar un pago
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              - amount
+              - payment_method
+              properties:
+                group_id:
+                  type: string
+                amount:
+                  type: number
+                payment_method:
+                  type: string
+                  enum:
+                  - wallet
+                  - bank_transfer
+                  - mobile_money
+                pin:
+                  type: string
+      responses:
+        '200':
+          description: Pago procesado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/payments/reject:
+    post:
+      tags:
+      - Payments
+      summary: Rechazar un pago pendiente
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - payment_id
+              properties:
+                payment_id:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Pago rechazado
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Sin permisos
+  /api/platform/state:
+    get:
+      tags:
+      - Public
+      summary: Obtener estado actual de la plataforma
+      responses:
+        '200':
+          description: Estado de la plataforma
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      maintenance:
+                        type: boolean
+                      version:
+                        type: string
+  /api/public/info:
+    get:
+      tags:
+      - Public
+      summary: Obtener información pública de la plataforma
+      responses:
+        '200':
+          description: Información pública
+  /api/public/lottery/recent:
+    get:
+      tags:
+      - Public
+      summary: Obtener resultados recientes de lotería
+      responses:
+        '200':
+          description: Resultados recientes
+  /api/public/products:
+    get:
+      tags:
+      - Public
+      summary: Obtener productos públicos del marketplace
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: category
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Productos públicos
+  /api/public/stats:
+    get:
+      tags:
+      - Public
+      summary: Obtener estadísticas públicas
+      responses:
+        '200':
+          description: Estadísticas públicas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      total_users:
+                        type: integer
+                      total_groups:
+                        type: integer
+                      total_transactions:
+                        type: integer
+                      total_volume:
+                        type: number
+  /api/push/send:
+    post:
+      tags:
+      - Push
+      summary: Enviar notificación push (solo admin)
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - userId
+              - title
+              properties:
+                userId:
+                  type: string
+                title:
+                  type: string
+                message:
+                  type: string
+                url:
+                  type: string
+      responses:
+        '200':
+          description: Push enviada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Solo administradores
+  /api/push/subscribe:
+    post:
+      tags:
+      - Push
+      summary: Suscribirse a notificaciones push
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - endpoint
+              - keys
+              properties:
+                endpoint:
+                  type: string
+                keys:
+                  type: object
+                  properties:
+                    p256dh:
+                      type: string
+                    auth:
+                      type: string
+      responses:
+        '200':
+          description: Suscripción push registrada
+        '400':
+          description: Datos incompletos
+        '401':
+          description: Autenticación requerida
+  /api/push/unsubscribe:
+    delete:
+      tags:
+      - Push
+      summary: Desuscribirse de notificaciones push
+      security:
+      - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  description: Omitir para eliminar todas las suscripciones
+      responses:
+        '200':
+          description: Suscripción eliminada
+        '401':
+          description: Autenticación requerida
+  /api/push/vapid-key:
+    get:
+      tags:
+      - Push
+      summary: Obtener clave pública VAPID
+      responses:
+        '200':
+          description: Clave VAPID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      publicKey:
+                        type: string
+  /api/recovery/backup-codes/generate:
+    post:
+      tags:
+      - Recovery
+      summary: Generar códigos de respaldo
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Códigos generados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      codes:
+                        type: array
+                        items:
+                          type: string
+                      count:
+                        type: integer
+        '401':
+          description: Autenticación requerida
+  /api/recovery/backup-codes/status:
+    get:
+      tags:
+      - Recovery
+      summary: Obtener estado de códigos de respaldo
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado obtenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      has_codes:
+                        type: boolean
+                      remaining:
+                        type: integer
+        '401':
+          description: Autenticación requerida
+  /api/recovery/backup-codes/verify:
+    post:
+      tags:
+      - Recovery
+      summary: Verificar código de respaldo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - code
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Código verificado
+        '400':
+          description: Código inválido
+  /api/recovery/security-questions/get:
+    get:
+      tags:
+      - Recovery
+      summary: Obtener preguntas de seguridad
+      parameters:
+      - name: email
+        in: query
+        required: true
+        schema:
+          type: string
+          format: email
+      responses:
+        '200':
+          description: Preguntas obtenidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      questions:
+                        type: array
+                        items:
+                          type: string
+                      has_questions:
+                        type: boolean
+  /api/recovery/security-questions/set:
+    post:
+      tags:
+      - Recovery
+      summary: Configurar preguntas de seguridad
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - question1
+              - answer1
+              - question2
+              - answer2
+              - question3
+              - answer3
+              properties:
+                question1:
+                  type: string
+                answer1:
+                  type: string
+                question2:
+                  type: string
+                answer2:
+                  type: string
+                question3:
+                  type: string
+                answer3:
+                  type: string
+      responses:
+        '200':
+          description: Preguntas configuradas
+        '401':
+          description: Autenticación requerida
+  /api/recovery/security-questions/verify:
+    post:
+      tags:
+      - Recovery
+      summary: Verificar respuestas de seguridad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - answer1
+              - answer2
+              - answer3
+              properties:
+                email:
+                  type: string
+                  format: email
+                answer1:
+                  type: string
+                answer2:
+                  type: string
+                answer3:
+                  type: string
+      responses:
+        '200':
+          description: Respuestas verificadas
+        '400':
+          description: Respuestas incorrectas
+  /api/referrals/apply:
+    post:
+      tags:
+      - Referrals
+      summary: Aplicar código de referido durante registro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - referral_code
+              - new_user_id
+              properties:
+                referral_code:
+                  type: string
+                new_user_id:
+                  type: string
+                new_user_email:
+                  type: string
+      responses:
+        '200':
+          description: Código aplicado
+        '400':
+          description: Datos inválidos
+        '404':
+          description: Código no encontrado
+  /api/referrals/list:
+    get:
+      tags:
+      - Referrals
+      summary: Listar mis referidos
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de referidos
+        '401':
+          description: Autenticación requerida
+  /api/referrals/my-code:
+    get:
+      tags:
+      - Referrals
+      summary: Obtener mi código de referido
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Código de referido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      referral_code:
+                        type: string
+                      referral_link:
+                        type: string
+                      stats:
+                        type: object
+                        properties:
+                          pending:
+                            type: integer
+                          registered:
+                            type: integer
+                          verified:
+                            type: integer
+                          rewarded:
+                            type: integer
+                          total_rewards:
+                            type: number
+        '401':
+          description: Autenticación requerida
+  /api/referrals/send:
+    post:
+      tags:
+      - Referrals
+      summary: Enviar invitación de referido
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Invitación enviada
+        '401':
+          description: Autenticación requerida
+  /api/registration/groups/create:
+    post:
+      tags:
+      - Groups
+      summary: Crear grupo de ahorro
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - contribution_amount
+              - frequency
+              - max_members
+              properties:
+                name:
+                  type: string
+                contribution_amount:
+                  type: number
+                frequency:
+                  type: string
+                  enum:
+                  - weekly
+                  - biweekly
+                  - monthly
+                max_members:
+                  type: integer
+                grace_period:
+                  type: integer
+                  default: 3
+                start_date:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Grupo creado
+        '401':
+          description: Autenticación requerida
+  /api/registration/groups/list:
+    post:
+      tags:
+      - Groups
+      summary: Listar grupos disponibles para registro
+      responses:
+        '200':
+          description: Grupos disponibles
+  /api/rewards/onboarding/claim:
+    post:
+      tags:
+      - Rewards
+      summary: Reclamar recompensa de onboarding
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - task_id
+              properties:
+                task_id:
+                  type: string
+                  enum:
+                  - account_created
+                  - email_verified
+                  - profile_completed
+                  - first_deposit
+                  - first_tanda
+                  - kyc_completed
+      responses:
+        '200':
+          description: Recompensa reclamada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task_id:
+                    type: string
+                  reward_claimed:
+                    type: number
+                  new_ltd_balance:
+                    type: number
+        '400':
+          description: Ya reclamada o tarea no completada
+  /api/rewards/onboarding/status:
+    get:
+      tags:
+      - Rewards
+      summary: Obtener estado de recompensas de onboarding
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de tareas y recompensas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: object
+                  summary:
+                    type: object
+                    properties:
+                      total_tasks:
+                        type: integer
+                      completed_tasks:
+                        type: integer
+                      total_claimed:
+                        type: number
+                      pending_rewards:
+                        type: number
+  /api/search:
+    get:
+      tags:
+      - Users
+      summary: Búsqueda global
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 2
+      responses:
+        '200':
+          description: Resultados de búsqueda
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      type: object
+                  groups:
+                    type: array
+                    items:
+                      type: object
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+  /api/status:
+    get:
+      tags:
+      - Public
+      summary: Health check del API
+      responses:
+        '200':
+          description: API funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: ok
+                      version:
+                        type: string
+  /api/sync/download:
+    post:
+      tags:
+      - Sync
+      summary: Descargar cambios del servidor
+      security:
+      - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                last_sync_timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Cambios descargados
+        '401':
+          description: Autenticación requerida
+  /api/sync/status:
+    post:
+      tags:
+      - Sync
+      summary: Obtener estado de sincronización
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - data_types
+              properties:
+                data_types:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Estado de sincronización
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/sync/upload:
+    post:
+      tags:
+      - Sync
+      summary: Subir cambios offline al servidor
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - changes
+              properties:
+                changes:
+                  type: array
+                  items:
+                    type: object
+                last_sync_timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Cambios sincronizados
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/system/status:
+    get:
+      tags:
+      - System
+      summary: Estado del sistema
+      responses:
+        '200':
+          description: Sistema operativo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                  uptime:
+                    type: number
+  /api/tandas:
+    get:
+      tags:
+      - Groups
+      summary: Listar todas las tandas
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Lista de tandas
+  /api/tandas/available-positions:
+    get:
+      tags:
+      - Groups
+      summary: Posiciones disponibles en tanda
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: tanda_id
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Lista de posiciones disponibles
+  /api/tandas/change-position-request:
+    put:
+      tags:
+      - Groups
+      summary: Modificar solicitud de cambio de posición
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - request_id
+              - new_position
+              properties:
+                request_id:
+                  type: string
+                new_position:
+                  type: integer
+                new_reason:
+                  type: string
+      responses:
+        '200':
+          description: Solicitud actualizada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+        '403':
+          description: Sin permisos
+  /api/tandas/create:
+    post:
+      tags:
+      - Groups
+      summary: Crear nueva tanda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - group_id
+              - name
+              - contribution_amount
+              - frequency
+              - max_members
+              properties:
+                group_id:
+                  type: string
+                name:
+                  type: string
+                contribution_amount:
+                  type: number
+                frequency:
+                  type: string
+                  enum:
+                  - weekly
+                  - biweekly
+                  - monthly
+                max_members:
+                  type: integer
+                start_date:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Tanda creada
+  /api/tandas/my-position-status:
+    get:
+      tags:
+      - Groups
+      summary: Mi estado de posición en tandas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de posiciones del usuario
+  /api/tandas/my-tandas:
+    get:
+      tags:
+      - Groups
+      summary: Mis tandas activas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Tandas del usuario
+  /api/tandas/pay:
+    post:
+      tags:
+      - Groups
+      summary: Realizar pago de tanda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tanda_id
+              - amount
+              properties:
+                tanda_id:
+                  type: string
+                amount:
+                  type: number
+                payment_method:
+                  type: string
+                receipt_url:
+                  type: string
+      responses:
+        '200':
+          description: Pago registrado
+  /api/tandas/request-position:
+    post:
+      tags:
+      - Groups
+      summary: Solicitar posición en tanda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tanda_id
+              properties:
+                tanda_id:
+                  type: string
+                preferred_position:
+                  type: integer
+      responses:
+        '200':
+          description: Solicitud enviada
+  /api/tandas/start:
+    post:
+      tags:
+      - Groups
+      summary: Iniciar ciclo de tanda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - tanda_id
+              properties:
+                tanda_id:
+                  type: string
+      responses:
+        '200':
+          description: Tanda iniciada
+  /api/upload/social-image:
+    post:
+      tags:
+      - Upload
+      summary: Subir imagen para publicación social
+      description: Acepta JPG, PNG, GIF, WebP. Máximo 5MB. Valida bytes mágicos.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Imagen subida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                      filename:
+                        type: string
+                      size:
+                        type: integer
+                      type:
+                        type: string
+        '400':
+          description: Archivo inválido
+        '401':
+          description: Autenticación requerida
+  /api/upload/social-video:
+    post:
+      tags:
+      - Upload
+      summary: Subir video para publicación social
+      description: Acepta MP4, WebM, MOV, AVI, MKV. Máximo 50MB.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Video subido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                      filename:
+                        type: string
+                      size:
+                        type: integer
+                      type:
+                        type: string
+        '400':
+          description: Archivo inválido
+        '401':
+          description: Autenticación requerida
+        '413':
+          description: Video excede 50MB
+  /api/user/2fa/disable:
+    post:
+      tags:
+      - Users
+      summary: Desactivar 2FA
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  description: Código actual para confirmar
+      responses:
+        '200':
+          description: 2FA desactivado
+  /api/user/2fa/setup:
+    post:
+      tags:
+      - Users
+      summary: Configurar 2FA
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  enum:
+                  - totp
+                  - sms
+                  - email
+      responses:
+        '200':
+          description: Configuración de 2FA (incluye QR para TOTP)
+  /api/user/2fa/status:
+    get:
+      tags:
+      - Users
+      summary: Estado de 2FA del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de 2FA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  method:
+                    type: string
+                    enum:
+                    - totp
+                    - sms
+                    - email
+  /api/user/2fa/verify:
+    post:
+      tags:
+      - Users
+      summary: Verificar código 2FA
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - code
+              properties:
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: 2FA verificado y activado
+  /api/user/achievements:
+    get:
+      tags:
+      - Users
+      summary: Obtener logros del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Logros obtenidos
+        '401':
+          description: Autenticación requerida
+  /api/user/activity:
+    get:
+      tags:
+      - Users
+      summary: Obtener actividad reciente del usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Actividad obtenida
+        '401':
+          description: Autenticación requerida
+  /api/user/avatar:
+    post:
+      tags:
+      - Users
+      summary: Subir avatar de usuario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      avatar_url:
+                        type: string
+        '401':
+          description: Autenticación requerida
+  /api/user/change-password:
+    post:
+      tags:
+      - Users
+      summary: Cambiar contraseña
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - current_password
+              - new_password
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Contraseña actualizada
+        '400':
+          description: Contraseña actual incorrecta
+  /api/user/devices:
+    get:
+      tags:
+      - Users
+      summary: Obtener dispositivos registrados
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Dispositivos listados
+        '401':
+          description: Autenticación requerida
+    delete:
+      tags:
+      - Users
+      summary: Eliminar un dispositivo
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - device_id
+              properties:
+                device_id:
+                  type: string
+      responses:
+        '200':
+          description: Dispositivo eliminado
+        '401':
+          description: Autenticación requerida
+  /api/user/profile:
+    get:
+      tags:
+      - Users
+      summary: Obtener perfil del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Datos del perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      tags:
+      - Users
+      summary: Actualizar perfil del usuario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone:
+                  type: string
+                avatar_url:
+                  type: string
+      responses:
+        '200':
+          description: Perfil actualizado
+  /api/user/security/status:
+    get:
+      tags:
+      - Users
+      summary: Obtener estado de seguridad de la cuenta
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado de seguridad
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      two_factor_enabled:
+                        type: boolean
+                      email_verified:
+                        type: boolean
+                      phone_verified:
+                        type: boolean
+                      has_backup_codes:
+                        type: boolean
+                      has_security_questions:
+                        type: boolean
+                      webauthn_enabled:
+                        type: boolean
+        '401':
+          description: Autenticación requerida
+  /api/user/settings:
+    get:
+      tags:
+      - Users
+      summary: Obtener configuración del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Configuración obtenida
+        '401':
+          description: Autenticación requerida
+    put:
+      tags:
+      - Users
+      summary: Actualizar configuración del usuario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Configuración actualizada
+        '401':
+          description: Autenticación requerida
+  /api/user/transactions:
+    get:
+      tags:
+      - Users
+      summary: Historial de transacciones del usuario
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          default: 0
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - contribution
+          - payout
+      responses:
+        '200':
+          description: Lista de transacciones
+  /api/users/payout-methods:
+    get:
+      tags:
+      - Users
+      summary: Obtener métodos de pago del usuario
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Métodos de pago
+        '401':
+          description: Autenticación requerida
+    post:
+      tags:
+      - Users
+      summary: Agregar método de pago
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - bank
+                  - mobile
+                  - crypto
+                details:
+                  type: object
+      responses:
+        '200':
+          description: Método agregado
+        '401':
+          description: Autenticación requerida
+  /api/users/search-mentions:
+    get:
+      tags:
+      - Users
+      summary: Buscar usuarios para menciones (@)
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Usuarios encontrados
+        '401':
+          description: Autenticación requerida
+  /api/users/search-to-invite:
+    get:
+      tags:
+      - Users
+      summary: Buscar usuarios para invitar a grupo
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Usuarios encontrados
+        '401':
+          description: Autenticación requerida
+  /api/verification/phone/send:
+    post:
+      tags:
+      - Verification
+      summary: Enviar código de verificación por SMS
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - phone
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Código enviado
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/wallet/balance:
+    get:
+      tags:
+      - Wallet
+      summary: Obtener balance de billetera
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Balance actual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      balance:
+                        type: number
+                        example: 1500
+                      ltd_balance:
+                        type: number
+                        example: 40
+                      balances:
+                        type: object
+                        properties:
+                          available_usd:
+                            type: number
+                          ltd_tokens:
+                            type: number
+  /api/wallet/balance-history:
+    get:
+      tags:
+      - Wallet
+      summary: Historial de balance
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: days
+        in: query
+        schema:
+          type: integer
+          default: 30
+      responses:
+        '200':
+          description: Historial de balance
+  /api/wallet/deposit/bank-transfer:
+    post:
+      tags:
+      - Wallet
+      summary: Crear depósito por transferencia bancaria
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - bank_code
+              properties:
+                amount:
+                  type: number
+                  minimum: 10
+                  maximum: 250000
+                  example: 1000
+                bank_code:
+                  type: string
+                  enum:
+                  - BAH
+                  - BDO
+                  - BFI
+                  - BAC
+                  - BAN
+                  - BCH
+                  example: BAH
+                account_number:
+                  type: string
+      responses:
+        '200':
+          description: Depósito creado con instrucciones
+  /api/wallet/deposit/crypto:
+    post:
+      tags:
+      - Wallet
+      summary: Solicitar depósito en criptomoneda
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - currency
+              properties:
+                amount:
+                  type: number
+                currency:
+                  type: string
+                  enum:
+                  - btc
+                  - usdt
+                  - eth
+      responses:
+        '200':
+          description: Dirección de depósito crypto
+  /api/wallet/deposit/mobile:
+    post:
+      tags:
+      - Wallet
+      summary: Solicitar depósito por dinero móvil
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - provider
+              properties:
+                amount:
+                  type: number
+                  minimum: 1
+                provider:
+                  type: string
+                  enum:
+                  - tigo
+                  - claro
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Instrucciones de depósito
+  /api/wallet/limits:
+    get:
+      tags:
+      - Wallet
+      summary: Límites de transacción
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Límites actuales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  daily_limit:
+                    type: number
+                  monthly_limit:
+                    type: number
+                  remaining_daily:
+                    type: number
+    put:
+      tags:
+      - Wallet
+      summary: Solicitar cambio de límites
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                daily_limit:
+                  type: number
+                monthly_limit:
+                  type: number
+      responses:
+        '200':
+          description: Solicitud enviada
+  /api/wallet/limits/request-increase:
+    post:
+      tags:
+      - Wallet
+      summary: Solicitar aumento de límite diario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - requested_daily_limit
+              properties:
+                requested_daily_limit:
+                  type: number
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Solicitud enviada
+        '400':
+          description: Datos inválidos
+        '401':
+          description: Autenticación requerida
+  /api/wallet/pin/set:
+    post:
+      tags:
+      - Wallet
+      summary: Configurar PIN de transacción
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - pin
+              properties:
+                pin:
+                  type: string
+                  pattern: ^[0-9]{4,6}$
+      responses:
+        '200':
+          description: PIN configurado
+  /api/wallet/pin/status:
+    get:
+      tags:
+      - Wallet
+      summary: Estado del PIN de wallet
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Estado del PIN
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_pin:
+                    type: boolean
+                  locked:
+                    type: boolean
+                  attempts_remaining:
+                    type: integer
+  /api/wallet/pin/verify:
+    post:
+      tags:
+      - Wallet
+      summary: Verificar PIN de transacción
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - pin
+              properties:
+                pin:
+                  type: string
+      responses:
+        '200':
+          description: PIN válido
+  /api/wallet/whitelist:
+    get:
+      tags:
+      - Wallet
+      summary: Lista de direcciones autorizadas
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Direcciones whitelisted
+    post:
+      tags:
+      - Wallet
+      summary: Agregar dirección a whitelist
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - address
+              - type
+              properties:
+                address:
+                  type: string
+                type:
+                  type: string
+                  enum:
+                  - bank
+                  - crypto
+                  - mobile
+                label:
+                  type: string
+      responses:
+        '201':
+          description: Dirección agregada
+  /api/wallet/withdraw/bank:
+    post:
+      tags:
+      - Wallet
+      summary: Solicitar retiro bancario
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - bank_name
+              - account_number
+              - account_holder_name
+              properties:
+                amount:
+                  type: number
+                  minimum: 10
+                  maximum: 100000
+                bank_name:
+                  type: string
+                account_number:
+                  type: string
+                account_holder_name:
+                  type: string
+                transaction_pin:
+                  type: string
+                  description: Requerido para montos >= L.1000
+      responses:
+        '200':
+          description: Retiro solicitado
+  /api/wallet/withdraw/crypto:
+    post:
+      tags:
+      - Wallet
+      summary: Retiro a wallet crypto
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - currency
+              - address
+              properties:
+                amount:
+                  type: number
+                currency:
+                  type: string
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Retiro crypto procesado
+  /api/wallet/withdraw/fees:
+    get:
+      tags:
+      - Wallet
+      summary: Obtener comisiones de retiro por método
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Comisiones obtenidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      fees:
+                        type: object
+                        properties:
+                          bank_transfer:
+                            type: object
+                          mobile_money:
+                            type: object
+                          crypto:
+                            type: object
+        '401':
+          description: Autenticación requerida
+  /api/wallet/withdraw/mobile:
+    post:
+      tags:
+      - Wallet
+      summary: Retiro a dinero móvil
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - amount
+              - provider
+              - phone
+              properties:
+                amount:
+                  type: number
+                provider:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Retiro procesado
+  /api/wallet/withdrawals:
+    get:
+      tags:
+      - Wallet
+      summary: Historial de retiros
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - completed
+          - rejected
+      responses:
+        '200':
+          description: Lista de retiros
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido en login
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+            user:
+              $ref: '#/components/schemas/User'
+            auth_token:
+              type: string
+            refresh_token:
+              type: string
+            expires_in:
+              type: integer
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        verification_level:
+          type: string
+          enum:
+          - none
+          - basic
+          - intermediate
+          - full
+        avatar_url:
+          type: string
+        status:
+          type: string
+    Group:
+      type: object
+      properties:
+        group_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        max_members:
+          type: integer
+        current_members:
+          type: integer
+        contribution_amount:
+          type: number
+        frequency:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - cancelled
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: object
+          properties:
+            error:
+              type: object
+              properties:
+                code:
+                  type: integer
+                message:
+                  type: string
+                details:
+                  type: object

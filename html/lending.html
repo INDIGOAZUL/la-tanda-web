@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Resource Optimization -->
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lending | La Tanda Web3 DeFi</title>
+    <!-- Critical CSS: Font Awesome with async loading -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Optimized Google Fonts loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"></noscript>
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #00FFFF;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --border-card: rgba(0, 255, 255, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success-color: #22d55e;
+            --error-color: #f87171;
+            --warning-color: #fbbf24;
+            --info-color: #3b82f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .lending-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--tanda-cyan);
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .new-badge {
+            background: linear-gradient(135deg, #22d55e, #16a34a);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .lending-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 24px;
+        }
+
+        .lending-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .overview-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .overview-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--tanda-cyan) 0%, var(--tanda-cyan-light) 100%);
+        }
+
+        .overview-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 255, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .card-icon.supply { background: linear-gradient(135deg, #22d55e, #16a34a); }
+        .card-icon.borrow { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .card-icon.yield { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .card-change {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .card-change.positive { color: var(--success-color); }
+        .card-change.negative { color: var(--error-color); }
+
+        .lending-pools {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pools-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .pool-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .pool-card:hover {
+            background: rgba(0, 255, 255, 0.05);
+            border-color: var(--tanda-cyan);
+            transform: translateY(-2px);
+        }
+
+        .pool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .pool-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pool-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--tanda-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .pool-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .pool-rates {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .rate-item {
+            text-align: center;
+        }
+
+        .rate-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rate-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tanda-cyan);
+        }
+
+        .pool-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .pool-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .pool-btn.primary {
+            background: linear-gradient(135deg, var(--tanda-cyan) 0%, #0080FF 100%);
+            color: #0f172a;
+        }
+
+        .pool-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--border-card);
+        }
+
+        .pool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+
+        .coming-soon {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .coming-soon i {
+            font-size: 64px;
+            color: var(--tanda-cyan);
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .coming-soon h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .lending-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .pool-rates {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .pool-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="lending-container">
+        <div class="lending-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='index.html'">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </button>
+                <h1 class="page-title">
+                    <i class="fas fa-hand-holding-usd"></i> Lending
+                </h1>
+                <span class="new-badge">NEW</span>
+            </div>
+        </div>
+
+        <!-- Lending Overview -->
+        <div class="lending-overview">
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon supply">💰</div>
+                    <div class="card-title">Total Suministrado</div>
+                </div>
+                <div class="card-value" id="totalSupplied">$1,250,000</div>
+                <div class="card-change positive">+12.5% este mes</div>
+            </div>
+
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon borrow">📋</div>
+                    <div class="card-title">Total Prestado</div>
+                </div>
+                <div class="card-value" id="totalBorrowed">$856,400</div>
+                <div class="card-change positive">+8.3% este mes</div>
+            </div>
+
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon yield">📈</div>
+                    <div class="card-title">Yield Promedio</div>
+                </div>
+                <div class="card-value" id="avgYield">11.4%</div>
+                <div class="card-change positive">+2.1% APY</div>
+            </div>
+        </div>
+
+        <!-- Lending Pools -->
+        <div class="lending-pools">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-coins"></i> Pools de Lending
+                </h2>
+            </div>
+
+            <div class="pools-grid">
+                <!-- LTD Pool -->
+                <div class="pool-card" onclick="openLendingModal('ltd')">
+                    <div class="pool-header">
+                        <div class="pool-info">
+                            <div class="pool-logo">LTD</div>
+                            <div>
+                                <div class="pool-name">La Tanda Token</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Token nativo del protocolo</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pool-rates">
+                        <div class="rate-item">
+                            <div class="rate-label">Supply APY</div>
+                            <div class="rate-value">8.5%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Borrow APY</div>
+                            <div class="rate-value">12.3%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Utilización</div>
+                            <div class="rate-value">68.5%</div>
+                        </div>
+                    </div>
+
+                    <div class="pool-actions">
+                        <button class="pool-btn primary" onclick="event.stopPropagation(); supply('ltd')">
+                            <i class="fas fa-plus"></i> Suministrar
+                        </button>
+                        <button class="pool-btn secondary" onclick="event.stopPropagation(); borrow('ltd')">
+                            <i class="fas fa-download"></i> Pedir Prestado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- USDC Pool -->
+                <div class="pool-card" onclick="openLendingModal('usdc')">
+                    <div class="pool-header">
+                        <div class="pool-info">
+                            <div class="pool-logo">$</div>
+                            <div>
+                                <div class="pool-name">USDC</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Stablecoin respaldado por USD</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pool-rates">
+                        <div class="rate-item">
+                            <div class="rate-label">Supply APY</div>
+                            <div class="rate-value">5.2%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Borrow APY</div>
+                            <div class="rate-value">7.8%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Utilización</div>
+                            <div class="rate-value">66.7%</div>
+                        </div>
+                    </div>
+
+                    <div class="pool-actions">
+                        <button class="pool-btn primary" onclick="event.stopPropagation(); supply('usdc')">
+                            <i class="fas fa-plus"></i> Suministrar
+                        </button>
+                        <button class="pool-btn secondary" onclick="event.stopPropagation(); borrow('usdc')">
+                            <i class="fas fa-download"></i> Pedir Prestado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ETH Pool -->
+                <div class="pool-card" onclick="openLendingModal('eth')">
+                    <div class="pool-header">
+                        <div class="pool-info">
+                            <div class="pool-logo">Ξ</div>
+                            <div>
+                                <div class="pool-name">Ethereum</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Criptomoneda líder del ecosistema</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pool-rates">
+                        <div class="rate-item">
+                            <div class="rate-label">Supply APY</div>
+                            <div class="rate-value">6.9%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Borrow APY</div>
+                            <div class="rate-value">9.4%</div>
+                        </div>
+                        <div class="rate-item">
+                            <div class="rate-label">Utilización</div>
+                            <div class="rate-value">73.4%</div>
+                        </div>
+                    </div>
+
+                    <div class="pool-actions">
+                        <button class="pool-btn primary" onclick="event.stopPropagation(); supply('eth')">
+                            <i class="fas fa-plus"></i> Suministrar
+                        </button>
+                        <button class="pool-btn secondary" onclick="event.stopPropagation(); borrow('eth')">
+                            <i class="fas fa-download"></i> Pedir Prestado
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coming Soon Notice -->
+            <div class="coming-soon">
+                <i class="fas fa-rocket"></i>
+                <h3>Más Funciones Próximamente</h3>
+                <p>Liquidaciones automáticas, flash loans, y pools de yield farming avanzado</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lending Manager Class
+        class LendingManager {
+            constructor() {
+                this.pools = {
+                    ltd: { supplyApy: 8.5, borrowApy: 12.3, utilization: 68.5 },
+                    usdc: { supplyApy: 5.2, borrowApy: 7.8, utilization: 66.7 },
+                    eth: { supplyApy: 6.9, borrowApy: 9.4, utilization: 73.4 }
+                };
+                
+                this.userPositions = {
+                    supplied: {},
+                    borrowed: {}
+                };
+            }
+        }
+
+        function openLendingModal(asset) {
+            console.log(`🏦 Abriendo pool de lending para ${asset.toUpperCase()}`);
+            // Aquí se abriría un modal detallado o navegaría a una página específica
+            alert(`Pool de ${asset.toUpperCase()} - Funcionalidad completa próximamente`);
+        }
+
+        function supply(asset) {
+            console.log(`💰 Suministrando ${asset.toUpperCase()}`);
+            alert(`Suministrar ${asset.toUpperCase()} - Funcionalidad próximamente`);
+        }
+
+        function borrow(asset) {
+            console.log(`📋 Pidiendo prestado ${asset.toUpperCase()}`);
+            alert(`Pedir prestado ${asset.toUpperCase()} - Funcionalidad próximamente`);
+        }
+
+        // Initialize lending manager
+        let lendingManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            lendingManager = new LendingManager();
+            console.log('🏦 Lending system initialized');
+        });
+    </script>
+</body>
+</html>

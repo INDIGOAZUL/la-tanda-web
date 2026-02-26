@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Resource Optimization -->
+    <!-- DNS Prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staking | La Tanda Web3 DeFi</title>
+    <!-- Critical CSS: Font Awesome with async loading -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Optimized Google Fonts loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"></noscript>
+    <style>
+        /* ================================
+           🌐 WEB3 DESIGN SYSTEM
+           ================================ */
+        :root {
+            /* La Tanda Web3 Colors */
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --tanda-black: #000000;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #00FFFF;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --border-card: rgba(0, 255, 255, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --crypto-gold: #ffd700;
+            --success-color: #22d55e;
+            --error-color: #f87171;
+            --warning-color: #fbbf24;
+            --info-color: #3b82f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* ================================
+           ✨ BACKGROUND EFFECTS
+           ================================ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(255, 215, 0, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* ================================
+           🧭 NAVIGATION
+           ================================ */
+        .nav-header {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link:hover {
+            color: var(--tanda-cyan);
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--border-accent);
+        }
+        
+        /* ================================
+           📊 MAIN CONTAINER
+           ================================ */
+        .staking-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ================================
+           📈 STAKING OVERVIEW
+           ================================ */
+        .staking-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .overview-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .overview-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-accent);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--tanda-black);
+            font-weight: 700;
+        }
+        
+        .card-icon.balance {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+        }
+        
+        .card-icon.staked {
+            background: linear-gradient(135deg, var(--crypto-gold), #e6c200);
+        }
+        
+        .card-icon.rewards {
+            background: linear-gradient(135deg, var(--success-color), #16a34a);
+        }
+        
+        .card-icon.apy {
+            background: linear-gradient(135deg, var(--info-color), #1d4ed8);
+        }
+        
+        .card-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .card-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
+        }
+        
+        .card-change {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .card-change.positive {
+            color: var(--success-color);
+        }
+        
+        .card-change.negative {
+            color: var(--error-color);
+        }
+        
+        /* ================================
+           🏦 STAKING POOLS
+           ================================ */
+        .staking-pools {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-card);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .pool-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .pool-card:hover {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: var(--border-accent);
+            transform: translateY(-2px);
+        }
+        
+        .pool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .pool-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .pool-apy {
+            background: linear-gradient(135deg, var(--success-color), #16a34a);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        .pool-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .pool-stat {
+            text-align: center;
+        }
+        
+        .pool-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .pool-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .pool-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-stake {
+            flex: 1;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-stake:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .btn-unstake {
+            background: transparent;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-unstake:hover {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        /* ================================
+           📊 MY STAKES
+           ================================ */
+        .my-stakes {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stake-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .stake-item:hover {
+            border-color: var(--border-accent);
+        }
+        
+        .stake-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .stake-pool {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .stake-status {
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-active {
+            background: rgba(34, 213, 94, 0.2);
+            color: var(--success-color);
+        }
+        
+        .status-locked {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .status-unlocked {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--info-color);
+        }
+        
+        .stake-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        
+        .stake-detail {
+            text-align: center;
+        }
+        
+        .stake-detail-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .stake-detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* ================================
+           📱 RESPONSIVE DESIGN
+           ================================ */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+            
+            .nav-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .nav-left {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .staking-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .pools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .pool-actions {
+                flex-direction: column;
+            }
+            
+            .stake-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* ================================
+           ✨ ANIMATIONS
+           ================================ */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .staking-container > * {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .reward-pulse {
+            animation: rewardPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes rewardPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* ================================
+           💰 MODAL STYLES
+           ================================ */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 2px solid var(--border-accent);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--tanda-cyan);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--tanda-cyan);
+            box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
+        }
+        
+        .balance-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .balance-amount {
+            color: var(--tanda-cyan);
+            font-weight: 600;
+        }
+        
+        .reward-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .preview-label {
+            color: var(--text-secondary);
+        }
+        
+        .preview-value {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-card);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cancel:hover {
+            color: var(--text-primary);
+            border-color: var(--border-accent);
+        }
+        
+        .btn-confirm {
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            color: var(--tanda-black);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-confirm:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="nav-header">
+        <div class="nav-left">
+            <button class="back-btn" onclick="window.location.href='web3-dashboard.html'">
+                <i class="fas fa-arrow-left"></i> Exchange
+            </button>
+            <h1 class="page-title">
+                <i class="fas fa-piggy-bank"></i> Staking
+            </h1>
+        </div>
+        <div class="nav-links">
+            <a href="web3-dashboard.html" class="nav-link">
+                <i class="fas fa-exchange-alt"></i> Exchange
+            </a>
+            <a href="trading.html" class="nav-link">
+                <i class="fas fa-chart-line"></i> Trading
+            </a>
+            <a href="tanda-wallet.html" class="nav-link">
+                <i class="fas fa-wallet"></i> Wallet
+            </a>
+        </div>
+    </nav>
+
+    <div class="staking-container">
+        <!-- Staking Overview -->
+        <div class="staking-overview">
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon balance">LTD</div>
+                    <div class="card-title">Balance Disponible</div>
+                </div>
+                <div class="card-value" id="availableBalance">2,500.00</div>
+                <div class="card-change positive">+125.50 LTD hoy</div>
+            </div>
+
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon staked">🔒</div>
+                    <div class="card-title">Total en Staking</div>
+                </div>
+                <div class="card-value" id="totalStaked">1,800.00</div>
+                <div class="card-change positive">+5.2% este mes</div>
+            </div>
+
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon rewards">💰</div>
+                    <div class="card-title">Rewards Acumulados</div>
+                </div>
+                <div class="card-value" id="totalRewards">347.82</div>
+                <div class="card-change positive">+12.45 LTD esta semana</div>
+            </div>
+
+            <div class="overview-card">
+                <div class="card-header">
+                    <div class="card-icon apy">📈</div>
+                    <div class="card-title">APY Promedio</div>
+                </div>
+                <div class="card-value" id="averageAPY">12.5%</div>
+                <div class="card-change positive">+0.8% vs mes anterior</div>
+            </div>
+        </div>
+
+        <!-- Staking Pools -->
+        <div class="staking-pools">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-swimming-pool"></i> Pools de Staking
+                </h2>
+            </div>
+
+            <div class="pools-grid">
+                <div class="pool-card" onclick="openStakeModal('flexible')">
+                    <div class="pool-header">
+                        <div class="pool-name">Flexible Staking</div>
+                        <div class="pool-apy">8.5% APY</div>
+                    </div>
+                    <div class="pool-stats">
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">TVL</div>
+                            <div class="pool-stat-value">2.4M LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Mínimo</div>
+                            <div class="pool-stat-value">10 LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Período</div>
+                            <div class="pool-stat-value">Sin bloqueo</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Rewards</div>
+                            <div class="pool-stat-value">Diarios</div>
+                        </div>
+                    </div>
+                    <div class="pool-actions">
+                        <button class="btn-stake">
+                            <i class="fas fa-plus"></i> Stake
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pool-card" onclick="openStakeModal('30day')">
+                    <div class="pool-header">
+                        <div class="pool-name">30 Días Locked</div>
+                        <div class="pool-apy">12.0% APY</div>
+                    </div>
+                    <div class="pool-stats">
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">TVL</div>
+                            <div class="pool-stat-value">1.8M LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Mínimo</div>
+                            <div class="pool-stat-value">100 LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Período</div>
+                            <div class="pool-stat-value">30 días</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Rewards</div>
+                            <div class="pool-stat-value">Al vencimiento</div>
+                        </div>
+                    </div>
+                    <div class="pool-actions">
+                        <button class="btn-stake">
+                            <i class="fas fa-lock"></i> Stake
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pool-card" onclick="openStakeModal('90day')">
+                    <div class="pool-header">
+                        <div class="pool-name">90 Días Locked</div>
+                        <div class="pool-apy">15.5% APY</div>
+                    </div>
+                    <div class="pool-stats">
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">TVL</div>
+                            <div class="pool-stat-value">3.2M LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Mínimo</div>
+                            <div class="pool-stat-value">500 LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Período</div>
+                            <div class="pool-stat-value">90 días</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Rewards</div>
+                            <div class="pool-stat-value">Diarios + Bonus</div>
+                        </div>
+                    </div>
+                    <div class="pool-actions">
+                        <button class="btn-stake">
+                            <i class="fas fa-crown"></i> Stake
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pool-card" onclick="openStakeModal('365day')">
+                    <div class="pool-header">
+                        <div class="pool-name">1 Año Locked</div>
+                        <div class="pool-apy">20.0% APY</div>
+                    </div>
+                    <div class="pool-stats">
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">TVL</div>
+                            <div class="pool-stat-value">5.1M LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Mínimo</div>
+                            <div class="pool-stat-value">1,000 LTD</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Período</div>
+                            <div class="pool-stat-value">365 días</div>
+                        </div>
+                        <div class="pool-stat">
+                            <div class="pool-stat-label">Rewards</div>
+                            <div class="pool-stat-value">Compuestos</div>
+                        </div>
+                    </div>
+                    <div class="pool-actions">
+                        <button class="btn-stake">
+                            <i class="fas fa-gem"></i> Stake
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Stakes -->
+        <div class="my-stakes">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-wallet"></i> Mis Stakes
+                </h2>
+                <button class="btn-stake" onclick="claimAllRewards()">
+                    <i class="fas fa-coins"></i> Reclamar Todo
+                </button>
+            </div>
+
+            <div id="myStakesList">
+                <!-- Stakes will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Staking Manager Class
+        class StakingManager {
+            constructor() {
+                this.balances = {
+                    available: 2500.00,
+                    staked: 1800.00,
+                    rewards: 347.82
+                };
+                this.stakes = [];
+                this.pools = {
+                    flexible: { apy: 8.5, lockDays: 0, minAmount: 10 },
+                    '30day': { apy: 12.0, lockDays: 30, minAmount: 100 },
+                    '90day': { apy: 15.5, lockDays: 90, minAmount: 500 },
+                    '365day': { apy: 20.0, lockDays: 365, minAmount: 1000 }
+                };
+                this.init();
+            }
+
+            init() {
+                this.loadStakes();
+                this.renderStakes();
+                this.updateBalances();
+                this.simulateRewards();
+            }
+
+            loadStakes() {
+                try {
+                    const cachedStakes = localStorage.getItem('latanda_stakes');
+                    if (cachedStakes) {
+                        this.stakes = JSON.parse(cachedStakes);
+                    } else {
+                        this.stakes = this.generateDemoStakes();
+                        localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                    }
+                    console.log(`✅ Loaded ${this.stakes.length} stakes`);
+                } catch (error) {
+                    console.error('Error loading stakes:', error);
+                    this.stakes = this.generateDemoStakes();
+                }
+            }
+
+            generateDemoStakes() {
+                const now = new Date();
+                return [
+                    {
+                        id: 'stake_1',
+                        pool: 'flexible',
+                        amount: 500.00,
+                        startDate: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+                        endDate: null,
+                        status: 'active',
+                        rewards: 23.45
+                    },
+                    {
+                        id: 'stake_2',
+                        pool: '30day',
+                        amount: 800.00,
+                        startDate: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+                        endDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+                        status: 'locked',
+                        rewards: 89.67
+                    },
+                    {
+                        id: 'stake_3',
+                        pool: '90day',
+                        amount: 500.00,
+                        startDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+                        endDate: new Date(now.getTime() + 85 * 24 * 60 * 60 * 1000).toISOString(),
+                        status: 'locked',
+                        rewards: 12.75
+                    }
+                ];
+            }
+
+            renderStakes() {
+                const container = document.getElementById('myStakesList');
+                
+                if (this.stakes.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <i class="fas fa-piggy-bank" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                            <h3>No tienes stakes activos</h3>
+                            <p>Comienza a hacer staking para ganar rewards pasivos</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const stakesHTML = this.stakes.map(stake => {
+                    const pool = this.pools[stake.pool];
+                    const startDate = new Date(stake.startDate);
+                    const endDate = stake.endDate ? new Date(stake.endDate) : null;
+                    const now = new Date();
+                    
+                    let statusClass = 'status-active';
+                    let statusText = 'Activo';
+                    let daysLeft = 0;
+                    
+                    if (endDate) {
+                        daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                        if (daysLeft > 0) {
+                            statusClass = 'status-locked';
+                            statusText = `${daysLeft} días restantes`;
+                        } else {
+                            statusClass = 'status-unlocked';
+                            statusText = 'Listo para retirar';
+                        }
+                    }
+
+                    const poolNames = {
+                        flexible: 'Flexible Staking',
+                        '30day': '30 Días Locked',
+                        '90day': '90 Días Locked',
+                        '365day': '1 Año Locked'
+                    };
+
+                    return `
+                        <div class="stake-item">
+                            <div class="stake-header">
+                                <div class="stake-pool">${poolNames[stake.pool]}</div>
+                                <div class="stake-status ${statusClass}">${statusText}</div>
+                            </div>
+                            <div class="stake-details">
+                                <div class="stake-detail">
+                                    <div class="stake-detail-label">Monto Staked</div>
+                                    <div class="stake-detail-value">${stake.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} LTD</div>
+                                </div>
+                                <div class="stake-detail">
+                                    <div class="stake-detail-label">APY</div>
+                                    <div class="stake-detail-value">${pool.apy}%</div>
+                                </div>
+                                <div class="stake-detail">
+                                    <div class="stake-detail-label">Rewards</div>
+                                    <div class="stake-detail-value reward-pulse">${stake.rewards.toFixed(6)} LTD</div>
+                                </div>
+                                <div class="stake-detail">
+                                    <div class="stake-detail-label">Fecha Inicio</div>
+                                    <div class="stake-detail-value">${startDate.toLocaleDateString('es-ES')}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                    <button class="btn-stake" onclick="claimRewards('${stake.id}')">
+                                        <i class="fas fa-coins"></i> Reclamar
+                                    </button>
+                                    ${stake.status === 'active' || (endDate && daysLeft <= 0) ? 
+                                        `<button class="btn-unstake" onclick="unstake('${stake.id}')">
+                                            <i class="fas fa-unlock"></i> Unstake
+                                        </button>` : 
+                                        `<button class="btn-unstake" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                            <i class="fas fa-lock"></i> Bloqueado
+                                        </button>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = stakesHTML;
+            }
+
+            updateBalances() {
+                document.getElementById('availableBalance').textContent = this.balances.available.toLocaleString('es-ES', { minimumFractionDigits: 2 });
+                document.getElementById('totalStaked').textContent = this.balances.staked.toLocaleString('es-ES', { minimumFractionDigits: 2 });
+                document.getElementById('totalRewards').textContent = this.balances.rewards.toFixed(2);
+            }
+
+            simulateRewards() {
+                setInterval(() => {
+                    // Simulate small reward increases
+                    this.stakes.forEach(stake => {
+                        if (stake.status === 'active' || stake.status === 'locked') {
+                            const pool = this.pools[stake.pool];
+                            const dailyReward = (stake.amount * pool.apy / 100) / 365;
+                            stake.rewards += dailyReward / 24 / 60; // Per minute for demo
+                        }
+                    });
+                    
+                    // Update total rewards
+                    this.balances.rewards = this.stakes.reduce((total, stake) => total + stake.rewards, 0);
+                    
+                    this.renderStakes();
+                    this.updateBalances();
+                    localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                }, 60000); // Update every minute
+            }
+
+            openStakeModal(poolType) {
+                const pool = this.pools[poolType];
+                const poolNames = {
+                    flexible: 'Flexible Staking',
+                    '30day': '30 Días Locked',
+                    '90day': '90 Días Locked',
+                    '365day': '1 Año Locked'
+                };
+
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">${poolNames[poolType]} - ${pool.apy}% APY</h3>
+                            <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                        </div>
+                        
+                        <div class="balance-info">
+                            <span>Balance disponible:</span>
+                            <span class="balance-amount">${this.balances.available.toLocaleString('es-ES', { minimumFractionDigits: 2 })} LTD</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Cantidad a stakear (mín: ${pool.minAmount} LTD)</label>
+                            <input type="number" class="form-input" id="stakeAmount" placeholder="${pool.minAmount}" 
+                                   min="${pool.minAmount}" max="${this.balances.available}" step="0.01">
+                        </div>
+                        
+                        <div class="reward-preview" id="rewardPreview">
+                            <div class="preview-row">
+                                <span class="preview-label">APY:</span>
+                                <span class="preview-value">${pool.apy}%</span>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-label">Período de bloqueo:</span>
+                                <span class="preview-value">${pool.lockDays === 0 ? 'Sin bloqueo' : pool.lockDays + ' días'}</span>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-label">Rewards estimados (30 días):</span>
+                                <span class="preview-value" id="estimatedRewards">0.00 LTD</span>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="btn-cancel" onclick="this.closest('.modal').remove()">Cancelar</button>
+                            <button class="btn-confirm" onclick="stakingManager.executeStake('${poolType}')">
+                                <i class="fas fa-lock"></i> Confirmar Stake
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Add real-time reward calculation
+                const amountInput = document.getElementById('stakeAmount');
+                const estimatedRewardsElement = document.getElementById('estimatedRewards');
+
+                amountInput.addEventListener('input', () => {
+                    const amount = parseFloat(amountInput.value) || 0;
+                    const monthlyRewards = (amount * pool.apy / 100) / 12;
+                    estimatedRewardsElement.textContent = monthlyRewards.toFixed(6) + ' LTD';
+                });
+            }
+
+            executeStake(poolType) {
+                const amount = parseFloat(document.getElementById('stakeAmount').value);
+                const pool = this.pools[poolType];
+
+                // Validation
+                if (!amount || amount < pool.minAmount) {
+                    this.showNotification('Error', `Cantidad mínima: ${pool.minAmount} LTD`, 'error');
+                    return;
+                }
+
+                if (amount > this.balances.available) {
+                    this.showNotification('Error', 'Saldo insuficiente', 'error');
+                    return;
+                }
+
+                // Create new stake
+                const now = new Date();
+                const endDate = pool.lockDays > 0 ? 
+                    new Date(now.getTime() + pool.lockDays * 24 * 60 * 60 * 1000) : null;
+
+                const newStake = {
+                    id: `stake_${Date.now()}`,
+                    pool: poolType,
+                    amount: amount,
+                    startDate: now.toISOString(),
+                    endDate: endDate ? endDate.toISOString() : null,
+                    status: pool.lockDays > 0 ? 'locked' : 'active',
+                    rewards: 0
+                };
+
+                // Update balances
+                this.balances.available -= amount;
+                this.balances.staked += amount;
+
+                // Add stake
+                this.stakes.push(newStake);
+
+                // Save and update
+                localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                this.renderStakes();
+                this.updateBalances();
+
+                // Close modal and show success
+                document.querySelector('.modal').remove();
+                this.showNotification(
+                    '✅ Stake Exitoso',
+                    `${amount} LTD stakeados en ${poolType} pool`,
+                    'success'
+                );
+            }
+
+            claimRewards(stakeId) {
+                const stake = this.stakes.find(s => s.id === stakeId);
+                if (!stake || stake.rewards <= 0) {
+                    this.showNotification('Info', 'No hay rewards para reclamar', 'info');
+                    return;
+                }
+
+                const rewardAmount = stake.rewards;
+                
+                // Update balances
+                this.balances.available += rewardAmount;
+                this.balances.rewards -= rewardAmount;
+                stake.rewards = 0;
+
+                // Save and update
+                localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                this.renderStakes();
+                this.updateBalances();
+
+                this.showNotification(
+                    '💰 Rewards Reclamados',
+                    `${rewardAmount.toFixed(6)} LTD agregados a tu balance`,
+                    'success'
+                );
+            }
+
+            claimAllRewards() {
+                const totalRewards = this.stakes.reduce((total, stake) => total + stake.rewards, 0);
+                
+                if (totalRewards <= 0) {
+                    this.showNotification('Info', 'No hay rewards para reclamar', 'info');
+                    return;
+                }
+
+                // Update all stakes
+                this.stakes.forEach(stake => {
+                    this.balances.available += stake.rewards;
+                    stake.rewards = 0;
+                });
+
+                this.balances.rewards = 0;
+
+                // Save and update
+                localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                this.renderStakes();
+                this.updateBalances();
+
+                this.showNotification(
+                    '💰 Todos los Rewards Reclamados',
+                    `${totalRewards.toFixed(6)} LTD agregados a tu balance`,
+                    'success'
+                );
+            }
+
+            unstake(stakeId) {
+                const stake = this.stakes.find(s => s.id === stakeId);
+                if (!stake) return;
+
+                const now = new Date();
+                const endDate = stake.endDate ? new Date(stake.endDate) : null;
+
+                // Check if can unstake
+                if (endDate && now < endDate) {
+                    this.showNotification('Error', 'El stake aún está bloqueado', 'error');
+                    return;
+                }
+
+                // Claim any pending rewards first
+                if (stake.rewards > 0) {
+                    this.balances.available += stake.rewards;
+                }
+
+                // Return staked amount
+                this.balances.available += stake.amount;
+                this.balances.staked -= stake.amount;
+
+                // Remove stake
+                this.stakes = this.stakes.filter(s => s.id !== stakeId);
+
+                // Save and update
+                localStorage.setItem('latanda_stakes', JSON.stringify(this.stakes));
+                this.renderStakes();
+                this.updateBalances();
+
+                this.showNotification(
+                    '🔓 Unstake Exitoso',
+                    `${stake.amount} LTD devueltos a tu balance`,
+                    'success'
+                );
+            }
+
+            showNotification(title, message, type = 'info') {
+                const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+                alert(`${icon} ${title}\n${message}`);
+            }
+        }
+
+        // Global functions
+        function openStakeModal(poolType) {
+            stakingManager.openStakeModal(poolType);
+        }
+
+        function claimRewards(stakeId) {
+            stakingManager.claimRewards(stakeId);
+        }
+
+        function claimAllRewards() {
+            stakingManager.claimAllRewards();
+        }
+
+        function unstake(stakeId) {
+            stakingManager.unstake(stakeId);
+        }
+
+        // Initialize staking manager
+        let stakingManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            stakingManager = new StakingManager();
+        });
+    </script>
+</body>
+</html>

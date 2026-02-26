@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda Web3 - Development Roadmap</title>
+    <link rel="stylesheet" href="shared-components-v2.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.8);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --success-green: #22c55e;
+            --warning-orange: #f59e0b;
+            --pending-gray: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .progress-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+
+        .progress-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 2px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+        }
+
+        .progress-card h3 {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--tanda-cyan);
+            margin-bottom: 8px;
+        }
+
+        .progress-card p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .roadmap-timeline {
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--tanda-cyan) 0%, var(--pending-gray) 100%);
+            border-radius: 2px;
+        }
+
+        .milestone {
+            position: relative;
+            margin-bottom: 48px;
+            margin-left: 80px;
+        }
+
+        .milestone-icon {
+            position: absolute;
+            left: -50px;
+            top: 8px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--bg-primary);
+            z-index: 10;
+        }
+
+        .milestone.completed .milestone-icon {
+            background: var(--success-green);
+        }
+
+        .milestone.in-progress .milestone-icon {
+            background: var(--warning-orange);
+        }
+
+        .milestone.pending .milestone-icon {
+            background: var(--pending-gray);
+        }
+
+        .milestone-content {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 2px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+        }
+
+        .milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .milestone-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .milestone-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success-green);
+        }
+
+        .status-in-progress {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-orange);
+        }
+
+        .status-pending {
+            background: rgba(107, 114, 128, 0.2);
+            color: var(--pending-gray);
+        }
+
+        .milestone-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-icon {
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .task-completed .task-icon {
+            color: var(--success-green);
+        }
+
+        .task-pending .task-icon {
+            color: var(--pending-gray);
+        }
+
+        .task-text {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .task-completed .task-text {
+            opacity: 0.7;
+            text-decoration: line-through;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(107, 114, 128, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tanda-cyan), var(--tanda-cyan-light));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .last-updated {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .milestone {
+                margin-left: 60px;
+            }
+            
+            .milestone-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 La Tanda Web3 Roadmap</h1>
+            <p>Track our journey from MVP to the world's first decentralized Latin American financial ecosystem</p>
+        </div>
+
+        <div class="progress-overview">
+            <div class="progress-card">
+                <h3 id="overall-progress">25%</h3>
+                <p>Overall Progress</p>
+            </div>
+            <div class="progress-card">
+                <h3 id="completed-milestones">0</h3>
+                <p>Completed Milestones</p>
+            </div>
+            <div class="progress-card">
+                <h3 id="total-tasks">16</h3>
+                <p>Total Tasks</p>
+            </div>
+            <div class="progress-card">
+                <h3 id="days-since-start">--</h3>
+                <p>Days in Development</p>
+            </div>
+        </div>
+
+        <div class="roadmap-timeline">
+            <div class="timeline-line"></div>
+
+            <!-- Foundation Milestone -->
+            <div class="milestone in-progress" id="milestone-foundation">
+                <div class="milestone-icon">🏗️</div>
+                <div class="milestone-content">
+                    <div class="milestone-header">
+                        <h2 class="milestone-title">Foundation Architecture</h2>
+                        <span class="milestone-status status-in-progress">In Progress</span>
+                    </div>
+                    <p class="milestone-description">
+                        Build the core architecture and essential components for the La Tanda Web3 platform.
+                    </p>
+                    <ul class="task-list">
+                        <li class="task-item task-completed">
+                            <i class="fas fa-check-circle task-icon"></i>
+                            <span class="task-text">Complete CLAUDE.md documentation</span>
+                        </li>
+                        <li class="task-item task-completed">
+                            <i class="fas fa-check-circle task-icon"></i>
+                            <span class="task-text">Set up API configuration (api-endpoints-config.js)</span>
+                        </li>
+                        <li class="task-item task-completed">
+                            <i class="fas fa-check-circle task-icon"></i>
+                            <span class="task-text">Complete groups advanced system</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Create system-test.html</span>
+                        </li>
+                    </ul>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokenomics Milestone -->
+            <div class="milestone pending" id="milestone-tokenomics">
+                <div class="milestone-icon">💎</div>
+                <div class="milestone-content">
+                    <div class="milestone-header">
+                        <h2 class="milestone-title">LTD Token Economics</h2>
+                        <span class="milestone-status status-pending">Pending</span>
+                    </div>
+                    <p class="milestone-description">
+                        Complete tokenomics implementation and developer reward systems for the LTD token.
+                    </p>
+                    <ul class="task-list">
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Create LTD-TOKEN-COMPLETE-ECONOMICS.md</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Document DEVELOPER-TOKENOMICS-REWARDS.md</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Write DEVELOPER-QUICKSTART.md</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Set up GitHub bounty templates</span>
+                        </li>
+                    </ul>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public Launch Milestone -->
+            <div class="milestone pending" id="milestone-public-launch">
+                <div class="milestone-icon">🌍</div>
+                <div class="milestone-content">
+                    <div class="milestone-header">
+                        <h2 class="milestone-title">Public Launch Preparation</h2>
+                        <span class="milestone-status status-pending">Pending</span>
+                    </div>
+                    <p class="milestone-description">
+                        Prepare for public launch with staging environments, community setup, and announcements.
+                    </p>
+                    <ul class="task-list">
+                        <li class="task-item task-completed">
+                            <i class="fas fa-check-circle task-icon"></i>
+                            <span class="task-text">Set up GitHub repository</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Deploy staging environment scripts</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Create Discord setup guide</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Social media announcements</span>
+                        </li>
+                    </ul>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 25%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community Growth Milestone -->
+            <div class="milestone pending" id="milestone-community">
+                <div class="milestone-icon">👥</div>
+                <div class="milestone-content">
+                    <div class="milestone-header">
+                        <h2 class="milestone-title">Community Growth</h2>
+                        <span class="milestone-status status-pending">Pending</span>
+                    </div>
+                    <p class="milestone-description">
+                        Build and grow the developer and user community around La Tanda Web3.
+                    </p>
+                    <ul class="task-list">
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Launch Discord community</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Create developer onboarding program</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">Establish bug bounty program</span>
+                        </li>
+                        <li class="task-item task-pending">
+                            <i class="fas fa-circle task-icon"></i>
+                            <span class="task-text">First 100 community members</span>
+                        </li>
+                    </ul>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            <p><i class="fas fa-clock"></i> Last updated: <span id="last-update-time">--</span></p>
+            <p>Auto-updated via git hooks • Run <code>./update-roadmap.sh</code> for manual update</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="latanda-footer" class="auto-footer"></div>
+
+    <script type="module" src="shared-components.js"></script>
+    <script>
+        // Initialize roadmap with current timestamp
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('last-update-time').textContent = new Date().toLocaleString();
+            
+            // Calculate days since project start (approximate)
+            const projectStart = new Date('2024-01-01');
+            const now = new Date();
+            const daysSinceStart = Math.floor((now - projectStart) / (1000 * 60 * 60 * 24));
+            document.getElementById('days-since-start').textContent = daysSinceStart;
+        });
+
+        // Function to update milestone status (called by automation scripts)
+        function updateMilestoneStatus(milestoneId, status, progress) {
+            const milestone = document.getElementById(milestoneId);
+            if (!milestone) return;
+
+            const statusElement = milestone.querySelector('.milestone-status');
+            const progressFill = milestone.querySelector('.progress-fill');
+            
+            // Update status class and text
+            milestone.className = `milestone ${status}`;
+            statusElement.className = `milestone-status status-${status}`;
+            statusElement.textContent = status.replace('-', ' ').toUpperCase();
+            
+            // Update progress bar
+            if (progressFill && progress !== undefined) {
+                progressFill.style.width = `${progress}%`;
+            }
+
+            // Update last update time
+            document.getElementById('last-update-time').textContent = new Date().toLocaleString();
+        }
+
+        // Function to update overall progress
+        function updateOverallProgress(percentage, completedMilestones, totalTasks) {
+            document.getElementById('overall-progress').textContent = `${percentage}%`;
+            document.getElementById('completed-milestones').textContent = completedMilestones;
+            document.getElementById('total-tasks').textContent = totalTasks;
+        }
+    </script>
+</body>
+</html>

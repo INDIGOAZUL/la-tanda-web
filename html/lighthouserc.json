@@ -1,0 +1,61 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "startServerCommand": "npm run preview",
+      "startServerReadyPattern": "Local:.+",
+      "url": [
+        "http://localhost:4173",
+        "http://localhost:4173/home-dashboard.html",
+        "http://localhost:4173/web3-dashboard.html",
+        "http://localhost:4173/my-tandas.html"
+      ],
+      "settings": {
+        "preset": "desktop",
+        "throttling": {
+          "rttMs": 40,
+          "throughputKbps": 10240,
+          "cpuSlowdownMultiplier": 1
+        },
+        "screenEmulation": {
+          "mobile": false,
+          "width": 1350,
+          "height": 940,
+          "deviceScaleFactor": 1
+        }
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", {"minScore": 0.8}],
+        "categories:accessibility": ["error", {"minScore": 0.9}],
+        "categories:best-practices": ["error", {"minScore": 0.9}],
+        "categories:seo": ["error", {"minScore": 0.9}],
+        "categories:pwa": ["warn", {"minScore": 0.8}],
+
+        "first-contentful-paint": ["warn", {"maxNumericValue": 2000}],
+        "largest-contentful-paint": ["warn", {"maxNumericValue": 2500}],
+        "cumulative-layout-shift": ["error", {"maxNumericValue": 0.1}],
+        "total-blocking-time": ["warn", {"maxNumericValue": 300}],
+        "speed-index": ["warn", {"maxNumericValue": 3000}],
+
+        "resource-summary:script:size": ["error", {"maxNumericValue": 500000}],
+        "resource-summary:stylesheet:size": ["warn", {"maxNumericValue": 150000}],
+        "resource-summary:image:size": ["warn", {"maxNumericValue": 1000000}],
+        "resource-summary:font:size": ["warn", {"maxNumericValue": 200000}],
+        "resource-summary:total:size": ["warn", {"maxNumericValue": 2000000}],
+
+        "unused-javascript": ["warn", {"maxNumericValue": 100000}],
+        "unused-css-rules": ["warn", {"maxNumericValue": 50000}],
+        "modern-image-formats": "warn",
+        "offscreen-images": "warn",
+        "uses-webp-images": "warn",
+        "uses-responsive-images": "warn",
+        "uses-optimized-images": "warn"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

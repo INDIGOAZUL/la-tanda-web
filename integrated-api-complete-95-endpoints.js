@@ -22213,6 +22213,48 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
         }
 
         // ============================================
+        // POST /api/feed/social/track-views - Batch increment view counts
+        // Added: 2026-02-26
+        // ============================================
+        if (pathname === '/api/feed/social/track-views' && method === 'POST') {
+            try {
+                const eventIds = body.event_ids;
+
+                if (!Array.isArray(eventIds) || eventIds.length === 0) {
+                    sendError(res, 400, 'event_ids debe ser un array no vacio');
+                    return;
+                }
+
+                if (eventIds.length > 50) {
+                    sendError(res, 400, 'Maximo 50 eventos por solicitud');
+                    return;
+                }
+
+                // Validate each ID is a non-empty string
+                const validIds = eventIds.filter(id => typeof id === 'string' && id.trim().length > 0);
+                if (validIds.length === 0) {
+                    sendError(res, 400, 'event_ids contiene valores invalidos');
+                    return;
+                }
+
+                const result = await dbPostgres.pool.query(
+                    'UPDATE social_feed SET view_count = view_count + 1 WHERE id = ANY($1::uuid[])',
+                    [validIds]
+                );
+
+                sendResponse(res, 200, {
+                    success: true,
+                    tracked: result.rowCount
+                });
+                return;
+            } catch (error) {
+                log('error', '[SOCIAL] Track views error: ' + error.message);
+                sendError(res, 500, 'Error al registrar vistas');
+                return;
+            }
+        }
+
+        // ============================================
         // GET /api/feed/social/bookmarks - Get user's bookmarked events
         // Added: 2026-01-25
         // ============================================

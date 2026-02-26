@@ -1,0 +1,221 @@
+const db = require('./db-postgres');
+
+// Función simple - solo datos básicos
+async function getGroupsByAdmin(adminId) {
+    const result = await db.pool.query(
+        `SELECT 
+            group_id, name, contribution_amount, frequency,
+            member_count, max_members, total_amount_collected,
+            admin_id, status, created_at, location, description, category
+        FROM groups
+        WHERE admin_id = $1
+        ORDER BY created_at DESC`,
+        [adminId]
+    );
+    return result.rows;
+}
+
+// Función enriquecida - incluye rol, pagos, alertas
+async function getEnrichedGroupsByUser(userId) {
+    const query = `
+        WITH user_groups AS (
+            -- Grupos donde el usuario es miembro activo
+            SELECT 
+                g.*,
+                gm.role AS my_role,
+                gm.status AS my_membership_status,
+                gm.joined_at
+            FROM groups g
+            INNER JOIN group_members gm ON g.group_id = gm.group_id
+            WHERE gm.user_id = $1 AND gm.status = 'active'
+            
+            UNION
+            
+            -- Grupos donde el usuario es admin/creador (aunque no esté en group_members)
+            SELECT 
+                g.*,
+                'creator' AS my_role,
+                'active' AS my_membership_status,
+                g.created_at AS joined_at
+            FROM groups g
+            WHERE g.admin_id = $1
+            AND NOT EXISTS (
+                SELECT 1 FROM group_members gm 
+                WHERE gm.group_id = g.group_id AND gm.user_id = $1
+            )
+        ),
+        group_stats AS (
+            SELECT 
+                group_id,
+                COUNT(*) AS active_members
+            FROM group_members
+            WHERE status = 'active'
+            GROUP BY group_id
+        ),
+        payment_stats AS (
+            SELECT 
+                c.group_id,
+                c.user_id,
+                MAX(c.paid_date) AS last_payment_date,
+                SUM(CASE WHEN c.status = 'completed' THEN c.amount ELSE 0 END) AS total_paid,
+                COUNT(CASE WHEN c.status = 'pending' THEN 1 END) AS pending_payments
+            FROM contributions c
+            WHERE c.user_id = $1 AND c.status IN ('completed', 'pending')
+            GROUP BY c.group_id, c.user_id
+        )
+        SELECT 
+            ug.group_id,
+            ug.name,
+            ug.description,
+            ug.category,
+            ug.location,
+            ug.contribution_amount,
+            ug.frequency,
+            ug.max_members,
+            ug.status,
+            ug.created_at,
+            ug.total_amount_collected,
+            ug.admin_id,
+            ug.member_count,
+            ug.my_role,
+            ug.my_membership_status,
+            ug.joined_at,
+            COALESCE(gs.active_members, 1) AS members_count,
+            COALESCE(ps.last_payment_date, ug.created_at) AS last_payment_date,
+            COALESCE(ps.total_paid, 0) AS my_total_paid,
+            COALESCE(ps.pending_payments, 0) AS pending_payments
+        FROM user_groups ug
+        LEFT JOIN group_stats gs ON ug.group_id = gs.group_id
+        LEFT JOIN payment_stats ps ON ug.group_id = ps.group_id
+        ORDER BY ug.created_at DESC
+    `;
+    
+    const result = await db.pool.query(query, [userId]);
+    
+    // Post-procesar para calcular estado de pago y alertas
+    return result.rows.map(group => enrichGroupWithPaymentStatus(group));
+}
+
+function enrichGroupWithPaymentStatus(group) {
+    // Calcular próximo pago basado en el último pago o fecha de creación
+    const lastPayment = new Date(group.last_payment_date);
+    const today = new Date();
+    
+    let daysInterval = 30; // monthly por defecto
+    if (group.frequency === 'weekly') daysInterval = 7;
+    else if (group.frequency === 'biweekly') daysInterval = 14;
+    
+    const nextPaymentDue = new Date(lastPayment);
+    nextPaymentDue.setDate(nextPaymentDue.getDate() + daysInterval);
+    
+    // Calcular estado de pago
+    const gracePeriod = 3;
+    const dueWithGrace = new Date(nextPaymentDue);
+    dueWithGrace.setDate(dueWithGrace.getDate() + gracePeriod);
+    
+    let paymentStatus = 'up_to_date';
+    let daysLate = 0;
+    
+    if (today > dueWithGrace) {
+        paymentStatus = 'late';
+        daysLate = Math.floor((today - dueWithGrace) / (1000 * 60 * 60 * 24));
+    } else if (today > nextPaymentDue) {
+        paymentStatus = 'pending';
+        daysLate = Math.floor((today - nextPaymentDue) / (1000 * 60 * 60 * 24));
+    }
+    
+    // Si hay pagos pendientes en la DB, marcar como pending
+    if (group.pending_payments > 0) {
+        paymentStatus = 'pending';
+    }
+    
+    // Generar alertas
+    const alerts = [];
+    
+    if (paymentStatus === 'up_to_date') {
+        const daysUntilDue = Math.floor((nextPaymentDue - today) / (1000 * 60 * 60 * 24));
+        if (daysUntilDue <= 3 && daysUntilDue > 0) {
+            alerts.push({
+                type: 'payment_due',
+                severity: 'warning',
+                message: `Tu pago vence en ${daysUntilDue} día${daysUntilDue !== 1 ? 's' : ''}`
+            });
+        }
+    } else if (paymentStatus === 'late') {
+        alerts.push({
+            type: 'payment_overdue',
+            severity: 'danger',
+            message: `Tienes un pago atrasado (${daysLate} día${daysLate !== 1 ? 's' : ''})`
+        });
+    } else if (paymentStatus === 'pending' && group.pending_payments > 0) {
+        alerts.push({
+            type: 'payment_pending',
+            severity: 'info',
+            message: `Tienes ${group.pending_payments} pago${group.pending_payments !== 1 ? 's' : ''} pendiente${group.pending_payments !== 1 ? 's' : ''}`
+        });
+    }
+    
+    return {
+        ...group,
+        my_payment_status: paymentStatus,
+        my_days_late: daysLate,
+        my_next_payment_due: nextPaymentDue.toISOString(),
+        my_total_paid: parseFloat(group.my_total_paid || 0),
+        my_alerts: alerts,
+        has_active_tanda: false,
+        my_turn_number: null,
+        turns_until_mine: null
+    };
+}
+
+module.exports = { 
+    getGroupsByAdmin, 
+    getEnrichedGroupsByUser 
+};
+
+
+// Get public groups available for joining (excluding user's own groups)
+async function getPublicGroups(excludeUserId = null) {
+    let query = `
+        SELECT
+            g.group_id as id,
+            g.name,
+            g.contribution_amount,
+            g.frequency,
+            g.member_count,
+            g.max_members,
+            g.total_amount_collected,
+            g.admin_id,
+            g.status,
+            g.created_at,
+            g.location,
+            g.description,
+            g.image_url,
+            g.category,
+            g.meeting_schedule,
+            u.name as admin_name
+        FROM groups g
+        LEFT JOIN users u ON g.admin_id = u.user_id
+        WHERE g.status = 'active'
+        AND g.member_count < g.max_members
+        AND g.is_demo = false
+    `;
+
+    const params = [];
+
+    if (excludeUserId) {
+        query += `
+            AND g.group_id NOT IN (
+                SELECT group_id FROM group_members WHERE user_id = $1
+            )
+        `;
+        params.push(excludeUserId);
+    }
+
+    query += ' ORDER BY g.created_at DESC';
+
+    const result = await db.pool.query(query, params);
+    return result.rows;
+}
+
+module.exports.getPublicGroups = getPublicGroups;
