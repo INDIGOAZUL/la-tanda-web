@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.0">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.1">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -797,6 +797,10 @@
                 actionsHtml += '<button class="btn pr-request-btn" data-action="grp-request-extension" data-group-id="' + escapeHtml(group.id) + '">Solicitar Prorroga</button>';
             }
 
+            // v4.11.1: Historial button for active groups (all roles)
+            if (st === 'active' || st === 'paused') {
+                actionsHtml += '<button class="btn btn-sm ch-btn-history" data-action="grp-contribution-history" data-group-id="' + escapeHtml(group.id) + '" data-role="' + escapeHtml(group.my_role || 'member') + '" title="Historial de pagos"><i class="fas fa-history"></i> Historial</button>';
+            }
             // Public group card overrides (discover open groups)
             if (group.is_public) {
                 statusColor = '#f59e0b';
@@ -3353,9 +3357,11 @@ function renderTandaCard(tanda) {
         actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
             '<span class="tc-waiting"><i class="fas fa-clock"></i> ' + (tanda.has_turn_assigned ? 'Esperando inicio' : 'Sin turno') + '</span>';
     } else if (isCompleted) {
-        actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>';
+        actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
+            '<button class="btn btn-sm ch-btn-history" data-action="grp-contribution-history" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '" data-role="' + escapeHtml(role) + '" title="Historial de pagos"><i class="fas fa-history"></i> Historial</button>';
     } else {
-        actionsHtml = '<button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + eid + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>';
+        actionsHtml = '<button class="btn btn-sm btn-primary" data-action="grp-make-tanda-payment" data-tanda-id="' + eid + '"><i class="fas fa-money-bill-wave"></i> Pagar</button>' +
+            '<button class="btn btn-sm ch-btn-history" data-action="grp-contribution-history" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '" data-role="' + escapeHtml(role) + '" title="Historial de pagos"><i class="fas fa-history"></i> Historial</button>';
     }
 
     // Lottery/goal badges
@@ -9688,6 +9694,7 @@ function renderTurnsList() {
                 buttons += _gmBtn('gm-distribute', svgDistribute, greenBg, 'Distribuir Ciclo', 'Repartir fondos del ciclo', '#34d399', '#059669', greenBg, greenBorder);
                 buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-contribution-history', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'rgba(0,255,255,0.1)', 'Historial de Pagos', 'Historial completo de contribuciones', '#00FFFF', '#00B8D4', dark, darkBorder);
                 buttons += _gmBtn('gm-show-extensions', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(245,158,11,0.1)', 'Gestionar Prorrogas', 'Moras y solicitudes', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
                 buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente la tanda', '#f87171', '#ef4444', redBg, redBorder);
             }
@@ -9736,6 +9743,7 @@ function renderTurnsList() {
                     case 'gm-manage-turns': if (typeof manageTurns === 'function') manageTurns(gid); break;
                     case 'gm-toggle-pause': if (typeof toggleTandaPause === 'function') toggleTandaPause(gid); break;
                     case 'gm-show-balances': if (typeof showTandaBalances === 'function') showTandaBalances(gid); break;
+                    case 'gm-contribution-history': closeModal(); if (typeof showContributionHistory === 'function') showContributionHistory(gid, 'matrix'); break;
                     case 'gm-show-extensions': if (typeof showExtensionManager === 'function') showExtensionManager(gid); break;
                     case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
                     case 'gm-edit-group': if (typeof editGroup === 'function') editGroup(gid); break;
@@ -11457,6 +11465,226 @@ function renderTurnsList() {
 })();
 </script>
 
+    <!-- Contribution History (v4.11.1) -->
+    <script>
+        // ===== CONTRIBUTION HISTORY (v4.11.1) =====
+        async function showContributionHistory(groupId, view, targetUserId) {
+            view = view || 'timeline';
+            var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+            if (!authTk) { showNotification('Sesion expirada', 'error'); return; }
+
+            // Remove any existing overlay
+            var existing = document.getElementById('chOverlay');
+            if (existing) existing.remove();
+
+            // Show loading modal
+            var overlayEl = document.createElement('div');
+            overlayEl.className = 'modal-overlay ch-overlay';
+            overlayEl.id = 'chOverlay';
+            overlayEl.innerHTML = '<div class="modal-content ch-modal"><div class="ch-header"><h3><i class="fas fa-history"></i> Historial de Pagos</h3><button class="ch-close" data-action="ch-close">&times;</button></div><div class="ch-body"><div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#00FFFF;"></i><p style="margin-top:12px;">Cargando historial...</p></div></div></div>';
+            document.body.appendChild(overlayEl);
+            overlayEl.style.display = 'flex';
+            overlayEl.setAttribute('data-group-id', groupId);
+
+            overlayEl.addEventListener('click', function(e) {
+                if (e.target === overlayEl) { overlayEl.remove(); return; }
+                var actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+                var act = actionBtn.getAttribute('data-action');
+                if (act === 'ch-close') overlayEl.remove();
+                else if (act === 'ch-back-matrix') { overlayEl.remove(); showContributionHistory(groupId, 'matrix'); }
+                else if (act === 'ch-drill-member') {
+                    var uid = actionBtn.getAttribute('data-user-id');
+                    if (uid) { overlayEl.remove(); showContributionHistory(groupId, 'timeline', uid); }
+                }
+            });
+
+            try {
+                var url = API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/contribution-history?view=' + view;
+                if (targetUserId) url += '&user_id=' + encodeURIComponent(targetUserId);
+                var resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + authTk } });
+                var json = await resp.json();
+                if (!resp.ok || !json.success) {
+                    throw new Error(json.message || 'Error al cargar historial');
+                }
+                var data = json.data;
+                var bodyEl = overlayEl.querySelector('.ch-body');
+                if (view === 'matrix') {
+                    bodyEl.innerHTML = renderPaymentMatrix(data, groupId);
+                } else {
+                    var backBtn = targetUserId ? '<button class="btn btn-sm ch-btn-back" data-action="ch-back-matrix"><i class="fas fa-arrow-left"></i> Volver a matriz</button>' : '';
+                    bodyEl.innerHTML = backBtn + renderContributionTimeline(data);
+                }
+            } catch (err) {
+                var bodyErr = overlayEl.querySelector('.ch-body');
+                if (bodyErr) bodyErr.innerHTML = '<div style="text-align:center;padding:40px;color:#f87171;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i><p style="margin-top:12px;">' + escapeHtml(err.message || 'Error al cargar historial') + '</p></div>';
+            }
+        }
+
+        function renderContributionTimeline(data) {
+            var s = data.summary || {};
+            var paidStatuses = ['completed','coordinator_approved','archived'];
+            var verificationLabels = {
+                'coordinator_manual': 'Registrado por coordinador',
+                'coordinator_bulk': 'Registro masivo',
+                'bank_transfer': 'Transferencia bancaria',
+                'wallet': 'Pago con billetera',
+                'mobile_money': 'Dinero movil',
+                'crypto': 'Cripto',
+                'cash': 'Efectivo',
+                'card': 'Tarjeta',
+                'self_report': 'Auto-reporte',
+                'system': 'Sistema'
+            };
+
+            var html = '<div class="ch-summary">';
+            html += '<div class="ch-stat"><div class="ch-stat-val">' + (s.cycles_paid || 0) + '/' + (s.cycles_total || 0) + '</div><div class="ch-stat-label">Ciclos pagados</div></div>';
+            html += '<div class="ch-stat"><div class="ch-stat-val">L. ' + ((s.total_paid || 0).toLocaleString('es-HN')) + '</div><div class="ch-stat-label">Total pagado</div></div>';
+            html += '<div class="ch-stat"><div class="ch-stat-val">' + (s.cycles_pending || 0) + '</div><div class="ch-stat-label">Pendientes</div></div>';
+            html += '</div>';
+
+            if (data.member_name && data.member_user_id) {
+                html += '<div class="ch-member-label"><i class="fas fa-user"></i> ' + escapeHtml(data.member_name) + '</div>';
+            }
+
+            var byCycle = {};
+            (data.contributions || []).forEach(function(c) {
+                if (!byCycle[c.cycle_number]) byCycle[c.cycle_number] = [];
+                byCycle[c.cycle_number].push(c);
+            });
+
+            html += '<div class="ch-timeline">';
+            var currentCycle = data.current_cycle || 1;
+            if (currentCycle === 0) currentCycle = 1;
+
+            for (var cy = 1; cy <= currentCycle; cy++) {
+                var entries = byCycle[cy] || [];
+                if (entries.length === 0) {
+                    html += '<div class="ch-entry ch-entry-none">';
+                    html += '<div class="ch-entry-icon"><i class="fas fa-minus-circle"></i></div>';
+                    html += '<div class="ch-entry-body"><div class="ch-entry-title">Ciclo ' + cy + '</div><div class="ch-entry-detail">Sin registro</div></div>';
+                    html += '</div>';
+                } else {
+                    entries.forEach(function(c) {
+                        var isPaid = paidStatuses.includes(c.status);
+                        var isRejected = c.status === 'rejected';
+                        var statusClass = isPaid ? 'ch-entry-paid' : isRejected ? 'ch-entry-rejected' : 'ch-entry-pending';
+                        var icon = isPaid ? 'fa-check-circle' : isRejected ? 'fa-times-circle' : 'fa-clock';
+
+                        html += '<div class="ch-entry ' + statusClass + '">';
+                        html += '<div class="ch-entry-icon"><i class="fas ' + icon + '"></i></div>';
+                        html += '<div class="ch-entry-body">';
+                        html += '<div class="ch-entry-title">Ciclo ' + c.cycle_number + ' &mdash; L. ' + parseFloat(c.amount).toLocaleString('es-HN') + '</div>';
+
+                        var statusText = isPaid ? 'Pagado' : isRejected ? 'Rechazado' : 'Pendiente';
+                        html += '<div class="ch-entry-status ' + (isPaid ? 'ch-status-paid' : isRejected ? 'ch-status-rejected' : 'ch-status-pending') + '">' + statusText + '</div>';
+
+                        if (isPaid) {
+                            var vLabel = verificationLabels[c.verification_method] || c.verification_method || 'No especificado';
+                            html += '<div class="ch-entry-detail"><i class="fas fa-shield-alt"></i> ' + escapeHtml(vLabel) + '</div>';
+                            if (c.verified_by_name) {
+                                html += '<div class="ch-entry-detail"><i class="fas fa-user-check"></i> Verificado por ' + escapeHtml(c.verified_by_name) + '</div>';
+                            }
+                            if (c.paid_date) {
+                                var pd = new Date(c.paid_date);
+                                html += '<div class="ch-entry-detail"><i class="fas fa-calendar"></i> ' + pd.toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>';
+                            }
+                            if (c.confirmation_code) {
+                                html += '<div class="ch-entry-detail"><i class="fas fa-hashtag"></i> Ref: ' + escapeHtml(c.confirmation_code) + '</div>';
+                            }
+                            if (c.proof_url) {
+                                html += '<div class="ch-entry-detail"><a href="' + escapeHtml(c.proof_url) + '" target="_blank" rel="noopener" class="ch-proof-link"><i class="fas fa-paperclip"></i> Ver comprobante</a></div>';
+                            }
+                        }
+                        if (isRejected && c.rejection_reason) {
+                            html += '<div class="ch-entry-detail ch-rejection"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(c.rejection_reason) + '</div>';
+                        }
+                        html += '</div></div>';
+                    });
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderPaymentMatrix(data, groupId) {
+            var members = data.members || [];
+            var contribs = data.contributions || {};
+            var cycleTotals = data.cycle_totals || [];
+            var currentCycle = data.current_cycle || 1;
+            var paidStatuses = ['completed','coordinator_approved','archived'];
+
+            var totalPaid = 0, totalExpected = 0;
+            cycleTotals.forEach(function(ct) { totalPaid += ct.paid; totalExpected += ct.total; });
+            var compliance = totalExpected > 0 ? Math.round((totalPaid / totalExpected) * 100) : 0;
+
+            var html = '<div class="ch-summary">';
+            html += '<div class="ch-stat"><div class="ch-stat-val">' + members.length + '</div><div class="ch-stat-label">Miembros</div></div>';
+            html += '<div class="ch-stat"><div class="ch-stat-val">' + currentCycle + '</div><div class="ch-stat-label">Ciclo actual</div></div>';
+            html += '<div class="ch-stat"><div class="ch-stat-val">' + compliance + '%</div><div class="ch-stat-label">Cumplimiento</div></div>';
+            html += '</div>';
+
+            // Member drill-down select
+            html += '<div class="ch-member-select">';
+            html += '<label><i class="fas fa-search"></i> Ver historial individual:</label>';
+            html += '<select id="chMemberDrill">';
+            html += '<option value="">-- Seleccionar miembro --</option>';
+            members.forEach(function(m) {
+                html += '<option value="' + escapeHtml(m.user_id) + '">' + escapeHtml(m.name) + (m.role === 'coordinator' || m.role === 'creator' ? ' (Coord.)' : '') + '</option>';
+            });
+            html += '</select></div>';
+
+            // Matrix table
+            html += '<div class="ch-matrix-wrap"><table class="ch-matrix">';
+            html += '<thead><tr><th class="ch-sticky-col">Miembro</th>';
+            for (var cy = 1; cy <= currentCycle; cy++) {
+                html += '<th>C' + cy + '</th>';
+            }
+            html += '</tr></thead><tbody>';
+
+            members.forEach(function(m) {
+                html += '<tr>';
+                html += '<td class="ch-sticky-col ch-member-name" data-action="ch-drill-member" data-user-id="' + escapeHtml(m.user_id) + '">' + escapeHtml(m.name) + '</td>';
+                var userContribs = contribs[m.user_id] || {};
+                for (var cy2 = 1; cy2 <= currentCycle; cy2++) {
+                    var entry = userContribs[String(cy2)];
+                    if (!entry) {
+                        html += '<td class="ch-cell ch-cell-none" title="Sin registro">&mdash;</td>';
+                    } else if (paidStatuses.includes(entry.status)) {
+                        html += '<td class="ch-cell ch-cell-paid" title="Pagado"><i class="fas fa-check"></i></td>';
+                    } else if (entry.status === 'rejected') {
+                        html += '<td class="ch-cell ch-cell-rejected" title="Rechazado"><i class="fas fa-times"></i></td>';
+                    } else {
+                        html += '<td class="ch-cell ch-cell-pending" title="Pendiente"><i class="fas fa-clock"></i></td>';
+                    }
+                }
+                html += '</tr>';
+            });
+
+            // Summary row
+            html += '<tr class="ch-summary-row"><td class="ch-sticky-col">% Pagado</td>';
+            cycleTotals.forEach(function(ct) {
+                var cls = ct.percent >= 80 ? 'ch-pct-good' : ct.percent >= 50 ? 'ch-pct-warn' : 'ch-pct-bad';
+                html += '<td class="ch-cell ' + cls + '">' + ct.percent + '%</td>';
+            });
+            html += '</tr>';
+
+            html += '</tbody></table></div>';
+            return html;
+        }
+
+        // Wire up member drill-down select (delegated since it's dynamically created)
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'chMemberDrill') {
+                var uid = e.target.value;
+                var overlay = document.getElementById('chOverlay');
+                if (uid && overlay) {
+                    var gid = overlay.getAttribute('data-group-id');
+                    if (gid) { overlay.remove(); showContributionHistory(gid, 'timeline', uid); }
+                }
+            }
+        });
+    </script>
     <script src="payout-frontend.js?v=1.6"></script>
 
     <!-- Tab Switching (delegated, no inline onclick) -->
@@ -12318,6 +12546,16 @@ function renderTurnsList() {
                 case 'grp-make-tanda-payment':
                     var mtTid = btn.getAttribute('data-tanda-id');
                     if (mtTid && typeof makeTandaPayment === 'function') makeTandaPayment(mtTid);
+                    break;
+                case 'grp-contribution-history':
+                    (function() {
+                        var chGroupId = btn.getAttribute('data-group-id');
+                        var chRole = btn.getAttribute('data-role') || 'member';
+                        if (chGroupId && typeof showContributionHistory === 'function') {
+                            var chView = ['creator','coordinator','admin'].includes(chRole) ? 'matrix' : 'timeline';
+                            showContributionHistory(chGroupId, chView);
+                        }
+                    })();
                     break;
 
                 // Toast close (Phase 1)
