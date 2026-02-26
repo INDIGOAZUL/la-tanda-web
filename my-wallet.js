@@ -499,6 +499,8 @@ class LaTandaWallet {
     // Load transaction history for the new layout
     async loadTransactionHistory() {
         try {
+            // Invalidate page cache when reloading transactions
+            this.pageCache = {};
 
             // Try to load from API first, fallback to local data
             await this.fetchTransactionHistory();
@@ -635,7 +637,6 @@ class LaTandaWallet {
         // Check page cache first
         const cached = this.getCachedPage(cacheKey);
         if (cached) {
-            console.log(`Loading page ${pageNum} from cache`);
             this.transactionHistory = cached.transactions;
             this.currentPage = pageNum;
             this.paginationData = cached.pagination;
@@ -652,7 +653,6 @@ class LaTandaWallet {
             const response = await this.apiCall('/api/user/transactions', {
                 method: 'POST',
                 body: JSON.stringify({
-                    user_id: userId,
                     limit: this.paginationData.limit,
                     offset: offset
                 })
@@ -660,8 +660,8 @@ class LaTandaWallet {
             
             this.hideLoading();
             
-            if (response && response.success && response.data) {
-                this.transactionHistory = response.data.transactions || [];
+            if (response && response.success && response.data && response.data.transactions) {
+                this.transactionHistory = response.data.transactions;
                 this.currentPage = pageNum;
                 if (response.data.pagination) {
                     this.paginationData = response.data.pagination;
@@ -677,6 +677,8 @@ class LaTandaWallet {
                 this.renderTransactionHistory();
                 this.renderWithTransition();
                 this.saveTransactionHistory();
+            } else {
+                this.showError('Error al cargar las transacciones');
             }
         } catch (error) {
             this.hideLoading();
@@ -765,145 +767,6 @@ class LaTandaWallet {
         if (indicator) {
             indicator.textContent = `Página ${this.currentPage} de ${this.totalPages}`;
         }
-    }
-
-    /**
-     * Enable infinite scroll - loads next page when user scrolls to bottom
-     * Bonus feature: +50 LTD (alternative to button pagination)
-     * Call this method to activate infinite scroll mode
-     */
-    enableInfiniteScroll() {
-        // Create intersection observer to detect scroll to bottom
-        const options = {
-            root: null,
-            rootMargin: '100px',
-            threshold: 0.1
-        };
-        
-        this.infiniteScrollObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && this.paginationData.has_more && !this.isLoadingMore) {
-                    this.loadNextPage();
-                }
-            });
-        }, options);
-        
-        // Observe the transaction list container
-        const transactionList = document.getElementById('transactionsList');
-        if (transactionList && this.infiniteScrollObserver) {
-            this.infiniteScrollObserver.observe(transactionList);
-            console.log('Infinite scroll enabled');
-        }
-        
-        // Add "Load More" button as fallback
-        this.addLoadMoreButton();
-    }
-
-    /**
-     * Disable infinite scroll
-     */
-    disableInfiniteScroll() {
-        if (this.infiniteScrollObserver) {
-            this.infiniteScrollObserver.disconnect();
-            this.infiniteScrollObserver = null;
-        }
-        // Remove load more button
-        const existingBtn = document.getElementById('loadMoreBtn');
-        if (existingBtn) existingBtn.remove();
-    }
-
-    /**
-     * Load next page (for infinite scroll)
-     */
-    async loadNextPage() {
-        if (this.isLoadingMore || !this.paginationData.has_more) return;
-        
-        this.isLoadingMore = true;
-        
-        // Show loading indicator
-        const loadMoreBtn = document.getElementById('loadMoreBtn');
-        if (loadMoreBtn) loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando más...';
-        
-        try {
-            const nextOffset = this.paginationData.offset + this.paginationData.limit;
-            const userId = this.getCurrentUserId();
-            
-            const response = await this.apiCall('/api/user/transactions', {
-                method: 'POST',
-                body: JSON.stringify({
-                    user_id: userId,
-                    limit: this.paginationData.limit,
-                    offset: nextOffset
-                })
-            });
-            
-            if (response && response.success && response.data) {
-                const newTransactions = response.data.transactions || [];
-                
-                // Append new transactions to existing list
-                this.transactionHistory = [...this.transactionHistory, ...newTransactions];
-                
-                // Update pagination state
-                if (response.data.pagination) {
-                    this.paginationData = response.data.pagination;
-                    this.currentPage = Math.floor(response.data.pagination.offset / response.data.pagination.limit) + 1;
-                    this.totalPages = Math.ceil(response.data.pagination.total / response.data.pagination.limit) || 1;
-                }
-                
-                // Re-render transaction list
-                this.renderTransactionHistory();
-                
-                // Update button state
-                if (loadMoreBtn) {
-                    if (this.paginationData.has_more) {
-                        loadMoreBtn.innerHTML = 'Cargar más';
-                    } else {
-                        loadMoreBtn.innerHTML = 'No hay más transacciones';
-                        loadMoreBtn.disabled = true;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error loading more transactions:', error);
-            this.showError('Error al cargar más transacciones');
-        } finally {
-            this.isLoadingMore = false;
-        }
-    }
-
-    /**
-     * Add "Load More" button as fallback for infinite scroll
-     */
-    addLoadMoreButton() {
-        const transactionList = document.getElementById('transactionsList');
-        if (!transactionList) return;
-        
-        // Check if button already exists
-        if (document.getElementById('loadMoreBtn')) return;
-        
-        const loadMoreBtn = document.createElement('button');
-        loadMoreBtn.id = 'loadMoreBtn';
-        loadMoreBtn.className = 'load-more-btn';
-        loadMoreBtn.innerHTML = 'Cargar más';
-        loadMoreBtn.onclick = () => this.loadNextPage();
-        
-        transactionList.parentNode.insertBefore(loadMoreBtn, transactionList.nextSibling);
-    }
-
-    /**
-     * Generate pagination HTML markup for insertion into DOM
-     * @returns {string} HTML markup for pagination controls
-     */
-    getPaginationHTML() {
-        return `
-            <div id="paginationControls" class="pagination-controls hidden">
-                <button id="prevPage" class="btn-pagination">← Anterior</button>
-                <input type="number" id="jumpToPage" class="page-jump-input" min="1" placeholder="#">
-                <button id="jumpPageBtn" class="btn-pagination">Ir</button>
-                <span id="pageIndicator">Página ${this.currentPage} de ${this.totalPages}</span>
-                <button id="nextPage" class="btn-pagination">Siguiente →</button>
-            </div>
-        `;
     }
 
     // ================================
