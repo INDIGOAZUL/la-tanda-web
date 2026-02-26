@@ -25,6 +25,10 @@ const SocialFeed = {
     currentUserId: null, // Track logged in user
     currentHashtag: null, // Track active hashtag filter
     currentSearch: null, // Track active search filter
+    viewObserver: null, // IntersectionObserver for view tracking
+    viewTimers: {}, // Pending 2-second timers per event ID
+    pendingViews: new Set(), // Event IDs ready to flush
+    viewFlushInterval: null, // 3-second flush interval
 
     tabs: [
         { id: "todos", label: "Todos", icon: "fa-globe", filter: null },
@@ -80,6 +84,7 @@ const SocialFeed = {
 
         this.loadEvents();
         this.setupIntersectionObserver();
+        this.setupViewTracking();
         this.attachEngagementHandlers();
         this.attachTabHandlers();
         this.attachPostMenuHandlers();
@@ -1093,6 +1098,13 @@ const SocialFeed = {
             });
         }
 
+        // Observe cards for view tracking
+        if (this.viewObserver) {
+            listEl.querySelectorAll(".social-card").forEach(card => {
+                this.viewObserver.observe(card);
+            });
+        }
+
         // Deep link: scroll to shared event if ?event= param is present
         if (this.deepLinkEventId) {
             const targetCard = listEl.querySelector('.social-card[data-event-id="' + this.deepLinkEventId + '"]');
@@ -1136,6 +1148,7 @@ const SocialFeed = {
         const verifiedBadge = isAnonymous ? '' : (actor.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : '');
         const likesText = engagement.likes || '';
         const commentsText = engagement.comments || '';
+        const viewCount = engagement.views || 0;
 
         const trendingBadge = this.currentTab === "trending" && engagement.score > 5
             ? '<span class="trending-badge"><i class="fas fa-fire"></i></span>'
@@ -1193,6 +1206,7 @@ const SocialFeed = {
                 this.renderLinkPreviewCard(event) +
             '</div>' +
             '<div class="social-card-footer">' +
+                (viewCount > 0 ? '<span class="sf-views"><i class="far fa-eye"></i> ' + viewCount + '</span>' : '') +
                 '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta">' +
                     '<i class="' + (event.is_liked ? 'fas' : 'far') + ' fa-heart"></i>' +
                     '<span>' + likesText + '</span>' +
@@ -2996,6 +3010,65 @@ if (window.CommentsModal) {
         }
     },
 
+    setupViewTracking() {
+        const viewedKey = 'sf_viewed';
+        // Load previously viewed IDs from sessionStorage
+        let viewedSet;
+        try {
+            const stored = sessionStorage.getItem(viewedKey);
+            viewedSet = stored ? new Set(JSON.parse(stored)) : new Set();
+        } catch (e) { viewedSet = new Set(); }
+
+        this.viewObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const card = entry.target;
+                const eventId = card.dataset.eventId;
+                if (!eventId) return;
+
+                if (entry.isIntersecting) {
+                    // Skip if already viewed this session
+                    if (viewedSet.has(eventId)) return;
+                    // Start 2-second timer
+                    this.viewTimers[eventId] = setTimeout(() => {
+                        viewedSet.add(eventId);
+                        this.pendingViews.add(eventId);
+                        try { sessionStorage.setItem(viewedKey, JSON.stringify([...viewedSet])); } catch (e) {}
+                        delete this.viewTimers[eventId];
+                    }, 2000);
+                } else {
+                    // Card left viewport — cancel timer
+                    if (this.viewTimers[eventId]) {
+                        clearTimeout(this.viewTimers[eventId]);
+                        delete this.viewTimers[eventId];
+                    }
+                }
+            });
+        }, { threshold: 0.5 });
+
+        // Flush pending views every 3 seconds
+        this.viewFlushInterval = setInterval(() => this.flushViewTracker(), 3000);
+
+        // Flush on page unload
+        window.addEventListener('beforeunload', () => this.flushViewTracker(true));
+    },
+
+    flushViewTracker(useBeacon) {
+        if (this.pendingViews.size === 0) return;
+        const ids = [...this.pendingViews];
+        this.pendingViews.clear();
+        const payload = JSON.stringify({ event_ids: ids });
+
+        if (useBeacon && navigator.sendBeacon) {
+            navigator.sendBeacon('/api/feed/social/track-views', new Blob([payload], { type: 'application/json' }));
+        } else {
+            fetch('/api/feed/social/track-views', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload
+            }).catch(() => {});
+        }
+    },
+
     destroy() {
         if (this.observer) {
             this.observer.disconnect();
@@ -3005,6 +3078,15 @@ if (window.CommentsModal) {
             this.videoVisibilityObserver.disconnect();
             this.videoVisibilityObserver = null;
         }
+        if (this.viewObserver) {
+            this.viewObserver.disconnect();
+            this.viewObserver = null;
+        }
+        if (this.viewFlushInterval) {
+            clearInterval(this.viewFlushInterval);
+            this.viewFlushInterval = null;
+        }
+        this.flushViewTracker();
         this.events = [];
         this.offset = 0;
         this.hasMore = true;
