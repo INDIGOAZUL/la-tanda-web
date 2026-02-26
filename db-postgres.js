@@ -715,7 +715,7 @@ const createGroupInvitation = async (invitationData) => {
         const result = await pool.query(`
             INSERT INTO group_invitations (group_id, inviter_id, invitee_email, invitee_phone, invitee_name, invitee_user_id, message, is_reusable, max_uses)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, group_id, inviter_id, invitee_email, invitee_name, status, created_at, expires_at
+            RETURNING id, group_id, inviter_id, invitee_email, invitee_name, status, token, created_at, expires_at, is_reusable, max_uses
         `, [group_id, inviter_id, invitee_email, invitee_phone, invitee_name, invitee_user_id, message, is_reusable, max_uses]);
         
         log('info', 'Group invitation created', { id: result.rows[0].id, group_id });
@@ -894,13 +894,11 @@ const createTanda = async (tandaData) => {
             INSERT INTO tandas (
                 tanda_id, name, contribution_amount, total_per_turn, frequency,
                 coordinator_id, group_id, status, current_turn, total_turns,
-                turns_order, is_demo,
-                start_date,
-                commission_rate
+                turns_order, is_demo
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING tanda_id, name, contribution_amount, total_per_turn, frequency, coordinator_id, group_id, status, current_turn, total_turns, start_date, created_at
+            RETURNING tanda_id, name, contribution_amount, total_per_turn, frequency, coordinator_id, group_id, status, current_turn, total_turns, created_at
         `, [
-            tandaData.id || 'tanda_' + Date.now(),
+            tandaData.tanda_id || tandaData.id || 'tanda_' + Date.now(),
             tandaData.name,
             tandaData.contribution_amount || 100,
             tandaData.total_per_turn || (tandaData.contribution_amount * (tandaData.turns_order?.length || 1)),
