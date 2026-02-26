@@ -1193,8 +1193,8 @@ const SocialFeed = {
                 this.renderLinkPreviewCard(event) +
             '</div>' +
             '<div class="social-card-footer">' +
-                '<button class="engagement-btn like-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta">' +
-                    '<i class="far fa-heart"></i>' +
+                '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta">' +
+                    '<i class="' + (event.is_liked ? 'fas' : 'far') + ' fa-heart"></i>' +
                     '<span>' + likesText + '</span>' +
                 '</button>' +
                 '<button class="engagement-btn comment-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Comentar">' +
@@ -1204,8 +1204,8 @@ const SocialFeed = {
                 '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Compartir">' +
                     '<i class="fas fa-share-alt"></i>' +
                 '</button>' +
-                '<button class="engagement-btn bookmark-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
-                    '<i class="far fa-bookmark"></i>' +
+                '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
+                    '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
             '</div>' +
         '</div>';
