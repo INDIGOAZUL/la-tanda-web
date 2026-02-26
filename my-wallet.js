@@ -527,13 +527,10 @@ class LaTandaWallet {
                 return;
             }
 
-            // Production API call - use correct POST endpoint with user_id
-            const userId = this.getCurrentUserId();
-
+            // Production API call - use correct POST endpoint
             const response = await this.apiCall('/api/user/transactions', {
                 method: 'POST',
                 body: JSON.stringify({
-                    user_id: userId,
                     limit: this.PAGE_SIZE_DEFAULT,
                     offset: 0
                 })
@@ -674,9 +671,8 @@ class LaTandaWallet {
                 });
                 
                 this.updatePaginationUI();
-                this.renderTransactionHistory();
                 this.renderWithTransition();
-                this.saveTransactionHistory();
+                this.renderTransactionHistory();
             } else {
                 this.showError('Error al cargar las transacciones');
             }
