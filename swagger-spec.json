@@ -1,0 +1,1117 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "La Tanda Fintech Platform API",
+    "version": "2.0.0",
+    "description": "Complete REST API for La Tanda fintech platform with 95+ endpoints covering authentication, tandas management, wallet operations, payments, and admin functions.",
+    "contact": {
+      "name": "La Tanda API Support",
+      "url": "https://latanda.online",
+      "email": "devops@latanda.online"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://latanda.online",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:3002",
+      "description": "Development Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User and admin authentication endpoints"
+    },
+    {
+      "name": "Wallet",
+      "description": "Wallet balance and deposit operations"
+    },
+    {
+      "name": "Tandas",
+      "description": "Tanda (group savings) management and position assignment"
+    },
+    {
+      "name": "Groups",
+      "description": "Group creation and management"
+    },
+    {
+      "name": "Payments",
+      "description": "Payment processing and methods"
+    },
+    {
+      "name": "Deposits",
+      "description": "Deposit management and verification"
+    },
+    {
+      "name": "Notifications",
+      "description": "Push notifications and messaging"
+    },
+    {
+      "name": "Mobile",
+      "description": "Mobile app specific endpoints"
+    },
+    {
+      "name": "MIA Assistant",
+      "description": "AI assistant (MIA) integration"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative operations"
+    },
+    {
+      "name": "Business Intelligence",
+      "description": "Analytics and reporting"
+    },
+    {
+      "name": "System",
+      "description": "System health and status"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "API Welcome",
+        "description": "Returns API welcome message and version",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Welcome message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"},
+                    "version": {"type": "string"},
+                    "endpoints": {"type": "integer"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "API health status check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {"type": "string", "example": "ok"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/status": {
+      "get": {
+        "summary": "System Status",
+        "description": "Comprehensive system status including database and services",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "System status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "system": {"type": "string"},
+                    "database": {"type": "object"},
+                    "uptime": {"type": "number"},
+                    "timestamp": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "User Login",
+        "description": "Authenticate user and receive JWT token",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string", "format": "password"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {"type": "boolean"},
+                    "token": {"type": "string"},
+                    "user": {"type": "object"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "summary": "User Registration",
+        "description": "Register a new user account",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password", "name"],
+                "properties": {
+                  "email": {"type": "string"},
+                  "password": {"type": "string"},
+                  "name": {"type": "string"},
+                  "phone": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Invalid input or email already exists"
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Refresh Token",
+        "description": "Refresh JWT access token",
+        "tags": ["Authentication"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "User Logout",
+        "description": "Logout and invalidate session",
+        "tags": ["Authentication"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Logout successful"
+          }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "summary": "Admin Login",
+        "description": "Admin authentication",
+        "tags": ["Admin"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {"type": "string"},
+                  "password": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Admin login successful"
+          }
+        }
+      }
+    },
+    "/api/wallet/balance": {
+      "get": {
+        "summary": "Get Wallet Balance",
+        "description": "Retrieve user's current wallet balance",
+        "tags": ["Wallet"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Wallet balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "balance": {"type": "number"},
+                    "currency": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/bank-transfer": {
+      "post": {
+        "summary": "Bank Transfer Deposit",
+        "description": "Initiate bank transfer deposit",
+        "tags": ["Wallet"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {"type": "number"},
+                  "accountNumber": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deposit initiated"
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/crypto": {
+      "post": {
+        "summary": "Cryptocurrency Deposit",
+        "description": "Deposit via cryptocurrency",
+        "tags": ["Wallet"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Crypto deposit address generated"
+          }
+        }
+      }
+    },
+    "/api/wallet/deposit/mobile": {
+      "post": {
+        "summary": "Mobile Payment Deposit",
+        "description": "Deposit via mobile payment",
+        "tags": ["Wallet"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Mobile payment initiated"
+          }
+        }
+      }
+    },
+    "/api/tandas/available-positions": {
+      "get": {
+        "summary": "Available Tanda Positions",
+        "description": "Get list of available positions in tandas",
+        "tags": ["Tandas"],
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "tandaId",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available positions"
+          }
+        }
+      }
+    },
+    "/api/tandas/request-position": {
+      "post": {
+        "summary": "Request Tanda Position",
+        "description": "Request a specific position in a tanda",
+        "tags": ["Tandas"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tandaId": {"type": "string"},
+                  "position": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Position request submitted"
+          }
+        }
+      }
+    },
+    "/api/tandas/change-position-request": {
+      "post": {
+        "summary": "Change Position Request",
+        "description": "Request to change tanda position",
+        "tags": ["Tandas"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Change request submitted"
+          }
+        }
+      }
+    },
+    "/api/tandas/my-position-status": {
+      "get": {
+        "summary": "My Position Status",
+        "description": "Get current position status in tandas",
+        "tags": ["Tandas"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Position status"
+          }
+        }
+      }
+    },
+    "/api/groups": {
+      "get": {
+        "summary": "List Groups",
+        "description": "Get list of all groups",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of groups"
+          }
+        }
+      }
+    },
+    "/api/groups/activate-tanda": {
+      "post": {
+        "summary": "Activate Tanda",
+        "description": "Activate a tanda within a group",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Tanda activated"
+          }
+        }
+      }
+    },
+    "/api/groups/position-requests": {
+      "get": {
+        "summary": "Position Requests",
+        "description": "Get pending position requests",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of position requests"
+          }
+        }
+      }
+    },
+    "/api/groups/approve-position-request": {
+      "post": {
+        "summary": "Approve Position Request",
+        "description": "Approve a member's position request",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Request approved"
+          }
+        }
+      }
+    },
+    "/api/groups/reject-position-request": {
+      "post": {
+        "summary": "Reject Position Request",
+        "description": "Reject a member's position request",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Request rejected"
+          }
+        }
+      }
+    },
+    "/api/groups/assign-position-manually": {
+      "post": {
+        "summary": "Manual Position Assignment",
+        "description": "Manually assign position to member",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Position assigned"
+          }
+        }
+      }
+    },
+    "/api/groups/auto-assign-positions": {
+      "post": {
+        "summary": "Auto-Assign Positions",
+        "description": "Automatically assign all positions",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Positions auto-assigned"
+          }
+        }
+      }
+    },
+    "/api/registration/groups/create": {
+      "post": {
+        "summary": "Create Group",
+        "description": "Register a new group",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "members": {"type": "integer"},
+                  "amount": {"type": "number"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group created"
+          }
+        }
+      }
+    },
+    "/api/registration/groups/list": {
+      "get": {
+        "summary": "List Registered Groups",
+        "description": "Get list of registered groups",
+        "tags": ["Groups"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of registered groups"
+          }
+        }
+      }
+    },
+    "/api/payments/process": {
+      "post": {
+        "summary": "Process Payment",
+        "description": "Process a payment transaction",
+        "tags": ["Payments"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {"type": "number"},
+                  "method": {"type": "string"},
+                  "recipient": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment processed"
+          }
+        }
+      }
+    },
+    "/api/payments/methods/available": {
+      "get": {
+        "summary": "Available Payment Methods",
+        "description": "Get list of available payment methods",
+        "tags": ["Payments"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of payment methods"
+          }
+        }
+      }
+    },
+    "/api/deposit/upload-receipt": {
+      "post": {
+        "summary": "Upload Deposit Receipt",
+        "description": "Upload proof of deposit receipt",
+        "tags": ["Deposits"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "receipt": {"type": "string", "format": "binary"},
+                  "depositId": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Receipt uploaded"
+          }
+        }
+      }
+    },
+    "/api/deposit/update-status": {
+      "post": {
+        "summary": "Update Deposit Status",
+        "description": "Update the status of a deposit",
+        "tags": ["Deposits"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/api/deposit/modify": {
+      "post": {
+        "summary": "Modify Deposit",
+        "description": "Modify deposit details",
+        "tags": ["Deposits"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Deposit modified"
+          }
+        }
+      }
+    },
+    "/api/deposit/cancel": {
+      "post": {
+        "summary": "Cancel Deposit",
+        "description": "Cancel a pending deposit",
+        "tags": ["Deposits"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Deposit cancelled"
+          }
+        }
+      }
+    },
+    "/api/deposit/extend": {
+      "post": {
+        "summary": "Extend Deposit",
+        "description": "Extend deposit deadline",
+        "tags": ["Deposits"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Deposit extended"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/pending": {
+      "get": {
+        "summary": "Pending Deposits",
+        "description": "Get list of pending deposits (Admin)",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of pending deposits"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/confirm": {
+      "post": {
+        "summary": "Confirm Deposit",
+        "description": "Admin confirms a deposit",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Deposit confirmed"
+          }
+        }
+      }
+    },
+    "/api/admin/deposits/reject": {
+      "post": {
+        "summary": "Reject Deposit",
+        "description": "Admin rejects a deposit",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Deposit rejected"
+          }
+        }
+      }
+    },
+    "/api/notifications/send": {
+      "post": {
+        "summary": "Send Notification",
+        "description": "Send notification to users",
+        "tags": ["Notifications"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {"type": "string"},
+                  "message": {"type": "string"},
+                  "type": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notification sent"
+          }
+        }
+      }
+    },
+    "/api/push/register": {
+      "post": {
+        "summary": "Register Push Token",
+        "description": "Register device for push notifications",
+        "tags": ["Notifications"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {"type": "string"},
+                  "platform": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Push token registered"
+          }
+        }
+      }
+    },
+    "/api/push/send": {
+      "post": {
+        "summary": "Send Push Notification",
+        "description": "Send push notification to device",
+        "tags": ["Notifications"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Push notification sent"
+          }
+        }
+      }
+    },
+    "/api/mobile/init": {
+      "post": {
+        "summary": "Mobile App Init",
+        "description": "Initialize mobile app session",
+        "tags": ["Mobile"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "deviceId": {"type": "string"},
+                  "platform": {"type": "string"},
+                  "version": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "App initialized"
+          }
+        }
+      }
+    },
+    "/api/mobile/settings": {
+      "post": {
+        "summary": "Mobile App Settings",
+        "description": "Update mobile app settings",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Settings updated"
+          }
+        }
+      }
+    },
+    "/api/mobile/session/start": {
+      "post": {
+        "summary": "Start Session",
+        "description": "Start mobile app session",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Session started"
+          }
+        }
+      }
+    },
+    "/api/mobile/session/end": {
+      "post": {
+        "summary": "End Session",
+        "description": "End mobile app session",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Session ended"
+          }
+        }
+      }
+    },
+    "/api/mobile/feedback": {
+      "post": {
+        "summary": "Submit Feedback",
+        "description": "Submit user feedback from mobile app",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Feedback submitted"
+          }
+        }
+      }
+    },
+    "/api/mobile/analytics": {
+      "post": {
+        "summary": "Mobile Analytics",
+        "description": "Submit mobile analytics data",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Analytics recorded"
+          }
+        }
+      }
+    },
+    "/api/sync/status": {
+      "post": {
+        "summary": "Sync Status",
+        "description": "Check sync status",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Sync status"
+          }
+        }
+      }
+    },
+    "/api/sync/upload": {
+      "post": {
+        "summary": "Upload Sync Data",
+        "description": "Upload offline data for sync",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Data uploaded"
+          }
+        }
+      }
+    },
+    "/api/sync/download": {
+      "get": {
+        "summary": "Download Sync Data",
+        "description": "Download data for offline use",
+        "tags": ["Mobile"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Data downloaded"
+          }
+        }
+      }
+    },
+    "/api/mia/conversation/start": {
+      "post": {
+        "summary": "Start MIA Conversation",
+        "description": "Start conversation with AI assistant MIA",
+        "tags": ["MIA Assistant"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Conversation started"
+          }
+        }
+      }
+    },
+    "/api/mia/message/send": {
+      "post": {
+        "summary": "Send Message to MIA",
+        "description": "Send message to AI assistant",
+        "tags": ["MIA Assistant"],
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {"type": "string"},
+                  "conversationId": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MIA response"
+          }
+        }
+      }
+    },
+    "/api/mia/capabilities": {
+      "get": {
+        "summary": "MIA Capabilities",
+        "description": "Get list of MIA assistant capabilities",
+        "tags": ["MIA Assistant"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of capabilities"
+          }
+        }
+      }
+    },
+    "/api/mia/context/update": {
+      "post": {
+        "summary": "Update MIA Context",
+        "description": "Update conversation context for MIA",
+        "tags": ["MIA Assistant"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Context updated"
+          }
+        }
+      }
+    },
+    "/api/user/transactions": {
+      "get": {
+        "summary": "User Transactions",
+        "description": "Get user transaction history",
+        "tags": ["Wallet"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Transaction history"
+          }
+        }
+      }
+    },
+    "/api/verification/phone/send": {
+      "post": {
+        "summary": "Send Phone Verification",
+        "description": "Send verification code to phone",
+        "tags": ["Authentication"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Verification code sent"
+          }
+        }
+      }
+    },
+    "/api/business/analytics/revenue": {
+      "get": {
+        "summary": "Revenue Analytics",
+        "description": "Get revenue analytics data",
+        "tags": ["Business Intelligence"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Revenue data"
+          }
+        }
+      }
+    },
+    "/api/business/performance/dashboard": {
+      "get": {
+        "summary": "Performance Dashboard",
+        "description": "Get performance dashboard metrics",
+        "tags": ["Business Intelligence"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Dashboard metrics"
+          }
+        }
+      }
+    },
+    "/api/admin/verify": {
+      "post": {
+        "summary": "Verify Admin",
+        "description": "Verify admin credentials",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Admin verified"
+          }
+        }
+      }
+    },
+    "/api/admin/logout": {
+      "post": {
+        "summary": "Admin Logout",
+        "description": "Logout admin user",
+        "tags": ["Admin"],
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Logout successful"
+          }
+        }
+      }
+    },
+    "/api/debug/deposits": {
+      "get": {
+        "summary": "Debug Deposits",
+        "description": "Debug endpoint for deposits (development only)",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Debug data"
+          }
+        }
+      }
+    },
+    "/api/test/register-dual-write": {
+      "post": {
+        "summary": "Test Dual-Write Registration",
+        "description": "Test endpoint for dual-write feature",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Test result"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from /api/auth/login"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Error message"
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

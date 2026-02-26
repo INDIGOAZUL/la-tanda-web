@@ -1,0 +1,388 @@
+/**
+ * 🌐 ESTILOS PARA SISTEMA DE TRADUCCIÓN
+ * Soporte para múltiples idiomas y direcciones de texto
+ */
+
+/* ============================================
+   SELECTOR DE IDIOMA
+   ============================================ */
+
+.language-selector {
+    position: relative;
+    display: inline-block;
+    z-index: 1000;
+}
+
+.language-dropdown {
+    position: relative;
+}
+
+.language-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.language-btn:hover {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: var(--tanda-cyan);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.15);
+}
+
+.current-flag {
+    font-size: 16px;
+}
+
+.current-lang {
+    flex: 1;
+    text-align: left;
+    font-weight: 500;
+}
+
+.language-btn i {
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.language-btn:hover i {
+    transform: rotate(180deg);
+}
+
+/* ============================================
+   MENÚ DESPLEGABLE DE IDIOMAS
+   ============================================ */
+
+.language-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    margin-top: 4px;
+    padding: 8px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+}
+
+.language-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.language-option:hover {
+    background: rgba(0, 255, 255, 0.1);
+    color: var(--tanda-cyan);
+}
+
+.lang-flag {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.lang-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* ============================================
+   SOPORTE RTL (Right-to-Left)
+   ============================================ */
+
+.rtl-layout {
+    direction: rtl;
+}
+
+.rtl-layout .language-selector {
+    float: left;
+}
+
+.rtl-layout .language-menu {
+    left: auto;
+    right: 0;
+}
+
+.rtl-layout .current-lang {
+    text-align: right;
+}
+
+.rtl-layout .lang-name {
+    text-align: right;
+}
+
+/* Ajustes específicos para idiomas RTL */
+.rtl-layout .nav-menu {
+    flex-direction: row-reverse;
+}
+
+.rtl-layout .card-actions {
+    flex-direction: row-reverse;
+}
+
+.rtl-layout .form-group input {
+    text-align: right;
+}
+
+.rtl-layout .notification {
+    right: auto;
+    left: 20px;
+}
+
+/* ============================================
+   INDICADORES DE CARGA DE TRADUCCIÓN
+   ============================================ */
+
+.translation-loading {
+    position: relative;
+}
+
+.translation-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(0, 255, 255, 0.1) 0%,
+        rgba(0, 255, 255, 0.2) 50%,
+        rgba(0, 255, 255, 0.1) 100%
+    );
+    animation: translation-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes translation-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ============================================
+   NOTIFICACIONES DE TRADUCCIÓN
+   ============================================ */
+
+.translation-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--tanda-cyan);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: var(--text-primary);
+    font-size: 14px;
+    z-index: 10000;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.translation-notification.show {
+    transform: translateX(0);
+}
+
+.translation-notification .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+}
+
+/* ============================================
+   AJUSTES ESPECÍFICOS POR IDIOMA
+   ============================================ */
+
+/* Chino - Mayor altura de línea */
+[lang="zh"] {
+    line-height: 1.8;
+}
+
+/* Árabe - Fuente y espaciado */
+[lang="ar"] {
+    font-family: 'Noto Sans Arabic', 'Arial Unicode MS', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+/* Ajustes de fuente para mejor legibilidad */
+[lang="zh"], [lang="ar"] {
+    font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+    .language-selector {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1002;
+    }
+    
+    .language-btn {
+        min-width: 100px;
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    .language-menu {
+        min-width: 150px;
+        right: 0;
+        left: auto;
+    }
+    
+    .rtl-layout .language-selector {
+        right: auto;
+        left: 20px;
+    }
+    
+    .rtl-layout .language-menu {
+        right: auto;
+        left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .language-btn .current-lang {
+        display: none;
+    }
+    
+    .language-btn {
+        min-width: auto;
+        width: 50px;
+        justify-content: center;
+    }
+}
+
+/* ============================================
+   ANIMACIONES SUAVES
+   ============================================ */
+
+.fade-in-translate {
+    animation: fadeInTranslate 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fadeInTranslate {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-rtl {
+    animation: slideInRTL 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInRTL {
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   ESTADOS ESPECIALES
+   ============================================ */
+
+.translation-error {
+    color: #f87171 !important;
+    position: relative;
+}
+
+.translation-error::before {
+    content: '⚠️';
+    position: absolute;
+    left: -20px;
+    font-size: 12px;
+}
+
+.translation-fallback {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Indicador de idioma activo */
+.current-language-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid var(--tanda-cyan);
+    border-radius: 20px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--tanda-cyan);
+    z-index: 999;
+    backdrop-filter: blur(10px);
+}
+
+.rtl-layout .current-language-indicator {
+    right: auto;
+    left: 20px;
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+
+.rtl-layout .text-left { text-align: right !important; }
+.rtl-layout .text-right { text-align: left !important; }
+
+/* Ocultar elementos basado en idioma */
+.hide-on-rtl { display: block; }
+.show-on-rtl { display: none; }
+
+.rtl-layout .hide-on-rtl { display: none; }
+.rtl-layout .show-on-rtl { display: block; }

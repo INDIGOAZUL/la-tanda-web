@@ -1,0 +1,109 @@
+        // Lottery assign positions (POST /api/groups/:groupId/lottery-assign)
+        // Only assigns to members without locked positions
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/lottery-assign$/) && method === "POST") {
+            const groupId = pathname.split("/")[3];
+            const coordinatorId = query.user_id || body.coordinator_id;
+            
+            log("info", "Lottery assign request", { groupId, coordinatorId });
+            
+            try {
+                // 1. Verify coordinator permission
+                const groupResult = await dbPostgres.pool.query(
+                    "SELECT admin_id FROM groups WHERE group_id = $1",
+                    [groupId]
+                );
+                
+                if (groupResult.rows.length === 0) {
+                    sendError(res, 404, "Grupo no encontrado");
+                    return;
+                }
+                
+                if (groupResult.rows[0].admin_id !== coordinatorId) {
+                    sendError(res, 403, "Solo el coordinador puede ejecutar la tombola");
+                    return;
+                }
+                
+                // 2. Get all active members
+                const membersResult = await dbPostgres.pool.query(
+                    "SELECT user_id, turn_position, turn_locked, display_name FROM group_members WHERE group_id = $1 AND status = 'active' ORDER BY turn_position ASC NULLS LAST",
+                    [groupId]
+                );
+                
+                const allMembers = membersResult.rows;
+                const lockedMembers = allMembers.filter(m => m.turn_locked === true);
+                const unlockedMembers = allMembers.filter(m => m.turn_locked !== true);
+                
+                if (unlockedMembers.length === 0) {
+                    sendError(res, 400, "No hay miembros sin posicion bloqueada para sortear");
+                    return;
+                }
+                
+                // 3. Get locked positions
+                const lockedPositions = new Set(lockedMembers.map(m => m.turn_position).filter(p => p !== null));
+                
+                // 4. Calculate available positions (1 to total members, excluding locked)
+                const totalPositions = allMembers.length;
+                const availablePositions = [];
+                for (let i = 1; i <= totalPositions; i++) {
+                    if (!lockedPositions.has(i)) {
+                        availablePositions.push(i);
+                    }
+                }
+                
+                // 5. Shuffle available positions (Fisher-Yates)
+                for (let i = availablePositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                }
+                
+                // 6. Assign shuffled positions to unlocked members
+                const assignments = [];
+                for (let i = 0; i < unlockedMembers.length && i < availablePositions.length; i++) {
+                    const member = unlockedMembers[i];
+                    const newPosition = availablePositions[i];
+                    
+                    await dbPostgres.pool.query(
+                        "UPDATE group_members SET turn_position = $1, updated_at = NOW() WHERE group_id = $2 AND user_id = $3",
+                        [newPosition, groupId, member.user_id]
+                    );
+                    
+                    assignments.push({
+                        user_id: member.user_id,
+                        display_name: member.display_name,
+                        new_position: newPosition
+                    });
+                }
+                
+                // 7. Update turns_order in tandas table
+                try {
+                    const allUpdatedMembers = await dbPostgres.pool.query(
+                        "SELECT user_id FROM group_members WHERE group_id = $1 AND status = 'active' ORDER BY turn_position ASC",
+                        [groupId]
+                    );
+                    const turnsOrder = allUpdatedMembers.rows.map(m => m.user_id);
+                    
+                    await dbPostgres.pool.query(
+                        "UPDATE tandas SET turns_order = $1, updated_at = NOW() WHERE group_id = $2",
+                        [turnsOrder, groupId]
+                    );
+                } catch (tandaError) {
+                    log("warn", "Could not update tanda turns_order after lottery", { error: tandaError.message });
+                }
+                
+                log("info", "Lottery completed", { groupId, assigned: assignments.length, locked: lockedMembers.length });
+                
+                sendSuccess(res, {
+                    message: "Tombola completada exitosamente",
+                    assignments: assignments.sort((a, b) => a.new_position - b.new_position),
+                    locked_count: lockedMembers.length,
+                    assigned_count: assignments.length
+                });
+                return;
+                
+            } catch (error) {
+                log("error", "Error in lottery assign", { groupId, error: error.message });
+                sendError(res, 500, "Error en la tombola: " + error.message);
+                return;
+            }
+        }
+
