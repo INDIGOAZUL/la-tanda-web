@@ -716,6 +716,15 @@
             <p>200,000,000 LTD — el token nativo del ecosistema La Tanda. Staking, burn deflacionario, gobernanza y recompensas para participantes de la red.</p>
         </div>
 
+        <!-- Simulation Disclaimer -->
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px;">
+            <i class="fas fa-flask" style="color: #f59e0b; font-size: 1.2rem; margin-top: 2px; flex-shrink: 0;"></i>
+            <div>
+                <strong style="color: #f59e0b; font-size: 0.9rem;">Preview — Datos de simulacion</strong>
+                <p style="color: rgba(248,250,252,0.6); font-size: 0.82rem; margin-top: 4px; line-height: 1.5;">Los balances, recompensas de staking, gobernanza y burns mostrados son una vista previa del modelo economico de LTD. Los datos reales se conectaran a La Tanda Chain cuando los modulos nativos esten activos en mainnet.</p>
+            </div>
+        </div>
+
         <!-- Navigation Tabs -->
         <div class="nav-tabs">
             <div class="nav-tab active" data-tab="overview">📊 Resumen</div>
@@ -1503,7 +1512,7 @@
                     circulatingSupply: 10000000, // 10M LTD initial circulating at TGE (5%)
                     lockedSupply: 190000000, // 190M in vesting/reserve
                     burnRate: 0.001, // 0.1% per transaction
-                    stakingAPY: 145,
+                    stakingAPY: 20, // matches UI mid-tier (10-30%)
                     governanceThreshold: 1000,
                     dailyMintLimit: 10000,
                     rewardMultipliers: {
@@ -1749,7 +1758,7 @@
             handleGovernance() {
                 if (this.userStats.stakingBalance >= this.tokenomicsData.governanceThreshold) {
                     this.userStats.governanceVotes += 1;
-                    const reward = Math.floor(Math.random() * 5) + 1; // 1-5 LTD
+                    const reward = (crypto.getRandomValues(new Uint8Array(1))[0] % 5) + 1; // 1-5 LTD
                     this.userStats.totalEarned += reward;
                     
                     this.saveUserData();
@@ -1770,9 +1779,9 @@
             // Handle achievement
             handleAchievement() {
                 // Simulate completing an achievement
-                if (Math.random() > 0.3) {
+                if (crypto.getRandomValues(new Uint8Array(1))[0] > 77) { // ~70% chance
                     this.userStats.achievementsCompleted += 1;
-                    const reward = Math.floor(Math.random() * 21) + 5; // 5-25 LTD
+                    const reward = (crypto.getRandomValues(new Uint8Array(1))[0] % 21) + 5; // 5-25 LTD
                     this.userStats.totalEarned += reward;
                     
                     this.saveUserData();
