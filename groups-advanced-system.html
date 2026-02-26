@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.1">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.2">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -11485,6 +11485,7 @@ function renderTurnsList() {
             document.body.appendChild(overlayEl);
             overlayEl.style.display = 'flex';
             overlayEl.setAttribute('data-group-id', groupId);
+            overlayEl.setAttribute('data-role', '');
 
             overlayEl.addEventListener('click', function(e) {
                 if (e.target === overlayEl) { overlayEl.remove(); return; }
@@ -11496,6 +11497,10 @@ function renderTurnsList() {
                 else if (act === 'ch-drill-member') {
                     var uid = actionBtn.getAttribute('data-user-id');
                     if (uid) { overlayEl.remove(); showContributionHistory(groupId, 'timeline', uid); }
+                }
+                else if (act === 'ch-reverse') {
+                    var cid = actionBtn.getAttribute('data-contribution-id');
+                    if (cid) handleContributionReverse(cid, groupId, view, targetUserId);
                 }
             });
 
@@ -11509,6 +11514,10 @@ function renderTurnsList() {
                 }
                 var data = json.data;
                 var bodyEl = overlayEl.querySelector('.ch-body');
+                // Detect coordinator role from data context
+                if (data.view === 'matrix' || targetUserId) {
+                    overlayEl.setAttribute('data-role', 'coordinator');
+                }
                 if (view === 'matrix') {
                     bodyEl.innerHTML = renderPaymentMatrix(data, groupId);
                 } else {
@@ -11568,16 +11577,18 @@ function renderTurnsList() {
                     entries.forEach(function(c) {
                         var isPaid = paidStatuses.includes(c.status);
                         var isRejected = c.status === 'rejected';
-                        var statusClass = isPaid ? 'ch-entry-paid' : isRejected ? 'ch-entry-rejected' : 'ch-entry-pending';
-                        var icon = isPaid ? 'fa-check-circle' : isRejected ? 'fa-times-circle' : 'fa-clock';
+                        var isRefunded = c.status === 'refunded';
+                        var statusClass = isRefunded ? 'ch-entry-refunded' : isPaid ? 'ch-entry-paid' : isRejected ? 'ch-entry-rejected' : 'ch-entry-pending';
+                        var icon = isRefunded ? 'fa-undo' : isPaid ? 'fa-check-circle' : isRejected ? 'fa-times-circle' : 'fa-clock';
 
                         html += '<div class="ch-entry ' + statusClass + '">';
                         html += '<div class="ch-entry-icon"><i class="fas ' + icon + '"></i></div>';
                         html += '<div class="ch-entry-body">';
                         html += '<div class="ch-entry-title">Ciclo ' + c.cycle_number + ' &mdash; L. ' + parseFloat(c.amount).toLocaleString('es-HN') + '</div>';
 
-                        var statusText = isPaid ? 'Pagado' : isRejected ? 'Rechazado' : 'Pendiente';
-                        html += '<div class="ch-entry-status ' + (isPaid ? 'ch-status-paid' : isRejected ? 'ch-status-rejected' : 'ch-status-pending') + '">' + statusText + '</div>';
+                        var statusText = isRefunded ? 'Revertido' : isPaid ? 'Pagado' : isRejected ? 'Rechazado' : 'Pendiente';
+                        var statusBadgeClass = isRefunded ? 'ch-status-refunded' : isPaid ? 'ch-status-paid' : isRejected ? 'ch-status-rejected' : 'ch-status-pending';
+                        html += '<div class="ch-entry-status ' + statusBadgeClass + '">' + statusText + '</div>';
 
                         if (isPaid) {
                             var vLabel = verificationLabels[c.verification_method] || c.verification_method || 'No especificado';
@@ -11598,6 +11609,25 @@ function renderTurnsList() {
                         }
                         if (isRejected && c.rejection_reason) {
                             html += '<div class="ch-entry-detail ch-rejection"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(c.rejection_reason) + '</div>';
+                        }
+                        if (isRefunded) {
+                            if (c.reversed_by_name) {
+                                html += '<div class="ch-entry-detail"><i class="fas fa-user-shield"></i> Revertido por ' + escapeHtml(c.reversed_by_name) + '</div>';
+                            }
+                            if (c.reversed_at) {
+                                var rd = new Date(c.reversed_at);
+                                html += '<div class="ch-entry-detail"><i class="fas fa-calendar-times"></i> ' + rd.toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>';
+                            }
+                            if (c.reversal_reason) {
+                                html += '<div class="ch-entry-detail ch-rejection"><i class="fas fa-comment-alt"></i> ' + escapeHtml(c.reversal_reason) + '</div>';
+                            }
+                        }
+                        if (isPaid && !isRefunded) {
+                            var overlayEl = document.getElementById('chOverlay');
+                            var dataRole = overlayEl ? overlayEl.getAttribute('data-role') : '';
+                            if (dataRole === 'coordinator' || dataRole === 'creator' || dataRole === 'admin') {
+                                html += '<button class="ch-btn-reverse" data-action="ch-reverse" data-contribution-id="' + escapeHtml(c.id) + '"><i class="fas fa-undo"></i> Deshacer</button>';
+                            }
                         }
                         html += '</div></div>';
                     });
@@ -11650,6 +11680,8 @@ function renderTurnsList() {
                     var entry = userContribs[String(cy2)];
                     if (!entry) {
                         html += '<td class="ch-cell ch-cell-none" title="Sin registro">&mdash;</td>';
+                    } else if (entry.status === 'refunded') {
+                        html += '<td class="ch-cell ch-cell-refunded" title="Revertido"><i class="fas fa-undo"></i></td>';
                     } else if (paidStatuses.includes(entry.status)) {
                         html += '<td class="ch-cell ch-cell-paid" title="Pagado"><i class="fas fa-check"></i></td>';
                     } else if (entry.status === 'rejected') {
@@ -11671,6 +11703,54 @@ function renderTurnsList() {
 
             html += '</tbody></table></div>';
             return html;
+        }
+
+        async function handleContributionReverse(contributionId, groupId, currentView, currentUserId) {
+            var existing = document.querySelector('.ch-reverse-confirm');
+            if (existing) existing.remove();
+
+            var btn = document.querySelector('[data-contribution-id="' + contributionId + '"]');
+            if (!btn) return;
+            var entry = btn.closest('.ch-entry');
+            if (!entry) return;
+
+            var confirmHtml = '<div class="ch-reverse-confirm">';
+            confirmHtml += '<textarea class="ch-reverse-reason" placeholder="Motivo de la reversion (opcional)" rows="2" maxlength="500"></textarea>';
+            confirmHtml += '<div class="ch-reverse-actions">';
+            confirmHtml += '<button class="ch-reverse-cancel" type="button">Cancelar</button>';
+            confirmHtml += '<button class="ch-reverse-ok" type="button"><i class="fas fa-undo"></i> Confirmar reversion</button>';
+            confirmHtml += '</div></div>';
+            entry.insertAdjacentHTML('beforeend', confirmHtml);
+
+            var confirmArea = entry.querySelector('.ch-reverse-confirm');
+            var cancelBtn = confirmArea.querySelector('.ch-reverse-cancel');
+            var okBtn = confirmArea.querySelector('.ch-reverse-ok');
+            var reasonInput = confirmArea.querySelector('.ch-reverse-reason');
+
+            cancelBtn.addEventListener('click', function() { confirmArea.remove(); });
+
+            okBtn.addEventListener('click', async function() {
+                okBtn.disabled = true;
+                okBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Revirtiendo...';
+                var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                try {
+                    var resp = await fetch(API_BASE + '/api/contributions/' + encodeURIComponent(contributionId) + '/reverse', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + authTk, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason: reasonInput.value.trim() })
+                    });
+                    var json = await resp.json();
+                    if (!resp.ok || !json.success) throw new Error(json.message || 'Error al revertir');
+                    showNotification(json.data?.message || 'Pago revertido exitosamente', 'success');
+                    var overlay = document.getElementById('chOverlay');
+                    if (overlay) overlay.remove();
+                    showContributionHistory(groupId, currentView || 'timeline', currentUserId);
+                } catch (err) {
+                    showNotification(err.message || 'Error al revertir el pago', 'error');
+                    okBtn.disabled = false;
+                    okBtn.innerHTML = '<i class="fas fa-undo"></i> Confirmar reversion';
+                }
+            });
         }
 
         // Wire up member drill-down select (delegated since it's dynamically created)

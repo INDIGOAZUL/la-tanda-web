@@ -6190,7 +6190,7 @@ const server = http.createServer(async (req, res) => {
                 return;
             }
 
-            const { name, contribution_amount, frequency, max_members, grace_period, start_date, latePaymentPenalty, commissionRate } = body;
+            const { name, description, category, location, contribution_amount, frequency, max_members, grace_period, start_date, latePaymentPenalty, commissionRate } = body;
             const coordinator_id = authUser.userId;
             const groupId = generateId('group');
 
@@ -6215,9 +6215,9 @@ const server = http.createServer(async (req, res) => {
                 status: 'active',
                 created_at: new Date().toISOString(),
                 location: 'Honduras',
-                description: `Grupo ${name} - ${frequency}`,
+                description: (typeof description === 'string' && description.trim()) ? description.replace(/<[^>]*>/g, '').trim().substring(0, 500) : `Grupo ${name} - ${frequency}`,
                 image_url: '/uploads/groups/default.jpg',
-                category: 'general',
+                category: (typeof category === 'string' && category.trim()) ? category.replace(/<[^>]*>/g, '').trim().substring(0, 50) : 'general',
                 meeting_schedule: 'Por definir'
             };
             
@@ -6242,8 +6242,8 @@ const server = http.createServer(async (req, res) => {
                     member_count: 1,
                     total_amount_collected: 0,
                     description: newGroup.description,
-                    location: 'Honduras',
-                    category: 'general',
+                    location: newGroup.location,
+                    category: newGroup.category,
                     start_date: start_date || null,
                     grace_period: parseInt(grace_period) || 3,
                     penalty_amount: parseFloat(latePaymentPenalty) || 50,
@@ -8277,8 +8277,8 @@ const server = http.createServer(async (req, res) => {
                         status: m.status,
                         joined_at: m.joined_at,
                         invited_by: m.invited_by,
-                        turn_position: positionMap[m.user_id] || null,
-                        has_turn_assigned: !!positionMap[m.user_id],
+                        turn_position: positionMap[m.user_id] || m.turn_position || null,
+                        has_turn_assigned: !!(positionMap[m.user_id] || m.turn_position),
                         is_anonymous: m.is_anonymous || false,
                         turn_locked: m.turn_locked || false,
                         num_positions: parseInt(m.num_positions) || 1,
@@ -11145,6 +11145,342 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+
+        // ===== Contribution History (timeline + matrix) =====
+        if (pathname.match(/^\/api\/groups\/[^\/]+\/contribution-history$/) && method === "GET") {
+            const authUserHist = requireAuth(req, res);
+            if (!authUserHist) return;
+
+            const groupId = pathname.split("/")[3];
+            const urlPartsHist = parseUrl(req.url);
+            const view = urlPartsHist.query.view || 'timeline';
+            const targetUserId = urlPartsHist.query.user_id || null;
+
+            try {
+                // Membership + role check
+                const memberCheck = await dbPostgres.pool.query(
+                    `SELECT gm.role, gm.status, gm.user_id,
+                            g.admin_id, g.name AS group_name, g.current_cycle, g.max_members,
+                            g.contribution_amount, g.frequency, g.start_date
+                     FROM group_members gm
+                     JOIN groups g ON g.group_id = gm.group_id
+                     WHERE gm.group_id = $1 AND gm.user_id = $2
+                       AND gm.status NOT IN ('removed','rejected')`,
+                    [groupId, authUserHist.userId]
+                );
+                if (memberCheck.rows.length === 0 && authUserHist.role !== 'admin') {
+                    sendError(res, 403, "No tienes acceso a este grupo");
+                    return;
+                }
+
+                const memberRow = memberCheck.rows[0] || {};
+                const isAdmin = ['creator','coordinator','admin'].includes(memberRow.role) ||
+                                memberRow.admin_id === authUserHist.userId ||
+                                authUserHist.role === 'admin';
+                const currentCycle = parseInt(memberRow.current_cycle) || 1;
+                const maxMembers = parseInt(memberRow.max_members) || 1;
+                const contributionAmount = parseFloat(memberRow.contribution_amount) || 0;
+
+                // Authorization: matrix or viewing another user requires coordinator/creator
+                if (view === 'matrix' && !isAdmin) {
+                    sendError(res, 403, "Solo coordinadores pueden ver la matriz de pagos");
+                    return;
+                }
+                if (targetUserId && targetUserId !== authUserHist.userId && !isAdmin) {
+                    sendError(res, 403, "No puedes ver el historial de otro miembro");
+                    return;
+                }
+
+                if (view === 'matrix') {
+                    // ---- MATRIX VIEW (coordinator) ----
+                    const [contribResult, membersResult] = await Promise.all([
+                        dbPostgres.pool.query(
+                            `SELECT c.user_id, c.cycle_number, c.status, c.id AS contribution_id,
+                                    c.amount, c.paid_date, c.verification_method
+                             FROM contributions c
+                             WHERE c.group_id = $1
+                             ORDER BY c.cycle_number, c.user_id`,
+                            [groupId]
+                        ),
+                        dbPostgres.pool.query(
+                            `SELECT gm.user_id, u.name, u.email,
+                                    COALESCE(gm.num_positions, 1) AS num_positions,
+                                    gm.role
+                             FROM group_members gm
+                             JOIN users u ON u.user_id = gm.user_id
+                             WHERE gm.group_id = $1
+                               AND gm.status NOT IN ('removed','rejected')
+                             ORDER BY u.name`,
+                            [groupId]
+                        )
+                    ]);
+
+                    // Build contributions map: { user_id: { cycle: { status, contribution_id } } }
+                    const contribMap = {};
+                    for (const row of contribResult.rows) {
+                        if (!contribMap[row.user_id]) contribMap[row.user_id] = {};
+                        contribMap[row.user_id][row.cycle_number] = {
+                            status: row.status,
+                            contribution_id: row.contribution_id,
+                            amount: parseFloat(row.amount),
+                            paid_date: row.paid_date,
+                            verification_method: row.verification_method
+                        };
+                    }
+
+                    // Cycle totals
+                    const cycleTotals = [];
+                    for (let cy = 1; cy <= currentCycle; cy++) {
+                        let paid = 0, total = membersResult.rows.length;
+                        for (const m of membersResult.rows) {
+                            const entry = (contribMap[m.user_id] || {})[cy];
+                            if (entry && ['completed','coordinator_approved','archived'].includes(entry.status)) {
+                                paid++;
+                            }
+                            // refunded entries not counted as paid
+                        }
+                        cycleTotals.push({ cycle: cy, paid, total, percent: total > 0 ? Math.round((paid / total) * 100) : 0 });
+                    }
+
+                    sendSuccess(res, {
+                        view: 'matrix',
+                        group_id: groupId,
+                        group_name: memberRow.group_name,
+                        current_cycle: currentCycle,
+                        max_members: maxMembers,
+                        contribution_amount: contributionAmount,
+                        members: membersResult.rows.map(m => ({
+                            user_id: m.user_id,
+                            name: m.name,
+                            email: m.email,
+                            num_positions: parseInt(m.num_positions),
+                            role: m.role
+                        })),
+                        contributions: contribMap,
+                        cycle_totals: cycleTotals
+                    });
+                } else {
+                    // ---- TIMELINE VIEW (single member) ----
+                    const userId = targetUserId || authUserHist.userId;
+
+                    const contribResult = await dbPostgres.pool.query(
+                        `SELECT c.id, c.cycle_number, c.amount, c.status, c.payment_method,
+                                c.transaction_id, c.confirmation_code, c.notes,
+                                c.due_date, c.paid_date, c.proof_url,
+                                c.verified_by, c.verified_at, c.verification_method,
+                                c.rejection_reason, c.created_at,
+                                c.reversed_by, c.reversed_at, c.reversal_reason,
+                                v.name AS verified_by_name,
+                                rv.name AS reversed_by_name
+                         FROM contributions c
+                         LEFT JOIN users v ON v.user_id = c.verified_by
+                         LEFT JOIN users rv ON rv.user_id = c.reversed_by
+                         WHERE c.group_id = $1 AND c.user_id = $2
+                         ORDER BY c.cycle_number ASC, c.created_at ASC`,
+                        [groupId, userId]
+                    );
+
+                    // Get member name
+                    const memberNameResult = await dbPostgres.pool.query(
+                        `SELECT u.name, COALESCE(gm.num_positions, 1) AS num_positions
+                         FROM users u
+                         LEFT JOIN group_members gm ON gm.user_id = u.user_id AND gm.group_id = $2
+                         WHERE u.user_id = $1`,
+                        [userId, groupId]
+                    );
+                    const memberName = memberNameResult.rows[0]?.name || 'Miembro';
+                    const numPositions = parseInt(memberNameResult.rows[0]?.num_positions) || 1;
+
+                    // Summary
+                    let cyclesPaid = 0, totalPaid = 0, cyclesPending = 0;
+                    const paidStatuses = ['completed','coordinator_approved','archived'];
+                    for (const c of contribResult.rows) {
+                        if (paidStatuses.includes(c.status)) {
+                            cyclesPaid++;
+                            totalPaid += parseFloat(c.amount);
+                        } else if (c.status === 'pending' || c.status === 'pending_verification' || c.status === 'awaiting_payment') {
+                            cyclesPending++;
+                        }
+                    }
+
+                    sendSuccess(res, {
+                        view: 'timeline',
+                        group_id: groupId,
+                        group_name: memberRow.group_name,
+                        current_cycle: currentCycle,
+                        max_members: maxMembers,
+                        contribution_amount: contributionAmount,
+                        member_name: memberName,
+                        member_user_id: userId,
+                        num_positions: numPositions,
+                        contributions: contribResult.rows.map(c => ({
+                            id: c.id,
+                            cycle_number: c.cycle_number,
+                            amount: parseFloat(c.amount),
+                            status: c.status,
+                            payment_method: c.payment_method,
+                            transaction_id: c.transaction_id,
+                            confirmation_code: c.confirmation_code,
+                            notes: c.notes,
+                            due_date: c.due_date,
+                            paid_date: c.paid_date,
+                            proof_url: c.proof_url,
+                            verified_by: c.verified_by,
+                            verified_by_name: c.verified_by_name,
+                            verified_at: c.verified_at,
+                            verification_method: c.verification_method,
+                            rejection_reason: c.rejection_reason,
+                            reversed_by: c.reversed_by,
+                            reversed_at: c.reversed_at,
+                            reversal_reason: c.reversal_reason,
+                            reversed_by_name: c.reversed_by_name,
+                            created_at: c.created_at
+                        })),
+                        summary: {
+                            cycles_paid: cyclesPaid,
+                            cycles_pending: cyclesPending,
+                            cycles_total: currentCycle,
+                            total_paid: totalPaid,
+                            num_positions: numPositions
+                        }
+                    });
+                }
+            } catch (error) {
+                log("error", "Error fetching contribution history", { groupId, error: error.message });
+                sendError(res, 500, "Error al obtener historial de contribuciones");
+            }
+            return;
+        }
+
+        // ===== Reverse Contribution (v4.11.2) =====
+        if (pathname.match(/^\/api\/contributions\/[^\/]+\/reverse$/) && method === "POST") {
+            const authUserRev = requireAuth(req, res);
+            if (!authUserRev) return;
+
+            const contributionId = pathname.split("/")[3];
+
+            try {
+                // Fetch contribution
+                const contribResult = await dbPostgres.pool.query(
+                    `SELECT c.id, c.user_id, c.group_id, c.amount, c.status, c.payment_method, c.cycle_number,
+                            g.admin_id, g.name AS group_name
+                     FROM contributions c
+                     JOIN groups g ON g.group_id = c.group_id
+                     WHERE c.id = $1`,
+                    [contributionId]
+                );
+                if (contribResult.rows.length === 0) {
+                    sendError(res, 404, "Contribucion no encontrada");
+                    return;
+                }
+
+                const contrib = contribResult.rows[0];
+
+                // Already refunded?
+                if (contrib.status === 'refunded') {
+                    sendError(res, 400, "Esta contribucion ya fue revertida");
+                    return;
+                }
+
+                // Only reversible statuses
+                const reversibleStatuses = ['completed', 'coordinator_approved', 'archived'];
+                if (!reversibleStatuses.includes(contrib.status)) {
+                    sendError(res, 400, "Solo se pueden revertir pagos completados");
+                    return;
+                }
+
+                // Authorization: must be coordinator/creator of the group or platform admin
+                const memberAuth = await dbPostgres.pool.query(
+                    `SELECT role FROM group_members
+                     WHERE group_id = $1 AND user_id = $2
+                       AND status NOT IN ('removed','rejected')`,
+                    [contrib.group_id, authUserRev.userId]
+                );
+                const callerRole = memberAuth.rows[0]?.role;
+                const isAuthorized = ['creator', 'coordinator'].includes(callerRole) ||
+                                     contrib.admin_id === authUserRev.userId ||
+                                     authUserRev.role === 'admin';
+
+                if (!isAuthorized) {
+                    sendError(res, 403, "Solo coordinadores pueden revertir pagos");
+                    return;
+                }
+
+                const reason = (body.reason || '').trim().slice(0, 500) || 'Sin motivo especificado';
+                const amount = parseFloat(contrib.amount);
+
+                // Transaction block
+                const client = await dbPostgres.pool.connect();
+                try {
+                    await client.query('BEGIN');
+
+                    // Lock contribution row
+                    const locked = await client.query(
+                        'SELECT id, status FROM contributions WHERE id = $1 FOR UPDATE',
+                        [contributionId]
+                    );
+                    if (locked.rows[0]?.status === 'refunded') {
+                        await client.query('ROLLBACK');
+                        client.release();
+                        sendError(res, 400, "Esta contribucion ya fue revertida");
+                        return;
+                    }
+
+                    // If wallet payment, re-credit user's balance
+                    if (contrib.payment_method === 'wallet') {
+                        await client.query(
+                            `UPDATE user_wallets SET balance = balance + $1, updated_at = NOW()
+                             WHERE user_id = $2`,
+                            [amount, contrib.user_id]
+                        );
+                        log("info", "Wallet re-credited on reversal", {
+                            user_id: contrib.user_id, amount, contribution_id: contributionId
+                        });
+                    }
+
+                    // Update contribution status
+                    await client.query(
+                        `UPDATE contributions
+                         SET status = 'refunded',
+                             reversed_by = $1,
+                             reversed_at = NOW(),
+                             reversal_reason = $2,
+                             updated_at = NOW()
+                         WHERE id = $3`,
+                        [authUserRev.userId, reason, contributionId]
+                    );
+
+                    await client.query('COMMIT');
+                    client.release();
+
+                    log("info", "Contribution reversed", {
+                        contribution_id: contributionId,
+                        group_id: contrib.group_id,
+                        user_id: contrib.user_id,
+                        reversed_by: authUserRev.userId,
+                        amount,
+                        payment_method: contrib.payment_method,
+                        reason
+                    });
+
+                    sendSuccess(res, {
+                        message: "Pago revertido exitosamente",
+                        contribution_id: contributionId,
+                        user_id: contrib.user_id,
+                        amount,
+                        wallet_refunded: contrib.payment_method === 'wallet'
+                    });
+                } catch (txErr) {
+                    try { await client.query('ROLLBACK'); } catch (_) {}
+                    client.release();
+                    throw txErr;
+                }
+            } catch (error) {
+                log("error", "Error reversing contribution", { contributionId, error: error.message });
+                sendError(res, 500, "Error al revertir la contribucion");
+            }
+            return;
+        }
         // // Update group (PostgreSQL-only)
         if (pathname.match(/^\/api\/groups\/[^\/]+\/update-pg$/) && method === 'PATCH') {
             const authUser = getAuthenticatedUser(req, query);
@@ -21350,6 +21686,34 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                 }
 
 
+
+                // Enrich with user likes/bookmarks state
+                if (feedAuthUser) {
+                    const eventIds = events.map(ev => ev.id);
+                    if (eventIds.length > 0) {
+                        try {
+                            const [userLikes, userBookmarks] = await Promise.all([
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_likes WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [feedAuthUser.userId, eventIds]
+                                ),
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_bookmarks WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [feedAuthUser.userId, eventIds]
+                                )
+                            ]);
+                            const likedSet = new Set(userLikes.rows.map(r => r.event_id));
+                            const bookmarkedSet = new Set(userBookmarks.rows.map(r => r.event_id));
+                            events.forEach(ev => {
+                                ev.is_liked = likedSet.has(ev.id);
+                                ev.is_bookmarked = bookmarkedSet.has(ev.id);
+                            });
+                        } catch (lbErr) {
+                            log('warn', '[SOCIAL] Like/bookmark check error: ' + lbErr.message);
+                        }
+                    }
+                }
+
                 // Mask actor info for anonymous posts
                 const feedAuthUserId = feedAuthUser ? feedAuthUser.userId : null;
                 events.forEach(ev => {
@@ -22548,6 +22912,34 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     }
                 }));
 
+
+                // Enrich with user likes/bookmarks state
+                if (currentUserId) {
+                    const upEventIds = posts.map(p => p.id);
+                    if (upEventIds.length > 0) {
+                        try {
+                            const [upLikes, upBookmarks] = await Promise.all([
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_likes WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [currentUserId, upEventIds]
+                                ),
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_bookmarks WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [currentUserId, upEventIds]
+                                )
+                            ]);
+                            const upLikedSet = new Set(upLikes.rows.map(r => r.event_id));
+                            const upBookmarkedSet = new Set(upBookmarks.rows.map(r => r.event_id));
+                            posts.forEach(p => {
+                                p.is_liked = upLikedSet.has(p.id);
+                                p.is_bookmarked = upBookmarkedSet.has(p.id);
+                            });
+                        } catch (uplbErr) {
+                            log('warn', '[SOCIAL] User posts like/bookmark check error: ' + uplbErr.message);
+                        }
+                    }
+                }
+
                 sendResponse(res, 200, {
                     success: true,
                     data: {
@@ -22778,6 +23170,35 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     count: parseInt(r.count) || 0,
                     tab: (typeLabels[r.event_type] || { tab: "todos" }).tab
                 }));
+
+
+                // Enrich with user likes/bookmarks state
+                const trendAuthUser = getAuthenticatedUser(req, query);
+                if (trendAuthUser) {
+                    const trendEventIds = events.map(ev => ev.id);
+                    if (trendEventIds.length > 0) {
+                        try {
+                            const [trendLikes, trendBookmarks] = await Promise.all([
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_likes WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [trendAuthUser.userId, trendEventIds]
+                                ),
+                                dbPostgres.pool.query(
+                                    'SELECT event_id FROM social_bookmarks WHERE user_id = $1 AND event_id = ANY($2)',
+                                    [trendAuthUser.userId, trendEventIds]
+                                )
+                            ]);
+                            const tLikedSet = new Set(trendLikes.rows.map(r => r.event_id));
+                            const tBookmarkedSet = new Set(trendBookmarks.rows.map(r => r.event_id));
+                            events.forEach(ev => {
+                                ev.is_liked = tLikedSet.has(ev.id);
+                                ev.is_bookmarked = tBookmarkedSet.has(ev.id);
+                            });
+                        } catch (tlbErr) {
+                            log('warn', '[SOCIAL] Trending like/bookmark check error: ' + tlbErr.message);
+                        }
+                    }
+                }
 
                 sendResponse(res, 200, {
                     success: true,
@@ -23416,6 +23837,20 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     } catch (e) { log("error", "Contributions lookup failed", { error: e.message }); }
                 }
                 
+                // Batch-query num_positions per group for this user
+                const positionsByGroup = {};
+                if (allGroupIds.size > 0) {
+                    try {
+                        const gidsArr2 = Array.from(allGroupIds);
+                        const gph2 = gidsArr2.map((_, i) => "$" + (i + 2)).join(", ");
+                        const posRes = await dbPostgres.pool.query(
+                            "SELECT group_id, COALESCE(num_positions, 1) as num_positions FROM group_members WHERE user_id = $1 AND group_id IN (" + gph2 + ") AND status IN ('active','suspended')",
+                            [userId].concat(gidsArr2)
+                        );
+                        posRes.rows.forEach(r => positionsByGroup[r.group_id] = parseInt(r.num_positions));
+                    } catch (e) { log("error", "Positions lookup failed", { error: e.message }); }
+                }
+                
                 const enrichedTandas = userTandas.map(t => {
                     const rawTurnsOrder = t.turns_order || [];
                     const turnsOrder = rawTurnsOrder.map(function(item) {
@@ -23429,6 +23864,7 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     const maxMembers = t.max_members || totalTurns;
                     const currentCycle = t.current_cycle || currentTurn;
                     const commissionRate = t.commission_rate !== null && t.commission_rate !== undefined ? parseFloat(t.commission_rate) : null;
+                    const numPositions = positionsByGroup[t.group_id] || 1;
                     let status = t.status || "active";
                     const isCoordinator = t.coordinator_id === userId;
                     const hasTurnAssigned = turnsOrder.includes(userId) || isCoordinator;
@@ -23473,7 +23909,10 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                             members_needed: totalTurns,
                             has_turn_assigned: hasTurnAssigned,
                             lottery_scheduled_at: t.lottery_scheduled_at || null,
-                            lottery_executed_at: t.lottery_executed_at || null
+                            lottery_executed_at: t.lottery_executed_at || null,
+                            lottery_executed: t.lottery_executed || false,
+                            is_my_turn: false,
+                            num_positions: numPositions
                         };
                     }
                     
@@ -23492,7 +23931,7 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                     
                     // Payment status based on real data + grace period + date check
                     var paymentStatus = "up_to_date";
-                    if (myContributionsPaid < currentCycle) {
+                    if (myContributionsPaid < currentCycle * numPositions) {
                         var now = new Date();
                         var graceDate = nextPaymentGraceDeadline ? new Date(nextPaymentGraceDeadline + "T23:59:59") : nextPaymentDate;
                         if (now > graceDate) {
@@ -23539,7 +23978,10 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
                         coordinator_name: t.coordinator_name || null,
                         has_turn_assigned: hasTurnAssigned,
                         lottery_scheduled_at: t.lottery_scheduled_at || null,
-                        lottery_executed_at: t.lottery_executed_at || null
+                        lottery_executed_at: t.lottery_executed_at || null,
+                        lottery_executed: t.lottery_executed || false,
+                        is_my_turn: currentTurn > 0 && currentTurn === myTurnPosition,
+                        num_positions: numPositions
                     };
                 });
                 log("info", `Returning ${enrichedTandas.length} tandas for ${userId} from PostgreSQL`);

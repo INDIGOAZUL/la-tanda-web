@@ -26,7 +26,8 @@ async function getEnrichedGroupsByUser(userId) {
                 g.*,
                 COALESCE(gm.role, CASE WHEN g.admin_id = $1 THEN 'creator' ELSE 'member' END) AS my_role,
                 COALESCE(gm.status, 'active') AS my_membership_status,
-                COALESCE(gm.joined_at, g.created_at) AS joined_at
+                COALESCE(gm.joined_at, g.created_at) AS joined_at,
+                COALESCE(gm.num_positions, 1) AS my_num_positions
             FROM groups g
             LEFT JOIN group_members gm ON g.group_id = gm.group_id AND gm.user_id = $1
             WHERE (
@@ -112,7 +113,8 @@ async function getEnrichedGroupsByUser(userId) {
             COALESCE(ps.pending_payments, 0) AS pending_payments,
             COALESCE(ps.cycles_paid, 0) AS cycles_paid,
             COALESCE(pos.total_positions, 1) AS total_positions,
-            ug.grace_period
+            ug.grace_period,
+            ug.my_num_positions
         FROM user_groups ug
         LEFT JOIN latest_tanda lt ON ug.group_id = lt.group_id
         LEFT JOIN position_stats pos ON ug.group_id = pos.group_id
@@ -287,6 +289,7 @@ function enrichGroupWithPaymentStatus(group) {
         my_total_paid: parseFloat(group.my_total_paid || 0),
         my_alerts: alerts,
         has_active_tanda: !!group.tanda_id,
+        my_num_positions: parseInt(group.my_num_positions) || 1,
         my_turn_number: null,
         turns_until_mine: null
     };
@@ -311,6 +314,7 @@ async function getPublicGroups(excludeUserId = null) {
             g.image_url,
             g.category,
             g.meeting_schedule,
+            g.commission_rate,
             u.name as admin_name
         FROM groups g
         LEFT JOIN users u ON g.admin_id = u.user_id
