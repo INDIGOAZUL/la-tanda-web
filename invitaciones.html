@@ -546,6 +546,11 @@
     <div class="toast" id="toast"></div>
 
     <script>
+    function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
     class InvitationManager {
         constructor() {
             this.user = null;
@@ -675,9 +680,9 @@
             if (type === "received" && inv.status === "pending") {
                 actions = `
                     <div class="card-actions">
-                        <button class="btn btn-accept" onclick="app.acceptInvitation('${inv.token}')">\n                            <i class="fas fa-check"></i> Aceptar
+                        <button class="btn btn-accept" onclick="app.acceptInvitation('${escapeHtml(inv.token)}')">\n                            <i class="fas fa-check"></i> Aceptar
                         </button>
-                        <button class="btn btn-decline" onclick="app.declineInvitation('${inv.token}')">\n                            <i class="fas fa-times"></i> Rechazar
+                        <button class="btn btn-decline" onclick="app.declineInvitation('${escapeHtml(inv.token)}')">\n                            <i class="fas fa-times"></i> Rechazar
                         </button>
                     </div>
                 `;
@@ -698,26 +703,26 @@
                     '</div>';
             }
 
-            const recipient = type === "sent" ? 
-                `<span><i class="fas fa-user"></i> Para: ${inv.invitee_name || inv.invitee_email || "Usuario"}</span>` :
-                `<span><i class="fas fa-user"></i> De: ${inv.inviter_name || "Usuario"}</span>`;
+            const recipient = type === "sent" ?
+                `<span><i class="fas fa-user"></i> Para: ${escapeHtml(inv.invitee_name || inv.invitee_email || "Usuario")}</span>` :
+                `<span><i class="fas fa-user"></i> De: ${escapeHtml(inv.inviter_name || "Usuario")}</span>`;
 
             return `
                 <div class="invitation-card">
                     <div class="card-header">
                         <div class="card-title">
                             <i class="fas fa-users"></i>
-                            ${inv.group_name || "Grupo"}
+                            ${escapeHtml(inv.group_name || "Grupo")}
                         </div>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="status-badge ${statusClass}">${escapeHtml(statusText)}</span>
                     </div>
                     <div class="card-meta">
                         ${recipient}
                         <span><i class="fas fa-calendar"></i> ${date}</span>
                         <span><i class="fas fa-dollar-sign"></i> L. ${parseFloat(inv.contribution_amount || 0).toLocaleString()}</span>
-                        <span><i class="fas fa-sync"></i> ${inv.frequency || "mensual"}</span>
+                        <span><i class="fas fa-sync"></i> ${escapeHtml(inv.frequency || "mensual")}</span>
                     </div>
-                    ${inv.message ? `<div class="card-message">"${inv.message}"</div>` : ""}
+                    ${inv.message ? `<div class="card-message">"${escapeHtml(inv.message)}"</div>` : ""}
                     ${actions}
                 </div>
             `;
@@ -726,15 +731,19 @@
         renderGroupSelect() {
             const select = document.getElementById("groupSelect");
             select.innerHTML = `<option value="">Seleccionar grupo...</option>` + 
-                this.groups.map(g => `<option value="${g.group_id || g.id}">${g.name}</option>`).join("");
+                this.groups.map(g => `<option value="${escapeHtml(g.group_id || g.id)}">${escapeHtml(g.name)}</option>`).join("");
         }
 
         async acceptInvitation(token) {
             try {
+                const authToken = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
                 const res = await fetch("/api/invitations/token/" + token + "/accept", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ user_id: this.user.user_id || this.user.id })
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + authToken
+                    },
+                    body: JSON.stringify({})
                 });
                 const data = await res.json();
                 
@@ -806,23 +815,23 @@
                             Invitacion a Grupo
                         </div>
                     </div>
-                    <h2 style="margin: 20px 0; color: var(--tanda-cyan);">${inv.group_name}</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 20px;">${inv.group_description || ""}</p>
+                    <h2 style="margin: 20px 0; color: var(--tanda-cyan);">${escapeHtml(inv.group_name)}</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">${escapeHtml(inv.group_description || "")}</p>
                     <div class="card-meta" style="margin-bottom: 20px;">
-                        <span><i class="fas fa-user"></i> Invitado por: ${inv.inviter_name || "Usuario"}</span>
+                        <span><i class="fas fa-user"></i> Invitado por: ${escapeHtml(inv.inviter_name || "Usuario")}</span>
                         <span><i class="fas fa-dollar-sign"></i> L. ${parseFloat(inv.contribution_amount || 0).toLocaleString()}</span>
-                        <span><i class="fas fa-sync"></i> ${inv.frequency || "mensual"}</span>
+                        <span><i class="fas fa-sync"></i> ${escapeHtml(inv.frequency || "mensual")}</span>
                     </div>
-                    ${inv.message ? `<div class="card-message">"${inv.message}"</div>` : ""}
+                    ${inv.message ? `<div class="card-message">"${escapeHtml(inv.message)}"</div>` : ""}
                     <div class="card-actions" style="flex-direction: column;">
                         ${isLoggedIn ? `
-                            <button class="btn btn-accept" style="width:100%" onclick="app.acceptTokenInvite('${token}')">\n                                <i class="fas fa-check"></i> Aceptar y Unirse
+                            <button class="btn btn-accept" style="width:100%" onclick="app.acceptTokenInvite('${escapeHtml(token)}')">\n                                <i class="fas fa-check"></i> Aceptar y Unirse
                             </button>
                             <button class="btn btn-decline" style="width:100%" onclick="window.location.href='invitaciones.html'">
                                 <i class="fas fa-times"></i> Rechazar
                             </button>
                         ` : `
-                            <button class="btn btn-primary" style="width:100%" onclick="localStorage.setItem('redirect_after_auth', 'invitaciones.html?token=${token}'); window.location.href='auth-enhanced.html'">
+                            <button class="btn btn-primary" style="width:100%" onclick="localStorage.setItem('redirect_after_auth', 'invitaciones.html?token=${escapeHtml(token)}'); window.location.href='auth-enhanced.html'">
                                 <i class="fas fa-sign-in-alt"></i> Iniciar Sesion para Aceptar
                             </button>
                         `}
@@ -835,7 +844,7 @@
             document.querySelector(".container").innerHTML = `
                 <div class="empty-state" style="min-height: 50vh;">
                     <i class="fas fa-exclamation-circle" style="color: var(--error-color);"></i>
-                    <h3>${message}</h3>
+                    <h3>${escapeHtml(message)}</h3>
                     <p>Esta invitacion puede haber expirado o ya fue utilizada.</p>
                     <button class="btn btn-secondary" style="margin-top: 20px;" onclick="window.location.href='invitaciones.html'">
                         <i class="fas fa-arrow-left"></i> Ir a Invitaciones
@@ -845,18 +854,20 @@
         }
 
         async acceptTokenInvite(token) {
-            const userData = localStorage.getItem("latanda_user");
-            if (!userData) {
+            const authToken = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+            if (!authToken) {
                 this.showToast("Debes iniciar sesion", "error");
                 return;
             }
-            
-            const user = JSON.parse(userData);
+
             try {
                 const res = await fetch("/api/invitations/token/" + token + "/accept", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ user_id: user.user_id || user.id })
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + authToken
+                    },
+                    body: JSON.stringify({})
                 });
                 const data = await res.json();
                 
