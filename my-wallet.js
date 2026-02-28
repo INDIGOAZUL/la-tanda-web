@@ -16,7 +16,22 @@ class LaTandaWallet {
             HNL_USD: 0.0402
         };
         this.selectedBank = null;
+        
+        // Pagination configuration
+        this.PAGE_SIZE_DEFAULT = 20;
+        this.PAGE_SIZE_MAX = 50;
+        this.PAGE_CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+        
+        // Page cache for faster navigation
+        this.pageCache = {};
+        
         this.transactionHistory = [];
+        
+        // Pagination state
+        this.currentPage = 1;
+        this.totalPages = 1;
+        this.paginationData = { total: 0, limit: this.PAGE_SIZE_DEFAULT, offset: 0, has_more: false };
+        
         this.qrCodeInstance = null;
         this.notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '[]');
 
@@ -130,6 +145,21 @@ class LaTandaWallet {
                 !settingsDropdown.contains(e.target) &&
                 !settingsBtn.contains(e.target)) {
                 this.closeWalletSettings();
+            }
+        });
+
+        // Pagination controls
+        document.getElementById('prevPage')?.addEventListener('click', () => this.prevPage());
+        document.getElementById('nextPage')?.addEventListener('click', () => this.nextPage());
+        document.getElementById('jumpPageBtn')?.addEventListener('click', () => {
+            const input = document.getElementById('jumpToPage');
+            const page = parseInt(input?.value);
+            if (page) this.loadPage(page);
+        });
+        document.getElementById('jumpToPage')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const page = parseInt(e.target.value);
+                if (page) this.loadPage(page);
             }
         });
 
@@ -469,6 +499,8 @@ class LaTandaWallet {
     // Load transaction history for the new layout
     async loadTransactionHistory() {
         try {
+            // Invalidate page cache when reloading transactions
+            this.pageCache = {};
 
             // Try to load from API first, fallback to local data
             await this.fetchTransactionHistory();
@@ -495,20 +527,25 @@ class LaTandaWallet {
                 return;
             }
 
-            // Production API call - use correct POST endpoint with user_id
-            const userId = this.getCurrentUserId();
-
+            // Production API call - use correct POST endpoint
             const response = await this.apiCall('/api/user/transactions', {
                 method: 'POST',
                 body: JSON.stringify({
-                    user_id: userId,
-                    limit: 50,
+                    limit: this.PAGE_SIZE_DEFAULT,
                     offset: 0
                 })
             });
 
             if (response && response.success && response.data && response.data.transactions) {
                 this.transactionHistory = response.data.transactions;
+
+                // Capture pagination data
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                    this.totalPages = Math.ceil(response.data.pagination.total / response.data.pagination.limit) || 1;
+                    this.currentPage = Math.floor(response.data.pagination.offset / response.data.pagination.limit) + 1;
+                    this.updatePaginationUI();
+                }
 
                 // Save to localStorage as backup
                 this.saveTransactionHistory();
@@ -573,6 +610,158 @@ class LaTandaWallet {
         } else {
             // Start with empty transaction history - real transactions will be added as they occur
             this.transactionHistory = [];
+        }
+    }
+
+    // ================================
+    // 📄 PAGINATION METHODS
+    // ================================
+    // Handles server-side pagination for transaction history
+    // Uses backend API: POST /api/user/transactions with limit/offset
+    // Supports Previous/Next navigation and jump-to-page
+
+    /**
+     * Load a specific page of transactions
+     * @param {number} pageNum - Page number to load (1-indexed)
+     */
+    async loadPage(pageNum) {
+        if (pageNum < 1 || pageNum > this.totalPages) return;
+        
+        const offset = (pageNum - 1) * this.paginationData.limit;
+        const userId = this.getCurrentUserId();
+        const cacheKey = `page_${pageNum}_${this.paginationData.limit}`;
+        
+        // Check page cache first
+        const cached = this.getCachedPage(cacheKey);
+        if (cached) {
+            this.transactionHistory = cached.transactions;
+            this.currentPage = pageNum;
+            this.paginationData = cached.pagination;
+            this.totalPages = Math.ceil(cached.pagination.total / cached.pagination.limit) || 1;
+            this.updatePaginationUI();
+            this.renderTransactionHistory();
+            return;
+        }
+        
+        try {
+            // Show loading indicator with smooth transition
+            this.showLoading('Cargando transacciones...');
+            
+            const response = await this.apiCall('/api/user/transactions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    limit: this.paginationData.limit,
+                    offset: offset
+                })
+            });
+            
+            this.hideLoading();
+            
+            if (response && response.success && response.data && response.data.transactions) {
+                this.transactionHistory = response.data.transactions;
+                this.currentPage = pageNum;
+                if (response.data.pagination) {
+                    this.paginationData = response.data.pagination;
+                }
+                
+                // Cache this page for faster navigation
+                this.cachePage(cacheKey, {
+                    transactions: this.transactionHistory,
+                    pagination: this.paginationData
+                });
+                
+                this.updatePaginationUI();
+                this.renderWithTransition();
+                this.renderTransactionHistory();
+            } else {
+                this.showError('Error al cargar las transacciones');
+            }
+        } catch (error) {
+            this.hideLoading();
+            this.showError('Error al cargar la página de transacciones');
+        }
+    }
+
+    /**
+     * Get cached page data if not expired
+     */
+    getCachedPage(cacheKey) {
+        const cached = this.pageCache[cacheKey];
+        if (!cached) return null;
+        
+        const isExpired = Date.now() - cached.timestamp > this.PAGE_CACHE_EXPIRY;
+        if (isExpired) {
+            delete this.pageCache[cacheKey];
+            return null;
+        }
+        return cached.data;
+    }
+
+    /**
+     * Cache page data with timestamp
+     */
+    cachePage(cacheKey, data) {
+        // Keep only last 5 pages in cache
+        const cacheKeys = Object.keys(this.pageCache);
+        if (cacheKeys.length >= 5) {
+            const oldestKey = cacheKeys[0];
+            delete this.pageCache[oldestKey];
+        }
+        
+        this.pageCache[cacheKey] = {
+            data: data,
+            timestamp: Date.now()
+        };
+    }
+
+    /**
+     * Render with smooth CSS transition
+     */
+    renderWithTransition() {
+        const list = document.getElementById('transactionsList');
+        if (list) {
+            list.classList.add('fade-transition');
+            setTimeout(() => list.classList.remove('fade-transition'), 300);
+        }
+    }
+
+    /**
+     * Navigate to next page (if available)
+     */
+    nextPage() {
+        if (this.paginationData.has_more) {
+            this.loadPage(this.currentPage + 1);
+        }
+    }
+
+    /**
+     * Navigate to previous page (if not on first page)
+     */
+    prevPage() {
+        if (this.currentPage > 1) {
+            this.loadPage(this.currentPage - 1);
+        }
+    }
+
+    /**
+     * Update pagination UI controls based on current state
+     * Shows/hides controls, enables/disables buttons, updates indicator
+     */
+    updatePaginationUI() {
+        const controls = document.getElementById('paginationControls');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const indicator = document.getElementById('pageIndicator');
+        
+        if (!controls) return;
+        
+        controls.classList.toggle('hidden', this.totalPages <= 1);
+        
+        if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = !this.paginationData.has_more;
+        
+        if (indicator) {
+            indicator.textContent = `Página ${this.currentPage} de ${this.totalPages}`;
         }
     }
 
