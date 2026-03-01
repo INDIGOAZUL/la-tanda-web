@@ -1,0 +1,205 @@
+openapi: 3.1.0
+info:
+  title: La Tanda Fintech Platform API
+  description: Strict OpenAPI 3.1.0 specification for La Tanda v4.11. This documentation
+    covers the complete banking and ROSCA ecosystem including Auth, Tandas, Wallet,
+    and KYC.
+  version: 4.11.0
+  contact:
+    name: La Tanda Dev Team
+    url: https://latanda.online
+    email: devops@latanda.online
+  license:
+    name: Proprietary
+    url: https://latanda.online/terms
+servers:
+- url: https://api.latanda.online/v1
+  description: Production Gateway
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+  description: Identity & Access
+- name: Groups
+  description: ROSCA Tanda Management
+- name: Wallet
+  description: Financial Operations
+- name: System
+  description: Observability
+paths:
+  /api/auth/login:
+    post:
+      tags:
+      - Auth
+      summary: User Login
+      operationId: authLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+  /api/groups:
+    get:
+      tags:
+      - Groups
+      summary: List Groups
+      operationId: getGroups
+      security: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+    post:
+      tags:
+      - Groups
+      summary: Create Tanda
+      operationId: createGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreate'
+      responses:
+        '201':
+          description: Created
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+  /api/wallet/balance:
+    get:
+      tags:
+      - Wallet
+      summary: Get Balance
+      operationId: getWalletBalance
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Wallet not found
+  /health:
+    get:
+      tags:
+      - System
+      summary: Health Check
+      operationId: checkHealth
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        '503':
+          description: Service Unavailable
+        '400':
+          description: Invalid request
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    GroupCreate:
+      type: object
+      required:
+      - name
+      - max_members
+      properties:
+        name:
+          type: string
+        max_members:
+          type: integer
+          minimum: 2
+    BalanceResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+        currency:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
