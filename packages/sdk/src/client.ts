@@ -8,6 +8,9 @@ import { FeedModule } from './modules/feed'
 import { TandasModule } from './modules/tandas'
 import { MarketplaceModule } from './modules/marketplace'
 import { LotteryModule } from './modules/lottery'
+import { ProvidersModule } from './modules/providers'
+import { VerificationModule } from './modules/verification'
+import { NotificationModule } from './modules/notifications'
 import { LaTandaConfig, DEFAULT_CONFIG, TokenStorage, MemoryTokenStorage } from './config'
 import type { AdminModule, MiningModule, MIAModule } from './types'
 
@@ -22,6 +25,9 @@ export class LaTandaClient {
     tandas: TandasModule
     marketplace: MarketplaceModule
     lottery: LotteryModule
+    providers: ProvidersModule
+    verification: VerificationModule
+    notifications: NotificationModule
     admin!: AdminModule
     mining!: MiningModule
     mia!: MIAModule
@@ -56,6 +62,9 @@ export class LaTandaClient {
         this.tandas = new TandasModule(this._http)
         this.marketplace = new MarketplaceModule(this._http)
         this.lottery = new LotteryModule(this._http)
+        this.providers = new ProvidersModule(this._http)
+        this.verification = new VerificationModule(this._http)
+        this.notifications = new NotificationModule(this._http)
         this._initPlaceholderModules()
     }
 
