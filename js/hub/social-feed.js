@@ -33,6 +33,7 @@ const SocialFeed = {
     tabs: [
         { id: "todos", label: "Todos", icon: "fa-globe", filter: null },
         { id: "trending", label: "Trending", icon: "fa-fire", filter: "trending" },
+        { id: "siguiendo", label: "Siguiendo", icon: "fa-user-friends", filter: "following" },
         { id: "grupos", label: "Grupos", icon: "fa-users", filter: "group_created,group_joined" },
         { id: "mercado", label: "Mercado", icon: "fa-shopping-bag", filter: "product_posted" },
         { id: "loteria", label: "Loteria", icon: "fa-dice", filter: "lottery_result,prediction_shared" },
@@ -813,8 +814,37 @@ const SocialFeed = {
             tab.classList.add("active");
 
             this.currentTab = tabId;
+            sessionStorage.setItem("socialFeedTab", tabId);
+            if (tabId === "siguiendo") this.loadFollowingCount();
             this.loadEvents(true);
         });
+
+        // Restore tab from sessionStorage
+        const savedTab = sessionStorage.getItem("socialFeedTab");
+        if (savedTab && this.tabs.find(t => t.id === savedTab)) {
+            const savedBtn = tabsContainer.querySelector('[data-tab="' + savedTab + '"]');
+            if (savedBtn && savedTab !== this.currentTab) {
+                tabsContainer.querySelectorAll(".feed-tab").forEach(t => t.classList.remove("active"));
+                savedBtn.classList.add("active");
+                this.currentTab = savedTab;
+                if (savedTab === "siguiendo") this.loadFollowingCount();
+            }
+        }
+    },
+
+    async loadFollowingCount() {
+        try {
+            const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken") || "";
+            if (!token) return;
+            const res = await fetch("/api/feed/social/following?limit=1&offset=0", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const count = data.following_count || 0;
+            const btn = document.querySelector('[data-tab="siguiendo"] span');
+            if (btn && count > 0) btn.textContent = "Siguiendo (" + count + ")";
+        } catch(e) {}
     },
 
     attachPostMenuHandlers() {
@@ -1037,6 +1067,8 @@ const SocialFeed = {
             let url;
             if (tab.filter === "trending") {
                 url = "/api/feed/social/trending?limit=" + this.limit + "&offset=" + this.offset;
+            } else if (tab.filter === "following") {
+                url = "/api/feed/social/following?limit=" + this.limit + "&offset=" + this.offset;
             } else if (tab.filter) {
                 url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&types=" + tab.filter;
             } else {
@@ -1080,11 +1112,13 @@ const SocialFeed = {
 
         if (this.events.length === 0) {
             const tab = this.tabs.find(t => t.id === this.currentTab);
+            const emptyMsg = this.currentTab === "siguiendo"
+                ? '<p>Sigue a otros usuarios para ver sus publicaciones aqui</p><span>Explora y conecta con la comunidad</span>'
+                : '<p>No hay actividad ' + (this.currentTab !== "todos" ? "en esta categoria" : "reciente") + '</p><span>La actividad de la comunidad aparecera aqui</span>';
             listEl.innerHTML =
                 '<div class="social-feed-empty">' +
                     '<i class="fas ' + (tab ? tab.icon : 'fa-inbox') + '"></i>' +
-                    '<p>No hay actividad ' + (this.currentTab !== "todos" ? "en esta categoria" : "reciente") + '</p>' +
-                    '<span>La actividad de la comunidad aparecera aqui</span>' +
+                    emptyMsg +
                 '</div>';
             return;
         }

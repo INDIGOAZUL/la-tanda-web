@@ -28073,11 +28073,141 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
             return;
         }
 
+        // ============================================
+        // POST /api/feed/social/report - Submit content report
+        // Added: 2026-03-01 (bounty #51)
+        // ============================================
+        if (pathname === '/api/feed/social/report' && method === 'POST') {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser) { sendError(res, 401, 'Autenticacion requerida'); return; }
+
+            try {
+                const body = await parseBody(req);
+                const { event_id, comment_id, reason, description } = body;
+
+                if (!reason) { sendError(res, 400, 'El campo reason es requerido'); return; }
+                const validReasons = ['spam', 'acoso', 'inapropiado', 'desinformacion', 'otro'];
+                if (!validReasons.includes(reason)) { sendError(res, 400, 'Razon invalida'); return; }
+                if (!event_id && !comment_id) { sendError(res, 400, 'Se requiere event_id o comment_id'); return; }
+
+                // Rate limit: 10 reports per day per user
+                const rateLimitCheck = await dbPostgres.pool.query(
+                    `SELECT COUNT(*) FROM social_reports WHERE reporter_id = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+                    [authUser.userId]
+                );
+                if (parseInt(rateLimitCheck.rows[0].count) >= 10) {
+                    sendError(res, 429, 'Limite de reportes diarios alcanzado (max 10)'); return;
+                }
+
+                // Prevent duplicate reports
+                const dupCheck = await dbPostgres.pool.query(
+                    `SELECT id FROM social_reports WHERE reporter_id = $1 AND event_id IS NOT DISTINCT FROM $2 AND comment_id IS NOT DISTINCT FROM $3`,
+                    [authUser.userId, event_id || null, comment_id || null]
+                );
+                if (dupCheck.rows.length > 0) {
+                    sendError(res, 409, 'Ya reportaste este contenido'); return;
+                }
+
+                await dbPostgres.pool.query(
+                    `INSERT INTO social_reports (reporter_id, event_id, comment_id, reason, description) VALUES ($1, $2, $3, $4, $5)`,
+                    [authUser.userId, event_id || null, comment_id || null, reason, description || null]
+                );
+
+                // Auto-hide if 3+ unique reports
+                if (event_id) {
+                    const reportCount = await dbPostgres.pool.query(
+                        `SELECT COUNT(DISTINCT reporter_id) FROM social_reports WHERE event_id = $1 AND status = 'pending'`,
+                        [event_id]
+                    );
+                    if (parseInt(reportCount.rows[0].count) >= 3) {
+                        await dbPostgres.pool.query(`UPDATE social_feed SET is_hidden = true WHERE id = $1`, [event_id]);
+                    }
+                }
+
+                sendSuccess(res, { message: 'Reporte enviado correctamente' });
+            } catch (err) {
+                log('error', '[REPORT] Error creating report', { error: err.message });
+                sendError(res, 500, 'Error al procesar el reporte');
+            }
+            return;
+        }
+
+        // ============================================
+        // GET /api/admin/reports - List pending reports (admin only)
+        // POST /api/admin/reports/:id/resolve - Resolve a report (admin only)
+        // Added: 2026-03-01 (bounty #51)
+        // ============================================
+        if (pathname === '/api/admin/reports' && method === 'GET') {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser || authUser.role !== 'admin') { sendError(res, 403, 'Acceso denegado'); return; }
+
+            try {
+                const limit = Math.min(parseInt(query.limit) || 20, 50);
+                const offset = parseInt(query.offset) || 0;
+                const status = query.status || 'pending';
+
+                const result = await dbPostgres.pool.query(
+                    `SELECT r.*, 
+                        u.username as reporter_username,
+                        sf.content as event_content,
+                        sf.user_id as event_author
+                     FROM social_reports r
+                     LEFT JOIN users u ON r.reporter_id = u.user_id
+                     LEFT JOIN social_feed sf ON r.event_id = sf.id
+                     WHERE r.status = $1
+                     ORDER BY r.created_at DESC
+                     LIMIT $2 OFFSET $3`,
+                    [status, limit, offset]
+                );
+
+                const countResult = await dbPostgres.pool.query(
+                    `SELECT COUNT(*) FROM social_reports WHERE status = $1`, [status]
+                );
+
+                sendSuccess(res, { reports: result.rows, total: parseInt(countResult.rows[0].count), limit, offset });
+            } catch (err) {
+                sendError(res, 500, 'Error al obtener reportes');
+            }
+            return;
+        }
+
+        if (pathname.match(/^\/api\/admin\/reports\/[\w-]+\/resolve$/) && method === 'POST') {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser || authUser.role !== 'admin') { sendError(res, 403, 'Acceso denegado'); return; }
+
+            try {
+                const reportId = pathname.split('/')[4];
+                const body = await parseBody(req);
+                const { action, resolution_note } = body; // action: dismiss | warn | hide
+
+                if (!['dismiss', 'warn', 'hide'].includes(action)) {
+                    sendError(res, 400, 'Accion invalida. Use: dismiss, warn, hide'); return;
+                }
+
+                const report = await dbPostgres.pool.query(`SELECT * FROM social_reports WHERE id = $1`, [reportId]);
+                if (!report.rows.length) { sendError(res, 404, 'Reporte no encontrado'); return; }
+
+                await dbPostgres.pool.query(
+                    `UPDATE social_reports SET status = $1, reviewed_by = $2, reviewed_at = NOW(), resolution_note = $3 WHERE id = $4`,
+                    [action === 'dismiss' ? 'dismissed' : 'actioned', authUser.userId, resolution_note || null, reportId]
+                );
+
+                if (action === 'hide' && report.rows[0].event_id) {
+                    await dbPostgres.pool.query(`UPDATE social_feed SET is_hidden = true WHERE id = $1`, [report.rows[0].event_id]);
+                }
+
+                sendSuccess(res, { message: 'Reporte resuelto', action });
+            } catch (err) {
+                sendError(res, 500, 'Error al resolver el reporte');
+            }
+            return;
+        }
+
         sendError(res, 404, 'Endpoint not found', {
             requested_path: pathname,
             method: method,
             available_docs: '/docs',
-            total_endpoints: 140
+            total_endpoints: 143
         });
 
     } catch (error) {
