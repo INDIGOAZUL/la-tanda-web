@@ -906,7 +906,7 @@ class MarketplaceSocialSystem {
                         name: p.seller_name || 'Vendedor',
                         avatar: (p.seller_name || 'V').charAt(0).toUpperCase(),
                         avatarUrl: p.seller_avatar,
-                        rating: 4.5 // TODO: Implement product reviews
+                        rating: p.avg_rating ? parseFloat(p.avg_rating) : null
                     },
                     featured: p.is_featured || false,
                     referralEnabled: p.referral_enabled,
@@ -1398,7 +1398,75 @@ class MarketplaceSocialSystem {
         
         container.innerHTML = products.map(product => this.createProductCard(product)).join('');
     }
-    
+
+    createProductCard(product) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const cur = product.currency || 'HNL';
+        const priceLabel = this.formatPrice(product.price, cur);
+        const condLabels = { new: 'Nuevo', like_new: 'Como nuevo', good: 'Bueno', acceptable: 'Aceptable', used: 'Usado', refurbished: 'Reacondicionado' };
+        const condLabel = condLabels[product.condition] || '';
+        const stockLabel = product.quantity > 0 ? `${product.quantity} disponible${product.quantity > 1 ? 's' : ''}` : 'Agotado';
+        const stockColor = product.quantity > 0 ? '#10B981' : '#EF4444';
+
+        const imgSrc = product.images && product.images.length > 0
+            ? (typeof product.images[0] === 'object' ? product.images[0].url : product.images[0])
+            : null;
+        const imgHtml = imgSrc && imgSrc.startsWith('http')
+            ? `<img src="${esc(imgSrc)}" alt="" style="width:100%;height:100%;object-fit:cover;" loading="lazy">`
+            : `<span style="font-size:48px;">${product.image || '📦'}</span>`;
+
+        const ratingHtml = product.seller.rating
+            ? `⭐ ${Number(product.seller.rating).toFixed(1)}`
+            : '<span style="color:rgba(255,255,255,0.4);">Sin resenas</span>';
+
+        const descText = (product.description || '').length > 100
+            ? product.description.substring(0, 100) + '...'
+            : (product.description || '');
+
+        const commissionPercent = product.referralCommission || 5;
+        const estimatedCommission = (product.price * commissionPercent / 100).toFixed(0);
+
+        return `
+            <div class="service-card" data-id="${esc(product.id)}">
+                <div class="service-image" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                    ${imgHtml}
+                    ${condLabel ? `<div class="service-badge" style="background:rgba(139,92,246,0.9);">${esc(condLabel)}</div>` : ''}
+                </div>
+                <div class="service-info">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                        <span style="font-size:12px;color:${stockColor};font-weight:600;">${esc(stockLabel)}</span>
+                    </div>
+                    <div class="service-title">${esc(product.name)}</div>
+                    <div class="service-description">${esc(descText)}</div>
+                    <div class="service-provider">
+                        <div class="provider-avatar">${esc(product.seller.avatar)}</div>
+                        <div class="provider-info">
+                            <div class="provider-name">${esc(product.seller.name)}</div>
+                            <div class="provider-rating">${ratingHtml}</div>
+                        </div>
+                    </div>
+                    <div class="service-details">
+                        <div class="service-price">${priceLabel}</div>
+                    </div>
+                    <div class="service-actions" style="display:flex;gap:8px;margin-top:12px;">
+                        ${product.quantity > 0 ? `
+                        <button class="btn btn-primary" style="flex:1;" data-action="buy-product" data-id="${esc(product.id)}">
+                            <span>🛒</span> Comprar
+                        </button>` : `
+                        <button class="btn btn-secondary" style="flex:1;opacity:0.5;" disabled>Agotado</button>`}
+                        <button class="btn btn-secondary share-btn" style="padding:10px 14px;" data-action="share-product" data-id="${esc(product.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
+                            <span>💰</span>
+                        </button>
+                    </div>
+                    ${!this.isGuest ? `
+                    <div class="commission-hint" style="text-align:center;margin-top:8px;font-size:11px;color:rgba(0,255,255,0.7);">
+                        💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada venta referida
+                    </div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
     async loadMyStore() {
         const container = document.getElementById('myStoreContent');
         if (!container) return;
@@ -3238,6 +3306,33 @@ class MarketplaceSocialSystem {
         }
     }
     
+    showConfirm(message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar') {
+        return new Promise((resolve) => {
+            const existing = document.getElementById('mpConfirmOverlay');
+            if (existing) existing.remove();
+            const overlay = document.createElement('div');
+            overlay.id = 'mpConfirmOverlay';
+            overlay.className = 'modal active';
+            overlay.innerHTML = `
+                <div class="modal-content" style="max-width:400px;text-align:center;">
+                    <div style="padding:24px;">
+                        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+                        <p style="font-size:16px;margin-bottom:24px;color:rgba(255,255,255,0.9);">${this.escapeHtml(message)}</p>
+                        <div style="display:flex;gap:12px;justify-content:center;">
+                            <button class="btn btn-secondary" id="mpConfirmCancel">${this.escapeHtml(cancelLabel)}</button>
+                            <button class="btn btn-danger" id="mpConfirmOk">${this.escapeHtml(confirmLabel)}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            const close = (val) => { overlay.remove(); resolve(val); };
+            overlay.querySelector('#mpConfirmOk').addEventListener('click', () => close(true));
+            overlay.querySelector('#mpConfirmCancel').addEventListener('click', () => close(false));
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+        });
+    }
+
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
@@ -4160,15 +4255,123 @@ function closeCreatePostModal() {
 }
 
 function viewProduct(productId) {
-    window.marketplaceSystem?.showNotification('Vista de producto en desarrollo', 'info');
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+    const product = ms.products.find(p => String(p.id) === String(productId) || String(p.productId) === String(productId));
+    if (product) {
+        ms.showNotification(`${ms.escapeHtml(product.name)} - ${ms.formatPrice(product.price, product.currency || 'HNL')}`, 'info');
+    }
 }
 
-function buyProduct(productId) {
-    if (window.marketplaceSystem?.isGuest) {
-        window.marketplaceSystem.showLoginPrompt('comprar productos');
-        return;
-    }
-    window.marketplaceSystem?.showNotification('¡Producto agregado al carrito!', 'success');
+async function buyProduct(productId) {
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+    if (ms.isGuest) { ms.showLoginPrompt('comprar productos'); return; }
+
+    const product = ms.products.find(p => String(p.id) === String(productId) || String(p.productId) === String(productId));
+    if (!product) { ms.showNotification('Producto no encontrado', 'error'); return; }
+    if (product.quantity < 1) { ms.showNotification('Producto agotado', 'error'); return; }
+
+    const esc = ms.escapeHtml.bind(ms);
+    const maxQty = Math.min(product.quantity, 10);
+    const cur = product.currency || 'HNL';
+    const unitPrice = product.price;
+
+    const existing = document.getElementById('purchaseModal');
+    if (existing) existing.remove();
+
+    const qtyOptions = Array.from({ length: maxQty }, (_, i) => i + 1)
+        .map(n => `<option value="${n}">${n}</option>`).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'purchaseModal';
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:460px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🛒 Confirmar Compra</h2>
+                <button class="close-btn" id="purchaseClose">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <div style="display:flex;gap:16px;margin-bottom:20px;align-items:center;">
+                    <div style="font-size:48px;flex-shrink:0;">${product.image || '📦'}</div>
+                    <div>
+                        <div style="font-size:16px;font-weight:600;">${esc(product.name)}</div>
+                        <div style="color:rgba(255,255,255,0.6);font-size:13px;">${esc(product.seller.name)}</div>
+                        <div style="color:#10B981;font-weight:700;font-size:18px;margin-top:4px;">${ms.formatPrice(unitPrice, cur)}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Cantidad</label>
+                    <select id="purchaseQty" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:white;">
+                        ${qtyOptions}
+                    </select>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Metodo de pago</label>
+                    <select id="purchasePayment" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:white;">
+                        <option value="wallet">Wallet LTD</option>
+                        <option value="cash">Efectivo</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Notas (opcional)</label>
+                    <textarea id="purchaseNotes" rows="2" placeholder="Instrucciones de entrega, etc." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:white;resize:vertical;"></textarea>
+                </div>
+                <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;margin-bottom:20px;text-align:center;">
+                    <div style="font-size:13px;color:rgba(255,255,255,0.7);">Total</div>
+                    <div id="purchaseTotal" style="font-size:28px;font-weight:700;color:#10B981;">${ms.formatPrice(unitPrice, cur)}</div>
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-secondary" id="purchaseCancelBtn" style="flex:1;">Cancelar</button>
+                    <button class="btn btn-primary" id="purchaseConfirmBtn" style="flex:1;">Confirmar Compra</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const totalEl = document.getElementById('purchaseTotal');
+    const qtyEl = document.getElementById('purchaseQty');
+    qtyEl.addEventListener('change', () => {
+        totalEl.textContent = ms.formatPrice(unitPrice * parseInt(qtyEl.value), cur);
+    });
+
+    const closeModal = () => modal.remove();
+    document.getElementById('purchaseClose').addEventListener('click', closeModal);
+    document.getElementById('purchaseCancelBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    document.getElementById('purchaseConfirmBtn').addEventListener('click', async () => {
+        const confirmBtn = document.getElementById('purchaseConfirmBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Procesando...';
+
+        try {
+            const apiId = product.productId || product.id;
+            const response = await ms.apiRequest(`/api/marketplace/products/${encodeURIComponent(apiId)}/buy`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: apiId,
+                    quantity: parseInt(qtyEl.value),
+                    payment_method: document.getElementById('purchasePayment').value,
+                    notes: document.getElementById('purchaseNotes').value.trim()
+                })
+            });
+
+            if (response.success || response.order) {
+                closeModal();
+                ms.showNotification('Compra realizada exitosamente', 'success');
+                ms.loadMarketplaceData();
+            } else {
+                throw new Error(response.error || 'Error al procesar compra');
+            }
+        } catch (err) {
+            ms.showNotification(err.message || 'Error al procesar la compra', 'error');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirmar Compra';
+        }
+    });
 }
 
 function toggleLike(postId) {
@@ -4176,22 +4379,24 @@ function toggleLike(postId) {
         window.marketplaceSystem.showLoginPrompt('dar like');
         return;
     }
-    window.marketplaceSystem?.showNotification('¡Like agregado!', 'success');
+    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
 }
 
 function showComments(postId) {
-    window.marketplaceSystem?.showNotification('Comentarios en desarrollo', 'info');
+    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
 }
 
 function sharePost(postId) {
-    window.marketplaceSystem?.showNotification('¡Post compartido!', 'success');
+    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
 }
 
 // Service-related global functions
 function viewService(serviceId) {
-    const service = window.marketplaceSystem?.services.find(s => s.id === serviceId);
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+    const service = ms.services.find(s => s.id === serviceId);
     if (service) {
-        window.marketplaceSystem?.showNotification(`${this.escapeHtml(service.title)} - ${this.escapeHtml(service.provider.name)}`, 'info');
+        ms.showNotification(`${ms.escapeHtml(service.title)} - ${ms.escapeHtml(service.provider.name)}`, 'info');
     }
 }
 
@@ -4216,12 +4421,14 @@ function confirmBooking(bookingId) {
 }
 
 async function cancelBooking(bookingId) {
-    if (!confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
-        return;
-    }
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+
+    const confirmed = await ms.showConfirm('¿Estas seguro de que deseas cancelar esta reserva?', 'Cancelar reserva', 'Volver');
+    if (!confirmed) return;
 
     try {
-        const response = await window.marketplaceSystem?.apiRequest(`/api/marketplace/bookings/${bookingId}/status`, {
+        const response = await ms.apiRequest(`/api/marketplace/bookings/${bookingId}/status`, {
             method: 'PUT',
             body: JSON.stringify({
                 status: 'cancelled',
@@ -4230,18 +4437,54 @@ async function cancelBooking(bookingId) {
         });
 
         if (response?.success) {
-            window.marketplaceSystem?.showNotification('Reserva cancelada exitosamente', 'success');
-            window.marketplaceSystem?.loadBookingsData();
+            ms.showNotification('Reserva cancelada exitosamente', 'success');
+            ms.loadBookingsData();
         } else {
             throw new Error(response?.error || 'Error al cancelar');
         }
     } catch (error) {
-        window.marketplaceSystem?.showNotification('Error al cancelar la reserva', 'error');
+        ms.showNotification('Error al cancelar la reserva', 'error');
     }
 }
 
-function rescheduleBooking(bookingId) {
-    window.marketplaceSystem?.showNotification('Función de reprogramar en desarrollo', 'info');
+async function rescheduleBooking(bookingId) {
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+
+    const booking = ms.bookings?.find(b => String(b.id) === String(bookingId));
+    if (!booking) { ms.showNotification('Reserva no encontrada', 'error'); return; }
+
+    const confirmed = await ms.showConfirm(
+        'Se cancelara la reserva actual y podras crear una nueva con diferente fecha/hora.',
+        'Reprogramar', 'Volver'
+    );
+    if (!confirmed) return;
+
+    try {
+        const response = await ms.apiRequest(`/api/marketplace/bookings/${bookingId}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                status: 'cancelled',
+                cancellation_reason: 'Reprogramado por cliente'
+            })
+        });
+
+        if (response?.success) {
+            ms.showNotification('Reserva cancelada. Selecciona nueva fecha.', 'info');
+            await ms.loadBookingsData();
+            // Find matching service in services list
+            const service = ms.services?.find(s => String(s.serviceId) === String(booking.serviceId));
+            if (service) {
+                ms.openBookingModal(service.id);
+            } else {
+                ms.showNotification('Servicio no encontrado. Busca el servicio y reserva de nuevo.', 'info');
+            }
+        } else {
+            throw new Error(response?.error || 'Error al cancelar');
+        }
+    } catch (err) {
+        ms.showNotification('Error al reprogramar la reserva', 'error');
+    }
 }
 
 async function contactProvider(bookingId) {
@@ -4333,8 +4576,116 @@ async function contactProvider(bookingId) {
 }
 
 function leaveReview(bookingId) {
-    window.marketplaceSystem?.showNotification('Sistema de reseñas en desarrollo', 'info');
-    // In future: open review modal
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+    if (ms.isGuest) { ms.showLoginPrompt('dejar resenas'); return; }
+
+    const booking = ms.bookings?.find(b => String(b.id) === String(bookingId));
+    if (!booking) { ms.showNotification('Reserva no encontrada', 'error'); return; }
+
+    const esc = ms.escapeHtml.bind(ms);
+    const existing = document.getElementById('reviewModal');
+    if (existing) existing.remove();
+
+    const starRow = (name, label) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.8);min-width:120px;">${esc(label)}</span>
+            <div class="rv-stars" data-name="${esc(name)}" data-value="0" style="display:flex;gap:4px;cursor:pointer;">
+                ${[1,2,3,4,5].map(n => `<span data-star="${n}" style="font-size:22px;color:rgba(255,255,255,0.25);transition:color 0.15s;">★</span>`).join('')}
+            </div>
+        </div>`;
+
+    const modal = document.createElement('div');
+    modal.id = 'reviewModal';
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h2 class="modal-title">⭐ Dejar Resena</h2>
+                <button class="close-btn" id="reviewClose">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <div style="margin-bottom:16px;padding:12px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:10px;">
+                    <div style="font-weight:600;">${esc(booking.service)}</div>
+                    <div style="color:rgba(255,255,255,0.6);font-size:13px;">Proveedor: ${esc(booking.provider)}</div>
+                </div>
+                ${starRow('overall_rating', 'General')}
+                ${starRow('quality_rating', 'Calidad')}
+                ${starRow('punctuality_rating', 'Puntualidad')}
+                ${starRow('communication_rating', 'Comunicacion')}
+                ${starRow('value_rating', 'Valor')}
+                <div style="margin-top:16px;margin-bottom:12px;">
+                    <label style="display:block;margin-bottom:6px;font-weight:500;">Comentario</label>
+                    <textarea id="reviewComment" rows="3" placeholder="Comparte tu experiencia..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:white;resize:vertical;"></textarea>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:20px;">
+                    <button class="btn btn-secondary" id="reviewCancelBtn" style="flex:1;">Cancelar</button>
+                    <button class="btn btn-primary" id="reviewSubmitBtn" style="flex:1;">Enviar Resena</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Star click handlers
+    modal.querySelectorAll('.rv-stars').forEach(row => {
+        row.addEventListener('click', (e) => {
+            const starEl = e.target.closest('[data-star]');
+            if (!starEl) return;
+            const val = parseInt(starEl.dataset.star);
+            row.dataset.value = val;
+            row.querySelectorAll('[data-star]').forEach(s => {
+                s.style.color = parseInt(s.dataset.star) <= val ? '#FBBF24' : 'rgba(255,255,255,0.25)';
+            });
+        });
+    });
+
+    const closeModal = () => modal.remove();
+    document.getElementById('reviewClose').addEventListener('click', closeModal);
+    document.getElementById('reviewCancelBtn').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    document.getElementById('reviewSubmitBtn').addEventListener('click', async () => {
+        const ratings = {};
+        let allFilled = true;
+        modal.querySelectorAll('.rv-stars').forEach(row => {
+            const val = parseInt(row.dataset.value);
+            if (val < 1) allFilled = false;
+            ratings[row.dataset.name] = val;
+        });
+
+        if (!allFilled) {
+            ms.showNotification('Selecciona todas las calificaciones (1-5 estrellas)', 'error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('reviewSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+
+        try {
+            const response = await ms.apiRequest('/api/marketplace/reviews', {
+                method: 'POST',
+                body: JSON.stringify({
+                    booking_id: booking.id,
+                    ...ratings,
+                    comment: document.getElementById('reviewComment').value.trim()
+                })
+            });
+
+            if (response.success || response.review) {
+                closeModal();
+                ms.showNotification('Resena enviada exitosamente', 'success');
+                ms.loadBookingsData();
+            } else {
+                throw new Error(response.error || 'Error al enviar resena');
+            }
+        } catch (err) {
+            ms.showNotification(err.message || 'Error al enviar la resena', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enviar Resena';
+        }
+    });
 }
 
 function rebookService(bookingId) {
