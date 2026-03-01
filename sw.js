@@ -6,8 +6,8 @@ self.addEventListener('push', function(event) {
     var title = data.title || 'La Tanda';
     var options = {
         body: data.body || '',
-        icon: data.icon || '/img/icons/icon-192x192.png',
-        badge: data.badge || '/img/icons/badge-72x72.png',
+        icon: data.icon || '/assets/images/pwa-192x192.svg',
+        badge: data.badge || '/assets/images/pwa-192x192.svg',
         data: { url: data.url || '/home-dashboard.html' },
         vibrate: [200, 100, 200],
         tag: data.type || 'default',

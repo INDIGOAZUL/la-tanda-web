@@ -59,7 +59,7 @@ class NotificationCenter {
 
     async loadNotificationsFromAPI() {
         try {
-            const response = await fetch(this.apiBase + "/api/notifications?user_id=" + encodeURIComponent(this.userId) + "&limit=50", {
+            const response = await fetch(this.apiBase + "/api/notifications?limit=50", {
                 method: "GET",
                 headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" })
             });
@@ -391,7 +391,7 @@ class NotificationCenter {
             await fetch(this.apiBase + "/api/notifications/read/" + notificationId, {
                 method: "POST",
                 headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
-                body: JSON.stringify({ user_id: this.userId })
+                body: JSON.stringify({})
             });
         } catch (error) {
         }
@@ -410,7 +410,7 @@ class NotificationCenter {
             await fetch(this.apiBase + "/api/notifications/read-all", {
                 method: "POST",
                 headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
-                body: JSON.stringify({ user_id: this.userId })
+                body: JSON.stringify({})
             });
         } catch (error) {
         }

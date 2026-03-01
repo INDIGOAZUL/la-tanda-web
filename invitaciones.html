@@ -551,6 +551,32 @@
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
     }
 
+    // Escape for JS string inside HTML onclick attribute (dual context)
+    function escapeJsAttr(str) {
+        if (str == null) return '';
+        return String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Async confirm dialog (replaces native confirm())
+    function showConfirmDialog(message) {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+            const box = document.createElement('div');
+            box.style.cssText = 'background:#1e293b;border:1px solid rgba(0,255,255,0.3);border-radius:12px;padding:24px;max-width:380px;width:90%;text-align:center;color:#f8fafc;font-family:Inter,sans-serif';
+            box.innerHTML = '<p style="margin-bottom:20px;font-size:0.95rem;line-height:1.5">' + escapeHtml(message) + '</p>'
+                + '<div style="display:flex;gap:12px;justify-content:center">'
+                + '<button id="cfmNo" style="padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#f8fafc;cursor:pointer;font-size:0.9rem">Cancelar</button>'
+                + '<button id="cfmYes" style="padding:8px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#00FFFF,#7FFFD8);color:#000;cursor:pointer;font-weight:600;font-size:0.9rem">Confirmar</button>'
+                + '</div>';
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            box.querySelector('#cfmYes').onclick = () => { overlay.remove(); resolve(true); };
+            box.querySelector('#cfmNo').onclick = () => { overlay.remove(); resolve(false); };
+            overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } };
+        });
+    }
+
     class InvitationManager {
         constructor() {
             this.user = null;
@@ -602,28 +628,29 @@
         }
 
         async loadData() {
-            const userId = this.user.user_id || this.user.id;
-            
+            const authHeaders = {
+                'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('authToken'))
+            };
+
             try {
                 // Load received invitations
-                const recRes = await fetch("/api/invitations/" + userId);
+                const recRes = await fetch("/api/invitations/my-received", { headers: authHeaders });
                 const recData = await recRes.json();
                 this.received = recData.success ? recData.data.invitations : [];
 
                 // Load sent invitations
-                const sentRes = await fetch("/api/invitations/sent/" + userId);
+                const sentRes = await fetch("/api/invitations/my-sent", { headers: authHeaders });
                 const sentData = await sentRes.json();
                 this.sent = sentData.success ? sentData.data.invitations : [];
 
                 // Load user groups for create form
-                const groupsRes = await fetch("/api/groups?user_id=" + userId);
+                const groupsRes = await fetch("/api/groups/my-groups-pg", { headers: authHeaders });
                 const groupsData = await groupsRes.json();
                 this.groups = groupsData.success ? (groupsData.data.groups || groupsData.data || []) : [];
 
                 this.render();
                 this.loadReferralData();
             } catch (error) {
-                console.error("Error loading data:", error);
                 this.showToast("Error al cargar datos", "error");
             }
         }
@@ -692,14 +719,14 @@
                     (Date.now() - new Date(inv.last_reminded_at).getTime()) > 24 * 60 * 60 * 1000;
                 const reminderInfo = inv.reminder_count > 0 ? 
                     '<span style="font-size: 0.75rem; color: #9ca3af; margin-right: 0.5rem;">Recordatorios: ' + inv.reminder_count + '</span>' : '';
-                const inviteeName = (inv.invitee_name || inv.invitee_email || 'Invitado').replace(/'/g, "\\'");
-                
+                const inviteeName = escapeJsAttr(inv.invitee_name || inv.invitee_email || 'Invitado');
+
                 actions = '<div class="card-actions" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">' +
                     reminderInfo +
-                    (canRemind ? 
-                        '<button class="btn btn-remind" onclick="app.sendReminder(\'' + inv.group_id + '\', \'' + inv.id + '\', \'' + inviteeName + '\')" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-bell"></i> Recordar</button>' 
+                    (canRemind ?
+                        '<button class="btn btn-remind" onclick="app.sendReminder(\'' + escapeJsAttr(inv.group_id) + '\', \'' + escapeJsAttr(inv.id) + '\', \'' + inviteeName + '\')" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-bell"></i> Recordar</button>'
                         : '<span style="font-size: 0.75rem; color: #9ca3af;">Espera 24h</span>') +
-                    '<button class="btn btn-share" onclick="app.shareInvitation(\'' + inv.token + '\', \'' + (inv.group_name || 'Grupo').replace(/'/g, "\\'") + '\')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-share"></i> Compartir</button>' +
+                    '<button class="btn btn-share" onclick="app.shareInvitation(\'' + escapeJsAttr(inv.token) + '\', \'' + escapeJsAttr(inv.group_name || 'Grupo') + '\')" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"><i class="fas fa-share"></i> Compartir</button>' +
                     '</div>';
             }
 
@@ -759,7 +786,7 @@
         }
 
         async declineInvitation(token) {
-            if (!confirm("Rechazar esta invitacion?")) return;
+            if (!(await showConfirmDialog("Rechazar esta invitacion?"))) return;
             
             try {
                 const res = await fetch("/api/invitations/token/" + token + "/decline", {
@@ -904,7 +931,7 @@
                     this.renderReferralSection();
                 }
             } catch (error) {
-                console.error('Error loading referral data:', error);
+                // referral data load failed
             }
         }
 
@@ -966,14 +993,14 @@
                     const status = statusText[ref.status] || ref.status;
 
                     html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">';
-                    html += '<div><div style="color: #fff;">' + name + '</div>';
-                    html += '<div style="color: #666; font-size: 0.75rem;">' + date + '</div></div>';
-                    html += '<div style="color: ' + color + '; font-size: 0.875rem;">' + status + '</div></div>';
+                    html += '<div><div style="color: #fff;">' + escapeHtml(name) + '</div>';
+                    html += '<div style="color: #666; font-size: 0.75rem;">' + escapeHtml(date) + '</div></div>';
+                    html += '<div style="color: ' + escapeHtml(color) + '; font-size: 0.875rem;">' + escapeHtml(status) + '</div></div>';
                 });
 
                 container.innerHTML = html;
             } catch (error) {
-                console.error('Error loading referrals list:', error);
+                // referrals list load failed
             }
         }
 
@@ -1023,11 +1050,14 @@
             const userData = localStorage.getItem("latanda_user");
             const user = JSON.parse(userData);
             
+            const authToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
             const res = await fetch("/api/groups/" + groupId + "/members/invite", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + authToken
+                },
                 body: JSON.stringify({
-                    inviter_id: user.user_id || user.id,
                     email: email || null,
                     name: name || null,
                     message: message || null
@@ -1041,12 +1071,13 @@
                 
                 // Show shareable link
                 const link = "https://latanda.online/invitaciones.html?token=" + (data.token || data.data?.token);
-                if (confirm("Invitacion creada! Link copiado al portapapeles.\\n\\n" + link + "\\n\\nAbrir WhatsApp para compartir?")) {
+                // Copy to clipboard first
+                navigator.clipboard?.writeText(link);
+
+                const share = await showConfirmDialog("Invitacion creada! Link copiado al portapapeles. Abrir WhatsApp para compartir?");
+                if (share) {
                     window.open("https://wa.me/?text=" + encodeURIComponent("Te invito a unirte a mi grupo en La Tanda: " + link));
                 }
-                
-                // Copy to clipboard
-                navigator.clipboard?.writeText(link);
                 
                 // Reset form and reload
                 e.target.reset();
@@ -1058,7 +1089,7 @@
                 app.showToast(data.error || data.message || "Error", "error");
             }
         } catch (error) {
-            console.error(error);
+            // invitation create failed
             app.showToast("Error de conexion", "error");
         }
     });
