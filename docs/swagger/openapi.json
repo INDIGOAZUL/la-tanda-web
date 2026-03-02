@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "La Tanda API",
-    "version": "4.7.0",
+    "version": "4.11.3",
     "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```\n\n**Revocación de tokens:** Los tokens son invalidados al cerrar sesión (`POST /api/auth/logout`) o cambiar contraseña. Un token revocado recibe `401 Token ha sido revocado` en cualquier endpoint protegido.",
     "contact": {
       "name": "INDIGOAZUL Development",
@@ -8744,6 +8744,159 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/reverse": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Reversar contribución",
+        "description": "Reversa una contribución de pago (v4.11.2)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de la contribución a reversar"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Motivo de la reversa"
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contribución reversada exitosamente"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/contribution-history": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Historial de contribuciones del grupo",
+        "description": "Obtiene la matriz/timeline de contribuciones del grupo (v4.11.1)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID del grupo"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Fecha inicial (opcional)"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Fecha final (opcional)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de contribuciones"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/feed/social/track-views": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Registrar vistas de publicaciones",
+        "description": "Registra las vistas de publicaciones para analytics (v4.11.3)",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "postIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array de IDs de publicaciones vistas"
+                  }
+                },
+                "required": [
+                  "postIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vistas registradas"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
