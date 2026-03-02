@@ -32,6 +32,7 @@ const SocialFeed = {
 
     tabs: [
         { id: "todos", label: "Todos", icon: "fa-globe", filter: null },
+        { id: "siguiendo", label: "Siguiendo", icon: "fa-user-plus", filter: "following" },
         { id: "trending", label: "Trending", icon: "fa-fire", filter: "trending" },
         { id: "grupos", label: "Grupos", icon: "fa-users", filter: "group_created,group_joined" },
         { id: "mercado", label: "Mercado", icon: "fa-shopping-bag", filter: "product_posted" },
@@ -57,6 +58,13 @@ const SocialFeed = {
             return;
         }
         this.loadCurrentUserId();
+        // Restore tab preference from sessionStorage
+        try {
+            const storedTab = sessionStorage.getItem("socialFeedTab");
+            if (storedTab && this.tabs.find(t => t.id === storedTab)) {
+                this.currentTab = storedTab;
+            }
+        } catch (e) {}
         this.render();
 
         // Check URL for hashtag filter
@@ -813,6 +821,8 @@ const SocialFeed = {
             tab.classList.add("active");
 
             this.currentTab = tabId;
+            // Persist tab preference in sessionStorage
+            try { sessionStorage.setItem("socialFeedTab", tabId); } catch (e) {}
             this.loadEvents(true);
         });
     },
@@ -1037,6 +1047,8 @@ const SocialFeed = {
             let url;
             if (tab.filter === "trending") {
                 url = "/api/feed/social/trending?limit=" + this.limit + "&offset=" + this.offset;
+            } else if (tab.filter === "following") {
+                url = "/api/feed/social/following?limit=" + this.limit + "&offset=" + this.offset;
             } else if (tab.filter) {
                 url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&types=" + tab.filter;
             } else {
@@ -1080,11 +1092,22 @@ const SocialFeed = {
 
         if (this.events.length === 0) {
             const tab = this.tabs.find(t => t.id === this.currentTab);
+            let emptyMessage = 'La actividad de la comunidad aparecera aqui';
+            let emptyIcon = tab ? tab.icon : 'fa-inbox';
+            
+            // Special empty state for "Siguiendo" tab
+            if (this.currentTab === "siguiendo") {
+                emptyMessage = 'Sigue a otros usuarios para ver sus publicaciones aqui';
+                emptyIcon = 'fa-user-plus';
+            } else if (this.currentTab !== "todos") {
+                emptyMessage = 'No hay actividad en esta categoria';
+            }
+            
             listEl.innerHTML =
                 '<div class="social-feed-empty">' +
-                    '<i class="fas ' + (tab ? tab.icon : 'fa-inbox') + '"></i>' +
+                    '<i class="fas ' + emptyIcon + '"></i>' +
                     '<p>No hay actividad ' + (this.currentTab !== "todos" ? "en esta categoria" : "reciente") + '</p>' +
-                    '<span>La actividad de la comunidad aparecera aqui</span>' +
+                    '<span>' + emptyMessage + '</span>' +
                 '</div>';
             return;
         }
