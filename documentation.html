@@ -1,35 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
-
     <meta charset="UTF-8">
-    <!-- Resource Optimization -->
-    <!-- DNS Prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
-    <!-- Preconnect to critical origins -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentación - La Tanda Web3</title>
-    <!-- Critical CSS: Font Awesome with async loading -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
+    <title>Documentación para Desarrolladores | La Tanda</title>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
     <style>
         :root {
-            --tanda-cyan: #00FFFF;
-            --tanda-cyan-light: #7FFFD8;
-            --text-primary: #f8fafc;
-            --text-secondary: rgba(248, 250, 252, 0.7);
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
-            --bg-card: rgba(30, 41, 59, 0.8);
-            --border-accent: rgba(0, 255, 255, 0.2);
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --bg-glass-hover: rgba(255, 255, 255, 0.08);
+            --accent: #00FFFF;
+            --accent-hover: #00cccc;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
         }
 
         * {
@@ -39,116 +31,1015 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .coming-soon-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-        }
-
-        .coming-soon-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(24px);
-            border: 2px solid var(--border-accent);
-            border-radius: 24px;
-            padding: 60px 40px;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
-        }
-
-        .coming-soon-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: var(--bg-primary);
-            margin: 0 auto 30px;
-            box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3);
-        }
-
-        .coming-soon-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .coming-soon-description {
-            font-size: 18px;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
             line-height: 1.6;
         }
 
-        .back-button {
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            color: var(--bg-primary);
-            border: none;
-            padding: 16px 32px;
+        /* Glassmorphism Card */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
+            padding: 24px;
+            margin-bottom: 24px;
             transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        .back-button:hover {
+        .glass-card:hover {
+            background: var(--bg-glass-hover);
+            border-color: rgba(0, 255, 255, 0.2);
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .nav-section {
+            padding: 0 24px;
+            margin-bottom: 24px;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-bottom: 8px;
+        }
+
+        .nav-links a {
+            display: block;
+            padding: 10px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: var(--bg-glass);
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px;
+            max-width: 1200px;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent), #00a8a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 40px 0 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin: 24px 0 16px;
+            color: var(--accent);
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            margin: 20px 0 12px;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            margin: 16px 0 16px 24px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--bg-secondary) !important;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+
+        :not(pre) > code {
+            background: var(--bg-glass);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-glass);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-secondary);
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--bg-glass-hover);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .callout-info {
+            background: rgba(0, 255, 255, 0.05);
+            border-color: var(--accent);
+        }
+
+        .callout-warning {
+            background: rgba(245, 158, 11, 0.05);
+            border-color: var(--warning);
+        }
+
+        .callout-success {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: var(--success);
+        }
+
+        /* Button */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 24px;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 200;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                padding: 10px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-btn {
+                display: none;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Anchor Links */
+        .section-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        h2:hover .section-link,
+        h3:hover .section-link {
+            opacity: 1;
+        }
+
+        .section-link:hover {
+            color: var(--accent);
+        }
+
+        /* Feature List */
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .feature-item {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .feature-item h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .feature-item p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
         }
     </style>
-  <script type="module" crossorigin src="/assets/js/documentation-DsswpPIS.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
-  <link rel="modulepreload" crossorigin href="/assets/js/shared-components-chunk-l0sNRNKZ.js">
-  <link rel="stylesheet" crossorigin href="/assets/css/shared-components-v2-CszIIlFl.css">
-  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
-  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
-<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+</head>
 <body>
-    <div class="coming-soon-container">
-        <div class="coming-soon-card">
-            <div class="coming-soon-icon">
-                <i class="fas fa-book"></i>
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+    </button>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>📚 La Tanda</h1>
+                <p>Documentación para Desarrolladores</p>
             </div>
-            <h1 class="coming-soon-title">Documentación</h1>
-            <p class="coming-soon-description">
-                Estamos preparando una documentación completa de La Tanda Web3 que incluirá guías de usuario, documentación técnica y tutoriales paso a paso.
-            </p>
-            <a href="home-dashboard.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Volver al Dashboard
-            </a>
-        </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Inicio</div>
+                <ul class="nav-links">
+                    <li><a href="#getting-started" class="active">🚀 Getting Started</a></li>
+                    <li><a href="#authentication">🔐 Authentication</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">API Reference</div>
+                <ul class="nav-links">
+                    <li><a href="#api-overview">📋 API Overview</a></li>
+                    <li><a href="#code-examples">💻 Code Examples</a></li>
+                    <li><a href="#rate-limits">⚡ Rate Limits</a></li>
+                    <li><a href="#error-handling">❌ Error Handling</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Blockchain</div>
+                <ul class="nav-links">
+                    <li><a href="#chain-api">⛓️ La Tanda Chain API</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">Recursos</div>
+                <ul class="nav-links">
+                    <li><a href="https://latanda.online/docs" target="_blank">🔗 Swagger UI</a></li>
+                    <li><a href="https://latanda.online" target="_blank">🌐 Plataforma</a></li>
+                    <li><a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank">📦 GitHub</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Getting Started -->
+            <section id="getting-started">
+                <h2>
+                    🚀 Getting Started
+                    <a href="#getting-started" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <p><strong>La Tanda</strong> es una plataforma de ahorro cooperativo digital que lleva las tandas tradicionales (ROSCAs) a la era digital para comunidades en Honduras.</p>
+                    
+                    <p>Una tanda (ROSCA — Rotating Savings and Credit Association) es un sistema de ahorro comunitario tradicional en Latinoamérica. Un grupo de personas acuerda contribuir una cantidad fija de dinero periódicamente. En cada ronda, un miembro recibe el fondo completo. Es banca sin banco — confianza comunitaria como infraestructura financiera.</p>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">15,000+</div>
+                        <div class="stat-label">Usuarios Activos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">L 2.4M+</div>
+                        <div class="stat-label">Total Ahorrado</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">300+</div>
+                        <div class="stat-label">Tandas Activas</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3>Características Principales</h3>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <h4>👥 Tandas Grupales</h4>
+                            <p>Ahorra junto a tu comunidad. Grupos de 5 a 50 personas con aportes desde L500 mensuales.</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>💳 Wallet Digital</h4>
+                            <p>Controla tu dinero desde cualquier lugar. Depósitos y retiros instantáneos.</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>💰 Préstamos P2P</h4>
+                            <p>Accede a crédito entre miembros. Tasas justas, sin papeleo.</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>🛒 Marketplace</h4>
+                            <p>Compra/venta de productos y servicios entre miembros de la comunidad.</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>📱 Red Social</h4>
+                            <p>Feed con posts, media, GIFs, encuestas, ubicación, menciones y hashtags.</p>
+                        </div>
+                        <div class="feature-item">
+                            <h4>🤖 MIA - Asistente IA</h4>
+                            <p>IA integrada (Groq Llama 3.3 70B) para ayudar a los usuarios.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info">
+                    <strong>🌐 En Producción:</strong> La plataforma está activa con usuarios reales en <a href="https://latanda.online" target="_blank" style="color: var(--accent);">latanda.online</a>
+                </div>
+            </section>
+
+            <!-- Authentication -->
+            <section id="authentication">
+                <h2>
+                    🔐 Authentication
+                    <a href="#authentication" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <p>La Tanda utiliza <strong>JWT (JSON Web Tokens)</strong> para autenticación de API, con soporte para rotación de refresh tokens y blacklist.</p>
+                </div>
+
+                <h3>Flujo de Login</h3>
+                
+                <div class="glass-card">
+                    <h4>1. Login del Usuario</h4>
+                    <pre><code class="language-bash">POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "usuario@example.com",
+  "password": "securepassword123"
+}
+
+# Respuesta
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expires_in": 3600
+}</code></pre>
+                </div>
+
+                <div class="glass-card">
+                    <h4>2. Usar Token en Requests</h4>
+                    <pre><code class="language-bash">GET /api/wallet/balance
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                </div>
+
+                <div class="glass-card">
+                    <h4>3. Refresh Token</h4>
+                    <pre><code class="language-bash">POST /api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}</code></pre>
+                </div>
+
+                <h3>Características de Seguridad</h3>
+                
+                <ul>
+                    <li>✅ <strong>bcrypt 12 rounds</strong> - Hash de contraseñas</li>
+                    <li>✅ <strong>crypto.timingSafeEqual</strong> - Comparaciones sensibles</li>
+                    <li>✅ <strong>Refresh token rotación + blacklist</strong> (Redis)</li>
+                    <li>✅ <strong>WebSocket JWT auth</strong> - Autenticación en tiempo real</li>
+                    <li>✅ <strong>2FA</strong> - Autenticación de dos factores</li>
+                </ul>
+            </section>
+
+            <!-- API Overview -->
+            <section id="api-overview">
+                <h2>
+                    📋 API Overview
+                    <a href="#api-overview" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <p><strong>Base URL:</strong> <code>https://latanda.online/api</code></p>
+                </div>
+
+                <h3>EndPoints por Módulo</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Endpoint</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Auth</strong></td>
+                            <td><code>/api/auth/*</code></td>
+                            <td>Login, registro, refresh, 2FA, verificación</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Groups</strong></td>
+                            <td><code>/api/groups/*</code></td>
+                            <td>CRUD grupos, miembros, contribuciones, sorteo</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tandas</strong></td>
+                            <td><code>/api/tandas/*</code></td>
+                            <td>Ciclos, turnos, pagos, coordinador</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wallet</strong></td>
+                            <td><code>/api/wallet/*</code></td>
+                            <td>Balance, transacciones, retiros</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Marketplace</strong></td>
+                            <td><code>/api/marketplace/*</code></td>
+                            <td>Productos, categorías, proveedores</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Social Feed</strong></td>
+                            <td><code>/api/feed/social/*</code></td>
+                            <td>Posts, likes, comments, follow, trending</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admin</strong></td>
+                            <td><code>/api/admin/*</code></td>
+                            <td>Dashboard, usuarios, auditoría, compliance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lottery</strong></td>
+                            <td><code>/api/lottery/*</code></td>
+                            <td>Predicciones, scraping, estadísticas</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MIA</strong></td>
+                            <td><code>/api/mia/*</code></td>
+                            <td>Chat con asistente IA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Uploads</strong></td>
+                            <td><code>/api/upload/*</code></td>
+                            <td>Imágenes, videos, comprobantes</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="callout callout-info">
+                    <strong>📖 Documentación Interactiva:</strong> Visita <a href="https://latanda.online/docs" target="_blank" style="color: var(--accent);">Swagger UI</a> para explorar todos los endpoints con ejemplos en vivo.
+                </div>
+            </section>
+
+            <!-- Code Examples -->
+            <section id="code-examples">
+                <h2>
+                    💻 Code Examples
+                    <a href="#code-examples" class="section-link">#</a>
+                </h2>
+
+                <h3>Login y Obtener Balance</h3>
+
+                <div class="glass-card">
+                    <h4>JavaScript (fetch)</h4>
+                    <pre><code class="language-javascript">async function loginAndGetBalance(email, password) {
+  // 1. Login
+  const loginRes = await fetch('https://latanda.online/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const { access_token } = await loginRes.json();
+  
+  // 2. Obtener balance
+  const balanceRes = await fetch('https://latanda.online/api/wallet/balance', {
+    headers: { 'Authorization': `Bearer ${access_token}` }
+  });
+  
+  return await balanceRes.json();
+}</code></pre>
+                </div>
+
+                <div class="glass-card">
+                    <h4>cURL</h4>
+                    <pre><code class="language-bash"># Login
+curl -X POST https://latanda.online/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# Obtener balance
+curl -X GET https://latanda.online/api/wallet/balance \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</code></pre>
+                </div>
+
+                <h3>Crear Grupo</h3>
+
+                <div class="glass-card">
+                    <pre><code class="language-javascript">const createGroup = async (token, groupName, monthlyAmount) => {
+  const res = await fetch('https://latanda.online/api/groups', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      name: groupName,
+      monthly_amount: monthlyAmount,
+      max_members: 10
+    })
+  });
+  return await res.json();
+};</code></pre>
+                </div>
+
+                <h3>Obtener Social Feed</h3>
+
+                <div class="glass-card">
+                    <pre><code class="language-javascript">const getFeed = async (token, page = 1) => {
+  const res = await fetch(`https://latanda.online/api/feed/social?page=${page}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return await res.json();
+};</code></pre>
+                </div>
+            </section>
+
+            <!-- Rate Limits -->
+            <section id="rate-limits">
+                <h2>
+                    ⚡ Rate Limits
+                    <a href="#rate-limits" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <h3>Límites por Zona</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Zona</th>
+                                <th>Límite</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Auth</strong></td>
+                                <td>5/min</td>
+                                <td>Login, registro, endpoints de autenticación</td>
+                            </tr>
+                            <tr>
+                                <td><strong>API</strong></td>
+                                <td>5/s</td>
+                                <td>Endpoints API normales</td>
+                            </tr>
+                            <tr>
+                                <td><strong>General</strong></td>
+                                <td>10/s</td>
+                                <td>Requests generales</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Respuesta Rate Limit</h3>
+
+                <div class="glass-card">
+                    <pre><code class="language-json">// HTTP 429 Too Many Requests
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}</code></pre>
+                </div>
+
+                <h3>Mejores Prácticas</h3>
+
+                <ul>
+                    <li>✅ Implementar <strong>exponential backoff</strong> para retries</li>
+                    <li>✅ <strong>Cache</strong> de datos frecuentemente accedidos</li>
+                    <li>✅ Usar <strong>WebSocket</strong> para actualizaciones en tiempo real (no sujeto a rate limits HTTP)</li>
+                </ul>
+            </section>
+
+            <!-- Error Handling -->
+            <section id="error-handling">
+                <h2>
+                    ❌ Error Handling
+                    <a href="#error-handling" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <h3>Formato Estándar de Error</h3>
+                    <pre><code class="language-json">{
+  "error": "ERROR_CODE",
+  "message": "Descripción legible del error",
+  "details": {} // Opcional: detalles adicionales
+}</code></pre>
+                </div>
+
+                <h3>Códigos de Error Comunes</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>HTTP</th>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>400</td>
+                            <td><code>INVALID_INPUT</code></td>
+                            <td>Parámetros de entrada inválidos</td>
+                        </tr>
+                        <tr>
+                            <td>401</td>
+                            <td><code>UNAUTHORIZED</code></td>
+                            <td>JWT faltante o inválido</td>
+                        </tr>
+                        <tr>
+                            <td>403</td>
+                            <td><code>FORBIDDEN</code></td>
+                            <td>Permisos insuficientes</td>
+                        </tr>
+                        <tr>
+                            <td>404</td>
+                            <td><code>NOT_FOUND</code></td>
+                            <td>Recurso no existe</td>
+                        </tr>
+                        <tr>
+                            <td>409</td>
+                            <td><code>CONFLICT</code></td>
+                            <td>Conflicto (ej: email duplicado)</td>
+                        </tr>
+                        <tr>
+                            <td>429</td>
+                            <td><code>RATE_LIMITED</code></td>
+                            <td>Límite de rate excedido</td>
+                        </tr>
+                        <tr>
+                            <td>500</td>
+                            <td><code>INTERNAL_ERROR</code></td>
+                            <td>Error interno del servidor</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Ejemplo de Manejo de Errores</h3>
+
+                <div class="glass-card">
+                    <pre><code class="language-javascript">async function safeApiCall(url, token) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(`${res.status}: ${error.message}`);
+    }
+    
+    return await res.json();
+  } catch (err) {
+    console.error('API Error:', err.message);
+    // Manejar error...
+  }
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- La Tanda Chain API -->
+            <section id="chain-api">
+                <h2>
+                    ⛓️ La Tanda Chain API
+                    <a href="#chain-api" class="section-link">#</a>
+                </h2>
+
+                <div class="glass-card">
+                    <h3>LTD Token Contract</h3>
+                    <ul>
+                        <li><strong>Red:</strong> Polygon Amoy Testnet</li>
+                        <li><strong>Contrato:</strong> <code>0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc</code></li>
+                        <li><strong>Estándar:</strong> ERC20</li>
+                        <li><strong>Supply Total:</strong> 1,000,000,000 LTD</li>
+                    </ul>
+                </div>
+
+                <h3>RPC Endpoints</h3>
+
+                <div class="glass-card">
+                    <ul>
+                        <li><strong>Polygon Amoy RPC:</strong> <code>https://rpc-amoy.polygon.technology/</code></li>
+                        <li><strong>Block Explorer:</strong> <code>https://amoy.polygonscan.com/</code></li>
+                    </ul>
+                </div>
+
+                <h3>Consultar Balance LTD</h3>
+
+                <div class="glass-card">
+                    <h4>ethers.js</h4>
+                    <pre><code class="language-javascript">import { ethers } from 'ethers';
+
+const provider = new ethers.JsonRpcProvider(
+  'https://rpc-amoy.polygon.technology/'
+);
+
+const contract = new ethers.Contract(
+  '0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc',
+  ['function balanceOf(address) view returns (uint256)'],
+  provider
+);
+
+const balance = await contract.balanceOf('YOUR_WALLET_ADDRESS');
+console.log('LTD Balance:', ethers.formatEther(balance));</code></pre>
+                </div>
+
+                <h3>Distribución de Tokens</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Porcentaje</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Participation</td>
+                            <td>20%</td>
+                            <td>Recompensas por participación</td>
+                        </tr>
+                        <tr>
+                            <td>Staking & Governance</td>
+                            <td>30%</td>
+                            <td>Staking y gobernanza</td>
+                        </tr>
+                        <tr>
+                            <td>Development</td>
+                            <td>25%</td>
+                            <td>Fondo de desarrollo</td>
+                        </tr>
+                        <tr>
+                            <td>Liquidity</td>
+                            <td>10%</td>
+                            <td>Liquidez</td>
+                        </tr>
+                        <tr>
+                            <td>Vesting</td>
+                            <td>10%</td>
+                            <td>4-year vesting (1-year cliff)</td>
+                        </tr>
+                        <tr>
+                            <td>DAO Reserve</td>
+                            <td>5%</td>
+                            <td>Reserva DAO</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="callout callout-warning">
+                    <strong>⚠️ Nota:</strong> Los tokens LTD están actualmente en testnet. Serán intercambiables 1:1 por tokens mainnet LTD al lanzamiento de La Tanda Chain.
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <section style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border);">
+                <div class="glass-card" style="text-align: center;">
+                    <h3>📖 Swagger UI - Documentación Interactiva</h3>
+                    <p>Explora todos los endpoints con ejemplos en vivo</p>
+                    <a href="https://latanda.online/docs" target="_blank" class="btn">Abrir Swagger UI</a>
+                    <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" class="btn btn-outline" style="margin-left: 12px;">GitHub Repo</a>
+                </div>
+                
+                <p style="text-align: center; margin-top: 40px; color: var(--text-secondary); font-size: 0.875rem;">
+                    Construido desde Roatán, Honduras • Inclusión financiera a través de tecnología y comunidad
+                </p>
+            </section>
+        </main>
     </div>
 
-    <!-- Unified Footer -->
-    <div id="latanda-footer" class="auto-footer"></div>
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
 
-  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/documentation-legacy-BVTqHIKe.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
-    <script src="shared-components.js?v=7.20"></script>
+    <script>
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // Active nav link on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-links a');
+
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Close mobile sidebar on navigation
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
