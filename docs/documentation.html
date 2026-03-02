@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda API Documentation v2.0</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #1d4ed8;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            --gradient-secondary: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 4rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        /* Quick Start Card */
+        .quick-start {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .quick-start h3 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* API Info Cards */
+        .api-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px -8px rgba(59, 130, 246, 0.4);
+        }
+
+        .info-card .icon {
+            font-size: 2.5rem;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .info-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .info-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Code Block Styles */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent-primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* API Endpoint Styles */
+        .endpoint-section {
+            margin: 3rem 0;
+        }
+
+        .endpoint-section h2 {
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+        }
+
+        .endpoint-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: var(--bg-tertiary);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 1rem;
+        }
+
+        .method-get {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .method-post {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .method-put {
+            background: var(--accent-warning);
+            color: white;
+        }
+
+        .method-delete {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        .endpoint-body {
+            padding: 1.5rem;
+        }
+
+        .endpoint-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .parameter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .parameter-table th,
+        .parameter-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .parameter-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Authentication Section */
+        .auth-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border-radius: 16px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+
+        .auth-section h2 {
+            color: var(--accent-success);
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .auth-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .auth-step {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-step .step-number {
+            background: var(--accent-success);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 0;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .api-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-flow {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <i class="fas fa-cloud"></i>
+                La Tanda API
+            </div>
+            <ul class="nav-links">
+                <li><a href="#overview">概览</a></li>
+                <li><a href="#authentication">认证</a></li>
+                <li><a href="#endpoints">API端点</a></li>
+                <li><a href="#sdk">SDK</a></li>
+                <li><a href="#support">支持</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-content">
+            <div class="version-badge">v2.0</div>
+            <h1>La Tanda API Documentation</h1>
+            <p class="subtitle">现代化的OAuth 2.0认证和API集成平台</p>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="container">
+        <div class="quick-start">
+            <h3><i class="fas fa-rocket"></i> 快速开始 (5分钟)</h3>
+            <p>在5分钟内完成La Tanda API集成并开始调用第一个API</p>
+            <div class="code-block" data-lang="bash">
+# 1. 获取访问令牌
+curl -X POST https://my.tanda.co/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "password",
+    "client_id": "your_client_id",
+    "client_secret": "your_client_secret",
+    "username": "your_username",
+    "password": "your_password"
+  }'
+
+# 2. 调用API
+curl -X GET https://my.tanda.co/api/v2/users \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+            </div>
+        </div>
+    </section>
+
+    <!-- API Overview -->
+    <section id="overview" class="container">
+        <h2 style="margin: 3rem 0 2rem 0; font-size: 2.5rem;">API 概览</h2>
+        
+        <div class="api-info-grid">
+            <div class="info-card">
+                <div class="icon"><i class="fas fa-shield-alt"></i></div>
+                <h3>OAuth 2.0 认证</h3>
+                <p>支持Authorization Code和Password两种认证方式，符合行业标准的安全认证流程</p>
+            </div>
+            
+            <div class="info-card">
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <h3>权限系统集成</h3>
+                <p>与Tanda平台权限级别完全同步，确保安全的数据访问控制</p>
+            </div>
+            
+            <div class="info-card">
+                <div class="icon"><i class="fas fa-lock"></i></div>
+                <h3>环境隔离</h3>
+                <p>测试和生产环境完全隔离，确保开发数据安全</p>
+            </div>
+            
+            <div class="info-card">
+                <div class="icon"><i class="fas fa-code"></i></div>
+                <h3>多语言SDK</h3>
+                <p>提供Python、JavaScript、Java等多种语言SDK，简化集成开发</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authentication -->
+    <section id="authentication" class="container">
+        <div class="auth-section">
+            <h2><i class="fas fa-key"></i> OAuth 2.0 认证流程</h2>
+            
+            <div class="auth-flow">
+                <div class="auth-step">
+                    <div class="step-number">1</div>
+                    <h4>注册应用</h4>
+                    <p>在Tanda平台注册应用，获取Client ID和Client Secret</p>
+                </div>
+                
+                <div class="auth-step">
+                    <div class="step-number">2</div>
+                    <h4>选择认证方式</h4>
+                    <p>选择Authorization Code（第三方应用）或Password（自有应用）认证</p>
+                </div>
+                
+                <div class="auth-step">
+                    <div class="step-number">3</div>
+                    <h4>获取访问令牌</h4>
+                    <p>通过OAuth 2.0流程获取访问令牌</p>
+                </div>
+                
+                <div class="auth-step">
+                    <div class="step-number">4</div>
+                    <h4>调用API</h4>
+                    <p>使用访问令牌调用La Tanda API</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Endpoints -->
+    <section id="endpoints" class="container">
+        <div class="endpoint-section">
+            <h2>API 端点</h2>
+            
+            <!-- Users Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/v2/users</span>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">获取用户列表，支持分页和过滤</p>
+                    
+                    <h4>查询参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>page</code></td>
+                                <td>integer</td>
+                                <td>否</td>
+                                <td>页码，默认为1</td>
+                            </tr>
+                            <tr>
+                                <td><code>limit</code></td>
+                                <td>integer</td>
+                                <td>否</td>
+                                <td>每页数量，默认为20，最大100</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>否</td>
+                                <td>按角色过滤：admin, user, guest</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>响应示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "data": [
+    {
+      "id": "user_123",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "admin",
+      "created_at": "2026-03-02T16:00:00Z",
+      "updated_at": "2026-03-02T16:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "total_pages": 1
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create User Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-url">/api/v2/users</span>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">创建新用户</p>
+                    
+                    <h4>请求参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>name</code></td>
+                                <td>string</td>
+                                <td>是</td>
+                                <td>用户姓名</td>
+                            </tr>
+                            <tr>
+                                <td><code>email</code></td>
+                                <td>string</td>
+                                <td>是</td>
+                                <td>用户邮箱地址</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>否</td>
+                                <td>用户角色，默认为user</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>请求示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin"
+}
+                    </div>
+                    
+                    <h4>响应示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "id": "user_123",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin",
+  "created_at": "2026-03-02T16:00:00Z",
+  "updated_at": "2026-03-02T16:00:00Z"
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Get User Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/v2/users/{user_id}</span>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">获取指定用户信息</p>
+                    
+                    <h4>路径参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>string</td>
+                                <td>是</td>
+                                <td>用户ID</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>响应示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "id": "user_123",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "role": "admin",
+  "created_at": "2026-03-02T16:00:00Z",
+  "updated_at": "2026-03-02T16:00:00Z"
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update User Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="endpoint-method method-put">PUT</span>
+                        <span class="endpoint-url">/api/v2/users/{user_id}</span>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">更新用户信息</p>
+                    
+                    <h4>路径参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>string</td>
+                                <td>是</td>
+                                <td>用户ID</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>请求参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>name</code></td>
+                                <td>string</td>
+                                <td>否</td>
+                                <td>用户姓名</td>
+                            </tr>
+                            <tr>
+                                <td><code>email</code></td>
+                                <td>string</td>
+                                <td>否</td>
+                                <td>用户邮箱地址</td>
+                            </tr>
+                            <tr>
+                                <td><code>role</code></td>
+                                <td>string</td>
+                                <td>否</td>
+                                <td>用户角色</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>请求示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com",
+  "role": "user"
+}
+                    </div>
+                    
+                    <h4>响应示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "id": "user_123",
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com",
+  "role": "user",
+  "created_at": "2026-03-02T16:00:00Z",
+  "updated_at": "2026-03-02T16:30:00Z"
+}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete User Endpoint -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div>
+                        <span class="endpoint-method method-delete">DELETE</span>
+                        <span class="endpoint-url">/api/v2/users/{user_id}</span>
+                    </div>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">删除指定用户</p>
+                    
+                    <h4>路径参数</h4>
+                    <table class="parameter-table">
+                        <thead>
+                            <tr>
+                                <th>参数</th>
+                                <th>类型</th>
+                                <th>必需</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>user_id</code></td>
+                                <td>string</td>
+                                <td>是</td>
+                                <td>用户ID</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h4>响应示例</h4>
+                    <div class="code-block" data-lang="json">
+{
+  "message": "User deleted successfully",
+  "deleted_user_id": "user_123"
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SDK Section -->
+    <section id="sdk" class="container">
+        <h2 style="margin: 3rem 0 2rem 0; font-size: 2.5rem;">SDK 和工具</h2>
+        
+        <div class="api-info-grid">
+            <div class="info-card">
+                <div class="icon"><i class="fab fa-python"></i></div>
+                <h3>Python SDK</h3>
+                <p>功能完整的Python SDK，支持自动令牌管理和错误处理</p>
+                <div class="code-block" data-lang="python">
+from tanda_api import TandaAPI
+
+client = TandaAPI(
+    client_id='your_client_id',
+    client_secret='your_client_secret'
+)
+
+users = client.users.list()
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <div class="icon"><i class="fab fa-js"></i></div>
+                <h3>JavaScript SDK</h3>
+                <p>现代JavaScript SDK，支持浏览器和Node.js环境</p>
+                <div class="code-block" data-lang="javascript">
+const { TandaAPI } = require('tanda-api');
+
+const client = new TandaAPI({
+  clientId: 'your_client_id',
+  clientSecret: 'your_client_secret'
+});
+
+const users = await client.users.list();
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>文档</h3>
+                    <ul>
+                        <li><a href="#overview">API概览</a></li>
+                        <li><a href="#authentication">认证指南</a></li>
+                        <li><a href="#endpoints">API端点</a></li>
+                        <li><a href="#sdk">SDK和工具</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>支持</h3>
+                    <ul>
+                        <li><a href="#">API状态</a></li>
+                        <li><a href="#">故障排除</a></li>
+                        <li><a href="#">开发者论坛</a></li>
+                        <li><a href="#">联系我们</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>资源</h3>
+                    <ul>
+                        <li><a href="#">GitHub</a></li>
+                        <li><a href="#">变更日志</a></li>
+                        <li><a href="#">最佳实践</a></li>
+                        <li><a href="#">安全指南</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>关于</h3>
+                    <ul>
+                        <li><a href="#">La Tanda</a></li>
+                        <li><a href="#">服务条款</a></li>
+                        <li><a href="#">隐私政策</a></li>
+                        <li><a href="#">版本历史</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
