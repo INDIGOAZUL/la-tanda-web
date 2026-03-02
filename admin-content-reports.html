@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Reports Admin - La Tanda</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-card.pending { border-left: 4px solid #f59e0b; }
+        .stat-card.reviewing { border-left: 4px solid #3b82f6; }
+        .stat-card.resolved { border-left: 4px solid #10b981; }
+        .stat-card.dismissed { border-left: 4px solid #6b7280; }
+        
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filters select, .filters button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .filters button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background: #2563eb;
+        }
+        
+        .reports-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-reviewing { background: #dbeafe; color: #1e40af; }
+        .status-resolved { background: #d1fae5; color: #065f46; }
+        .status-dismissed { background: #f3f4f6; color: #374151; }
+        
+        .reason-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .reason-spam { background: #fee2e2; color: #991b1b; }
+        .reason-harassment { background: #fce7f3; color: #9d174d; }
+        .reason-inappropriate { background: #ffedd5; color: #9a3412; }
+        .reason-misinformation { background: #e0e7ff; color: #3730a3; }
+        .reason-other { background: #f3f4f6; color: #374151; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        .btn-review { background: #3b82f6; color: white; }
+        .btn-resolve { background: #10b981; color: white; }
+        .btn-dismiss { background: #6b7280; color: white; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        .content-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>🚩 Content Reports Admin</h1>
+        
+        <div class="stats-grid" id="stats">
+            <div class="stat-card pending">
+                <h3>Pending</h3>
+                <div class="number" id="pending-count">-</div>
+            </div>
+            <div class="stat-card reviewing">
+                <h3>Reviewing</h3>
+                <div class="number" id="reviewing-count">-</div>
+            </div>
+            <div class="stat-card resolved">
+                <h3>Resolved</h3>
+                <div class="number" id="resolved-count">-</div>
+            </div>
+            <div class="stat-card dismissed">
+                <h3>Dismissed</h3>
+                <div class="number" id="dismissed-count">-</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <select id="status-filter">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="reviewing">Reviewing</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+            </select>
+            <select id="reason-filter">
+                <option value="">All Reasons</option>
+                <option value="spam">Spam</option>
+                <option value="harassment">Harassment</option>
+                <option value="inappropriate">Inappropriate</option>
+                <option value="misinformation">Misinformation</option>
+                <option value="other">Other</option>
+            </select>
+            <button onclick="loadReports()">Filter</button>
+            <button onclick="loadStats()">Refresh Stats</button>
+        </div>
+        
+        <div class="reports-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Reporter</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-list">
+                    <tr><td colspan="6" class="loading">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Report Detail Modal -->
+    <div class="modal" id="report-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Report Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-body">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentReports = [];
+        
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/reports/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('pending-count').textContent = data.data.pending || 0;
+                    
+                    // Calculate other stats from breakdown
+                    const stats = { reviewing: 0, resolved: 0, dismissed: 0 };
+                    data.data.breakdown.forEach(item => {
+                        if (stats[item.status] !== undefined) {
+                            stats[item.status] += parseInt(item.count);
+                        }
+                    });
+                    
+                    document.getElementById('reviewing-count').textContent = stats.reviewing;
+                    document.getElementById('resolved-count').textContent = stats.resolved;
+                    document.getElementById('dismissed-count').textContent = stats.dismissed;
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        // Load reports
+        async function loadReports() {
+            const status = document.getElementById('status-filter').value;
+            const reason = document.getElementById('reason-filter').value;
+            
+            try {
+                let url = `${API_BASE}/admin/reports`;
+                const params = [];
+                if (status) params.push(`status=${status}`);
+                if (reason) params.push(`reason=${reason}`);
+                if (params.length) url += '?' + params.join('&');
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentReports = data.data.reports;
+                    renderReports(currentReports);
+                } else {
+                    showError(data.error?.message || 'Failed to load reports');
+                }
+            } catch (error) {
+                showError('Failed to load reports');
+                console.error(error);
+            }
+        }
+        
+        // Render reports table
+        function renderReports(reports) {
+            const tbody = document.getElementById('reports-list');
+            
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;">No reports found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = reports.map(report => `
+                <tr>
+                    <td>${report.id.substring(0, 8)}...</td>
+                    <td><span class="reason-badge reason-${report.reason}">${report.reason}</span></td>
+                    <td><span class="status-badge status-${report.status}">${report.status}</span></td>
+                    <td>${report.reporter_name || report.reporter_id}</td>
+                    <td>${new Date(report.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="action-btn btn-review" onclick="viewReport('${report.id}')">View</button>
+                        ${report.status === 'pending' ? `
+                            <button class="action-btn btn-review" onclick="updateStatus('${report.id}', 'reviewing')">Review</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // View report details
+        function viewReport(id) {
+            const report = currentReports.find(r => r.id === id);
+            if (!report) return;
+            
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = `
+                <div class="content-preview">
+                    <strong>Reported Content:</strong>
+                    <p>${report.event_content || report.comment_content || 'Content not available'}</p>
+                </div>
+                <div class="form-group">
+                    <label>Reason:</label>
+                    <span class="reason-badge reason-${report.reason}">${report.reason}</span>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <p>${report.description || 'No description provided'}</p>
+                </div>
+                <div class="form-group">
+                    <label>Admin Notes:</label>
+                    <textarea id="admin-notes">${report.admin_notes || ''}</textarea>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    ${report.status !== 'resolved' ? `
+                        <button class="action-btn btn-resolve" onclick="resolveReport('${report.id}')">Resolve</button>
+                    ` : ''}
+                    ${report.status !== 'dismissed' ? `
+                        <button class="action-btn btn-dismiss" onclick="dismissReport('${report.id}')">Dismiss</button>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('report-modal').classList.add('active');
+        }
+        
+        // Update report status
+        async function updateStatus(id, status) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/reports/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    loadReports();
+                    loadStats();
+                } else {
+                    alert(data.error?.message || 'Failed to update');
+                }
+            } catch (error) {
+                alert('Failed to update status');
+            }
+        }
+        
+        // Resolve report
+        async function resolveReport(id) {
+            const notes = document.getElementById('admin-notes').value;
+            await updateStatusWithNotes(id, 'resolved', notes);
+        }
+        
+        // Dismiss report
+        async function dismissReport(id) {
+            const notes = document.getElementById('admin-notes').value;
+            await updateStatusWithNotes(id, 'dismissed', notes);
+        }
+        
+        async function updateStatusWithNotes(id, status, notes) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/reports/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({ status, admin_notes: notes })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    closeModal();
+                    loadReports();
+                    loadStats();
+                } else {
+                    alert(data.error?.message || 'Failed to update');
+                }
+            } catch (error) {
+                alert('Failed to update status');
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('report-modal').classList.remove('active');
+        }
+        
+        // Show error
+        function showError(message) {
+            const tbody = document.getElementById('reports-list');
+            tbody.innerHTML = `<tr><td colspan="6" class="error">${message}</td></tr>`;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadReports();
+        });
+        
+        // Close modal on outside click
+        document.getElementById('report-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'report-modal') closeModal();
+        });
+    </script>
+</body>
+</html>
