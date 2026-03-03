@@ -1,518 +1,286 @@
-# 🤝 Contributing to La Tanda
+# Contributing to La Tanda
 
 Thank you for your interest in contributing to La Tanda! We welcome all contributions and offer LTD token rewards for merged Pull Requests.
 
+> **Read this page fully before submitting a PR.** Most rejected PRs fail because contributors skip the [Codebase Patterns](#-codebase-patterns-read-this-first) section.
+
 ---
 
-## 💰 Bounty Program
+## Bounty Program
 
 We pay contributors in LTD tokens for every merged PR!
 
-**Reward Structure:**
-- 🐛 **Bug Fixes:** 25-100 LTD
-- ✨ **Features:** 100-500 LTD
-- 📚 **Documentation:** 25-75 LTD
-- 🧪 **Testing:** 50-200 LTD
+| Type | Reward |
+|------|--------|
+| Bug Fixes | 25-100 LTD |
+| Features | 100-500 LTD |
+| Documentation | 25-200 LTD |
+| Testing | 50-400 LTD |
 
-**Active Bounties:** See [ACTIVE-BOUNTIES.md](./ACTIVE-BOUNTIES.md)
-
----
-
-## 🚀 Quick Start
-
-New to contributing? Check our **[Developer Quickstart Guide](./DEVELOPER-QUICKSTART.md)** for a 5-minute setup!
+**Active Bounties:** [Issues with `bounty` label](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)
 
 ---
 
-## 📋 Contribution Process
+## Codebase Patterns (READ THIS FIRST)
 
-### 1. Find Something to Work On
+These are **mandatory requirements**. PRs that violate them will be rejected.
 
-**Option A: Claim a Bounty**
-- Browse [active bounties](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aissue+is%3Aopen+label%3Abounty)
-- Comment "I'd like to work on this" to claim
-- Wait for confirmation from maintainers
+### 1. Auth Token Key
 
-**Option B: Report a Bug**
-- Create a [bug report issue](https://github.com/INDIGOAZUL/la-tanda-web/issues/new?template=bug-bounty.md)
-- Include steps to reproduce
-- If accepted, it becomes a bounty!
+The JWT token is stored as `auth_token` (snake_case) in `localStorage`.
 
-**Option C: Propose a Feature**
-- Create a [feature request issue](https://github.com/INDIGOAZUL/la-tanda-web/issues/new?template=feature-bounty.md)
-- Discuss with maintainers
-- If approved, work on implementation
+```javascript
+// CORRECT
+const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
 
-### 2. Set Up Your Development Environment
+// WRONG - will always be null
+const token = sessionStorage.getItem('jwtToken');
+const token = localStorage.getItem('token');
+```
+
+### 2. XSS Prevention — `escapeHtml()` Required
+
+**Every** piece of user-supplied data rendered in HTML **must** go through `escapeHtml()`. The codebase has been audited 20+ times for this.
+
+```javascript
+// CORRECT
+listEl.innerHTML = '<p>' + escapeHtml(user.name) + '</p>';
+
+// WRONG - XSS vulnerability, instant rejection
+listEl.innerHTML = '<p>' + user.name + '</p>';
+listEl.innerHTML = `<p>${post.content}</p>`;
+```
+
+### 3. Spanish UI / English Code
+
+- **User-facing text** (labels, buttons, messages, toasts): Spanish (`es-HN`)
+- **Code comments, variable names, logs**: English
+
+```javascript
+// CORRECT
+showNotification('Operacion exitosa', 'success');  // Spanish for UI
+// Fetch user's following feed                       // English for comments
+
+// WRONG
+showNotification('Operation successful', 'success'); // English UI text
+// Obtener el feed del usuario                        // Spanish comments
+```
+
+### 4. Modify Existing Files — Never Create Standalone Scripts
+
+The frontend uses singleton class instances. **Add methods to existing classes**, don't create parallel scripts.
+
+```
+CORRECT: Edit js/hub/social-feed.js → add to the SocialFeed object
+WRONG:   Create src/js/hub/social-feed.js (new standalone file)
+WRONG:   Create my-feature.js that does document.querySelector() from scratch
+```
+
+Key singletons:
+- `SocialFeed` in `js/hub/social-feed.js` — social feed module
+- `MarketplaceSocial` in `marketplace-social.js` — marketplace SPA (at HTML root, NOT in `js/`)
+
+### 5. Verify API Endpoints — Don't Fabricate
+
+Before documenting or calling an endpoint, verify it exists:
+- **Swagger UI**: [latanda.online/docs](https://latanda.online/docs) (220+ documented paths)
+- **Dev Portal Sandbox**: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) (try endpoints live)
+
+```
+REAL:   GET  /api/feed/social/following
+REAL:   POST /api/feed/social/:id/toggle-like
+REAL:   GET  /api/groups/my-groups-pg
+
+FAKE:   GET  /api/feed/social/para-ti          (does not exist)
+FAKE:   POST /api/feed/social/:id/like         (wrong — it's toggle-like)
+FAKE:   GET  /api/groups                       (wrong — it's my-groups-pg)
+```
+
+### 6. Security Rules
+
+These are enforced in code review. Violations = instant rejection.
+
+| Rule | Reason |
+|------|--------|
+| Never use `Math.random()` | Use `crypto.randomInt()` or `crypto.getRandomValues()` |
+| Never use `body.user_id` for auth | Always use `authUser.userId` from JWT (prevents IDOR) |
+| Never send `error.message` to clients | Generic Spanish messages only (never leak internals) |
+| Never use `SELECT *` or `RETURNING *` | Explicit column lists only |
+| Never use inline `onclick` handlers | Use delegated event listeners with `data-action` attributes |
+| Financial operations need transactions | `BEGIN` + `SELECT FOR UPDATE` + `COMMIT` |
+
+### 7. File Locations (Don't Guess)
+
+```
+la-tanda-web/
+├── *.html                        # Pages at root (home-dashboard, explorar, etc.)
+├── marketplace-social.js         # Marketplace JS (AT ROOT, not in js/)
+├── marketplace-social.html       # Marketplace HTML (AT ROOT)
+├── js/
+│   ├── hub/                      # Core modules
+│   │   ├── social-feed.js        # Social feed (SocialFeed singleton)
+│   │   ├── contextual-widgets.js
+│   │   ├── sidebar-widgets.js
+│   │   └── ...
+│   ├── core/                     # Shared utilities
+│   ├── components-loader.js      # Dynamic component loading
+│   └── ...
+├── css/
+│   ├── hub/                      # Hub styles (social-feed.css)
+│   ├── dashboard-layout.css      # Main layout
+│   ├── groups-page.css           # Groups/Tandas styles
+│   └── ...
+├── docs/swagger/openapi.json     # OpenAPI spec (220+ paths)
+├── chain/                        # Blockchain explorer + files
+└── smart-contracts/              # Solidity (Polygon Amoy)
+```
+
+### 8. What NOT to Do (Lessons from Rejected PRs)
+
+| Mistake | What happened |
+|---------|---------------|
+| Created file at `src/js/hub/social-feed.js` | Wrong path — no `src/` directory exists |
+| Used `sessionStorage.getItem('jwtToken')` | Wrong — platform uses `localStorage.getItem('auth_token')` |
+| Documented `POST https://my.tanda.co/oauth/token` | Fabricated URL — real API is at `latanda.online` |
+| Deleted 8,700 lines of openapi.json to replace with 4 endpoints | Destroyed existing work — always additive |
+| Submitted all UI text in Chinese | Platform is in Spanish for Honduran users |
+| Rendered `post.content` without `escapeHtml()` | XSS vulnerability |
+| Combined 4 bounties in 1 PR | Each bounty = separate PR for clean review |
+| Used ethers.js for chain examples | La Tanda Chain is Cosmos SDK (not EVM) |
+
+---
+
+## Quick Start
+
+### 1. Fork & Clone
 
 ```bash
-# Fork the repository on GitHub
-# Then clone your fork:
 git clone https://github.com/YOUR_USERNAME/la-tanda-web.git
 cd la-tanda-web
-
-# Create a new branch
 git checkout -b feature/your-feature-name
 ```
 
-### 3. Make Your Changes
-
-**Follow Our Coding Standards:**
-- HTML: Semantic HTML5, kebab-case classes
-- CSS: Use CSS variables, consistent naming
-- JavaScript: ES6+, error handling, comments
-- Solidity: Follow style guide, add NatSpec
-
-**Test Your Changes:**
-- Test locally (http://localhost:8080)
-- Test in multiple browsers
-- Test on mobile devices
-- Run smart contract tests (`npx hardhat test`)
-
-### 4. Commit Your Changes
-
-**Commit Message Format:**
-```
-type(scope): brief description
-
-Longer description if needed
-
-Fixes #123
-```
-
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting)
-- `refactor`: Code refactoring
-- `test`: Adding tests
-- `chore`: Maintenance tasks
-
-**Examples:**
-```
-feat(wallet): add transaction pagination
-
-- Implement server-side pagination
-- Add Previous/Next navigation
-- Test with 100+ transactions
-
-Fixes #4
-```
-
-```
-fix(groups): resolve member joining bug
-
-- Fix API endpoint error
-- Add proper error handling
-- Update validation logic
-
-Fixes #42
-```
-
-### 5. Submit a Pull Request
+### 2. Serve Locally
 
 ```bash
-# Push to your fork
+npx serve .
+# Open http://localhost:3000
+```
+
+> **Note:** The frontend calls the production API at `latanda.online`. There is no local backend. You can test UI changes but API-dependent features will use the live server.
+
+### 3. Explore the Real API
+
+- **Swagger UI**: [latanda.online/docs](https://latanda.online/docs) — browse all endpoints
+- **Dev Portal**: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) — try endpoints live, see WebSocket docs, SDK examples in 5 languages, chain API docs
+
+### 4. Submit Your PR
+
+```bash
+git add <specific-files>
+git commit -m "feat(scope): brief description"
 git push origin feature/your-feature-name
 ```
 
-**On GitHub:**
-1. Go to the original repository
-2. Click "New Pull Request"
-3. Select your branch
-4. Fill out the PR template
-
-**PR Template:**
-```markdown
-## Description
-Brief description of what this PR does
-
-## Related Issue
-Fixes #123
-
-## Changes Made
-- Change 1
-- Change 2
-- Change 3
-
-## Testing
-- [ ] Tested locally
-- [ ] Tested in Chrome/Firefox/Safari
-- [ ] Tested on mobile
-- [ ] All tests passing
-
-## Screenshots
-(if applicable)
-
-## LTD Payment Address
-0xYourPolygonAmoyAddress
-```
-
-### 6. Code Review
-
-**What to Expect:**
-- Maintainers review within 24-48 hours
-- You may receive feedback or change requests
-- Address feedback promptly
-- Be respectful and collaborative
-
-**Common Review Comments:**
-- "Please add tests for this function"
-- "Can you update the documentation?"
-- "Let's follow the existing code style here"
-- "Great work! Just a few minor changes needed"
-
-### 7. Get Merged & Paid!
-
-Once approved:
-1. ✅ PR gets merged
-2. 💰 LTD tokens sent within 24h
-3. 🎉 You're a contributor!
+The PR template will auto-populate with a checklist. Fill it out completely.
 
 ---
 
-## 📏 Code Quality Standards
-
-### General Guidelines
-
-**DO:**
-- ✅ Follow existing code patterns
-- ✅ Add comments for complex logic
-- ✅ Test your changes thoroughly
-- ✅ Update documentation
-- ✅ Use descriptive variable names
-- ✅ Handle errors gracefully
-
-**DON'T:**
-- ❌ Submit untested code
-- ❌ Break existing functionality
-- ❌ Ignore coding standards
-- ❌ Add unnecessary dependencies
-- ❌ Include console.log() in production code
-- ❌ Hardcode sensitive data
-
-### HTML Standards
-
-```html
-<!-- ✅ Good -->
-<div class="wallet-container">
-  <h2 class="wallet-title">My Wallet</h2>
-  <button class="action-btn btn-primary">Send</button>
-</div>
-
-<!-- ❌ Bad -->
-<div class="WalletContainer">
-  <h2 style="color: blue;">My Wallet</h2>
-  <button onclick="send()">Send</button>
-</div>
-```
-
-### CSS Standards
-
-```css
-/* ✅ Good - Use CSS variables */
-.wallet-balance {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-  border-radius: 12px;
-}
-
-/* ❌ Bad - Hardcoded values */
-.wallet-balance {
-  color: #f8fafc;
-  background: #1e293b;
-  border-radius: 12px;
-}
-```
-
-### JavaScript Standards
-
-```javascript
-// ✅ Good - Modern ES6+, error handling
-async function fetchBalance(userId) {
-  try {
-    const response = await fetch(`/api/user/balance?id=${userId}`);
-    if (!response.ok) throw new Error('Failed to fetch balance');
-    const data = await response.json();
-    return data.balance;
-  } catch (error) {
-    console.error('Error fetching balance:', error);
-    throw error;
-  }
-}
-
-// ❌ Bad - No error handling, old syntax
-function fetchBalance(userId) {
-  var response = fetch('/api/user/balance?id=' + userId);
-  return response.json().balance;
-}
-```
-
-### Solidity Standards
-
-```solidity
-// ✅ Good - NatSpec comments, proper structure
-/// @notice Transfers tokens with vesting
-/// @param to Address to transfer to
-/// @param amount Amount to transfer
-/// @return success Whether transfer succeeded
-function transferWithVesting(
-    address to,
-    uint256 amount
-) external returns (bool success) {
-    require(to != address(0), "Invalid address");
-    require(amount > 0, "Amount must be > 0");
-    // Implementation...
-    return true;
-}
-
-// ❌ Bad - No comments, poor naming
-function t(address a, uint256 b) external returns (bool) {
-    _transfer(msg.sender, a, b);
-    return true;
-}
-```
-
----
-
-## 🧪 Testing Requirements
-
-### Frontend Testing
-
-**Manual Testing Checklist:**
-- [ ] Visual appearance matches design
-- [ ] All buttons/links work
-- [ ] Forms validate correctly
-- [ ] No console errors
-- [ ] Responsive on mobile
-- [ ] Works in Chrome, Firefox, Safari
-
-**Browser Testing:**
-- Chrome 88+
-- Firefox 87+
-- Safari 14+
-- Mobile browsers
-
-### Smart Contract Testing
-
-**Required for all contract changes:**
-```bash
-cd smart-contracts
-npm install
-npx hardhat test
-
-# All tests must pass!
-```
-
-**Coverage Requirements:**
-- Core functions: 100% coverage
-- Helper functions: 80% coverage
-- Overall: 90%+ coverage
-
----
-
-## 📝 Documentation Requirements
-
-### Code Documentation
-
-**JavaScript/TypeScript:**
-```javascript
-/**
- * Calculates total rewards for a user
- * @param {string} userId - User's unique identifier
- * @param {number} period - Period in months
- * @returns {Promise<number>} Total rewards in LTD
- */
-async function calculateRewards(userId, period) {
-  // Implementation
-}
-```
-
-**Solidity:**
-```solidity
-/// @notice Vests tokens over time
-/// @dev Uses linear vesting with cliff
-/// @param beneficiary Address receiving vested tokens
-/// @param amount Total amount to vest
-/// @param duration Vesting duration in seconds
-function createVesting(
-    address beneficiary,
-    uint256 amount,
-    uint256 duration
-) external;
-```
-
-### Feature Documentation
-
-When adding a new feature, update:
-- [ ] README.md (if user-facing)
-- [ ] ACTIVE-BOUNTIES.md (if creating bounty)
-- [ ] Inline code comments
-- [ ] API documentation (if adding endpoints)
-
----
-
-## 🔒 Security Guidelines
-
-### Never Commit:
-- ❌ Private keys or mnemonics
-- ❌ API keys or secrets
-- ❌ Database credentials
-- ❌ .env files
-- ❌ User data
-
-### Always:
-- ✅ Validate all user input
-- ✅ Sanitize data before display
-- ✅ Use prepared statements for SQL
-- ✅ Check authentication/authorization
-- ✅ Handle errors without exposing internals
-
-### Reporting Security Issues
-
-**Found a security vulnerability?**
-- ❌ **DO NOT** create a public issue
-- ✅ Email: security@latanda.online
-- ✅ Include detailed description
-- ✅ Receive priority bounty (up to 500 LTD)
-
----
-
-## 🏷️ Issue Labels
-
-Understanding our labels:
-
-- `bounty` - Rewards available for this issue
-- `bug` - Something isn't working
-- `enhancement` - New feature or request
-- `documentation` - Documentation improvements
-- `good first issue` - Good for newcomers
-- `help wanted` - Extra attention needed
-- `high-priority` - Should be worked on soon
-- `infrastructure` - Infrastructure/DevOps tasks
-- `security` - Security-related issues
-
----
-
-## 💬 Community Guidelines
-
-### Code of Conduct
-
-**Be:**
-- ✅ Respectful and inclusive
-- ✅ Constructive in feedback
-- ✅ Patient with newcomers
-- ✅ Collaborative and helpful
-
-**Don't:**
-- ❌ Use offensive language
-- ❌ Harass or discriminate
-- ❌ Spam or self-promote
-- ❌ Share others' private information
-
-### Communication Channels
-
-- **GitHub Issues:** Bug reports and feature requests
-- **GitHub Discussions:** Questions and general discussion
-- **Pull Request Comments:** Code review discussions
-- **Twitter/X:** [@TandaWeb3](https://x.com/TandaWeb3)
-
----
-
-## 🎯 Bounty-Specific Guidelines
+## Contribution Process
 
 ### Claiming a Bounty
+1. Comment on the issue: "I'd like to work on this"
+2. Wait for maintainer to assign you
+3. You have **7 days** to submit a PR
+4. If you need more time, comment on the issue
+5. If inactive for 7 days, bounty reopens
 
-1. **Comment to claim:** "I'd like to work on this"
-2. **Wait for confirmation:** Maintainer will assign you
-3. **Start working:** You have 7 days to submit PR
-4. **If you need more time:** Comment on the issue
-5. **If you can't finish:** Let us know so others can claim
+### One Bounty = One PR
+Submit each bounty as a **separate PR**. Don't combine multiple bounties — it forces all-or-nothing review.
 
-### Multiple Contributors
+### Commit Messages
 
-- One person per bounty (first to claim gets it)
-- If inactive for 7 days, bounty reopens
-- Collaboration is encouraged for large bounties
+```
+type(scope): brief description
 
-### Bounty Payment
+Fixes #123
+```
 
-**Requirements:**
-- PR must be merged (not just approved)
-- Code must meet all acceptance criteria
-- Wallet address must be provided
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
-**Timeline:**
-- Review: 24-48 hours
-- Merge: After approval
-- Payment: Within 24 hours of merge
-
-**Network:**
-- Polygon Amoy Testnet (currently)
-- Will migrate to Polygon mainnet later
+### Code Review
+- Reviews within 24-48 hours
+- Address feedback promptly
+- Common reasons for rejection: fabricated endpoints, wrong auth pattern, XSS, wrong file paths
 
 ---
 
-## 📚 Additional Resources
+## Code Quality Standards
 
-### Documentation
-- [Developer Quickstart](./DEVELOPER-QUICKSTART.md) - 5-min setup
-- [README](./README.md) - Project overview
-- [Active Bounties](./ACTIVE-BOUNTIES.md) - Current rewards
-- [Smart Contracts](./smart-contracts/README.md) - Contract docs
+### HTML
+- Semantic HTML5, kebab-case classes
+- No inline `onclick` — use `data-action` attributes
+- No inline styles — use CSS classes
 
-### Platform
-- Live: https://latanda.online
-- Staging: https://indigoazul.github.io/la-tanda-web/
-- API: https://api.latanda.online
+### CSS
+- Use existing CSS variables (`--mp-orange`, `--bg-primary`, `--bg-secondary`, `--text-primary`)
+- Dark theme: `#0f172a` background, cyan `#00FFFF` accent, orange `#FF6B35` for marketplace
+- Mobile responsive (test at 768px and 480px)
 
-### Contracts
-- LTDToken: [0x8633...9cFc](https://amoy.polygonscan.com/address/0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc)
-- Vesting: [0x7F21...082F](https://amoy.polygonscan.com/address/0x7F21EC0A4B3Ec076eB4bc2924397C85B44a5082F)
-- Reserve: [0xF136...0bA2](https://amoy.polygonscan.com/address/0xF136C790da0D76d75d36207d954A6E114A9c0bA2)
+### JavaScript
+- ES6+ (async/await, template literals, destructuring)
+- `escapeHtml()` on all user data rendered in HTML
+- Error handling with try/catch on all fetch calls
+- No `console.log()` in production code
+- Follow existing patterns in the file you're modifying
 
 ---
 
-## ❓ FAQ
+## Security
+
+### Never Commit
+- Private keys or mnemonics
+- API keys or secrets
+- `.env` files
+- Hardcoded credentials (even "demo" ones)
+
+### Report Vulnerabilities
+- **DO NOT** create a public issue
+- Email: `contact@latanda.online`
+- Priority bounty: up to 500 LTD
+
+---
+
+## Resources
+
+| Resource | URL |
+|----------|-----|
+| Live Platform | [latanda.online](https://latanda.online) |
+| Swagger UI (API docs) | [latanda.online/docs](https://latanda.online/docs) |
+| Dev Portal (sandbox, WebSocket, SDK, chain) | [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) |
+| La Tanda Chain Explorer | [latanda.online/chain](https://latanda.online/chain/) |
+| GitHub Discussions | [Discussions](https://github.com/INDIGOAZUL/la-tanda-web/discussions) |
+
+---
+
+## FAQ
 
 **Q: Do I need to ask before working on something?**
-A: For bounties, yes - claim the issue first. For small fixes, you can submit directly.
-
-**Q: How long does review take?**
-A: 24-48 hours for most PRs.
+A: For bounties, yes — claim the issue first. For small fixes, submit directly.
 
 **Q: Can I work on multiple bounties?**
-A: Yes, but one at a time is recommended.
+A: Yes, but one at a time is recommended. One PR per bounty.
 
-**Q: What if I don't finish in time?**
-A: Just comment on the issue - we're flexible!
+**Q: The API calls hit production — is that OK for testing?**
+A: Yes, that's the intended workflow. The frontend is static files that call the live API. You can test UI changes locally but API responses come from the server.
+
+**Q: What's the La Tanda Chain?**
+A: A Cosmos SDK blockchain (NOT EVM). Chain ID `latanda-testnet-1`, token LTD. See [chain docs](https://latanda.online/dev-dashboard.html#chain).
 
 **Q: When do I get paid?**
-A: Within 24 hours of your PR being merged.
-
-**Q: What wallet do I need?**
-A: MetaMask or any Polygon-compatible wallet.
-
-**Q: Is this real money?**
-A: Currently testnet tokens. Will migrate to mainnet later with real value.
+A: Within 24 hours of your PR being merged. Include your wallet address in the PR.
 
 ---
 
-## 🙏 Thank You!
-
-Your contributions help make La Tanda better for everyone. Whether it's a bug fix, new feature, or documentation improvement - every contribution matters!
-
-**First 10 contributors get "Founding Contributor" recognition!**
-
----
-
-**Questions?** Ask in [GitHub Discussions](https://github.com/INDIGOAZUL/la-tanda-web/discussions)
-
-**Ready to contribute?** Check [Active Bounties](./ACTIVE-BOUNTIES.md)!
-
----
-
-*Last Updated: October 18, 2025*
-*Bounty Budget: 250M LTD*
-*Sustainability: 2,000+ years*
+*Last Updated: March 3, 2026*
+*Platform Version: 4.12.0*
