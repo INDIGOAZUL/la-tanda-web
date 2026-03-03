@@ -29,12 +29,20 @@ assignees: ''
 | 🟡 Medium | 250 LTD |
 | 🟢 Small | 100 LTD |
 
-## 🎯 How to Claim This Bounty
+## Required Reading (before you start)
+
+- **[CONTRIBUTING.md — Codebase Patterns](../../CONTRIBUTING.md#-codebase-patterns-read-this-first)** — auth token key, escapeHtml, Spanish UI, file locations, security rules
+- **[Swagger UI](https://latanda.online/docs)** — verify all API endpoints exist before using them
+- **[Dev Portal](https://latanda.online/dev-dashboard.html)** — try endpoints live, see SDK examples
+
+---
+
+## How to Claim
 
 1. **Comment** "I'd like to work on this" to claim
-2. **Fork** the repository
-3. **Implement** the feature with tests & documentation
-4. **Submit** PR referencing this issue (#ISSUE_NUMBER)
+2. **Fork** the repository and create a feature branch
+3. **Implement** the feature following codebase patterns
+4. **Submit** PR referencing this issue (one bounty = one PR)
 5. **Get reviewed** and merged
 6. **Receive** LTD tokens to your wallet (within 24h)
 

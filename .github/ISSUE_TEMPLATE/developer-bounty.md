@@ -40,13 +40,21 @@ assignees: ''
 
 ---
 
-## 🚀 How to Claim This Bounty
+## Required Reading (before you start)
+
+- **[CONTRIBUTING.md — Codebase Patterns](../../CONTRIBUTING.md#-codebase-patterns-read-this-first)** — auth token key, escapeHtml, Spanish UI, file locations, security rules
+- **[Swagger UI](https://latanda.online/docs)** — verify all API endpoints exist before using them
+- **[Dev Portal](https://latanda.online/dev-dashboard.html)** — try endpoints live, see SDK examples
+
+PRs that violate codebase patterns (wrong auth token, XSS, fabricated endpoints, wrong file paths) will be rejected.
+
+---
+
+## How to Claim
 
 1. Comment "I'd like to claim this bounty" on this issue
 2. Wait for assignment confirmation
-3. Fork the repository
+3. Fork the repository and create a feature branch
 4. Complete the work following the acceptance criteria
-5. Submit a Pull Request referencing this issue
+5. Submit a Pull Request referencing this issue (one bounty = one PR)
 6. After PR is merged, LTD tokens will be sent to your wallet
-
-**Questions?** Comment below or check [DEVELOPER-QUICKSTART.md](../../DEVELOPER-QUICKSTART.md)
