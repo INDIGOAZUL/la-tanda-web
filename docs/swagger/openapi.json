@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "La Tanda API",
-    "version": "4.7.0",
+    "version": "4.11.3",
     "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```\n\n**Revocación de tokens:** Los tokens son invalidados al cerrar sesión (`POST /api/auth/logout`) o cambiar contraseña. Un token revocado recibe `401 Token ha sido revocado` en cualquier endpoint protegido.",
     "contact": {
       "name": "INDIGOAZUL Development",
@@ -8741,6 +8741,213 @@
         "responses": {
           "200": {
             "description": "Código válido con nombre del referente"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/feed/social/track-views": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Registrar vistas de publicaciones",
+        "description": "Registra vistas de múltiples publicaciones para análisis de engagement",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event_ids"
+                ],
+                "properties": {
+                  "event_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "IDs de publicaciones vistas"
+                  }
+                }
+              },
+              "example": {
+                "event_ids": [
+                  123,
+                  456,
+                  789
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vistas registradas exitosamente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Vistas registradas",
+                  "data": {
+                    "tracked": 3
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/reverse": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Revertir contribución",
+        "description": "Revierte una contribución y devuelve fondos al usuario",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la contribución a revertir"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Razón de la reversión"
+                  }
+                }
+              },
+              "example": {
+                "reason": "Pago duplicado"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contribución revertida exitosamente",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Contribución revertida",
+                  "data": {
+                    "contribution_id": 123,
+                    "amount": 100.0,
+                    "reversed_at": "2026-03-03T10:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/contribution-history": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Historial de contribuciones del grupo",
+        "description": "Obtiene el historial completo de contribuciones con timeline y matriz de pagos",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del grupo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de contribuciones",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "group_id": 1,
+                    "total_contributions": 50,
+                    "timeline": [
+                      {
+                        "date": "2026-03-01",
+                        "member": "Juan Pérez",
+                        "amount": 100.0,
+                        "status": "verified"
+                      }
+                    ],
+                    "matrix": {
+                      "members": [
+                        "Juan",
+                        "María",
+                        "Pedro"
+                      ],
+                      "rounds": [
+                        [
+                          100,
+                          100,
+                          100
+                        ],
+                        [
+                          100,
+                          100,
+                          100
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
