@@ -12,6 +12,12 @@
         :root {
             --tanda-cyan: #00FFFF;
             --tanda-cyan-light: #7FFFD8;
+            --mp-orange: #FF6B35;
+            --mp-orange-light: #FF8F5E;
+            --mp-orange-glow: rgba(255, 107, 53, 0.3);
+            --mp-orange-bg: rgba(255, 107, 53, 0.12);
+            --mp-green: #10B981;
+            --mp-amber: #F59E0B;
             --text-primary: #f8fafc;
             --text-secondary: rgba(248, 250, 252, 0.7);
             --text-accent: #a78bfa;
@@ -19,7 +25,137 @@
             --bg-secondary: #1e293b;
             --bg-accent: rgba(15, 23, 42, 0.8);
             --border-primary: rgba(148, 163, 184, 0.1);
-            --border-accent: rgba(0, 255, 255, 0.2);
+            --border-accent: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Bottom Tab Navigation */
+        .mp-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 107, 53, 0.15);
+            padding: 6px 0;
+            padding-bottom: max(6px, env(safe-area-inset-bottom));
+        }
+        .mp-bottom-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            text-decoration: none;
+            position: relative;
+        }
+        .mp-bottom-tab i { font-size: 20px; }
+        .mp-bottom-tab.active { color: var(--mp-orange); }
+        .mp-bottom-tab:hover { color: rgba(255,255,255,0.8); }
+        .mp-bottom-tab.active:hover { color: var(--mp-orange); }
+        .mp-tab-badge {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            min-width: 16px;
+            height: 16px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        /* Side Rail (desktop) */
+        .mp-side-rail {
+            display: none;
+        }
+        @media (min-width: 769px) {
+            .mp-bottom-nav { display: none; }
+            .mp-side-rail {
+                position: fixed;
+                left: 0;
+                top: 56px;
+                bottom: 0;
+                width: 60px;
+                background: rgba(15, 23, 42, 0.95);
+                backdrop-filter: blur(12px);
+                border-right: 1px solid rgba(255, 107, 53, 0.1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 16px 0;
+                gap: 4px;
+                z-index: 999;
+                transition: width 0.2s;
+            }
+            .mp-side-rail:hover { width: 180px; }
+            .mp-rail-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+                padding: 12px 0;
+                justify-content: center;
+                background: none;
+                border: none;
+                color: rgba(255, 255, 255, 0.5);
+                cursor: pointer;
+                transition: all 0.2s;
+                text-decoration: none;
+                font-size: 13px;
+                border-left: 3px solid transparent;
+            }
+            .mp-side-rail:hover .mp-rail-item { justify-content: flex-start; padding-left: 16px; }
+            .mp-rail-item i { font-size: 18px; min-width: 24px; text-align: center; }
+            .mp-rail-label { display: none; white-space: nowrap; }
+            .mp-side-rail:hover .mp-rail-label { display: inline; }
+            .mp-rail-item:hover { color: #fff; background: rgba(255, 107, 53, 0.05); }
+            .mp-rail-item.active { color: var(--mp-orange); border-left-color: var(--mp-orange); }
+            .mp-main { margin-left: 60px; }
+            .mp-side-rail:hover ~ .mp-main { margin-left: 60px; }
+        }
+
+        /* Inline search (desktop only) */
+        .mp-search-inline {
+            display: none;
+        }
+        @media (min-width: 769px) {
+            .mp-search-inline {
+                display: flex;
+                flex: 1;
+                max-width: 480px;
+            }
+            .mp-search-inline input {
+                width: 100%;
+                padding: 8px 16px;
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                color: #e2e8f0;
+                font-size: 13px;
+                transition: border-color 0.2s;
+            }
+            .mp-search-inline input:focus {
+                outline: none;
+                border-color: var(--mp-orange);
+            }
+            .mp-header-right .mp-search-btn { display: none; }
         }
 
         * {
@@ -83,58 +219,6 @@
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
         
-        /* Navigation Tabs */
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-            padding: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--border-primary);
-        }
-        
-        .nav-tab {
-            padding: 12px 24px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 10px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 500;
-            font-size: 14px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .nav-tab:hover {
-            background: rgba(0, 255, 255, 0.1);
-            color: var(--text-primary);
-            border-color: var(--border-accent);
-            transform: translateY(-1px);
-        }
-        
-        .nav-tab.active {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
-            color: var(--text-primary);
-            border-color: var(--tanda-cyan);
-            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .nav-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--tanda-cyan);
-        }
         
         /* Content Sections */
         .content-section {
@@ -211,233 +295,6 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
         
-        /* Product Card */
-        .product-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            border-color: #8B5CF6;
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            position: relative;
-        }
-        
-        .product-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(16, 185, 129, 0.9);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .product-info {
-            padding: 20px;
-        }
-        
-        .product-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        
-        .product-description {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        
-        .product-price {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .price-ltd {
-            font-size: 20px;
-            font-weight: 700;
-            color: #10B981;
-        }
-        
-        .price-usd {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .product-seller {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .seller-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .seller-info {
-            flex: 1;
-        }
-        
-        .seller-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .seller-rating {
-            font-size: 12px;
-            color: #F59E0B;
-        }
-        
-        /* Social Elements */
-        .social-post {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .post-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8B5CF6, #6366F1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        
-        .user-info {
-            flex: 1;
-        }
-        
-        .user-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .post-time {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .post-content {
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        
-        .post-actions {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        
-        .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            border-radius: 20px;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        
-        .action-btn.active {
-            background: rgba(139, 92, 246, 0.3);
-            color: #8B5CF6;
-        }
-        
-        /* Stats Card */
-        .stat-card {
-            background: var(--bg-accent);
-            backdrop-filter: blur(24px);
-            border: 1px solid var(--border-primary);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
-            border-color: var(--border-accent);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin: 0 auto 15px;
-            color: var(--bg-primary);
-        }
-        
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--tanda-cyan);
-            margin-bottom: 5px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .stat-label {
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
         
         /* Button Styles */
         .btn {
@@ -585,73 +442,6 @@
             min-width: 150px;
         }
         
-        /* Profile Card */
-        .profile-card {
-            background: var(--bg-accent);
-            backdrop-filter: blur(24px);
-            border: 1px solid var(--border-primary);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .profile-card:hover {
-            border-color: var(--border-accent);
-            box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
-            transform: translateY(-2px);
-        }
-        
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0 auto 15px;
-            color: var(--bg-primary);
-        }
-        
-        .profile-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: var(--text-primary);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .profile-role {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
-        }
-        
-        .profile-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .profile-stat {
-            text-align: center;
-        }
-        
-        .profile-stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--tanda-cyan);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .profile-stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
         
         /* Modal Styles */
         .modal {
@@ -799,8 +589,8 @@
 
         /* Guest Banner */
         .guest-banner {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.2));
-            border: 1px solid rgba(139, 92, 246, 0.4);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.15), rgba(255, 143, 94, 0.1));
+            border: 1px solid rgba(255, 107, 53, 0.3);
             border-radius: 12px;
             padding: 16px 24px;
             margin-bottom: 20px;
@@ -821,250 +611,6 @@
             pointer-events: none;
         }
 
-        /* Tier Progress Banner - Collapsible */
-        .tier-progress-banner {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--border-accent);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .tier-progress-banner.tanda-active {
-            border-color: rgba(0, 255, 255, 0.4);
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(0, 255, 255, 0.05));
-        }
-
-        .tier-header {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            cursor: pointer;
-            gap: 12px;
-            transition: background 0.2s;
-        }
-
-        .tier-header:hover {
-            background: rgba(255,255,255,0.03);
-        }
-
-        .tier-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .tier-avatar.tanda {
-            background: linear-gradient(135deg, #00FFFF, #06B6D4);
-            color: #0f172a;
-        }
-
-        .tier-user-summary {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .tier-user-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tier-badge {
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 500;
-        }
-
-        .tier-badge.tanda {
-            background: rgba(0, 255, 255, 0.2);
-            color: #00FFFF;
-        }
-
-        .tier-badge.premium {
-            background: rgba(139, 92, 246, 0.2);
-            color: #A78BFA;
-        }
-
-        .tier-user-desc {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            margin-top: 2px;
-        }
-
-        .tier-progress-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-
-        .tier-progress-bar {
-            width: 80px;
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .tier-progress-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        .tier-progress-fill.low { background: #EF4444; }
-        .tier-progress-fill.mid { background: #F59E0B; }
-        .tier-progress-fill.high { background: #10B981; }
-        .tier-progress-fill.max { background: linear-gradient(90deg, #00FFFF, #8B5CF6); }
-
-        .tier-progress-pct {
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
-            min-width: 36px;
-        }
-
-        .tier-toggle {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            transition: transform 0.3s;
-        }
-
-        .tier-progress-banner.expanded .tier-toggle {
-            transform: rotate(180deg);
-        }
-
-        .tier-details {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            border-top: 1px solid transparent;
-        }
-
-        .tier-progress-banner.expanded .tier-details {
-            max-height: 300px;
-            border-top-color: rgba(255,255,255,0.1);
-        }
-
-        .tier-details-content {
-            padding: 12px 16px;
-        }
-
-        .tier-current-benefits {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .tier-benefit-tag {
-            font-size: 11px;
-            padding: 4px 10px;
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 12px;
-            color: #10B981;
-        }
-
-        .tier-benefit-tag.locked {
-            background: rgba(100, 116, 139, 0.1);
-            border-color: rgba(100, 116, 139, 0.2);
-            color: rgba(255,255,255,0.4);
-        }
-
-        .tier-next-steps {
-            background: rgba(255,255,255,0.03);
-            border-radius: 8px;
-            padding: 10px 12px;
-        }
-
-        .tier-next-title {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .tier-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .tier-step:last-child {
-            border-bottom: none;
-        }
-
-        .tier-step-icon {
-            font-size: 18px;
-        }
-
-        .tier-step-info {
-            flex: 1;
-        }
-
-        .tier-step-name {
-            font-size: 13px;
-            color: #fff;
-        }
-
-        .tier-step-desc {
-            font-size: 11px;
-            color: rgba(255,255,255,0.5);
-        }
-
-        .tier-step-action {
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .tier-step-action.primary {
-            background: linear-gradient(135deg, #00FFFF, #06B6D4);
-            color: #0f172a;
-        }
-
-        .tier-step-action.secondary {
-            background: rgba(139, 92, 246, 0.2);
-            color: #A78BFA;
-        }
-
-        .tier-step-action:hover {
-            transform: scale(1.05);
-        }
-
-        .tier-step.completed .tier-step-name {
-            color: rgba(255,255,255,0.5);
-        }
-
-        @media (max-width: 768px) {
-            .tier-progress-bar {
-                width: 60px;
-            }
-            .tier-progress-pct {
-                display: none;
-            }
-        }
 
         /* Service Card Styles */
         .service-card {
@@ -1313,7 +859,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: var(--tanda-cyan);
+            background: var(--mp-orange);
             flex-shrink: 0;
         }
 
@@ -1959,42 +1505,13 @@
     height: 60px;
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 107, 53, 0.15);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 16px;
     z-index: 1000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.mp-menu-btn {
-    width: 40px;
-    height: 40px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background 0.2s;
-}
-
-.mp-menu-btn:hover {
-    background: rgba(0, 255, 255, 0.1);
-}
-
-.mp-menu-btn span {
-    display: block;
-    width: 20px;
-    height: 2px;
-    background: #fff;
-    border-radius: 2px;
-    transition: all 0.3s;
 }
 
 .mp-brand {
@@ -2028,45 +1545,6 @@
 
 .mp-search-btn:hover {
     background: rgba(0, 255, 255, 0.1);
-}
-
-.mp-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.mp-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: rgba(0, 255, 255, 0.1);
-    border: 1px solid rgba(0, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mp-action-btn:hover {
-    background: rgba(0, 255, 255, 0.2);
-    border-color: var(--tanda-cyan);
-    transform: translateY(-1px);
-}
-
-.mp-action-icon {
-    font-size: 16px;
-}
-
-.mp-action-icon-only {
-    padding: 8px 12px;
-}
-
-.mp-action-icon-only .mp-action-text {
-    display: none;
 }
 
 /* Search Bar */
@@ -2147,159 +1625,11 @@
     cursor: pointer;
 }
 
-/* Sidebar */
-.mp-sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 1001;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s;
-}
-
-.mp-sidebar-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.mp-sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 280px;
-    height: 100vh;
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    z-index: 1002;
-    transition: left 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid rgba(0, 255, 255, 0.1);
-}
-
-.mp-sidebar.active {
-    left: 0;
-}
-
-.mp-sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.mp-user-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.mp-user-avatar {
-    width: 45px;
-    height: 45px;
-    background: linear-gradient(135deg, var(--tanda-cyan), #7FFFD8);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-}
-
-.mp-user-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.mp-user-name {
-    font-weight: 600;
-    color: #fff;
-    font-size: 14px;
-}
-
-.mp-user-balance {
-    font-size: 12px;
-    color: var(--tanda-cyan);
-}
-
-.mp-sidebar-close {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.mp-sidebar-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.mp-sidebar-nav {
-    flex: 1;
-    padding: 15px 0;
-    overflow-y: auto;
-}
-
-.mp-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: rgba(255, 255, 255, 0.7);
-    text-decoration: none;
-    transition: all 0.2s;
-    position: relative;
-}
-
-.mp-nav-item:hover {
-    background: rgba(0, 255, 255, 0.05);
-    color: #fff;
-}
-
-.mp-nav-item.active {
-    background: rgba(0, 255, 255, 0.1);
-    color: var(--tanda-cyan);
-    border-left: 3px solid var(--tanda-cyan);
-}
-
-.mp-nav-icon {
-    font-size: 18px;
-    width: 24px;
-    text-align: center;
-}
-
-.mp-nav-text {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.mp-nav-badge {
-    margin-left: auto;
-    background: #ef4444;
-    color: #fff;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.mp-nav-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 10px 20px;
-}
-
 /* Main Content */
 .mp-main {
     margin-top: 60px;
-    padding: 20px;
+    padding: 16px;
+    padding-bottom: 72px;
     min-height: calc(100vh - 60px);
 }
 
@@ -2311,23 +1641,6 @@
 .mp-main > .container {
     padding: 0;
     max-width: 100%;
-}
-
-/* Mobile Responsive */
-@media (max-width: 640px) {
-    .mp-header-center {
-        display: flex;
-        gap: 6px;
-    }
-    
-    .mp-action-text {
-        display: none;
-    }
-    
-    .mp-action-btn {
-        padding: 8px 10px;
-    }
-    
 }
 
 /* Header V2 Layout */
@@ -2346,7 +1659,9 @@
 .mp-header-center {
     display: flex;
     align-items: center;
-    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    padding: 0 16px;
 }
 
 .mp-header-right {
@@ -2397,20 +1712,6 @@
 }
 
 @media (max-width: 640px) {
-    .mp-header-center {
-        display: flex;
-        gap: 6px;
-    }
-    
-    .mp-action-text {
-        display: none;
-    }
-    
-    .mp-action-btn {
-        padding: 8px 10px;
-    }
-    
-    
     .mp-brand .mp-title {
         display: none;
     }
@@ -2794,12 +2095,12 @@
 .exp-tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .exp-tabs::-webkit-scrollbar { display: none; }
 .exp-tab { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap; }
-.exp-tab.active { background: rgba(0,255,255,0.12); border-color: rgba(0,255,255,0.4); color: #00FFFF; }
+.exp-tab.active { background: var(--mp-orange-bg); border-color: rgba(255,107,53,0.4); color: var(--mp-orange); }
 .exp-tab:not(.active):hover { background: rgba(255,255,255,0.06); }
 .exp-category-pills { display: flex; gap: 6px; overflow-x: auto; padding: 0 0 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .exp-category-pills::-webkit-scrollbar { display: none; }
 .exp-pill { flex-shrink: 0; padding: 5px 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; white-space: nowrap; }
-.exp-pill.active { background: rgba(0,255,255,0.1); border-color: rgba(0,255,255,0.35); color: #00FFFF; }
+.exp-pill.active { background: var(--mp-orange-bg); border-color: rgba(255,107,53,0.35); color: var(--mp-orange); }
 .exp-pill:not(.active):hover { background: rgba(255,255,255,0.05); }
 .exp-feed { display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
 .exp-card { display: flex; align-items: center; gap: 12px; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
@@ -2822,8 +2123,8 @@
 .exp-load-more { text-align: center; padding: 16px 0; }
 .exp-load-more-btn { padding: 10px 32px; border-radius: 20px; border: 1px solid rgba(0,255,255,0.3); background: transparent; color: #00FFFF; font-size: 13px; cursor: pointer; transition: background 0.2s; }
 .exp-load-more-btn:hover { background: rgba(0,255,255,0.08); }
-.exp-sell-fab { position: fixed; bottom: 80px; right: 20px; width: 52px; height: 52px; border-radius: 50%; border: none; background: linear-gradient(135deg, #00FFFF, #0891b2); color: #0f172a; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,255,255,0.3); z-index: 50; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; }
-.exp-sell-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(0,255,255,0.4); }
+.exp-sell-fab { position: fixed; bottom: 80px; right: 20px; width: 52px; height: 52px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--mp-orange), #E55A2B); color: #fff; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px var(--mp-orange-glow); z-index: 50; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; }
+.exp-sell-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(255,107,53,0.4); }
 .exp-empty { text-align: center; padding: 48px 16px; color: rgba(255,255,255,0.4); }
 .exp-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .exp-empty-text { font-size: 14px; margin-bottom: 12px; }
@@ -3327,6 +2628,686 @@
     .store-portfolio-banner { font-size: 12px; }
     .store-item-action-btn { width: 26px; height: 26px; font-size: 12px; }
 }
+
+/* ===================== Mi Tienda V2 Dashboard (sd-*) ===================== */
+
+/* Quick Actions Toolbar */
+.sd-quick-actions {
+    display: flex; gap: 10px; padding: 16px 0; margin-bottom: 20px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.sd-quick-actions::-webkit-scrollbar { display: none; }
+.sd-quick-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.sd-quick-btn i { font-size: 15px; color: var(--store-accent-primary, #8B5CF6); }
+.sd-quick-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--store-border, rgba(139,92,246,0.3)); }
+.sd-quick-btn-primary {
+    background: var(--store-gradient, linear-gradient(135deg, #8B5CF6, #06B6D4));
+    border-color: transparent; color: #fff;
+    padding: 12px 22px; font-size: 14px;
+    box-shadow: 0 2px 12px rgba(139,92,246,0.3);
+}
+.sd-quick-btn-primary i { color: #fff; font-size: 16px; }
+.sd-quick-btn-primary:hover { opacity: 0.9; filter: brightness(1.1); box-shadow: 0 4px 16px rgba(139,92,246,0.4); }
+
+/* Analytics Summary Grid */
+.sd-analytics {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 14px; margin-bottom: 24px;
+}
+.sd-analytics-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 18px; display: flex; align-items: flex-start; gap: 14px;
+    transition: border-color 0.2s;
+}
+.sd-analytics-card:hover { border-color: var(--store-border, rgba(139,92,246,0.3)); }
+.sd-analytics-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+.sd-analytics-icon.sd-icon-ventas { background: rgba(16,185,129,0.15); color: #10B981; }
+.sd-analytics-icon.sd-icon-rating { background: rgba(245,158,11,0.15); color: #F59E0B; }
+.sd-analytics-icon.sd-icon-actividad { background: rgba(59,130,246,0.15); color: #3B82F6; }
+.sd-analytics-icon.sd-icon-rendimiento { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+.sd-analytics-body { flex: 1; min-width: 0; }
+.sd-analytics-value {
+    font-size: 22px; font-weight: 700; color: #fff;
+    line-height: 1.2; margin-bottom: 2px;
+}
+.sd-analytics-label {
+    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.sd-analytics-sub {
+    font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.4;
+}
+
+/* Store Preview Card */
+.sd-preview-section { margin-bottom: 24px; }
+.sd-preview-label {
+    font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+}
+.sd-preview-label i { font-size: 14px; }
+.sd-preview-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; overflow: hidden; position: relative;
+    transition: border-color 0.2s;
+}
+.sd-preview-card:hover { border-color: var(--store-border, rgba(139,92,246,0.3)); }
+.sd-preview-header {
+    height: 80px; display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+    background: var(--store-gradient, linear-gradient(135deg, #8B5CF6, #06B6D4));
+    position: relative; overflow: hidden;
+}
+.sd-preview-header::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.3));
+}
+.sd-preview-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8); overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    background: rgba(0,0,0,0.2); z-index: 1; flex-shrink: 0;
+}
+.sd-preview-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sd-preview-name {
+    font-size: 16px; font-weight: 700; color: #fff; z-index: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.sd-preview-stats {
+    display: flex; gap: 20px; padding: 14px 20px;
+    background: rgba(255,255,255,0.03);
+}
+.sd-preview-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.sd-preview-stat-value { font-size: 14px; font-weight: 700; color: #fff; }
+.sd-preview-stat-label { font-size: 11px; color: rgba(255,255,255,0.45); }
+.sd-preview-footer {
+    display: flex; justify-content: flex-end; padding: 10px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.sd-preview-link {
+    padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    color: var(--store-accent-primary, #8B5CF6); background: var(--store-bg, rgba(139,92,246,0.15));
+    border: 1px solid var(--store-border, rgba(139,92,246,0.3));
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.sd-preview-link:hover { background: var(--store-border, rgba(139,92,246,0.3)); }
+
+/* Tabbed Listings */
+.sd-listings { margin-bottom: 24px; }
+.sd-listings-tabs {
+    display: flex; gap: 0; margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sd-listings-tab {
+    padding: 10px 20px; font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.5); background: transparent; border: none;
+    cursor: pointer; transition: all 0.2s; position: relative;
+    display: flex; align-items: center; gap: 6px;
+}
+.sd-listings-tab.active {
+    color: var(--store-accent-primary, #8B5CF6);
+}
+.sd-listings-tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--store-accent-primary, #8B5CF6); border-radius: 2px 2px 0 0;
+}
+.sd-listings-tab:hover:not(.active) { color: rgba(255,255,255,0.7); }
+.sd-listings-count {
+    font-size: 11px; padding: 1px 7px; border-radius: 10px;
+    background: rgba(255,255,255,0.1); font-weight: 500;
+}
+.sd-listings-tab.active .sd-listings-count {
+    background: var(--store-bg, rgba(139,92,246,0.15)); color: var(--store-accent-primary, #8B5CF6);
+}
+.sd-listings-content { display: none; }
+.sd-listings-content.active { display: block; }
+
+/* Enhanced Item Cards */
+.sd-item-card {
+    display: flex; align-items: center; gap: 14px; padding: 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; margin-bottom: 10px; transition: border-color 0.2s;
+}
+.sd-item-card:hover { border-color: var(--store-border, rgba(139,92,246,0.2)); }
+.sd-item-image {
+    width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
+    background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 24px;
+}
+.sd-item-image img { width: 100%; height: 100%; object-fit: cover; }
+.sd-item-body { flex: 1; min-width: 0; }
+.sd-item-title {
+    font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sd-item-price { font-size: 13px; font-weight: 600; color: var(--store-accent-primary, #8B5CF6); }
+.sd-item-meta { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.sd-item-status {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    flex-shrink: 0; margin-left: auto;
+}
+.sd-item-status.active { background: rgba(16,185,129,0.15); color: #10B981; }
+.sd-item-status.draft { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+.sd-item-status.soldout { background: rgba(239,68,68,0.15); color: #EF4444; }
+.sd-item-actions {
+    display: flex; gap: 6px; flex-shrink: 0;
+}
+.sd-item-action {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: rgba(255,255,255,0.4); cursor: pointer;
+    font-size: 13px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.sd-item-action:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.sd-item-action.featured-active { color: #F59E0B; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1); }
+
+/* Empty State */
+.sd-empty {
+    text-align: center; padding: 40px 20px;
+    background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 12px;
+}
+.sd-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.6; }
+.sd-empty-title { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+.sd-empty-desc { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 16px; line-height: 1.5; }
+.sd-empty-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: 10px;
+    background: var(--store-gradient, linear-gradient(135deg, #8B5CF6, #06B6D4));
+    color: #fff; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; transition: opacity 0.2s;
+}
+.sd-empty-cta:hover { opacity: 0.9; }
+
+/* Recent Reviews */
+.sd-reviews { margin-bottom: 24px; }
+.sd-reviews-header {
+    font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+}
+.sd-reviews-header i { color: var(--store-accent-primary, #8B5CF6); }
+.sd-review-card {
+    display: flex; gap: 12px; padding: 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; margin-bottom: 8px;
+}
+.sd-review-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6); flex-shrink: 0;
+    overflow: hidden;
+}
+.sd-review-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sd-review-body { flex: 1; min-width: 0; }
+.sd-review-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+.sd-review-author { font-size: 13px; font-weight: 600; color: #fff; }
+.sd-review-stars { font-size: 12px; color: #F59E0B; }
+.sd-review-date { font-size: 11px; color: rgba(255,255,255,0.35); margin-left: auto; }
+.sd-review-text { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+/* Theme Browser */
+.sd-themes { margin-bottom: 24px; }
+.sd-themes-header {
+    font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+}
+.sd-themes-header i { color: var(--store-accent-primary, #8B5CF6); }
+.sd-themes-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+.sd-themes-label {
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 20px;
+}
+.sd-themes-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+.sd-theme-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.sd-theme-card:hover { border-color: rgba(255,255,255,0.2); }
+.sd-theme-card.active { border-color: var(--store-accent-primary, #8B5CF6); box-shadow: 0 0 0 2px var(--store-accent-primary, #8B5CF6), 0 0 12px rgba(139,92,246,0.2); }
+.sd-theme-preview {
+    width: 100%; height: 48px; border-radius: 8px; position: relative; overflow: hidden;
+}
+.sd-theme-preview-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 18px;
+}
+.sd-theme-preview-dot {
+    position: absolute; bottom: 8px; left: 10px;
+    width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7);
+}
+.sd-theme-preview-lines {
+    position: absolute; bottom: 10px; right: 10px;
+    display: flex; flex-direction: column; gap: 3px;
+}
+.sd-theme-preview-line {
+    height: 3px; border-radius: 2px; background: rgba(255,255,255,0.3);
+}
+.sd-theme-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.sd-theme-btn {
+    padding: 5px 14px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    border: 1px solid; cursor: pointer; transition: all 0.2s;
+}
+.sd-theme-btn.active-btn {
+    background: var(--store-accent-primary, #8B5CF6); border-color: var(--store-accent-primary, #8B5CF6);
+    color: #fff; cursor: default;
+}
+.sd-theme-btn.apply-btn {
+    background: transparent; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);
+}
+.sd-theme-btn.apply-btn:hover { border-color: var(--store-accent-primary, #8B5CF6); color: var(--store-accent-primary, #8B5CF6); }
+
+/* Layout Cards in Theme Browser */
+.sd-layout-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.sd-layout-card:hover { border-color: rgba(255,255,255,0.2); }
+.sd-layout-card.active { border-color: var(--store-accent-primary, #8B5CF6); box-shadow: 0 0 0 2px var(--store-accent-primary, #8B5CF6), 0 0 12px rgba(139,92,246,0.2); }
+.sd-layout-icon { font-size: 24px; }
+.sd-layout-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.sd-layout-desc { font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; }
+
+/* Enhanced Header V2 */
+.sd-header {
+    display: flex; align-items: flex-start; gap: 16px; padding: 20px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; margin-bottom: 4px; flex-wrap: wrap;
+}
+.sd-header-avatar {
+    width: 72px; height: 72px; border-radius: 16px;
+    background: var(--store-gradient, linear-gradient(135deg, #8B5CF6, #06B6D4));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: #fff; flex-shrink: 0; overflow: hidden;
+}
+.sd-header-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sd-header-info { flex: 1; min-width: 0; }
+.sd-header-name {
+    font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.sd-header-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.sd-header-meta {
+    font-size: 12px; color: rgba(255,255,255,0.45);
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.sd-header-meta i { font-size: 12px; }
+.sd-header-actions {
+    display: flex; gap: 8px; flex-shrink: 0; align-self: flex-start;
+}
+.sd-header-btn {
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+}
+.sd-header-btn i { font-size: 13px; }
+.sd-header-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
+.sd-header-btn-accent {
+    background: var(--store-bg, rgba(139,92,246,0.15));
+    border-color: var(--store-border, rgba(139,92,246,0.3));
+    color: var(--store-accent-primary, #8B5CF6);
+}
+.sd-header-btn-accent:hover {
+    background: var(--store-border, rgba(139,92,246,0.3));
+}
+
+/* Section Headers */
+.sd-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+}
+.sd-section-title {
+    font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.7);
+    display: flex; align-items: center; gap: 8px;
+}
+.sd-section-title i { color: var(--store-accent-primary, #8B5CF6); font-size: 15px; }
+.sd-section-btn {
+    padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    background: var(--store-bg, rgba(139,92,246,0.15));
+    border: 1px solid var(--store-border, rgba(139,92,246,0.3));
+    color: var(--store-accent-primary, #8B5CF6); cursor: pointer; transition: all 0.2s;
+}
+.sd-section-btn:hover { background: var(--store-border, rgba(139,92,246,0.3)); }
+
+/* Contact section reuse */
+.sd-contact { margin-bottom: 24px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sd-analytics { grid-template-columns: 1fr; }
+    .sd-themes-grid { grid-template-columns: repeat(2, 1fr); }
+    .sd-header { flex-direction: column; text-align: center; align-items: center; }
+    .sd-header-actions { justify-content: center; width: 100%; }
+    .sd-header-badges { justify-content: center; }
+    .sd-header-meta { justify-content: center; }
+    .sd-preview-stats { justify-content: center; }
+    .sd-item-card { flex-wrap: wrap; }
+    .sd-item-status { margin-left: 0; }
+    .sd-review-date { margin-left: 0; }
+}
+@media (max-width: 480px) {
+    .sd-themes-grid { grid-template-columns: 1fr; }
+    .sd-quick-actions { gap: 8px; }
+    .sd-quick-btn { padding: 8px 14px; font-size: 12px; }
+    .sd-analytics-card { padding: 14px; }
+    .sd-analytics-value { font-size: 18px; }
+    .sd-header-avatar { width: 56px; height: 56px; font-size: 22px; border-radius: 14px; }
+    .sd-header-name { font-size: 17px; }
+}
+
+/* ========== TIER BADGE (Header) ========== */
+.mp-tier-badge {
+    display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; cursor: pointer; border: none;
+    background: color-mix(in srgb, var(--tier-color, #6b7280) 20%, transparent);
+    color: var(--tier-color, #6b7280);
+    border: 1px solid color-mix(in srgb, var(--tier-color, #6b7280) 30%, transparent);
+    transition: opacity 0.2s;
+}
+.mp-tier-badge:hover { opacity: 0.8; }
+
+/* ========== STORE BADGES (Plan/Premium/Tanda) ========== */
+.store-badge-plan { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(245,158,11,0.15); color: #f59e0b; }
+.store-badge-premium { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(255,107,53,0.15); color: #ff6b35; }
+.store-badge-tanda { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(16,185,129,0.15); color: #10b981; }
+
+/* ========== UPGRADE PROMPT (Bottom Sheet) ========== */
+.tier-upgrade-prompt {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 1100;
+    animation: tierSlideUp 0.3s ease-out;
+}
+@keyframes tierSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.tier-prompt-content {
+    background: rgba(15,23,42,0.97); backdrop-filter: blur(12px);
+    border-top: 2px solid var(--mp-orange); padding: 16px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.tier-prompt-icon { font-size: 24px; }
+.tier-prompt-text { color: var(--text-primary); font-size: 0.9rem; line-height: 1.4; max-width: 400px; }
+.tier-prompt-actions { display: flex; gap: 10px; }
+.tier-prompt-btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+.tier-prompt-upgrade { background: var(--mp-orange); color: #fff; }
+.tier-prompt-upgrade:hover { opacity: 0.9; }
+.tier-prompt-close { background: rgba(255,255,255,0.08); color: #ccc; }
+.tier-prompt-hint { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
+
+/* ========== UPGRADE MODAL ========== */
+.upgrade-overlay {
+    position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.upgrade-modal {
+    background: #1e293b; border: 1px solid rgba(255,107,53,0.2); border-radius: 16px;
+    max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px;
+}
+.upgrade-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.upgrade-modal-header h3 { margin: 0; color: var(--text-primary); font-size: 1.2rem; }
+.upgrade-modal-close { background: none; border: none; color: #999; font-size: 24px; cursor: pointer; padding: 0 4px; }
+.upgrade-tanda-badge { background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 14px; border-radius: 8px; text-align: center; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px; }
+.upgrade-tier-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.upgrade-tier-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 16px; text-align: center; position: relative;
+}
+.upgrade-tier-card.upgrade-tier-active { border-color: var(--mp-orange); background: var(--mp-orange-bg); }
+.upgrade-tier-card.upgrade-tier-popular { border-color: var(--mp-orange); }
+.upgrade-tier-badge-pop {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--mp-orange); color: #fff; font-size: 10px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px;
+}
+.upgrade-tier-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.upgrade-tier-price { font-size: 1.5rem; font-weight: 800; color: var(--mp-orange); }
+.upgrade-tier-period { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
+.upgrade-tier-current { font-size: 0.8rem; color: var(--mp-orange); font-weight: 600; padding: 6px 0; }
+.upgrade-tier-btn {
+    width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: #ccc; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+}
+.upgrade-tier-btn:hover { background: rgba(255,255,255,0.1); }
+.upgrade-tier-btn-primary { background: var(--mp-orange); color: #fff; border-color: var(--mp-orange); }
+.upgrade-tier-btn-primary:hover { opacity: 0.9; }
+.upgrade-tier-btn-premium { background: rgba(255,107,53,0.15); color: var(--mp-orange); border-color: var(--mp-orange); }
+.upgrade-features-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 16px; }
+.upgrade-features-table th { color: rgba(255,255,255,0.5); font-weight: 600; padding: 8px 6px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.upgrade-features-table th:first-child { text-align: left; }
+.upgrade-feature-name { color: var(--text-secondary); padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.upgrade-feature-val { color: rgba(255,255,255,0.6); text-align: center; padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.upgrade-feature-val.upgrade-current { color: var(--mp-orange); font-weight: 600; }
+.upgrade-tanda-promo { text-align: center; color: #10b981; font-size: 0.82rem; padding: 8px; background: rgba(16,185,129,0.08); border-radius: 8px; }
+
+/* Upgrade Payment Step */
+.upgrade-back-btn { background: none; border: none; color: #999; cursor: pointer; font-size: 0.85rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.upgrade-back-btn:hover { color: #fff; }
+.upgrade-pay-summary { text-align: center; margin-bottom: 20px; }
+.upgrade-pay-tier { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.upgrade-pay-price { font-size: 1.8rem; font-weight: 800; color: var(--mp-orange); }
+.upgrade-pay-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.upgrade-pay-option {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; cursor: pointer; color: var(--text-secondary); font-size: 0.88rem;
+}
+.upgrade-pay-option input[type="radio"] { accent-color: var(--mp-orange); }
+.upgrade-confirm-btn {
+    width: 100%; padding: 12px; border-radius: 10px; border: none;
+    background: var(--mp-orange); color: #fff; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s;
+}
+.upgrade-confirm-btn:hover { opacity: 0.9; }
+.upgrade-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ========== TIER PROGRESS CARD ========== */
+.tier-progress-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+}
+.tier-prog-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tier-prog-icon { font-size: 18px; }
+.tier-prog-title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+.tier-prog-expiry { margin-left: auto; font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+.tier-prog-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tier-prog-name { font-size: 0.82rem; color: var(--text-secondary); min-width: 100px; }
+.tier-prog-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.tier-prog-fill { height: 100%; background: var(--mp-orange); border-radius: 3px; transition: width 0.3s; }
+.tier-prog-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); min-width: 40px; text-align: right; }
+.tier-prog-unlimited { font-size: 0.78rem; color: #10b981; font-weight: 600; }
+.tier-prog-upgrade-btn {
+    margin-top: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--mp-orange);
+    background: transparent; color: var(--mp-orange); cursor: pointer; font-size: 0.85rem; font-weight: 600;
+}
+.tier-prog-upgrade-btn:hover { background: var(--mp-orange-bg); }
+
+/* ========== LOCK BADGES (Layout/Theme Pickers) ========== */
+.store-layout-locked, .store-theme-locked { opacity: 0.45; position: relative; }
+.store-lock-badge {
+    position: absolute; top: 6px; right: 6px; z-index: 2;
+    font-size: 14px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 600px) {
+    .upgrade-tier-cards { grid-template-columns: 1fr; }
+    .upgrade-modal { padding: 16px; }
+    .tier-prog-row { flex-wrap: wrap; }
+    .tier-prog-name { min-width: 80px; }
+}
+
+/* ========== MIS COMPRAS TAB ========== */
+.mc-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0; }
+.mc-title { font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0; }
+.mc-disputes-btn { background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; }
+.mc-disputes-btn:hover { background: rgba(239,68,68,0.25); }
+.mc-tabs { display: flex; gap: 0; padding: 12px 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mc-tab { flex: 1; text-align: center; padding: 10px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 0.9rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.mc-tab.active { color: #FF6B35; border-bottom-color: #FF6B35; font-weight: 600; }
+.mc-filters { padding: 8px 16px; }
+.mc-filter { width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; }
+.mc-filter option { background: #1e293b; }
+.mc-content { display: none; padding: 12px 16px; }
+.mc-content.active { display: block; }
+.mc-order-card { display: flex; align-items: flex-start; gap: 12px; padding: 14px; margin-bottom: 10px; background: rgba(255,255,255,0.04); border-radius: 10px; border-left: 3px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s; }
+.mc-order-card:hover { background: rgba(255,255,255,0.07); }
+.mc-order-card[data-status="pending"] { border-left-color: #F59E0B; }
+.mc-order-card[data-status="paid"] { border-left-color: #3B82F6; }
+.mc-order-card[data-status="shipped"] { border-left-color: #8B5CF6; }
+.mc-order-card[data-status="delivered"] { border-left-color: #10B981; }
+.mc-order-card[data-status="cancelled"] { border-left-color: #EF4444; }
+.mc-order-card[data-status="refunded"] { border-left-color: #A855F7; }
+.mc-order-img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.05); }
+.mc-order-info { flex: 1; min-width: 0; }
+.mc-order-title { font-size: 0.9rem; font-weight: 600; color: #fff; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-order-meta { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin: 0; }
+.mc-order-right { text-align: right; flex-shrink: 0; }
+.mc-order-price { font-size: 0.95rem; font-weight: 700; color: #10B981; }
+.mc-order-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; margin-top: 4px; }
+.mc-status-pending { background: rgba(245,158,11,0.15); color: #F59E0B; }
+.mc-status-paid { background: rgba(59,130,246,0.15); color: #3B82F6; }
+.mc-status-shipped { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+.mc-status-delivered { background: rgba(16,185,129,0.15); color: #10B981; }
+.mc-status-cancelled { background: rgba(239,68,68,0.15); color: #EF4444; }
+.mc-status-refunded { background: rgba(168,85,247,0.15); color: #A855F7; }
+.mc-order-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.mc-order-actions button { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); transition: all 0.2s; }
+.mc-order-actions button:hover { background: rgba(255,255,255,0.12); }
+.mc-order-actions .mc-btn-danger { border-color: rgba(239,68,68,0.3); color: #EF4444; }
+.mc-order-actions .mc-btn-success { border-color: rgba(16,185,129,0.3); color: #10B981; }
+.mc-order-actions .mc-btn-primary { border-color: rgba(255,107,53,0.3); color: #FF6B35; }
+.mc-dispute-badge { display: inline-block; padding: 2px 6px; background: rgba(239,68,68,0.15); color: #EF4444; font-size: 0.68rem; border-radius: 6px; margin-left: 4px; }
+.mc-empty { text-align: center; padding: 40px 16px; color: rgba(255,255,255,0.5); }
+.mc-empty i { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+
+/* ========== CART ========== */
+.mc-cart-btn { position: relative; background: none; border: none; color: rgba(255,255,255,0.8); font-size: 1.1rem; cursor: pointer; padding: 6px; }
+.mc-cart-btn:hover { color: #FF6B35; }
+.mc-cart-badge { position: absolute; top: -2px; right: -4px; background: #EF4444; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 1px 4px; border-radius: 8px; min-width: 14px; text-align: center; line-height: 1.2; }
+.mc-cart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1100; display: flex; justify-content: center; align-items: flex-start; padding-top: 60px; }
+.mc-cart-modal { background: #1e293b; border-radius: 14px; width: 90%; max-width: 440px; max-height: 80vh; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); }
+.mc-cart-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mc-cart-header h3 { margin: 0; color: #fff; font-size: 1.1rem; }
+.mc-cart-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.mc-cart-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.mc-cart-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.mc-cart-item-img { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: rgba(255,255,255,0.05); }
+.mc-cart-item-info { flex: 1; min-width: 0; }
+.mc-cart-item-title { font-size: 0.85rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-cart-item-price { font-size: 0.78rem; color: #10B981; }
+.mc-cart-item-qty { width: 50px; padding: 4px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.85rem; }
+.mc-cart-item-remove { background: none; border: none; color: rgba(239,68,68,0.7); cursor: pointer; font-size: 0.9rem; padding: 4px; }
+.mc-cart-item-remove:hover { color: #EF4444; }
+.mc-cart-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+.mc-cart-total { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.95rem; font-weight: 700; color: #fff; }
+.mc-cart-total span:last-child { color: #10B981; }
+.mc-cart-payment { padding: 8px 0; }
+.mc-cart-payment select { width: 100%; padding: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.85rem; margin-bottom: 8px; }
+.mc-cart-payment select option { background: #1e293b; }
+.mc-cart-actions { display: flex; gap: 8px; }
+.mc-cart-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; font-weight: 600; border: none; }
+.mc-cart-continue { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
+.mc-cart-continue:hover { background: rgba(255,255,255,0.12); }
+.mc-cart-checkout { background: #FF6B35; color: #fff; }
+.mc-cart-checkout:hover { background: #e55a2b; }
+.mc-cart-checkout:disabled { opacity: 0.5; cursor: not-allowed; }
+.mc-cart-empty { text-align: center; padding: 40px 16px; color: rgba(255,255,255,0.4); }
+.mc-cart-empty i { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+/* ========== ORDER DETAIL ========== */
+.mc-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1100; display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; overflow-y: auto; }
+.mc-detail-modal { background: #1e293b; border-radius: 14px; width: 92%; max-width: 480px; margin-bottom: 40px; border: 1px solid rgba(255,255,255,0.1); }
+.mc-detail-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mc-detail-header h3 { margin: 0; color: #fff; font-size: 1rem; }
+.mc-detail-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.mc-detail-body { padding: 16px; }
+.mc-detail-product { display: flex; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.mc-detail-product img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; }
+.mc-detail-product-info h4 { margin: 0 0 4px; font-size: 0.95rem; color: #fff; }
+.mc-detail-product-info p { margin: 0; font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+.mc-detail-section { margin-bottom: 14px; }
+.mc-detail-section h4 { font-size: 0.8rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px; }
+.mc-detail-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(255,255,255,0.7); padding: 3px 0; }
+.mc-detail-row span:last-child { color: #fff; font-weight: 500; }
+.mc-detail-timeline { position: relative; padding-left: 24px; margin: 12px 0; }
+.mc-detail-timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: rgba(255,255,255,0.1); }
+.mc-tl-step { position: relative; padding: 6px 0 14px; }
+.mc-tl-step:last-child { padding-bottom: 0; }
+.mc-tl-dot { position: absolute; left: -20px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.2); }
+.mc-tl-step.done .mc-tl-dot { background: #10B981; border-color: #10B981; }
+.mc-tl-step.active .mc-tl-dot { background: #FF6B35; border-color: #FF6B35; box-shadow: 0 0 8px rgba(255,107,53,0.4); }
+.mc-tl-step.error .mc-tl-dot { background: #EF4444; border-color: #EF4444; }
+.mc-tl-label { font-size: 0.85rem; color: #fff; font-weight: 500; }
+.mc-tl-date { font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+.mc-tl-tracking { font-size: 0.75rem; color: #8B5CF6; margin-top: 2px; }
+.mc-detail-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.mc-detail-actions button { flex: 1; min-width: 100px; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.mc-detail-actions button:hover { background: rgba(255,255,255,0.1); }
+.mc-detail-actions .mc-btn-danger { border-color: rgba(239,68,68,0.3); color: #EF4444; }
+.mc-detail-actions .mc-btn-success { border-color: rgba(16,185,129,0.3); color: #10B981; }
+
+/* ========== DISPUTES ========== */
+.mc-dispute-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1100; display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; overflow-y: auto; }
+.mc-dispute-modal { background: #1e293b; border-radius: 14px; width: 92%; max-width: 480px; margin-bottom: 40px; border: 1px solid rgba(255,255,255,0.1); }
+.mc-dispute-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mc-dispute-header h3 { margin: 0; color: #fff; font-size: 1rem; }
+.mc-dispute-body { padding: 16px; }
+.mc-dispute-card { padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.04); border-radius: 10px; border-left: 3px solid rgba(255,255,255,0.1); cursor: pointer; }
+.mc-dispute-card:hover { background: rgba(255,255,255,0.07); }
+.mc-dispute-card[data-status="open"] { border-left-color: #EF4444; }
+.mc-dispute-card[data-status="seller_response"] { border-left-color: #F59E0B; }
+.mc-dispute-card[data-status="resolved"] { border-left-color: #10B981; }
+.mc-dispute-card[data-status="closed"] { border-left-color: rgba(255,255,255,0.2); }
+.mc-dispute-title { font-size: 0.9rem; font-weight: 600; color: #fff; margin: 0 0 4px; }
+.mc-dispute-meta { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+.mc-dispute-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
+.mc-dstatus-open { background: rgba(239,68,68,0.15); color: #EF4444; }
+.mc-dstatus-seller_response { background: rgba(245,158,11,0.15); color: #F59E0B; }
+.mc-dstatus-resolved { background: rgba(16,185,129,0.15); color: #10B981; }
+.mc-dstatus-closed { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+.mc-dispute-form label { display: block; font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-bottom: 4px; margin-top: 12px; }
+.mc-dispute-form select, .mc-dispute-form textarea { width: 100%; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.85rem; }
+.mc-dispute-form select option { background: #1e293b; }
+.mc-dispute-form textarea { min-height: 80px; resize: vertical; font-family: inherit; }
+.mc-dispute-submit { width: 100%; margin-top: 16px; padding: 12px; background: #EF4444; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.mc-dispute-submit:hover { background: #DC2626; }
+.mc-dispute-detail-section { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.mc-dispute-detail-section:last-child { border-bottom: none; }
+.mc-dispute-detail-section h4 { font-size: 0.8rem; color: rgba(255,255,255,0.4); text-transform: uppercase; margin: 0 0 6px; }
+.mc-dispute-detail-section p { font-size: 0.85rem; color: rgba(255,255,255,0.8); margin: 0; line-height: 1.4; }
+.mc-dispute-evidence { display: flex; gap: 8px; margin-top: 8px; }
+.mc-dispute-evidence img { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; cursor: pointer; }
+.mc-dispute-respond textarea { width: 100%; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.85rem; min-height: 60px; resize: vertical; margin-top: 8px; font-family: inherit; }
+.mc-dispute-respond button { margin-top: 8px; padding: 8px 16px; background: #F59E0B; color: #000; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+/* ========== PRODUCT REVIEW MODAL ========== */
+.mc-review-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1100; display: flex; justify-content: center; align-items: center; }
+.mc-review-modal { background: #1e293b; border-radius: 14px; width: 90%; max-width: 400px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); }
+.mc-review-stars { display: flex; gap: 6px; margin: 8px 0; }
+.mc-review-stars i { font-size: 1.5rem; color: rgba(255,255,255,0.2); cursor: pointer; transition: color 0.15s; }
+.mc-review-stars i.active { color: #F59E0B; }
+.mc-review-modal textarea { width: 100%; padding: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; font-size: 0.85rem; min-height: 60px; resize: vertical; margin-top: 8px; font-family: inherit; }
+.mc-review-submit { width: 100%; margin-top: 12px; padding: 10px; background: #FF6B35; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+/* ========== MOBILE ========== */
+@media (max-width: 768px) {
+    .mc-cart-modal { width: 100%; max-width: none; border-radius: 14px 14px 0 0; margin-top: auto; }
+    .mc-detail-modal, .mc-dispute-modal { width: 96%; }
+    .mc-order-card { flex-wrap: wrap; }
+    .mc-order-right { width: 100%; text-align: left; display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+}
+
     </style>
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -3345,33 +3326,24 @@
     <!-- NEW MARKETPLACE HEADER -->
     <header class="mp-header">
         <div class="mp-header-left">
-            <button class="mp-menu-btn" onclick="toggleMarketplaceSidebar()">
-                <span></span><span></span><span></span>
-            </button>
             <a href="home-dashboard.html" class="mp-logo-link">
                 <img loading="lazy" src="La Tanda logos (3).png" alt="La Tanda" class="mp-logo-img">
                 <span class="mp-logo-fallback" style="display:none;">🏛️</span>
             </a>
             <div class="mp-brand">
-                <span class="mp-logo">🛍️</span>
                 <span class="mp-title">Marketplace</span>
             </div>
         </div>
         <div class="mp-header-center">
-            <button class="mp-action-btn" onclick="showCreateProductModal()">
-                <span class="mp-action-icon">📦</span>
-                <span class="mp-action-text">Publicar</span>
-            </button>
-            <button class="mp-action-btn" onclick="showCreateServiceModal()">
-                <span class="mp-action-icon">🛠️</span>
-                <span class="mp-action-text">Ofrecer</span>
-            </button>
-            <button class="mp-action-btn" onclick="switchToMyStore()" title="Mi Tienda">
-                <span class="mp-action-icon">🏪</span>
-                <span class="mp-action-text">Mi Tienda</span>
-            </button>
+            <div class="mp-search-inline" id="mpSearchInline">
+                <input type="text" id="mpSearchInputDesktop" placeholder="Buscar productos, servicios, tiendas..." onkeyup="if(event.key==='Enter') window.ms?.searchProducts()">
+            </div>
         </div>
         <div class="mp-header-right">
+            <button class="mc-cart-btn" data-action="open-cart" title="Carrito">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="mc-cart-badge" id="mcCartBadge" style="display:none;">0</span>
+            </button>
             <button class="mp-search-btn" onclick="toggleMarketplaceSearch()">🔍</button>
         </div>
     </header>
@@ -3407,71 +3379,6 @@
         </div>
     </div>
 
-    <!-- SIDEBAR MENU -->
-    <div class="mp-sidebar-overlay" id="mpSidebarOverlay" onclick="toggleMarketplaceSidebar()"></div>
-    <aside class="mp-sidebar" id="mpSidebar">
-        <div class="mp-sidebar-header">
-            <div class="mp-user-info">
-                <div class="mp-user-avatar" id="mpUserAvatar">👤</div>
-                <div class="mp-user-details">
-                    <span class="mp-user-name" id="mpUserName">Usuario</span>
-                    <span class="mp-user-balance" id="mpUserBalance">0 LTD</span>
-                </div>
-            </div>
-            <button class="mp-sidebar-close" onclick="toggleMarketplaceSidebar()">✕</button>
-        </div>
-        <nav class="mp-sidebar-nav">
-            <a href="#" class="mp-nav-item active" onclick="navigateToSection('marketplace'); return false;">
-                <span class="mp-nav-icon">🛍️</span>
-                <span class="mp-nav-text">Explorar</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('services'); return false;">
-                <span class="mp-nav-icon">🛠️</span>
-                <span class="mp-nav-text">Servicios</span>
-            </a>
-            <div class="mp-nav-divider"></div>
-            <a href="#" class="mp-nav-item" onclick="switchToMyStore(); return false;">
-                <span class="mp-nav-icon">🏪</span>
-                <span class="mp-nav-text">Mi Tienda</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('orders'); return false;">
-                <span class="mp-nav-icon">🛒</span>
-                <span class="mp-nav-text">Mis Pedidos</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('bookings'); return false;">
-                <span class="mp-nav-icon">📅</span>
-                <span class="mp-nav-text">Mis Reservas</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('messages'); return false;">
-                <span class="mp-nav-icon">💬</span>
-                <span class="mp-nav-text">Mensajes</span>
-                <span class="mp-nav-badge" id="mpMessagesBadge" style="display:none;">0</span>
-            </a>
-            <div class="mp-nav-divider"></div>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('social'); return false;">
-                <span class="mp-nav-icon">👥</span>
-                <span class="mp-nav-text">Social</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('community'); return false;">
-                <span class="mp-nav-icon">🌐</span>
-                <span class="mp-nav-text">Comunidad</span>
-            </a>
-            <a href="#" class="mp-nav-item" onclick="navigateToSection('reputation'); return false;">
-                <span class="mp-nav-icon">⭐</span>
-                <span class="mp-nav-text">Mi Reputación</span>
-            </a>
-            <div class="mp-nav-divider"></div>
-            <a href="#" class="mp-nav-item" onclick="showUpgradeModal(); return false;">
-                <span class="mp-nav-icon">💎</span>
-                <span class="mp-nav-text">Mejorar Plan</span>
-            </a>
-            <a href="home-dashboard.html" class="mp-nav-item">
-                <span class="mp-nav-icon">🏠</span>
-                <span class="mp-nav-text">Ir al Dashboard</span>
-            </a>
-        </nav>
-    </aside>
-
     <!-- MAIN CONTENT WRAPPER -->
     <main class="mp-main">
         <!-- Guest Banner -->
@@ -3498,150 +3405,6 @@
             <button class="exp-sell-fab" data-action="exp-sell-product" title="Vender Producto">➕</button>
         </div>
 
-        <!-- Services Section -->
-        <div id="services" class="content-section">
-            <!-- Tier Progress Banner - Collapsible -->
-            <div class="tier-progress-banner" id="servicesTierBanner">
-                <div class="tier-header" onclick="toggleTierDetails()">
-                    <div class="tier-avatar" id="tierAvatar">U</div>
-                    <div class="tier-user-summary">
-                        <div class="tier-user-name">
-                            <span id="tierUserName">Usuario</span>
-                            <span class="tier-badge" id="tierBadge">Free</span>
-                        </div>
-                        <div class="tier-user-desc" id="tierDesc">Miembro de La Tanda</div>
-                    </div>
-                    <div class="tier-progress-wrap">
-                        <div class="tier-progress-bar">
-                            <div class="tier-progress-fill mid" id="tierProgressFill" style="width: 25%"></div>
-                        </div>
-                        <span class="tier-progress-pct" id="tierProgressPct">25%</span>
-                    </div>
-                    <span class="tier-toggle">▼</span>
-                </div>
-                <div class="tier-details">
-                    <div class="tier-details-content">
-                        <div class="tier-current-benefits" id="tierBenefits">
-                            <span class="tier-benefit-tag">✓ Comprar productos</span>
-                            <span class="tier-benefit-tag">✓ Ver servicios</span>
-                            <span class="tier-benefit-tag locked">🔒 Vender productos</span>
-                            <span class="tier-benefit-tag locked">🔒 Ofrecer servicios</span>
-                        </div>
-                        <div class="tier-next-steps">
-                            <div class="tier-next-title">Próximos pasos</div>
-                            <div class="tier-step" id="tierStep1">
-                                <span class="tier-step-icon">👥</span>
-                                <div class="tier-step-info">
-                                    <div class="tier-step-name">Únete a una Tanda</div>
-                                    <div class="tier-step-desc">Desbloquea venta de productos</div>
-                                </div>
-                                <button class="tier-step-action primary" onclick="window.location.href='my-tandas.html'">Unirme</button>
-                            </div>
-                            <div class="tier-step" id="tierStep2">
-                                <span class="tier-step-icon">💎</span>
-                                <div class="tier-step-info">
-                                    <div class="tier-step-name">Plan Premium</div>
-                                    <div class="tier-step-desc">Acceso completo al marketplace</div>
-                                </div>
-                                <button class="tier-step-action secondary" onclick="showUpgradeModal()">Ver planes</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search and Filters for Services -->
-            <div class="card">
-                <div class="search-bar">
-                    <input type="text" class="search-input" placeholder="Buscar servicios, proveedores..." id="serviceSearchInput" onkeyup="filterServices()">
-                    <select class="filter-select" id="serviceCategoryFilter" onchange="filterServices()">
-                        <option value="">Todas las categorías</option>
-                        <option value="cleaning">🧹 Limpieza del Hogar</option>
-                        <option value="repairs">🔧 Reparaciones</option>
-                        <option value="gardening">🌱 Jardinería</option>
-                        <option value="tutoring">📚 Tutorías</option>
-                        <option value="beauty">💅 Belleza</option>
-                        <option value="moving">📦 Mudanzas</option>
-                        <option value="other_services">⚙️ Otros Servicios</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Services Stats -->
-            <div class="grid grid-4">
-                <div class="stat-card">
-                    <div class="stat-icon">🧹</div>
-                    <div class="stat-value" id="servicesActiveCount">--</div>
-                    <div class="stat-label">Servicios Activos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">👨‍🔧</div>
-                    <div class="stat-value" id="servicesProvidersCount">--</div>
-                    <div class="stat-label">Proveedores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📅</div>
-                    <div class="stat-value" id="servicesBookingsCount">--</div>
-                    <div class="stat-label">Reservas Completadas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-value" id="servicesAvgRating">--</div>
-                    <div class="stat-label">Rating Promedio</div>
-                </div>
-            </div>
-
-            <!-- Featured Services -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Servicios Destacados</h2>
-                        <p class="card-subtitle">Los más solicitados por la comunidad</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-3" id="featuredServices">
-                    <!-- Featured services will be loaded here -->
-                </div>
-            </div>
-
-            <!-- All Services -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Todos los Servicios</h2>
-                        <p class="card-subtitle">Encuentra el servicio que necesitas</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-3" id="recentServices">
-                    <!-- Services will be loaded here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Social Section -->
-        <div id="social" class="content-section">
-            <div class="grid grid-2">
-                <!-- Social Feed -->
-                <div class="card" style="grid-column: 1 / -1;">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Feed de la Comunidad</h2>
-                            <p class="card-subtitle">Últimas actualizaciones y noticias</p>
-                        </div>
-                        <button class="btn btn-primary" onclick="showCreatePostModal()">
-                            <span>✍️</span> Crear Post
-                        </button>
-                    </div>
-
-                    <div id="socialFeed">
-                        <!-- Posts will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- My Store Section -->
         <div id="my-store" class="content-section">
             <div id="myStoreContent">
@@ -3649,48 +3412,31 @@
             </div>
         </div>
 
-        <!-- Orders Section -->
-        <div id="orders" class="content-section">
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Mis Pedidos</h2>
-                        <p class="card-subtitle">Compras y ventas recientes</p>
-                    </div>
-                </div>
-                
-                <div class="nav-tabs" style="margin-bottom: 20px;">
-                    <div class="nav-tab active" data-subtab="purchases">🛒 Compras</div>
-                    <div class="nav-tab" data-subtab="sales">💰 Ventas</div>
-                </div>
-                
-                <div id="ordersContent">
-                    <!-- Orders will be loaded here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Bookings Section -->
+        <!-- Mis Compras Section (was Bookings) -->
         <div id="bookings" class="content-section">
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Mis Reservas</h2>
-                        <p class="card-subtitle">Servicios reservados y citas programadas</p>
-                    </div>
-                </div>
-
-                <div id="bookingsContent">
-                    <!-- Bookings will be loaded here -->
-                    <div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.6);">
-                        <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
-                        <h3>No tienes reservas</h3>
-                        <p>Explora la sección de servicios para reservar tu primera cita</p>
-                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="document.querySelector('[data-tab=services]').click()">
-                            Ver Servicios
-                        </button>
-                    </div>
-                </div>
+            <div class="mc-header">
+                <h2 class="mc-title">Mis Compras</h2>
+                <button class="mc-disputes-btn" data-action="mc-open-disputes"><i class="fas fa-exclamation-triangle"></i> Disputas</button>
+            </div>
+            <div class="mc-tabs">
+                <button class="mc-tab active" data-action="mc-switch-tab" data-mc-tab="products">Productos</button>
+                <button class="mc-tab" data-action="mc-switch-tab" data-mc-tab="services">Servicios</button>
+            </div>
+            <div class="mc-filters">
+                <select class="mc-filter" id="mcStatusFilter" data-action="mc-filter-status">
+                    <option value="">Todos</option>
+                    <option value="pending">Pendientes</option>
+                    <option value="paid">Pagados</option>
+                    <option value="shipped">Enviados</option>
+                    <option value="delivered">Entregados</option>
+                    <option value="cancelled">Cancelados</option>
+                </select>
+            </div>
+            <div id="mcProductsContent" class="mc-content active">
+                <div class="mc-loading" style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Cargando...</div>
+            </div>
+            <div id="mcServicesContent" class="mc-content">
+                <div class="mc-loading" style="text-align:center;padding:40px;color:rgba(255,255,255,0.5);">Cargando...</div>
             </div>
         </div>
 
@@ -3754,175 +3500,58 @@
                 </div>
             </div>
         </div>
-        <!-- Community Section -->
-        <div id="community" class="content-section">
-            <div class="grid grid-2">
-                <!-- Community Stats -->
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Estadísticas de Comunidad</h2>
-                            <p class="card-subtitle">Actividad general</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-2">
-                        <div class="stat-card">
-                            <div class="stat-icon">👥</div>
-                            <div class="stat-value">12,847</div>
-                            <div class="stat-label">Miembros Activos</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">💬</div>
-                            <div class="stat-value">3,456</div>
-                            <div class="stat-label">Posts Este Mes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">🛍️</div>
-                            <div class="stat-value">8,932</div>
-                            <div class="stat-label">Transacciones</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon">🏆</div>
-                            <div class="stat-value">4.9</div>
-                            <div class="stat-label">Rating Promedio</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Top Contributors -->
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Top Contributors</h2>
-                            <p class="card-subtitle">Miembros más activos</p>
-                        </div>
-                    </div>
-                    
-                    <div id="topContributors">
-                        <!-- Contributors will be loaded here -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Community Events -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Eventos de Comunidad</h2>
-                        <p class="card-subtitle">Próximos eventos y actividades</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-3" id="communityEvents">
-                    <!-- Events will be loaded here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Reputation Section -->
-        <div id="reputation" class="content-section">
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Mi Reputación</h2>
-                            <p class="card-subtitle">Puntaje y badges obtenidos</p>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="font-size: 64px; font-weight: 700; color: #8B5CF6; margin-bottom: 10px;">4.8</div>
-                        <div style="color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Puntaje de Reputación</div>
-                        <div style="font-size: 14px; color: #F59E0B;">⭐⭐⭐⭐⭐ (156 reviews)</div>
-                    </div>
-                    
-                    <div class="grid grid-2">
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; font-weight: 700; color: #10B981;">156</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Transacciones</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; font-weight: 700; color: #10B981;">98.7%</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Tasa de Éxito</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; font-weight: 700; color: #8B5CF6;">12</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Badges</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; font-weight: 700; color: #F59E0B;">Gold</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Nivel</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Badges Obtenidos</h2>
-                            <p class="card-subtitle">Logros desbloqueados</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-3" id="userBadges">
-                        <!-- Badges will be loaded here -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Reviews -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Reseñas Recientes</h2>
-                        <p class="card-subtitle">Feedback de otros usuarios</p>
-                    </div>
-                </div>
-                
-                <div id="recentReviews">
-                    <!-- Reviews will be loaded here -->
-                </div>
-            </div>
-        </div>
     </div>
 
     </main>
 
-    <!-- Create Post Modal -->
-    <div id="createPostModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Crear Nuevo Post</h2>
-                <button class="close-btn" onclick="closeCreatePostModal()">&times;</button>
-            </div>
+    <!-- Bottom Tab Navigation (mobile) -->
+    <nav class="mp-bottom-nav">
+        <button class="mp-bottom-tab active" data-section="marketplace" onclick="mpNavigate('marketplace')">
+            <i class="fas fa-search"></i>
+            <span>Explorar</span>
+        </button>
+        <button class="mp-bottom-tab" data-section="my-store" onclick="mpNavigate('my-store')">
+            <i class="fas fa-store"></i>
+            <span>Mi Tienda</span>
+        </button>
+        <button class="mp-bottom-tab" data-section="bookings" onclick="mpNavigate('bookings')">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Compras</span>
+        </button>
+        <button class="mp-bottom-tab" data-section="messages" onclick="mpNavigate('messages')">
+            <i class="fas fa-comment-dots"></i>
+            <span>Chat</span>
+            <span class="mp-tab-badge" id="mpMsgBadge" style="display:none;">0</span>
+        </button>
+        <a class="mp-bottom-tab" href="home-dashboard.html">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </a>
+    </nav>
 
-            <form id="createPostForm">
-                <div class="form-group">
-                    <label>¿Qué quieres compartir?</label>
-                    <textarea id="postContent" rows="4" placeholder="Comparte tus pensamientos con la comunidad..." required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Tipo de Post</label>
-                    <select id="postType">
-                        <option value="general">General</option>
-                        <option value="achievement">Logro</option>
-                        <option value="question">Pregunta</option>
-                        <option value="tip">Consejo</option>
-                        <option value="announcement">Anuncio</option>
-                    </select>
-                </div>
-
-                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeCreatePostModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <span>📝</span> Publicar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Side Rail Navigation (desktop) -->
+    <nav class="mp-side-rail">
+        <button class="mp-rail-item active" data-section="marketplace" onclick="mpNavigate('marketplace')" title="Explorar">
+            <i class="fas fa-search"></i>
+            <span class="mp-rail-label">Explorar</span>
+        </button>
+        <button class="mp-rail-item" data-section="my-store" onclick="mpNavigate('my-store')" title="Mi Tienda">
+            <i class="fas fa-store"></i>
+            <span class="mp-rail-label">Mi Tienda</span>
+        </button>
+        <button class="mp-rail-item" data-section="bookings" onclick="mpNavigate('bookings')" title="Compras">
+            <i class="fas fa-shopping-bag"></i>
+            <span class="mp-rail-label">Compras</span>
+        </button>
+        <button class="mp-rail-item" data-section="messages" onclick="mpNavigate('messages')" title="Mensajes">
+            <i class="fas fa-comment-dots"></i>
+            <span class="mp-rail-label">Chat</span>
+        </button>
+        <a class="mp-rail-item" href="home-dashboard.html" title="Dashboard">
+            <i class="fas fa-home"></i>
+            <span class="mp-rail-label">Inicio</span>
+        </a>
+    </nav>
 
     <!-- Booking Modal -->
     <div id="bookingModal" class="modal">
@@ -3940,6 +3569,7 @@
                     <div style="color: rgba(255,255,255,0.7); margin-bottom: 4px;">Proveedor: <span id="bookingProviderName">Nombre del Proveedor</span></div>
                     <div style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 8px;" id="bookingProviderRating"></div>
                     <div style="color: #10B981; font-weight: 600;" id="bookingPrice">L.0</div>
+                    <div id="bookingCommission" class="mc-commission-line" style="display:none;"></div>
                 </div>
 
                 <div class="form-grid">
@@ -4012,120 +3642,13 @@
         </div>
     </div>
 
-    <!-- Upgrade Modal -->
-    <div id="upgradeModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <h2 class="modal-title">⬆️ Mejora tu Plan</h2>
-                <button class="close-btn" onclick="closeUpgradeModal()">&times;</button>
-            </div>
-
-            <div style="text-align: center; padding: 20px;">
-                <div style="font-size: 48px; margin-bottom: 15px;">🌟</div>
-                <p style="color: rgba(255,255,255,0.7); margin-bottom: 20px;">
-                    Necesitas el plan <strong id="upgradeRequiredTier">Plan</strong> (<span id="upgradePrice">L.99/mes</span>) para <span id="upgradeAction">realizar esta acción</span>
-                </p>
-
-                <div style="background: rgba(139, 92, 246, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                    <div style="font-weight: 600; margin-bottom: 10px;">Incluye:</div>
-                    <ul id="upgradeFeatures" style="list-style: none; padding: 0; margin: 0; color: rgba(255,255,255,0.8);">
-                        <!-- Features will be loaded here -->
-                    </ul>
-                </div>
-
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-secondary" onclick="closeUpgradeModal()" style="flex: 1;">
-                        Más tarde
-                    </button>
-                    <button class="btn btn-primary" onclick="showUpgradeModal(); closeUpgradeModal();" style="flex: 1;">
-                        <span>⬆️</span> Ver Planes
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Subscription Modal -->
-    <div id="subscriptionModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h2 class="modal-title">💎 Planes de Suscripción</h2>
-                <button class="close-btn" onclick="closeSubscriptionModal()">&times;</button>
-            </div>
-
-            <div class="subscription-plans" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; padding: 20px;">
-                <!-- Free Plan -->
-                <div class="plan-card" style="background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
-                    <div style="font-size: 32px; margin-bottom: 10px;">🆓</div>
-                    <h3 style="color: #10B981; margin-bottom: 5px;">Gratis</h3>
-                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.0<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
-                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
-                        <li style="margin-bottom: 8px;">✅ Crear cuenta</li>
-                        <li style="margin-bottom: 8px;">✅ Guardar favoritos</li>
-                        <li style="margin-bottom: 8px;">✅ Mensajería limitada</li>
-                        <li style="margin-bottom: 8px;">❌ Reservar servicios</li>
-                        <li style="margin-bottom: 8px;">❌ Publicar reseñas</li>
-                    </ul>
-                    <button class="btn btn-secondary" style="width: 100%;" disabled>Plan Actual</button>
-                </div>
-
-                <!-- Plan -->
-                <div class="plan-card" style="background: rgba(139, 92, 246, 0.15); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 16px; padding: 24px; text-align: center; transform: scale(1.02); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);">
-                    <div style="background: #8B5CF6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; margin-bottom: 10px;">RECOMENDADO</div>
-                    <div style="font-size: 32px; margin-bottom: 10px;">⭐</div>
-                    <h3 style="color: #8B5CF6; margin-bottom: 5px;">Plan</h3>
-                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.99<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
-                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
-                        <li style="margin-bottom: 8px;">✅ Todo de Gratis</li>
-                        <li style="margin-bottom: 8px;">✅ Reservar servicios</li>
-                        <li style="margin-bottom: 8px;">✅ Mensajería ilimitada</li>
-                        <li style="margin-bottom: 8px;">✅ Publicar reseñas</li>
-                        <li style="margin-bottom: 8px;">✅ Soporte prioritario</li>
-                    </ul>
-                    <button class="btn btn-primary" style="width: 100%;" onclick="selectPlan('plan')">Elegir Plan</button>
-                </div>
-
-                <!-- Premium -->
-                <div class="plan-card" style="background: rgba(245, 158, 11, 0.1); border: 2px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 24px; text-align: center;">
-                    <div style="font-size: 32px; margin-bottom: 10px;">👑</div>
-                    <h3 style="color: #F59E0B; margin-bottom: 5px;">Premium</h3>
-                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 15px;">L.299<span style="font-size: 14px; font-weight: 400;">/mes</span></div>
-                    <ul style="list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 14px; color: rgba(255,255,255,0.8);">
-                        <li style="margin-bottom: 8px;">✅ Todo de Plan</li>
-                        <li style="margin-bottom: 8px;">✅ Reservas prioritarias</li>
-                        <li style="margin-bottom: 8px;">✅ Citas recurrentes</li>
-                        <li style="margin-bottom: 8px;">✅ 10% descuento</li>
-                        <li style="margin-bottom: 8px;">✅ Listados destacados</li>
-                    </ul>
-                    <button class="btn btn-success" style="width: 100%; background: linear-gradient(135deg, #F59E0B, #D97706);" onclick="selectPlan('premium')">Elegir Premium</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-    <script src="marketplace-social.js?v=30.0"></script>
+    <script src="marketplace-social.js?v=36.0"></script>
     <script src="pwa-manager.js"></script>
     <script>
 // ==========================================
-// MARKETPLACE HEADER & SIDEBAR FUNCTIONS
+// MARKETPLACE NAVIGATION FUNCTIONS
 // ==========================================
-
-// Toggle Tier Progress Banner details
-function toggleTierDetails() {
-    const banner = document.getElementById("servicesTierBanner");
-    if (banner) {
-        banner.classList.toggle("expanded");
-    }
-}
-
-function toggleMarketplaceSidebar() {
-    const sidebar = document.getElementById("mpSidebar");
-    const overlay = document.getElementById("mpSidebarOverlay");
-    sidebar.classList.toggle("active");
-    overlay.classList.toggle("active");
-    document.body.style.overflow = sidebar.classList.contains("active") ? "hidden" : "";
-}
 
 function toggleMarketplaceSearch() {
     const searchBar = document.getElementById("mpSearchBar");
@@ -4139,266 +3662,46 @@ function toggleMarketplaceSearch() {
     }
 }
 
-function navigateToSection(sectionId) {
-    // Only close sidebar if it's open (don't toggle)
-    const sidebar = document.getElementById("mpSidebar");
-    const overlay = document.getElementById("mpSidebarOverlay");
-    if (sidebar && sidebar.classList.contains("active")) {
-        sidebar.classList.remove("active");
-        if (overlay) overlay.classList.remove("active");
-        document.body.style.overflow = "";
-    }
-
-    // Update active nav item
-    document.querySelectorAll(".mp-nav-item").forEach(item => {
-        item.classList.remove("active");
-    });
-    const navItem = document.querySelector(`.mp-nav-item[onclick*="'${sectionId}'"]`);
-    if (navItem) navItem.classList.add("active");
-
-    // Switch section using existing marketplace system
-    if (window.marketplaceSystem) {
-        window.marketplaceSystem.switchTab(sectionId);
-    } else if (window.ms) {
-        window.ms.switchTab(sectionId);
-    }
-}
-
 function switchToMyStore() {
     if (window.marketplaceSystem?.isGuest) {
         window.marketplaceSystem.showLoginPrompt("ver tu tienda");
         return;
     }
-    
-    // Hide all sections
-    document.querySelectorAll(".content-section").forEach(section => {
-        section.classList.remove("active");
+    mpNavigate("my-store");
+}
+
+function mpNavigate(sectionId) {
+    // Update bottom nav active state
+    document.querySelectorAll(".mp-bottom-tab").forEach(function(t) {
+        t.classList.toggle("active", t.dataset.section === sectionId);
     });
-    
-    // Show my-store section
-    const myStoreSection = document.getElementById("my-store");
-    if (myStoreSection) {
-        myStoreSection.classList.add("active");
-    }
-    
-    // Update sidebar nav (remove active from all)
-    document.querySelectorAll(".mp-nav-item").forEach(item => {
-        item.classList.remove("active");
+    // Update side rail active state
+    document.querySelectorAll(".mp-rail-item").forEach(function(t) {
+        t.classList.toggle("active", t.dataset.section === sectionId);
     });
-    
-    // Load my store
-    if (window.marketplaceSystem) {
-        window.marketplaceSystem.loadMyStore();
-    }
-    
-    // Close sidebar if open on mobile
-    const sidebar = document.querySelector(".mp-sidebar");
-    if (sidebar?.classList.contains("active")) {
-        toggleMarketplaceSidebar();
-    }
-}
-// Update user info in sidebar
-// Update Tier Progress Banner with user info
-// Update Tier Banner from subscription API data
-function updateTierBannerFromSubscription(tier, subscriptionData) {
-    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
-    const avatarEl = document.getElementById("tierAvatar");
-    const nameEl = document.getElementById("tierUserName");
-    const badgeEl = document.getElementById("tierBadge");
-    const descEl = document.getElementById("tierDesc");
-    const progressFill = document.getElementById("tierProgressFill");
-    const progressPct = document.getElementById("tierProgressPct");
-    const banner = document.getElementById("servicesTierBanner");
-    const benefitsEl = document.getElementById("tierBenefits");
-    const step1 = document.getElementById("tierStep1");
-    const step2 = document.getElementById("tierStep2");
-
-    // Update user info
-    if (user.name) {
-        if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
-        if (nameEl) nameEl.textContent = user.name;
-    }
-
-    const isTandaMember = tier === "tanda_member" || subscriptionData?.is_tanda_benefit;
-    const isPremium = tier === "premium";
-    const tandaDetails = subscriptionData?.tanda_status?.details;
-    const currentTandaStatus = tandaDetails?.current_tanda_status;
-    const pausedCount = parseInt(tandaDetails?.paused_memberships || 0);
-    const activeCount = parseInt(tandaDetails?.active_memberships || 0);
-    const isPaused = currentTandaStatus === "paused" || (pausedCount > 0 && activeCount === 0);
-
-    let badgeText = "Free";
-    let progress = 50;
-    let progressClass = "mid";
-    let desc = "Cuenta verificada";
-
-    if (isPremium) {
-        badgeText = "Premium";
-        progress = 100;
-        progressClass = "max";
-        desc = "Acceso completo al marketplace";
-        if (banner) banner.classList.add("tanda-active");
-    } else if (isTandaMember) {
-        badgeText = "Tanda";
-        progress = 75;
-        progressClass = "high";
-        if (isPaused) {
-            desc = "Miembro de tanda (pausada)";
-        } else if (activeCount > 0) {
-            desc = "Miembro activo de " + activeCount + " tanda(s)";
-        } else {
-            desc = "Miembro de tanda";
-        }
-        if (banner) banner.classList.add("tanda-active");
-        if (badgeEl) badgeEl.classList.add("tanda");
-    }
-
-    if (badgeEl) badgeEl.textContent = badgeText;
-    if (descEl) descEl.textContent = desc;
-    if (progressFill) {
-        progressFill.style.width = progress + "%";
-        progressFill.className = "tier-progress-fill " + progressClass;
-    }
-    if (progressPct) progressPct.textContent = progress + "%";
-
-    // Update benefits
-    if (benefitsEl) {
-        benefitsEl.innerHTML =
-            "<span class=\"tier-benefit-tag\">✓ Comprar productos</span>" +
-            "<span class=\"tier-benefit-tag\">✓ Ver servicios</span>" +
-            (isTandaMember || isPremium ? "<span class=\"tier-benefit-tag\">✓ Vender productos</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Vender productos</span>") +
-            (isPremium ? "<span class=\"tier-benefit-tag\">✓ Ofrecer servicios</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Ofrecer servicios</span>");
-    }
-
-    // Update next steps based on tier
-    if (step1 && step2) {
-        if (isPremium) {
-            // Premium user - all done
-            step1.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Miembro de Tanda</div><div class="tier-step-desc">Completado</div></div>';
-            step2.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Plan Premium</div><div class="tier-step-desc">Activo</div></div>';
-        } else if (isTandaMember) {
-            // Tanda member - show tanda status and premium option
-            if (isPaused) {
-                step1.innerHTML = '<span class="tier-step-icon">⏸️</span><div class="tier-step-info"><div class="tier-step-name">Tu Tanda está pausada</div><div class="tier-step-desc">Espera la reactivación</div></div><button class="tier-step-action secondary" onclick="window.location.href=\'my-tandas.html\'">Ver estado</button>';
-            } else {
-                step1.innerHTML = '<span class="tier-step-icon">✅</span><div class="tier-step-info"><div class="tier-step-name" style="color:rgba(255,255,255,0.5)">Miembro de Tanda</div><div class="tier-step-desc">¡Ya puedes vender!</div></div><button class="tier-step-action secondary" onclick="window.location.href=\'my-tandas.html\'">Ver tanda</button>';
-            }
-            step2.innerHTML = '<span class="tier-step-icon">💎</span><div class="tier-step-info"><div class="tier-step-name">Plan Premium</div><div class="tier-step-desc">Ofrece servicios</div></div><button class="tier-step-action primary" onclick="showUpgradeModal()">Mejorar</button>';
-        }
-        // Free users keep the default steps
-    }
-
-    console.log("✅ Tier Banner updated:", badgeText, progress + "%", desc, "isPaused:", isPaused);
+    // Switch section
+    var ms = window.marketplaceSystem || window.ms;
+    if (ms) ms.switchTab(sectionId);
 }
 
-
-function updateTierBanner() {
-    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
-    const avatarEl = document.getElementById("tierAvatar");
-    const nameEl = document.getElementById("tierUserName");
-    const badgeEl = document.getElementById("tierBadge");
-    const descEl = document.getElementById("tierDesc");
-    const progressFill = document.getElementById("tierProgressFill");
-    const progressPct = document.getElementById("tierProgressPct");
-    const banner = document.getElementById("servicesTierBanner");
-    const benefitsEl = document.getElementById("tierBenefits");
-    
-    if (!user || !user.name) return;
-    
-    // Update user info
-    if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
-    if (nameEl) nameEl.textContent = user.name;
-    
-    // Determine tier and progress
-    const isTandaMember = user.active_tandas > 0 || user.total_tandas > 0 || user.tandas_count > 0 || user.role === "tanda_member" || user.is_tanda_member;
-    const isPremium = user.subscription === "premium" || user.role === "premium";
-    
-    let tier = "Free";
-    let progress = 25;
-    let progressClass = "low";
-    let desc = "Miembro de La Tanda";
-    
-    if (isPremium) {
-        tier = "Premium";
-        progress = 100;
-        progressClass = "max";
-        desc = "Acceso completo al marketplace";
-        if (banner) banner.classList.add("tanda-active");
-    } else if (isTandaMember) {
-        tier = "Tanda";
-        progress = 75;
-        progressClass = "high";
-        desc = user.active_tandas > 0 ? "Miembro activo de " + user.active_tandas + " tanda(s)" : "Miembro de tanda (pausada)";
-        if (banner) banner.classList.add("tanda-active");
-        if (badgeEl) badgeEl.classList.add("tanda");
-    } else if (user.email_verified) {
-        progress = 50;
-        progressClass = "mid";
-        desc = "Cuenta verificada";
-    }
-    
-    if (badgeEl) badgeEl.textContent = tier;
-    if (descEl) descEl.textContent = desc;
-    if (progressFill) {
-        progressFill.style.width = progress + "%";
-        progressFill.className = "tier-progress-fill " + progressClass;
-    }
-    if (progressPct) progressPct.textContent = progress + "%";
-    
-    // Update benefits
-    if (benefitsEl && (isTandaMember || isPremium)) {
-        benefitsEl.innerHTML = 
-            "<span class=\"tier-benefit-tag\">✓ Comprar productos</span>" +
-            "<span class=\"tier-benefit-tag\">✓ Ver servicios</span>" +
-            (isTandaMember || isPremium ? "<span class=\"tier-benefit-tag\">✓ Vender productos</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Vender productos</span>") +
-            (isPremium ? "<span class=\"tier-benefit-tag\">✓ Ofrecer servicios</span>" : "<span class=\"tier-benefit-tag locked\">🔒 Ofrecer servicios</span>");
-    }
-}
-
-
-function updateSidebarUserInfo() {
-    const user = JSON.parse(localStorage.getItem("latanda_user") || "{}");
-    const nameEl = document.getElementById("mpUserName");
-    const avatarEl = document.getElementById("mpUserAvatar");
-    const balanceEl = document.getElementById("mpUserBalance");
-    
-    if (user && user.name) {
-        if (nameEl) nameEl.textContent = user.name;
-        if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
-    }
-    
-    // Get balance from wallet if available
-    if (window.marketplaceSystem && window.marketplaceSystem.userBalance) {
-        if (balanceEl) balanceEl.textContent = window.marketplaceSystem.userBalance + " LTD";
-    }
-}
-
-// Update messages badge
+// Update messages badge in bottom nav
 function updateMessagesBadge(count) {
-    const badge = document.getElementById("mpMessagesBadge");
+    var badge = document.getElementById("mpMsgBadge");
     if (badge) {
         if (count > 0) {
             badge.textContent = count > 99 ? "99+" : count;
-            badge.style.display = "inline";
+            badge.style.display = "flex";
         } else {
             badge.style.display = "none";
         }
     }
 }
 
-// Initialize on load
 document.addEventListener("DOMContentLoaded", function() {
-    updateSidebarUserInfo();
-    updateTierBanner();
-    
-    // Close sidebar on escape key
+    // Close search on Escape
     document.addEventListener("keydown", function(e) {
         if (e.key === "Escape") {
-            const sidebar = document.getElementById("mpSidebar");
-            if (sidebar && sidebar.classList.contains("active")) {
-                toggleMarketplaceSidebar();
-            }
-            const searchBar = document.getElementById("mpSearchBar");
+            var searchBar = document.getElementById("mpSearchBar");
             if (searchBar && searchBar.classList.contains("active")) {
                 toggleMarketplaceSearch();
             }
@@ -4574,6 +3877,114 @@ document.addEventListener("DOMContentLoaded", function() {
         .portfolio-actions { flex-direction: column; }
         .portfolio-actions button { width: 100%; text-align: center; }
     }
+
+    /* ===================== Plan 3: Seller Tools ===================== */
+
+    /* Edit/Delete buttons on item cards */
+    .sd-item-action-danger:hover { color: #ef4444 !important; background: rgba(239,68,68,0.15) !important; }
+
+    /* Orders Tab */
+    .sd-order-badge-pending { background: #f59e0b !important; color: #000 !important; font-weight: 700; }
+    .sd-order-filter-row { margin-bottom: 10px; }
+    .sd-order-filter { background: rgba(255,255,255,0.06); color: #e0e0e0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; }
+    .sd-order-filter:focus { border-color: var(--mp-orange, #FF6B35); outline: none; }
+    .sd-orders-list { display: flex; flex-direction: column; gap: 8px; max-height: 500px; overflow-y: auto; }
+    .sd-order-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.04); border-radius: 10px; border-left: 3px solid rgba(255,255,255,0.1); flex-wrap: wrap; }
+    .sd-order-card[data-order-status="pending"] { border-left-color: #f59e0b; }
+    .sd-order-card[data-order-status="paid"] { border-left-color: #06b6d4; }
+    .sd-order-card[data-order-status="shipped"] { border-left-color: #3b82f6; }
+    .sd-order-card[data-order-status="delivered"] { border-left-color: #10b981; }
+    .sd-order-card[data-order-status="cancelled"] { border-left-color: #ef4444; }
+    .sd-order-card[data-order-status="refunded"] { border-left-color: #a855f7; }
+    .sd-order-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .sd-order-img-placeholder { width: 48px; height: 48px; border-radius: 8px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.3); font-size: 1.2rem; flex-shrink: 0; }
+    .sd-order-info { flex: 1; min-width: 120px; }
+    .sd-order-product { font-weight: 600; font-size: 0.9rem; color: #f0f0f0; }
+    .sd-order-buyer { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .sd-order-buyer i { margin-right: 4px; }
+    .sd-order-date { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .sd-order-right { text-align: right; min-width: 100px; }
+    .sd-order-amount { font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+    .sd-order-total { font-weight: 700; font-size: 0.95rem; color: #22c55e; }
+    .sd-order-status { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; margin-top: 4px; }
+    .sd-order-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .sd-order-paid { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .sd-order-shipped { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .sd-order-delivered { background: rgba(16,185,129,0.15); color: #10b981; }
+    .sd-order-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .sd-order-refunded { background: rgba(168,85,247,0.15); color: #a855f7; }
+    .sd-order-actions { width: 100%; display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+    .sd-order-btn { padding: 5px 14px; border-radius: 8px; border: none; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background 0.2s, opacity 0.2s; }
+    .sd-order-btn:hover { opacity: 0.85; }
+    .sd-order-btn-confirm { background: #f59e0b; color: #000; }
+    .sd-order-btn-ship { background: #3b82f6; color: #fff; }
+    .sd-order-btn-deliver { background: #10b981; color: #fff; }
+    .sd-order-tracking { display: flex; gap: 6px; align-items: center; flex: 1; }
+    .sd-order-tracking-input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 5px 10px; color: #e0e0e0; font-size: 0.82rem; }
+    .sd-order-tracking-input:focus { border-color: #3b82f6; outline: none; }
+
+    /* Inline stock input */
+    .sd-inline-stock { width: 60px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 3px 6px; color: #e0e0e0; font-size: 0.82rem; text-align: center; margin-top: 4px; }
+    .sd-inline-stock:focus { border-color: var(--mp-orange, #FF6B35); outline: none; }
+    .sd-stock-low { background: rgba(245,158,11,0.15) !important; color: #f59e0b !important; }
+
+    /* Analytics chart */
+    .sd-analytics-warning { border: 1px solid rgba(245,158,11,0.3); }
+    .sd-chart { position: relative; height: 200px; padding: 20px 0 30px 50px; margin: 8px 0 16px; }
+    .sd-chart-empty { text-align: center; padding: 40px 16px; color: rgba(255,255,255,0.35); font-size: 0.9rem; }
+    .sd-chart-ymax { position: absolute; top: 8px; left: 0; font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+    .sd-chart-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; }
+    .sd-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+    .sd-chart-bar { width: 100%; min-height: 2px; background: var(--mp-orange, #FF6B35); opacity: 0.8; border-radius: 2px 2px 0 0; transition: height 0.3s, opacity 0.2s; position: relative; cursor: pointer; }
+    .sd-chart-bar:hover { opacity: 1; }
+    .sd-chart-tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; white-space: nowrap; z-index: 10; pointer-events: none; margin-bottom: 4px; }
+    .sd-chart-bar:hover .sd-chart-tooltip { display: block; }
+    .sd-chart-label { font-size: 0.65rem; color: rgba(255,255,255,0.35); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+    /* Top products table */
+    .sd-top-products { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+    .sd-top-products th { text-align: left; font-size: 0.75rem; color: rgba(255,255,255,0.45); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sd-top-products td { padding: 8px; font-size: 0.85rem; color: #e0e0e0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .sd-top-rank { width: 30px; text-align: center; font-weight: 700; }
+    .sd-top-rank-1 { color: #fbbf24; }
+    .sd-top-rank-2 { color: #94a3b8; }
+    .sd-top-rank-3 { color: #cd7f32; }
+
+    @media (max-width: 768px) {
+        .sd-chart { height: 150px; padding-left: 40px; }
+        .sd-order-card { flex-direction: column; align-items: flex-start; }
+        .sd-order-right { text-align: left; }
+        .sd-top-products { font-size: 0.8rem; }
+        .sd-top-products td, .sd-top-products th { padding: 5px 4px; }
+    }
+
+    /* Platform Commission */
+    .mc-commission-line { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+    .mc-commission-zero { color: #10B981; font-weight: 600; }
+
+    /* Featured Boost Modal */
+    .boost-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; }
+    .boost-modal-content { background: #1e293b; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); max-width: 440px; width: 90%; }
+    .boost-tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .boost-tier-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .boost-tier-card:hover { border-color: var(--mp-orange, #FF6B35); transform: translateY(-2px); }
+    .boost-tier-recommended { border-color: var(--mp-orange, #FF6B35); background: rgba(255,107,53,0.1); }
+    .boost-tier-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--mp-orange, #FF6B35); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 10px; white-space: nowrap; }
+    .boost-tier-days { font-size: 20px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; }
+    .boost-tier-price { font-size: 14px; color: #F59E0B; font-weight: 600; }
+    .boost-active-badge { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #10B981; text-align: center; }
+    .boost-badge { position: absolute; top: 8px; right: 8px; background: rgba(255,107,53,0.9); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
+    .boost-btn { color: var(--mp-orange, #FF6B35) !important; }
+
+    /* Chain Balance Card */
+    .chain-balance-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(6,182,212,0.2); border-radius: 12px; margin: 12px 0; overflow: hidden; }
+    .chain-balance-header { padding: 10px 14px; font-size: 13px; font-weight: 600; color: #06B6D4; border-bottom: 1px solid rgba(6,182,212,0.1); display: flex; align-items: center; gap: 8px; }
+    .chain-balance-body { padding: 8px; }
+    .chain-address { font-family: 'Fira Code', monospace; font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chain-link-input { flex: 1; padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #e2e8f0; font-family: monospace; font-size: 13px; }
+    .chain-link-form { padding: 4px; }
+    .chain-refresh-btn { background: none; border: 1px solid rgba(6,182,212,0.3); border-radius: 6px; color: #06B6D4; padding: 4px 8px; cursor: pointer; margin-top: 6px; font-size: 12px; }
+    .chain-refresh-btn:hover { background: rgba(6,182,212,0.1); }
     </style>
 </body>
 </html>

@@ -10,6 +10,17 @@
  * - Connected to real PostgreSQL backend APIs
  */
 
+// Tier limits mirror (client-side, used before API responds)
+function getTierLimitsClient(tier) {
+    const tiers = {
+        free: { label: 'Gratis', max_listings: 5, max_bookings_month: 3, max_messages_day: 10, can_mixed_store: false, layouts: ['classic'], themes: ['dark'], booking_discount: 0, referral_commission: 0, can_featured: false, featured_per_month: 0, max_batch_stock: 1, analytics_level: 'basic', platform_commission: 5, referral_bonus: 0 },
+        plan: { label: 'Plan', max_listings: 25, max_bookings_month: 15, max_messages_day: 50, can_mixed_store: false, layouts: ['classic', 'showcase', 'compact'], themes: ['dark', 'cyan', 'gold'], booking_discount: 0, referral_commission: 3, can_featured: false, featured_per_month: 0, max_batch_stock: 10, analytics_level: 'revenue', platform_commission: 3, referral_bonus: 5 },
+        premium: { label: 'Premium', max_listings: -1, max_bookings_month: -1, max_messages_day: -1, can_mixed_store: true, layouts: ['classic', 'showcase', 'compact'], themes: ['dark', 'cyan', 'gold', 'green', 'coral', 'purple'], booking_discount: 10, referral_commission: 5, can_featured: true, featured_per_month: 3, max_batch_stock: 50, analytics_level: 'full', platform_commission: 1, referral_bonus: 10 },
+        tanda_member: { label: 'Tanda', max_listings: -1, max_bookings_month: -1, max_messages_day: -1, can_mixed_store: true, layouts: ['classic', 'showcase', 'compact'], themes: ['dark', 'cyan', 'gold', 'green', 'coral', 'purple'], booking_discount: 10, referral_commission: 5, can_featured: true, featured_per_month: 3, max_batch_stock: 50, analytics_level: 'full', platform_commission: 0, referral_bonus: 10 }
+    };
+    return tiers[tier] || tiers.free;
+}
+
 class MarketplaceSocialSystem {
     constructor() {
         this.API_BASE = 'https://latanda.online';
@@ -20,10 +31,6 @@ class MarketplaceSocialSystem {
         // System state
         this.products = [];
         this.services = [];
-        this.posts = [];
-        this.orders = [];
-        this.reviews = [];
-        this.badges = [];
         this.bookings = [];
 
         // Messaging state
@@ -32,70 +39,17 @@ class MarketplaceSocialSystem {
         this.messages = [];
         this.unreadCount = 0;
 
-        // Subscription tiers
-        this.subscriptionTiers = {
-            guest: {
-                name: 'Invitado',
-                price: 0,
-                features: ['Explorar productos y servicios', 'Ver listados'],
-                restrictions: ['No puede comprar', 'No puede reservar', 'No puede publicar']
-            },
-            free: {
-                name: 'Gratis',
-                price: 0,
-                features: ['Crear cuenta', 'Guardar favoritos', 'Mensajería limitada (5/día)'],
-                restrictions: ['No puede reservar servicios', 'Sin reseñas']
-            },
-            plan: {
-                name: 'Plan',
-                price: 99,
-                features: ['Reservar servicios', 'Mensajería ilimitada', 'Publicar reseñas', 'Soporte prioritario'],
-                restrictions: []
-            },
-            premium: {
-                name: 'Premium',
-                price: 299,
-                features: ['Reservas prioritarias', 'Citas recurrentes', '10% descuento', 'Listados destacados', 'Soporte VIP'],
-                restrictions: []
-            },
-            tanda_member: {
-                name: 'Miembro Tanda',
-                price: 0,
-                badge: '🎯',
-                features: [
-                    'Acceso completo GRATIS',
-                    'Listar productos y servicios',
-                    'Promocionar listados',
-                    'Reservas ilimitadas',
-                    'Mensajería ilimitada',
-                    'Comisiones de referidos',
-                    'Soporte prioritario'
-                ],
-                restrictions: []
-            }
-        };
-
         // Current user subscription (default to free for logged users, guest for non-logged)
         this.userSubscription = this.isGuest ? 'guest' : (this.currentUser?.subscription || 'free');
 
         // Market statistics
         this.marketStats = {
-            totalProducts: 1247,
-            totalSellers: 342,
-            totalTransactions: 5673,
-            totalVolume: 89200,
-            totalServices: 156,
-            totalProviders: 89
-        };
-
-        // User reputation
-        this.userReputation = {
-            score: 4.8,
-            reviews: 156,
-            transactions: 156,
-            successRate: 98.7,
-            badges: 12,
-            level: 'Gold'
+            totalProducts: 0,
+            totalSellers: 0,
+            totalTransactions: 0,
+            totalVolume: 0,
+            totalServices: 0,
+            totalProviders: 0
         };
 
         // Product categories
@@ -131,15 +85,14 @@ class MarketplaceSocialSystem {
                 this.loadCategories(),
                 this.loadMarketplaceData(),
                 this.loadServicesData(),
-                this.loadSocialData(),
                 this.loadMarketplaceStats(),
                 this.loadUserSubscription()
             ]);
 
             this.updateAllDisplays();
             this.updateGuestUI();
-            this.updateSubscriptionUI();
             this.populateCategoryFilters();
+            this._updateCartBadge();
 
         } catch (error) {
             // Non-blocking: individual sections handle their own errors
@@ -194,21 +147,21 @@ class MarketplaceSocialSystem {
 
         try {
             const response = await this.apiRequest('/api/marketplace/subscription');
-
-            const sub = response.data?.subscription || response.subscription;
+            const data = response.data || response;
+            const sub = data.subscription;
             if (response.success && sub) {
                 this.subscriptionData = sub;
                 this.userSubscription = sub.tier || 'free';
-
-                // Log tanda member status
-                if (sub.is_tanda_benefit) {
-                }
-
+                this.tierLimits = data.limits || getTierLimitsClient(this.userSubscription);
+                this.tierUsage = data.usage || { listings: 0, products: 0, services: 0, bookings_this_month: 0, messages_today: 0 };
             }
         } catch (error) {
             this.userSubscription = 'free';
             this.subscriptionData = null;
+            this.tierLimits = getTierLimitsClient('free');
+            this.tierUsage = { listings: 0, products: 0, services: 0, bookings_this_month: 0, messages_today: 0 };
         }
+        this.updateTierBadge();
     }
 
     // Populate category filter dropdowns with API data
@@ -232,137 +185,298 @@ class MarketplaceSocialSystem {
         if (guestBanner) {
             guestBanner.style.display = this.isGuest ? 'flex' : 'none';
         }
-
-        // Show/hide elements based on guest status
-        document.querySelectorAll('[data-requires-auth]').forEach(el => {
-            if (this.isGuest) {
-                el.classList.add('guest-restricted');
-            } else {
-                el.classList.remove('guest-restricted');
-            }
-        });
     }
 
-    // Subscription tier UI updates
-    updateSubscriptionUI() {
-        const tierBadge = document.getElementById('userTierBadge');
-        if (tierBadge) {
-            const tier = this.subscriptionTiers[this.userSubscription];
-            const tierColors = {
-                guest: '#6B7280',
-                free: '#10B981',
-                plan: '#8B5CF6',
-                premium: '#F59E0B',
-                tanda_member: '#00FFFF'
-            };
+    // Check tier gate for an action. Returns true if allowed, false if blocked (shows prompt).
+    checkTierGate(action, context = {}) {
+        if (this.isGuest) return true; // guests handled separately
+        const limits = this.tierLimits || getTierLimitsClient(this.userSubscription);
+        const usage = this.tierUsage || {};
+        let blocked = false;
+        let message = '';
 
-            // Special badge for tanda members
-            if (this.userSubscription === 'tanda_member') {
-                tierBadge.innerHTML = `
-                    <span style="background: linear-gradient(135deg, #00FFFF, #7FFFD8); color: #0f172a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(0, 255, 255, 0.3);">
-                        🎯 ${this.escapeHtml(tier.name)} <span style="font-size: 10px; opacity: 0.8;">GRATIS</span>
-                    </span>
-                `;
-
-                // Show tanda benefit banner if not already shown
-                this.showTandaBenefitBanner();
-            } else {
-                tierBadge.innerHTML = `
-                    <span style="background: ${tierColors[this.userSubscription]}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                        ${this.escapeHtml(tier.name)}${this.userSubscription !== 'guest' && tier.price > 0 ? ` - L.${tier.price}/mes` : ''}
-                    </span>
-                `;
+        switch (action) {
+            case 'create_listing': {
+                if (limits.max_listings !== -1 && (usage.listings || 0) >= limits.max_listings) {
+                    blocked = true;
+                    message = 'Has alcanzado el limite de ' + limits.max_listings + ' publicaciones para tu plan.';
+                }
+                break;
+            }
+            case 'book_service': {
+                if (limits.max_bookings_month !== -1 && (usage.bookings_this_month || 0) >= limits.max_bookings_month) {
+                    blocked = true;
+                    message = 'Has alcanzado el limite de ' + limits.max_bookings_month + ' reservas/mes para tu plan.';
+                }
+                break;
+            }
+            case 'send_message': {
+                if (limits.max_messages_day !== -1 && (usage.messages_today || 0) >= limits.max_messages_day) {
+                    blocked = true;
+                    message = 'Has alcanzado el limite de ' + limits.max_messages_day + ' mensajes/dia para tu plan.';
+                }
+                break;
+            }
+            case 'mixed_store': {
+                if (!limits.can_mixed_store) {
+                    blocked = true;
+                    message = 'Las tiendas mixtas requieren Plan Premium o ser miembro de una tanda.';
+                }
+                break;
+            }
+            case 'select_layout': {
+                if (context.layout && !limits.layouts.includes(context.layout)) {
+                    blocked = true;
+                    message = 'El layout "' + this.escapeHtml(context.layoutLabel || context.layout) + '" requiere un plan superior.';
+                }
+                break;
+            }
+            case 'select_theme': {
+                if (context.theme && !limits.themes.includes(context.theme)) {
+                    blocked = true;
+                    message = 'El tema "' + this.escapeHtml(context.themeLabel || context.theme) + '" requiere un plan superior.';
+                }
+                break;
+            }
+            case 'featured_listing': {
+                if (!limits.can_featured) {
+                    blocked = true;
+                    message = 'Los listados destacados requieren Plan Premium o ser miembro de una tanda.';
+                }
+                break;
             }
         }
+
+        if (blocked) {
+            this.showUpgradePrompt(action, message);
+            return false;
+        }
+        return true;
     }
 
-    // Show special banner for tanda members
-    showTandaBenefitBanner() {
-        // Only show once per session
-        if (sessionStorage.getItem('tanda_benefit_shown')) return;
-
-        const banner = document.createElement('div');
-        banner.id = 'tandaBenefitBanner';
-        banner.style.cssText = `
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(127, 255, 216, 0.1));
-            border: 1px solid rgba(0, 255, 255, 0.4);
-            border-radius: 16px;
-            padding: 16px 24px;
-            z-index: 9999;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);
-            max-width: 90%;
-            text-align: center;
-            animation: slideDown 0.5s ease-out;
-        `;
-
-        const tandaDetails = this.subscriptionData?.tanda_status?.details;
-        const detailsText = tandaDetails ?
-            `(${tandaDetails.groups_created || 0} tandas creadas, ${tandaDetails.active_memberships || 0} membresías activas)` : '';
-
-        banner.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <span style="font-size: 28px;">🎯</span>
-                <div>
-                    <div style="font-weight: 600; color: #00FFFF; font-size: 16px;">¡Acceso Completo al Marketplace!</div>
-                    <div style="color: rgba(255,255,255,0.8); font-size: 13px;">
-                        Como miembro activo de La Tanda, tienes acceso GRATIS a todas las funciones ${detailsText}
-                    </div>
+    // Show upgrade prompt bottom sheet
+    showUpgradePrompt(reason, message) {
+        // Remove any existing prompt
+        document.querySelector('.tier-upgrade-prompt')?.remove();
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const prompt = document.createElement('div');
+        prompt.className = 'tier-upgrade-prompt';
+        prompt.innerHTML = `
+            <div class="tier-prompt-content">
+                <div class="tier-prompt-icon">🔒</div>
+                <div class="tier-prompt-text">${esc(message)}</div>
+                <div class="tier-prompt-actions">
+                    <button class="tier-prompt-btn tier-prompt-upgrade" data-action="open-upgrade-modal">Mejorar Plan</button>
+                    <button class="tier-prompt-btn tier-prompt-close" data-action="close-tier-prompt">Cerrar</button>
                 </div>
-                <button onclick="this.parentElement.parentElement.remove(); sessionStorage.setItem('tanda_benefit_shown', 'true');"
-                        style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;">
-                    Entendido
-                </button>
+                <div class="tier-prompt-hint">O unete a una tanda para acceso Premium gratis</div>
             </div>
         `;
-
-        document.body.appendChild(banner);
-
-        // Auto-hide after 8 seconds
-        setTimeout(() => {
-            if (banner.parentElement) {
-                banner.style.animation = 'slideUp 0.3s ease-out forwards';
-                setTimeout(() => banner.remove(), 300);
-            }
-            sessionStorage.setItem('tanda_benefit_shown', 'true');
-        }, 8000);
+        document.body.appendChild(prompt);
+        // Auto-dismiss after 10s
+        setTimeout(() => prompt.remove(), 10000);
     }
 
-    // Check if user can perform action based on tier
-    // Updated: All logged-in users can book/buy, tanda_member/premium gets extra perks
-    canPerformAction(action) {
-        const tierPermissions = {
-            guest: ['browse', 'view'],
-            free: ['browse', 'view', 'favorite', 'message', 'buy', 'book', 'review'],
-            plan: ['browse', 'view', 'favorite', 'message', 'buy', 'book', 'review', 'priority_support'],
-            premium: ['browse', 'view', 'favorite', 'message', 'buy', 'book', 'review', 'priority_book', 'recurring', 'discount', 'priority_support', 'featured_listing', 'list_service', 'promote'],
-            tanda_member: ['browse', 'view', 'favorite', 'message', 'buy', 'book', 'review', 'priority_book', 'recurring', 'priority_support', 'featured_listing', 'list_service', 'promote', 'referral_commission']
-        };
-        return tierPermissions[this.userSubscription]?.includes(action) || false;
+    // Open full upgrade modal with tier comparison
+    openUpgradeModal() {
+        document.querySelector('.upgrade-overlay')?.remove();
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const currentTier = this.userSubscription || 'free';
+        const isTanda = currentTier === 'tanda_member';
+
+        const features = [
+            { name: 'Publicaciones', free: '5', plan: '25', premium: 'Ilimitado' },
+            { name: 'Reservas/mes', free: '3', plan: '15', premium: 'Ilimitado' },
+            { name: 'Mensajes/dia', free: '10', plan: '50', premium: 'Ilimitado' },
+            { name: 'Layouts', free: '1', plan: '3', premium: 'Todos' },
+            { name: 'Temas', free: '1', plan: '3', premium: '6' },
+            { name: 'Tienda mixta', free: '—', plan: '—', premium: 'Si' },
+            { name: 'Descuento reservas', free: '0%', plan: '0%', premium: '10%' },
+            { name: 'Comision referidos', free: '0%', plan: '3%', premium: '5%' },
+            { name: 'Destacados/mes', free: '0', plan: '0', premium: '3' }
+        ];
+
+        let featuresHtml = features.map(f => `
+            <tr>
+                <td class="upgrade-feature-name">${esc(f.name)}</td>
+                <td class="upgrade-feature-val${currentTier === 'free' ? ' upgrade-current' : ''}">${esc(f.free)}</td>
+                <td class="upgrade-feature-val${currentTier === 'plan' ? ' upgrade-current' : ''}">${esc(f.plan)}</td>
+                <td class="upgrade-feature-val${currentTier === 'premium' || isTanda ? ' upgrade-current' : ''}">${esc(f.premium)}</td>
+            </tr>
+        `).join('');
+
+        const overlay = document.createElement('div');
+        overlay.className = 'upgrade-overlay';
+        overlay.innerHTML = `
+            <div class="upgrade-modal">
+                <div class="upgrade-modal-header">
+                    <h3>Elige tu plan</h3>
+                    <button class="upgrade-modal-close" data-action="close-upgrade-modal">&times;</button>
+                </div>
+                <div class="upgrade-tiers-step" id="upgradeTiersStep">
+                    ${isTanda ? '<div class="upgrade-tanda-badge">Incluido con tu Tanda</div>' : ''}
+                    <div class="upgrade-tier-cards">
+                        <div class="upgrade-tier-card${currentTier === 'free' ? ' upgrade-tier-active' : ''}">
+                            <div class="upgrade-tier-name">Gratis</div>
+                            <div class="upgrade-tier-price">L. 0</div>
+                            <div class="upgrade-tier-period">para siempre</div>
+                            ${currentTier === 'free' ? '<div class="upgrade-tier-current">Plan actual</div>' : '<button class="upgrade-tier-btn" data-action="select-upgrade-tier" data-id="free">Seleccionar</button>'}
+                        </div>
+                        <div class="upgrade-tier-card upgrade-tier-popular${currentTier === 'plan' ? ' upgrade-tier-active' : ''}">
+                            <div class="upgrade-tier-badge-pop">Popular</div>
+                            <div class="upgrade-tier-name">Plan</div>
+                            <div class="upgrade-tier-price">L. 99</div>
+                            <div class="upgrade-tier-period">/mes</div>
+                            ${currentTier === 'plan' ? '<div class="upgrade-tier-current">Plan actual</div>' : '<button class="upgrade-tier-btn upgrade-tier-btn-primary" data-action="select-upgrade-tier" data-id="plan">Seleccionar</button>'}
+                        </div>
+                        <div class="upgrade-tier-card${currentTier === 'premium' || isTanda ? ' upgrade-tier-active' : ''}">
+                            <div class="upgrade-tier-name">Premium</div>
+                            <div class="upgrade-tier-price">L. 299</div>
+                            <div class="upgrade-tier-period">/mes</div>
+                            ${isTanda ? '<div class="upgrade-tier-current">Incluido con Tanda</div>' : currentTier === 'premium' ? '<div class="upgrade-tier-current">Plan actual</div>' : '<button class="upgrade-tier-btn upgrade-tier-btn-premium" data-action="select-upgrade-tier" data-id="premium">Seleccionar</button>'}
+                        </div>
+                    </div>
+                    <table class="upgrade-features-table">
+                        <thead><tr><th></th><th>Gratis</th><th>Plan</th><th>Premium</th></tr></thead>
+                        <tbody>${featuresHtml}</tbody>
+                    </table>
+                    <div class="upgrade-tanda-promo">Unete a una tanda y obtiene Premium gratis</div>
+                </div>
+                <div class="upgrade-payment-step" id="upgradePaymentStep" style="display:none;">
+                    <button class="upgrade-back-btn" data-action="upgrade-back-to-tiers"><i class="fas fa-arrow-left"></i> Volver</button>
+                    <div class="upgrade-pay-summary" id="upgradePaySummary"></div>
+                    <div class="upgrade-pay-methods">
+                        <label class="upgrade-pay-option">
+                            <input type="radio" name="upgradePayMethod" value="wallet" checked>
+                            <span>Wallet (Saldo actual: L. <span id="upgradeWalletBal">...</span>)</span>
+                        </label>
+                        <label class="upgrade-pay-option">
+                            <input type="radio" name="upgradePayMethod" value="cash">
+                            <span>Efectivo (se genera codigo de referencia)</span>
+                        </label>
+                    </div>
+                    <button class="upgrade-confirm-btn" data-action="confirm-upgrade" id="upgradeConfirmBtn">Confirmar Pago</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        // Load wallet balance
+        this.apiRequest('/api/wallet/balance').then(r => {
+            const bal = document.getElementById('upgradeWalletBal');
+            if (bal) bal.textContent = parseFloat(r.data?.balance || r.balance || 0).toFixed(2);
+        }).catch(() => {});
     }
 
-    // Check if user is a tanda member (has free full access)
-    isTandaMember() {
-        return this.userSubscription === 'tanda_member' || this.subscriptionData?.is_tanda_benefit === true;
-    }
+    // Select a tier in upgrade modal → show payment step
+    selectUpgradeTier(tier) {
+        const prices = { free: 0, plan: 99, premium: 299 };
+        const labels = { free: 'Gratis', plan: 'Plan', premium: 'Premium' };
+        this._pendingUpgradeTier = tier;
 
-    // Show upgrade prompt
-    showUpgradePrompt(requiredTier, action) {
-        const tier = this.subscriptionTiers[requiredTier];
-        const modal = document.getElementById('upgradeModal');
-        if (modal) {
-            document.getElementById('upgradeRequiredTier').textContent = tier.name;
-            document.getElementById('upgradePrice').textContent = `L.${tier.price}/mes`;
-            document.getElementById('upgradeAction').textContent = action;
-            document.getElementById('upgradeFeatures').innerHTML = tier.features.map(f => `<li>✅ ${f}</li>`).join('');
-            modal.classList.add('active');
-        } else {
-            this.showNotification(`Necesitas ${this.escapeHtml(tier.name)} (L.${tier.price}/mes) para ${action}`, 'info');
+        if (tier === 'free') {
+            // Downgrade confirmation
+            if (!confirm('Deseas cambiar a plan Gratis? Perderas los beneficios al finalizar el periodo actual.')) return;
+            this.confirmUpgrade();
+            return;
         }
+
+        document.getElementById('upgradeTiersStep').style.display = 'none';
+        document.getElementById('upgradePaymentStep').style.display = 'block';
+        document.getElementById('upgradePaySummary').innerHTML = `
+            <div class="upgrade-pay-tier">${this.escapeHtml(labels[tier])}</div>
+            <div class="upgrade-pay-price">L. ${prices[tier]}/mes</div>
+        `;
+    }
+
+    // Confirm the upgrade payment
+    async confirmUpgrade() {
+        const tier = this._pendingUpgradeTier;
+        if (!tier) return;
+        const btn = document.getElementById('upgradeConfirmBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+
+        const method = document.querySelector('input[name="upgradePayMethod"]:checked')?.value || 'wallet';
+
+        try {
+            const response = await this.apiRequest('/api/marketplace/subscription/upgrade', {
+                method: 'POST',
+                body: JSON.stringify({ tier, payment: { method } })
+            });
+            if (response.success) {
+                const sub = response.data?.subscription || response.subscription;
+                if (sub?.reference_code) {
+                    this.showNotification('Referencia: ' + sub.reference_code + '. Realiza el pago para activar tu plan.', 'info');
+                } else {
+                    const labels = { free: 'Gratis', plan: 'Plan', premium: 'Premium' };
+                    this.showNotification((labels[tier] || tier) + ' activado exitosamente', 'success');
+                }
+                document.querySelector('.upgrade-overlay')?.remove();
+                await this.loadUserSubscription();
+                // Refresh store if on Mi Tienda
+                if (document.getElementById('my-store')?.classList.contains('active')) {
+                    this.loadMyStore();
+                }
+            } else {
+                this.showNotification(response.message || 'Error al procesar la suscripcion', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error al procesar la suscripcion', 'error');
+        }
+        if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Pago'; }
+    }
+
+    // Update tier badge in header
+    updateTierBadge() {
+        let badge = document.getElementById('mpTierBadge');
+        if (this.isGuest || !this.userSubscription || this.userSubscription === 'guest') {
+            if (badge) badge.remove();
+            return;
+        }
+        const tier = this.userSubscription;
+        const colors = { free: '#6b7280', plan: '#f59e0b', premium: '#ff6b35', tanda_member: '#10b981' };
+        const labels = { free: 'Free', plan: 'Plan', premium: 'Premium', tanda_member: 'Tanda' };
+        if (!badge) {
+            badge = document.createElement('button');
+            badge.id = 'mpTierBadge';
+            badge.className = 'mp-tier-badge';
+            badge.setAttribute('data-action', 'open-upgrade-modal');
+            const headerRight = document.querySelector('.mp-header-right');
+            if (headerRight) headerRight.prepend(badge);
+        }
+        badge.style.setProperty('--tier-color', colors[tier] || colors.free);
+        badge.textContent = labels[tier] || 'Free';
+    }
+
+    // Render tier progress card for Mi Tienda dashboard
+    renderTierProgressCard() {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const tier = this.userSubscription || 'free';
+        const limits = this.tierLimits || getTierLimitsClient(tier);
+        const usage = this.tierUsage || {};
+        const labels = { free: 'Gratis', plan: 'Plan', premium: 'Premium', tanda_member: 'Tanda Member' };
+        const icons = { free: '🆓', plan: '⭐', premium: '👑', tanda_member: '🤝' };
+        const isTanda = tier === 'tanda_member';
+        const isUnlimited = tier === 'premium' || isTanda;
+
+        const expiresAt = this.subscriptionData?.expires_at;
+        const expiryText = expiresAt && tier !== 'free' ? 'Vence: ' + new Date(expiresAt).toLocaleDateString('es-HN') : '';
+
+        const listBar = isUnlimited ? '<span class="tier-prog-unlimited">Ilimitado</span>'
+            : `<div class="tier-prog-bar"><div class="tier-prog-fill" style="width:${Math.min(100, ((usage.listings || 0) / limits.max_listings) * 100)}%"></div></div><span class="tier-prog-label">${usage.listings || 0}/${limits.max_listings}</span>`;
+        const bookBar = isUnlimited ? '<span class="tier-prog-unlimited">Ilimitado</span>'
+            : `<div class="tier-prog-bar"><div class="tier-prog-fill" style="width:${Math.min(100, ((usage.bookings_this_month || 0) / limits.max_bookings_month) * 100)}%"></div></div><span class="tier-prog-label">${usage.bookings_this_month || 0}/${limits.max_bookings_month}</span>`;
+
+        return `<div class="tier-progress-card">
+            <div class="tier-prog-header">
+                <span class="tier-prog-icon">${icons[tier] || '🆓'}</span>
+                <span class="tier-prog-title">${esc(labels[tier] || 'Gratis')}</span>
+                ${expiryText ? '<span class="tier-prog-expiry">' + esc(expiryText) + '</span>' : ''}
+            </div>
+            <div class="tier-prog-row"><span class="tier-prog-name">Publicaciones</span>${listBar}</div>
+            <div class="tier-prog-row"><span class="tier-prog-name">Reservas/mes</span>${bookBar}</div>
+            ${!isUnlimited ? '<button class="tier-prog-upgrade-btn" data-action="open-upgrade-modal">Mejorar Plan</button>' : ''}
+        </div>`;
     }
 
     // Show login prompt for guests
@@ -383,16 +497,6 @@ class MarketplaceSocialSystem {
                 const tabName = e.target.dataset.tab;
                 if (tabName) {
                     this.switchTab(tabName);
-                }
-            });
-        });
-        
-        // Subtab navigation (for orders)
-        document.querySelectorAll('[data-subtab]').forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const subtabName = e.target.dataset.subtab;
-                if (subtabName) {
-                    this.switchSubtab(subtabName);
                 }
             });
         });
@@ -421,14 +525,6 @@ class MarketplaceSocialSystem {
             });
         }
         
-        // Create post form
-        const createPostForm = document.getElementById('createPostForm');
-        if (createPostForm) {
-            createPostForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleCreatePost();
-            });
-        }
     }
     
     switchTab(tabName) {
@@ -450,78 +546,31 @@ class MarketplaceSocialSystem {
         this.loadSectionData(tabName);
     }
     
-    switchSubtab(subtabName) {
-        // Update subtab buttons
-        document.querySelectorAll('[data-subtab]').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelector(`[data-subtab="${subtabName}"]`).classList.add('active');
-        
-        // Load subtab content
-        this.loadOrdersData(subtabName);
-    }
-    
     async loadSectionData(section) {
         switch (section) {
             case 'marketplace':
                 this.loadMarketplaceProducts();
                 break;
-            case 'services':
-                this.loadServicesSection();
-                break;
-            case 'social':
-                this.loadSocialFeed();
-                break;
             case 'my-store':
                 this.loadMyStore();
                 break;
-            case 'orders':
-                this.loadOrdersData('purchases');
-                break;
             case 'bookings':
-                this.loadBookingsData();
-                break;
-            case 'community':
-                this.loadCommunityData();
-                break;
-            case 'reputation':
-                this.loadReputationData();
+                this.loadMyPurchases();
                 break;
             case 'messages':
                 this.loadConversations();
-        // v4.2.0: Delegated listener for conversation items
-        document.addEventListener('click', (e) => {
-            const convItem = e.target.closest('[data-action="open-conv"]');
-            if (convItem) {
-                const otherId = convItem.dataset.otherId;
-                const productId = convItem.dataset.productId || null;
-                const otherName = convItem.dataset.otherName;
-                this.openConversation(otherId, productId, otherName);
-            }
-        });
+                // v4.2.0: Delegated listener for conversation items
+                document.addEventListener('click', (e) => {
+                    const convItem = e.target.closest('[data-action="open-conv"]');
+                    if (convItem) {
+                        const otherId = convItem.dataset.otherId;
+                        const productId = convItem.dataset.productId || null;
+                        const otherName = convItem.dataset.otherName;
+                        this.openConversation(otherId, productId, otherName);
+                    }
+                });
                 break;
         }
-    }
-
-    // Services section
-    loadServicesSection() {
-        this.loadFeaturedServices();
-        this.loadRecentServices();
-    }
-
-    loadFeaturedServices() {
-        const container = document.getElementById('featuredServices');
-        if (!container) return;
-
-        const featuredServices = this.services.filter(s => s.featured);
-        container.innerHTML = featuredServices.map(service => this.createServiceCard(service)).join('');
-    }
-
-    loadRecentServices() {
-        const container = document.getElementById('recentServices');
-        if (!container) return;
-
-        container.innerHTML = this.services.map(service => this.createServiceCard(service)).join('');
     }
 
     formatPrice(price, currency, suffix) {
@@ -578,53 +627,548 @@ class MarketplaceSocialSystem {
                             <span>💰</span>
                         </button>
                     </div>
-                    ${!this.isGuest ? `
-                    <div class="commission-hint" style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(0,255,255,0.7);">
-                        💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada reserva referida
-                    </div>
-                    ` : ''}
+                    ${!this.isGuest ? ((this.tierLimits || getTierLimitsClient(this.userSubscription)).referral_commission > 0
+                        ? `<div class="commission-hint" style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(0,255,255,0.7);">
+                            💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada reserva referida
+                        </div>`
+                        : `<div class="commission-hint" style="text-align: center; margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.4);">
+                            Mejora tu plan para ganar comisiones por referidos
+                        </div>`) : ''}
                 </div>
             </div>
         `;
     }
 
-    filterServices() {
-        const searchTerm = document.getElementById('serviceSearchInput')?.value.toLowerCase() || '';
-        const categoryFilter = document.getElementById('serviceCategoryFilter')?.value || '';
-
-        let filteredServices = this.services.filter(service => {
-            const matchesSearch = service.title.toLowerCase().includes(searchTerm) ||
-                                service.description.toLowerCase().includes(searchTerm) ||
-                                service.provider.name.toLowerCase().includes(searchTerm);
-            const matchesCategory = !categoryFilter || service.category === categoryFilter;
-
-            return matchesSearch && matchesCategory;
-        });
-
-        this.displayFilteredServices(filteredServices);
-    }
-
-    displayFilteredServices(services) {
-        const container = document.getElementById('recentServices');
-        if (!container) return;
-
-        if (services.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.6);">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
-                    <h3>No se encontraron servicios</h3>
-                    <p>Intenta ajustar los filtros de búsqueda</p>
-                </div>
-            `;
+    // =====================================================
+    // MIS COMPRAS (Unified Purchases Tab)
+    // =====================================================
+    async loadMyPurchases() {
+        if (!this.authToken) {
+            const pc = document.getElementById('mcProductsContent');
+            const sc = document.getElementById('mcServicesContent');
+            const loginHtml = '<div class="mc-empty"><i class="fas fa-lock"></i><h3>Inicia sesion para ver tus compras</h3><button class="btn btn-primary" style="margin-top:12px;" onclick="goToLogin()">Iniciar Sesion</button></div>';
+            if (pc) pc.innerHTML = loginHtml;
+            if (sc) sc.innerHTML = loginHtml;
             return;
         }
+        await Promise.all([this._loadBuyerProductOrders(), this.loadBookingsData()]);
+    }
 
-        container.innerHTML = services.map(service => this.createServiceCard(service)).join('');
+    async _loadBuyerProductOrders() {
+        const container = document.getElementById('mcProductsContent');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</div>';
+        try {
+            const response = await this.apiRequest('/api/marketplace/product-orders?role=buyer&limit=30');
+            if (!response.success) throw new Error('Error');
+            const orders = response.orders || response.data?.orders || [];
+            this._buyerOrders = orders;
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="mc-empty"><i class="fas fa-shopping-bag"></i><h3>Sin pedidos de productos</h3><p>Explora el marketplace para encontrar productos</p></div>';
+                return;
+            }
+            const esc = this.escapeHtml.bind(this);
+            container.innerHTML = orders.map(o => this._renderBuyerOrderCard(o, esc)).join('');
+        } catch (err) {
+            container.innerHTML = '<div class="mc-empty"><i class="fas fa-exclamation-circle"></i><h3>Error cargando pedidos</h3><button class="btn btn-secondary" style="margin-top:8px;" data-action="retry-purchases">Reintentar</button></div>';
+        }
+    }
+
+    _renderBuyerOrderCard(o, esc) {
+        const statusLabels = { pending: 'Pendiente', paid: 'Pagado', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado', refunded: 'Reembolsado' };
+        const img = (o.product_images && Array.isArray(o.product_images) && o.product_images[0]) ? esc(o.product_images[0]) : '';
+        const imgTag = img ? `<img src="${img}" class="mc-order-img" alt="">` : '<div class="mc-order-img" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📦</div>';
+        const total = parseFloat(o.total_price) || 0;
+        const date = new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+        const status = o.status || 'pending';
+        const dispute = o.dispute_id ? `<span class="mc-dispute-badge">Disputa</span>` : '';
+        let actions = '';
+        if (status === 'pending') actions = `<button class="mc-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar</button>`;
+        else if (status === 'shipped') actions = `<button class="mc-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
+        else if (status === 'delivered') {
+            actions = `<button class="mc-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Resena</button>`;
+            if (!o.dispute_id) actions += `<button class="mc-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Disputa</button>`;
+        }
+        return `<div class="mc-order-card" data-status="${esc(status)}" data-action="mc-order-detail" data-id="${o.id}">
+            ${imgTag}
+            <div class="mc-order-info">
+                <p class="mc-order-title">${esc(o.product_title || 'Producto')}</p>
+                <p class="mc-order-meta">${esc(o.seller_name || '')} &middot; ${date} &middot; x${o.quantity || 1} ${dispute}</p>
+                <div class="mc-order-actions" onclick="event.stopPropagation();">${actions}</div>
+            </div>
+            <div class="mc-order-right">
+                <div class="mc-order-price">L. ${total.toLocaleString('es-HN', {minimumFractionDigits:2})}</div>
+                <span class="mc-order-status mc-status-${esc(status)}">${statusLabels[status] || status}</span>
+            </div>
+        </div>`;
+    }
+
+    switchPurchaseTab(tabName) {
+        document.querySelectorAll('.mc-tab').forEach(t => t.classList.toggle('active', t.dataset.mcTab === tabName));
+        document.querySelectorAll('.mc-content').forEach(c => c.classList.remove('active'));
+        const target = tabName === 'products' ? 'mcProductsContent' : 'mcServicesContent';
+        document.getElementById(target)?.classList.add('active');
+    }
+
+    _filterBuyerOrders(status) {
+        const container = document.getElementById('mcProductsContent');
+        if (!container || !this._buyerOrders) return;
+        const filtered = status ? this._buyerOrders.filter(o => o.status === status) : this._buyerOrders;
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="mc-empty"><i class="fas fa-filter"></i><p>Sin pedidos con este estado</p></div>';
+            return;
+        }
+        const esc = this.escapeHtml.bind(this);
+        container.innerHTML = filtered.map(o => this._renderBuyerOrderCard(o, esc)).join('');
+    }
+
+    // =====================================================
+    // SHOPPING CART (sessionStorage)
+    // =====================================================
+    _getCart() { try { return JSON.parse(sessionStorage.getItem('mp_cart') || '[]'); } catch { return []; } }
+    _saveCart(items) { sessionStorage.setItem('mp_cart', JSON.stringify(items)); this._updateCartBadge(); }
+    _addToCart(product, quantity) {
+        const items = this._getCart();
+        const pid = String(product.productId || product.id);
+        const existing = items.find(i => i.product_id === pid);
+        if (existing) {
+            existing.quantity = Math.min(existing.quantity + quantity, existing.max_qty);
+        } else {
+            items.push({
+                product_id: pid,
+                title: product.name || product.title || 'Producto',
+                price: product.price,
+                currency: product.currency || 'HNL',
+                quantity: quantity,
+                max_qty: Math.min(product.quantity || 10, 10),
+                image: (product.images && product.images[0]) || product.image || '',
+                seller_id: product.seller?.userId || product.seller_id || '',
+                seller_name: product.seller?.name || product.seller_name || ''
+            });
+        }
+        this._saveCart(items);
+        this.showNotification('Agregado al carrito', 'success');
+    }
+    _removeFromCart(productId) {
+        const items = this._getCart().filter(i => i.product_id !== String(productId));
+        this._saveCart(items);
+    }
+    _updateCartQty(productId, qty) {
+        const items = this._getCart();
+        const item = items.find(i => i.product_id === String(productId));
+        if (item) { item.quantity = Math.max(1, Math.min(qty, item.max_qty)); this._saveCart(items); }
+    }
+    _clearCart() { sessionStorage.removeItem('mp_cart'); this._updateCartBadge(); }
+    _getCartCount() { return this._getCart().reduce((s, i) => s + i.quantity, 0); }
+    _updateCartBadge() {
+        const badge = document.getElementById('mcCartBadge');
+        if (!badge) return;
+        const count = this._getCartCount();
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
+    openCartModal() {
+        const existing = document.getElementById('mcCartOverlay');
+        if (existing) existing.remove();
+        const items = this._getCart();
+        const esc = this.escapeHtml.bind(this);
+        const overlay = document.createElement('div');
+        overlay.id = 'mcCartOverlay';
+        overlay.className = 'mc-cart-overlay';
+        let itemsHtml = '';
+        if (items.length === 0) {
+            itemsHtml = '<div class="mc-cart-empty"><i class="fas fa-shopping-cart"></i><p>Tu carrito esta vacio</p></div>';
+        } else {
+            itemsHtml = items.map(i => {
+                const imgTag = i.image ? `<img src="${esc(i.image)}" class="mc-cart-item-img" alt="">` : '<div class="mc-cart-item-img" style="display:flex;align-items:center;justify-content:center;font-size:1rem;">📦</div>';
+                return `<div class="mc-cart-item" data-product-id="${esc(i.product_id)}">
+                    ${imgTag}
+                    <div class="mc-cart-item-info">
+                        <div class="mc-cart-item-title">${esc(i.title)}</div>
+                        <div class="mc-cart-item-price">L. ${parseFloat(i.price).toLocaleString('es-HN',{minimumFractionDigits:2})} x ${i.quantity}</div>
+                    </div>
+                    <input type="number" class="mc-cart-item-qty" value="${i.quantity}" min="1" max="${i.max_qty}" data-action="mc-cart-qty" data-product-id="${esc(i.product_id)}">
+                    <button class="mc-cart-item-remove" data-action="mc-cart-remove" data-product-id="${esc(i.product_id)}"><i class="fas fa-times"></i></button>
+                </div>`;
+            }).join('');
+        }
+        const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
+        overlay.innerHTML = `<div class="mc-cart-modal">
+            <div class="mc-cart-header"><h3><i class="fas fa-shopping-cart"></i> Carrito (${items.length})</h3><button class="mc-cart-close" data-action="mc-close-cart"><i class="fas fa-times"></i></button></div>
+            <div class="mc-cart-body">${itemsHtml}</div>
+            ${items.length > 0 ? `<div class="mc-cart-footer">
+                <div class="mc-cart-total"><span>Total</span><span>L. ${total.toLocaleString('es-HN',{minimumFractionDigits:2})}</span></div>
+                <div class="mc-cart-payment">
+                    <select id="mcCartPayment"><option value="wallet">Wallet LTD</option><option value="cash">Efectivo</option></select>
+                </div>
+                <div class="mc-cart-actions">
+                    <button class="mc-cart-continue" data-action="mc-close-cart">Seguir Comprando</button>
+                    <button class="mc-cart-checkout" data-action="mc-checkout">Pagar (${items.length})</button>
+                </div>
+            </div>` : ''}
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    async handleCartCheckout() {
+        const items = this._getCart();
+        if (items.length === 0) return;
+        const paymentMethod = document.getElementById('mcCartPayment')?.value || 'cash';
+        const checkoutBtn = document.querySelector('[data-action="mc-checkout"]');
+        if (checkoutBtn) { checkoutBtn.disabled = true; checkoutBtn.textContent = 'Procesando...'; }
+        let success = 0, failed = 0;
+        for (let i = 0; i < items.length; i++) {
+            if (checkoutBtn) checkoutBtn.textContent = `Procesando ${i + 1} de ${items.length}...`;
+            try {
+                const resp = await this.apiRequest(`/api/marketplace/products/${items[i].product_id}/buy`, {
+                    method: 'POST',
+                    body: JSON.stringify({ product_id: items[i].product_id, quantity: items[i].quantity, payment_method: paymentMethod })
+                });
+                if (resp.success || resp.order) success++;
+                else failed++;
+            } catch { failed++; }
+        }
+        document.getElementById('mcCartOverlay')?.remove();
+        if (failed === 0) {
+            this._clearCart();
+            this.showNotification(`${success} pedido(s) creado(s) exitosamente`, 'success');
+            mpNavigate('bookings');
+            this.loadMyPurchases();
+        } else {
+            // Keep failed items in cart
+            const successIds = new Set();
+            const cart = this._getCart();
+            // Remove all since we can't know which succeeded vs failed item-by-item
+            // (sequential order matches), clear all on partial success too
+            this._clearCart();
+            this.showNotification(`${success} exitoso(s), ${failed} fallido(s)`, failed > 0 ? 'error' : 'success');
+            mpNavigate('bookings');
+            this.loadMyPurchases();
+        }
+    }
+
+    // =====================================================
+    // ORDER DETAIL + TRACKING
+    // =====================================================
+    async openOrderDetail(orderId) {
+        const existing = document.getElementById('mcDetailOverlay');
+        if (existing) existing.remove();
+        try {
+            const resp = await this.apiRequest(`/api/marketplace/product-orders/${orderId}`);
+            if (!resp.success) throw new Error('Error');
+            const o = resp.order || resp.data?.order;
+            if (!o) throw new Error('No data');
+            const esc = this.escapeHtml.bind(this);
+            const statusLabels = { pending: 'Pendiente', paid: 'Pagado', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado', refunded: 'Reembolsado' };
+            const img = (o.product_images && Array.isArray(o.product_images) && o.product_images[0]) ? o.product_images[0] : '';
+            const total = parseFloat(o.total_price) || 0;
+            const createdDate = new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+            const steps = this._buildTimeline(o);
+            let actions = '';
+            if (o.status === 'pending') actions = `<button class="mc-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar Pedido</button>`;
+            else if (o.status === 'shipped') actions = `<button class="mc-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
+            else if (o.status === 'delivered') {
+                actions = `<button class="mc-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Dejar Resena</button>`;
+                if (!o.dispute_id) actions += `<button class="mc-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Abrir Disputa</button>`;
+            }
+            const disputeInfo = o.dispute_id ? `<div class="mc-detail-section"><h4>Disputa</h4><div class="mc-detail-row"><span>Estado</span><span class="mc-dispute-status mc-dstatus-${esc(o.dispute_status || 'open')}">${esc(o.dispute_status || 'open')}</span></div><button class="btn btn-sm" style="margin-top:6px;padding:6px 12px;font-size:0.8rem;background:rgba(239,68,68,0.15);color:#EF4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;" data-action="mc-view-dispute" data-id="${o.dispute_id}">Ver Disputa</button></div>` : '';
+            const overlay = document.createElement('div');
+            overlay.id = 'mcDetailOverlay';
+            overlay.className = 'mc-detail-overlay';
+            overlay.innerHTML = `<div class="mc-detail-modal">
+                <div class="mc-detail-header"><h3>Pedido #${o.id}</h3><button class="mc-detail-close" data-action="mc-close-detail"><i class="fas fa-times"></i></button></div>
+                <div class="mc-detail-body">
+                    <div class="mc-detail-product">
+                        ${img ? `<img src="${esc(img)}" alt="">` : '<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:8px;font-size:2rem;">📦</div>'}
+                        <div class="mc-detail-product-info">
+                            <h4>${esc(o.product_title || 'Producto')}</h4>
+                            <p>${o.quantity || 1} x L. ${parseFloat(o.unit_price || 0).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>
+                            <p style="color:#10B981;font-weight:700;">Total: L. ${total.toLocaleString('es-HN',{minimumFractionDigits:2})}</p>
+                        </div>
+                    </div>
+                    <div class="mc-detail-section">
+                        <h4>Informacion</h4>
+                        <div class="mc-detail-row"><span>Vendedor</span><span>${esc(o.seller_name || '')}</span></div>
+                        <div class="mc-detail-row"><span>Fecha</span><span>${createdDate}</span></div>
+                        <div class="mc-detail-row"><span>Pago</span><span>${esc(o.payment_method || 'cash')}</span></div>
+                        ${o.tracking_number ? `<div class="mc-detail-row"><span>Rastreo</span><span style="color:#8B5CF6;">${esc(o.tracking_number)}</span></div>` : ''}
+                        <div class="mc-detail-row"><span>Estado</span><span class="mc-order-status mc-status-${esc(o.status)}">${statusLabels[o.status] || o.status}</span></div>
+                    </div>
+                    <div class="mc-detail-section"><h4>Seguimiento</h4><div class="mc-detail-timeline">${steps}</div></div>
+                    ${disputeInfo}
+                    <div class="mc-detail-actions" onclick="event.stopPropagation();">${actions}</div>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        } catch (err) {
+            this.showNotification('Error cargando detalle del pedido', 'error');
+        }
+    }
+
+    _buildTimeline(o) {
+        const statusOrder = ['pending', 'paid', 'shipped', 'delivered'];
+        const labels = { pending: 'Pedido creado', paid: 'Pago confirmado', shipped: 'Enviado', delivered: 'Entregado' };
+        const currentIdx = statusOrder.indexOf(o.status);
+        const isCancelled = o.status === 'cancelled';
+        const isRefunded = o.status === 'refunded';
+        let html = '';
+        statusOrder.forEach((s, i) => {
+            const cls = isCancelled || isRefunded ? '' : (i < currentIdx ? 'done' : i === currentIdx ? 'active' : '');
+            const dateStr = (i === 0) ? new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : (cls === 'done' || cls === 'active') ? (o.updated_at ? new Date(o.updated_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '') : '';
+            html += `<div class="mc-tl-step ${cls}"><div class="mc-tl-dot"></div><div class="mc-tl-label">${labels[s]}</div>${dateStr ? `<div class="mc-tl-date">${dateStr}</div>` : ''}${s === 'shipped' && o.tracking_number && (cls === 'done' || cls === 'active') ? `<div class="mc-tl-tracking">Rastreo: ${this.escapeHtml(o.tracking_number)}</div>` : ''}</div>`;
+        });
+        if (isCancelled) html += `<div class="mc-tl-step error"><div class="mc-tl-dot"></div><div class="mc-tl-label">Cancelado</div><div class="mc-tl-date">${o.updated_at ? new Date(o.updated_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : ''}</div></div>`;
+        if (isRefunded) html += `<div class="mc-tl-step error"><div class="mc-tl-dot"></div><div class="mc-tl-label" style="color:#A855F7;">Reembolsado</div><div class="mc-tl-date">${o.updated_at ? new Date(o.updated_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : ''}</div></div>`;
+        return html;
+    }
+
+    // =====================================================
+    // BUYER ORDER ACTIONS
+    // =====================================================
+    async handleBuyerOrderAction(orderId, action) {
+        const labels = { cancel: 'Cancelar este pedido?', confirm_delivery: 'Confirmar que recibiste este pedido?' };
+        const confirmed = await this.showConfirm(labels[action] || 'Confirmar?');
+        if (!confirmed) return;
+        try {
+            const resp = await this.apiRequest(`/api/marketplace/product-orders/${orderId}/buyer-action`, {
+                method: 'PUT', body: JSON.stringify({ action })
+            });
+            if (resp.success) {
+                this.showNotification(action === 'cancel' ? 'Pedido cancelado' : 'Recepcion confirmada', 'success');
+                document.getElementById('mcDetailOverlay')?.remove();
+                this._loadBuyerProductOrders();
+            } else {
+                throw new Error(resp.error || 'Error');
+            }
+        } catch (err) {
+            this.showNotification(err.message || 'Error al procesar accion', 'error');
+        }
+    }
+
+    openProductReview(orderId, productId) {
+        const existing = document.getElementById('mcReviewOverlay');
+        if (existing) existing.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'mcReviewOverlay';
+        overlay.className = 'mc-review-overlay';
+        overlay.innerHTML = `<div class="mc-review-modal">
+            <h3 style="margin:0 0 12px;color:#fff;">Dejar Resena</h3>
+            <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin:0 0 8px;">Califica tu experiencia con este producto</p>
+            <div class="mc-review-stars" id="mcReviewStars">
+                ${[1,2,3,4,5].map(n => `<i class="far fa-star" data-rating="${n}"></i>`).join('')}
+            </div>
+            <textarea id="mcReviewComment" placeholder="Comentario (opcional)" maxlength="1000"></textarea>
+            <button class="mc-review-submit" data-action="mc-submit-review" data-order-id="${orderId}" data-product-id="${productId}">Enviar Resena</button>
+            <button style="width:100%;margin-top:6px;padding:8px;background:none;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.6);cursor:pointer;" data-action="mc-close-review">Cancelar</button>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        // Star interaction
+        const starsContainer = document.getElementById('mcReviewStars');
+        let selectedRating = 0;
+        starsContainer.addEventListener('click', (e) => {
+            const star = e.target.closest('[data-rating]');
+            if (!star) return;
+            selectedRating = parseInt(star.dataset.rating);
+            starsContainer.querySelectorAll('i').forEach((s, i) => {
+                s.className = i < selectedRating ? 'fas fa-star active' : 'far fa-star';
+            });
+        });
+        overlay._getSelectedRating = () => selectedRating;
+    }
+
+    async _submitProductReview(orderId, productId) {
+        const overlay = document.getElementById('mcReviewOverlay');
+        if (!overlay) return;
+        const rating = overlay._getSelectedRating ? overlay._getSelectedRating() : 0;
+        if (rating === 0) { this.showNotification('Selecciona una calificacion', 'error'); return; }
+        const comment = document.getElementById('mcReviewComment')?.value?.trim() || '';
+        try {
+            const resp = await this.apiRequest('/api/marketplace/reviews', {
+                method: 'POST', body: JSON.stringify({ order_id: parseInt(orderId), product_id: parseInt(productId), overall_rating: rating, comment })
+            });
+            if (resp.success) {
+                overlay.remove();
+                this.showNotification('Resena enviada', 'success');
+                this._loadBuyerProductOrders();
+            } else {
+                throw new Error(resp.error || 'Error');
+            }
+        } catch (err) {
+            this.showNotification(err.message || 'Error al enviar resena', 'error');
+        }
+    }
+
+    // =====================================================
+    // DISPUTES
+    // =====================================================
+    openDisputeModal(orderId, bookingId) {
+        const existing = document.getElementById('mcDisputeOverlay');
+        if (existing) existing.remove();
+        const reasonOptions = [
+            { value: 'wrong_item', label: 'Articulo incorrecto' },
+            { value: 'damaged', label: 'Articulo danado' },
+            { value: 'not_received', label: 'No recibido' },
+            { value: 'not_as_described', label: 'No coincide con descripcion' },
+            { value: 'seller_unresponsive', label: 'Vendedor no responde' },
+            { value: 'service_issue', label: 'Problema con servicio' },
+            { value: 'other', label: 'Otro' }
+        ];
+        const overlay = document.createElement('div');
+        overlay.id = 'mcDisputeOverlay';
+        overlay.className = 'mc-dispute-overlay';
+        overlay.innerHTML = `<div class="mc-dispute-modal">
+            <div class="mc-dispute-header"><h3><i class="fas fa-exclamation-triangle"></i> Abrir Disputa</h3><button class="mc-detail-close" data-action="mc-close-dispute-form"><i class="fas fa-times"></i></button></div>
+            <div class="mc-dispute-body mc-dispute-form">
+                <label>Razon</label>
+                <select id="mcDisputeReason">${reasonOptions.map(r => `<option value="${r.value}">${r.label}</option>`).join('')}</select>
+                <label>Descripcion</label>
+                <textarea id="mcDisputeDesc" placeholder="Describe el problema en detalle..." maxlength="1000"></textarea>
+                <input type="hidden" id="mcDisputeOrderId" value="${orderId || ''}">
+                <input type="hidden" id="mcDisputeBookingId" value="${bookingId || ''}">
+                <button class="mc-dispute-submit" data-action="mc-submit-dispute">Enviar Disputa</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    async _submitDispute() {
+        const reason = document.getElementById('mcDisputeReason')?.value;
+        const description = document.getElementById('mcDisputeDesc')?.value?.trim();
+        const orderId = document.getElementById('mcDisputeOrderId')?.value;
+        const bookingId = document.getElementById('mcDisputeBookingId')?.value;
+        if (!description) { this.showNotification('Describe el problema', 'error'); return; }
+        const body = { reason, description };
+        if (orderId) body.order_id = parseInt(orderId);
+        else if (bookingId) body.booking_id = parseInt(bookingId);
+        try {
+            const resp = await this.apiRequest('/api/marketplace/disputes', { method: 'POST', body: JSON.stringify(body) });
+            if (resp.success) {
+                document.getElementById('mcDisputeOverlay')?.remove();
+                this.showNotification('Disputa creada', 'success');
+                this._loadBuyerProductOrders();
+            } else {
+                throw new Error(resp.error || 'Error');
+            }
+        } catch (err) {
+            this.showNotification(err.message || 'Error al crear disputa', 'error');
+        }
+    }
+
+    async openDisputesList() {
+        const existing = document.getElementById('mcDisputeOverlay');
+        if (existing) existing.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'mcDisputeOverlay';
+        overlay.className = 'mc-dispute-overlay';
+        overlay.innerHTML = `<div class="mc-dispute-modal">
+            <div class="mc-dispute-header"><h3>Mis Disputas</h3><button class="mc-detail-close" data-action="mc-close-dispute-form"><i class="fas fa-times"></i></button></div>
+            <div class="mc-dispute-body"><div style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i> Cargando...</div></div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        try {
+            const resp = await this.apiRequest('/api/marketplace/disputes');
+            const disputes = resp.disputes || resp.data?.disputes || [];
+            const body = overlay.querySelector('.mc-dispute-body');
+            if (disputes.length === 0) {
+                body.innerHTML = '<div class="mc-empty"><i class="fas fa-check-circle"></i><p>No tienes disputas</p></div>';
+                return;
+            }
+            const esc = this.escapeHtml.bind(this);
+            const statusLabels = { open: 'Abierta', seller_response: 'Respuesta del vendedor', resolved: 'Resuelta', closed: 'Cerrada' };
+            body.innerHTML = disputes.map(d => {
+                const title = d.product_title || d.service_title || `Disputa #${d.id}`;
+                const date = new Date(d.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+                return `<div class="mc-dispute-card" data-status="${esc(d.status)}" data-action="mc-view-dispute" data-id="${d.id}">
+                    <div class="mc-dispute-title">${esc(title)}</div>
+                    <div class="mc-dispute-meta">${date} &middot; <span class="mc-dispute-status mc-dstatus-${esc(d.status)}">${statusLabels[d.status] || d.status}</span></div>
+                </div>`;
+            }).join('');
+        } catch {
+            overlay.querySelector('.mc-dispute-body').innerHTML = '<div class="mc-empty"><i class="fas fa-exclamation-circle"></i><p>Error cargando disputas</p></div>';
+        }
+    }
+
+    async openDisputeDetail(disputeId) {
+        try {
+            const resp = await this.apiRequest(`/api/marketplace/disputes/${disputeId}`);
+            const d = resp.dispute || resp.data?.dispute;
+            if (!d) throw new Error('No data');
+            const esc = this.escapeHtml.bind(this);
+            const statusLabels = { open: 'Abierta', seller_response: 'Respuesta del vendedor', resolved: 'Resuelta', closed: 'Cerrada' };
+            const reasonLabels = { wrong_item: 'Articulo incorrecto', damaged: 'Danado', not_received: 'No recibido', not_as_described: 'No coincide', seller_unresponsive: 'Vendedor no responde', service_issue: 'Problema con servicio', other: 'Otro' };
+            const existing = document.getElementById('mcDisputeOverlay');
+            if (existing) existing.remove();
+            const overlay = document.createElement('div');
+            overlay.id = 'mcDisputeOverlay';
+            overlay.className = 'mc-dispute-overlay';
+            let actionsHtml = '';
+            if (d.status === 'open' && d.respondent_id === this.userId) {
+                actionsHtml = `<div class="mc-dispute-respond"><h4 style="color:rgba(255,255,255,0.5);font-size:0.8rem;text-transform:uppercase;">Tu respuesta</h4><textarea id="mcDisputeResponse" placeholder="Escribe tu respuesta..." maxlength="2000"></textarea><button data-action="mc-respond-dispute" data-id="${d.id}">Enviar Respuesta</button></div>`;
+            }
+            if (d.status === 'resolved') {
+                actionsHtml += `<button style="width:100%;margin-top:12px;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.8);cursor:pointer;" data-action="mc-close-dispute" data-id="${d.id}">Cerrar Disputa</button>`;
+            }
+            const evidenceHtml = d.evidence_images && Array.isArray(d.evidence_images) && d.evidence_images.length > 0
+                ? `<div class="mc-dispute-evidence">${d.evidence_images.map(img => `<img src="${esc(img)}" alt="Evidencia">`).join('')}</div>` : '';
+            overlay.innerHTML = `<div class="mc-dispute-modal">
+                <div class="mc-dispute-header"><h3>Disputa #${d.id}</h3><button class="mc-detail-close" data-action="mc-close-dispute-form"><i class="fas fa-times"></i></button></div>
+                <div class="mc-dispute-body">
+                    <div class="mc-dispute-detail-section">
+                        <h4>Estado</h4>
+                        <span class="mc-dispute-status mc-dstatus-${esc(d.status)}">${statusLabels[d.status] || d.status}</span>
+                    </div>
+                    <div class="mc-dispute-detail-section">
+                        <h4>Razon</h4><p>${reasonLabels[d.reason] || esc(d.reason)}</p>
+                    </div>
+                    <div class="mc-dispute-detail-section">
+                        <h4>Descripcion</h4><p>${esc(d.description)}</p>
+                        ${evidenceHtml}
+                    </div>
+                    ${d.product_title ? `<div class="mc-dispute-detail-section"><h4>Producto</h4><p>${esc(d.product_title)}</p></div>` : ''}
+                    ${d.respondent_message ? `<div class="mc-dispute-detail-section"><h4>Respuesta del vendedor</h4><p>${esc(d.respondent_message)}</p><p style="font-size:0.75rem;color:rgba(255,255,255,0.4);">${d.respondent_at ? new Date(d.respondent_at).toLocaleDateString('es-HN') : ''}</p></div>` : ''}
+                    ${d.resolution ? `<div class="mc-dispute-detail-section"><h4>Resolucion</h4><p>${esc(d.resolution_notes || d.resolution)}</p>${d.refund_amount > 0 ? `<p style="color:#10B981;">Reembolso: L. ${parseFloat(d.refund_amount).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>` : ''}</div>` : ''}
+                    ${actionsHtml}
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        } catch {
+            this.showNotification('Error cargando disputa', 'error');
+        }
+    }
+
+    async _respondToDispute(disputeId) {
+        const msg = document.getElementById('mcDisputeResponse')?.value?.trim();
+        if (!msg) { this.showNotification('Escribe tu respuesta', 'error'); return; }
+        try {
+            const resp = await this.apiRequest(`/api/marketplace/disputes/${disputeId}/respond`, { method: 'PUT', body: JSON.stringify({ message: msg }) });
+            if (resp.success) {
+                this.showNotification('Respuesta enviada', 'success');
+                this.openDisputeDetail(disputeId);
+            } else throw new Error(resp.error || 'Error');
+        } catch (err) { this.showNotification(err.message || 'Error', 'error'); }
+    }
+
+    async _closeDispute(disputeId) {
+        try {
+            const resp = await this.apiRequest(`/api/marketplace/disputes/${disputeId}/close`, { method: 'PUT', body: JSON.stringify({}) });
+            if (resp.success) {
+                this.showNotification('Disputa cerrada', 'success');
+                document.getElementById('mcDisputeOverlay')?.remove();
+            } else throw new Error(resp.error || 'Error');
+        } catch (err) { this.showNotification(err.message || 'Error', 'error'); }
     }
 
     // Booking system
     async loadBookingsData() {
-        const container = document.getElementById('bookingsContent');
+        const container = document.getElementById('mcServicesContent');
         if (!container) return;
 
         // Show loading state
@@ -755,6 +1299,8 @@ class MarketplaceSocialSystem {
             this.showLoginPrompt('reservar servicios');
             return;
         }
+        // Tier gate: booking limit
+        if (!this.checkTierGate('book_service')) return;
 
         const service = this.services.find(s => s.id === serviceId);
         if (!service) {
@@ -781,6 +1327,21 @@ class MarketplaceSocialSystem {
 
             document.getElementById('bookingPrice').textContent = priceText;
             document.getElementById('bookingServiceId').value = serviceId;
+
+            // Show platform commission info
+            const commEl = document.getElementById('bookingCommission');
+            if (commEl) {
+                const sellerTier = this.userSubscription || 'free';
+                const commPct = getTierLimitsClient(sellerTier).platform_commission || 0;
+                if (commPct > 0) {
+                    const fee = Math.round(estimatedPrice * commPct) / 100;
+                    commEl.textContent = 'Comision: ' + commPct + '% (L. ' + fee.toFixed(2) + ')';
+                    commEl.style.display = '';
+                } else {
+                    commEl.innerHTML = '<span class="mc-commission-zero">Sin comision</span>';
+                    commEl.style.display = '';
+                }
+            }
 
             // Show provider rating if available
             const ratingEl = document.getElementById('bookingProviderRating');
@@ -1059,75 +1620,9 @@ class MarketplaceSocialSystem {
         ];
     }
 
-    async loadSocialData() {
-        try {
-            // Cargar posts mock
-            const mockPosts = [
-                {
-                    id: 'post_001',
-                    user: {
-                        id: 'user_001',
-                        name: 'María González',
-                        avatar: 'M'
-                    },
-                    content: '¡Acabo de completar mi primera tanda con éxito! 🎉 La experiencia ha sido increíble y he conocido personas maravillosas en el proceso.',
-                    type: 'achievement',
-                    timestamp: new Date('2024-02-16T10:30:00'),
-                    likes: 23,
-                    comments: 5,
-                    shares: 2
-                },
-                {
-                    id: 'post_002',
-                    user: {
-                        id: 'user_002',
-                        name: 'Carlos Ruiz',
-                        avatar: 'C'
-                    },
-                    content: '¿Alguien ha probado el nuevo sistema de staking? Me gustaría saber sus experiencias antes de participar.',
-                    type: 'question',
-                    timestamp: new Date('2024-02-16T09:15:00'),
-                    likes: 12,
-                    comments: 8,
-                    shares: 1
-                },
-                {
-                    id: 'post_003',
-                    user: {
-                        id: 'user_003',
-                        name: 'Ana Silva',
-                        avatar: 'A'
-                    },
-                    content: 'Consejo del día: Siempre diversifica tus participaciones en tandas. No pongas todos los huevos en la misma canasta 💡',
-                    type: 'tip',
-                    timestamp: new Date('2024-02-15T16:45:00'),
-                    likes: 45,
-                    comments: 12,
-                    shares: 8
-                }
-            ];
-            
-            this.posts = mockPosts;
-        } catch (error) {
-        }
-    }
     
     updateAllDisplays() {
-        this.updateMarketStats();
         this.loadMarketplaceProducts();
-        this.loadServicesSection();
-        this.loadSocialFeed();
-    }
-    
-    updateMarketStats() {
-        const el1 = document.getElementById('totalProducts');
-        const el2 = document.getElementById('totalSellers');
-        const el3 = document.getElementById('totalTransactions');
-        const el4 = document.getElementById('totalVolume');
-        if (el1) el1.textContent = this.marketStats.totalProducts.toLocaleString();
-        if (el2) el2.textContent = this.marketStats.totalSellers.toLocaleString();
-        if (el3) el3.textContent = this.marketStats.totalTransactions.toLocaleString();
-        if (el4) el4.textContent = `${(this.marketStats.totalVolume / 1000).toFixed(1)}K`;
     }
     
     loadMarketplaceProducts() {
@@ -1307,49 +1802,6 @@ class MarketplaceSocialSystem {
         '</div>';
     }
     
-    loadSocialFeed() {
-        const container = document.getElementById('socialFeed');
-        if (!container) return;
-        
-        const sortedPosts = this.posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        container.innerHTML = sortedPosts.map(post => this.createPostCard(post)).join('');
-    }
-    
-    createPostCard(post) {
-        const timeAgo = this.getTimeAgo(post.timestamp);
-        const typeIcons = {
-            achievement: '🏆',
-            question: '❓',
-            tip: '💡',
-            announcement: '📢',
-            general: '💬'
-        };
-        
-        return `
-            <div class="social-post">
-                <div class="post-header">
-                    <div class="user-avatar">${post.user.avatar}</div>
-                    <div class="user-info">
-                        <div class="user-name">${post.user.name} ${typeIcons[post.type] || ''}</div>
-                        <div class="post-time">${timeAgo}</div>
-                    </div>
-                </div>
-                <div class="post-content">${this.escapeHtml(post.content)}</div>
-                <div class="post-actions">
-                    <button class="action-btn ${post.liked ? 'active' : ''}" data-action="toggle-like" data-id="${this.escapeHtml(post.id)}">
-                        <span>👍</span> ${this.escapeHtml(post.likes)}
-                    </button>
-                    <button class="action-btn" data-action="show-comments" data-id="${this.escapeHtml(post.id)}">
-                        <span>💬</span> ${this.escapeHtml(post.comments)}
-                    </button>
-                    <button class="action-btn" data-action="share-post" data-id="${this.escapeHtml(post.id)}">
-                        <span>📤</span> ${post.shares}
-                    </button>
-                </div>
-            </div>
-        `;
-    }
     
     filterProducts() {
         const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
@@ -1431,6 +1883,7 @@ class MarketplaceSocialSystem {
                 <div class="service-image" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
                     ${imgHtml}
                     ${condLabel ? `<div class="service-badge" style="background:rgba(139,92,246,0.9);">${esc(condLabel)}</div>` : ''}
+                    ${product.is_featured ? '<div class="boost-badge"><i class="fas fa-rocket"></i> Impulsado</div>' : ''}
                 </div>
                 <div class="service-info">
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
@@ -1451,17 +1904,23 @@ class MarketplaceSocialSystem {
                     <div class="service-actions" style="display:flex;gap:8px;margin-top:12px;">
                         ${product.quantity > 0 ? `
                         <button class="btn btn-primary" style="flex:1;" data-action="buy-product" data-id="${esc(product.id)}">
-                            <span>🛒</span> Comprar
+                            Comprar
+                        </button>
+                        <button class="btn btn-secondary" style="padding:10px 14px;" data-action="add-to-cart" data-id="${esc(product.id)}" title="Agregar al carrito">
+                            <i class="fas fa-cart-plus"></i>
                         </button>` : `
                         <button class="btn btn-secondary" style="flex:1;opacity:0.5;" disabled>Agotado</button>`}
                         <button class="btn btn-secondary share-btn" style="padding:10px 14px;" data-action="share-product" data-id="${esc(product.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
                             <span>💰</span>
                         </button>
                     </div>
-                    ${!this.isGuest ? `
-                    <div class="commission-hint" style="text-align:center;margin-top:8px;font-size:11px;color:rgba(0,255,255,0.7);">
-                        💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada venta referida
-                    </div>` : ''}
+                    ${!this.isGuest ? ((this.tierLimits || getTierLimitsClient(this.userSubscription)).referral_commission > 0
+                        ? `<div class="commission-hint" style="text-align:center;margin-top:8px;font-size:11px;color:rgba(0,255,255,0.7);">
+                            💰 Gana ${this.formatPrice(parseFloat(estimatedCommission), cur)} por cada venta referida
+                        </div>`
+                        : `<div class="commission-hint" style="text-align:center;margin-top:8px;font-size:11px;color:rgba(255,255,255,0.4);">
+                            Mejora tu plan para ganar comisiones por referidos
+                        </div>`) : ''}
                 </div>
             </div>
         `;
@@ -1556,7 +2015,10 @@ class MarketplaceSocialSystem {
     renderStoreLayoutPicker() {
         const container = document.getElementById('myStoreContent');
         if (!container) return;
-        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : this._selectedShopType === 'mixed' ? '🏬 Mixta' : '📦 Productos';
+        const limits = this.tierLimits || getTierLimitsClient(this.userSubscription);
+        const lockClass = (layout) => limits.layouts.includes(layout) ? '' : ' store-layout-locked';
+        const lockBadge = (layout) => limits.layouts.includes(layout) ? '' : '<span class="store-lock-badge">🔒</span>';
         container.innerHTML = `<div class="store-onboarding">
             ${this._earlyBannerHtml || ''}
             <div class="store-type-selected">
@@ -1567,7 +2029,8 @@ class MarketplaceSocialSystem {
             <h2>Elige el estilo de tu tienda</h2>
             <div class="store-subtitle">Puedes cambiarlo despues.</div>
             <div class="store-layout-grid">
-                <div class="store-layout-card" data-action="select-layout" data-id="classic">
+                <div class="store-layout-card${lockClass('classic')}" data-action="select-layout" data-id="classic">
+                    ${lockBadge('classic')}
                     <div class="store-layout-preview">
                         <div class="slp-header"><div class="slp-avatar"></div><div class="slp-lines"><div class="slp-line w60"></div><div class="slp-line w40"></div></div></div>
                         <div class="slp-stats"><span></span><span></span><span></span><span></span></div>
@@ -1576,7 +2039,8 @@ class MarketplaceSocialSystem {
                     <div class="store-layout-name">Clasica</div>
                     <div class="store-layout-desc">Header, estadisticas, secciones</div>
                 </div>
-                <div class="store-layout-card" data-action="select-layout" data-id="showcase">
+                <div class="store-layout-card${lockClass('showcase')}" data-action="select-layout" data-id="showcase">
+                    ${lockBadge('showcase')}
                     <div class="store-layout-preview">
                         <div class="slp-banner"><div class="slp-line w60" style="background:rgba(6,182,212,0.4);"></div></div>
                         <div class="slp-gallery"><span></span><span></span><span></span><span></span></div>
@@ -1585,7 +2049,8 @@ class MarketplaceSocialSystem {
                     <div class="store-layout-name">Escaparate</div>
                     <div class="store-layout-desc">Banner, galeria, testimonios</div>
                 </div>
-                <div class="store-layout-card" data-action="select-layout" data-id="compact">
+                <div class="store-layout-card${lockClass('compact')}" data-action="select-layout" data-id="compact">
+                    ${lockBadge('compact')}
                     <div class="store-layout-preview slp-compact-prev">
                         <div class="slp-avatar-lg"></div>
                         <div class="slp-line w40" style="margin:0 auto;"></div>
@@ -1603,9 +2068,12 @@ class MarketplaceSocialSystem {
     renderStoreThemePicker() {
         const container = document.getElementById('myStoreContent');
         if (!container) return;
-        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : '📦 Productos';
+        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : this._selectedShopType === 'mixed' ? '🏬 Mixta' : '📦 Productos';
         const layoutLabels = { classic: 'Clasica', showcase: 'Escaparate', compact: 'Tarjeta' };
         const layoutLabel = layoutLabels[this._selectedLayout] || 'Clasica';
+        const limits = this.tierLimits || getTierLimitsClient(this.userSubscription);
+        const lockClass = (theme) => limits.themes.includes(theme) ? '' : ' store-theme-locked';
+        const lockBadge = (theme) => limits.themes.includes(theme) ? '' : '<span class="store-lock-badge">🔒</span>';
         container.innerHTML = `<div class="store-onboarding">
             ${this._earlyBannerHtml || ''}
             <div class="store-type-selected">
@@ -1617,27 +2085,33 @@ class MarketplaceSocialSystem {
             <h2>Elige tu tema de color</h2>
             <div class="store-subtitle">Puedes cambiarlo despues.</div>
             <div class="store-theme-grid">
-                <div class="store-theme-card" data-action="select-theme" data-id="dark">
+                <div class="store-theme-card${lockClass('dark')}" data-action="select-theme" data-id="dark">
+                    ${lockBadge('dark')}
                     <div class="store-theme-swatch"><span style="background:#8B5CF6;"></span><span style="background:#06B6D4;"></span></div>
                     <div class="store-theme-name">Oscuro</div>
                 </div>
-                <div class="store-theme-card" data-action="select-theme" data-id="cyan">
+                <div class="store-theme-card${lockClass('cyan')}" data-action="select-theme" data-id="cyan">
+                    ${lockBadge('cyan')}
                     <div class="store-theme-swatch"><span style="background:#06B6D4;"></span><span style="background:#14B8A6;"></span></div>
                     <div class="store-theme-name">Cyan / Tech</div>
                 </div>
-                <div class="store-theme-card" data-action="select-theme" data-id="gold">
+                <div class="store-theme-card${lockClass('gold')}" data-action="select-theme" data-id="gold">
+                    ${lockBadge('gold')}
                     <div class="store-theme-swatch"><span style="background:#F59E0B;"></span><span style="background:#D97706;"></span></div>
                     <div class="store-theme-name">Dorado</div>
                 </div>
-                <div class="store-theme-card" data-action="select-theme" data-id="green">
+                <div class="store-theme-card${lockClass('green')}" data-action="select-theme" data-id="green">
+                    ${lockBadge('green')}
                     <div class="store-theme-swatch"><span style="background:#10B981;"></span><span style="background:#059669;"></span></div>
                     <div class="store-theme-name">Verde / Eco</div>
                 </div>
-                <div class="store-theme-card" data-action="select-theme" data-id="coral">
+                <div class="store-theme-card${lockClass('coral')}" data-action="select-theme" data-id="coral">
+                    ${lockBadge('coral')}
                     <div class="store-theme-swatch"><span style="background:#EF4444;"></span><span style="background:#F97316;"></span></div>
                     <div class="store-theme-name">Rojo / Coral</div>
                 </div>
-                <div class="store-theme-card" data-action="select-theme" data-id="purple">
+                <div class="store-theme-card${lockClass('purple')}" data-action="select-theme" data-id="purple">
+                    ${lockBadge('purple')}
                     <div class="store-theme-swatch"><span style="background:#A855F7;"></span><span style="background:#7C3AED;"></span></div>
                     <div class="store-theme-name">Purpura</div>
                 </div>
@@ -1819,7 +2293,16 @@ class MarketplaceSocialSystem {
             }
         } catch (e) { /* ok */ }
 
-        return { services, products, reviews, showServices, showProducts };
+        // Fetch seller orders
+        let orders = [];
+        try {
+            const ordRes = await this.apiRequest('/api/marketplace/product-orders?role=seller&limit=50');
+            if (ordRes.success && ordRes.data?.orders) {
+                orders = ordRes.data.orders;
+            }
+        } catch (e) { /* ok */ }
+
+        return { services, products, reviews, orders, showServices, showProducts };
     }
 
     _buildStoreItemCards(items, type) {
@@ -1875,6 +2358,13 @@ class MarketplaceSocialSystem {
         if (provider.is_verified) badges += '<span class="store-badge-verified">✓ Verificado</span>';
         if (provider.provider_id <= 50) badges += '<span class="store-badge-early">🎁 Early Seller</span>';
         badges += `<span class="store-badge-type">${typeIcon} ${esc(typeLabel)}</span>`;
+        // Tier badge
+        const tier = this.userSubscription || 'free';
+        if (tier !== 'free' && tier !== 'guest') {
+            const tierLabels = { plan: 'Plan', premium: 'Premium', tanda_member: 'Tanda' };
+            const tierClasses = { plan: 'store-badge-plan', premium: 'store-badge-premium', tanda_member: 'store-badge-tanda' };
+            badges += `<span class="${tierClasses[tier] || 'store-badge-plan'}">${esc(tierLabels[tier] || tier)}</span>`;
+        }
         return badges;
     }
 
@@ -1886,35 +2376,55 @@ class MarketplaceSocialSystem {
         const layout = provider.store_layout || 'classic';
         const theme = provider.store_theme || 'dark';
         const storeData = await this._fetchStoreData(provider);
+
+        // Fetch seller analytics for plan+ tiers
+        const tierLimits = getTierLimitsClient(this.userSubscription || 'free');
+        if (tierLimits.analytics_level !== 'basic') {
+            try {
+                const analyticsRes = await this.apiRequest('/api/marketplace/seller/analytics');
+                if (analyticsRes.success) {
+                    storeData.analytics = analyticsRes.data;
+                }
+            } catch (e) { /* ok */ }
+        }
+        storeData.analyticsLevel = tierLimits.analytics_level;
+
         switch (layout) {
             case 'showcase': this._renderDashboardShowcase(container, provider, storeData, theme); break;
             case 'compact':  this._renderDashboardCompact(container, provider, storeData, theme); break;
-            default:         this._renderDashboardClassic(container, provider, storeData, theme); break;
+            default:         this._renderDashboardClassicV2(container, provider, storeData, theme); break;
         }
-        // Portfolio banner (v4.5.0)
-        const handle = provider.handle;
-        if (handle) {
-            const esc = (v) => this.escapeHtml(String(v ?? ''));
-            const dashboard = container.querySelector('.store-dashboard');
-            if (dashboard) {
-                const banner = document.createElement('div');
-                banner.className = 'store-portfolio-banner';
-                banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/negocio/${esc(handle)}" target="_blank">latanda.online/negocio/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/negocio/${esc(handle)}">Copiar</button>`;
-                dashboard.insertBefore(banner, dashboard.firstChild);
+        // Portfolio banner + CTA (v4.5.0 / v4.6.0) — only for showcase/compact; V2 classic has inline quick actions
+        if (layout !== 'classic') {
+            const handle = provider.handle;
+            if (handle) {
+                const esc = (v) => this.escapeHtml(String(v ?? ''));
+                const dashboard = container.querySelector('.store-dashboard');
+                if (dashboard) {
+                    const banner = document.createElement('div');
+                    banner.className = 'store-portfolio-banner';
+                    banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/negocio/${esc(handle)}" target="_blank">latanda.online/negocio/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/negocio/${esc(handle)}">Copiar</button>`;
+                    dashboard.insertBefore(banner, dashboard.firstChild);
+                }
             }
-        }
-        // Portfolio / CV CTA (v4.6.0)
-        try {
-            const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
-            this._currentPortfolio = cvRes.data?.portfolio || null;
-        } catch { this._currentPortfolio = null; }
-        const dashboard2 = container.querySelector('.store-dashboard');
-        if (dashboard2) {
-            const cta = document.createElement('div');
-            cta.className = 'store-portfolio-cta';
-            cta.innerHTML = `<button class="store-btn-portfolio" data-action="open-portfolio-maker">${this._currentPortfolio ? 'Editar Portafolio / CV' : 'Crear Portafolio / CV'}</button>`;
-            const banner2 = dashboard2.querySelector('.store-portfolio-banner');
-            if (banner2) { banner2.after(cta); } else { dashboard2.insertBefore(cta, dashboard2.firstChild); }
+            try {
+                const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+                this._currentPortfolio = cvRes.data?.portfolio || null;
+            } catch { this._currentPortfolio = null; }
+            const dashboard2 = container.querySelector('.store-dashboard');
+            if (dashboard2) {
+                const cta = document.createElement('div');
+                cta.className = 'store-portfolio-cta';
+                cta.innerHTML = `<button class="store-btn-portfolio" data-action="open-portfolio-maker">${this._currentPortfolio ? 'Editar Portafolio / CV' : 'Crear Portafolio / CV'}</button>`;
+                const banner2 = dashboard2.querySelector('.store-portfolio-banner');
+                if (banner2) { banner2.after(cta); } else { dashboard2.insertBefore(cta, dashboard2.firstChild); }
+            }
+        } else {
+            // V2 classic: still fetch portfolio state for portfolio maker button
+            try {
+                const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+                this._currentPortfolio = cvRes.data?.portfolio || null;
+            } catch { this._currentPortfolio = null; }
         }
     }
 
@@ -2481,7 +2991,421 @@ class MarketplaceSocialSystem {
         this.showNotification('CV descargado', 'success');
     }
 
-    // ===================== CLASSIC LAYOUT =====================
+    // ===================== CLASSIC V2 LAYOUT (Shopify-inspired) =====================
+    _renderDashboardClassicV2(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const header = this._buildDashboardHeader(provider, esc);
+        const quickActions = this._buildQuickActionsToolbar(provider, esc);
+        const analytics = this._buildAnalyticsSummary(provider, storeData, esc);
+        const preview = this._buildStorePreviewCard(provider, esc);
+        const listings = this._buildTabbedListings(storeData, provider, esc);
+        const reviews = this._buildRecentReviews(storeData.reviews || [], esc);
+        const themes = this._buildThemeBrowser(provider, esc);
+        const contactItems = this._buildContactItems(provider);
+        const tierCard = this.renderTierProgressCard();
+
+        // Enhanced analytics for plan+ tiers
+        let sellerAnalytics = '';
+        if (storeData.analytics && storeData.analyticsLevel !== 'basic') {
+            const a = storeData.analytics;
+            const summary = a.summary || {};
+            let extraCards = '';
+            extraCards += `<div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">L. ${parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
+                    <div class="sd-analytics-label">Ingresos totales</div>
+                    <div class="sd-analytics-sub">${esc(String(summary.total_orders || 0))} pedidos</div>
+                </div>
+            </div>`;
+            const pendingCount = parseInt(summary.pending_orders || 0);
+            extraCards += `<div class="sd-analytics-card${pendingCount > 0 ? ' sd-analytics-warning' : ''}">
+                <div class="sd-analytics-icon sd-icon-actividad"><i class="fas fa-clock"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">${esc(String(pendingCount))}</div>
+                    <div class="sd-analytics-label">Pedidos pendientes</div>
+                    <div class="sd-analytics-sub">${pendingCount > 0 ? 'Requieren atencion' : 'Todo al dia'}</div>
+                </div>
+            </div>`;
+            sellerAnalytics += `<div class="sd-analytics">${extraCards}</div>`;
+            // Revenue chart
+            sellerAnalytics += `<div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-chart-bar"></i> Ventas (30 dias)</div></div>`;
+            sellerAnalytics += this._buildRevenueChart(a.revenue_last_30d || [], esc);
+            // Top products (full tier only)
+            if (storeData.analyticsLevel === 'full') {
+                sellerAnalytics += `<div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-trophy"></i> Productos Top</div></div>`;
+                sellerAnalytics += this._buildTopProductsTable(a.top_products || [], esc);
+            }
+        }
+
+        const chainCard = this._buildChainBalanceCard(esc);
+        const referralDash = this._buildReferralDashboard(esc);
+
+        container.innerHTML = `<div class="store-dashboard" data-layout="classic" data-theme="${esc(theme)}">
+            ${header}
+            ${tierCard}
+            ${chainCard}
+            ${quickActions}
+            ${analytics}
+            ${sellerAnalytics}
+            ${referralDash}
+            ${preview}
+            ${listings}
+            ${reviews}
+            ${themes}
+            <div class="sd-contact">
+                <div class="sd-section-header">
+                    <div class="sd-section-title"><i class="fas fa-address-book"></i> Contacto</div>
+                    <button class="sd-section-btn" data-action="edit-store">Editar</button>
+                </div>
+                <div class="store-contact-grid">${contactItems}</div>
+            </div>
+        </div>`;
+
+        // Load chain balance and referral data asynchronously
+        this._loadChainBalance();
+        this._loadReferralDashboard();
+    }
+
+    _buildDashboardHeader(provider, esc) {
+        const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
+        const avatarHtml = provider.profile_image
+            ? `<img src="${esc(provider.profile_image)}" alt="">`
+            : esc(initial);
+        const badges = this._buildBadgesHtml(provider);
+        const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
+        const since = provider.created_at ? new Date(provider.created_at).toLocaleDateString('es-HN', { month: 'long', year: 'numeric' }) : '';
+        return `<div class="sd-header">
+            <div class="sd-header-avatar">${avatarHtml}</div>
+            <div class="sd-header-info">
+                <div class="sd-header-name">${esc(provider.business_name || 'Mi Tienda')}</div>
+                <div class="sd-header-badges">${badges}</div>
+                <div class="sd-header-meta">
+                    ${loc ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</span>` : ''}
+                    ${since ? `<span><i class="far fa-calendar-alt"></i> Desde ${esc(since)}</span>` : ''}
+                </div>
+            </div>
+            <div class="sd-header-actions">
+                <button class="sd-header-btn" data-action="edit-store"><i class="fas fa-pen"></i> Editar</button>
+                <button class="sd-header-btn sd-header-btn-accent" data-action="sd-scroll-themes"><i class="fas fa-palette"></i> Personalizar</button>
+            </div>
+        </div>`;
+    }
+
+    _buildQuickActionsToolbar(provider, esc) {
+        const shopType = provider.shop_type || 'services';
+        const handle = provider.handle;
+        let btns = '';
+        if (shopType !== 'products') {
+            btns += `<button class="sd-quick-btn sd-quick-btn-primary" data-action="add-service"><i class="fas fa-plus"></i> Servicio</button>`;
+        }
+        if (shopType !== 'services') {
+            btns += `<button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product"><i class="fas fa-plus"></i> Producto</button>`;
+        }
+        if (handle) {
+            btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/negocio/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
+        }
+        btns += `<button class="sd-quick-btn" data-action="open-portfolio-maker"><i class="fas fa-file-alt"></i> Portafolio</button>`;
+        return `<div class="sd-quick-actions">${btns}</div>`;
+    }
+
+    _buildAnalyticsSummary(provider, storeData, esc) {
+        const rating = Number(provider.avg_rating || 0).toFixed(1);
+        const jobs = parseInt(provider.completed_jobs || 0);
+        const reviews = parseInt(provider.total_reviews || 0);
+        const responseRate = parseInt(provider.response_rate || 100);
+        const responseTime = provider.response_time_hours ? `${Number(provider.response_time_hours).toFixed(0)}h` : '<1h';
+        const totalItems = (storeData.services?.length || 0) + (storeData.products?.length || 0);
+
+        return `<div class="sd-analytics">
+            <div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-briefcase"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">${esc(String(jobs))}</div>
+                    <div class="sd-analytics-label">Trabajos completados</div>
+                    <div class="sd-analytics-sub">${esc(String(totalItems))} publicacion${totalItems !== 1 ? 'es' : ''} activa${totalItems !== 1 ? 's' : ''}</div>
+                </div>
+            </div>
+            <div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-rating"><i class="fas fa-star"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">${rating === '0.0' ? '--' : esc(rating)}</div>
+                    <div class="sd-analytics-label">Rating promedio</div>
+                    <div class="sd-analytics-sub">${reviews > 0 ? esc(String(reviews)) + ' resena' + (reviews !== 1 ? 's' : '') : 'Sin resenas aun'}</div>
+                </div>
+            </div>
+            <div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-actividad"><i class="fas fa-chart-line"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">${esc(String(totalItems))}</div>
+                    <div class="sd-analytics-label">Publicaciones</div>
+                    <div class="sd-analytics-sub">${storeData.showServices ? esc(String(storeData.services?.length || 0)) + ' servicio' + ((storeData.services?.length || 0) !== 1 ? 's' : '') : ''}${storeData.showServices && storeData.showProducts ? ' · ' : ''}${storeData.showProducts ? esc(String(storeData.products?.length || 0)) + ' producto' + ((storeData.products?.length || 0) !== 1 ? 's' : '') : ''}</div>
+                </div>
+            </div>
+            <div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-bolt"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">${esc(String(responseRate))}%</div>
+                    <div class="sd-analytics-label">Tasa de respuesta</div>
+                    <div class="sd-analytics-sub">Tiempo: ${esc(responseTime)}</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    _buildStorePreviewCard(provider, esc) {
+        const handle = provider.handle;
+        if (!handle) return '';
+        const initial = (provider.business_name || 'T').charAt(0).toUpperCase();
+        const avatarHtml = provider.profile_image
+            ? `<img src="${esc(provider.profile_image)}" alt="">`
+            : esc(initial);
+        const rating = Number(provider.avg_rating || 0).toFixed(1);
+        const jobs = parseInt(provider.completed_jobs || 0);
+        const reviews = parseInt(provider.total_reviews || 0);
+        return `<div class="sd-preview-section">
+            <div class="sd-preview-label"><i class="fas fa-eye"></i> Asi ven los clientes tu tienda</div>
+            <div class="sd-preview-card">
+                <div class="sd-preview-header">
+                    <div class="sd-preview-avatar">${avatarHtml}</div>
+                    <div class="sd-preview-name">${esc(provider.business_name || 'Mi Tienda')}</div>
+                </div>
+                <div class="sd-preview-stats">
+                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${rating === '0.0' ? '--' : esc(rating)}</div><div class="sd-preview-stat-label">Rating</div></div>
+                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(jobs))}</div><div class="sd-preview-stat-label">Trabajos</div></div>
+                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(reviews))}</div><div class="sd-preview-stat-label">Resenas</div></div>
+                </div>
+                <div class="sd-preview-footer">
+                    <a class="sd-preview-link" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    _buildTabbedListings(storeData, provider, esc) {
+        const { services, products, orders, showServices, showProducts } = storeData;
+        if (!showServices && !showProducts) return '';
+
+        const sCount = services?.length || 0;
+        const pCount = products?.length || 0;
+        const oCount = orders?.length || 0;
+        const pendingOrders = (orders || []).filter(o => o.status === 'pending' || o.status === 'paid').length;
+        const shopType = provider.shop_type || 'services';
+
+        let tabs = '';
+        let contents = '';
+        const firstTab = showServices ? 'services' : 'products';
+
+        if (showServices) {
+            tabs += `<button class="sd-listings-tab${firstTab === 'services' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="services">
+                <i class="fas fa-wrench"></i> Servicios <span class="sd-listings-count">${esc(String(sCount))}</span>
+            </button>`;
+            const sCards = sCount > 0 ? services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') : this._buildEmptyListingState('services', esc);
+            contents += `<div class="sd-listings-content${firstTab === 'services' ? ' active' : ''}" data-tab="services">${sCards}</div>`;
+        }
+        if (showProducts) {
+            tabs += `<button class="sd-listings-tab${firstTab === 'products' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="products">
+                <i class="fas fa-box"></i> Productos <span class="sd-listings-count">${esc(String(pCount))}</span>
+            </button>`;
+            const pCards = pCount > 0 ? products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') : this._buildEmptyListingState('products', esc);
+            contents += `<div class="sd-listings-content${firstTab === 'products' ? ' active' : ''}" data-tab="products">${pCards}</div>`;
+        }
+
+        // Orders tab
+        const pendingBadge = pendingOrders > 0 ? `<span class="sd-listings-count sd-order-badge-pending">${esc(String(pendingOrders))}</span>` : '';
+        tabs += `<button class="sd-listings-tab" data-action="sd-switch-tab" data-tab="orders">
+            <i class="fas fa-shopping-bag"></i> Pedidos ${pendingBadge}
+        </button>`;
+        contents += `<div class="sd-listings-content" data-tab="orders">${this._buildOrdersTab(orders || [], esc)}</div>`;
+
+        return `<div class="sd-listings">
+            <div class="sd-listings-tabs">${tabs}</div>
+            ${contents}
+        </div>`;
+    }
+
+    _buildEnhancedItemCard(item, type, esc) {
+        const imgSrc = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
+        const imgHtml = imgSrc ? `<img src="${esc(imgSrc)}" alt="">` : `<span>${type === 'services' ? '\u{1f527}' : '\u{1f4e6}'}</span>`;
+        const itemId = type === 'services' ? item.service_id : item.id;
+        const featuredClass = item.featured ? ' featured-active' : '';
+
+        let priceHtml = '';
+        let statusHtml = '';
+        let metaHtml = '';
+        let stockHtml = '';
+
+        if (type === 'services') {
+            priceHtml = item.price_type === 'fixed' ? `L. ${esc(String(item.price))}` : esc(item.price_type || 'Consultar');
+            metaHtml = `${esc(String(item.booking_count || 0))} reservas`;
+            statusHtml = `<span class="sd-item-status active">Activo</span>`;
+        } else {
+            priceHtml = `L. ${esc(String(item.price))}`;
+            const qty = parseInt(item.quantity || 0);
+            stockHtml = `<input type="number" class="sd-inline-stock" data-product-id="${esc(String(itemId))}" value="${qty}" min="0" max="10000" title="Stock">`;
+            if (qty === 0) {
+                statusHtml = `<span class="sd-item-status soldout">Agotado</span>`;
+            } else if (qty <= 3) {
+                statusHtml = `<span class="sd-item-status sd-stock-low">Poco stock</span>`;
+            } else {
+                statusHtml = `<span class="sd-item-status active">${esc(String(qty))} disp.</span>`;
+            }
+            metaHtml = `${esc(String(qty))} en stock`;
+        }
+
+        return `<div class="sd-item-card">
+            <div class="sd-item-image">${imgHtml}</div>
+            <div class="sd-item-body">
+                <div class="sd-item-title">${esc(item.title)}</div>
+                <div class="sd-item-price">${priceHtml}</div>
+                <div class="sd-item-meta">${metaHtml}</div>
+                ${stockHtml}
+            </div>
+            ${statusHtml}
+            <div class="sd-item-actions">
+                <button class="sd-item-action" data-action="edit-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Editar"><i class="fas fa-pen"></i></button>
+                <button class="sd-item-action sd-item-action-danger" data-action="delete-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                <button class="sd-item-action${featuredClass}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar"><i class="fas fa-star"></i></button>
+                <button class="sd-item-action boost-btn" data-action="boost-item" data-type="${type === 'services' ? 'service' : 'product'}" data-id="${esc(String(itemId))}" title="Impulsar"><i class="fas fa-rocket"></i></button>
+                <button class="sd-item-action" data-action="move-item-up" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-order="${esc(String(item.display_order || 0))}" title="Subir"><i class="fas fa-arrow-up"></i></button>
+            </div>
+        </div>`;
+    }
+
+    _buildEmptyListingState(type, esc) {
+        const isService = type === 'services';
+        return `<div class="sd-empty">
+            <div class="sd-empty-icon">${isService ? '\u{1f527}' : '\u{1f4e6}'}</div>
+            <div class="sd-empty-title">Sin ${isService ? 'servicios' : 'productos'} aun</div>
+            <div class="sd-empty-desc">${isService ? 'Agrega tu primer servicio y empieza a recibir reservas.' : 'Publica tu primer producto para que los clientes lo encuentren.'}</div>
+            <button class="sd-empty-cta" data-action="${isService ? 'add-service' : 'add-product'}"><i class="fas fa-plus"></i> Agregar ${isService ? 'servicio' : 'producto'}</button>
+        </div>`;
+    }
+
+    _buildRecentReviews(reviews, esc) {
+        if (!reviews || reviews.length === 0) return '';
+        const cards = reviews.slice(0, 3).map(r => {
+            const stars = '\u2605'.repeat(Math.round(Number(r.rating || 0)));
+            const initial = ((r.reviewer_name || r.user_name || 'U').charAt(0)).toUpperCase();
+            const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '';
+            const text = (r.comment || r.review_text || '').length > 120 ? (r.comment || r.review_text || '').substring(0, 120) + '...' : (r.comment || r.review_text || '');
+            return `<div class="sd-review-card">
+                <div class="sd-review-avatar">${esc(initial)}</div>
+                <div class="sd-review-body">
+                    <div class="sd-review-top">
+                        <span class="sd-review-author">${esc(r.reviewer_name || r.user_name || 'Usuario')}</span>
+                        <span class="sd-review-stars">${stars}</span>
+                        <span class="sd-review-date">${esc(dateStr)}</span>
+                    </div>
+                    ${text ? `<div class="sd-review-text">${esc(text)}</div>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+        return `<div class="sd-reviews">
+            <div class="sd-reviews-header"><i class="fas fa-comment-dots"></i> Resenas recientes</div>
+            ${cards}
+        </div>`;
+    }
+
+    _buildThemeBrowser(provider, esc) {
+        const currentTheme = provider.store_theme || 'dark';
+        const currentLayout = provider.store_layout || 'classic';
+        const themes = [
+            { id: 'dark', label: 'Oscuro', c1: '#8B5CF6', c2: '#06B6D4', bg: '#1e1b4b' },
+            { id: 'cyan', label: 'Cyan', c1: '#06B6D4', c2: '#14B8A6', bg: '#0c4a6e' },
+            { id: 'gold', label: 'Dorado', c1: '#F59E0B', c2: '#D97706', bg: '#451a03' },
+            { id: 'green', label: 'Verde', c1: '#10B981', c2: '#059669', bg: '#052e16' },
+            { id: 'coral', label: 'Coral', c1: '#EF4444', c2: '#F97316', bg: '#450a0a' },
+            { id: 'purple', label: 'Purpura', c1: '#A855F7', c2: '#7C3AED', bg: '#3b0764' }
+        ];
+        const layouts = [
+            { id: 'classic', label: 'Clasica', icon: '\u{1f4cb}', desc: 'Completa con todas las secciones' },
+            { id: 'showcase', label: 'Escaparate', icon: '\u{1f5bc}', desc: 'Galeria destacada' },
+            { id: 'compact', label: 'Tarjeta', icon: '\u{1f4c7}', desc: 'Minimalista y directa' }
+        ];
+
+        const themeCards = themes.map(t => {
+            const isActive = t.id === currentTheme;
+            return `<div class="sd-theme-card${isActive ? ' active' : ''}" data-theme-id="${esc(t.id)}">
+                <div class="sd-theme-preview" style="background:${t.bg};">
+                    <div class="sd-theme-preview-bar" style="background:linear-gradient(90deg,${t.c1},${t.c2});"></div>
+                    <div class="sd-theme-preview-dot" style="background:${t.c1};"></div>
+                    <div class="sd-theme-preview-lines">
+                        <div class="sd-theme-preview-line" style="width:30px;background:${t.c1};opacity:0.5;"></div>
+                        <div class="sd-theme-preview-line" style="width:20px;background:${t.c2};opacity:0.4;"></div>
+                    </div>
+                </div>
+                <div class="sd-theme-name">${esc(t.label)}</div>
+                <button class="sd-theme-btn ${isActive ? 'active-btn' : 'apply-btn'}" data-action="${isActive ? '' : 'sd-apply-theme'}" data-theme="${esc(t.id)}" ${isActive ? 'disabled' : ''}>${isActive ? 'Activo' : 'Aplicar'}</button>
+            </div>`;
+        }).join('');
+
+        const layoutCards = layouts.map(l => {
+            const isActive = l.id === currentLayout;
+            return `<div class="sd-layout-card${isActive ? ' active' : ''}">
+                <div class="sd-layout-icon">${l.icon}</div>
+                <div class="sd-layout-name">${esc(l.label)}</div>
+                <div class="sd-layout-desc">${esc(l.desc)}</div>
+                <button class="sd-theme-btn ${isActive ? 'active-btn' : 'apply-btn'}" data-action="${isActive ? '' : 'sd-apply-layout'}" data-layout="${esc(l.id)}" ${isActive ? 'disabled' : ''}>${isActive ? 'Activa' : 'Aplicar'}</button>
+            </div>`;
+        }).join('');
+
+        return `<div class="sd-themes" id="sdThemeBrowser">
+            <div class="sd-themes-header"><i class="fas fa-palette"></i> Personaliza tu Tienda</div>
+            <div class="sd-themes-sub">Elige un tema de color y un layout para tu tienda.</div>
+            <div class="sd-themes-label">Temas de color</div>
+            <div class="sd-themes-grid">${themeCards}</div>
+            <div class="sd-themes-label">Layouts</div>
+            <div class="sd-themes-grid">${layoutCards}</div>
+        </div>`;
+    }
+
+    async applyThemeInline(themeId) {
+        const validThemes = ['dark', 'cyan', 'gold', 'green', 'coral', 'purple'];
+        if (!validThemes.includes(themeId)) return;
+        try {
+            const res = await this.apiRequest('/api/marketplace/providers/me', {
+                method: 'PUT',
+                body: JSON.stringify({ store_theme: themeId })
+            });
+            if (res.success) {
+                this.showNotification('Tema aplicado', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al aplicar tema', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al aplicar tema', 'error');
+        }
+    }
+
+    async applyLayoutInline(layoutId) {
+        const validLayouts = ['classic', 'showcase', 'compact'];
+        if (!validLayouts.includes(layoutId)) return;
+        try {
+            const res = await this.apiRequest('/api/marketplace/providers/me', {
+                method: 'PUT',
+                body: JSON.stringify({ store_layout: layoutId })
+            });
+            if (res.success) {
+                this.showNotification('Layout aplicado', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al cambiar layout', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al cambiar layout', 'error');
+        }
+    }
+
+    switchListingTab(tabName) {
+        const container = document.querySelector('.sd-listings');
+        if (!container) return;
+        container.querySelectorAll('.sd-listings-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+        container.querySelectorAll('.sd-listings-content').forEach(c => c.classList.toggle('active', c.dataset.tab === tabName));
+    }
+
+    // ===================== CLASSIC LAYOUT (Legacy) =====================
     _renderDashboardClassic(container, provider, storeData, theme) {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
@@ -2605,7 +3529,9 @@ class MarketplaceSocialSystem {
             </div>`;
         }
 
+        const tierCard = this.renderTierProgressCard();
         container.innerHTML = `<div class="store-dashboard" data-layout="showcase" data-theme="${esc(theme)}">
+            ${tierCard}
             <div class="store-showcase-hero">
                 <div class="store-showcase-hero-content">
                     <div class="store-name">${esc(provider.business_name || 'Mi Tienda')} ${badges}</div>
@@ -2688,7 +3614,9 @@ class MarketplaceSocialSystem {
         if (showServices) actionBtns.push('<button class="store-compact-action-btn" data-action="add-service">+ Servicio</button>');
         if (showProducts) actionBtns.push('<button class="store-compact-action-btn" data-action="add-product">+ Producto</button>');
 
+        const tierCard = this.renderTierProgressCard();
         container.innerHTML = `<div class="store-dashboard" data-layout="compact" data-theme="${esc(theme)}">
+            ${tierCard}
             <div class="store-compact-card">
                 <div class="store-compact-avatar">${avatarHtml}</div>
                 <div class="store-compact-name">${esc(provider.business_name || 'Mi Tienda')}</div>
@@ -2960,132 +3888,6 @@ class MarketplaceSocialSystem {
         }
     }
 
-    loadOrdersData(type = 'purchases') {
-        const container = document.getElementById('ordersContent');
-        if (!container) return;
-        
-        // Mock orders data
-        const mockOrders = [
-            {
-                id: 'order_001',
-                product: 'Smartphone Premium',
-                seller: 'TechStore',
-                buyer: 'Mi Usuario',
-                amount: 850,
-                status: 'completed',
-                date: new Date('2024-02-10'),
-                type: 'purchase'
-            },
-            {
-                id: 'order_002',
-                product: 'Café Premium',
-                seller: 'Mi Tienda',
-                buyer: 'Ana Silva',
-                amount: 45,
-                status: 'pending',
-                date: new Date('2024-02-15'),
-                type: 'sale'
-            }
-        ];
-        
-        const filteredOrders = mockOrders.filter(order => 
-            type === 'purchases' ? order.type === 'purchase' : order.type === 'sale'
-        );
-        
-        container.innerHTML = filteredOrders.map(order => `
-            <div class="social-post">
-                <div class="post-header">
-                    <div class="user-avatar">${order.product.charAt(0)}</div>
-                    <div class="user-info">
-                        <div class="user-name">${order.product}</div>
-                        <div class="post-time">${type === 'purchases' ? 'Vendido por' : 'Comprado por'} ${type === 'purchases' ? order.seller : order.buyer}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #10B981;">${order.amount} LTD</div>
-                        <div style="font-size: 12px; color: ${order.status === 'completed' ? '#10B981' : '#F59E0B'};">
-                            ${order.status === 'completed' ? '✅ Completado' : '⏳ Pendiente'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-    
-    loadCommunityData() {
-        // Load community statistics and events
-        const topContributors = [
-            { name: 'María González', avatar: 'M', contributions: 45, reputation: 4.9 },
-            { name: 'Carlos Ruiz', avatar: 'C', contributions: 38, reputation: 4.8 },
-            { name: 'Ana Silva', avatar: 'A', contributions: 32, reputation: 4.7 }
-        ];
-        
-        const container = document.getElementById('topContributors');
-        if (container) {
-            container.innerHTML = topContributors.map(user => `
-                <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div class="user-avatar" style="width: 40px; height: 40px; font-size: 16px;">${user.avatar}</div>
-                        <div>
-                            <div style="font-weight: 600;">${user.name}</div>
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">${user.contributions} contribuciones</div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="color: #8B5CF6; font-weight: 600;">⭐ ${user.reputation}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
-    
-    loadReputationData() {
-        // Load user badges
-        const badges = [
-            { name: 'Primera Venta', icon: '🎯', earned: true },
-            { name: 'Vendedor Confiable', icon: '🛡️', earned: true },
-            { name: 'Cliente Frecuente', icon: '🛒', earned: true },
-            { name: 'Contributor Activo', icon: '💬', earned: true },
-            { name: 'Mentor Comunidad', icon: '👨‍🏫', earned: false },
-            { name: 'Influencer', icon: '⭐', earned: false }
-        ];
-        
-        const container = document.getElementById('userBadges');
-        if (container) {
-            container.innerHTML = badges.map(badge => `
-                <div style="text-align: center; padding: 15px; background: rgba(255, 255, 255, ${badge.earned ? '0.1' : '0.03'}); border-radius: 12px; opacity: ${badge.earned ? '1' : '0.5'};">
-                    <div style="font-size: 32px; margin-bottom: 8px;">${badge.icon}</div>
-                    <div style="font-size: 12px; font-weight: 600;">${badge.name}</div>
-                </div>
-            `).join('');
-        }
-        
-        // Load recent reviews
-        const reviews = [
-            { reviewer: 'Ana Silva', rating: 5, comment: 'Excelente vendedor, producto tal como se describe.', date: new Date('2024-02-10') },
-            { reviewer: 'Carlos Ruiz', rating: 5, comment: 'Muy profesional y rápida entrega.', date: new Date('2024-02-08') },
-            { reviewer: 'María González', rating: 4, comment: 'Buena experiencia, recomendado.', date: new Date('2024-02-05') }
-        ];
-        
-        const reviewsContainer = document.getElementById('recentReviews');
-        if (reviewsContainer) {
-            reviewsContainer.innerHTML = reviews.map(review => `
-                <div class="social-post">
-                    <div class="post-header">
-                        <div class="user-avatar">${review.reviewer.charAt(0)}</div>
-                        <div class="user-info">
-                            <div class="user-name">${review.reviewer}</div>
-                            <div class="post-time">${this.getTimeAgo(review.date)}</div>
-                        </div>
-                        <div style="color: #F59E0B;">
-                            ${'⭐'.repeat(review.rating)}
-                        </div>
-                    </div>
-                    <div class="post-content">${this.escapeHtml(review.comment)}</div>
-                </div>
-            `).join('');
-        }
-    }
-    
     async handleCreateProduct() {
         const overlay = document.getElementById('productCreateOverlay');
         if (!overlay) return;
@@ -3164,44 +3966,6 @@ class MarketplaceSocialSystem {
         }
     }
     
-    async handleCreatePost() {
-        try {
-            const content = document.getElementById('postContent').value;
-            const type = document.getElementById('postType').value;
-            
-            if (!content.trim()) {
-                this.showNotification('Por favor escribe algo para compartir', 'error');
-                return;
-            }
-            
-            // Simulate post creation
-            const newPost = {
-                id: 'post_' + Date.now(),
-                user: {
-                    id: this.currentUser.id,
-                    name: this.currentUser.name,
-                    avatar: this.currentUser.name.charAt(0).toUpperCase()
-                },
-                content: content,
-                type: type,
-                timestamp: new Date(),
-                likes: 0,
-                comments: 0,
-                shares: 0
-            };
-            
-            this.posts.unshift(newPost);
-            
-            this.closeCreatePostModal();
-            this.loadSocialFeed();
-            
-            this.showNotification('¡Post publicado exitosamente!', 'success');
-            
-        } catch (error) {
-            this.showNotification('Error al crear el post', 'error');
-        }
-    }
-    
     getCategoryIcon(category) {
         const icons = {
             electronics: '📱',
@@ -3218,11 +3982,6 @@ class MarketplaceSocialSystem {
         document.getElementById('productCreateOverlay')?.remove();
     }
     
-    closeCreatePostModal() {
-        document.getElementById('createPostModal').classList.remove('active');
-        document.getElementById('createPostForm').reset();
-    }
-
     closeBookingModal() {
         document.getElementById('bookingModal')?.classList.remove('active');
         document.getElementById('bookingForm')?.reset();
@@ -3567,6 +4326,8 @@ class MarketplaceSocialSystem {
             this.showNotification("No hay conversación activa", "error");
             return;
         }
+        // Tier gate: daily message limit
+        if (!this.checkTierGate('send_message')) return;
 
         const input = document.getElementById("messageInput");
         const message = input?.value?.trim();
@@ -4198,6 +4959,537 @@ class MarketplaceSocialSystem {
         });
     }
 
+    // ===================== EDIT PRODUCT MODAL =====================
+    openEditProductModal(productId) {
+        document.getElementById('productEditOverlay')?.remove();
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const overlay = document.createElement('div');
+        overlay.id = 'productEditOverlay';
+        overlay.className = 'store-edit-overlay';
+        overlay.innerHTML = `<div class="store-edit-modal">
+            <div class="store-edit-modal-header"><h3>Editar Producto</h3><button data-action="close-edit-product" class="store-edit-close">&times;</button></div>
+            <div class="store-create-form" id="editProductForm">
+                <div class="store-form-loading" id="epLoading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        this._loadEditProductData(productId);
+    }
+
+    async _loadEditProductData(productId) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        try {
+            const res = await this.apiRequest(`/api/marketplace/products/${productId}`);
+            if (!res.success) throw new Error('No encontrado');
+            const p = res.data.product || res.data;
+            const form = document.getElementById('editProductForm');
+            if (!form) return;
+            const images = Array.isArray(p.images) ? p.images : [];
+            const imgPreviews = images.map((img, i) => {
+                const url = typeof img === 'object' ? img.url : img;
+                return `<div class="store-image-preview"><img src="${esc(url)}" alt=""><button class="store-image-remove" data-action="remove-edit-product-image" data-index="${i}">&times;</button></div>`;
+            }).join('');
+            form.innerHTML = `
+                <div class="store-form-group"><label>Titulo *</label><input type="text" id="epTitle" maxlength="200" value="${esc(p.title || '')}"></div>
+                <div class="store-form-row">
+                    <div class="store-form-group"><label>Precio *</label><input type="number" id="epPrice" min="0" max="1000000" step="0.01" value="${esc(String(p.price || ''))}"></div>
+                    <div class="store-form-group"><label>Moneda</label><select id="epCurrency"><option value="HNL"${p.currency === 'HNL' ? ' selected' : ''}>HNL</option><option value="USD"${p.currency === 'USD' ? ' selected' : ''}>USD</option><option value="LTD"${p.currency === 'LTD' ? ' selected' : ''}>LTD</option></select></div>
+                    <div class="store-form-group"><label>Cantidad *</label><input type="number" id="epQuantity" min="0" max="10000" value="${esc(String(p.quantity || 0))}"></div>
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group"><label>Condicion</label><select id="epCondition"><option value="new"${p.condition === 'new' ? ' selected' : ''}>Nuevo</option><option value="like_new"${p.condition === 'like_new' ? ' selected' : ''}>Como nuevo</option><option value="used"${p.condition === 'used' ? ' selected' : ''}>Usado</option></select></div>
+                    <div class="store-form-group"><label>Ubicacion</label><input type="text" id="epLocation" maxlength="100" value="${esc(p.location || '')}"></div>
+                </div>
+                <div class="store-form-group"><label>Descripcion *</label><textarea id="epDescription" rows="4" maxlength="2000">${esc(p.description || '')}</textarea></div>
+                <div class="store-form-group"><label>Imagenes actuales</label><div class="store-image-previews" id="epImagePreviews">${imgPreviews}</div>
+                    <div class="store-image-dropzone" id="editProductDropzone"><input type="file" id="editProductFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none"><div class="store-image-dropzone-text">Agregar mas imagenes</div></div>
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group"><label><input type="checkbox" id="epShipping"${p.shipping_available ? ' checked' : ''}> Envio disponible</label></div>
+                    <div class="store-form-group" id="epShippingPriceGroup" style="display:${p.shipping_available ? 'block' : 'none'}"><label>Precio envio</label><input type="number" id="epShippingPrice" min="0" step="0.01" value="${esc(String(p.shipping_price || ''))}"></div>
+                </div>
+                <div class="store-form-group"><label>Comision referido (%)</label><select id="epReferral"><option value="0"${(!p.referral_commission_percent || p.referral_commission_percent == 0) ? ' selected' : ''}>Sin comision</option><option value="2"${p.referral_commission_percent == 2 ? ' selected' : ''}>2%</option><option value="5"${p.referral_commission_percent == 5 ? ' selected' : ''}>5%</option><option value="10"${p.referral_commission_percent == 10 ? ' selected' : ''}>10%</option><option value="15"${p.referral_commission_percent == 15 ? ' selected' : ''}>15%</option></select></div>
+                <input type="hidden" id="epProductId" value="${esc(String(productId))}">
+                <input type="hidden" id="epExistingImages" value='${JSON.stringify(images).replace(/'/g, "&#39;")}'>
+                <div class="store-form-actions">
+                    <button class="btn btn-secondary" data-action="close-edit-product">Cancelar</button>
+                    <button class="btn btn-primary" data-action="submit-edit-product"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>`;
+            this._setupDropzone('editProductDropzone', 'editProductFileInput', 'editProduct');
+            const shipCb = document.getElementById('epShipping');
+            if (shipCb) shipCb.addEventListener('change', () => {
+                const g = document.getElementById('epShippingPriceGroup');
+                if (g) g.style.display = shipCb.checked ? 'block' : 'none';
+            });
+        } catch (err) {
+            const form = document.getElementById('editProductForm');
+            if (form) form.innerHTML = '<div class="sd-empty"><div class="sd-empty-title">Error al cargar producto</div></div>';
+        }
+    }
+
+    async handleEditProduct() {
+        const productId = document.getElementById('epProductId')?.value;
+        const title = document.getElementById('epTitle')?.value?.trim();
+        const price = parseFloat(document.getElementById('epPrice')?.value);
+        const quantity = parseInt(document.getElementById('epQuantity')?.value);
+        const description = document.getElementById('epDescription')?.value?.trim();
+        if (!title || !price || isNaN(quantity) || !description) {
+            this.showNotification('Completa los campos obligatorios', 'error');
+            return;
+        }
+        let images = [];
+        try { images = JSON.parse(document.getElementById('epExistingImages')?.value || '[]'); } catch(e) {}
+        if (this._editProductImages?.length) {
+            const uploaded = await this._uploadImages(this._editProductImages, 'product');
+            if (uploaded) images = images.concat(uploaded);
+        }
+        try {
+            const res = await this.apiRequest(`/api/marketplace/products/${productId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    title, description, price, quantity,
+                    currency: document.getElementById('epCurrency')?.value || 'HNL',
+                    condition: document.getElementById('epCondition')?.value || 'new',
+                    location: document.getElementById('epLocation')?.value?.trim() || null,
+                    images,
+                    shipping_available: document.getElementById('epShipping')?.checked || false,
+                    shipping_price: parseFloat(document.getElementById('epShippingPrice')?.value) || 0,
+                    referral_commission_percent: parseInt(document.getElementById('epReferral')?.value) || 0
+                })
+            });
+            if (res.success) {
+                document.getElementById('productEditOverlay')?.remove();
+                this.showNotification('Producto actualizado', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al actualizar', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al actualizar producto', 'error');
+        }
+    }
+
+    // ===================== EDIT SERVICE MODAL =====================
+    openEditServiceModal(serviceId) {
+        document.getElementById('serviceEditOverlay')?.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'serviceEditOverlay';
+        overlay.className = 'store-edit-overlay';
+        overlay.innerHTML = `<div class="store-edit-modal">
+            <div class="store-edit-modal-header"><h3>Editar Servicio</h3><button data-action="close-edit-service" class="store-edit-close">&times;</button></div>
+            <div class="store-create-form" id="editServiceForm">
+                <div class="store-form-loading" id="esLoading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        this._loadEditServiceData(serviceId);
+    }
+
+    async _loadEditServiceData(serviceId) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        try {
+            const res = await this.apiRequest(`/api/marketplace/services/${serviceId}`);
+            if (!res.success) throw new Error('No encontrado');
+            const s = res.data.service || res.data;
+            const form = document.getElementById('editServiceForm');
+            if (!form) return;
+            const images = Array.isArray(s.images) ? s.images : [];
+            const imgPreviews = images.map((img, i) => {
+                const url = typeof img === 'object' ? img.url : img;
+                return `<div class="store-image-preview"><img src="${esc(url)}" alt=""><button class="store-image-remove" data-action="remove-edit-service-image" data-index="${i}">&times;</button></div>`;
+            }).join('');
+            const tags = Array.isArray(s.tags) ? s.tags.join(', ') : (s.tags || '');
+            form.innerHTML = `
+                <div class="store-form-group"><label>Titulo *</label><input type="text" id="esTitle" maxlength="200" value="${esc(s.title || '')}"></div>
+                <div class="store-form-group"><label>Descripcion Corta</label><input type="text" id="esShortDesc" maxlength="160" value="${esc(s.short_description || '')}"></div>
+                <div class="store-form-row">
+                    <div class="store-form-group"><label>Tipo de Precio *</label><select id="esPriceType"><option value="fixed"${s.price_type === 'fixed' ? ' selected' : ''}>Precio Fijo</option><option value="hourly"${s.price_type === 'hourly' ? ' selected' : ''}>Por Hora</option><option value="quote"${s.price_type === 'quote' ? ' selected' : ''}>Negociable</option><option value="free"${s.price_type === 'free' ? ' selected' : ''}>Gratis</option></select></div>
+                    <div class="store-form-group"><label>Moneda</label><select id="esCurrency"><option value="HNL"${(s.currency || 'HNL') === 'HNL' ? ' selected' : ''}>HNL</option><option value="USD"${s.currency === 'USD' ? ' selected' : ''}>USD</option><option value="LTD"${s.currency === 'LTD' ? ' selected' : ''}>LTD</option></select></div>
+                </div>
+                <div class="store-form-row">
+                    <div class="store-form-group"><label>Precio *</label><input type="number" id="esPrice" min="0" max="1000000" step="0.01" value="${esc(String(s.price || ''))}"></div>
+                    <div class="store-form-group"><label>Duracion (hrs)</label><input type="number" id="esDuration" min="0.5" max="720" step="0.5" value="${esc(String(s.duration_hours || 1))}"></div>
+                </div>
+                <div class="store-form-group"><label>Descripcion Completa *</label><textarea id="esDescription" rows="4" maxlength="2000">${esc(s.description || '')}</textarea></div>
+                <div class="store-form-group"><label>Imagenes actuales</label><div class="store-image-previews" id="esImagePreviews">${imgPreviews}</div>
+                    <div class="store-image-dropzone" id="editServiceDropzone"><input type="file" id="editServiceFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none"><div class="store-image-dropzone-text">Agregar mas imagenes</div></div>
+                </div>
+                <div class="store-form-group"><label>Etiquetas (separadas por coma)</label><input type="text" id="esTags" value="${esc(tags)}"></div>
+                <input type="hidden" id="esServiceId" value="${esc(String(serviceId))}">
+                <input type="hidden" id="esExistingImages" value='${JSON.stringify(images).replace(/'/g, "&#39;")}'>
+                <div class="store-form-actions">
+                    <button class="btn btn-secondary" data-action="close-edit-service">Cancelar</button>
+                    <button class="btn btn-primary" data-action="submit-edit-service"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>`;
+            this._setupDropzone('editServiceDropzone', 'editServiceFileInput', 'editService');
+        } catch (err) {
+            const form = document.getElementById('editServiceForm');
+            if (form) form.innerHTML = '<div class="sd-empty"><div class="sd-empty-title">Error al cargar servicio</div></div>';
+        }
+    }
+
+    async handleEditService() {
+        const serviceId = document.getElementById('esServiceId')?.value;
+        const title = document.getElementById('esTitle')?.value?.trim();
+        const price = parseFloat(document.getElementById('esPrice')?.value);
+        const description = document.getElementById('esDescription')?.value?.trim();
+        if (!title || !description) {
+            this.showNotification('Completa los campos obligatorios', 'error');
+            return;
+        }
+        let images = [];
+        try { images = JSON.parse(document.getElementById('esExistingImages')?.value || '[]'); } catch(e) {}
+        if (this._editServiceImages?.length) {
+            const uploaded = await this._uploadImages(this._editServiceImages, 'service');
+            if (uploaded) images = images.concat(uploaded);
+        }
+        const tagsRaw = document.getElementById('esTags')?.value || '';
+        const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+        try {
+            const res = await this.apiRequest(`/api/marketplace/services/${serviceId}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    title, description,
+                    short_description: document.getElementById('esShortDesc')?.value?.trim() || null,
+                    price_type: document.getElementById('esPriceType')?.value || 'fixed',
+                    price: price || 0,
+                    duration_hours: parseFloat(document.getElementById('esDuration')?.value) || 1,
+                    images, tags
+                })
+            });
+            if (res.success) {
+                document.getElementById('serviceEditOverlay')?.remove();
+                this.showNotification('Servicio actualizado', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al actualizar', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al actualizar servicio', 'error');
+        }
+    }
+
+    // ===================== DELETE ITEM =====================
+    async deleteItem(type, id) {
+        const confirmed = await this.showConfirm('Eliminar este listado? Esta accion no se puede deshacer.');
+        if (!confirmed) return;
+        try {
+            if (type === 'products') {
+                const res = await this.apiRequest(`/api/marketplace/products/${id}`, { method: 'DELETE' });
+                if (res.success) { this.showNotification('Producto eliminado', 'success'); this.loadMyStore(); }
+                else this.showNotification('Error al eliminar', 'error');
+            } else {
+                const res = await this.apiRequest(`/api/marketplace/services/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'inactive' }) });
+                if (res.success) { this.showNotification('Servicio desactivado', 'success'); this.loadMyStore(); }
+                else this.showNotification('Error al desactivar', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al eliminar', 'error');
+        }
+    }
+
+    // ===================== FEATURED BOOST =====================
+    async openBoostModal(itemType, itemId) {
+        const esc = this.escapeHtml.bind(this);
+        document.getElementById('boostOverlay')?.remove();
+
+        // Check active boosts for this item
+        let activeBoosts = [];
+        try {
+            const res = await this.apiRequest('/api/marketplace/featured-boost/active');
+            if (res.success) activeBoosts = res.data?.boosts || [];
+        } catch {}
+        const current = activeBoosts.find(b => b.item_type === itemType && String(b.item_id) === String(itemId));
+
+        // Fetch wallet balance
+        let balance = 0;
+        try {
+            const bal = await this.apiRequest('/api/wallet/balance');
+            balance = parseFloat(bal.data?.balance || bal.data?.crypto_balances?.LTD || bal.balance || 0);
+        } catch {}
+
+        const overlay = document.createElement('div');
+        overlay.id = 'boostOverlay';
+        overlay.className = 'boost-modal';
+        overlay.innerHTML = `<div class="boost-modal-content">
+            <div class="modal-header"><h2 class="modal-title"><i class="fas fa-rocket"></i> Impulsar Articulo</h2><button class="close-btn" data-action="close-boost-modal">&times;</button></div>
+            <div style="padding:20px;">
+                ${current ? `<div class="boost-active-badge"><i class="fas fa-check-circle"></i> Impulso activo — ${Math.ceil(parseFloat(current.remaining_days))} dias restantes</div>` : ''}
+                <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:16px;">Tu articulo aparecera destacado en la tienda y resultados de busqueda.</p>
+                <div class="boost-tiers">
+                    <div class="boost-tier-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="3">
+                        <div class="boost-tier-days">3 dias</div>
+                        <div class="boost-tier-price">25 LTD</div>
+                    </div>
+                    <div class="boost-tier-card boost-tier-recommended" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="7">
+                        <div class="boost-tier-badge">Recomendado</div>
+                        <div class="boost-tier-days">7 dias</div>
+                        <div class="boost-tier-price">50 LTD</div>
+                    </div>
+                    <div class="boost-tier-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="14">
+                        <div class="boost-tier-days">14 dias</div>
+                        <div class="boost-tier-price">100 LTD</div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-top:12px;font-size:13px;color:rgba(255,255,255,0.5);">Saldo LTD: <strong>${balance.toFixed(2)}</strong></div>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    async _purchaseBoost(itemType, itemId, duration) {
+        try {
+            const res = await this.apiRequest('/api/marketplace/featured-boost', {
+                method: 'POST',
+                body: JSON.stringify({ item_type: itemType, item_id: parseInt(itemId), duration })
+            });
+            if (res.success) {
+                document.getElementById('boostOverlay')?.remove();
+                this.showNotification('Articulo impulsado exitosamente', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification(res.error || 'Error al impulsar', 'error');
+            }
+        } catch (err) {
+            this.showNotification(err.message || 'Error al procesar el impulso', 'error');
+        }
+    }
+
+    // ===================== CHAIN BALANCE =====================
+    async _fetchChainBalance() {
+        try {
+            const res = await this.apiRequest('/api/marketplace/wallet/chain-balance');
+            return res.success ? res.data : null;
+        } catch { return null; }
+    }
+
+    async _linkChainAddress(address) {
+        try {
+            const res = await this.apiRequest('/api/marketplace/wallet/link-address', {
+                method: 'PUT',
+                body: JSON.stringify({ wallet_address: address })
+            });
+            if (res.success) {
+                this.showNotification('Direccion vinculada', 'success');
+                return true;
+            }
+            this.showNotification(res.error || 'Error al vincular', 'error');
+            return false;
+        } catch (err) {
+            this.showNotification(err.message || 'Error al vincular', 'error');
+            return false;
+        }
+    }
+
+    _buildChainBalanceCard(esc) {
+        return `<div class="chain-balance-card" id="chainBalanceCard">
+            <div class="chain-balance-header"><i class="fas fa-link"></i> La Tanda Chain (on-chain)</div>
+            <div class="chain-balance-body" id="chainBalBody">
+                <div style="text-align:center;color:rgba(255,255,255,0.5);padding:12px;"><i class="fas fa-spinner fa-spin"></i> Consultando...</div>
+            </div>
+        </div>`;
+    }
+
+    async _loadChainBalance() {
+        const body = document.getElementById('chainBalBody');
+        if (!body) return;
+        const data = await this._fetchChainBalance();
+        const esc = this.escapeHtml.bind(this);
+        if (!data || data.wallet_address === null) {
+            body.innerHTML = `<div class="chain-link-form">
+                <p style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;">Vincula tu direccion de La Tanda Chain</p>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="chainAddrInput" class="chain-link-input" placeholder="ltd1..." maxlength="59">
+                    <button class="btn btn-primary" id="chainLinkBtn" style="white-space:nowrap;padding:6px 12px;font-size:13px;">Vincular</button>
+                </div>
+            </div>`;
+            document.getElementById('chainLinkBtn')?.addEventListener('click', async () => {
+                const addr = document.getElementById('chainAddrInput')?.value?.trim();
+                if (!addr) return;
+                const ok = await this._linkChainAddress(addr);
+                if (ok) this._loadChainBalance();
+            });
+        } else if (data.chain_balance === null) {
+            body.innerHTML = `<div style="text-align:center;padding:8px;">
+                <div class="chain-address">${esc(data.wallet_address)}</div>
+                <div style="color:rgba(255,255,255,0.5);font-size:12px;">Cadena no disponible</div>
+            </div>`;
+        } else {
+            body.innerHTML = `<div style="text-align:center;padding:8px;">
+                <div style="font-size:22px;font-weight:700;color:#10B981;">${parseFloat(data.chain_balance).toLocaleString('es-HN', { minimumFractionDigits: 2 })} LTD</div>
+                <div class="chain-address">${esc(data.wallet_address)}</div>
+                <button class="chain-refresh-btn" id="chainRefreshBtn" title="Actualizar"><i class="fas fa-sync-alt"></i></button>
+            </div>`;
+            document.getElementById('chainRefreshBtn')?.addEventListener('click', () => this._loadChainBalance());
+        }
+    }
+
+    // ===================== REFERRAL DASHBOARD =====================
+    _buildReferralDashboard(esc) {
+        return `<div class="sd-section" id="referralDashboard">
+            <div class="sd-section-header"><i class="fas fa-users"></i> Referidos</div>
+            <div id="referralDashBody" style="padding:12px;text-align:center;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>`;
+    }
+
+    async _loadReferralDashboard() {
+        const body = document.getElementById('referralDashBody');
+        if (!body) return;
+        try {
+            const [statsRes, codeRes] = await Promise.all([
+                this.apiRequest('/api/marketplace/referrals/stats'),
+                this.apiRequest('/api/marketplace/referrals/code')
+            ]);
+            const stats = statsRes.data || statsRes;
+            const code = codeRes.data?.referral_code || codeRes.referral_code || '';
+            const totalEarnings = parseFloat(stats.total_earnings || 0).toFixed(2);
+            const totalConversions = parseInt(stats.total_conversions || 0);
+            const pendingEarnings = parseFloat(stats.pending_earnings || 0).toFixed(2);
+            const esc = this.escapeHtml.bind(this);
+            body.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                    <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;text-align:center;">
+                        <div style="font-size:18px;font-weight:700;color:#10B981;">${totalEarnings} LTD</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.6);">Ganancias totales</div>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:8px;padding:10px;text-align:center;">
+                        <div style="font-size:18px;font-weight:700;color:#06B6D4;">${totalConversions}</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.6);">Conversiones</div>
+                    </div>
+                </div>
+                ${code ? `<div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;">
+                    <code style="flex:1;font-size:13px;color:#F59E0B;">${esc(code)}</code>
+                    <button class="btn" id="copyRefCode" style="padding:4px 10px;font-size:12px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);border-radius:6px;color:#F59E0B;cursor:pointer;"><i class="fas fa-copy"></i></button>
+                </div>` : ''}`;
+            document.getElementById('copyRefCode')?.addEventListener('click', () => {
+                navigator.clipboard.writeText(code).then(() => this.showNotification('Codigo copiado', 'success')).catch(() => {});
+            });
+        } catch {
+            body.innerHTML = '<div style="color:rgba(255,255,255,0.5);font-size:13px;">Error al cargar referidos</div>';
+        }
+    }
+
+    // ===================== ORDERS TAB =====================
+    _buildOrdersTab(orders, esc) {
+        const statusLabels = { pending: 'Pendiente', paid: 'Pagado', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado', refunded: 'Reembolsado' };
+        const statusColors = { pending: 'pending', paid: 'paid', shipped: 'shipped', delivered: 'delivered', cancelled: 'cancelled', refunded: 'refunded' };
+        if (!orders || orders.length === 0) {
+            return `<div class="sd-empty"><div class="sd-empty-icon"><i class="fas fa-shopping-bag"></i></div><div class="sd-empty-title">No tienes pedidos aun</div><div class="sd-empty-desc">Cuando alguien compre tus productos, los veras aqui.</div></div>`;
+        }
+        const filterHtml = `<div class="sd-order-filter-row"><select class="sd-order-filter" data-action="filter-orders">
+            <option value="all">Todos</option><option value="pending">Pendientes</option><option value="paid">Pagados</option><option value="shipped">Enviados</option><option value="delivered">Entregados</option><option value="cancelled">Cancelados</option></select></div>`;
+        const cards = orders.map(o => {
+            const imgSrc = o.product_images && o.product_images[0] ? (typeof o.product_images[0] === 'object' ? o.product_images[0].url : o.product_images[0]) : null;
+            const imgHtml = imgSrc ? `<img src="${esc(imgSrc)}" alt="" class="sd-order-img">` : `<div class="sd-order-img sd-order-img-placeholder"><i class="fas fa-box"></i></div>`;
+            const dateStr = o.created_at ? new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            const statusClass = statusColors[o.status] || 'pending';
+            const statusLabel = statusLabels[o.status] || esc(o.status);
+            let actionsHtml = '';
+            if (o.status === 'pending') {
+                actionsHtml = `<button class="sd-order-btn sd-order-btn-confirm" data-action="update-order-status" data-order-id="${esc(String(o.id))}" data-new-status="paid">Confirmar Pago</button>`;
+            } else if (o.status === 'paid') {
+                actionsHtml = `<div class="sd-order-tracking"><input type="text" class="sd-order-tracking-input" placeholder="# Seguimiento (opcional)" data-order-id="${esc(String(o.id))}"><button class="sd-order-btn sd-order-btn-ship" data-action="update-order-status" data-order-id="${esc(String(o.id))}" data-new-status="shipped">Enviar</button></div>`;
+            } else if (o.status === 'shipped') {
+                actionsHtml = `<button class="sd-order-btn sd-order-btn-deliver" data-action="update-order-status" data-order-id="${esc(String(o.id))}" data-new-status="delivered">Confirmar Entrega</button>`;
+            }
+            return `<div class="sd-order-card" data-order-status="${esc(o.status)}">
+                ${imgHtml}
+                <div class="sd-order-info">
+                    <div class="sd-order-product">${esc(o.product_title || 'Producto')}</div>
+                    <div class="sd-order-buyer"><i class="fas fa-user"></i> ${esc(o.buyer_name || 'Comprador')}</div>
+                    <div class="sd-order-date">${esc(dateStr)}</div>
+                </div>
+                <div class="sd-order-right">
+                    <div class="sd-order-amount">${esc(String(o.quantity || 1))} x L. ${esc(String(parseFloat(o.unit_price || 0).toLocaleString('es-HN')))}</div>
+                    <div class="sd-order-total">L. ${esc(String(parseFloat(o.total_price || 0).toLocaleString('es-HN')))}</div>
+                    <span class="sd-order-status sd-order-${statusClass}">${statusLabel}</span>
+                </div>
+                ${actionsHtml ? `<div class="sd-order-actions">${actionsHtml}</div>` : ''}
+            </div>`;
+        }).join('');
+        return filterHtml + `<div class="sd-orders-list" id="sdOrdersList">${cards}</div>`;
+    }
+
+    async handleUpdateOrderStatus(orderId, newStatus) {
+        let trackingNumber = null;
+        if (newStatus === 'shipped') {
+            const input = document.querySelector(`.sd-order-tracking-input[data-order-id="${orderId}"]`);
+            trackingNumber = input?.value?.trim() || null;
+        }
+        try {
+            const res = await this.apiRequest(`/api/marketplace/product-orders/${orderId}/status`, {
+                method: 'PUT',
+                body: JSON.stringify({ status: newStatus, tracking_number: trackingNumber })
+            });
+            if (res.success) {
+                this.showNotification('Estado actualizado', 'success');
+                this.loadMyStore();
+            } else {
+                this.showNotification('Error al actualizar pedido', 'error');
+            }
+        } catch (err) {
+            this.showNotification('Error al actualizar pedido', 'error');
+        }
+    }
+
+    filterOrders(status) {
+        const list = document.getElementById('sdOrdersList');
+        if (!list) return;
+        list.querySelectorAll('.sd-order-card').forEach(card => {
+            if (status === 'all' || card.dataset.orderStatus === status) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // ===================== SELLER ANALYTICS =====================
+    _buildRevenueChart(dailyData, esc) {
+        if (!dailyData || dailyData.length === 0) {
+            return `<div class="sd-chart-empty">Sin ventas en los ultimos 30 dias</div>`;
+        }
+        const maxRev = Math.max(...dailyData.map(d => parseFloat(d.revenue) || 0), 1);
+        const bars = dailyData.map((d, i) => {
+            const rev = parseFloat(d.revenue) || 0;
+            const heightPct = Math.max(2, (rev / maxRev) * 100);
+            const dateLabel = new Date(d.date + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+            const showLabel = i % Math.max(1, Math.floor(dailyData.length / 6)) === 0;
+            return `<div class="sd-chart-col">
+                <div class="sd-chart-bar" style="height:${heightPct}%" title="L. ${rev.toLocaleString('es-HN')} - ${dateLabel}">
+                    <span class="sd-chart-tooltip">L. ${rev.toLocaleString('es-HN')}<br>${esc(dateLabel)}</span>
+                </div>
+                ${showLabel ? `<span class="sd-chart-label">${esc(dateLabel)}</span>` : '<span class="sd-chart-label"></span>'}
+            </div>`;
+        }).join('');
+        return `<div class="sd-chart">
+            <div class="sd-chart-ymax">L. ${maxRev.toLocaleString('es-HN')}</div>
+            <div class="sd-chart-bars">${bars}</div>
+        </div>`;
+    }
+
+    _buildTopProductsTable(products, esc) {
+        if (!products || products.length === 0 || products.every(p => parseInt(p.total_orders) === 0)) {
+            return `<div class="sd-chart-empty">Sin productos vendidos aun</div>`;
+        }
+        const rankColors = ['sd-top-rank-1', 'sd-top-rank-2', 'sd-top-rank-3'];
+        const rows = products.filter(p => parseInt(p.total_orders) > 0).slice(0, 5).map((p, i) => {
+            return `<tr>
+                <td class="sd-top-rank ${rankColors[i] || ''}">${i + 1}</td>
+                <td>${esc(p.title)}</td>
+                <td>${esc(String(p.total_orders))}</td>
+                <td>L. ${parseFloat(p.total_revenue || 0).toLocaleString('es-HN')}</td>
+            </tr>`;
+        }).join('');
+        return `<table class="sd-top-products">
+            <thead><tr><th>#</th><th>Producto</th><th>Pedidos</th><th>Ingresos</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    }
+
     debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -4238,20 +5530,6 @@ function showCreateServiceModal() {
 
 function closeCreateServiceModal() {
     document.getElementById('serviceCreateOverlay')?.remove();
-}
-
-function showCreatePostModal() {
-    if (window.marketplaceSystem?.isGuest) {
-        window.marketplaceSystem.showLoginPrompt('crear publicaciones');
-        return;
-    }
-    document.getElementById('createPostModal').classList.add('active');
-}
-
-function closeCreatePostModal() {
-    if (window.marketplaceSystem) {
-        window.marketplaceSystem.closeCreatePostModal();
-    }
 }
 
 function viewProduct(productId) {
@@ -4321,10 +5599,11 @@ async function buyProduct(productId) {
                 <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;margin-bottom:20px;text-align:center;">
                     <div style="font-size:13px;color:rgba(255,255,255,0.7);">Total</div>
                     <div id="purchaseTotal" style="font-size:28px;font-weight:700;color:#10B981;">${ms.formatPrice(unitPrice, cur)}</div>
+                    <div id="purchaseCommission" class="mc-commission-line" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;"></div>
                 </div>
                 <div style="display:flex;gap:12px;">
-                    <button class="btn btn-secondary" id="purchaseCancelBtn" style="flex:1;">Cancelar</button>
-                    <button class="btn btn-primary" id="purchaseConfirmBtn" style="flex:1;">Confirmar Compra</button>
+                    <button class="btn btn-secondary" id="purchaseAddCartBtn" style="flex:1;"><i class="fas fa-cart-plus"></i> Al Carrito</button>
+                    <button class="btn btn-primary" id="purchaseConfirmBtn" style="flex:1;">Comprar Ahora</button>
                 </div>
             </div>
         </div>
@@ -4332,15 +5611,34 @@ async function buyProduct(productId) {
     document.body.appendChild(modal);
 
     const totalEl = document.getElementById('purchaseTotal');
+    const commEl = document.getElementById('purchaseCommission');
     const qtyEl = document.getElementById('purchaseQty');
-    qtyEl.addEventListener('change', () => {
-        totalEl.textContent = ms.formatPrice(unitPrice * parseInt(qtyEl.value), cur);
-    });
+    // Show platform commission info
+    const sellerTier = ms.userSubscription || 'free';
+    const commPercent = getTierLimitsClient(sellerTier).platform_commission || 0;
+    function updateCommissionDisplay() {
+        const total = unitPrice * parseInt(qtyEl.value);
+        totalEl.textContent = ms.formatPrice(total, cur);
+        if (commPercent > 0) {
+            const fee = Math.round(total * commPercent) / 100;
+            commEl.textContent = 'Comision de plataforma: ' + commPercent + '% (L. ' + fee.toFixed(2) + ')';
+        } else {
+            commEl.innerHTML = '<span class="mc-commission-zero">Sin comision</span>';
+        }
+    }
+    updateCommissionDisplay();
+    qtyEl.addEventListener('change', updateCommissionDisplay);
 
     const closeModal = () => modal.remove();
     document.getElementById('purchaseClose').addEventListener('click', closeModal);
-    document.getElementById('purchaseCancelBtn').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    // Add to cart button
+    document.getElementById('purchaseAddCartBtn').addEventListener('click', () => {
+        const qty = parseInt(qtyEl.value) || 1;
+        ms._addToCart(product, qty);
+        closeModal();
+    });
 
     document.getElementById('purchaseConfirmBtn').addEventListener('click', async () => {
         const confirmBtn = document.getElementById('purchaseConfirmBtn');
@@ -4888,37 +6186,12 @@ function shareToTwitter(link, title) {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${link}`, '_blank');
 }
 
-// Subscription functions
-function showUpgradeModal() {
-    document.getElementById('subscriptionModal')?.classList.add('active');
-}
-
-function closeUpgradeModal() {
-    document.getElementById('upgradeModal')?.classList.remove('active');
-}
-
-function closeSubscriptionModal() {
-    document.getElementById('subscriptionModal')?.classList.remove('active');
-}
-
-function selectPlan(tier) {
-    window.marketplaceSystem?.showNotification(`Plan ${tier} seleccionado. Redirigiendo al pago...`, 'success');
-    closeSubscriptionModal();
-}
-
 function closeLoginPromptModal() {
     document.getElementById('loginPromptModal')?.classList.remove('active');
 }
 
 function goToLogin() {
     window.location.href = 'auth-enhanced.html?redirect=marketplace-social.html';
-}
-
-// Filter services
-function filterServices() {
-    if (window.marketplaceSystem) {
-        window.marketplaceSystem.filterServices();
-    }
 }
 
 // Add CSS animations
@@ -4983,6 +6256,16 @@ function setupMarketplaceDelegatedListeners() {
             case 'share-service': e.stopPropagation(); if (typeof showShareModal === 'function') showShareModal(id); break;
             case 'view-product': if (typeof viewProduct === 'function') viewProduct(id); break;
             case 'buy-product': e.stopPropagation(); if (typeof buyProduct === 'function') buyProduct(id); break;
+            case 'add-to-cart': {
+                e.stopPropagation();
+                const msCart = window.marketplaceSystem;
+                if (!msCart) break;
+                if (msCart.isGuest) { msCart.showLoginPrompt('agregar al carrito'); break; }
+                const cartProduct = msCart.products?.find(p => String(p.id) === String(id) || String(p.productId) === String(id));
+                if (cartProduct) msCart._addToCart(cartProduct, 1);
+                else msCart.showNotification('Producto no encontrado', 'error');
+                break;
+            }
             case 'share-product': e.stopPropagation(); if (typeof showShareModal === 'function') showShareModal(id, 'product'); break;
             case 'toggle-like': if (typeof toggleLike === 'function') toggleLike(id); break;
             case 'show-comments': if (typeof showComments === 'function') showComments(id); break;
@@ -4999,7 +6282,9 @@ function setupMarketplaceDelegatedListeners() {
                 const ms = window.marketplaceSystem;
                 if (!ms) break;
                 if (id === 'mixed') {
-                    ms.showNotification('Tipo Mixta disponible proximamente con Premium', 'info');
+                    if (!ms.checkTierGate('mixed_store')) break;
+                    ms._selectedShopType = id;
+                    ms.renderStoreLayoutPicker();
                 } else if (id === 'services' || id === 'products') {
                     ms._selectedShopType = id;
                     ms.renderStoreLayoutPicker();
@@ -5013,7 +6298,9 @@ function setupMarketplaceDelegatedListeners() {
             }
             case 'select-layout': {
                 const msL = window.marketplaceSystem;
+                const layoutLabels = { classic: 'Clasica', showcase: 'Escaparate', compact: 'Tarjeta' };
                 if (msL && (id === 'classic' || id === 'showcase' || id === 'compact')) {
+                    if (!msL.checkTierGate('select_layout', { layout: id, layoutLabel: layoutLabels[id] })) break;
                     msL._selectedLayout = id;
                     msL.renderStoreThemePicker();
                 }
@@ -5027,7 +6314,9 @@ function setupMarketplaceDelegatedListeners() {
             case 'select-theme': {
                 const msT = window.marketplaceSystem;
                 const validThemes = ['dark', 'cyan', 'gold', 'green', 'coral', 'purple'];
+                const themeLabels = { dark: 'Oscuro', cyan: 'Cyan', gold: 'Dorado', green: 'Verde', coral: 'Coral', purple: 'Purpura' };
                 if (msT && validThemes.includes(id)) {
+                    if (!msT.checkTierGate('select_theme', { theme: id, themeLabel: themeLabels[id] })) break;
                     msT._selectedTheme = id;
                     msT.renderStoreOnboardingForm();
                 }
@@ -5060,6 +6349,7 @@ function setupMarketplaceDelegatedListeners() {
                 if (ms3?._currentProvider?.shop_type === 'products') {
                     ms3.showNotification('Tu tienda es de tipo Productos. No puedes crear servicios.', 'error');
                 } else if (ms3) {
+                    if (!ms3.checkTierGate('create_listing')) break;
                     ms3.openCreateServiceModal();
                 }
                 break;
@@ -5070,6 +6360,7 @@ function setupMarketplaceDelegatedListeners() {
                 if (ms4?._currentProvider?.shop_type === 'services') {
                     ms4.showNotification('Tu tienda es de tipo Servicios. No puedes crear productos.', 'error');
                 } else if (ms4) {
+                    if (!ms4.checkTierGate('create_listing')) break;
                     ms4.openCreateProductModal();
                 }
                 break;
@@ -5080,6 +6371,89 @@ function setupMarketplaceDelegatedListeners() {
             }
             case 'close-create-product': {
                 document.getElementById('productCreateOverlay')?.remove();
+                break;
+            }
+            case 'edit-item': {
+                const msEdit = window.marketplaceSystem;
+                if (!msEdit) break;
+                const editType = btn.dataset.type;
+                const editId = btn.dataset.id;
+                if (editType === 'products') msEdit.openEditProductModal(editId);
+                else if (editType === 'services') msEdit.openEditServiceModal(editId);
+                break;
+            }
+            case 'delete-item': {
+                const msDel = window.marketplaceSystem;
+                if (!msDel) break;
+                msDel.deleteItem(btn.dataset.type, btn.dataset.id);
+                break;
+            }
+            case 'boost-item': {
+                const msBoost = window.marketplaceSystem;
+                if (!msBoost) break;
+                msBoost.openBoostModal(btn.dataset.type, btn.dataset.id);
+                break;
+            }
+            case 'close-boost-modal': {
+                document.getElementById('boostOverlay')?.remove();
+                break;
+            }
+            case 'boost-select-tier': {
+                const msBS = window.marketplaceSystem;
+                if (!msBS) break;
+                msBS._purchaseBoost(btn.dataset.type, btn.dataset.id, parseInt(btn.dataset.duration));
+                break;
+            }
+            case 'close-edit-product': {
+                document.getElementById('productEditOverlay')?.remove();
+                break;
+            }
+            case 'close-edit-service': {
+                document.getElementById('serviceEditOverlay')?.remove();
+                break;
+            }
+            case 'submit-edit-product': {
+                window.marketplaceSystem?.handleEditProduct();
+                break;
+            }
+            case 'submit-edit-service': {
+                window.marketplaceSystem?.handleEditService();
+                break;
+            }
+            case 'remove-edit-product-image': {
+                const epIdx = parseInt(btn.dataset.index);
+                const epImagesEl = document.getElementById('epExistingImages');
+                if (!isNaN(epIdx) && epImagesEl) {
+                    try {
+                        const imgs = JSON.parse(epImagesEl.value || '[]');
+                        imgs.splice(epIdx, 1);
+                        epImagesEl.value = JSON.stringify(imgs);
+                        btn.closest('.store-image-preview')?.remove();
+                    } catch(e) {}
+                }
+                break;
+            }
+            case 'remove-edit-service-image': {
+                const esIdx = parseInt(btn.dataset.index);
+                const esImagesEl = document.getElementById('esExistingImages');
+                if (!isNaN(esIdx) && esImagesEl) {
+                    try {
+                        const imgs = JSON.parse(esImagesEl.value || '[]');
+                        imgs.splice(esIdx, 1);
+                        esImagesEl.value = JSON.stringify(imgs);
+                        btn.closest('.store-image-preview')?.remove();
+                    } catch(e) {}
+                }
+                break;
+            }
+            case 'update-order-status': {
+                const orderId = btn.dataset.orderId;
+                const newStatus = btn.dataset.newStatus;
+                if (orderId && newStatus) window.marketplaceSystem?.handleUpdateOrderStatus(orderId, newStatus);
+                break;
+            }
+            case 'filter-orders': {
+                // Handled by change event below
                 break;
             }
             case 'submit-service': {
@@ -5109,6 +6483,39 @@ function setupMarketplaceDelegatedListeners() {
                         window.marketplaceSystem?.showNotification('No se pudo copiar', 'error');
                     });
                 }
+                break;
+            }
+            case 'sd-switch-tab': {
+                const tabName = btn.dataset.tab;
+                if (tabName) window.marketplaceSystem?.switchListingTab(tabName);
+                break;
+            }
+            case 'sd-apply-theme': {
+                const themeId = btn.dataset.theme;
+                if (themeId) window.marketplaceSystem?.applyThemeInline(themeId);
+                break;
+            }
+            case 'sd-apply-layout': {
+                const layoutId = btn.dataset.layout || btn.closest('[data-layout]')?.dataset.layout;
+                if (layoutId) window.marketplaceSystem?.applyLayoutInline(layoutId);
+                break;
+            }
+            case 'sd-share-store': {
+                const shareUrl = btn.dataset.url;
+                if (shareUrl && navigator.share) {
+                    navigator.share({ title: 'Mi Tienda en La Tanda', url: shareUrl }).catch(() => {});
+                } else if (shareUrl && navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        window.marketplaceSystem?.showNotification('URL copiada al portapapeles', 'success');
+                    }).catch(() => {
+                        window.marketplaceSystem?.showNotification('No se pudo copiar', 'error');
+                    });
+                }
+                break;
+            }
+            case 'sd-scroll-themes': {
+                const themeBrowser = document.getElementById('sdThemeBrowser');
+                if (themeBrowser) themeBrowser.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 break;
             }
             case 'open-portfolio-maker': {
@@ -5207,7 +6614,10 @@ function setupMarketplaceDelegatedListeners() {
             case 'exp-sell-product': {
                 const msE2 = window.marketplaceSystem;
                 if (msE2?.isGuest) { msE2.showLoginPrompt('vender productos'); break; }
-                if (msE2) msE2.openCreateProductModal();
+                if (msE2) {
+                    if (!msE2.checkTierGate('create_listing')) break;
+                    msE2.openCreateProductModal();
+                }
                 break;
             }
             case 'exp-view-tienda': {
@@ -5232,13 +6642,169 @@ function setupMarketplaceDelegatedListeners() {
                 window.marketplaceSystem?.loadBookingsData();
                 break;
             }
+            case 'retry-purchases': {
+                window.marketplaceSystem?.loadMyPurchases();
+                break;
+            }
+            case 'mc-switch-tab': {
+                const mcTab = btn.dataset.mcTab;
+                if (mcTab) window.marketplaceSystem?.switchPurchaseTab(mcTab);
+                break;
+            }
+            case 'mc-order-detail': {
+                window.marketplaceSystem?.openOrderDetail(id);
+                break;
+            }
+            case 'mc-buyer-cancel': {
+                window.marketplaceSystem?.handleBuyerOrderAction(id, 'cancel');
+                break;
+            }
+            case 'mc-buyer-confirm': {
+                window.marketplaceSystem?.handleBuyerOrderAction(id, 'confirm_delivery');
+                break;
+            }
+            case 'mc-product-review': {
+                const prodId = btn.dataset.productId;
+                window.marketplaceSystem?.openProductReview(id, prodId);
+                break;
+            }
+            case 'mc-submit-review': {
+                const sOrderId = btn.dataset.orderId;
+                const sProdId = btn.dataset.productId;
+                window.marketplaceSystem?._submitProductReview(sOrderId, sProdId);
+                break;
+            }
+            case 'mc-close-review': {
+                document.getElementById('mcReviewOverlay')?.remove();
+                break;
+            }
+            case 'mc-open-dispute-form': {
+                const disputeOrderId = btn.dataset.orderId;
+                const disputeBookingId = btn.dataset.bookingId;
+                window.marketplaceSystem?.openDisputeModal(disputeOrderId, disputeBookingId);
+                break;
+            }
+            case 'mc-submit-dispute': {
+                window.marketplaceSystem?._submitDispute();
+                break;
+            }
+            case 'mc-close-dispute-form': {
+                document.getElementById('mcDisputeOverlay')?.remove();
+                break;
+            }
+            case 'mc-open-disputes': {
+                window.marketplaceSystem?.openDisputesList();
+                break;
+            }
+            case 'mc-view-dispute': {
+                window.marketplaceSystem?.openDisputeDetail(id);
+                break;
+            }
+            case 'mc-respond-dispute': {
+                window.marketplaceSystem?._respondToDispute(id);
+                break;
+            }
+            case 'mc-close-dispute': {
+                window.marketplaceSystem?._closeDispute(id);
+                break;
+            }
+            case 'mc-close-detail': {
+                document.getElementById('mcDetailOverlay')?.remove();
+                break;
+            }
+            case 'open-cart': {
+                window.marketplaceSystem?.openCartModal();
+                break;
+            }
+            case 'mc-close-cart': {
+                document.getElementById('mcCartOverlay')?.remove();
+                break;
+            }
+            case 'mc-cart-remove': {
+                const rmPid = btn.dataset.productId;
+                if (rmPid) { window.marketplaceSystem?._removeFromCart(rmPid); window.marketplaceSystem?.openCartModal(); }
+                break;
+            }
+            case 'mc-checkout': {
+                window.marketplaceSystem?.handleCartCheckout();
+                break;
+            }
             case 'retry-conversations': {
                 window.marketplaceSystem?.loadConversations();
+                break;
+            }
+            // Tier/subscription actions
+            case 'close-tier-prompt': {
+                btn.closest('.tier-upgrade-prompt')?.remove();
+                break;
+            }
+            case 'open-upgrade-modal': {
+                const msUp = window.marketplaceSystem;
+                if (msUp && !msUp.isGuest) msUp.openUpgradeModal();
+                else if (msUp) msUp.showLoginPrompt('ver planes');
+                break;
+            }
+            case 'close-upgrade-modal': {
+                btn.closest('.upgrade-overlay')?.remove();
+                break;
+            }
+            case 'select-upgrade-tier': {
+                window.marketplaceSystem?.selectUpgradeTier(id);
+                break;
+            }
+            case 'upgrade-back-to-tiers': {
+                const tiersStep = document.getElementById('upgradeTiersStep');
+                const payStep = document.getElementById('upgradePaymentStep');
+                if (tiersStep) tiersStep.style.display = 'block';
+                if (payStep) payStep.style.display = 'none';
+                break;
+            }
+            case 'confirm-upgrade': {
+                window.marketplaceSystem?.confirmUpgrade();
                 break;
             }
         }
     });
 }
+
+// Delegated change handlers for order filters and inline stock
+document.addEventListener('change', (e) => {
+    // Buyer order status filter
+    if (e.target.classList.contains('mc-filter')) {
+        window.marketplaceSystem?._filterBuyerOrders(e.target.value);
+        return;
+    }
+    // Cart quantity change
+    if (e.target.dataset.action === 'mc-cart-qty') {
+        const pid = e.target.dataset.productId;
+        const qty = parseInt(e.target.value) || 1;
+        if (pid) {
+            window.marketplaceSystem?._updateCartQty(pid, qty);
+            window.marketplaceSystem?.openCartModal();
+        }
+        return;
+    }
+    // Order filter dropdown
+    if (e.target.classList.contains('sd-order-filter')) {
+        window.marketplaceSystem?.filterOrders(e.target.value);
+        return;
+    }
+    // Inline stock update
+    if (e.target.classList.contains('sd-inline-stock')) {
+        const ms = window.marketplaceSystem;
+        if (!ms) return;
+        const productId = e.target.dataset.productId;
+        const newQty = parseInt(e.target.value);
+        if (!productId || isNaN(newQty) || newQty < 0 || newQty > 10000) return;
+        ms.apiRequest(`/api/marketplace/products/${productId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ quantity: newQty })
+        }).then(res => {
+            if (res.success) ms.showNotification('Stock actualizado', 'success');
+            else ms.showNotification('Error al actualizar stock', 'error');
+        }).catch(() => ms.showNotification('Error al actualizar stock', 'error'));
+    }
+});
 
 // Initialize the system when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
