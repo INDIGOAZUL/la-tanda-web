@@ -32,12 +32,15 @@ const SocialFeed = {
 
     tabs: [
         { id: "todos", label: "Todos", icon: "fa-globe", filter: null },
+        { id: "siguiendo", label: "Siguiendo", icon: "fa-user-friends", filter: "following" },
         { id: "trending", label: "Trending", icon: "fa-fire", filter: "trending" },
         { id: "grupos", label: "Grupos", icon: "fa-users", filter: "group_created,group_joined" },
         { id: "mercado", label: "Mercado", icon: "fa-shopping-bag", filter: "product_posted" },
         { id: "loteria", label: "Loteria", icon: "fa-dice", filter: "lottery_result,prediction_shared" },
         { id: "logros", label: "Logros", icon: "fa-trophy", filter: "milestone" }
     ],
+
+    followingCount: 0, // Track number of users being followed
 
     eventTypes: {
         group_created: { icon: "fa-users", color: "#00FFFF", label: "Nuevo Grupo" },
@@ -57,6 +60,16 @@ const SocialFeed = {
             return;
         }
         this.loadCurrentUserId();
+
+        // Restore last selected tab from sessionStorage
+        const savedTab = sessionStorage.getItem('socialFeedTab');
+        if (savedTab && this.tabs.find(t => t.id === savedTab)) {
+            this.currentTab = savedTab;
+        }
+
+        // Load following count for badge
+        this.loadFollowingCount();
+
         this.render();
 
         // Check URL for hashtag filter
@@ -103,6 +116,43 @@ const SocialFeed = {
                 this.currentUserId = localStorage.getItem("user_id") || localStorage.getItem("userId") || null;
             }
 } catch (e) {
+        }
+    },
+
+    async loadFollowingCount() {
+        try {
+            const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken") || "";
+            if (!token) return;
+
+            const response = await fetch("/api/feed/social/following?limit=1&offset=0", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data && result.data.pagination) {
+                    this.followingCount = result.data.pagination.total || 0;
+                    // Update badge if already rendered
+                    this.updateFollowingBadge();
+                }
+            }
+        } catch (e) {
+            // Silently fail - badge will just not show count
+        }
+    },
+
+    updateFollowingBadge() {
+        const siguiendoTab = document.querySelector('.feed-tab[data-tab="siguiendo"]');
+        if (!siguiendoTab || this.followingCount === 0) return;
+
+        const badge = siguiendoTab.querySelector('.tab-badge');
+        if (badge) {
+            badge.textContent = this.followingCount;
+        } else {
+            const span = siguiendoTab.querySelector('span');
+            if (span) {
+                span.innerHTML = 'Siguiendo <span class="tab-badge">' + this.followingCount + '</span>';
+            }
         }
     },
 
@@ -813,6 +863,10 @@ const SocialFeed = {
             tab.classList.add("active");
 
             this.currentTab = tabId;
+
+            // Save tab preference to sessionStorage
+            sessionStorage.setItem('socialFeedTab', tabId);
+
             this.loadEvents(true);
         });
     },
@@ -1037,6 +1091,8 @@ const SocialFeed = {
             let url;
             if (tab.filter === "trending") {
                 url = "/api/feed/social/trending?limit=" + this.limit + "&offset=" + this.offset;
+            } else if (tab.filter === "following") {
+                url = "/api/feed/social/following?limit=" + this.limit + "&offset=" + this.offset;
             } else if (tab.filter) {
                 url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&types=" + tab.filter;
             } else {
@@ -1080,6 +1136,18 @@ const SocialFeed = {
 
         if (this.events.length === 0) {
             const tab = this.tabs.find(t => t.id === this.currentTab);
+
+            // Special empty state for Siguiendo tab
+            if (this.currentTab === "siguiendo") {
+                listEl.innerHTML =
+                    '<div class="social-feed-empty">' +
+                        '<i class="fas fa-user-friends"></i>' +
+                        '<p>Sigue a otros usuarios para ver sus publicaciones aqui</p>' +
+                        '<span>Descubre usuarios interesantes en el feed principal</span>' +
+                    '</div>';
+                return;
+            }
+
             listEl.innerHTML =
                 '<div class="social-feed-empty">' +
                     '<i class="fas ' + (tab ? tab.icon : 'fa-inbox') + '"></i>' +
