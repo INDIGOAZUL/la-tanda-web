@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "La Tanda API",
-    "version": "4.7.0",
+    "version": "4.11.3",
     "description": "API completa de La Tanda — Plataforma fintech y social para tandas de ahorro rotativo, marketplace de servicios y productos, sistema de lotería predictiva, y más.\n\n**Base URL:** `https://latanda.online`\n\n**Autenticación:** Bearer JWT token en header `Authorization: Bearer <token>`\n\n**Formato de respuesta:**\n```json\n{\n  \"success\": true,\n  \"data\": { ... },\n  \"message\": \"...\"\n}\n```\n\n**Revocación de tokens:** Los tokens son invalidados al cerrar sesión (`POST /api/auth/logout`) o cambiar contraseña. Un token revocado recibe `401 Token ha sido revocado` en cualquier endpoint protegido.",
     "contact": {
       "name": "INDIGOAZUL Development",
@@ -3633,7 +3633,8 @@
         "tags": [
           "Social Feed"
         ],
-        "summary": "Mis bookmarks",
+        "summary": "Get user bookmarks",
+        "description": "Get list of bookmarked social feed events. Added in v4.9",
         "security": [
           {
             "BearerAuth": []
@@ -3641,10 +3642,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Publicaciones guardadas"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Bookmarks retrieved"
           }
         }
       }
@@ -6299,7 +6297,8 @@
         "tags": [
           "Social Feed"
         ],
-        "summary": "Feed de usuarios seguidos",
+        "summary": "Get following feed",
+        "description": "Get social feed filtered by followed users. Added in v4.10",
         "security": [
           {
             "BearerAuth": []
@@ -6310,25 +6309,22 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "type": "integer"
-            },
-            "description": "Máximo"
+              "type": "integer",
+              "default": 20
+            }
           },
           {
             "name": "offset",
             "in": "query",
             "schema": {
-              "type": "integer"
-            },
-            "description": "Desplazamiento"
+              "type": "integer",
+              "default": 0
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Feed de usuarios seguidos"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Following feed retrieved"
           }
         }
       }
@@ -8744,6 +8740,285 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/feed/social/track-views": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Track view counts (batch)",
+        "description": "Batch increment view counts for multiple social feed events. Added in v4.11.3",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "event_ids"
+                ],
+                "properties": {
+                  "event_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "maxItems": 50,
+                    "description": "Array of event IDs to track (max 50)"
+                  }
+                }
+              },
+              "example": {
+                "event_ids": [
+                  "123e4567-e89b-12d3-a456-426614174000",
+                  "223e4567-e89b-12d3-a456-426614174001"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Views tracked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tracked": {
+                          "type": "integer",
+                          "example": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/contributions/{contributionId}/reverse": {
+      "post": {
+        "tags": [
+          "Contributions"
+        ],
+        "summary": "Reverse a contribution payment",
+        "description": "Reverse a previously verified contribution. Admin/coordinator only. Added in v4.11.2",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contributionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Contribution ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Reason for reversal"
+                  }
+                }
+              },
+              "example": {
+                "reason": "Duplicate payment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contribution reversed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Contribución revertida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin/coordinator only"
+          },
+          "404": {
+            "description": "Contribution not found"
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/contribution-history": {
+      "get": {
+        "tags": [
+          "Groups"
+        ],
+        "summary": "Get contribution history (timeline/matrix)",
+        "description": "Get contribution history for a group in timeline or matrix view. Added in v4.11.1",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timeline",
+                "matrix"
+              ],
+              "default": "timeline"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by specific user (optional)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contribution history retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feed/social/{eventId}/bookmark": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Toggle bookmark",
+        "description": "Bookmark or unbookmark a social feed event. Added in v4.9",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookmark toggled"
+          }
+        }
+      }
+    },
+    "/api/feed/social/{eventId}/like": {
+      "post": {
+        "tags": [
+          "Social Feed"
+        ],
+        "summary": "Toggle like",
+        "description": "Like or unlike a social feed event. Added in v4.8",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like toggled"
           }
         }
       }
