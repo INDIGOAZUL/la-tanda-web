@@ -1,10 +1,10 @@
 # La Tanda — Cooperativa de Ahorro Digital
 
 [![Live](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
-[![Version](https://img.shields.io/badge/Version-3.95.0-blue)](https://latanda.online)
-[![API](https://img.shields.io/badge/API-140%2B%20endpoints-00FF80)](https://latanda.online/docs)
-[![Security](https://img.shields.io/badge/Security-20%20audit%20rounds-red)](https://latanda.online)
-[![Contracts](https://img.shields.io/badge/Contracts-Polygon%20Amoy-8B5CF6)](https://amoy.polygonscan.com)
+[![Version](https://img.shields.io/badge/Version-4.12.0-blue)](https://latanda.online)
+[![API](https://img.shields.io/badge/API-220%2B%20endpoints-00FF80)](https://latanda.online/docs)
+[![Security](https://img.shields.io/badge/Security-20%2B%20audit%20rounds-red)](https://latanda.online)
+[![Chain](https://img.shields.io/badge/Chain-latanda--testnet--1-FF6B35)](https://latanda.online/chain/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
 
 **Plataforma fintech de ahorro cooperativo (tandas/ROSCAs) para comunidades en Honduras.**
@@ -40,15 +40,15 @@ La Tanda lleva este concepto a una plataforma digital con:
 - **Mineria de Tokens** — Gana LTD por actividad diaria en la plataforma
 - **KYC** — Verificacion de identidad con upload de documentos
 
-### Seguridad (17 rondas de auditoria)
+### Seguridad (20+ rondas de auditoria)
 - JWT con rotacion de refresh tokens y blacklisting
 - Zero `SELECT *`, `RETURNING *`, `Math.random()`, `body.user_id` IDOR en todo el codebase
-- Rate limiting por zona (auth, API, general), CSP, SRI en CDN scripts
+- Rate limiting por zona (auth 5/min, API 5/s, general 10/s), CSP, SRI en CDN scripts
 - bcrypt 12 rounds, `crypto.timingSafeEqual` para comparaciones sensibles
-- WebSocket con autenticacion JWT
+- WebSocket con autenticacion JWT y heartbeat
 - API solo accesible via Nginx (127.0.0.1:3002)
-- Usuario de DB dedicado (DML-only, sin superuser)
-- Autovacuum tunado, timeouts de conexion, logging de queries lentas
+- Usuario de DB dedicado `latanda_app` (DML-only, sin superuser)
+- Transacciones con `SELECT FOR UPDATE` en operaciones financieras
 
 ---
 
@@ -57,13 +57,13 @@ La Tanda lleva este concepto a una plataforma digital con:
 | Capa | Tecnologia |
 |------|------------|
 | **Frontend** | Vanilla JS, HTML5, CSS3 (Glassmorphism), PWA con Service Worker (Workbox) |
-| **Backend** | Node.js (native http), 140+ endpoints REST |
-| **Base de Datos** | PostgreSQL 16 (30+ tablas, usuario `latanda_app` DML-only) |
+| **Backend** | Node.js (native http), 220+ endpoints REST |
+| **Base de Datos** | PostgreSQL 16 (40+ tablas, usuario `latanda_app` DML-only) |
 | **Cache/Sessions** | Redis (rate limiting, token blacklist) |
 | **Proceso** | PM2 cluster mode (2 instancias, max 384MB heap) |
 | **Proxy** | Nginx (SSL, gzip_static, WebSocket proxy, security headers) |
 | **IA** | Groq Llama 3.3 70B (asistente MIA) |
-| **Blockchain** | Solidity, Hardhat, Polygon Amoy testnet (LTD ERC20) |
+| **Blockchain** | La Tanda Chain (Cosmos SDK / CometBFT), Polygon Amoy testnet (LTD ERC20) |
 
 ---
 
@@ -89,12 +89,12 @@ La Tanda lleva este concepto a una plataforma digital con:
         │ /main/   │ │ :3002    │ │ :3002/ws │
         └──────────┘ └────┬─────┘ └──────────┘
                           │
-                ┌─────────┼─────────┐
-                ▼         ▼         ▼
-          ┌──────────┐ ┌─────┐ ┌──────┐
-          │PostgreSQL│ │Redis│ │ Groq │
-          │  16      │ │     │ │ LLM  │
-          └──────────┘ └─────┘ └──────┘
+                ┌─────────┼─────────┬─────────┐
+                ▼         ▼         ▼         ▼
+          ┌──────────┐ ┌─────┐ ┌──────┐ ┌─────────┐
+          │PostgreSQL│ │Redis│ │ Groq │ │La Tanda │
+          │  16      │ │     │ │ LLM  │ │ Chain   │
+          └──────────┘ └─────┘ └──────┘ └─────────┘
 ```
 
 ---
@@ -117,22 +117,23 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 
 ## API
 
-140+ endpoints organizados en modulos:
+220+ endpoints organizados en modulos:
 
 | Modulo | Endpoints | Descripcion |
 |--------|-----------|-------------|
 | Auth | `/api/auth/*` | Login, registro, refresh, 2FA, verificacion |
 | Groups | `/api/groups/*` | CRUD grupos, miembros, contribuciones, sorteo |
 | Tandas | `/api/tandas/*` | Ciclos, turnos, pagos, coordinador |
-| Wallet | `/api/wallet/*` | Balance, transacciones, retiros |
-| Marketplace | `/api/marketplace/*` | Productos, categorias, proveedores |
-| Social Feed | `/api/feed/social/*` | Posts, likes, comments, follow, trending |
+| Wallet | `/api/wallet/*` | Balance, transacciones, retiros, depositos |
+| Marketplace | `/api/marketplace/*` | Productos, servicios, tiendas, reservas, disputas, suscripciones |
+| Social Feed | `/api/feed/social/*` | Posts, likes, comments, follow, trending, bookmarks, view tracking |
 | Admin | `/api/admin/*` | Dashboard, usuarios, auditoria, compliance |
-| Lottery | `/api/lottery/*` | Predicciones, scraping, estadisticas |
+| Lottery | `/api/lottery/*` | Predicciones, scraping, estadisticas, WebSocket en vivo |
 | MIA | `/api/mia/*` | Chat con asistente IA |
 | Uploads | `/api/upload/*` | Imagenes, videos, comprobantes |
 
 **Documentacion interactiva:** [latanda.online/docs](https://latanda.online/docs) (Swagger UI)
+**Portal de desarrolladores:** [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) (sandbox, WebSocket, SDK, chain)
 
 ---
 
@@ -162,23 +163,42 @@ npx hardhat test
 
 ```
 la-tanda-web/
-├── *.html                    # 40+ paginas frontend (dashboard, wallet, marketplace, etc.)
-├── css/                      # Estilos (dashboard-layout, mobile-drawer, hub/)
+├── *.html                        # 30+ paginas frontend (home-dashboard, explorar, etc.)
+├── marketplace-social.js         # Marketplace SPA (AT ROOT, not in js/)
+├── marketplace-social.html       # Marketplace HTML (AT ROOT)
 ├── js/
-│   ├── hub/                  # Modulos JS principales (social-feed, sidebar, contextual)
-│   ├── lib/                  # Librerias (ethers.js)
-│   └── components-loader.js  # Carga dinamica de componentes
+│   ├── hub/                      # Core modules
+│   │   ├── social-feed.js        # Social feed (SocialFeed singleton)
+│   │   ├── contextual-widgets.js # Sidebar widgets
+│   │   ├── sidebar-widgets.js    # Sidebar data
+│   │   └── comments-modal.js     # Comments system
+│   ├── core/                     # Shared utilities
+│   ├── header/                   # Header components
+│   ├── sidebar/                  # Sidebar logic
+│   ├── onboarding/               # Onboarding flows
+│   ├── utils/                    # Utility functions
+│   ├── lib/                      # Libraries (ethers.js)
+│   └── components-loader.js      # Dynamic component loading
+├── css/
+│   ├── hub/                      # Hub styles (social-feed.css)
+│   ├── components/               # Component styles
+│   ├── dashboard-layout.css      # Main layout
+│   └── groups-page.css           # Groups/Tandas styles
+├── chain/                        # La Tanda Chain explorer + files
+├── docs/swagger/openapi.json     # OpenAPI spec (220+ paths)
 ├── smart-contracts/
-│   ├── contracts/            # LTDToken, Vesting, Reserve (Solidity)
-│   ├── scripts/              # Deploy scripts
-│   └── test/                 # Contract tests (Hardhat)
-├── packages/
-│   └── sdk/                  # TypeScript SDK (en desarrollo)
+│   ├── contracts/                # LTDToken, Vesting, Reserve (Solidity)
+│   ├── scripts/                  # Deploy scripts
+│   └── test/                     # Contract tests (Hardhat)
 ├── .github/
-│   ├── workflows/            # CI/CD (tests, deploy, bounty tracker)
-│   └── ISSUE_TEMPLATE/       # Templates para bounties
-└── docs/                     # Documentacion adicional
+│   ├── workflows/                # CI/CD
+│   ├── ISSUE_TEMPLATE/           # Bounty templates
+│   └── PULL_REQUEST_TEMPLATE.md  # PR checklist
+├── CONTRIBUTING.md               # Contribution guide + codebase patterns
+└── DEVELOPER-QUICKSTART.md       # Quick setup guide
 ```
+
+> **Important:** `marketplace-social.js` lives at the root alongside the HTML files, NOT inside `js/`. The `SocialFeed` module lives at `js/hub/social-feed.js`. Getting file paths wrong is the #1 reason PRs are rejected.
 
 ---
 
@@ -186,29 +206,23 @@ la-tanda-web/
 
 ### Bounties Activos
 
-| Bounty | Recompensa | Estado |
-|--------|------------|--------|
-| TypeScript SDK | 300 LTD | [PR #29](https://github.com/INDIGOAZUL/la-tanda-web/pull/29) — En review |
-| Transaction Pagination | 200 LTD | [Issue #4](https://github.com/INDIGOAZUL/la-tanda-web/issues/4) — Abierto |
-| Admin Role Management | 500 LTD | [Issue #13](https://github.com/INDIGOAZUL/la-tanda-web/issues/13) — Abierto |
-| Role Application UI | 400 LTD | [Issue #12](https://github.com/INDIGOAZUL/la-tanda-web/issues/12) — Abierto |
-
 Ver todos: **[Issues con label `bounty`](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)**
 
 ### Como Contribuir
 
-1. Revisa los [issues abiertos](https://github.com/INDIGOAZUL/la-tanda-web/issues) o [bounties](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=label%3Abounty)
-2. Comenta en el issue que te interesa
-3. Fork, trabaja en tu branch, abre PR referenciando el issue
-4. Review por maintainers
-5. Merge y recompensa en LTD tokens
+1. Lee **[CONTRIBUTING.md](./CONTRIBUTING.md)** — especialmente la seccion "Codebase Patterns"
+2. Revisa los [bounties abiertos](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=label%3Abounty)
+3. Comenta en el issue que te interesa
+4. Fork, trabaja en tu branch, abre PR referenciando el issue
+5. Review por maintainers (24-48h)
+6. Merge y recompensa en LTD tokens
 
 ### Guias
 
-- [Developer Quickstart](./DEVELOPER-QUICKSTART.md)
-- [API Docs (Swagger)](https://latanda.online/docs)
-- [Smart Contract Docs](./smart-contracts/README.md)
-- [Tokenomics & Rewards](./DEVELOPER-TOKENOMICS-REWARDS.md)
+- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Codebase patterns, security rules, file structure
+- [Developer Quickstart](./DEVELOPER-QUICKSTART.md) — Setup en 5 minutos
+- [Dev Portal](https://latanda.online/dev-dashboard.html) — Sandbox, WebSocket, SDK, chain docs
+- [API Docs (Swagger)](https://latanda.online/docs) — 220+ endpoints interactivos
 
 ---
 
@@ -244,4 +258,4 @@ MIT — Ver [LICENSE](./LICENSE)
 
 Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
-*Ultima actualizacion: Febrero 9, 2026*
+*Ultima actualizacion: Marzo 3, 2026*
