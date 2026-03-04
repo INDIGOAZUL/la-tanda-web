@@ -1244,6 +1244,9 @@ const SocialFeed = {
                 '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
+                '<button class="engagement-btn report-btn" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Reportar">' +
+                    '<i class="fas fa-flag"></i>' +
+                '</button>' +
             '</div>' +
         '</div>';
     },
@@ -1316,6 +1319,7 @@ const SocialFeed = {
             const bookmarkBtn = e.target.closest(".bookmark-btn");
             const commentBtn = e.target.closest(".comment-btn");
             const shareBtn = e.target.closest(".share-btn");
+            const reportBtn = e.target.closest(".report-btn");
 
             if (likeBtn) {
                 e.preventDefault();
@@ -1332,6 +1336,10 @@ const SocialFeed = {
             if (shareBtn) {
                 e.preventDefault();
                 this.shareEvent(shareBtn.dataset.id);
+            }
+            if (reportBtn) {
+                e.preventDefault();
+                this.openReport(reportBtn.dataset.id);
             }
 
             // Handle poll vote clicks
@@ -1494,6 +1502,14 @@ if (window.CommentsModal) {
             window.CommentsModal.open(eventId);
         } else {
             window.LaTandaPopup && window.LaTandaPopup.showInfo("Comentarios proximamente");
+        }
+    },
+
+    openReport(eventId) {
+        if (window.ReportModal) {
+            window.ReportModal.open("post", eventId);
+        } else {
+            window.LaTandaPopup && window.LaTandaPopup.showError("Sistema de reportes no disponible");
         }
     },
 

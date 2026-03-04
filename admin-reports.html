@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Reportes - La Tanda Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/admin-reports.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <h1><i class="fas fa-flag"></i> Gestión de Reportes</h1>
+            </div>
+            <div class="header-right">
+                <button class="btn-back" onclick="window.location.href='/admin-dashboard.html'">
+                    <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon pending">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Pendientes</span>
+                    <span class="stat-value" id="statPending">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon reviewed">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Revisados</span>
+                    <span class="stat-value" id="statReviewed">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon dismissed">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Desestimados</span>
+                    <span class="stat-value" id="statDismissed">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon actioned">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Accionados</span>
+                    <span class="stat-value" id="statActioned">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-status="pending">
+                    Pendientes <span class="tab-badge" id="badgePending">0</span>
+                </button>
+                <button class="filter-tab" data-status="reviewed">
+                    Revisados
+                </button>
+                <button class="filter-tab" data-status="dismissed">
+                    Desestimados
+                </button>
+                <button class="filter-tab" data-status="actioned">
+                    Accionados
+                </button>
+            </div>
+            <button class="btn-refresh" id="btnRefresh">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+
+        <!-- Reports List -->
+        <div class="reports-container">
+            <div class="reports-list" id="reportsList">
+                <!-- Reports will be loaded here -->
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Cargando reportes...</span>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="btn-page" id="btnPrev" disabled>
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <span class="page-info" id="pageInfo">Página 1 de 1</span>
+                <button class="btn-page" id="btnNext" disabled>
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div class="modal" id="reportDetailModal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalle del Reporte</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Report details will be loaded here -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <!-- Action buttons will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin-reports.js"></script>
+</body>
+</html>
