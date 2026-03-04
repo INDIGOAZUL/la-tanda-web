@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Role Management - La Tanda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin-role-management.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <h1><i class="fas fa-user-shield"></i> Gestión de Roles</h1>
+        </div>
+        <div class="header-right">
+            <button class="btn-refresh" id="refreshBtn" title="Actualizar datos">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <div class="admin-user">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminName">Admin</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="applications">
+            <i class="fas fa-inbox"></i> Solicitudes
+            <span class="badge" id="pendingBadge">0</span>
+        </button>
+        <button class="tab-btn" data-tab="users">
+            <i class="fas fa-users"></i> Usuarios
+        </button>
+        <button class="tab-btn" data-tab="assign">
+            <i class="fas fa-user-tag"></i> Asignar Rol
+        </button>
+        <button class="tab-btn" data-tab="audit">
+            <i class="fas fa-history"></i> Auditoría
+        </button>
+        <button class="tab-btn" data-tab="stats">
+            <i class="fas fa-chart-bar"></i> Estadísticas
+        </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Applications Tab -->
+        <section id="applications-tab" class="tab-content active">
+            <div class="section-header">
+                <h2>Solicitudes de Roles</h2>
+                <div class="filters">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">Todos los estados</option>
+                        <option value="pending" selected>Pendientes</option>
+                        <option value="approved">Aprobadas</option>
+                        <option value="rejected">Rechazadas</option>
+                    </select>
+                    <select id="roleFilter" class="filter-select">
+                        <option value="">Todos los roles</option>
+                        <option value="verified_user">Usuario Verificado</option>
+                        <option value="active_member">Miembro Activo</option>
+                        <option value="coordinator">Coordinador</option>
+                        <option value="moderator">Moderador</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <button class="btn-secondary" id="bulkApproveBtn" disabled>
+                        <i class="fas fa-check-double"></i> Aprobar Seleccionados
+                    </button>
+                </div>
+            </div>
+
+            <div class="applications-list" id="applicationsList">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando solicitudes...
+                </div>
+            </div>
+
+            <div class="pagination" id="applicationsPagination"></div>
+        </section>
+
+        <!-- Users Tab -->
+        <section id="users-tab" class="tab-content">
+            <div class="section-header">
+                <h2>Gestión de Usuarios</h2>
+                <div class="filters">
+                    <input type="text" id="userSearch" class="search-input" placeholder="Buscar por nombre o email...">
+                    <select id="userRoleFilter" class="filter-select">
+                        <option value="">Todos los roles</option>
+                        <option value="user">Usuario</option>
+                        <option value="verified_user">Usuario Verificado</option>
+                        <option value="active_member">Miembro Activo</option>
+                        <option value="coordinator">Coordinador</option>
+                        <option value="moderator">Moderador</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="users-table-container">
+                <table class="users-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol Actual</th>
+                            <th>Fecha Registro</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="usersPagination"></div>
+        </section>
+
+        <!-- Assign Role Tab -->
+        <section id="assign-tab" class="tab-content">
+            <div class="section-header">
+                <h2>Asignación Manual de Roles</h2>
+            </div>
+
+            <div class="assign-form-container">
+                <form id="assignRoleForm" class="assign-form">
+                    <div class="form-group">
+                        <label for="assignUserId">ID de Usuario</label>
+                        <input type="text" id="assignUserId" required placeholder="user_123abc">
+                        <small>Ingrese el ID del usuario al que desea asignar un rol</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assignRole">Nuevo Rol</label>
+                        <select id="assignRole" required>
+                            <option value="">Seleccione un rol</option>
+                            <option value="user">Usuario</option>
+                            <option value="verified_user">Usuario Verificado</option>
+                            <option value="active_member">Miembro Activo</option>
+                            <option value="coordinator">Coordinador</option>
+                            <option value="moderator">Moderador</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assignReason">Razón de Asignación</label>
+                        <textarea id="assignReason" rows="4" required placeholder="Explique por qué está asignando este rol..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-user-tag"></i> Asignar Rol
+                        </button>
+                        <button type="reset" class="btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
+                    </div>
+                </form>
+
+                <div class="permission-matrix">
+                    <h3>Matriz de Permisos</h3>
+                    <table class="matrix-table">
+                        <thead>
+                            <tr>
+                                <th>Permiso</th>
+                                <th>Usuario</th>
+                                <th>Verificado</th>
+                                <th>Activo</th>
+                                <th>Coordinador</th>
+                                <th>Moderador</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Crear Tanda</td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Editar Tanda</td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Moderar Contenido</td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Asignar Roles</td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                            </tr>
+                            <tr>
+                                <td>Ver Analíticas</td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-times text-danger"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                                <td><i class="fas fa-check text-success"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Audit Tab -->
+        <section id="audit-tab" class="tab-content">
+            <div class="section-header">
+                <h2>Registro de Auditoría</h2>
+                <div class="filters">
+                    <select id="auditMethodFilter" class="filter-select">
+                        <option value="">Todos los métodos</option>
+                        <option value="auto">Automático</option>
+                        <option value="application">Solicitud</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                    <input type="date" id="auditStartDate" class="date-input">
+                    <input type="date" id="auditEndDate" class="date-input">
+                    <button class="btn-primary" id="exportAuditBtn">
+                        <i class="fas fa-download"></i> Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="audit-table-container">
+                <table class="audit-table" id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Rol Anterior</th>
+                            <th>Rol Nuevo</th>
+                            <th>Método</th>
+                            <th>Cambiado Por</th>
+                            <th>Razón</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr>
+                            <td colspan="7" class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando registros...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="auditPagination"></div>
+        </section>
+
+        <!-- Stats Tab -->
+        <section id="stats-tab" class="tab-content">
+            <div class="section-header">
+                <h2>Estadísticas de Roles</h2>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statPendingApps">0</h3>
+                        <p>Solicitudes Pendientes</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statRecentChanges">0</h3>
+                        <p>Cambios (30 días)</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statApprovalRate">0%</h3>
+                        <p>Tasa de Aprobación</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statTotalUsers">0</h3>
+                        <p>Total Usuarios</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Distribución de Roles</h3>
+                    <div class="role-distribution" id="roleDistribution">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Application Review Modal -->
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Revisar Solicitud</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="reviewModalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-success" id="approveBtn">
+                    <i class="fas fa-check"></i> Aprobar
+                </button>
+                <button class="btn-danger" id="rejectBtn">
+                    <i class="fas fa-times"></i> Rechazar
+                </button>
+                <button class="btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="noteModalTitle">Nota de Revisión</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="reviewNote" rows="4" placeholder="Ingrese una nota explicando su decisión..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="submitReviewBtn">Confirmar</button>
+                <button class="btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="admin-role-management.js"></script>
+</body>
+</html>
