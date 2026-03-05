@@ -329,7 +329,7 @@ class EnhancedAPIProxy {
         }
 
         // Admin credentials
-        if (email === 'admin@latanda.online' && password === 'REMOVED_CREDENTIAL') {
+        if (email === 'admin@latanda.online' && password === 'Admin123!') {
             return {
                 success: true,
                 data: {

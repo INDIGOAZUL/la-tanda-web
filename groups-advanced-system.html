@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.2">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.4">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -255,7 +255,9 @@
                 current_turn_number: null,
                 current_turn_recipient: null,
                 tanda_status: pgGroup.tanda_status || null,
-                tanda_id: pgGroup.tanda_id || null
+                tanda_id: pgGroup.tanda_id || null,
+                my_turn_number: pgGroup.my_turn_number || null,
+                turns_until_mine: pgGroup.turns_until_mine
             };
         }
 
@@ -830,7 +832,7 @@
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val cyan">' + _gcFmtL(payout.user_receives) + '</div>' +
-                        '<div class="gc-stat-label">Recibes</div>' +
+                        '<div class="gc-stat-label">Recibes' + ((group.my_num_positions || 1) > 1 ? '/turno' : '') + '</div>' +
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val">' + escapeHtml(membersDisplay) + '</div>' +
@@ -3033,7 +3035,7 @@ function updateTandasSidebar(tandas) {
 
     if (collListEl) {
         var cobros = activeTandas.map(function(t) {
-            var ta = Math.max(0, (t.my_turn_position || 0) - (t.current_turn || 0));
+            var ta = (t.my_turn_position || 0) > 0 ? Math.max(0, (t.my_turn_position || 0) - (t.current_turn || 0)) : -1;
             var pool = (t.contribution_amount || 0) * (t.max_members || t.total_participants || 1);
             return { turnsAway: ta, pool: pool, group_name: t.group_name || '', is_my_turn: t.is_my_turn || false };
         }).filter(function(c) { return c.is_my_turn || c.turnsAway > 0; }).sort(function(a, b) { return a.turnsAway - b.turnsAway; });
@@ -3121,6 +3123,7 @@ async function refreshTandas() {
 
 // 2. RENDER TANDAS
 function formatRelativeDate(dateStr) {
+        if (!dateStr) return '--';
     if (!dateStr || dateStr === 'null') return 'Pendiente';
     var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
     var target = new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr);
@@ -3282,7 +3285,7 @@ function renderTandaCard(tanda) {
     if (isCompleted) {
         stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
         stat2Label = 'Cobr\u00e9'; stat2Val = 'L. ' + formatTandaNumber(tandaPayout.user_receives);
-        stat3Label = 'Pagu\u00e9'; stat3Val = 'L. ' + formatTandaNumber((tanda.contribution_amount || 0) * totalCount);
+        stat3Label = 'Pagu\u00e9'; stat3Val = 'L. ' + formatTandaNumber((tanda.contribution_amount || 0) * totalCount * (parseInt(tanda.num_positions) || 1));
         stat4Label = 'Duraci\u00f3n'; stat4Val = totalCount + ' ciclos';
     } else if (isRecruiting) {
         stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
@@ -3292,8 +3295,8 @@ function renderTandaCard(tanda) {
     } else {
         // Active/collecting/waiting-turn/paused — cycles = max_members
         stat1Label = 'Aporte'; stat1Val = _gcFmtL(tanda.contribution_amount);
-        stat2Label = 'Mi Turno'; stat2Val = tanda.has_turn_assigned ? '#' + tanda.my_turn_position + ' de ' + maxMembers : 'Sin turno';
-        stat3Label = 'Pagado'; stat3Val = paidCount + '/' + maxMembers;
+        stat2Label = 'Mi Turno'; stat2Val = tanda.has_turn_assigned ? '#' + tanda.my_turn_position + ' de ' + (tanda.total_participants || maxMembers) : 'Sin turno';
+        stat3Label = 'Pagado'; var numPos = parseInt(tanda.num_positions) || 1; var expectedPaid = (tanda.current_cycle || tanda.current_turn || 1) * numPos; stat3Val = paidCount + '/' + expectedPaid;
         stat4Label = 'Pr\u00f3x. Pago'; stat4Val = formatRelativeDate(tanda.next_payment_date);
     }
 
@@ -6105,6 +6108,61 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
+    <!-- Pre-Add Member Modal -->
+    <div id="preAddMemberModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 460px; max-height: 90vh; display: flex; flex-direction: column; background: #0f172a; border: 1px solid rgba(251,191,36,0.2); border-radius: 16px;">
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Agregar Miembro Manual</h3>
+                        <p style="margin: 4px 0 0; font-size: 0.875rem; opacity: 0.9;">Pre-registrar por nombre y telefono</p>
+                    </div>
+                </div>
+                <button data-action="grp-close-pre-add" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+            </div>
+            <div style="padding: 20px; overflow-y: auto;">
+                <div id="preAddError" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem;"></div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Nombre completo *</label>
+                    <input type="text" id="preAddName" placeholder="Ej: Juan Perez" maxlength="100" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Telefono (opcional)</label>
+                    <input type="tel" id="preAddPhone" placeholder="Ej: +504 9999-9999" maxlength="20" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Email (opcional)</label>
+                    <input type="email" id="preAddEmail" placeholder="Ej: juan@gmail.com" maxlength="100" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px;">Posiciones</label>
+                    <select id="preAddPositions" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; background: #1e293b; color: #f8fafc;">
+                        <option value="1">1 posicion</option>
+                        <option value="2">2 posiciones</option>
+                        <option value="3">3 posiciones</option>
+                    </select>
+                </div>
+                <div id="preAddSuggestions" style="display: none; margin-bottom: 16px; padding: 16px; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 8px;">
+                    <p style="margin: 0 0 12px; font-size: 0.8125rem; color: #22d3ee; font-weight: 600;">Posibles coincidencias encontradas:</p>
+                    <div id="preAddSuggestionsList"></div>
+                    <button data-action="grp-skip-suggestions" style="margin-top: 10px; width: 100%; padding: 10px; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid #334155; border-radius: 8px; cursor: pointer; font-size: 0.8125rem;">Ninguno coincide, crear pendiente</button>
+                </div>
+                <div style="padding: 12px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.15); border-radius: 8px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 0.8125rem; color: #d97706; line-height: 1.5;">
+                        <strong>Nota:</strong> Este miembro aparecera como "Pendiente de registro". Cuando se registre con el mismo telefono o email, su cuenta se vinculara automaticamente.
+                    </p>
+                </div>
+            </div>
+            <div style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 12px; justify-content: flex-end;">
+                <button data-action="grp-close-pre-add" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
+                <button data-action="grp-submit-pre-add" id="preAddSubmitBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Agregar</button>
+            </div>
+        </div>
+    </div>
+
     <style>
         #inviteMembersModal {
             display: none;
@@ -6264,6 +6322,7 @@ if (document.readyState === "loading") {
                             '<div class="member-info">' +
                                 '<div class="member-name">' + escapeHtml(displayName) + anonymousIndicator + (isCurrentUser ? ' <span style="color:#8b5cf6;font-size:0.75rem;">(Tu)</span>' : '') + '</div>' +
                                 '<span class="member-role ' + roleClass + '">' + roleText + '</span>' +
+                                (member.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente de registro</span>' : '') +
                             '</div>' +
                             '<div class="member-position">' + (function() { var pos = userPositions[member.user_id] || (member.turn_position ? [member.turn_position] : []); if (pos.length === 0) return 'Sin turno'; if (pos.length === 1) return 'Turno #' + pos[0]; return 'Turnos #' + pos.join(', #'); })() + '</div>' +
                         '</div>';
@@ -7010,6 +7069,169 @@ if (document.readyState === "loading") {
             }, 100);
         }
         window.inviteToGroup = inviteToGroup;
+
+        // ============================================
+        // PRE-ADD MEMBER FUNCTIONS
+        // ============================================
+        var currentPreAddGroupId = null;
+
+        function openPreAddModal(groupId) {
+            closeModal();
+            setTimeout(function() {
+                currentPreAddGroupId = groupId;
+                var modal = document.getElementById('preAddMemberModal');
+                if (!modal) return;
+                document.getElementById('preAddName').value = '';
+                document.getElementById('preAddPhone').value = '';
+                document.getElementById('preAddEmail').value = '';
+                document.getElementById('preAddPositions').value = '1';
+                var errEl = document.getElementById('preAddError');
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+                var sugEl = document.getElementById('preAddSuggestions');
+                if (sugEl) sugEl.style.display = 'none';
+                modal.style.display = 'flex';
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                if (window.innerWidth > 768) document.getElementById('preAddName').focus();
+            }, 100);
+        }
+        window.openPreAddModal = openPreAddModal;
+
+        function closePreAddModal() {
+            var modal = document.getElementById('preAddMemberModal');
+            if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); document.body.style.overflow = ''; }
+            currentPreAddGroupId = null;
+        }
+        window.closePreAddModal = closePreAddModal;
+
+        async function submitPreAdd(skipSuggestions) {
+            var nameEl = document.getElementById('preAddName');
+            var phoneEl = document.getElementById('preAddPhone');
+            var emailEl = document.getElementById('preAddEmail');
+            var posEl = document.getElementById('preAddPositions');
+            var errEl = document.getElementById('preAddError');
+            var btn = document.getElementById('preAddSubmitBtn');
+            var sugEl = document.getElementById('preAddSuggestions');
+            var name = (nameEl.value || '').trim();
+            var phone = (phoneEl.value || '').trim();
+            var email = (emailEl.value || '').trim();
+            var num_positions = parseInt(posEl.value) || 1;
+
+            errEl.style.display = 'none';
+            if (sugEl) sugEl.style.display = 'none';
+            if (name.length < 2) {
+                errEl.textContent = 'El nombre debe tener al menos 2 caracteres';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Buscando...';
+            try {
+                var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                var payload = { name: name, phone: phone || null, email: email || null, num_positions: num_positions };
+                if (skipSuggestions) payload.skip_suggestions = true;
+                var resp = await fetch(apiBase + '/api/groups/' + currentPreAddGroupId + '/members/pre-add', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+                    body: JSON.stringify(payload)
+                });
+                var data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    errEl.textContent = (data.error && data.error.message) || data.message || 'Error al agregar miembro';
+                    errEl.style.display = 'block';
+                    return;
+                }
+                // Handle suggestions response
+                if (data.data && data.data.action === 'confirm_needed') {
+                    renderPreAddSuggestions(data.data.suggestions, data.data.original);
+                    return;
+                }
+                closePreAddModal();
+                var toastMsg = (data.data && data.data.member && data.data.member.direct_add)
+                    ? escapeHtml(name) + ' agregado directamente (ya tiene cuenta)'
+                    : 'Miembro pre-agregado: ' + escapeHtml(name);
+                if (window.showToast) window.showToast(toastMsg, 'success');
+                if (typeof fetchMyGroups === 'function') fetchMyGroups();
+            } catch (e) {
+                errEl.textContent = 'Error de conexion';
+                errEl.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Agregar';
+            }
+        }
+        window.submitPreAdd = submitPreAdd;
+
+        function renderPreAddSuggestions(suggestions, original) {
+            var container = document.getElementById('preAddSuggestions');
+            var list = document.getElementById('preAddSuggestionsList');
+            if (!container || !list) return;
+            var html = '';
+            for (var i = 0; i < suggestions.length; i++) {
+                var s = suggestions[i];
+                html += '<div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.04); border-radius: 8px; margin-bottom: 8px;">';
+                html += '<div>';
+                html += '<div style="color: #f8fafc; font-weight: 500; font-size: 0.9rem;">' + escapeHtml(s.display_name) + '</div>';
+                html += '<div style="color: #94a3b8; font-size: 0.78rem;">';
+                if (s.masked_email) html += escapeHtml(s.masked_email);
+                if (s.masked_email && s.masked_phone) html += ' &middot; ';
+                if (s.masked_phone) html += escapeHtml(s.masked_phone);
+                html += '</div></div>';
+                html += '<button data-action="grp-confirm-suggestion" data-user-id="' + escapeHtml(s.user_id) + '" style="padding: 6px 14px; background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">Es esta persona</button>';
+                html += '</div>';
+            }
+            list.innerHTML = html;
+            container.style.display = 'block';
+        }
+
+        async function confirmPreAddSuggestion(userId) {
+            var errEl = document.getElementById('preAddError');
+            var posEl = document.getElementById('preAddPositions');
+            var num_positions = parseInt(posEl.value) || 1;
+            errEl.style.display = 'none';
+            try {
+                var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                var resp = await fetch(apiBase + '/api/groups/' + currentPreAddGroupId + '/members/pre-add/confirm', {
+                    method: 'POST',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders()),
+                    body: JSON.stringify({ confirmed_user_id: userId, num_positions: num_positions })
+                });
+                var data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    errEl.textContent = (data.error && data.error.message) || data.message || 'Error al confirmar miembro';
+                    errEl.style.display = 'block';
+                    return;
+                }
+                closePreAddModal();
+                if (window.showToast) window.showToast('Miembro agregado directamente al grupo', 'success');
+                if (typeof fetchMyGroups === 'function') fetchMyGroups();
+            } catch (e) {
+                errEl.textContent = 'Error de conexion';
+                errEl.style.display = 'block';
+            }
+        }
+
+        // Pre-add modal event delegation
+        (function() {
+            var paModal = document.getElementById('preAddMemberModal');
+            if (!paModal) return;
+            paModal.addEventListener('click', function(e) {
+                if (e.target === paModal) { closePreAddModal(); return; }
+                var btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                var action = btn.getAttribute('data-action');
+                if (action === 'grp-close-pre-add') closePreAddModal();
+                else if (action === 'grp-submit-pre-add') submitPreAdd();
+                else if (action === 'grp-skip-suggestions') submitPreAdd(true);
+                else if (action === 'grp-confirm-suggestion') { var uid = btn.getAttribute('data-user-id'); if (uid) confirmPreAddSuggestion(uid); }
+            });
+            // Enter key in form
+            paModal.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); submitPreAdd(); }
+            });
+        })();
 
         function showInviteModal(groupId) {
             currentInviteGroupId = groupId;
@@ -7857,7 +8079,8 @@ function renderTurnsList() {
                 if (pos.total_slots > 1) {
                     displayName += ' ' + (pos.slot_index + 1) + '/' + pos.total_slots;
                 }
-                
+                var placeholderBadge = (pos.original_member && pos.original_member.is_placeholder) ? ' <span class="member-placeholder-badge">Pendiente</span>' : '';
+
                 var roleText = (pos.role === 'creator' || pos.role === 'admin') ? 'Administrador' : 'Miembro';
                 if (isLocked) roleText += ' • Anclado';
                 
@@ -7867,7 +8090,7 @@ function renderTurnsList() {
                     'style="display: flex; align-items: center; gap: 12px; padding: 12px; background: ' + itemBg + '; border: 1px solid ' + itemBorder + '; border-radius: 10px; cursor: ' + (!isLocked ? 'grab' : 'default') + ';">' +
                     '<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 0.875rem;">' + position + '</div>' +
                     '<div style="flex: 1;">' +
-                        '<div style="font-weight: 500; color: #f8fafc;">' + escapeHtml(displayName) + '</div>' +
+                        '<div style="font-weight: 500; color: #f8fafc;">' + escapeHtml(displayName) + placeholderBadge + '</div>' +
                         '<div style="font-size: 0.75rem; color: #9ca3af;">' + escapeHtml(roleText) + '</div>' +
                     '</div>' +
                     '<button data-action="grp-toggle-lock" data-index="' + index + '" style="width: 32px; height: 32px; background: ' + lockBg + '; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="' + (isLocked ? 'Desbloquear' : 'Anclar posicion') + '">' + lockIcon + '</button>' +
@@ -7889,13 +8112,69 @@ function renderTurnsList() {
             });
             
             html += '</div>';
+
+            // Unassigned members section — members in group but not in turns_order
+            var assignedUserIds = {};
+            displayList.forEach(function(pos) { assignedUserIds[pos.user_id] = true; });
+            var unassigned = turnsMembers.filter(function(m) { return !assignedUserIds[m.user_id]; });
+            if (unassigned.length > 0) {
+                html += '<div style="margin-top: 16px; padding: 12px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 10px;">' +
+                    '<div style="font-size: 0.82rem; font-weight: 600; color: #d97706; margin-bottom: 10px;">Miembros sin turno asignado (' + unassigned.length + ')</div>';
+                unassigned.forEach(function(m) {
+                    var initials = (m.name || 'U').charAt(0).toUpperCase();
+                    var phBadge = m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '';
+                    html += '<div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(30,41,59,0.6); border-radius: 8px; margin-bottom: 6px;">' +
+                        '<div style="width: 32px; height: 32px; background: rgba(251,191,36,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #f59e0b; font-size: 0.85rem;">' + escapeHtml(initials) + '</div>' +
+                        '<div style="flex: 1;">' +
+                            '<div style="font-weight: 500; color: #f8fafc; font-size: 0.88rem;">' + escapeHtml(m.name || 'Usuario') + phBadge + '</div>' +
+                            '<div style="font-size: 0.72rem; color: #94a3b8;">' + (m.num_positions > 1 ? m.num_positions + ' posiciones' : '1 posicion') + '</div>' +
+                        '</div>' +
+                        '<button data-action="grp-add-to-turns" data-user-id="' + escapeHtml(m.user_id) + '" style="padding: 6px 14px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.78rem; font-weight: 600;">Agregar</button>' +
+                    '</div>';
+                });
+                html += '</div>';
+            }
+
             contentDiv.innerHTML = html;
             contentDiv.style.display = 'block';
-            
+
             // Enable drag and drop (only for unlocked items)
             initExpandedDragAndDrop();
         }
         
+        // Add unassigned member to turns list
+        function addMemberToTurns(userId) {
+            var member = turnsMembers.find(function(m) { return m.user_id === userId; });
+            if (!member) return;
+            if (!window.expandedTurns) window.expandedTurns = [];
+            var numPos = member.num_positions || 1;
+            for (var s = 0; s < numPos; s++) {
+                window.expandedTurns.push({
+                    user_id: member.user_id,
+                    name: member.name || 'Usuario',
+                    role: member.role || 'member',
+                    slot_index: s,
+                    total_slots: numPos,
+                    turn_locked: false,
+                    original_member: member
+                });
+            }
+            // Update total_slots on all entries for this user
+            window.expandedTurns.forEach(function(pos) {
+                if (pos.user_id === userId) pos.total_slots = numPos;
+            });
+            renderTurnsList();
+        }
+        window.addMemberToTurns = addMemberToTurns;
+
+        // Remove member from turns list (back to unassigned)
+        function removeMemberFromTurns(userId) {
+            if (!window.expandedTurns) return;
+            window.expandedTurns = window.expandedTurns.filter(function(pos) { return pos.user_id !== userId; });
+            renderTurnsList();
+        }
+        window.removeMemberFromTurns = removeMemberFromTurns;
+
         // Move position up in expanded list
         function moveExpandedUp(index) {
             if (!window.expandedTurns || index <= 0) return;
@@ -8575,7 +8854,7 @@ function renderTurnsList() {
                             '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
                                 cpGetAvatar(m) +
                                 '<div style="flex:1;min-width:0;">' +
-                                    '<div style="font-size:0.88rem;font-weight:500;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || 'Usuario') + '</div>' +
+                                    '<div style="font-size:0.88rem;font-weight:500;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || 'Usuario') + (m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</div>' +
                                     '<div style="display:flex;align-items:center;gap:6px;margin-top:2px;">' +
                                         (m.turn_position ? '<span style="font-size:0.7rem;color:#64748b;">Turno #' + escapeHtml(String(m.turn_position)) + '</span>' : '') +
                                         (m.member_role && m.member_role !== 'member' ? '<span style="font-size:0.65rem;padding:1px 6px;border-radius:8px;background:rgba(139,92,246,0.15);color:#a78bfa;">' + escapeHtml(m.member_role) + '</span>' : '') +
@@ -8709,6 +8988,10 @@ function renderTurnsList() {
                                 '</select>' +
                             '</div>' +
                         '</div>' +
+                        '<div style="margin-top:8px;">' +
+                            '<label style="font-size:0.72rem;color:#64748b;display:block;margin-bottom:3px;">Notas (opcional)</label>' +
+                            '<textarea id="cpBulkNotes" placeholder="Notas para estos pagos..." rows="2" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(100,116,139,0.3);background:rgba(30,41,59,0.8);color:#f8fafc;font-size:0.82rem;resize:vertical;font-family:inherit;"></textarea>' +
+                        '</div>' +
                         '<div style="font-size:0.72rem;color:#94a3b8;margin-top:6px;font-style:italic;">Cada registro aplica 1 cuota por miembro (al ciclo mas antiguo impago)</div>' +
                     '</div>';
 
@@ -8721,7 +9004,7 @@ function renderTurnsList() {
                                 (!isPaid ? '<input type="checkbox" data-action="cp-toggle-select" data-uid="' + escapeHtml(m.user_id) + '" ' + (isChecked ? 'checked' : '') + ' style="width:16px;height:16px;accent-color:#00FFFF;flex-shrink:0;">' : '<div style="width:16px;flex-shrink:0;"></div>') +
                                 cpGetAvatar(m) +
                                 '<div style="flex:1;min-width:0;">' +
-                                    '<div style="font-size:0.88rem;font-weight:500;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || 'Usuario') + '</div>' +
+                                    '<div style="font-size:0.88rem;font-weight:500;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(m.name || 'Usuario') + (m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</div>' +
                                     '<div style="font-size:0.72rem;color:#64748b;">' +
                                         (m.turn_position ? 'Turno #' + escapeHtml(String(m.turn_position)) : '') +
                                     '</div>' +
@@ -8767,8 +9050,10 @@ function renderTurnsList() {
 
                 var amountEl = document.getElementById('cpBulkAmount');
                 var methodEl = document.getElementById('cpBulkMethod');
+                var notesEl = document.getElementById('cpBulkNotes');
                 var amount = parseFloat(amountEl ? amountEl.value : cpState.bulkAmount);
                 var method = methodEl ? methodEl.value : cpState.bulkMethod;
+                var bulkNotes = notesEl ? notesEl.value.trim() : '';
 
                 if (!Number.isFinite(amount) || amount <= 0) {
                     showNotification('Monto invalido', 'error');
@@ -8779,7 +9064,9 @@ function renderTurnsList() {
                 if (btn) { btn.disabled = true; btn.textContent = 'Registrando...'; btn.style.background = 'rgba(0,255,255,0.5)'; }
 
                 var membersPayload = selected.map(function(uid) {
-                    return { member_user_id: uid, amount: amount };
+                    var item = { member_user_id: uid, amount: amount };
+                    if (bulkNotes) item.notes = bulkNotes;
+                    return item;
                 });
 
                 try {
@@ -9162,7 +9449,7 @@ function renderTurnsList() {
 
                     html += '<div class="ext-item ext-item-' + d.type + '">' +
                         '<div class="ext-item-header">' +
-                            icon + ' <strong>' + typeLabel + '</strong> — ' + name +
+                            icon + ' <strong>' + typeLabel + '</strong> — ' + name + (d.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') +
                         '</div>' +
                         '<div class="ext-item-meta">Ciclo ' + escapeHtml(String(d.cycle_number)) + ' | ' + amount + (dateStr ? ' | ' + escapeHtml(dateStr) : '') + '</div>' +
                         (d.reason ? '<div class="ext-item-reason">"' + escapeHtml(d.reason) + '"</div>' : '') +
@@ -9690,6 +9977,8 @@ function renderTurnsList() {
             buttons += _gmBtn('gm-invite', svgInvite, 'rgba(251,191,36,0.2)', 'Invitar Miembros', 'Enviar invitaciones', '#e2e8f0', '#94a3b8', dark, darkBorder);
             buttons += _gmBtn('gm-register-payment', svgRegPay, 'rgba(96,165,250,0.2)', 'Registrar Pago', 'Agregar contribucion', '#e2e8f0', '#94a3b8', dark, darkBorder);
             if (canManage) {
+                var svgPreAdd = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>';
+                buttons += _gmBtn('gm-pre-add-member', svgPreAdd, 'rgba(251,191,36,0.2)', 'Agregar Manual', 'Pre-registrar por nombre/telefono', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-verify-payments', svgVerify, warnBg, 'Verificar Pagos', 'Aprobar pagos pendientes', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-distribute', svgDistribute, greenBg, 'Distribuir Ciclo', 'Repartir fondos del ciclo', '#34d399', '#059669', greenBg, greenBorder);
                 buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
@@ -9737,6 +10026,7 @@ function renderTurnsList() {
                     case 'gm-view-members': if (typeof viewGroupMembers === 'function') viewGroupMembers(gid); break;
                     case 'gm-view-payments': if (typeof viewGroupPayments === 'function') viewGroupPayments(gid); break;
                     case 'gm-invite': if (typeof inviteToGroup === 'function') inviteToGroup(gid); break;
+                    case 'gm-pre-add-member': if (typeof openPreAddModal === 'function') openPreAddModal(gid); break;
                     case 'gm-register-payment': if (typeof registerGroupPayment === 'function') registerGroupPayment(gid); break;
                     case 'gm-verify-payments': if (typeof verifyPendingPayments === 'function') verifyPendingPayments(gid); break;
                     case 'gm-distribute': if (typeof showDistributionPreview === 'function') showDistributionPreview(gid); break;
@@ -9874,7 +10164,7 @@ function renderTurnsList() {
                 else { badgeCls = 'cm-badge-undecided'; badgeText = 'Sin decidir'; }
                 html += '<div class="cm-member-row">' +
                     '<div class="cm-member-avatar">' + avatarHtml + '</div>' +
-                    '<div class="cm-member-info"><div class="cm-member-name">' + name + '</div><span class="cm-member-role ' + roleCls + '">' + roleLabel + '</span></div>' +
+                    '<div class="cm-member-info"><div class="cm-member-name">' + name + (m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</div><span class="cm-member-role ' + roleCls + '">' + roleLabel + '</span></div>' +
                     '<span class="' + badgeCls + '">' + badgeText + '</span></div>';
             }
             el.innerHTML = html;
@@ -10006,22 +10296,124 @@ function renderTurnsList() {
 })();
 </script>
 
-<!-- FASE 1: Export Functions - Added 2025-11-27 -->
+<!-- FASE 1: Export Functions - Fixed 2026-03-04: auth + cycle picker -->
+<style>
+.exp-cycle-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100002; display: flex; align-items: center; justify-content: center; }
+.exp-cycle-modal { background: #1e293b; border-radius: 16px; padding: 24px; width: 340px; max-width: 90vw; color: #e2e8f0; }
+.exp-cycle-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
+.exp-cycle-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+.exp-cycle-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 16px; color: #e2e8f0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; transition: background 0.15s; }
+.exp-cycle-btn:hover { background: rgba(5,150,105,0.15); border-color: #059669; }
+.exp-cycle-btn .exp-cycle-meta { color: #9ca3af; font-size: 0.78rem; }
+.exp-cycle-close { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.85rem; margin-top: 12px; width: 100%; text-align: center; padding: 8px; }
+.exp-cycle-close:hover { color: #e2e8f0; }
+</style>
 <script>
 (function() {
     'use strict';
-    window.exportGroupMembers = function(groupId, format) {
+    var apiBase = '';
+    function getApiBase() { return window.API_BASE_URL || 'https://latanda.online'; }
+    function getToken() { return localStorage.getItem('auth_token') || localStorage.getItem('authToken'); }
+
+    async function _downloadExport(url, format) {
+        var token = getToken();
+        if (!token) { if (window.showToast) window.showToast('Debes iniciar sesion para exportar', 'error'); return; }
+        try {
+            var resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!resp.ok) { if (window.showToast) window.showToast('Error al exportar: ' + resp.status, 'error'); return; }
+            var blob = await resp.blob();
+            var cd = resp.headers.get('Content-Disposition') || '';
+            var fname = cd.indexOf('filename="') !== -1 ? cd.split('filename="')[1].replace('"','') : ('export.' + format);
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fname;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(a.href);
+            if (window.showToast) window.showToast('Exportacion descargada', 'success');
+        } catch(e) { if (window.showToast) window.showToast('Error de conexion al exportar', 'error'); }
+    }
+
+    window.exportGroupMembers = async function(groupId, format) {
         if (!groupId) groupId = window.currentMembersGroupId || window.currentManagedGroupId;
-        if (!groupId) { showError('No se pudo determinar el grupo'); return; }
-        var apiBase = window.API_BASE_URL || 'https://latanda.online';
-        if (window.notifyExportStarted) window.notifyExportStarted(format); window.open(apiBase + '/api/groups/' + groupId + '/export/members?format=' + format, '_blank');
+        if (!groupId) { if (window.showToast) window.showToast('No se pudo determinar el grupo', 'error'); return; }
+        if (window.notifyExportStarted) window.notifyExportStarted(format);
+        await _downloadExport(getApiBase() + '/api/groups/' + groupId + '/export/members?format=' + format, format);
     };
-    window.exportGroupPayments = function(groupId, format) {
+
+    // Payments export — show cycle picker first
+    window.exportGroupPayments = async function(groupId, format) {
         if (!groupId) groupId = window.currentPaymentsGroupId || window.currentManagedGroupId;
-        if (!groupId) { showError('No se pudo determinar el grupo'); return; }
-        var apiBase = window.API_BASE_URL || 'https://latanda.online';
-        if (window.notifyExportStarted) window.notifyExportStarted(format); window.open(apiBase + '/api/groups/' + groupId + '/export/payments?format=' + format, '_blank');
+        if (!groupId) { if (window.showToast) window.showToast('No se pudo determinar el grupo', 'error'); return; }
+        var token = getToken();
+        if (!token) { if (window.showToast) window.showToast('Debes iniciar sesion', 'error'); return; }
+
+        // Fetch available cycles
+        try {
+            var resp = await fetch(getApiBase() + '/api/groups/' + groupId + '/export/cycles', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!resp.ok) {
+                // Fallback: download all without picker
+                await _downloadExport(getApiBase() + '/api/groups/' + groupId + '/export/payments?format=' + format, format);
+                return;
+            }
+            var data = await resp.json();
+            var cycles = data.data && data.data.cycles ? data.data.cycles : [];
+            if (cycles.length <= 1) {
+                // Only 1 cycle, download directly
+                if (window.notifyExportStarted) window.notifyExportStarted(format);
+                var cycleParam = cycles.length === 1 ? '&cycle=' + cycles[0].cycle_number : '';
+                await _downloadExport(getApiBase() + '/api/groups/' + groupId + '/export/payments?format=' + format + cycleParam, format);
+                return;
+            }
+            // Show cycle picker
+            _showCyclePicker(groupId, format, cycles);
+        } catch(e) {
+            await _downloadExport(getApiBase() + '/api/groups/' + groupId + '/export/payments?format=' + format, format);
+        }
     };
+
+    function _showCyclePicker(groupId, format, cycles) {
+        var overlay = document.createElement('div');
+        overlay.className = 'exp-cycle-overlay';
+        var totalAll = cycles.reduce(function(s, c) { return s + parseFloat(c.total || 0); }, 0);
+        var countAll = cycles.reduce(function(s, c) { return s + parseInt(c.payment_count || 0); }, 0);
+        var html = '<div class="exp-cycle-modal">';
+        html += '<div class="exp-cycle-title">Seleccionar Ciclo para Exportar (' + format.toUpperCase() + ')</div>';
+        html += '<div class="exp-cycle-list">';
+        // "All cycles" option
+        html += '<button class="exp-cycle-btn" data-cycle="all"><span>Todos los Ciclos</span><span class="exp-cycle-meta">' + countAll + ' pagos | L. ' + totalAll.toLocaleString() + '</span></button>';
+        // Individual cycles
+        cycles.forEach(function(c) {
+            var metaParts = [c.payment_count + ' pagados'];
+            var missingOrPending = (parseInt(c.missing_count) || 0) + (parseInt(c.pending_count) || 0);
+            if (missingOrPending > 0) metaParts.push(missingOrPending + ' sin pago');
+            if (parseInt(c.rejected_count) > 0) metaParts.push(c.rejected_count + ' rech.');
+            if (parseInt(c.refunded_count) > 0) metaParts.push(c.refunded_count + ' rev.');
+            html += '<button class="exp-cycle-btn" data-cycle="' + c.cycle_number + '"><span>Ciclo ' + c.cycle_number + '</span><span class="exp-cycle-meta">' + metaParts.join(', ') + ' | L. ' + parseFloat(c.total || 0).toLocaleString() + '</span></button>';
+        });
+        html += '</div>';
+        html += '<button class="exp-cycle-close">Cancelar</button>';
+        html += '</div>';
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', async function(e) {
+            var btn = e.target.closest('.exp-cycle-btn');
+            if (btn) {
+                overlay.remove();
+                var cycle = btn.getAttribute('data-cycle');
+                if (window.notifyExportStarted) window.notifyExportStarted(format);
+                var url = getApiBase() + '/api/groups/' + groupId + '/export/payments?format=' + format;
+                if (cycle !== 'all') url += '&cycle=' + cycle;
+                await _downloadExport(url, format);
+                return;
+            }
+            if (e.target.classList.contains('exp-cycle-close') || e.target === overlay) {
+                overlay.remove();
+            }
+        });
+    }
 })();
 </script>
 
@@ -10484,7 +10876,7 @@ function renderTurnsList() {
                         '<div class="vp-card-body">' +
                             '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
                                 '<div>' +
-                                    '<div class="vp-card-name">' + safeName + '</div>' +
+                                    '<div class="vp-card-name">' + safeName + (c.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</div>' +
                                     '<div class="vp-card-contact">' + safeContact + '</div>' +
                                 '</div>' +
                                 '<div class="vp-card-right">' +
@@ -10797,7 +11189,7 @@ function renderTurnsList() {
                     '<div class="dist-beneficiary-avatar">' + escapeHtml((d.distribution.beneficiary_receives.user_name || '?').charAt(0)) + '</div>' +
                     '<div style="flex: 1;">' +
                         '<div style="font-weight: 600; color: #f8fafc;">' +
-                            escapeHtml(d.distribution.beneficiary_receives.user_name || 'Beneficiario') +
+                            escapeHtml(d.distribution.beneficiary_receives.user_name || 'Beneficiario') + (d.distribution.beneficiary_receives.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') +
                             (isCoordTurn ? ' <span style="font-size: 0.7rem; color: #a78bfa;">(Coordinador)</span>' : '') +
                         '</div>' +
                         '<div style="font-size: 0.75rem; color: #94a3b8;">Turno #' + escapeHtml(String(d.distribution.beneficiary_receives.turn_number || '?')) + '</div>' +
@@ -10990,7 +11382,7 @@ function renderTurnsList() {
                     '<div class="tb-col-name">' +
                         '<div class="tb-member-avatar">' + escapeHtml(initial) + '</div>' +
                         '<div class="tb-member-info">' +
-                            '<div class="tb-member-name">' + escapeHtml(m.name || 'Desconocido') + posLabel + '</div>' +
+                            '<div class="tb-member-name">' + escapeHtml(m.name || 'Desconocido') + (m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + posLabel + '</div>' +
                             (m.has_received ? '<div class="tb-received-tag">Recibio L. ' + _distFmt(m.total_received) + '</div>' : '') +
                         '</div>' +
                     '</div>' +
@@ -11553,7 +11945,7 @@ function renderTurnsList() {
             html += '</div>';
 
             if (data.member_name && data.member_user_id) {
-                html += '<div class="ch-member-label"><i class="fas fa-user"></i> ' + escapeHtml(data.member_name) + '</div>';
+                html += '<div class="ch-member-label"><i class="fas fa-user"></i> ' + escapeHtml(data.member_name) + (data.member_is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</div>';
             }
 
             var byCycle = {};
@@ -11674,7 +12066,7 @@ function renderTurnsList() {
 
             members.forEach(function(m) {
                 html += '<tr>';
-                html += '<td class="ch-sticky-col ch-member-name" data-action="ch-drill-member" data-user-id="' + escapeHtml(m.user_id) + '">' + escapeHtml(m.name) + '</td>';
+                html += '<td class="ch-sticky-col ch-member-name" data-action="ch-drill-member" data-user-id="' + escapeHtml(m.user_id) + '">' + escapeHtml(m.name) + (m.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') + '</td>';
                 var userContribs = contribs[m.user_id] || {};
                 for (var cy2 = 1; cy2 <= currentCycle; cy2++) {
                     var entry = userContribs[String(cy2)];
@@ -12136,7 +12528,8 @@ function renderTurnsList() {
     <script src="i18next-implementation-backend.js?v=1759688935"></script>
     <script src="real-time-api-integration.js"></script>
     <script src="dashboard-integration-fix.js"></script>
-    <script src="js/components/notification-center.js?v=2.7"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/components/notification-center.js?v=3.0"></script>
     <script src="js/components/network-switcher.js"></script>
     <script src="js/components/transaction-modal.js"></script>
     <script src="js/dashboard-api-connector.js"></script>
@@ -12743,6 +13136,10 @@ function renderTurnsList() {
                 case 'grp-remove-from-turns':
                     var rftUid = btn.getAttribute('data-user-id');
                     if (rftUid && typeof removeMemberFromTurns === 'function') removeMemberFromTurns(rftUid);
+                    break;
+                case 'grp-add-to-turns':
+                    var atuUid = btn.getAttribute('data-user-id');
+                    if (atuUid && typeof addMemberToTurns === 'function') addMemberToTurns(atuUid);
                     break;
 
                 // Schedule lottery modal (Phase 1)

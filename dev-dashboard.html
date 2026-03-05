@@ -514,6 +514,7 @@
                 <a href="#changelog">Changelog</a>
                 <a href="#bounties">Bounties</a>
                 <a href="#faq">FAQ</a>
+                <a href="#patterns">Patrones</a>
                 <a href="/docs" target="_blank" rel="noopener noreferrer">Swagger UI</a>
                 <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i> GitHub</a>
             </nav>
@@ -1590,6 +1591,93 @@ curl https://latanda.online/api/public/stats</pre>
         </section>
 
         <!-- Architecture -->
+        <section class="section" id="patterns">
+            <h2 class="section-title"><i class="fas fa-code"></i> Patrones del Codebase</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Reglas obligatorias para contribuidores. PRs que violen estos patrones seran rechazados. Ver <a href="https://github.com/INDIGOAZUL/la-tanda-web/blob/main/CONTRIBUTING.md" target="_blank" style="color: var(--tanda-cyan);">CONTRIBUTING.md</a> para la guia completa.</p>
+
+            <div class="cards-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="card">
+                    <h3 style="color: var(--tanda-green); font-size: 0.95rem; margin-bottom: 0.75rem;"><i class="fas fa-key"></i> Auth Token</h3>
+                    <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.78rem;"><span class="comment">// CORRECTO</span>
+<span style="color: #7dd3fc;">const</span> token = localStorage.getItem(<span style="color: #86efac;">'auth_token'</span>)
+  || localStorage.getItem(<span style="color: #86efac;">'authToken'</span>);
+
+<span class="comment">// INCORRECTO — siempre retorna null</span>
+<span style="color: #fca5a5;">sessionStorage.getItem('jwtToken')</span>
+<span style="color: #fca5a5;">localStorage.getItem('token')</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--tanda-green); font-size: 0.95rem; margin-bottom: 0.75rem;"><i class="fas fa-shield-alt"></i> XSS — escapeHtml()</h3>
+                    <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.78rem;"><span class="comment">// CORRECTO — escapar datos del usuario</span>
+el.innerHTML = <span style="color: #86efac;">'&lt;p&gt;'</span> + <span style="color: #7dd3fc;">escapeHtml</span>(user.name) + <span style="color: #86efac;">'&lt;/p&gt;'</span>;
+
+<span class="comment">// INCORRECTO — vulnerabilidad XSS</span>
+<span style="color: #fca5a5;">el.innerHTML = '&lt;p&gt;' + user.name + '&lt;/p&gt;';</span>
+<span style="color: #fca5a5;">el.innerHTML = `&lt;p&gt;${post.content}&lt;/p&gt;`;</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--tanda-green); font-size: 0.95rem; margin-bottom: 0.75rem;"><i class="fas fa-language"></i> Idioma</h3>
+                    <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.78rem;"><span class="comment">// Texto UI → Espanol (es-HN)</span>
+showNotification(<span style="color: #86efac;">'Operacion exitosa'</span>, <span style="color: #86efac;">'success'</span>);
+btn.textContent = <span style="color: #86efac;">'Guardar cambios'</span>;
+
+<span class="comment">// Comentarios y logs → Ingles</span>
+<span style="color: #94a3b8;">// Fetch user's following feed</span>
+console.error(<span style="color: #86efac;">'Failed to load events'</span>);</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--tanda-green); font-size: 0.95rem; margin-bottom: 0.75rem;"><i class="fas fa-folder-open"></i> Archivos Clave</h3>
+                    <div class="code-block" style="margin: 0;">
+<pre style="font-size: 0.78rem;"><span class="comment">// Marketplace (EN LA RAIZ, no en js/)</span>
+marketplace-social.js
+marketplace-social.html
+
+<span class="comment">// Social feed</span>
+js/hub/social-feed.js
+
+<span class="comment">// OpenAPI spec</span>
+docs/swagger/openapi.json
+
+<span class="comment">// Modifica archivos existentes</span>
+<span class="comment">// NUNCA crees scripts nuevos independientes</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <h3 style="color: #ef4444; font-size: 0.95rem; margin-bottom: 1rem;"><i class="fas fa-ban"></i> Reglas de Seguridad</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> <code>Math.random()</code> → usar <code style="color: var(--tanda-green);">crypto.randomInt()</code>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> <code>body.user_id</code> → usar <code style="color: var(--tanda-green);">authUser.userId</code> (JWT)
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> <code>onclick="fn()"</code> → usar <code style="color: var(--tanda-green);">data-action</code> + delegated
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> <code>SELECT *</code> → columnas explicitas siempre
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> <code>error.message</code> al cliente → mensajes genericos en espanol
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem;">
+                        <span style="color: #ef4444;">&#10007;</span> URLs fabricadas → verificar en <a href="/docs" style="color: var(--tanda-cyan);">Swagger UI</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section" id="architecture">
             <h2 class="section-title"><i class="fas fa-sitemap"></i> Arquitectura</h2>
             <p style="color: var(--text-secondary); margin-bottom: 1rem;">Vision general del stack tecnologico.</p>

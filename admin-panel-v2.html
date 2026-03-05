@@ -563,6 +563,102 @@
             font-family: 'Courier New', monospace;
             color: var(--primary-color);
         }
+
+        /* Bounty Payouts Section */
+        .bounty-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+        .bounty-credit-form {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .bounty-credit-form .bounty-field { display: flex; flex-direction: column; gap: 4px; }
+        .bounty-credit-form .bounty-field.full-width { grid-column: 1 / -1; }
+        .bounty-credit-form label { font-size: 0.8rem; color: var(--text-secondary); }
+        .bounty-credit-form input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .bounty-credit-form input:focus { outline: none; border-color: var(--primary-color); }
+        .bounty-submit-btn {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .bounty-submit-btn:hover { opacity: 0.9; }
+        .bounty-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .bounty-user-results {
+            position: absolute;
+            top: 100%;
+            left: 0; right: 0;
+            background: var(--bg-secondary, #1e293b);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .bounty-user-results.active { display: block; }
+        .bounty-user-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .bounty-user-item:hover { background: rgba(0,255,255,0.1); }
+        .bounty-user-item small { color: var(--text-secondary); margin-left: 6px; }
+        .bounty-history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bounty-history-table th {
+            padding: 10px 12px;
+            text-align: left;
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            background: rgba(0,255,255,0.1);
+        }
+        .bounty-history-table td {
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .bounty-amount-badge {
+            background: rgba(245,158,11,0.2);
+            color: #f59e0b;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        @media (max-width: 600px) {
+            .bounty-credit-form { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -1202,6 +1298,64 @@
                 </table>
             </div>
         </div>
+
+        <!-- Bounty Payouts Section — v4.12.1 -->
+        <div class="bounty-section" id="bountySection" style="margin-top: 30px;">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><i class="fas fa-coins"></i> Bounty Payouts (LTD)</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Acreditar LTD a contribuidores por bounties de GitHub</p>
+                </div>
+                <button class="refresh-btn" onclick="loadBountyHistory()">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+
+            <div class="bounty-credit-form" id="bountyCreditForm">
+                <div class="bounty-field full-width" style="position: relative;">
+                    <label>Usuario</label>
+                    <input type="text" id="bountyUserSearch" placeholder="Buscar por nombre o email..." autocomplete="off" oninput="searchBountyUser(this.value)">
+                    <input type="hidden" id="bountyUserId">
+                    <div class="bounty-user-results" id="bountyUserResults"></div>
+                </div>
+                <div class="bounty-field">
+                    <label>Cantidad (LTD)</label>
+                    <input type="number" id="bountyAmount" min="1" max="1000" step="1" placeholder="100">
+                </div>
+                <div class="bounty-field">
+                    <label>Razon / Descripcion</label>
+                    <input type="text" id="bountyReason" placeholder="Bounty #48 — OpenAPI spec update">
+                </div>
+                <div class="bounty-field">
+                    <label>GitHub PR # (opcional)</label>
+                    <input type="text" id="bountyPR" placeholder="#55">
+                </div>
+                <div class="bounty-field">
+                    <label>GitHub Issue # (opcional)</label>
+                    <input type="text" id="bountyIssue" placeholder="#48">
+                </div>
+                <button class="bounty-submit-btn" onclick="submitBountyCredit()" id="bountySubmitBtn">
+                    <i class="fas fa-paper-plane"></i> Acreditar Bounty
+                </button>
+            </div>
+
+            <div id="bountyHistoryContainer" style="overflow-x: auto;">
+                <table class="bounty-history-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Cantidad</th>
+                            <th>Razon</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bountyHistoryBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 30px;">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     <script>
         let currentDepositId = null;
         let currentUser = null;
@@ -3037,6 +3191,124 @@
         (function initGroupsSection() {
             if (document.getElementById('groupsSection')) {
                 setTimeout(loadAdminGroups, 500);
+            }
+        })();
+
+        // ===== BOUNTY PAYOUT FUNCTIONS (v4.12.1) =====
+
+        let bountySearchTimeout = null;
+
+        async function loadBountyHistory() {
+            const tbody = document.getElementById('bountyHistoryBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando...</td></tr>';
+            try {
+                const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/bounty-credits');
+                const data = await resp.json();
+                if (!data.success || !data.data.credits.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Sin bounties acreditados aun</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.data.credits.map(c => {
+                    const date = new Date(c.created_at).toLocaleDateString('es-HN', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const desc = escapeHtml(c.description.replace('Bounty: ', ''));
+                    return `<tr>
+                        <td>${date}</td>
+                        <td>${escapeHtml(c.name)}<br><small style="color:var(--text-secondary)">${escapeHtml(c.email)}</small></td>
+                        <td><span class="bounty-amount-badge">${Number(c.amount).toLocaleString()} LTD</span></td>
+                        <td>${desc}</td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:30px;">Error al cargar historial</td></tr>';
+            }
+        }
+
+        function searchBountyUser(query) {
+            clearTimeout(bountySearchTimeout);
+            const container = document.getElementById('bountyUserResults');
+            if (!query || query.length < 2) { container.classList.remove('active'); return; }
+            bountySearchTimeout = setTimeout(async () => {
+                try {
+                    const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/user-search?q=' + encodeURIComponent(query));
+                    const data = await resp.json();
+                    if (!data.success || !data.data.users.length) {
+                        container.innerHTML = '<div class="bounty-user-item" style="color:var(--text-secondary)">Sin resultados</div>';
+                        container.classList.add('active');
+                        return;
+                    }
+                    container.innerHTML = data.data.users.map(u =>
+                        `<div class="bounty-user-item" onclick="selectBountyUser('${escapeHtml(u.user_id)}','${escapeHtml(u.name)}','${escapeHtml(u.email)}')">${escapeHtml(u.name)}<small>${escapeHtml(u.email)}</small></div>`
+                    ).join('');
+                    container.classList.add('active');
+                } catch (err) {
+                    container.classList.remove('active');
+                }
+            }, 300);
+        }
+
+        function selectBountyUser(userId, name, email) {
+            document.getElementById('bountyUserId').value = userId;
+            document.getElementById('bountyUserSearch').value = name + ' (' + email + ')';
+            document.getElementById('bountyUserResults').classList.remove('active');
+        }
+
+        async function submitBountyCredit() {
+            const userId = document.getElementById('bountyUserId').value;
+            const amount = parseFloat(document.getElementById('bountyAmount').value);
+            const reason = document.getElementById('bountyReason').value.trim();
+            const pr = document.getElementById('bountyPR').value.trim();
+            const issue = document.getElementById('bountyIssue').value.trim();
+
+            if (!userId) { showNotification('Selecciona un usuario', 'error'); return; }
+            if (!amount || amount <= 0 || amount > 1000) { showNotification('Cantidad debe ser entre 1 y 1000 LTD', 'error'); return; }
+            if (!reason) { showNotification('Razon es requerida', 'error'); return; }
+
+            const userName = document.getElementById('bountyUserSearch').value;
+            if (!confirm(`Acreditar ${amount} LTD a ${userName}?\n\nRazon: ${reason}`)) return;
+
+            const btn = document.getElementById('bountySubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+            try {
+                const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/bounty-credit', {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: userId, amount, reason, github_pr: pr || null, github_issue: issue || null })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showNotification(`${data.data.amount} LTD acreditados a ${escapeHtml(data.data.user_name)}`, 'success');
+                    document.getElementById('bountyUserId').value = '';
+                    document.getElementById('bountyUserSearch').value = '';
+                    document.getElementById('bountyAmount').value = '';
+                    document.getElementById('bountyReason').value = '';
+                    document.getElementById('bountyPR').value = '';
+                    document.getElementById('bountyIssue').value = '';
+                    loadBountyHistory();
+                } else {
+                    showNotification(data.message || 'Error al acreditar', 'error');
+                }
+            } catch (err) {
+                showNotification('Error de conexion', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Acreditar Bounty';
+            }
+        }
+
+        // Close user search dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#bountyUserSearch') && !e.target.closest('#bountyUserResults')) {
+                const r = document.getElementById('bountyUserResults');
+                if (r) r.classList.remove('active');
+            }
+        });
+
+        // Init bounty section
+        (function initBountySection() {
+            if (document.getElementById('bountySection')) {
+                setTimeout(loadBountyHistory, 800);
             }
         })();
     </script>
@@ -5638,7 +5910,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                 
                 renderDeletedGroups();
             } catch (error) {
-                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 20px;">Error al cargar grupos eliminados'</p>';
+                container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 20px;">Error al cargar grupos eliminados</p>';
             }
         }
         

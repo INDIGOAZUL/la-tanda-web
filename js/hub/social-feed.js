@@ -1230,18 +1230,18 @@ const SocialFeed = {
             '</div>' +
             '<div class="social-card-footer">' +
                 (viewCount > 0 ? '<span class="sf-views"><i class="far fa-eye"></i> ' + viewCount + '</span>' : '') +
-                '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Me gusta">' +
+                '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta">' +
                     '<i class="' + (event.is_liked ? 'fas' : 'far') + ' fa-heart"></i>' +
                     '<span>' + likesText + '</span>' +
                 '</button>' +
-                '<button class="engagement-btn comment-btn" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Comentar">' +
+                '<button class="engagement-btn comment-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Comentar">' +
                     '<i class="far fa-comment"></i>' +
                     '<span>' + commentsText + '</span>' +
                 '</button>' +
-                '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Compartir">' +
+                '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Compartir">' +
                     '<i class="fas fa-share-alt"></i>' +
                 '</button>' +
-                '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" aria-label="Guardar">' +
+                '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
             '</div>' +
