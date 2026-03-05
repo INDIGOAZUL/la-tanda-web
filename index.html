@@ -1980,19 +1980,21 @@
                 const result = await response.json();
                 
                 if (result.success || response.ok) {
-                    showToast("¡Cuenta creada! Redirigiendo...", "success");
+                    showToast("¡Cuenta creada! Verifica tu correo electrónico.", "success");
                     
-                    // Store token if provided
-                    if (result.token) {
-                        localStorage.setItem("auth_token", result.token);
+                    // Store token if provided (fix: correct path from API response)
+                    const token = result.data?.auth_token || result.token;
+                    if (token) {
+                        localStorage.setItem("auth_token", token);
                     }
-                    if (result.user) {
-                        localStorage.setItem("latanda_user", JSON.stringify(result.user));
+                    const user = result.data?.user || result.user;
+                    if (user) {
+                        localStorage.setItem("latanda_user", JSON.stringify(user));
                     }
                     
-                    // Redirect to dashboard
+                    // Redirect to auth page for email verification
                     setTimeout(() => {
-                        window.location.href = "home-dashboard.html";
+                        window.location.href = "auth-enhanced.html";
                     }, 1500);
                     
                 } else {
