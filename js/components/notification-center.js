@@ -1,6 +1,7 @@
-// ===== NOTIFICATION CENTER v2.4 - XSS Hardened =====
-// Updated: 2026-02-11
+// ===== NOTIFICATION CENTER v2.9 - Intelligence Layer =====
+// Updated: 2026-03-04
 // Features: API sync, type-based colors, toast system, preferences modal
+// Phase 2: Dual push (VAPID + FCM), smart push permission timing
 
 class NotificationCenter {
     constructor() {
@@ -14,7 +15,10 @@ class NotificationCenter {
         this.pollingEnabled = true;
         this.pollIntervalMs = 60000;
         this.preferences = null;
+        this.fcmSupported = false;
+        this.fcmMessaging = null;
 
+        this.initFirebase();
         this.init();
     }
 
@@ -98,27 +102,94 @@ class NotificationCenter {
 
     mapNotificationType(apiType) {
         const typeMap = {
-            "lottery_scheduled": "tandas", "lottery_result": "tandas", "lottery_turn_assigned": "tandas",
-            "payment_received": "transactions", "payment_sent": "transactions", "payment_due": "transactions",
-            "deposit_confirmed": "transactions", "withdrawal_completed": "transactions", "withdrawal_requested": "transactions",
+            // Transactions
+            "payment_reminder": "transactions", "payment_received": "transactions",
+            "payment_recorded": "transactions", "payment_sent": "transactions",
+            "payment_due": "transactions", "payment_due_soon": "transactions",
+            "payment_late": "transactions", "mora_applied": "transactions",
+            "deposit_confirmed": "transactions", "deposit_rejected": "transactions",
+            "withdrawal_completed": "transactions", "withdrawal_requested": "transactions",
+            "payout_ready": "transactions", "payout_requested": "transactions",
+            "payout_approved": "transactions", "payout_processed": "transactions",
+            "payout_confirmed": "transactions", "payout_rejected": "transactions",
+            "payout_reminder": "transactions", "distribution_executed": "transactions",
+            "commission_request": "transactions", "commission_response": "transactions",
+            // Tandas
+            "lottery_scheduled": "tandas", "lottery_starting": "tandas",
+            "lottery_completed": "tandas", "lottery_turn_assigned": "tandas",
+            "lottery_executed": "tandas", "lottery_cancelled": "tandas",
+            "lottery_reset": "tandas", "lottery_result": "tandas",
+            "lottery_skipped": "tandas", "lottery_failed": "tandas",
+            "turn_assigned": "tandas", "turn_updated": "tandas",
             "tanda_joined": "tandas", "tanda_created": "tandas",
-            "group_invited": "social", "member_joined": "social", "member_left": "social", "achievement": "social",
-            "security_alert": "system", "system_notice": "system"
+            "tanda_starting": "tandas", "tanda_scheduled": "tandas",
+            // Social
+            "group_update": "social", "group_joined": "social",
+            "group_rejected": "social", "group_invitation": "social",
+            "group_invited": "social", "group_full": "social",
+            "group_full_member": "social", "invitation": "social",
+            "member_joined": "social", "member_left": "social",
+            "member_request_pending": "social", "member_auto_approved": "social",
+            "member_approved": "social", "membership_reactivated": "social",
+            "member_suspended": "social", "member_reactivated": "social",
+            "extension_requested": "social", "extension_approved": "social",
+            "extension_rejected": "social", "mention": "social",
+            "achievement": "social", "referral_success": "social",
+            // System
+            "security_alert": "system", "system_notice": "system",
+            "compliance_alert": "system", "suspension_warning": "system",
+            "suspension_recommended": "system", "join_error": "system",
+            "kyc_approved": "system", "kyc_pending_review": "system",
+            "recruitment_starting": "system", "recruitment_halfway": "system",
+            "recruitment_almost_full": "system", "recruitment_urgent": "system",
+            "recruitment_reminder": "system"
         };
         return typeMap[apiType] || "system";
     }
 
     isUrgentType(apiType) {
-        return ["security_alert", "payment_due", "payment_overdue", "suspension_warning"].includes(apiType);
+        return ["security_alert", "payment_due", "payment_overdue", "suspension_warning",
+            "mora_applied", "suspension_recommended", "compliance_alert", "payment_late"].includes(apiType);
     }
 
     getIconForType(type) {
         const iconMap = {
-            "lottery_scheduled": "📅", "lottery_result": "🎰", "lottery_turn_assigned": "🎯",
-            "payment_received": "💰", "payment_sent": "📤", "payment_due": "⏰",
-            "deposit_confirmed": "✅", "withdrawal_completed": "💸", "withdrawal_requested": "📤",
-            "tanda_joined": "👥", "tanda_created": "🆕", "group_invited": "💌",
-            "member_joined": "🎉", "member_left": "👋", "achievement": "🏆",
+            "payment_reminder": "💰", "payment_received": "✅", "payment_recorded": "📝",
+            "payment_sent": "📤", "payment_due": "⏰", "payment_due_soon": "⏰",
+            "payment_late": "⚠️", "mora_applied": "⚠️",
+            "deposit_confirmed": "✅", "deposit_rejected": "❌",
+            "withdrawal_completed": "💸", "withdrawal_requested": "📤",
+            "suspension_warning": "🚨", "suspension_recommended": "⚠️",
+            "member_suspended": "🔒", "member_reactivated": "✅",
+            "compliance_alert": "🚨",
+            "group_update": "📢", "group_joined": "✅", "group_rejected": "❌",
+            "group_invitation": "💌", "group_invited": "💌",
+            "group_full": "🎉", "group_full_member": "👥",
+            "join_error": "⚠️",
+            "member_joined": "👋", "member_request_pending": "📋",
+            "member_auto_approved": "⚡", "member_approved": "✅",
+            "membership_reactivated": "🔓", "mention": "💬",
+            "invitation": "📩",
+            "commission_request": "💼", "commission_response": "📩",
+            "turn_assigned": "🎯", "turn_updated": "🔄",
+            "tanda_starting": "🚀", "tanda_scheduled": "📅",
+            "tanda_joined": "👥", "tanda_created": "🆕",
+            "lottery_scheduled": "📅", "lottery_starting": "🎰",
+            "lottery_completed": "🎉", "lottery_turn_assigned": "🎯",
+            "lottery_executed": "🎲", "lottery_cancelled": "🚫",
+            "lottery_reset": "🔄", "lottery_result": "🎰",
+            "lottery_skipped": "⚠️", "lottery_failed": "❌",
+            "extension_requested": "📝", "extension_approved": "✅",
+            "extension_rejected": "❌",
+            "payout_ready": "🎉", "payout_requested": "📤",
+            "payout_approved": "✅", "payout_processed": "💸",
+            "payout_confirmed": "🎊", "payout_rejected": "❌",
+            "payout_reminder": "⏰", "distribution_executed": "💰",
+            "kyc_approved": "🛡️", "kyc_pending_review": "🔍",
+            "recruitment_starting": "🚀", "recruitment_halfway": "📢",
+            "recruitment_almost_full": "🔥", "recruitment_urgent": "⏰",
+            "recruitment_reminder": "📣", "referral_success": "🎉",
+            "achievement": "🏆",
             "security_alert": "🚨", "system_notice": "📢"
         };
         return iconMap[type] || "🔔";
@@ -567,7 +638,74 @@ class NotificationCenter {
                     </label>
                 </div>
             </div>
+
+            <div class="prefs-section">
+                <div class="prefs-section-title">
+                    <i class="fas fa-moon"></i> Horario Silencioso
+                </div>
+
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">🌙</span> Activar horario silencioso</div>
+                        <div class="prefs-item-desc">Las notificaciones no urgentes se enviarán al finalizar el horario</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_quiet_hours_enabled" ${p.quiet_hours_enabled ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="prefs-quiet-hours-range" id="quietHoursRange" style="display:${p.quiet_hours_enabled ? 'flex' : 'none'}">
+                    <div class="prefs-time-select">
+                        <label for="pref_quiet_hours_start">Desde:</label>
+                        <select id="pref_quiet_hours_start">${this._buildHourOptions(p.quiet_hours_start != null ? p.quiet_hours_start : 22)}</select>
+                    </div>
+                    <div class="prefs-time-select">
+                        <label for="pref_quiet_hours_end">Hasta:</label>
+                        <select id="pref_quiet_hours_end">${this._buildHourOptions(p.quiet_hours_end != null ? p.quiet_hours_end : 7)}</select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="prefs-section">
+                <div class="prefs-section-title">
+                    <i class="fas fa-newspaper"></i> Resumen Diario
+                </div>
+
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">📋</span> Recibir resumen diario</div>
+                        <div class="prefs-item-desc">Recibe un resumen de notificaciones no urgentes cada mañana a las 7:00 AM</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_digest_enabled" ${p.digest_enabled ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
         `;
+
+        // Wire quiet hours toggle visibility
+        this._wireQuietHoursToggle();
+    }
+
+    _wireQuietHoursToggle() {
+        const toggle = document.getElementById("pref_quiet_hours_enabled");
+        const range = document.getElementById("quietHoursRange");
+        if (toggle && range) {
+            toggle.addEventListener("change", () => {
+                range.style.display = toggle.checked ? "flex" : "none";
+            });
+        }
+    }
+
+    _buildHourOptions(selected) {
+        const labels = [];
+        for (let h = 0; h < 24; h++) {
+            const ampm = h === 0 ? '12:00 AM' : h < 12 ? h + ':00 AM' : h === 12 ? '12:00 PM' : (h - 12) + ':00 PM';
+            labels.push('<option value="' + h + '"' + (h === selected ? ' selected' : '') + '>' + ampm + '</option>');
+        }
+        return labels.join('');
     }
 
     async savePreferences() {
@@ -585,7 +723,12 @@ class NotificationCenter {
             member_activity: document.getElementById("pref_member_activity")?.checked ?? true,
             marketing: document.getElementById("pref_marketing")?.checked ?? false,
             email_enabled: document.getElementById("pref_email_enabled")?.checked ?? true,
-            push_enabled: document.getElementById("pref_push_enabled")?.checked ?? true
+            push_enabled: document.getElementById("pref_push_enabled")?.checked ?? true,
+            quiet_hours_enabled: document.getElementById("pref_quiet_hours_enabled")?.checked ?? false,
+            quiet_hours_start: parseInt(document.getElementById("pref_quiet_hours_start")?.value ?? "22", 10),
+            quiet_hours_end: parseInt(document.getElementById("pref_quiet_hours_end")?.value ?? "7", 10),
+            digest_enabled: document.getElementById("pref_digest_enabled")?.checked ?? false,
+            digest_frequency: document.getElementById("pref_digest_enabled")?.checked ? 'daily' : 'off'
         };
 
         try {
@@ -628,6 +771,45 @@ class NotificationCenter {
         }
     }
 
+    // ===== FIREBASE CLOUD MESSAGING =====
+
+    async initFirebase() {
+        if (!window._LT_FIREBASE_CONFIG) return;
+        try {
+            // Dynamically load Firebase compat SDK if not already present
+            if (typeof firebase === 'undefined') {
+                await this._loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+                await this._loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
+            }
+            if (typeof firebase === 'undefined' || !firebase.messaging) return;
+            if (!firebase.apps.length) {
+                firebase.initializeApp(window._LT_FIREBASE_CONFIG);
+            }
+            this.fcmMessaging = firebase.messaging();
+            this.fcmSupported = true;
+            // Send config to service worker for background message handling
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'FIREBASE_CONFIG',
+                    config: window._LT_FIREBASE_CONFIG
+                });
+            }
+        } catch (e) {
+            // Firebase not available — VAPID-only mode
+        }
+    }
+
+    _loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+            var s = document.createElement('script');
+            s.src = src;
+            s.onload = resolve;
+            s.onerror = resolve; // Don't block on CDN failure
+            document.head.appendChild(s);
+        });
+    }
+
     // ===== WEB PUSH SUBSCRIPTION =====
 
     initPushSubscription() {
@@ -640,12 +822,21 @@ class NotificationCenter {
             return;
         }
 
-        // Check if banner was dismissed in last 7 days
-        const dismissed = localStorage.getItem("push_banner_dismissed");
-        if (dismissed && (Date.now() - parseInt(dismissed, 10)) < 604800000) return;
+        // Smart push permission timing — max 3 prompts with progressive delay
+        const promptCount = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
+        if (promptCount >= 3) return;
 
-        // Show subtle banner after 10 seconds
-        setTimeout(() => this.showPushBanner(), 10000);
+        const dismissed = localStorage.getItem("push_banner_dismissed");
+        if (dismissed) {
+            const elapsed = Date.now() - parseInt(dismissed, 10);
+            // 1st dismiss → wait 1 day, 2nd → wait 7 days
+            const waitMs = promptCount <= 1 ? 86400000 : 604800000;
+            if (elapsed < waitMs) return;
+        }
+
+        // Delay: 30s on first visit, 15s on subsequent
+        const delay = promptCount === 0 ? 30000 : 15000;
+        setTimeout(() => this.showPushBanner(), delay);
     }
 
     showPushBanner() {
@@ -692,7 +883,7 @@ class NotificationCenter {
         banner.innerHTML = `
             <div class="push-banner-content">
                 <i class="fas fa-bell"></i>
-                <span>Activa las notificaciones para no perderte nada</span>
+                <span>Activa las notificaciones para no perderte pagos y turnos</span>
                 <button class="push-banner-btn" id="pushBannerAccept">Activar</button>
                 <button class="push-banner-dismiss" id="pushBannerDismiss">
                     <i class="fas fa-times"></i>
@@ -706,11 +897,13 @@ class NotificationCenter {
             var permission = await Notification.requestPermission();
             if (permission === "granted") {
                 await this.subscribeToPush();
-                this.showToast({ type: "success", message: "Notificaciones push activadas" });
+                this.showToast({ type: "success", message: "Notificaciones activadas — te avisaremos de pagos y turnos" });
             }
         });
         document.getElementById("pushBannerDismiss").addEventListener("click", () => {
             banner.remove();
+            const count = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
+            localStorage.setItem("push_prompt_count", String(count + 1));
             localStorage.setItem("push_banner_dismissed", String(Date.now()));
         });
     }
@@ -719,33 +912,53 @@ class NotificationCenter {
         try {
             var reg = await navigator.serviceWorker.ready;
             var existing = await reg.pushManager.getSubscription();
-            if (existing) return; // Already subscribed
 
-            var resp = await fetch(this.apiBase + "/api/push/vapid-key");
-            var result = await resp.json();
-            var publicKey = result.data ? result.data.publicKey : result.publicKey;
-            if (!publicKey) return;
+            // VAPID subscription
+            if (!existing) {
+                var resp = await fetch(this.apiBase + "/api/push/vapid-key");
+                var result = await resp.json();
+                var publicKey = result.data ? result.data.publicKey : result.publicKey;
+                if (publicKey) {
+                    var sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: this.urlBase64ToUint8Array(publicKey)
+                    });
 
-            var sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: this.urlBase64ToUint8Array(publicKey)
-            });
-
-            var p256dh = sub.getKey("p256dh");
-            var auth = sub.getKey("auth");
-            if (!p256dh || !auth) return;
-
-            await fetch(this.apiBase + "/api/push/subscribe", {
-                method: "POST",
-                headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
-                body: JSON.stringify({
-                    endpoint: sub.endpoint,
-                    keys: {
-                        p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh))),
-                        auth: btoa(String.fromCharCode.apply(null, new Uint8Array(auth)))
+                    var p256dh = sub.getKey("p256dh");
+                    var auth = sub.getKey("auth");
+                    if (p256dh && auth) {
+                        await fetch(this.apiBase + "/api/push/subscribe", {
+                            method: "POST",
+                            headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                            body: JSON.stringify({
+                                endpoint: sub.endpoint,
+                                keys: {
+                                    p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh))),
+                                    auth: btoa(String.fromCharCode.apply(null, new Uint8Array(auth)))
+                                }
+                            })
+                        });
                     }
-                })
-            });
+                }
+            }
+
+            // FCM registration (alongside VAPID)
+            if (this.fcmSupported && this.fcmMessaging) {
+                try {
+                    var fcmToken = await this.fcmMessaging.getToken({
+                        serviceWorkerRegistration: reg
+                    });
+                    if (fcmToken) {
+                        await fetch(this.apiBase + "/api/push/fcm-register", {
+                            method: "POST",
+                            headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                            body: JSON.stringify({ token: fcmToken, device_type: "web" })
+                        });
+                    }
+                } catch (e) {
+                    // FCM token failed — VAPID still works
+                }
+            }
         } catch (err) {
             // Silent fail — push is optional
         }
@@ -763,6 +976,21 @@ class NotificationCenter {
                     headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
                     body: JSON.stringify({ endpoint: endpoint })
                 });
+            }
+
+            // Also unregister FCM token
+            if (this.fcmSupported && this.fcmMessaging) {
+                try {
+                    var fcmToken = await this.fcmMessaging.getToken();
+                    if (fcmToken) {
+                        await this.fcmMessaging.deleteToken();
+                        await fetch(this.apiBase + "/api/push/fcm-unregister", {
+                            method: "DELETE",
+                            headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                            body: JSON.stringify({ token: fcmToken })
+                        });
+                    }
+                } catch (e) {}
             }
         } catch (err) {
             // Silent fail
