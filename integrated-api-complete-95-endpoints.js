@@ -22341,6 +22341,255 @@ if (pathname === '/api/admin/payouts/history' && method === 'GET') {
 
 
         // ============================================
+        // ============================================
+        // POST /api/feed/social/report - Submit a report (user)
+        // Added: 2026-03-05
+        // Bounty: #51 - Content Report/Flag System
+        // ============================================
+        if (pathname === '/api/feed/social/report' && method === 'POST') {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser) {
+                sendError(res, 401, 'Autenticacion requerida');
+                return;
+            }
+
+            const { event_id, comment_id, reason, description } = body;
+            const validReasons = ['spam', 'harassment', 'inappropriate', 'misinformation', 'other'];
+
+            // Validation
+            if (!reason || !validReasons.includes(reason)) {
+                sendError(res, 400, 'Razon invalida. Valores permitidos: spam, harassment, inappropriate, misinformation, other');
+                return;
+            }
+
+            if (!event_id && !comment_id) {
+                sendError(res, 400, 'Debe proporcionar event_id o comment_id');
+                return;
+            }
+
+            if (event_id && comment_id) {
+                sendError(res, 400, 'Solo puede reportar un elemento a la vez (evento o comentario)');
+                return;
+            }
+
+            const reporterId = authUser.userId;
+
+            try {
+                // Check for duplicate report
+                let duplicateCheck;
+                if (event_id) {
+                    duplicateCheck = await dbPostgres.pool.query(
+                        'SELECT id FROM social_reports WHERE reporter_id = $1 AND event_id = $2',
+                        [reporterId, event_id]
+                    );
+                } else {
+                    duplicateCheck = await dbPostgres.pool.query(
+                        'SELECT id FROM social_reports WHERE reporter_id = $1 AND comment_id = $2',
+                        [reporterId, comment_id]
+                    );
+                }
+
+                if (duplicateCheck.rows.length > 0) {
+                    sendError(res, 400, 'Ya has reportado este contenido anteriormente');
+                    return;
+                }
+
+                // Insert report
+                const insertResult = await dbPostgres.pool.query(
+                    `INSERT INTO social_reports (reporter_id, event_id, comment_id, reason, description)
+                     VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+                    [reporterId, event_id || null, comment_id || null, reason, description || null]
+                );
+
+                log('info', `[SOCIAL] User ${reporterId} submitted report ${insertResult.rows[0].id} for ${event_id ? 'event' : 'comment'}`);
+
+                sendResponse(res, 201, {
+                    success: true,
+                    message: 'Reporte enviado correctamente',
+                    report_id: insertResult.rows[0].id
+                });
+                return;
+            } catch (error) {
+                log('error', '[SOCIAL] Report submission error: ' + error.message);
+                sendError(res, 500, 'Error al procesar reporte');
+                return;
+            }
+        }
+
+        // ============================================
+        // GET /api/admin/reports - Get all reports (admin)
+        // Added: 2026-03-05
+        // Bounty: #51 - Content Report/Flag System
+        // ============================================
+        if (pathname === '/api/admin/reports' && (method === 'GET' || method === 'HEAD')) {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser) {
+                sendError(res, 401, 'Autenticacion requerida');
+                return;
+            }
+
+            // Check admin role
+            if (!['super_admin', 'admin', 'moderator'].includes(authUser.role)) {
+                sendError(res, 403, 'No tienes permisos de administrador');
+                return;
+            }
+
+            const status = query.status || 'pending';
+            const limit = Math.min(parseInt(query.limit) || 20, 50);
+            const offset = parseInt(query.offset) || 0;
+
+            try {
+                const result = await dbPostgres.pool.query(`
+                    SELECT
+                        r.id,
+                        r.reporter_id,
+                        r.event_id,
+                        r.comment_id,
+                        r.reason,
+                        r.description,
+                        r.status,
+                        r.reviewed_by,
+                        r.reviewed_at,
+                        r.resolution_note,
+                        r.created_at,
+                        u.name as reporter_name,
+                        u.avatar_url as reporter_avatar,
+                        sf.title as event_title,
+                        sf.actor_id as event_author_id,
+                        sc.content as comment_content,
+                        sc.user_id as comment_author_id
+                    FROM social_reports r
+                    LEFT JOIN users u ON r.reporter_id = u.user_id
+                    LEFT JOIN social_feed sf ON r.event_id = sf.id
+                    LEFT JOIN social_comments sc ON r.comment_id = sc.id
+                    WHERE ($1 = 'all' OR r.status = $1)
+                    ORDER BY r.created_at DESC
+                    LIMIT $2 OFFSET $3
+                `, [status, limit, offset]);
+
+                const countResult = await dbPostgres.pool.query(
+                    'SELECT COUNT(*) as total FROM social_reports WHERE ($1 = \'all\' OR status = $1)',
+                    [status]
+                );
+
+                const reports = result.rows.map(r => ({
+                    id: r.id,
+                    reporter: {
+                        id: r.reporter_id,
+                        name: r.reporter_name || 'Usuario',
+                        avatar: r.reporter_avatar
+                    },
+                    content: r.event_id ? {
+                        type: 'event',
+                        id: r.event_id,
+                        title: r.event_title,
+                        author_id: r.event_author_id
+                    } : {
+                        type: 'comment',
+                        id: r.comment_id,
+                        content: r.comment_content,
+                        author_id: r.comment_author_id
+                    },
+                    reason: r.reason,
+                    description: r.description,
+                    status: r.status,
+                    reviewed_by: r.reviewed_by,
+                    reviewed_at: r.reviewed_at,
+                    resolution_note: r.resolution_note,
+                    created_at: r.created_at
+                }));
+
+                const total = parseInt(countResult.rows[0]?.total) || 0;
+
+                sendResponse(res, 200, {
+                    success: true,
+                    data: reports,
+                    pagination: {
+                        total: total,
+                        limit: limit,
+                        offset: offset,
+                        has_more: offset + limit < total
+                    }
+                });
+                return;
+            } catch (error) {
+                log('error', '[ADMIN] Reports fetch error: ' + error.message);
+                sendError(res, 500, 'Error al obtener reportes');
+                return;
+            }
+        }
+
+        // ============================================
+        // POST /api/admin/reports/:id/resolve - Resolve a report (admin)
+        // Added: 2026-03-05
+        // Bounty: #51 - Content Report/Flag System
+        // ============================================
+        if (pathname.match(/^\/api\/admin\/reports\/[\w-]+\/resolve$/) && method === 'POST') {
+            const authUser = getAuthenticatedUser(req, query);
+            if (!authUser) {
+                sendError(res, 401, 'Autenticacion requerida');
+                return;
+            }
+
+            // Check admin role
+            if (!['super_admin', 'admin', 'moderator'].includes(authUser.role)) {
+                sendError(res, 403, 'No tienes permisos de administrador');
+                return;
+            }
+
+            const reportId = pathname.split('/')[4];
+            const { action, resolution_note } = body;
+            const validActions = ['dismissed', 'actioned'];
+
+            if (!action || !validActions.includes(action)) {
+                sendError(res, 400, 'Accion invalida. Valores permitidos: dismissed, actioned');
+                return;
+            }
+
+            try {
+                // Update report status
+                const result = await dbPostgres.pool.query(`
+                    UPDATE social_reports
+                    SET status = $1, reviewed_by = $2, reviewed_at = NOW(), resolution_note = $3
+                    WHERE id = $4
+                    RETURNING id, event_id, comment_id
+                `, [action, authUser.userId, resolution_note || null, reportId]);
+
+                if (result.rows.length === 0) {
+                    sendError(res, 404, 'Reporte no encontrado');
+                    return;
+                }
+
+                // If actioned, optionally hide the content
+                if (action === 'actioned' && result.rows[0].event_id) {
+                    await dbPostgres.pool.query(
+                        'UPDATE social_feed SET is_hidden = true WHERE id = $1',
+                        [result.rows[0].event_id]
+                    );
+                }
+
+                if (action === 'actioned' && result.rows[0].comment_id) {
+                    await dbPostgres.pool.query(
+                        'UPDATE social_comments SET is_hidden = true WHERE id = $1',
+                        [result.rows[0].comment_id]
+                    );
+                }
+
+                log('info', `[ADMIN] Report ${reportId} resolved as ${action} by ${authUser.userId}`);
+
+                sendResponse(res, 200, {
+                    success: true,
+                    message: 'Reporte resuelto correctamente'
+                });
+                return;
+            } catch (error) {
+                log('error', '[ADMIN] Report resolve error: ' + error.message);
+                sendError(res, 500, 'Error al resolver reporte');
+                return;
+            }
+        }
+
+        // ============================================
         // GET /api/feed/social/:id/comments - Get comments for event
         // Added: 2026-01-25
         // ============================================

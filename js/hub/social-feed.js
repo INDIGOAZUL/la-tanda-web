@@ -1244,6 +1244,9 @@ const SocialFeed = {
                 '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
+                '<button class="engagement-btn report-btn" data-id="' + this.escapeHtml(String(event.id)) + '" data-type="event" aria-label="Reportar">' +
+                    '<i class="far fa-flag"></i>' +
+                '</button>' +
             '</div>' +
         '</div>';
     },
@@ -1332,6 +1335,13 @@ const SocialFeed = {
             if (shareBtn) {
                 e.preventDefault();
                 this.shareEvent(shareBtn.dataset.id);
+            }
+
+            // Handle report button clicks
+            const reportBtn = e.target.closest(".report-btn");
+            if (reportBtn) {
+                e.preventDefault();
+                this.openReportModal(reportBtn.dataset.id, reportBtn.dataset.type);
             }
 
             // Handle poll vote clicks
@@ -1487,6 +1497,108 @@ const SocialFeed = {
         } finally {
             button.disabled = false;
         }
+    },
+
+    openReportModal(eventId, type) {
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+        
+        if (!token) {
+            window.LaTandaPopup && window.LaTandaPopup.showError("Inicia sesion para reportar");
+            return;
+        }
+
+        // Create report modal HTML
+        const modalHtml = `
+            <div id="report-modal" class="modal-overlay" style="display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000;">
+                <div class="modal-content" style="background: #1e293b; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                    <h3 style="margin: 0 0 16px; color: #f8fafc; font-size: 18px;">Reportar Contenido</h3>
+                    
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-size: 14px;">Razon del reporte</label>
+                        <select id="report-reason" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 14px;">
+                            <option value="">Selecciona una razon</option>
+                            <option value="spam">Spam</option>
+                            <option value="harassment">Acoso</option>
+                            <option value="inappropriate">Contenido inapropiado</option>
+                            <option value="misinformation">Desinformacion</option>
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; color: #94a3b8; margin-bottom: 8px; font-size: 14px;">Descripcion (opcional)</label>
+                        <textarea id="report-description" rows="3" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #f8fafc; font-size: 14px; resize: vertical;" placeholder="Describe el problema..."></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button id="report-cancel" style="padding: 10px 20px; border-radius: 8px; border: none; background: #334155; color: #f8fafc; cursor: pointer; font-size: 14px;">Cancelar</button>
+                        <button id="report-submit" style="padding: 10px 20px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-size: 14px;">Reportar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById("report-modal");
+        if (existingModal) existingModal.remove();
+
+        // Add modal to page
+        document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+        // Event handlers
+        document.getElementById("report-cancel").onclick = () => {
+            document.getElementById("report-modal").remove();
+        };
+
+        document.getElementById("report-submit").onclick = async () => {
+            const reason = document.getElementById("report-reason").value;
+            const description = document.getElementById("report-description").value;
+
+            if (!reason) {
+                window.LaTandaPopup && window.LaTandaPopup.showError("Selecciona una razon");
+                return;
+            }
+
+            const submitBtn = document.getElementById("report-submit");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Enviando...";
+
+            try {
+                const body = type === "event" 
+                    ? { event_id: eventId, reason, description }
+                    : { comment_id: eventId, reason, description };
+
+                const response = await fetch("/api/feed/social/report", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.LaTandaPopup && window.LaTandaPopup.showSuccess("Reporte enviado correctamente");
+                    document.getElementById("report-modal").remove();
+                } else {
+                    window.LaTandaPopup && window.LaTandaPopup.showError(data.message || "Error al enviar reporte");
+                }
+            } catch (error) {
+                window.LaTandaPopup && window.LaTandaPopup.showError("Error de conexion");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Reportar";
+            }
+        };
+
+        // Close on background click
+        document.getElementById("report-modal").onclick = (e) => {
+            if (e.target.id === "report-modal") {
+                document.getElementById("report-modal").remove();
+            }
+        };
     },
 
     openComments(eventId) {
