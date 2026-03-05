@@ -21,6 +21,39 @@ We pay contributors in LTD tokens for every merged PR!
 
 ---
 
+## Before You Start (MANDATORY)
+
+### Step 1: Claim the Issue
+
+1. Comment on the bounty issue with a **short proposal** (3-5 sentences):
+   - What is your approach?
+   - Which files will you modify?
+   - Have you read the existing code in those files?
+2. Wait for a maintainer to **assign you** the issue
+3. **Do NOT submit a PR before being assigned** — unassigned PRs will be closed without review
+
+### Step 2: Proof of Reading
+
+Every PR description **must** include this exact line:
+
+```
+Verification: TANDA-PROTOCOL
+```
+
+This confirms you read CONTRIBUTING.md. PRs without it are auto-closed. Do not explain or modify this phrase — just include it as-is in your PR body.
+
+### Step 3: One Bounty = One PR
+
+Submit each bounty as a **separate PR**. Don't combine multiple bounties — it forces all-or-nothing review.
+
+### Timelines
+
+- You have **7 days** to submit a PR after assignment
+- If you need more time, comment on the issue
+- If inactive for 7 days, bounty reopens for others
+
+---
+
 ## Codebase Patterns (READ THIS FIRST)
 
 These are **mandatory requirements**. PRs that violate them will be rejected.
@@ -80,7 +113,19 @@ Key singletons:
 - `SocialFeed` in `js/hub/social-feed.js` — social feed module
 - `MarketplaceSocial` in `marketplace-social.js` — marketplace SPA (at HTML root, NOT in `js/`)
 
-### 5. Verify API Endpoints — Don't Fabricate
+### 5. Backend: Integrate Into the Main API File
+
+All API endpoints go in `integrated-api-complete-95-endpoints.js`. This is a vanilla Node.js HTTP server — **NOT Express**.
+
+```
+CORRECT: Add your endpoint handler inside integrated-api-complete-95-endpoints.js
+WRONG:   Create api/my-feature-api.js with Express middleware (require, router, etc.)
+WRONG:   Create a standalone file with integration instructions
+```
+
+There is no `require()`, no `app.get()`, no middleware chain. Read the existing file to understand the pattern.
+
+### 6. Verify API Endpoints — Don't Fabricate
 
 Before documenting or calling an endpoint, verify it exists:
 - **Swagger UI**: [latanda.online/docs](https://latanda.online/docs) (220+ documented paths)
@@ -96,7 +141,7 @@ FAKE:   POST /api/feed/social/:id/like         (wrong — it's toggle-like)
 FAKE:   GET  /api/groups                       (wrong — it's my-groups-pg)
 ```
 
-### 6. Security Rules
+### 7. Security Rules
 
 These are enforced in code review. Violations = instant rejection.
 
@@ -109,7 +154,7 @@ These are enforced in code review. Violations = instant rejection.
 | Never use inline `onclick` handlers | Use delegated event listeners with `data-action` attributes |
 | Financial operations need transactions | `BEGIN` + `SELECT FOR UPDATE` + `COMMIT` |
 
-### 7. File Locations (Don't Guess)
+### 8. File Locations (Don't Guess)
 
 ```
 la-tanda-web/
@@ -135,10 +180,11 @@ la-tanda-web/
 └── smart-contracts/              # Solidity (Polygon Amoy)
 ```
 
-### 8. What NOT to Do (Lessons from Rejected PRs)
+### 9. What NOT to Do (Lessons from Rejected PRs)
 
 | Mistake | What happened |
 |---------|---------------|
+| Created standalone `api/report-api.js` with Express | Wrong — no Express, all endpoints in main API file |
 | Created file at `src/js/hub/social-feed.js` | Wrong path — no `src/` directory exists |
 | Used `sessionStorage.getItem('jwtToken')` | Wrong — platform uses `localStorage.getItem('auth_token')` |
 | Documented `POST https://my.tanda.co/oauth/token` | Fabricated URL — real API is at `latanda.online` |
@@ -147,6 +193,8 @@ la-tanda-web/
 | Rendered `post.content` without `escapeHtml()` | XSS vulnerability |
 | Combined 4 bounties in 1 PR | Each bounty = separate PR for clean review |
 | Used ethers.js for chain examples | La Tanda Chain is Cosmos SDK (not EVM) |
+| Provided Polygon/Solana wallet for payment | LTD is on La Tanda Chain — provide `ltd1...` address |
+| PR with "Integration Instructions" instead of actual integration | Code must work as submitted, not require manual wiring |
 
 ---
 
@@ -182,36 +230,10 @@ git commit -m "feat(scope): brief description"
 git push origin feature/your-feature-name
 ```
 
-The PR template will auto-populate with a checklist. Fill it out completely.
-
----
-
-## Contribution Process
-
-### Claiming a Bounty
-1. Comment on the issue: "I'd like to work on this"
-2. Wait for maintainer to assign you
-3. You have **7 days** to submit a PR
-4. If you need more time, comment on the issue
-5. If inactive for 7 days, bounty reopens
-
-### One Bounty = One PR
-Submit each bounty as a **separate PR**. Don't combine multiple bounties — it forces all-or-nothing review.
-
-### Commit Messages
-
-```
-type(scope): brief description
-
-Fixes #123
-```
-
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-
-### Code Review
-- Reviews within 24-48 hours
-- Address feedback promptly
-- Common reasons for rejection: fabricated endpoints, wrong auth pattern, XSS, wrong file paths
+Include in your PR description:
+- `Verification: TANDA-PROTOCOL`
+- Your `ltd1...` wallet address for payment
+- Which bounty issue it closes (`Closes #XX`)
 
 ---
 
@@ -233,6 +255,16 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 - Error handling with try/catch on all fetch calls
 - No `console.log()` in production code
 - Follow existing patterns in the file you're modifying
+
+---
+
+## Bounty Payment
+
+- **Token:** LTD on La Tanda Chain (Cosmos SDK, NOT EVM/Polygon/Solana)
+- **Address format:** `ltd1...` (bech32). Get one by running a node or request a custodial address
+- **When:** Within 24 hours of PR merge
+- **Include your `ltd1...` address in the PR description**
+- If you don't have a chain address yet, mention it in the PR — we'll coordinate
 
 ---
 
@@ -266,7 +298,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 ## FAQ
 
 **Q: Do I need to ask before working on something?**
-A: For bounties, yes — claim the issue first. For small fixes, submit directly.
+A: For bounties, yes — claim the issue first with a proposal. For small fixes (<10 lines), submit directly.
 
 **Q: Can I work on multiple bounties?**
 A: Yes, but one at a time is recommended. One PR per bounty.
@@ -277,10 +309,13 @@ A: Yes, that's the intended workflow. The frontend is static files that call the
 **Q: What's the La Tanda Chain?**
 A: A Cosmos SDK blockchain (NOT EVM). Chain ID `latanda-testnet-1`, token LTD. See [chain docs](https://latanda.online/dev-dashboard.html#chain).
 
-**Q: When do I get paid?**
-A: Within 24 hours of your PR being merged. Include your wallet address in the PR.
+**Q: I don't have an `ltd1...` address. How do I get paid?**
+A: Mention it in your PR. We can either set up a custodial address for you or coordinate an alternative.
+
+**Q: What does `Verification: TANDA-PROTOCOL` mean?**
+A: It proves you read this guide. Just include it in your PR description exactly as written.
 
 ---
 
-*Last Updated: March 3, 2026*
-*Platform Version: 4.12.0*
+*Last Updated: March 5, 2026*
+*Platform Version: 4.12.4*
