@@ -1,154 +1,529 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Documentation - La Tanda API</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Prism.js for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  
+  <style>
+    :root {
+      --tanda-cyan: #00FFFF;
+      --tanda-cyan-light: #7FFFD4;
+      --tanda-cyan-dark: #00CCCC;
+      --text-primary: #f8fafc;
+      --text-secondary: rgba(248, 250, 252, 0.7);
+      --text-muted: rgba(248, 250, 252, 0.5);
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --bg-card: rgba(30, 41, 59, 0.8);
+      --border-accent: rgba(0, 255, 255, 0.2);
+      --border-subtle: rgba(148, 163, 184, 0.1);
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
 
-    <meta charset="UTF-8">
-    <!-- Resource Optimization -->
-    <!-- DNS Prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
-    <!-- Preconnect to critical origins -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentación - La Tanda Web3</title>
-    <!-- Critical CSS: Font Awesome with async loading -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
-    <style>
-        :root {
-            --tanda-cyan: #00FFFF;
-            --tanda-cyan-light: #7FFFD8;
-            --text-primary: #f8fafc;
-            --text-secondary: rgba(248, 250, 252, 0.7);
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: rgba(30, 41, 59, 0.8);
-            --border-accent: rgba(0, 255, 255, 0.2);
-        }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    .docs-container { display: flex; min-height: 100vh; }
 
-        .coming-soon-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-        }
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-subtle);
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 24px 0;
+      z-index: 100;
+    }
 
-        .coming-soon-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(24px);
-            border: 2px solid var(--border-accent);
-            border-radius: 24px;
-            padding: 60px 40px;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
-        }
+    .sidebar-header {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 16px;
+    }
 
-        .coming-soon-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: var(--bg-primary);
-            margin: 0 auto 30px;
-            box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3);
-        }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
 
-        .coming-soon-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--bg-primary);
+    }
 
-        .coming-soon-description {
-            font-size: 18px;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
+    .logo-text { font-weight: 700; font-size: 18px; }
+    .logo-text span { color: var(--tanda-cyan); }
 
-        .back-button {
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            color: var(--bg-primary);
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .nav-section { padding: 8px 16px; }
 
-        .back-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
-        }
-    </style>
-  <script type="module" crossorigin src="/assets/js/documentation-DsswpPIS.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
-  <link rel="modulepreload" crossorigin href="/assets/js/shared-components-chunk-l0sNRNKZ.js">
-  <link rel="stylesheet" crossorigin href="/assets/css/shared-components-v2-CszIIlFl.css">
-  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
-  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
-<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding: 0 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .nav-link.active { background: rgba(0, 255, 255, 0.1); color: var(--tanda-cyan); }
+    .nav-link i { width: 20px; text-align: center; }
+
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 40px 60px;
+      max-width: 1200px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 0;
+      margin-bottom: 40px;
+      background: linear-gradient(180deg, rgba(0,255,255,0.05) 0%, transparent 100%);
+      border-radius: 24px;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p { font-size: 18px; color: var(--text-secondary); max-width: 600px; margin: 0 auto 32px; }
+
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-dark));
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3); }
+
+    .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-subtle); }
+    .btn-secondary:hover { background: var(--bg-secondary); border-color: var(--tanda-cyan); }
+
+    section { margin-bottom: 60px; }
+
+    section h2 { font-size: 32px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    section h2 i { color: var(--tanda-cyan); }
+    section h3 { font-size: 20px; font-weight: 600; margin: 32px 0 16px; }
+    section p { color: var(--text-secondary); margin-bottom: 16px; }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--border-accent);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(0, 255, 255, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--tanda-cyan);
+      margin-bottom: 16px;
+    }
+
+    .card h4 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .card p { font-size: 14px; margin-bottom: 0; }
+
+    pre {
+      background: #1a1a2e !important;
+      border-radius: 12px;
+      padding: 20px !important;
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--border-subtle);
+    }
+
+    code { font-family: 'Fira Code', monospace; font-size: 13px; }
+
+    .code-inline { background: var(--bg-tertiary); padding: 2px 8px; border-radius: 6px; font-size: 13px; color: var(--tanda-cyan-light); }
+
+    .table-container { overflow-x: auto; margin: 20px 0; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 12px; overflow: hidden; }
+
+    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-subtle); }
+
+    th { background: var(--bg-tertiary); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+
+    td { font-size: 14px; color: var(--text-secondary); }
+    tr:hover td { background: var(--bg-secondary); }
+
+    .endpoint-category { margin-bottom: 32px; }
+    .endpoint-category h4 { font-size: 18px; font-weight: 600; margin-bottom: 12px; color: var(--tanda-cyan); }
+    .endpoint-list { list-style: none; }
+    .endpoint-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-subtle); }
+
+    .method { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; min-width: 70px; text-align: center; }
+    .method-get { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .method-post { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+    .method-put { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .method-delete { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+
+    .endpoint-path { font-family: 'Fira Code', monospace; font-size: 13px; color: var(--text-primary); }
+
+    .error-code { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--bg-tertiary); border-radius: 10px; margin-bottom: 12px; }
+    .error-code code { background: var(--bg-secondary); padding: 4px 10px; border-radius: 6px; color: var(--error); }
+
+    .alert { padding: 16px 20px; border-radius: 12px; margin: 16px 0; display: flex; align-items: flex-start; gap: 12px; }
+    .alert-info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); }
+    .alert-info i { color: var(--info); }
+    .alert-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .alert-warning i { color: var(--warning); }
+
+    .footer { margin-top: 80px; padding: 40px 0; border-top: 1px solid var(--border-subtle); text-align: center; color: var(--text-muted); }
+    .footer a { color: var(--tanda-cyan); text-decoration: none; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 24px; }
+      .hero h1 { font-size: 32px; }
+      .hero-buttons { flex-direction: column; }
+    }
+
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 48px;
+      height: 48px;
+      background: var(--tanda-cyan);
+      color: var(--bg-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.3s ease;
+      border: none;
+      font-size: 20px;
+    }
+
+    .back-to-top.visible { opacity: 1; }
+  </style>
+</head>
 <body>
-    <div class="coming-soon-container">
-        <div class="coming-soon-card">
-            <div class="coming-soon-icon">
-                <i class="fas fa-book"></i>
-            </div>
-            <h1 class="coming-soon-title">Documentación</h1>
-            <p class="coming-soon-description">
-                Estamos preparando una documentación completa de La Tanda Web3 que incluirá guías de usuario, documentación técnica y tutoriales paso a paso.
-            </p>
-            <a href="home-dashboard.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Volver al Dashboard
-            </a>
+  <div class="docs-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="documentation.html" class="logo">
+          <div class="logo-icon"><i class="fas fa-coins"></i></div>
+          <div class="logo-text">La <span>Tanda</span></div>
+        </a>
+      </div>
+      <nav>
+        <div class="nav-section">
+          <div class="nav-section-title">Getting Started</div>
+          <a href="#getting-started" class="nav-link active"><i class="fas fa-rocket"></i> Quick Start</a>
+          <a href="#authentication" class="nav-link"><i class="fas fa-key"></i> Authentication</a>
+          <a href="#api-overview" class="nav-link"><i class="fas fa-network-wired"></i> API Overview</a>
         </div>
-    </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Code Examples</div>
+          <a href="#code-examples" class="nav-link"><i class="fas fa-code"></i> Examples</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Reference</div>
+          <a href="#rate-limits" class="nav-link"><i class="fas fa-tachometer-alt"></i> Rate Limits</a>
+          <a href="#error-handling" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Errors</a>
+          <a href="#chain-api" class="nav-link"><i class="fas fa-link"></i> Chain API</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Resources</div>
+          <a href="https://latanda.online/docs" target="_blank" class="nav-link"><i class="fas fa-book-open"></i> Swagger UI</a>
+        </div>
+      </nav>
+    </aside>
 
-    <!-- Unified Footer -->
-    <div id="latanda-footer" class="auto-footer"></div>
+    <main class="main-content">
+      <div class="hero">
+        <h1>Developer API Documentation</h1>
+        <p>Complete REST API reference for building on La Tanda platform. Includes authentication, endpoints, and code examples.</p>
+        <div class="hero-buttons">
+          <a href="https://latanda.online/docs" target="_blank" class="btn btn-primary">
+            <i class="fas fa-external-link-alt"></i> Swagger UI
+          </a>
+          <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" class="btn btn-secondary">
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </div>
+      </div>
 
-  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/documentation-legacy-BVTqHIKe.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
-    <script src="shared-components.js?v=7.20"></script>
+      <section id="getting-started">
+        <h2><i class="fas fa-rocket"></i> Getting Started</h2>
+        <p>La Tanda is a digital cooperative savings platform (ROSCA system) that digitizes traditional rotating savings groups.</p>
+        
+        <div class="card-grid">
+          <div class="card"><div class="card-icon"><i class="fas fa-users"></i></div><h4>Groups & Tandas</h4><p>Create, manage, and join savings groups with automated turn rotation.</p></div>
+          <div class="card"><div class="card-icon"><i class="fas fa-wallet"></i></div><h4>Digital Wallet</h4><p>Balance in Lempiras (HNL), contributions, withdrawals, transaction history.</p></div>
+          <div class="card"><div class="card-icon"><i class="fas fa-store"></i></div><h4>Marketplace</h4><p>Buy and sell products within the community.</p></div>
+          <div class="card"><div class="card-icon"><i class="fas fa-share-alt"></i></div><h4>Social Feed</h4><p>Posts, media, polls, mentions, hashtags.</p></div>
+        </div>
+
+        <h3>Base URL</h3>
+        <pre><code class="language-bash">Production: https://latanda.online/api
+Development: http://localhost:3002/api</code></pre>
+      </section>
+
+      <section id="authentication">
+        <h2><i class="fas fa-key"></i> Authentication</h2>
+        <p>La Tanda uses <strong>JWT (JSON Web Tokens)</strong> for authentication.</p>
+
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle"></i>
+          <div><strong>Important:</strong> Include token as: <code class="code-inline">Authorization: Bearer &lt;token&gt;</code></div>
+        </div>
+
+        <h3>Register</h3>
+        <pre><code class="language-javascript">// Register
+const response = await fetch('https://latanda.online/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: 'John Doe',
+    email: 'john@example.com',
+    password: 'your-password',
+    phone: '+50412345678'
+  })
+});
+const data = await response.json();
+// { success: true, token: "eyJ...", user: {...} }</code></pre>
+
+        <h3>Login</h3>
+        <pre><code class="language-javascript">// Login
+const response = await fetch('https://latanda.online/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'john@example.com', password: 'your-password' })
+});
+const { token } = await response.json();</code></pre>
+      </section>
+
+      <section id="api-overview">
+        <h2><i class="fas fa-network-wired"></i> API Overview</h2>
+        <p>The La Tanda API provides <strong>220+ endpoints</strong>.</p>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-heartbeat"></i> Health</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/health</span></li>
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/status</span></li>
+          </ul>
+        </div>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-user-plus"></i> Authentication</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-post">POST</span><span class="endpoint-path">/auth/register</span></li>
+            <li><span class="method method-post">POST</span><span class="endpoint-path">/auth/login</span></li>
+            <li><span class="method method-post">POST</span><span class="endpoint-path">/auth/refresh</span></li>
+          </ul>
+        </div>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-users"></i> Users</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/users/me</span></li>
+            <li><span class="method method-put">PUT</span><span class="endpoint-path">/users/me</span></li>
+          </ul>
+        </div>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-user-group"></i> Groups</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/groups</span></li>
+            <li><span class="method method-post">POST</span><span class="endpoint-path">/groups</span></li>
+          </ul>
+        </div>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-money-bill-wave"></i> Tandas</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/tandas</span></li>
+            <li><span class="method method-post">POST</span><span class="endpoint-path">/tandas</span></li>
+          </ul>
+        </div>
+
+        <div class="endpoint-category">
+          <h4><i class="fas fa-wallet"></i> Wallet</h4>
+          <ul class="endpoint-list">
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/wallet/balance</span></li>
+            <li><span class="method method-get">GET</span><span class="endpoint-path">/wallet/transactions</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="code-examples">
+        <h2><i class="fas fa-code"></i> Code Examples</h2>
+
+        <h3>Get User Profile</h3>
+        <pre><code class="language-javascript">const response = await fetch('https://latanda.online/api/users/me', {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+const user = await response.json();</code></pre>
+
+        <h3>Create a Group</h3>
+        <pre><code class="language-javascript">const response = await fetch('https://latanda.online/api/groups', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: 'My Savings Group',
+    contributionAmount: 1000,
+    frequency: 'weekly',
+    maxMembers: 10
+  })
+});</code></pre>
+
+        <h3>cURL</h3>
+        <pre><code class="language-bash"># Login
+curl -X POST https://latanda.online/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"pass123"}'
+
+# Get Profile
+curl https://latanda.online/api/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN"</code></pre>
+      </section>
+
+      <section id="rate-limits">
+        <h2><i class="fas fa-tachometer-alt"></i> Rate Limits</h2>
+        <div class="table-container">
+          <table>
+            <thead><tr><th>Endpoint</th><th>Limit</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code class="code-inline">/auth/*</code></td><td>5/min</td><td>Login, register</td></tr>
+              <tr><td><code class="code-inline">/api/*</code></td><td>300/min</td><td>General API</td></tr>
+              <tr><td><code class="code-inline">/wallet/*</code></td><td>10/min</td><td>Financial ops</td></tr>
+              <tr><td>Other</td><td>10/sec</td><td>All endpoints</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i><div><strong>Warning:</strong> HTTP 429 when exceeded. Use exponential backoff.</div></div>
+      </section>
+
+      <section id="error-handling">
+        <h2><i class="fas fa-exclamation-triangle"></i> Error Handling</h2>
+        <pre><code class="language-json">{ "success": false, "error": { "code": "INVALID_TOKEN", "message": "Token invalid or expired" } }</code></pre>
+        <div class="error-code"><code>400</code><span>Bad Request</span></div>
+        <div class="error-code"><code>401</code><span>Unauthorized</span></div>
+        <div class="error-code"><code>403</code><span>Forbidden</span></div>
+        <div class="error-code"><code>404</code><span>Not Found</span></div>
+        <div class="error-code"><code>429</code><span>Rate Limited</span></div>
+        <div class="error-code"><code>500</code><span>Server Error</span></div>
+      </section>
+
+      <section id="chain-api">
+        <h2><i class="fas fa-link"></i> La Tanda Chain API</h2>
+        <h3>RPC</h3>
+        <pre><code class="language-bash">https://latanda.online/chain/rpc</code></pre>
+        <h3>REST Endpoints</h3>
+        <ul class="endpoint-list">
+          <li><span class="method method-get">GET</span><span class="endpoint-path">/chain/balance/:address</span></li>
+          <li><span class="method method-get">GET</span><span class="endpoint-path">/chain/transaction/:hash</span></li>
+          <li><span class="method method-get">GET</span><span class="endpoint-path">/chain/stats</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <div class="card" style="text-align: center; padding: 40px;">
+          <div class="card-icon" style="margin: 0 auto 20px;"><i class="fas fa-book-open"></i></div>
+          <h4>Interactive API Documentation</h4>
+          <p style="margin-bottom: 24px;">Test all 220+ endpoints with Swagger UI.</p>
+          <a href="https://latanda.online/docs" target="_blank" class="btn btn-primary"><i class="fas fa-external-link-alt"></i> Open Swagger UI</a>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>© 2026 La Tanda Platform. All rights reserved.</p>
+        <p><a href="https://latanda.online">Home</a> · <a href="https://github.com/INDIGOAZUL/la-tanda-web">GitHub</a></p>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
 </body>
 </html>
