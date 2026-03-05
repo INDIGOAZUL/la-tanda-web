@@ -3,6 +3,21 @@
  * Added: Footer module support
  */
 
+// M1: Auth guard — redirect to login if no auth token
+// Pages using components-loader are protected; public pages don't use it.
+// Exempt pages that might use components for layout but don't require auth.
+(function() {
+    var exempt = ['help-center.html', 'contact.html', 'explorar.html', 'ltd-token-economics.html'];
+    var page = location.pathname.split('/').pop() || 'index.html';
+    if (exempt.indexOf(page) === -1) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token) {
+            localStorage.setItem('redirect_after_auth', location.href);
+            location.replace('auth-enhanced.html');
+        }
+    }
+})();
+
 const LaTandaComponentLoader = {
     cache: new Map(),
     loaded: new Set(),
