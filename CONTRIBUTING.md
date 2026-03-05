@@ -268,6 +268,28 @@ Include in your PR description:
 
 ---
 
+## Beyond Bounties: Join the Core Team
+
+We're actively recruiting core team members. Outstanding bounty contributors are the first candidates we consider.
+
+### Progression Path
+
+| Stage | Compensation | Vesting | How to reach |
+|-------|-------------|---------|--------------|
+| **Bounty Hunter** | 25–500 LTD per task | Immediate | Claim and complete bounty issues |
+| **Recurring Contributor** | 100K–500K LTD | 6mo cliff, 1yr linear | 3+ quality merged PRs |
+| **Core Team** | 1.5M–4M LTD | 1yr cliff, 2yr linear | Consistent contributions + invitation |
+
+### Open Core Team Roles
+
+- [Infrastructure Lead / DevOps](https://github.com/INDIGOAZUL/la-tanda-web/issues/81) — 2.5M LTD
+- [Frontend Developer](https://github.com/INDIGOAZUL/la-tanda-web/issues/82) — 2.5M LTD
+- [Community / Growth Lead](https://github.com/INDIGOAZUL/la-tanda-web/issues/83) — 2M LTD
+
+See individual issues for full descriptions and how to apply.
+
+---
+
 ## Security
 
 ### Never Commit
@@ -319,3 +341,4 @@ A: It proves you read this guide. Just include it in your PR description exactly
 
 *Last Updated: March 5, 2026*
 *Platform Version: 4.12.4*
+*Core Team Roles: [#81](https://github.com/INDIGOAZUL/la-tanda-web/issues/81), [#82](https://github.com/INDIGOAZUL/la-tanda-web/issues/82), [#83](https://github.com/INDIGOAZUL/la-tanda-web/issues/83)*
