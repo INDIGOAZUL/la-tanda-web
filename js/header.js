@@ -60,6 +60,9 @@ class LaTandaHeader {
                 case "profileBtn":
                     this.openProfile();
                     break;
+                case "themeToggle":
+                    this.toggleTheme();
+                    break;
             }
         });
 
@@ -91,6 +94,33 @@ class LaTandaHeader {
                 this.elements.balanceIcon.className = "fas fa-eye-slash";
             }
         }
+        this.initTheme();
+    }
+
+    // ============================================
+    // THEME TOGGLE
+    // ============================================
+    initTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme = savedTheme || (prefersDark ? "dark" : "light");
+        this.applyTheme(theme);
+    }
+
+    applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+        
+        const themeIcon = document.getElementById("themeIcon");
+        if (themeIcon) {
+            themeIcon.className = theme === "dark" ? "fas fa-moon" : "fas fa-sun";
+        }
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        this.applyTheme(newTheme);
     }
 
     // ============================================
