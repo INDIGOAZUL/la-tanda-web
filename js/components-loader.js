@@ -107,6 +107,7 @@ resolve();
         if (this.headerModulesLoaded) return;
 
         const modules = [
+            "js/theme-toggle.js",
             "js/core/api-client.js",
             "js/core/event-bus.js",
             "js/core/cache.js",
