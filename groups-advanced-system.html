@@ -799,10 +799,6 @@
                 actionsHtml += '<button class="btn pr-request-btn" data-action="grp-request-extension" data-group-id="' + escapeHtml(group.id) + '">Solicitar Prorroga</button>';
             }
 
-            // v4.11.1: Historial button for active groups (all roles)
-            if (st === 'active' || st === 'paused') {
-                actionsHtml += '<button class="btn btn-sm ch-btn-history" data-action="grp-contribution-history" data-group-id="' + escapeHtml(group.id) + '" data-role="' + escapeHtml(group.my_role || 'member') + '" title="Historial de pagos"><i class="fas fa-history"></i> Historial</button>';
-            }
             // Public group card overrides (discover open groups)
             if (group.is_public) {
                 statusColor = '#f59e0b';
@@ -8849,7 +8845,8 @@ function renderTurnsList() {
                         var amtPending = m.amount_pending != null ? m.amount_pending : cpState.contributionAmount;
                         var amountDisplay = 'L. ' + (amtPending > 0 ? amtPending.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '0.00');
                         var posLabel = (m.num_positions && m.num_positions > 1) ? '<div style="font-size:0.65rem;color:#00FFFF;margin-top:1px;">' + m.num_positions + ' numeros</div>' : '';
-                        var cuotasLabel = m.cycles_pending > 1 ? '<div style="font-size:0.68rem;color:#f59e0b;margin-top:1px;">Debe ' + m.cycles_pending + ' cuotas</div>' : '';
+                        var pastUnpaid = (m.unpaid_cycles || []).filter(function(c) { return c < cpState.cycleNumber; });
+                        var cuotasLabel = pastUnpaid.length > 0 ? '<div style="font-size:0.68rem;color:#ef4444;margin-top:1px;">Debe: C' + pastUnpaid.join(', C') + ' (L. ' + (pastUnpaid.length * cpState.contributionAmount * (m.num_positions || 1)).toLocaleString('es-HN') + ')</div>' : (m.cycles_pending > 0 ? '<div style="font-size:0.68rem;color:#f59e0b;margin-top:1px;">Pendiente ciclo actual</div>' : '');
                         html += '<div class="cp-member-row" id="cp-row-' + escapeHtml(m.user_id) + '">' +
                             '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
                                 cpGetAvatar(m) +
@@ -9014,7 +9011,7 @@ function renderTurnsList() {
                                 '<div style="font-size:0.75rem;font-weight:600;color:#cbd5e1;">L. ' + (m.amount_pending > 0 ? m.amount_pending.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '0.00') + '</div>' +
                                 cpGetStatusPill(m.payment_status) +
                                 ((m.num_positions && m.num_positions > 1) ? '<div style="font-size:0.62rem;color:#00FFFF;">' + m.num_positions + ' num.</div>' : '') +
-                                (m.cycles_pending > 1 ? '<div style="font-size:0.65rem;color:#f59e0b;">' + m.cycles_pending + ' cuotas</div>' : '') +
+                                ((m.unpaid_cycles || []).filter(function(c) { return c < cpState.cycleNumber; }).length > 0 ? '<div style="font-size:0.65rem;color:#ef4444;">Debe: C' + (m.unpaid_cycles || []).filter(function(c) { return c < cpState.cycleNumber; }).join(', C') + '</div>' : (m.cycles_pending > 0 ? '<div style="font-size:0.65rem;color:#f59e0b;">Pendiente</div>' : '')) +
                             '</div>' +
                         '</div>';
                     });
@@ -11875,7 +11872,7 @@ function renderTurnsList() {
             overlayEl.id = 'chOverlay';
             overlayEl.innerHTML = '<div class="modal-content ch-modal"><div class="ch-header"><h3><i class="fas fa-history"></i> Historial de Pagos</h3><button class="ch-close" data-action="ch-close">&times;</button></div><div class="ch-body"><div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#00FFFF;"></i><p style="margin-top:12px;">Cargando historial...</p></div></div></div>';
             document.body.appendChild(overlayEl);
-            overlayEl.style.display = 'flex';
+            overlayEl.classList.add('active');
             overlayEl.setAttribute('data-group-id', groupId);
             overlayEl.setAttribute('data-role', '');
 
