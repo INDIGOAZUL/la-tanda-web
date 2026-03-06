@@ -179,6 +179,9 @@ await this.loadMobileCSS();
         if (window.LaTandaI18n && window.LaTandaI18n.translatePage) {
             window.LaTandaI18n.translatePage();
 }
+        // Load onboarding tour
+        this.loadScript("js/tour.js");
+        
         return true;
     },
 
