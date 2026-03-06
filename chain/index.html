@@ -2100,6 +2100,178 @@
             }).join('');
         }
 
+            // ---- Search & Details Functions ----
+        
+        // Transaction Search
+        async function searchTransaction(txHash) {
+            if (!txHash || txHash.length < 10) return null;
+            try {
+                const response = await fetchJSON(`${REST}/cosmos/tx/v1beta1/txs/${txHash}`);
+                return response.tx_response;
+            } catch (e) {
+                console.error('Tx search error:', e);
+                return null;
+            }
+        }
+        
+        // Address Details
+        async function fetchAddressDetails(address) {
+            if (!address) return null;
+            try {
+                const [balance, delegations, txs] = await Promise.all([
+                    fetchJSON(`${REST}/cosmos/bank/v1beta1/balances/${address}`),
+                    fetchJSON(`${REST}/cosmos/staking/v1beta1/delegations/${address}`).catch(() => ({ delegation_responses: [] })),
+                    fetchJSON(`${REST}/cosmos/tx/v1beta1/txs?events=transfer.sender='${address}'&limit=10`).catch(() => ({ tx_responses: [] }))
+                ]);
+                return { balance, delegations, txs };
+            } catch (e) {
+                console.error('Address fetch error:', e);
+                return null;
+            }
+        }
+        
+        // Validator Details
+        async function fetchValidatorDetails(operatorAddress) {
+            if (!operatorAddress) return null;
+            try {
+                const response = await fetchJSON(`${REST}/cosmos/staking/v1beta1/validators/${operatorAddress}`);
+                return response.validator;
+            } catch (e) {
+                console.error('Validator fetch error:', e);
+                return null;
+            }
+        }
+        
+        // Render Search Results Modal
+        function showSearchResults(type, data) {
+            const modal = document.getElementById('searchModal') || createSearchModal();
+            const content = modal.querySelector('.modal-content');
+            
+            if (type === 'tx' && data) {
+                content.innerHTML = `
+                    <h2><i class="fas fa-exchange-alt"></i> Transaction Details</h2>
+                    <div class="detail-row"><span>Tx Hash:</span><code>${data.txhash}</code></div>
+                    <div class="detail-row"><span>Block:</span>${data.height}</div>
+                    <div class="detail-row"><span>Time:</span>${new Date(data.timestamp).toLocaleString()}</div>
+                    <div class="detail-row"><span>Gas Used:</span>${data.gas_used} / ${data.gas_wanted}</div>
+                    <div class="detail-row"><span>Status:</span><span class="${data.code === 0 ? 'text-green' : 'text-red'}">${data.code === 0 ? 'Success' : 'Failed'}</span></div>
+                    <div class="detail-row"><span>Messages:</span>${data.tx.body.messages.length}</div>
+                `;
+            } else if (type === 'address' && data) {
+                const balance = data.balance?.balances?.[0] || { amount: '0', denom: 'ultd' };
+                const ltd = ultdToLtd(balance.amount);
+                content.innerHTML = `
+                    <h2><i class="fas fa-wallet"></i> Address Details</h2>
+                    <div class="detail-row"><span>Address:</span><code>${shortHash(data.address)}</code></div>
+                    <div class="detail-row"><span>Balance:</span><strong>${ltd} LTD</strong> (${balance.amount} ${balance.denom})</div>
+                    <div class="detail-row"><span>Delegations:</span>${data.delegations.delegation_responses?.length || 0}</div>
+                    <div class="detail-row"><span>Transactions:</span>${data.txs.tx_responses?.length || 0} recent</div>
+                `;
+            } else if (type === 'validator' && data) {
+                content.innerHTML = `
+                    <h2><i class="fas fa-staking"></i> Validator Details</h2>
+                    <div class="detail-row"><span>Moniker:</span>${data.description?.moniker || 'Unknown'}</div>
+                    <div class="detail-row"><span>Operator:</span><code>${shortHash(data.operator_address)}</code></div>
+                    <div class="detail-row"><span>Commission:</span>${(parseFloat(data.commission?.commission_rates?.rate || 0) * 100).toFixed(2)}%</div>
+                    <div class="detail-row"><span>Status:</span>${data.status}</div>
+                    <div class="detail-row"><span>Tokens:</span>${parseInt(data.tokens || 0).toLocaleString()}</div>
+                `;
+            } else {
+                content.innerHTML = '<p class="text-red">No results found</p>';
+            }
+            
+            modal.style.display = 'flex';
+        }
+        
+        function createSearchModal() {
+            const modal = document.createElement('div');
+            modal.id = 'searchModal';
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content glass">
+                    <button class="modal-close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+                    <div></div>
+                </div>
+                <style>
+                    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; }
+                    .modal-content { max-width: 500px; width: 90%; padding: 2rem; position: relative; }
+                    .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+                    .detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+                    .detail-row span { color: var(--text-dim); }
+                    .detail-row code { font-size: 0.8rem; word-break: break-all; }
+                    .text-green { color: var(--green); }
+                    .text-red { color: var(--red); }
+                </style>
+            `;
+            document.body.appendChild(modal);
+            return modal;
+        }
+        
+        // Add search bar to header
+        function addSearchBar() {
+            const header = document.querySelector('.header-actions');
+            if (!header) return;
+            
+            const searchHTML = `
+                <div class="explorer-search">
+                    <input type="text" id="explorerSearchInput" placeholder="Search tx, address, validator..." />
+                    <button onclick="handleExplorerSearch()"><i class="fas fa-search"></i></button>
+                </div>
+                <style>
+                    .explorer-search { display: flex; gap: 0.5rem; }
+                    .explorer-search input { 
+                        background: var(--surface2); border: 1px solid var(--border); 
+                        color: var(--text); padding: 0.5rem 1rem; border-radius: 8px; width: 250px;
+                    }
+                    .explorer-search input:focus { outline: none; border-color: var(--cyan); }
+                    .explorer-search button {
+                        background: var(--cyan); border: none; color: #000;
+                        padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;
+                    }
+                </style>
+            `;
+            header.innerHTML = searchHTML + header.innerHTML;
+        }
+        
+        window.handleExplorerSearch = async function() {
+            const input = document.getElementById('explorerSearchInput');
+            const query = input.value.trim();
+            if (!query) return;
+            
+            // Try as tx hash first (64 hex chars)
+            if (query.length >= 10) {
+                const tx = await searchTransaction(query);
+                if (tx) {
+                    showSearchResults('tx', tx);
+                    return;
+                }
+            }
+            
+            // Try as address (ltd1...)
+            if (query.startsWith('ltd1')) {
+                const addr = await fetchAddressDetails(query);
+                if (addr) {
+                    addr.address = query;
+                    showSearchResults('address', addr);
+                    return;
+                }
+            }
+            
+            // Try as validator address (ltdvaloper1...)
+            if (query.startsWith('ltdvaloper1')) {
+                const val = await fetchValidatorDetails(query);
+                if (val) {
+                    showSearchResults('validator', val);
+                    return;
+                }
+            }
+            
+            alert('No results found for: ' + query);
+        };
+        
+        // Add search bar on init
+        addSearchBar();
+
         // ---- Init ----
         async function refresh() {
             await fetchStatus();
