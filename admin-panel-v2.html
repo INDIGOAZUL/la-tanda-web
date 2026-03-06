@@ -1507,11 +1507,8 @@
 
             // Local development credentials bypass
             const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const localCredentials = {
-                'admin': 'LaTanda2025!Admin',
-                'finance': 'Finance2025!LT',
-                'support': 'Support2025!Help'
-            };
+            const localCredentials = {};
+                // H4 FIX: Dev credentials removed from production code
 
             if (isLocalDev && localCredentials[username] === password) {
 
@@ -1848,14 +1845,14 @@
                         ${deposits.map(deposit => `
                             <tr>
                                 <td>
-                                    <strong>${deposit.user_id}</strong><br>
-                                    <small>Cuenta: ${deposit.user_account_number || deposit.account || 'LOCAL-' + deposit.user_id.slice(-4)}</small>
+                                    <strong>${escapeHtml(deposit.user_id)}</strong><br>
+                                    <small>Cuenta: ${escapeHtml(deposit.user_account_number || deposit.account || 'LOCAL-' + deposit.user_id.slice(-4))}</small>
                                 </td>
                                 <td>
                                     <strong>${formatCurrency(deposit.amount, deposit.currency)}</strong><br>
                                     <small>Neto: ${formatCurrency(deposit.net_amount, deposit.currency)}</small>
                                 </td>
-                                <td>${deposit.bank_name}</td>
+                                <td>${escapeHtml(deposit.bank_name || '')}</td>
                                 <td><span class="reference-code">${deposit.reference_number}</span></td>
                                 <td>
                                     <span class="status-badge status-${deposit.status.replace('_', '-')}">
@@ -2362,16 +2359,37 @@
             }, 5000);
         }
 
-        // Close modal when clicking outside
+        
+        // M1: Generic async confirm modal (replaces native confirm())
+  function adminConfirm(message) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;';
+                overlay.innerHTML = `
+                    <div style="background:var(--card-bg,#1e293b);border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 40px rgba(0,0,0,0.4);">
+                        <p style="color:var(--text-primary,#e2e8f0);margin:0 0 20px;font-size:0.95rem;line-height:1.5;">${message}</p>
+                        <div style="display:flex;gap:12px;justify-content:flex-end;">
+                            <button id="adminConfirmNo" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--text-secondary,#94a3b8);cursor:pointer;">Cancelar</button>
+                            <button id="adminConfirmYes" style="padding:8px 16px;border-radius:8px;border:none;background:var(--primary-color,#3b82f6);color:white;cursor:pointer;">Confirmar</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
+                overlay.querySelector('#adminConfirmYes').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+                overlay.querySelector('#adminConfirmNo').onclick = () => { document.body.removeChild(overlay); resolve(false); };
+                overlay.onclick = (e) => { if (e.target === overlay) { document.body.removeChild(overlay); resolve(false); } };
+            });
+        }
+
+// Close modal when clicking outside
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('modal')) {
                 closeModal();
             }
         });
 
-        // Appeal approval/rejection functions
+        // Appeal approval/rejection functiasync ons
         function approveAppeal(depositId) {
-            if (confirm('¿Aprobar esta apelación? El depósito será confirmado.')) {
+            if (await adminConfirm('¿Aprobar esta apelación? El depósito será confirmado.')) {
                 try {
                     // Update transaction status to approved
                     let updates = JSON.parse(localStorage.getItem('latanda_transaction_updates') || '{}');
@@ -2981,11 +2999,11 @@
                 const date = new Date(u.created_at).toLocaleDateString('es-HN');
                 
                 html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">';
-                html += '<td style="padding: 12px;">' + name + '</td>';
-                html += '<td style="padding: 12px;">' + u.email + '</td>';
+                html += '<td style="padding: 12px;">' + escapeHtml(name) + '</td>';
+                html += '<td style="padding: 12px;">' + escapeHtml(u.email) + '</td>';
                 html += '<td style="padding: 12px; text-align: center;"><span style="background: ' + color + '20; color: ' + color + '; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem;">' + label + '</span></td>';
                 html += '<td style="padding: 12px; text-align: center;">' + verified + '</td>';
-                html += '<td style="padding: 12px; text-align: center;">' + (u.role || 'user') + '</td>';
+                html += '<td style="padding: 12px; text-align: center;">' + escapeHtml(u.role || 'user') + '</td>';
                 html += '<td style="padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">' + date + '</td>';
                 html += '<td style="padding: 12px; text-align: center;"><button onclick="openUserActionModal(' + u.id + ')" style="background: var(--tanda-cyan); color: var(--bg-primary); border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;"><i class="fas fa-edit"></i></button></td>';
                 html += '</tr>';
@@ -3074,15 +3092,15 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    alert('Estado actualizado correctamente');
+                    showNotification('Estado actualizado correctamente', 'info');
                     closeUserActionModal();
                     loadUsers(currentUsersPage);
                     loadUserStats();
                 } else {
-                    alert('Error: ' + (data.error || 'No se pudo actualizar'));
+                    showNotification('Error: ' + (data.error || 'No se pudo actualizar'), 'error');
                 }
             } catch (err) {
-                alert('Error de conexion');
+                showNotification('Error de conexion', 'error');
             }
         }
 
@@ -3176,7 +3194,7 @@
                 const members = (g.member_count || 0) + '/' + (g.max_members || 12);
                 
                 html += '<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">';
-                html += '<td style="padding: 12px;">' + (g.name || 'Sin nombre') + '</td>';
+                html += '<td style="padding: 12px;">' + escapeHtml(g.name || 'Sin nombre') + '</td>';
                 html += '<td style="padding: 12px; text-align: center;">' + members + '</td>';
                 html += '<td style="padding: 12px; text-align: center;">' + amount + '</td>';
                 html += '<td style="padding: 12px; text-align: center;">' + freq + '</td>';
@@ -3222,7 +3240,7 @@
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:30px;">Error al cargar historial</td></tr>';
             }
-        }
+ async        }
 
         function searchBountyUser(query) {
             clearTimeout(bountySearchTimeout);
@@ -3244,7 +3262,7 @@
                 } catch (err) {
                     container.classList.remove('active');
                 }
-            }, 300);
+            }, 3async 00);
         }
 
         function selectBountyUser(userId, name, email) {
@@ -3265,7 +3283,7 @@
             if (!reason) { showNotification('Razon es requerida', 'error'); return; }
 
             const userName = document.getElementById('bountyUserSearch').value;
-            if (!confirm(`Acreditar ${amount} LTD a ${userName}?\n\nRazon: ${reason}`)) return;
+            if (!await adminConfirm(`Acreditar ${amount} LTD a ${userName}?\n\nRazon: ${reason}`)) return;
 
             const btn = document.getElementById('bountySubmitBtn');
             btn.disabled = true;
@@ -4067,9 +4085,9 @@
             showNotification('🧪 Datos de prueba creados exitosamente', 'success');
         }
 
-        // Clean old data function
+        // Clasync ean old data function
         function cleanOldData() {
-            if (!confirm('¿Estás seguro de que quieres limpiar todos los datos antiguos? Esta acción no se puede deshacer.')) {
+            if (!await adminConfirm('¿Estás seguro de que quieres limpiar todos los datos antiguos? Esta acción no se puede deshacer.')) {
                 return;
             }
 
@@ -4397,12 +4415,12 @@
                         ${withdrawals.map(withdrawal => `
                             <tr>
                                 <td>
-                                    <strong>${withdrawal.user_name || 'Usuario'}</strong><br>
+                                    <strong>${escapeHtml(withdrawal.user_name || 'Usuario')}</strong><br>
                                     <small>ID: ${withdrawal.id.slice(-8)}</small>
                                 </td>
                                 <td>
                                     <strong style="color: var(--danger-color);">${withdrawal.method === 'crypto' ? '$' : 'L.'} ${withdrawal.amount.toFixed(2)}</strong><br>
-                                    <small>Método: ${withdrawal.method}</small>
+                                    <small>Método: ${escapeHtml(withdrawal.method || '')}</small>
                                 </td>
                                 <td>
                                     ${renderBankInfo({bank: withdrawal.bank_name || withdrawal.provider || withdrawal.network, account_number: withdrawal.account_number || withdrawal.phone_number || withdrawal.wallet_address, account_holder: withdrawal.account_holder || withdrawal.user_name})}
@@ -4573,7 +4591,7 @@
 📝 INFORMACIÓN DE REFERENCIA:
 • Código de Referencia: ${withdrawal.admin_instructions?.reference || withdrawal.id.slice(-8).toUpperCase()}
 • ID de Transacción: ${withdrawal.id}
-• Usuario: ${withdrawal.user_name || 'Usuario'}
+• Usuario: ${escapeHtml(withdrawal.user_name || 'Usuario')}
 • Fecha de Solicitud: ${formatWithdrawalDate(withdrawal.created_at)}
 
 ⚠️ IMPORTANTE:
@@ -4750,7 +4768,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                     <p><strong>Rechazar el siguiente retiro:</strong></p>
                     <div style="background: rgba(239, 68, 68, 0.05); padding: 12px; border-radius: 8px; margin: 12px 0;">
                         <div>Monto: <strong>${withdrawal.method === 'crypto' ? '$' : 'L.'} ${withdrawal.amount.toFixed(2)}</strong></div>
-                        <div>Usuario: <strong>${withdrawal.user_name || 'Usuario'}</strong></div>
+                        <div>Usuario: <strong>${escapeHtml(withdrawal.user_name || 'Usuario')}</strong></div>
                         <div>Solicitud: <strong>${formatWithdrawalDate(withdrawal.created_at)}</strong></div>
                     </div>
                     <p style="color: var(--warning-color);"><i class="fas fa-exclamation-triangle"></i> El monto será devuelto al balance del usuario.</p>
@@ -5962,7 +5980,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
             document.getElementById('hardDeleteConfirmInput').oninput = function() {
                 const matches = this.value === groupName;
                 document.getElementById('hardDeleteBtn').disabled = !matches;
-            };
+      async       };
         }
         
         function closeHardDeleteModal() {
@@ -5975,7 +5993,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
             
             const confirmInput = document.getElementById('hardDeleteConfirmInput').value;
             if (confirmInput !== currentHardDeleteGroup.name) {
-                alert('El nombre no coincide. Por favor escriba el nombre exacto del grupo.');
+                showNotification('El nombre no coincide. Por favor escriba el nombre exacto del grupo.', 'info');
                 return;
             }
             
@@ -6003,14 +6021,14 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                     throw new Error(result.data?.error?.message || result.message || 'Error al eliminar');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showNotification('Error: ' + error.message, 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-trash-alt"></i> Eliminar Permanentemente';
             }
         }
         
         async function restoreGroup(groupId) {
-            if (!confirm('¿Restaurar este grupo?')) return;
+            if (!await adminConfirm('¿Restaurar este grupo?')) return;
             
             try {
                 const token = localStorage.getItem('auth_token') || localStorage.getItem('admin_token');
@@ -6031,7 +6049,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                     throw new Error(result.data?.error?.message || result.message || 'Error al restaurar');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showNotification('Error: ' + error.message, 'error');
             }
         }
         
@@ -6152,7 +6170,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
         }
 
         async function retryFailedJoin(id) {
-            if (!confirm('¿Reintentar agregar este usuario al grupo?')) return;
+            if (!await adminConfirm('¿Reintentar agregar este usuario al grupo?')) return;
 
             try {
                 const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
@@ -6166,13 +6184,13 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('✅ ' + data.data.message);
+                    showNotification(data.data.message, 'success');
                     loadFailedJoins();
                 } else {
-                    alert('❌ Error: ' + (data.data?.error?.message || 'Error desconocido'));
+                    showNotification(data.data?.error?.message || 'Error desconocido', 'error');
                 }
             } catch (error) {
-                alert('❌ Error de conexión');
+                showNotification('❌ Error de conexión', 'error');
             }
         }
 
@@ -6209,14 +6227,14 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('✅ Marcado como resuelto');
+                    showNotification('✅ Marcado como resuelto', 'info');
                     closeResolveModal();
                     loadFailedJoins();
                 } else {
-                    alert('❌ Error: ' + (data.data?.error?.message || 'Error desconocido'));
+                    showNotification(data.data?.error?.message || 'Error desconocido', 'error');
                 }
             } catch (error) {
-                alert('❌ Error de conexión');
+                showNotification('❌ Error de conexión', 'error');
             }
         }
 
