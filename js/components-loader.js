@@ -99,6 +99,7 @@ resolve();
             "js/header/ui.js",
             "js/header/events.js",
             "js/header/dropdown.js",
+            "js/header/theme-toggle.js",
             "js/header/index.js"
         ];
 
