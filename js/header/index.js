@@ -34,9 +34,66 @@ const LaTandaHeader = {
             window.HeaderUI.toggleBalanceVisibility(true);
         }
 
+        // Initialize theme toggle
+        this.initThemeToggle();
+
         // Load user avatar
         this.loadUserAvatar();
         this.initialized = true;
+    },
+
+    /**
+     * Initialize theme toggle functionality
+     */
+    initThemeToggle() {
+        const themeToggle = document.getElementById("themeToggle");
+        const themeIcon = document.getElementById("themeIcon");
+        
+        if (!themeToggle || !themeIcon) {
+            return;
+        }
+
+        // Apply saved theme or system preference
+        this.applyTheme();
+
+        // Toggle click handler
+        themeToggle.addEventListener("click", () => {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "light" ? "dark" : "light";
+            this.setTheme(newTheme);
+        });
+    },
+
+    /**
+     * Apply theme from localStorage or system preference
+     */
+    applyTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        const theme = savedTheme || this.getSystemTheme();
+        this.setTheme(theme, false);
+    },
+
+    /**
+     * Get system color scheme preference
+     */
+    getSystemTheme() {
+        return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    },
+
+    /**
+     * Set theme
+     */
+    setTheme(theme, save = true) {
+        document.documentElement.setAttribute("data-theme", theme);
+        
+        const themeIcon = document.getElementById("themeIcon");
+        if (themeIcon) {
+            themeIcon.className = theme === "light" ? "fas fa-sun" : "fas fa-moon";
+        }
+
+        if (save) {
+            localStorage.setItem("theme", theme);
+        }
     },
 
     /**
