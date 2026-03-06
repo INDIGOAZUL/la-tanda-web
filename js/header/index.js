@@ -36,6 +36,7 @@ const LaTandaHeader = {
 
         // Initialize theme toggle
         this.initThemeToggle();
+        this.initLanguageSelector();
 
         // Load user avatar
         this.loadUserAvatar();
@@ -62,6 +63,73 @@ const LaTandaHeader = {
             const newTheme = currentTheme === "light" ? "dark" : "light";
             this.setTheme(newTheme);
         });
+    },
+
+    /**
+     * Initialize language selector
+     */
+    initLanguageSelector() {
+        const langToggle = document.getElementById("langToggle");
+        const langDropdown = document.getElementById("langDropdown");
+        const currentLangFlag = document.getElementById("currentLangFlag");
+        const currentLangCode = document.getElementById("currentLangCode");
+        
+        if (!langToggle || !langDropdown) {
+            return;
+        }
+
+        // Language data
+        const languages = {
+            en: { flag: "🇺🇸", code: "EN" },
+            es: { flag: "🇭🇳", code: "ES" },
+            pt: { flag: "🇧🇷", code: "PT" }
+        };
+
+        // Load saved language
+        const savedLang = localStorage.getItem("latanda_language") || "en";
+        this.updateLanguageDisplay(savedLang, languages);
+
+        // Toggle dropdown
+        langToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            langDropdown.classList.toggle("active");
+        });
+
+        // Language option click
+        langDropdown.querySelectorAll(".lt-lang-option").forEach(option => {
+            option.addEventListener("click", () => {
+                const lang = option.dataset.lang;
+                localStorage.setItem("latanda_language", lang);
+                this.updateLanguageDisplay(lang, languages);
+                langDropdown.classList.remove("active");
+                
+                // Dispatch event for i18n system
+                window.dispatchEvent(new CustomEvent("language:change", { detail: { language: lang } }));
+                
+                // Reload to apply translations
+                location.reload();
+            });
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener("click", () => {
+            langDropdown.classList.remove("active");
+        });
+    },
+
+    /**
+     * Update language display
+     */
+    updateLanguageDisplay(lang, languages) {
+        const currentLangFlag = document.getElementById("currentLangFlag");
+        const currentLangCode = document.getElementById("currentLangCode");
+        
+        if (currentLangFlag && languages[lang]) {
+            currentLangFlag.textContent = languages[lang].flag;
+        }
+        if (currentLangCode && languages[lang]) {
+            currentLangCode.textContent = languages[lang].code;
+        }
     },
 
     /**
