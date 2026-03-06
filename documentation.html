@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
-
     <meta charset="UTF-8">
-    <!-- Resource Optimization -->
-    <!-- DNS Prefetch for external resources -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación API - La Tanda Web3</title>
+    
+    <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     
-    <!-- Preconnect to critical origins -->
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentación - La Tanda Web3</title>
-    <!-- Critical CSS: Font Awesome with async loading -->
+    
+    <!-- Font Awesome -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    
     <style>
         :root {
             --tanda-cyan: #00FFFF;
@@ -30,6 +36,7 @@
             --bg-secondary: #1e293b;
             --bg-card: rgba(30, 41, 59, 0.8);
             --border-accent: rgba(0, 255, 255, 0.2);
+            --border-hover: rgba(0, 255, 255, 0.5);
         }
 
         * {
@@ -42,113 +49,912 @@
             font-family: 'Inter', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .docs-container {
+            display: flex;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
-        .coming-soon-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-        }
-
-        .coming-soon-card {
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
             background: var(--bg-card);
             backdrop-filter: blur(24px);
-            border: 2px solid var(--border-accent);
-            border-radius: 24px;
-            padding: 60px 40px;
-            text-align: center;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.1);
+            border-right: 1px solid var(--border-accent);
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
         }
 
-        .coming-soon-icon {
-            width: 80px;
-            height: 80px;
+        .sidebar-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-accent);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
             background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            border-radius: 50%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: var(--bg-primary);
-            margin: 0 auto 30px;
-            box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3);
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .coming-soon-title {
-            font-size: 32px;
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--tanda-cyan);
+        }
+
+        .nav-link i {
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem 4rem;
+            max-width: 1200px;
+        }
+
+        .content-header {
+            margin-bottom: 3rem;
+        }
+
+        .content-title {
+            font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 1rem;
             background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .coming-soon-description {
-            font-size: 18px;
+        .content-description {
             color: var(--text-secondary);
-            margin-bottom: 40px;
-            line-height: 1.6;
+            font-size: 1.1rem;
+            max-width: 800px;
         }
 
-        .back-button {
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--tanda-cyan);
+        }
+
+        .section-content {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .section-content p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .section-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .section-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+            border: 1px solid var(--border-accent);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: #2d2d2d;
+            border-bottom: 1px solid var(--border-accent);
+        }
+
+        .code-language {
+            color: var(--tanda-cyan);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .copy-button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--tanda-cyan);
+        }
+
+        pre {
+            padding: 1rem;
+            margin: 0 !important;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-accent);
+            color: var(--text-secondary);
+        }
+
+        .table th {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--tanda-cyan);
+            font-weight: 600;
+        }
+
+        .table tr:hover {
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--tanda-cyan);
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .alert-warning {
+            border-left-color: #fbbf24;
+            background: rgba(251, 191, 36, 0.05);
+        }
+
+        .alert-warning .alert-title {
+            color: #fbbf24;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--tanda-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-content {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
             background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
             color: var(--bg-primary);
             border: none;
-            padding: 16px 32px;
+            padding: 1rem 2rem;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 1rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            transition: all 0.3s ease;
+            margin: 1.5rem 0;
         }
 
-        .back-button:hover {
+        .cta-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
         }
+
+        /* Mobile Responsive */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 100;
+            background: var(--bg-card);
+            border: 1px solid var(--border-accent);
+            color: var(--tanda-cyan);
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 99;
+                width: 100%;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                padding-top: 5rem;
+            }
+
+            .content-title {
+                font-size: 2rem;
+            }
+
+            .section-content {
+                padding: 1.5rem;
+            }
+        }
     </style>
-  <script type="module" crossorigin src="/assets/js/documentation-DsswpPIS.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
-  <link rel="modulepreload" crossorigin href="/assets/js/shared-components-chunk-l0sNRNKZ.js">
-  <link rel="stylesheet" crossorigin href="/assets/css/shared-components-v2-CszIIlFl.css">
-  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
-  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
-<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+</head>
 <body>
-    <div class="coming-soon-container">
-        <div class="coming-soon-card">
-            <div class="coming-soon-icon">
-                <i class="fas fa-book"></i>
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="docs-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">La Tanda API</div>
+                <div class="subtitle">Documentación para desarrolladores</div>
             </div>
-            <h1 class="coming-soon-title">Documentación</h1>
-            <p class="coming-soon-description">
-                Estamos preparando una documentación completa de La Tanda Web3 que incluirá guías de usuario, documentación técnica y tutoriales paso a paso.
-            </p>
-            <a href="home-dashboard.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Volver al Dashboard
-            </a>
-        </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#getting-started" class="nav-link active" data-section="getting-started">
+                        <i class="fas fa-rocket"></i>
+                        <span>Empezando</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#authentication" class="nav-link" data-section="authentication">
+                        <i class="fas fa-key"></i>
+                        <span>Autenticación</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#api-overview" class="nav-link" data-section="api-overview">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Vista General de API</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#code-examples" class="nav-link" data-section="code-examples">
+                        <i class="fas fa-code"></i>
+                        <span>Ejemplos de Código</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#rate-limits" class="nav-link" data-section="rate-limits">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Límites de Tasa</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#error-handling" class="nav-link" data-section="error-handling">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Manejo de Errores</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#chain-api" class="nav-link" data-section="chain-api">
+                        <i class="fas fa-link"></i>
+                        <span>API de La Tanda Chain</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://latanda.online/docs" target="_blank" class="nav-link">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span>Swagger UI Interactivo</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header">
+                <h1 class="content-title">Documentación para Desarrolladores</h1>
+                <p class="content-description">
+                    Bienvenido a la documentación oficial de la API de La Tanda Web3. Aquí encontrarás todo lo que necesitas para integrar tus aplicaciones con nuestra plataforma, desde la autenticación hasta las operaciones de cadena de bloques.
+                </p>
+            </div>
+
+            <!-- Getting Started Section -->
+            <section class="section" id="getting-started">
+                <h2 class="section-title">
+                    <i class="fas fa-rocket"></i>
+                    Empezando
+                </h2>
+                <div class="section-content">
+                    <p>
+                        La API de La Tanda es una interfaz RESTful que te permite interactuar con todos los servicios de la plataforma, incluyendo autenticación de usuarios, gestión de grupos (tandas), operaciones de billetera, feed social, mercado y más.
+                    </p>
+                    <p>
+                        Para empezar, necesitarás:
+                    </p>
+                    <ul>
+                        <li>Una cuenta activa en La Tanda Web3</li>
+                        <li>Un token JWT de autenticación (obtenido después del inicio de sesión)</li>
+                        <li>Conocimientos básicos de solicitudes HTTP y formato JSON</li>
+                    </ul>
+                    <p>
+                        La URL base para todas las solicitudes a la API es: <code>https://latanda.online/api/v1</code>
+                    </p>
+
+                    <div class="alert">
+                        <div class="alert-title">Nota</div>
+                        <div class="alert-content">
+                            Todas las solicitudes deben realizarse a través de HTTPS. Las solicitudes HTTP serán redirigidas automáticamente.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Authentication Section -->
+            <section class="section" id="authentication">
+                <h2 class="section-title">
+                    <i class="fas fa-key"></i>
+                    Autenticación
+                </h2>
+                <div class="section-content">
+                    <p>
+                        La API utiliza tokens JWT (JSON Web Tokens) para autenticar las solicitudes. Después de iniciar sesión exitosamente, recibirás un token de acceso que deberás incluir en todas las solicitudes subsiguientes.
+                    </p>
+                    <p>
+                        Para autenticar una solicitud, incluye el token en el encabezado <code>Authorization</code> con el prefijo <code>Bearer</code>:
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">Encabezado de Autenticación</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                    </div>
+
+                    <p>
+                        Flujo de autenticación:
+                    </p>
+                    <ol style="margin-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Envía una solicitud POST a <code>/auth/login</code> con tu correo electrónico y contraseña</li>
+                        <li>Recibe un token de acceso y un token de actualización (refresh token)</li>
+                        <li>Incluye el token de acceso en todas las solicitudes a endpoints protegidos</li>
+                        <li>Cuando el token expire, usa el refresh token para obtener un nuevo token de acceso</li>
+                    </ol>
+
+                    <div class="alert alert-warning">
+                        <div class="alert-title">Seguridad</div>
+                        <div class="alert-content">
+                            Nunca compartas tu token JWT con terceros. Los tokens tienen una validez de 24 horas. Asegúrate de almacenarlos de forma segura en tu aplicación.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Overview Section -->
+            <section class="section" id="api-overview">
+                <h2 class="section-title">
+                    <i class="fas fa-sitemap"></i>
+                    Vista General de API
+                </h2>
+                <div class="section-content">
+                    <p>
+                        La API se organiza en las siguientes categorías de endpoints:
+                    </p>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Descripción</th>
+                                <th>Base Path</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Auth</td>
+                                <td>Gestión de autenticación, registro, inicio de sesión y recuperación de contraseña</td>
+                                <td><code>/auth/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Wallet</td>
+                                <td>Operaciones de billetera, consulta de saldo, transferencias de tokens LTD</td>
+                                <td><code>/wallet/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Groups/Tandas</td>
+                                <td>Gestión de grupos, creación, unión, administración de miembros y ciclos de pago</td>
+                                <td><code>/groups/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Social Feed</td>
+                                <td>Publicaciones, me gusta, comentarios y marcadores del feed social</td>
+                                <td><code>/feed/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Marketplace</td>
+                                <td>Operaciones de compra y venta de bienes y servicios entre usuarios</td>
+                                <td><code>/marketplace/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Lottery</td>
+                                <td>Participación en sorteos y consulta de resultados</td>
+                                <td><code>/lottery/*</code></td>
+                            </tr>
+                            <tr>
+                                <td>Admin</td>
+                                <td>Funciones de administración de plataforma (solo para usuarios con permisos de administrador)</td>
+                                <td><code>/admin/*</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Code Examples Section -->
+            <section class="section" id="code-examples">
+                <h2 class="section-title">
+                    <i class="fas fa-code"></i>
+                    Ejemplos de Código
+                </h2>
+                <div class="section-content">
+                    <p>
+                        A continuación, ejemplos de las operaciones más comunes usando cURL y JavaScript Fetch API:
+                    </p>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Inicio de Sesión</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">curl -X POST https://latanda.online/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "tu@correo.com",
+    "password": "tu_contraseña"
+  }'</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">JavaScript (Fetch)</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-javascript">fetch('https://latanda.online/api/v1/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    email: 'tu@correo.com',
+    password: 'tu_contraseña'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  const accessToken = data.access_token;
+  // Almacena el token de forma segura
+})
+.catch(error => console.error('Error:', error));</code></pre>
+                    </div>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Obtener Grupos del Usuario</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">curl https://latanda.online/api/v1/groups \
+  -H "Authorization: Bearer TU_TOKEN_JWT"</code></pre>
+                    </div>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Crear una Publicación en el Feed</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">JavaScript (Fetch)</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-javascript">fetch('https://latanda.online/api/v1/feed/posts', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer TU_TOKEN_JWT'
+  },
+  body: JSON.stringify({
+    content: 'Hola comunidad de La Tanda! 🎉',
+    visibility: 'public'
+  })
+})
+.then(response => response.json())
+.then(data => console.log('Publicación creada:', data));</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rate Limits Section -->
+            <section class="section" id="rate-limits">
+                <h2 class="section-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Límites de Tasa
+                </h2>
+                <div class="section-content">
+                    <p>
+                        Para garantizar la estabilidad de la plataforma, aplicamos los siguientes límites de tasa a las solicitudes API:
+                    </p>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Endpoint</th>
+                                <th>Límite</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Inicio de sesión /auth/login</td>
+                                <td>5 solicitudes por minuto</td>
+                            </tr>
+                            <tr>
+                                <td>Endpoints de API general</td>
+                                <td>5 solicitudes por segundo</td>
+                            </tr>
+                            <tr>
+                                <td>Recursos generales (assets, páginas)</td>
+                                <td>10 solicitudes por segundo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>
+                        Los encabezados de respuesta incluirán información sobre tu límite de tasa actual:
+                    </p>
+                    <ul>
+                        <li><code>X-RateLimit-Limit</code>: Número máximo de solicitudes permitidas por ventana</li>
+                        <li><code>X-RateLimit-Remaining</code>: Número de solicitudes restantes en la ventana actual</li>
+                        <li><code>X-RateLimit-Reset</code>: Timestamp UNIX cuando se reiniciará el límite</li>
+                    </ul>
+
+                    <div class="alert alert-warning">
+                        <div class="alert-title">Límite Excedido</div>
+                        <div class="alert-content">
+                            Si excedes el límite de tasa, recibirás una respuesta con código de estado <code>429 Too Many Requests</code>. Espera el tiempo indicado en el encabezado <code>Retry-After</code> antes de realizar nuevas solicitudes.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Handling Section -->
+            <section class="section" id="error-handling">
+                <h2 class="section-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Manejo de Errores
+                </h2>
+                <div class="section-content">
+                    <p>
+                        La API usa códigos de estado HTTP estándar para indicar el resultado de las solicitudes:
+                    </p>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Código de Estado</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>200 OK</code></td>
+                                <td>Solicitud exitosa</td>
+                            </tr>
+                            <tr>
+                                <td><code>201 Created</code></td>
+                                <td>Recurso creado exitosamente</td>
+                            </tr>
+                            <tr>
+                                <td><code>400 Bad Request</code></td>
+                                <td>Solicitud inválida (parámetros faltantes o incorrectos)</td>
+                            </tr>
+                            <tr>
+                                <td><code>401 Unauthorized</code></td>
+                                <td>Autenticación fallida o token inválido/expirado</td>
+                            </tr>
+                            <tr>
+                                <td><code>403 Forbidden</code></td>
+                                <td>No tienes permisos para acceder al recurso</td>
+                            </tr>
+                            <tr>
+                                <td><code>404 Not Found</code></td>
+                                <td>El recurso solicitado no existe</td>
+                            </tr>
+                            <tr>
+                                <td><code>422 Unprocessable Entity</code></td>
+                                <td>Error de validación de datos</td>
+                            </tr>
+                            <tr>
+                                <td><code>429 Too Many Requests</code></td>
+                                <td>Has excedido el límite de tasa</td>
+                            </tr>
+                            <tr>
+                                <td><code>500 Internal Server Error</code></td>
+                                <td>Error interno del servidor</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>
+                        Todas las respuestas de error siguen un formato JSON estándar:
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">Formato de Respuesta de Error</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-json">{
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "Correo electrónico o contraseña incorrectos",
+    "details": {}
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chain API Section -->
+            <section class="section" id="chain-api">
+                <h2 class="section-title">
+                    <i class="fas fa-link"></i>
+                    API de La Tanda Chain
+                </h2>
+                <div class="section-content">
+                    <p>
+                        La Tanda Chain es nuestra cadena de bloques nativa, construida con Cosmos SDK. Ofrecemos endpoints de API REST y RPC para interactuar directamente con la cadena:
+                    </p>
+
+                    <ul>
+                        <li><strong>API REST:</strong> <code>https://latanda.online/chain/api/</code> (puerto 1317)</li>
+                        <li><strong>RPC:</strong> <code>https://latanda.online/chain/rpc/</code> (puerto 26657)</li>
+                        <li><strong>Chain ID:</strong> <code>latanda-testnet-1</code></li>
+                        <li><strong>Denominación de Token:</strong> <code>ultd</code> (1 LTD = 1,000,000 ultd)</li>
+                    </ul>
+
+                    <p>
+                        Ejemplos de operaciones comunes en la cadena:
+                    </p>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Consultar Saldo de una Dirección</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">curl https://latanda.online/chain/api/cosmos/bank/v1beta1/balances/ltd1direccion...</code></pre>
+                    </div>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Obtener Detalles de una Transacción</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">curl https://latanda.online/chain/api/cosmos/tx/v1beta1/txs/HASH_DE_TRANSACCION</code></pre>
+                    </div>
+
+                    <h3 style="color: var(--tanda-cyan); margin: 1.5rem 0 1rem;">Listar Validadores Activos</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">cURL</span>
+                            <button class="copy-button" onclick="copyCode(this)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <pre><code class="language-bash">curl https://latanda.online/chain/api/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="section">
+                <div class="section-content">
+                    <h2 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        Prueba la API Interactivamente
+                    </h2>
+                    <p>
+                        Explora todos los endpoints y prueba las solicitudes directamente en nuestra interfaz Swagger UI interactiva:
+                    </p>
+                    <a href="https://latanda.online/docs" target="_blank" class="cta-button">
+                        <i class="fas fa-external-link-alt"></i>
+                        Ir a Swagger UI
+                    </a>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Unified Footer -->
+    <!-- Footer -->
     <div id="latanda-footer" class="auto-footer"></div>
 
-  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
-  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
-  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/documentation-legacy-BVTqHIKe.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+    <script>
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.getElementById('sidebar');
+
+        mobileMenuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-link[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                // Close mobile menu if open
+                sidebar.classList.remove('open');
+                
+                // Scroll to section
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Highlight active section on scroll
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link[data-section]');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-section') === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Copy code function
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block').querySelector('code');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.style.color = '#10b981';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.style.color = '';
+                }, 2000);
+            });
+        }
+
+        // Initialize Prism.js syntax highlighting
+        document.querySelectorAll('code').forEach(block => {
+            Prism.highlightElement(block);
+        });
+    </script>
+
     <script src="shared-components.js?v=7.20"></script>
 </body>
 </html>
