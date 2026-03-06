@@ -43,7 +43,15 @@ const LaTandaComponentLoader = {
             }
             target.innerHTML = html;
             this.loaded.add(componentPath);
-return true;
+            
+            // Initialize lazy loading for new images
+            if (window.lazyImageLoader) {
+                setTimeout(() => {
+                    window.lazyImageLoader.observeNewImages(target);
+                }, 100);
+            }
+            
+            return true;
         } catch (err) {
             return false;
         }
