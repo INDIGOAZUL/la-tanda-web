@@ -34,7 +34,7 @@
 
     // Update button icon
     function updateButtonIcon(theme) {
-        const button = document.getElementById('theme-toggle-btn');
+        const button = document.getElementById('themeToggleBtn');
         if (!button) return;
 
         button.innerHTML = theme === 'dark'
