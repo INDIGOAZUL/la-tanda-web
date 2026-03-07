@@ -220,7 +220,7 @@ port = 3001
 [[chains]]
 id = 'latanda-testnet-1'
 rpc_addr = 'https://latanda.online/chain/rpc/'
-grpc_addr = 'https://latanda.online:9090'
+# grpc_addr = 'https://latanda.online:9090'  # Port not verified, comment out if unavailable
 websocket_addr = 'wss://latanda.online/chain/websocket/'
 rpc_timeout = '10s'
 account_prefix = 'ltd'
