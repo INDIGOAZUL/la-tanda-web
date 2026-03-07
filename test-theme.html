@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Toggle Test - La Tanda</title>
+
+    <!-- Load early theme script FIRST to prevent FOUC -->
+    <script src="js/early-theme.js"></script>
+
+    <!-- Load theme CSS variables -->
+    <link rel="stylesheet" href="css/variables.css">
+
+    <!-- Existing styles -->
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=30.1">
+
+    <style>
+        /* Test page specific styles */
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            color: var(--text-secondary);
+        }
+
+        .test-item i {
+            margin-right: 10px;
+            width: 24px;
+            text-align: center;
+            color: var(--accent-color);
+        }
+
+        .test-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .test-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ok {
+            background: #10b981;
+        }
+
+        .status-fail {
+            background: #ef4444;
+        }
+
+        #currentThemeDisplay {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 20px;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 style="color: var(--text-primary); margin-bottom: 20px;">
+            🌓 Theme Toggle Test Page
+        </h1>
+
+        <!-- Current theme display -->
+        <div id="currentThemeDisplay">
+            Current theme: <strong id="themeName">Loading...</strong>
+        </div>
+
+        <!-- Manual toggle button for testing -->
+        <div class="test-section">
+            <div class="test-title">Manual Toggle</div>
+            <button class="test-btn" onclick="window.themeToggle.toggle()">
+                Click to Toggle Theme
+            </button>
+        </div>
+
+        <!-- Test checklist -->
+        <div class="test-section">
+            <div class="test-title">Test Checklist</div>
+
+            <div class="test-item">
+                <i class="fas fa-sun"></i>
+                <span>Light theme works</span>
+                <span class="status-indicator status-ok" id="check1"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-moon"></i>
+                <span>Dark theme works</span>
+                <span class="status-indicator status-ok" id="check2"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-sync"></i>
+                <span>Toggle switches correctly</span>
+                <span class="status-indicator status-ok" id="check3"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-save"></i>
+                <span>Preference persists (refresh to test)</span>
+                <span class="status-indicator status-ok" id="check4"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-eye"></i>
+                <span>No FOUC on page load</span>
+                <span class="status-indicator status-ok" id="check5"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-desktop"></i>
+                <span>Respects system preference</span>
+                <span class="status-indicator status-ok" id="check6"></span>
+            </div>
+
+            <div class="test-item">
+                <i class="fas fa-check-circle"></i>
+                <span>Text readable in both themes</span>
+                <span class="status-indicator status-ok" id="check7"></span>
+            </div>
+        </div>
+
+        <!-- Color palette preview -->
+        <div class="test-section">
+            <div class="test-title">Color Palette</div>
+
+            <div class="test-item">
+                <span>Background Primary:</span>
+                <div style="width: 50px; height: 30px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-left: auto;"></div>
+            </div>
+
+            <div class="test-item">
+                <span>Background Secondary:</span>
+                <div style="width: 50px; height: 30px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; margin-left: auto;"></div>
+            </div>
+
+            <div class="test-item">
+                <span>Text Primary:</span>
+                <div style="width: 50px; height: 30px; background: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-left: auto;"></div>
+            </div>
+
+            <div class="test-item">
+                <span>Accent Color:</span>
+                <div style="width: 50px; height: 30px; background: var(--accent-color); border: 1px solid var(--border-color); border-radius: 4px; margin-left: auto;"></div>
+            </div>
+        </div>
+
+        <!-- Console check instruction -->
+        <div class="test-section">
+            <div class="test-title">Console Check</div>
+            <div class="test-item">
+                <i class="fas fa-terminal"></i>
+                <span>Open browser console (F12) and verify no errors</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="margin-top: 30px; text-align: center;">
+            <a href="home-dashboard.html" class="test-btn" style="display: inline-block;">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        // Update current theme display
+        function updateThemeDisplay() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            const themeName = document.getElementById('themeName');
+            themeName.textContent = theme.charAt(0).toUpperCase() + theme.slice(1) + ' Mode';
+            themeName.style.color = theme === 'dark' ? '#00d4aa' : '#6366f1';
+        }
+
+        // Run on load
+        updateThemeDisplay();
+
+        // Update on theme change
+        window.addEventListener('themechange', updateThemeDisplay);
+
+        // Check theme toggle loaded
+        window.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                console.log('✅ Theme toggle button found and loaded');
+                document.getElementById('check3').className = 'status-indicator status-ok';
+            } else {
+                console.error('❌ Theme toggle button NOT found');
+                document.getElementById('check3').className = 'status-indicator status-fail';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -114,7 +114,8 @@ resolve();
             "js/header/ui.js",
             "js/header/events.js",
             "js/header/dropdown.js",
-            "js/header/index.js"
+            "js/header/index.js",
+            "js/theme-toggle.js"
         ];
 
 for (const module of modules) {
