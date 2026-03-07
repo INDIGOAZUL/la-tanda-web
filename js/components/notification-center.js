@@ -563,6 +563,73 @@ class NotificationCenter {
         body.innerHTML = `
             <div class="prefs-section">
                 <div class="prefs-section-title">
+                    <i class="fas fa-bell"></i> Notificaciones
+                </div>
+                
+                <div class="prefs-item prefs-master-toggle">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">🔔</span> Silenciar todo</div>
+                        <div class="prefs-item-desc">Desactivar todas las notificaciones</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_silenciar_todo" ${p.silenciar_todo ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="prefs-section">
+                <div class="prefs-section-title">
+                    <i class="fas fa-list"></i> Categorías
+                </div>
+                
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">💳</span> Pagos y cobros</div>
+                        <div class="prefs-item-desc">Recordatorios, recibos, depósitos</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_category_payments" ${p.category_payments !== false ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">👥</span> Grupos</div>
+                        <div class="prefs-item-desc">Miembros, ciclos, turnos</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_category_groups" ${p.category_groups !== false ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">🛒</span> Marketplace</div>
+                        <div class="prefs-item-desc">Pedidos, mensajes, ventas</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_category_marketplace" ${p.category_marketplace !== false ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">❤️</span> Social</div>
+                        <div class="prefs-item-desc">Likes, comentarios, menciones</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_category_social" ${p.category_social !== false ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="prefs-section">
+                <div class="prefs-section-title">
                     <i class="fas fa-bell"></i> Tipos de Notificaciones
                 </div>
                 
@@ -697,6 +764,20 @@ class NotificationCenter {
                 range.style.display = toggle.checked ? "flex" : "none";
             });
         }
+
+        // Wire master silence toggle (bounty #87)
+        const silenciarToggle = document.getElementById("pref_silenciar_todo");
+        if (silenciarToggle) {
+            silenciarToggle.addEventListener("change", () => {
+                const isSilenced = silenciarToggle.checked;
+                // Disable all category toggles
+                const categories = ['pref_category_payments', 'pref_category_groups', 'pref_category_marketplace', 'pref_category_social'];
+                categories.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.disabled = isSilenced;
+                });
+            });
+        }
     }
 
     _buildHourOptions(selected) {
@@ -718,6 +799,14 @@ class NotificationCenter {
         }
 
         const newPrefs = {
+            // Master toggle
+            silenciar_todo: document.getElementById("pref_silenciar_todo")?.checked ?? false,
+            // Categories (bounty #87)
+            category_payments: document.getElementById("pref_category_payments")?.checked ?? true,
+            category_groups: document.getElementById("pref_category_groups")?.checked ?? true,
+            category_marketplace: document.getElementById("pref_category_marketplace")?.checked ?? true,
+            category_social: document.getElementById("pref_category_social")?.checked ?? true,
+            // Legacy
             payment_reminders: document.getElementById("pref_payment_reminders")?.checked ?? true,
             group_updates: document.getElementById("pref_group_updates")?.checked ?? true,
             member_activity: document.getElementById("pref_member_activity")?.checked ?? true,
@@ -730,6 +819,14 @@ class NotificationCenter {
             digest_enabled: document.getElementById("pref_digest_enabled")?.checked ?? false,
             digest_frequency: document.getElementById("pref_digest_enabled")?.checked ? 'daily' : 'off'
         };
+
+        // Handle master toggle - disable all categories if silenced
+        if (newPrefs.silenciar_todo) {
+            newPrefs.category_payments = false;
+            newPrefs.category_groups = false;
+            newPrefs.category_marketplace = false;
+            newPrefs.category_social = false;
+        }
 
         try {
             const response = await fetch(this.apiBase + "/api/notifications/preferences", {
@@ -814,13 +911,19 @@ class NotificationCenter {
 
     initPushSubscription() {
         if (!("Notification" in window) || !("PushManager" in window)) return;
+        
+        // Respect explicit denial (bounty #87)
         if (Notification.permission === "denied") return;
+        if (localStorage.getItem("push_permission_denied") === "true") return;
 
         // If already granted, silently subscribe
         if (Notification.permission === "granted") {
             this.subscribeToPush();
             return;
         }
+
+        // Don't ask if user previously dismissed or asked
+        if (localStorage.getItem("push_permission_asked") === "true") return;
 
         // Smart push permission timing — max 3 prompts with progressive delay
         const promptCount = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
@@ -883,21 +986,23 @@ class NotificationCenter {
         banner.innerHTML = `
             <div class="push-banner-content">
                 <i class="fas fa-bell"></i>
-                <span>Activa las notificaciones para no perderte pagos y turnos</span>
+                <span>Recibe alertas de pagos, cobros y actividad de tu grupo</span>
                 <button class="push-banner-btn" id="pushBannerAccept">Activar</button>
-                <button class="push-banner-dismiss" id="pushBannerDismiss">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="push-banner-btn push-banner-dismiss-text" id="pushBannerDismiss">Ahora no</button>
             </div>
         `;
         document.body.appendChild(banner);
 
         document.getElementById("pushBannerAccept").addEventListener("click", async () => {
             banner.remove();
+            localStorage.setItem("push_permission_asked", "true");
             var permission = await Notification.requestPermission();
             if (permission === "granted") {
                 await this.subscribeToPush();
                 this.showToast({ type: "success", message: "Notificaciones activadas — te avisaremos de pagos y turnos" });
+            } else if (permission === "denied") {
+                // Store that user explicitly denied
+                localStorage.setItem("push_permission_denied", "true");
             }
         });
         document.getElementById("pushBannerDismiss").addEventListener("click", () => {
