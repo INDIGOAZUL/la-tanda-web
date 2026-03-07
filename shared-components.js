@@ -15,6 +15,21 @@ const COMING_SOON_PAGES = [
     "ltd-token-economics.html"
 ];
 
+// Theme initialization - runs on all pages
+(function initGlobalTheme() {
+    const savedTheme = localStorage.getItem('latanda_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Listen for theme changes from other tabs/windows
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'latanda_theme') {
+            document.documentElement.setAttribute('data-theme', e.newValue);
+        }
+    });
+})();
+
 // Inject Coming Soon CSS
 (function() {
     const style = document.createElement("style");

@@ -87,6 +87,36 @@
             --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
             --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
         }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            /* Primary Colors (same for consistency) */
+            --primary: #0066ff;
+            --primary-dark: #3b82f6;
+            --primary-light: #1e3a8a;
+            
+            /* Backgrounds */
+            --bg-white: #0f172a;
+            --bg-light: #1e293b;
+            --bg-gray: #334155;
+            
+            /* Text */
+            --text-dark: #f1f5f9;
+            --text-medium: #cbd5e1;
+            --text-light: #94a3b8;
+            
+            /* Accents (same for consistency) */
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            
+            /* Borders & Shadows */
+            --border: #334155;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.6);
+        }
         
         * {
             margin: 0;
@@ -98,6 +128,7 @@
             font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg-white);
             color: var(--text-dark);
+            transition: background 0.3s ease, color 0.3s ease;
             line-height: 1.6;
             overflow-x: hidden;
         }
@@ -124,6 +155,11 @@
             display: flex;
             align-items: center;
             padding: 0 24px;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        [data-theme="dark"] .navbar {
+            background: rgba(15, 23, 42, 0.95);
         }
         
         .navbar-container {
@@ -227,6 +263,39 @@
             color: var(--text-dark);
             cursor: pointer;
         }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-light);
+            transform: scale(1.1);
+        }
+
+        .theme-toggle .sun-icon {
+            display: inline;
+        }
+
+        .theme-toggle .moon-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle .sun-icon {
+            display: none;
+        }
+
+        [data-theme="dark"] .theme-toggle .moon-icon {
+            display: inline;
+        }
         
         /* ========================================
            HERO SECTION
@@ -235,6 +304,7 @@
         .hero {
             padding: 140px 24px 80px;
             background: linear-gradient(180deg, var(--bg-white) 0%, var(--bg-light) 100%);
+            transition: background 0.3s ease;
         }
         
         .hero-container {
@@ -1352,6 +1422,10 @@
             </div>
             
             <div class="navbar-actions">
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme">
+                    <span class="sun-icon">☀️</span>
+                    <span class="moon-icon">🌙</span>
+                </button>
                 <a href="auth-enhanced.html" class="btn btn-outline">Ingresar</a>
                 <a href="auth-enhanced.html?tab=register" class="btn btn-primary">Registrarse</a>
             </div>
@@ -2102,8 +2176,32 @@
             });
         });
         
+        // Theme Toggle Functionality
+        function initTheme() {
+            // Get saved theme or use system preference
+            const savedTheme = localStorage.getItem('latanda_theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+            
+            // Apply theme
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Add toggle handler
+            const toggleBtn = document.getElementById('theme-toggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('latanda_theme', newTheme);
+                });
+            }
+        }
+
         // Initialize
         document.addEventListener("DOMContentLoaded", function() {
+            initTheme();
             loadStats();
             
             // Add scroll effect to navbar

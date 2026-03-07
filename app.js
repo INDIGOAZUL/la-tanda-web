@@ -23,8 +23,33 @@ class LaTandaApp {
         // Load saved data
         this.loadFromStorage();
         
+        // Initialize theme
+        this.initTheme();
+        
         // Test API connectivity
         setTimeout(() => this.testAPIConnectivity(), 2000);
+    }
+    
+    initTheme() {
+        // Get saved theme or use system preference
+        const savedTheme = localStorage.getItem('latanda_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        
+        // Apply theme
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // Add toggle handler if toggle exists
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('latanda_theme', newTheme);
+            });
+        }
     }
     
     setupEventListeners() {

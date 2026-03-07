@@ -14,6 +14,41 @@
     --shadow-light: 0 2px 8px rgba(0,0,0,0.1);
     --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
     --shadow-heavy: 0 8px 32px rgba(0,0,0,0.2);
+    --background-gradient: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+    --container-bg: rgba(0,0,0,0.1);
+    --text-light: white;
+    --tab-navigation-bg: rgba(255,255,255,0.95);
+    --border-radius: 8px;
+    --border-radius-large: 16px;
+    --transition: all 0.3s ease;
+}
+
+[data-theme="light"] {
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --background-light: #ffffff;
+    --card-background: rgba(255,255,255,0.98);
+    --shadow-light: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-medium: 0 4px 16px rgba(0,0,0,0.12);
+    --shadow-heavy: 0 8px 32px rgba(0,0,0,0.18);
+    --background-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #cbd5e0 100%);
+    --container-bg: rgba(255,255,255,0.85);
+    --text-light: #2d3748;
+    --tab-navigation-bg: rgba(255,255,255,0.98);
+}
+
+[data-theme="dark"] {
+    --text-primary: #e2e8f0;
+    --text-secondary: #a0aec0;
+    --background-light: #1a202c;
+    --card-background: rgba(45, 55, 72, 0.95);
+    --shadow-light: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-medium: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-heavy: 0 8px 32px rgba(0,0,0,0.5);
+    --background-gradient: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+    --container-bg: rgba(0,0,0,0.1);
+    --text-light: white;
+    --tab-navigation-bg: rgba(26, 32, 44, 0.95);
 }
 
 * { 
@@ -24,20 +59,22 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    background: linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%);
+    background: var(--background-gradient);
     min-height: 100vh;
-    color: white;
+    color: var(--text-light);
     overflow-x: hidden;
     line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
     max-width: 414px;
     margin: 0 auto;
     min-height: 100vh;
-    background: rgba(0,0,0,0.1);
+    background: var(--container-bg);
     position: relative;
     backdrop-filter: blur(10px);
+    transition: background 0.3s ease;
 }
 
 /* Status Bar */
@@ -850,8 +887,8 @@ body {
 /* Tab Navigation */
 .tab-navigation {
     display: flex;
-    background: rgba(255,255,255,0.95);
-    border-top: 1px solid #e0e0e0;
+    background: var(--tab-navigation-bg);
+    border-top: 1px solid rgba(255,255,255,0.1);
     position: fixed;
     bottom: 0;
     left: 50%;
@@ -860,7 +897,8 @@ body {
     max-width: 414px;
     z-index: 100;
     backdrop-filter: blur(10px);
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-light);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .nav-item {
@@ -1350,4 +1388,55 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(46, 134, 171, 0.7);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--card-background);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-medium);
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: var(--shadow-heavy);
+}
+
+.theme-toggle-icon {
+    font-size: 20px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.theme-toggle .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+.theme-toggle .moon-icon {
+    opacity: 0;
+    transform: rotate(90deg);
+    position: absolute;
+}
+
+[data-theme="light"] .theme-toggle .sun-icon {
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+[data-theme="light"] .theme-toggle .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg);
 }
