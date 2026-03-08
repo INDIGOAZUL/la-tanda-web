@@ -45,6 +45,23 @@
 - Icon-only buttons missing `aria-label`: 0 (in audited pages) ✅
 - Missing `alt` attributes in audited pages: 0 ✅
 
+## Additional remediation pass (review follow-up)
+
+Based on maintainer review, the following fixes were applied:
+
+1. **Corrected skip-link target scope**
+- Removed `id="main-content"` from `<body>` on audited pages.
+- Target now points to first meaningful main container:
+  - `auth-enhanced.html`: `.auth-wrapper`
+  - `home-dashboard.html`: `.main-feed`
+  - `groups-advanced-system.html`: `.main-feed`
+
+2. **Focus style override adjusted**
+- Removed `!important` from global `:focus-visible` patch to avoid overriding component-specific focus styles.
+
+3. **Dynamic modal accessibility semantics improved**
+- Added `role="dialog"` + `aria-modal="true"` to modal containers (`.modal`, `.drawer-modal`) in audited pages where applicable.
+
 ## Notes / follow-up items
 - Full Lighthouse and axe run should be executed in-browser environment for final numeric scoring evidence.
 - Modal focus trapping behavior appears partially implemented in several components; recommend dedicated pass for all modal variants if maintainers require strict trap proof across every flow.
