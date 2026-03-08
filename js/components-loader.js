@@ -98,6 +98,12 @@ resolve();
         for (const css of mobileCSS) {
             await this.loadCSS(css);
         }
+    },
+
+    // Load theme manager script
+    async loadThemeManager() {
+        await this.loadScript("js/theme-manager.js");
+    },
         
         this.mobileCSSLoaded = true;
 },
@@ -262,6 +268,7 @@ const target = document.getElementById(targetId);
     // Load all components
     async loadAll(headerTarget, sidebarTarget, footerTarget) {
         await Promise.all([
+            this.loadThemeManager(),
             this.loadHeader(headerTarget),
             this.loadSidebar(sidebarTarget),
             this.loadFooter(footerTarget)

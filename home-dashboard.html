@@ -10,6 +10,32 @@
     <link rel="preload" href="/js/hub/social-feed.js?v=12.1" as="script">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0f172a">
+    <script>
+        // Theme initialization - runs before CSS loads to prevent flash of wrong theme
+        (function() {
+            const storageKey = 'lt-theme-preference';
+            const savedTheme = localStorage.getItem(storageKey);
+            const systemPreference = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            const initialTheme = savedTheme || systemPreference;
+            document.documentElement.setAttribute('data-theme', initialTheme);
+            
+            // Update theme-color meta tag
+            const themeColor = initialTheme === 'light' ? '#ffffff' : '#0f172a';
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute('content', themeColor);
+            }
+            
+            // Listen for theme changes to update meta tag
+            window.addEventListener('themeChange', (e) => {
+                const newTheme = e.detail.theme;
+                const newColor = newTheme === 'light' ? '#ffffff' : '#0f172a';
+                if (metaThemeColor) {
+                    metaThemeColor.setAttribute('content', newColor);
+                }
+            });
+        })();
+    </script>
     <title data-i18n="dashboard.page_title">La Tanda - Web3 DeFi Ecosystem</title>
     
     <!-- Open Graph / Facebook -->
@@ -31,6 +57,8 @@
     <meta name="twitter:image" content="https://latanda.online/assets/logo-latanda-latest.png">
     <meta name="description" content="Dashboard principal La Tanda Web3 Ecosystem">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <!-- Theme Manager -->
+    <script src="/js/theme-manager.js"></script>
     <!-- Web3 Crypto Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
