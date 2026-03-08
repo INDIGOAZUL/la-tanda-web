@@ -1,6 +1,11 @@
 // ===== LOTTERY & TURN LOCK FUNCTIONS =====
 // Added for tombola and locked positions feature
 
+// Security: HTML escape helper
+var _lottEsc = typeof escapeHtml === "function" ? escapeHtml : function(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+};
+
 // Get current user ID (consistent with main system)
 function getLotteryUserId() {
     // 1. Try latanda_user object first (main auth)
@@ -12,7 +17,7 @@ function getLotteryUserId() {
             if (user && user.id) return user.id;
         }
     } catch (e) {}
-    
+
     // 2. Direct keys
     return localStorage.getItem("latanda_user_id") ||
            sessionStorage.getItem("latanda_user_id") ||
@@ -29,35 +34,37 @@ function toggleTurnLock(index) {
 }
 
 // Start lottery countdown (10 seconds)
-function startLotteryCountdown() {
+async function startLotteryCountdown() {
     var unlockedCount = turnsMembers.filter(function(m) { return !m.turn_locked; }).length;
     if (unlockedCount === 0) {
-        alert("No hay posiciones desbloqueadas para sortear. Desbloquea al menos una posicion.");
+        if (typeof showNotification === "function") showNotification("No hay posiciones desbloqueadas para sortear. Desbloquea al menos una posicion.", "error");
         return;
     }
-    
-    if (!confirm("Se sortearán " + unlockedCount + " posiciones no bloqueadas. Las posiciones con candado (🔒) no cambiarán.\n\n¿Iniciar tómbola?")) {
-        return;
+
+    // Confirm before starting
+    if (typeof showConfirm === "function") {
+        var proceed = await showConfirm("Se sortearan " + unlockedCount + " posiciones no bloqueadas. Las posiciones con candado no cambiaran. ¿Iniciar tombola?");
+        if (!proceed) return;
     }
-    
+
     // Create countdown modal
     var countdownModal = document.createElement("div");
     countdownModal.id = "lotteryCountdownModal";
     countdownModal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 20000;";
-    countdownModal.innerHTML = 
+    countdownModal.innerHTML =
         "<div style=\"text-align: center;\">" +
             "<div style=\"font-size: 8rem; color: #f59e0b; font-weight: bold;\" id=\"countdownNumber\">10</div>" +
-            "<div style=\"font-size: 1.5rem; color: white; margin-top: 20px;\">🎲 Preparando tómbola...</div>" +
+            "<div style=\"font-size: 1.5rem; color: white; margin-top: 20px;\">&#x1F3B2; Preparando tombola...</div>" +
             "<button onclick=\"cancelLottery()\" style=\"margin-top: 30px; padding: 10px 30px; background: #dc2626; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;\">Cancelar</button>" +
         "</div>";
     document.body.appendChild(countdownModal);
-    
+
     var count = 10;
     window.lotteryInterval = setInterval(function() {
         count--;
         var numberEl = document.getElementById("countdownNumber");
         if (numberEl) numberEl.textContent = count;
-        
+
         if (count <= 0) {
             clearInterval(window.lotteryInterval);
             executeLottery();
@@ -78,45 +85,44 @@ function cancelLottery() {
 async function executeLottery() {
     var modal = document.getElementById("lotteryCountdownModal");
     if (modal) {
-        modal.innerHTML = 
+        modal.innerHTML =
             "<div style=\"text-align: center;\">" +
-                "<div style=\"font-size: 4rem;\">🎲</div>" +
+                "<div style=\"font-size: 4rem;\">&#x1F3B2;</div>" +
                 "<div style=\"font-size: 1.5rem; color: white; margin-top: 20px;\">Sorteando posiciones...</div>" +
             "</div>";
     }
-    
+
     try {
         var userId = getLotteryUserId();
         console.log("[Lottery] User ID:", userId);
         console.log("[Lottery] Group ID:", manageTurnsGroupId);
-        
+
         if (!userId) {
             throw new Error("No se pudo obtener el ID del usuario");
         }
-        
+
         var apiBase = window.API_BASE_URL || "https://latanda.online";
-        
+
         var response = await fetch(apiBase + "/api/groups/" + manageTurnsGroupId + "/lottery-assign?user_id=" + userId, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ coordinator_id: userId })
         });
-        
+
         var result = await response.json();
         console.log("[Lottery] API Response:", result);
-        
+
         if (result.success) {
-            // Show results animation
             showLotteryResults(result.data);
         } else {
             if (modal) modal.remove();
-            var errorMsg = result.data?.error?.message || result.error || "Error desconocido";
-            alert("Error en la tómbola: " + errorMsg);
+            console.error("[Lottery] API error:", result.data?.error?.message || result.error);
+            if (typeof showNotification === "function") showNotification("Error en la tombola. Intenta de nuevo.", "error");
         }
     } catch (error) {
         console.error("[Lottery] Error:", error);
         if (modal) modal.remove();
-        alert("Error de conexión: " + error.message);
+        if (typeof showNotification === "function") showNotification("Error de conexion. Verifica tu internet.", "error");
     }
 }
 
@@ -124,19 +130,19 @@ async function executeLottery() {
 function showLotteryResults(data) {
     var modal = document.getElementById("lotteryCountdownModal");
     if (!modal) return;
-    
+
     var assignmentsHtml = data.assignments.map(function(a) {
         return "<div style=\"display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; margin: 8px 0;\">" +
             "<div style=\"width: 36px; height: 36px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;\">" + a.new_position + "</div>" +
-            "<div style=\"color: white; font-weight: 500;\">" + (a.display_name || "Usuario") + "</div>" +
+            "<div style=\"color: white; font-weight: 500;\">" + _lottEsc(a.display_name || "Usuario") + "</div>" +
         "</div>";
     }).join("");
-    
-    modal.innerHTML = 
+
+    modal.innerHTML =
         "<div style=\"text-align: center; max-width: 400px; width: 90%;\">" +
-            "<div style=\"font-size: 4rem; margin-bottom: 16px;\">🎉</div>" +
-            "<div style=\"font-size: 1.5rem; color: #10b981; font-weight: bold; margin-bottom: 8px;\">¡Tómbola completada!</div>" +
-            "<div style=\"color: #9ca3af; margin-bottom: 20px;\">" + data.assigned_count + " posiciones asignadas • " + data.locked_count + " bloqueadas</div>" +
+            "<div style=\"font-size: 4rem; margin-bottom: 16px;\">&#x1F389;</div>" +
+            "<div style=\"font-size: 1.5rem; color: #10b981; font-weight: bold; margin-bottom: 8px;\">&#xA1;Tombola completada!</div>" +
+            "<div style=\"color: #9ca3af; margin-bottom: 20px;\">" + data.assigned_count + " posiciones asignadas &#x2022; " + data.locked_count + " bloqueadas</div>" +
             "<div style=\"max-height: 300px; overflow-y: auto;\">" + assignmentsHtml + "</div>" +
             "<button onclick=\"closeLotteryAndRefresh()\" style=\"margin-top: 20px; padding: 12px 40px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;\">Aceptar</button>" +
         "</div>";
@@ -146,7 +152,7 @@ function showLotteryResults(data) {
 async function closeLotteryAndRefresh() {
     var modal = document.getElementById("lotteryCountdownModal");
     if (modal) modal.remove();
-    
+
     // Reload members to get updated positions
     await loadTurnsMembers(manageTurnsGroupId);
 }
@@ -160,4 +166,4 @@ window.executeLottery = executeLottery;
 window.showLotteryResults = showLotteryResults;
 window.closeLotteryAndRefresh = closeLotteryAndRefresh;
 
-console.log("[Lottery] Lottery functions loaded v2");
+console.log("[Lottery] Lottery functions loaded v3");

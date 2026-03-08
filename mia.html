@@ -9,8 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
-    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
-    <link rel="stylesheet" href="css/hub/social-feed.css?v=11.8">
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -290,6 +288,56 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        /* Voice input button */
+        .mia-voice-btn {
+            width: 48px;
+            height: 48px;
+            background: transparent;
+            border: 1px solid var(--border-card);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .mia-voice-btn:hover {
+            border-color: var(--tanda-cyan);
+            color: var(--tanda-cyan);
+        }
+
+        .mia-voice-btn.recording {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #ef4444;
+            animation: voicePulse 1.5s infinite;
+        }
+
+        .mia-voice-btn.unsupported {
+            display: none;
+        }
+
+        @keyframes voicePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+
+        .mia-voice-status {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #ef4444;
+            padding: 4px;
+            display: none;
+        }
+
+        .mia-voice-status.active {
+            display: block;
+        }
         
         /* Loading indicator */
         .mia-typing {
@@ -315,12 +363,134 @@
             50% { opacity: 1; transform: translateY(-4px); }
         }
         
+        /* Proactive alerts */
+        .mia-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin: 6px 0;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .mia-alert i {
+            margin-top: 2px;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .mia-alert-content {
+            flex: 1;
+        }
+
+        .mia-alert-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .mia-alert-action:hover { opacity: 0.8; }
+
+        .mia-alert.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        .mia-alert.danger i { color: #ef4444; }
+        .mia-alert.danger .mia-alert-action {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .mia-alert.warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+        }
+        .mia-alert.warning i { color: #f59e0b; }
+        .mia-alert.warning .mia-alert-action {
+            background: rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+        }
+
+        .mia-alert.success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+        .mia-alert.success i { color: #22c55e; }
+        .mia-alert.success .mia-alert-action {
+            background: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .mia-alert.info {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .mia-alert.info i { color: var(--tanda-cyan); }
+        .mia-alert.info .mia-alert-action {
+            background: rgba(0, 255, 255, 0.2);
+            color: var(--tanda-cyan);
+        }
+
+        /* Action buttons */
+        .mia-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            align-self: flex-start;
+        }
+
+        .mia-action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 16px;
+            color: var(--tanda-cyan);
+            font-size: 0.82rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mia-action-link:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .mia-action-link i {
+            font-size: 0.85rem;
+        }
+
+        .mia-source-badge {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.35);
+            margin-top: 4px;
+            align-self: flex-start;
+        }
+
         /* Mobile responsive */
         @media (max-width: 768px) {
             .mia-page-container {
                 border: none;
             }
-            
+
             .mia-message {
                 max-width: 90%;
             }
@@ -367,26 +537,34 @@
                 </div>
                 <h2>Hola, soy MIA</h2>
                 <p>Tu asistente inteligente de La Tanda. Puedo ayudarte con informacion sobre tandas, el token LTD, marketplace, loteria y mas.</p>
+                <div id="miaAlerts"></div>
                 <div class="mia-quick-actions">
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Como funcionan las tandas?</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Que es el token LTD?</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Como vender en marketplace?</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Predictor de loteria</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi resumen financiero</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Quiero pagar mi tanda</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Consejos de ahorro</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Analizar mi tienda</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi rendimiento de pagos</button>
+                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Ayuda con una disputa</button>
                 </div>
             </div>
         </div>
         
         <!-- Chat Input -->
         <div class="mia-chat-input-container">
+            <div class="mia-voice-status" id="voiceStatus">Escuchando...</div>
             <div class="mia-chat-input-wrapper">
-                <textarea 
-                    class="mia-chat-input" 
-                    id="chatInput" 
-                    placeholder="Escribe tu mensaje..."
+                <button class="mia-voice-btn" id="voiceBtn" onclick="toggleVoice()" aria-label="Entrada por voz">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <textarea
+                    class="mia-chat-input"
+                    id="chatInput"
+                    placeholder="Escribe o habla tu mensaje..."
                     rows="1"
+                    aria-label="Mensaje para MIA"
                     onkeydown="handleKeyDown(event)"
                 ></textarea>
-                <button class="mia-send-btn" id="sendBtn" onclick="sendMessage()">
+                <button class="mia-send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Enviar mensaje">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
@@ -394,21 +572,34 @@
     </div>
 
     <script>
+        // C1/C2: Auth guard — redirect if no token
+        (function() {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) {
+                localStorage.setItem('redirect_after_auth', location.href);
+                location.replace('auth-enhanced.html');
+            }
+        })();
+
         const chatMessages = document.getElementById("chatMessages");
         const chatInput = document.getElementById("chatInput");
         const sendBtn = document.getElementById("sendBtn");
         let conversationHistory = [];
         let isLoading = false;
 
+        function getAuthToken() {
+            return localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+        }
+
+        // H1: Safe message formatting — escape first, then apply markdown
         function formatMessage(text) {
-            let escaped = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-            escaped = escaped.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-            escaped = escaped.replace(/\n\n/g, "</p><p>");
-            escaped = escaped.replace(/\n/g, "<br>");
-            return "<p>" + escaped + "</p>";
+            const div = document.createElement('div');
+            div.textContent = text;
+            let escaped = div.innerHTML;
+            escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            escaped = escaped.replace(/\n\n/g, '</p><p>');
+            escaped = escaped.replace(/\n/g, '<br>');
+            return '<p>' + escaped + '</p>';
         }
 
         chatInput.addEventListener("input", function() {
@@ -428,13 +619,26 @@
             sendMessage();
         }
 
-        function addMessage(role, content) {
+        function addMessage(role, content, actions, source) {
             const welcome = chatMessages.querySelector(".mia-welcome");
             if (welcome) welcome.remove();
             const msgDiv = document.createElement("div");
             msgDiv.className = "mia-message " + role;
             if (role === "assistant") {
                 msgDiv.innerHTML = formatMessage(content);
+                // Render action buttons
+                if (actions && actions.length > 0) {
+                    const actionsDiv = document.createElement("div");
+                    actionsDiv.className = "mia-actions";
+                    for (const action of actions) {
+                        const link = document.createElement("a");
+                        link.className = "mia-action-link";
+                        link.href = action.url;
+                        link.innerHTML = '<i class="fas ' + (action.icon || 'fa-arrow-right') + '"></i> ' + formatMessage(action.label).replace(/<\/?p>/g, '');
+                        actionsDiv.appendChild(link);
+                    }
+                    msgDiv.appendChild(actionsDiv);
+                }
             } else {
                 msgDiv.textContent = content;
             }
@@ -468,20 +672,41 @@
             try {
                 const response = await fetch("/api/mia/chat", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + getAuthToken()
+                    },
                     body: JSON.stringify({
                         message: message,
                         conversationHistory: conversationHistory.slice(-10)
                     })
                 });
+                if (response.status === 401) {
+                    hideTyping();
+                    addMessage("assistant", "Tu sesion ha expirado. Redirigiendo al login...");
+                    setTimeout(function() {
+                        localStorage.setItem('redirect_after_auth', location.href);
+                        location.replace('auth-enhanced.html');
+                    }, 1500);
+                    return;
+                }
+                if (response.status === 429) {
+                    hideTyping();
+                    addMessage("assistant", "Has enviado muchos mensajes. Espera un momento antes de continuar.");
+                    return;
+                }
                 const data = await response.json();
                 hideTyping();
                 if (data.success && data.data.response) {
-                    addMessage("assistant", data.data.response);
+                    addMessage("assistant", data.data.response, data.data.actions, data.data.source);
                     conversationHistory.push(
                         { role: "user", content: message },
                         { role: "assistant", content: data.data.response }
                     );
+                    // L5: Cap local history
+                    if (conversationHistory.length > 40) {
+                        conversationHistory = conversationHistory.slice(-20);
+                    }
                 } else {
                     addMessage("assistant", "Lo siento, hubo un error. Intenta de nuevo.");
                 }
@@ -494,7 +719,112 @@
                 chatInput.focus();
             }
         }
+        // Voice input (Web Speech API)
+        const voiceBtn = document.getElementById('voiceBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        let recognition = null;
+        let isRecording = false;
+
+        (function initVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                voiceBtn.classList.add('unsupported');
+                return;
+            }
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-HN';
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = false;
+
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                chatInput.value = transcript;
+                chatInput.style.height = 'auto';
+                chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+                // Auto-send on final result
+                if (event.results[event.results.length - 1].isFinal) {
+                    stopVoice();
+                    if (transcript.trim()) {
+                        setTimeout(function() { sendMessage(); }, 300);
+                    }
+                }
+            };
+
+            recognition.onerror = function(event) {
+                stopVoice();
+                if (event.error === 'not-allowed') {
+                    addMessage('assistant', 'Necesito permiso para acceder a tu microfono. Activa el permiso en la configuracion de tu navegador.');
+                }
+            };
+
+            recognition.onend = function() {
+                stopVoice();
+            };
+        })();
+
+        function toggleVoice() {
+            if (isRecording) {
+                stopVoice();
+            } else {
+                startVoice();
+            }
+        }
+
+        function startVoice() {
+            if (!recognition) return;
+            try {
+                recognition.start();
+                isRecording = true;
+                voiceBtn.classList.add('recording');
+                voiceBtn.querySelector('i').className = 'fas fa-stop';
+                voiceStatus.classList.add('active');
+                chatInput.placeholder = 'Habla ahora...';
+            } catch (_) {}
+        }
+
+        function stopVoice() {
+            if (!recognition) return;
+            try { recognition.stop(); } catch (_) {}
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.querySelector('i').className = 'fas fa-microphone';
+            voiceStatus.classList.remove('active');
+            chatInput.placeholder = 'Escribe o habla tu mensaje...';
+        }
+
+        // Proactive alerts on page load
+        (async function loadGreeting() {
+            try {
+                const res = await fetch("/api/mia/greeting", {
+                    headers: { "Authorization": "Bearer " + getAuthToken() }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.success) return;
+                const container = document.getElementById("miaAlerts");
+                if (!container) return;
+                const alerts = data.data.alerts || [];
+                if (alerts.length === 0) return;
+                let html = '';
+                for (const a of alerts) {
+                    html += '<div class="mia-alert ' + (a.type || 'info') + '">';
+                    html += '<i class="fas ' + (a.icon || 'fa-info-circle') + '"></i>';
+                    html += '<div class="mia-alert-content">';
+                    html += '<div>' + formatMessage(a.text).replace(/<\/?p>/g, '') + '</div>';
+                    if (a.action) {
+                        html += '<a class="mia-alert-action" href="' + a.action.url + '">';
+                        html += '<i class="fas ' + (a.action.icon || 'fa-arrow-right') + '"></i> ' + formatMessage(a.action.label).replace(/<\/?p>/g, '');
+                        html += '</a>';
+                    }
+                    html += '</div></div>';
+                }
+                container.innerHTML = html;
+            } catch (_) {}
+        })();
     </script>
-    <script src="js/hub/contextual-widgets.js?v=1770829609"></script>
 </body>
 </html>

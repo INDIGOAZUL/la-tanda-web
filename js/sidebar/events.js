@@ -56,7 +56,7 @@ const SidebarEvents = {
 
         // Handle hamburger menu click (delegated from header)
         document.addEventListener("click", (e) => {
-            const menuBtn = e.target.closest("#menuToggle, .hamburger-menu, .menu-toggle");
+            const menuBtn = e.target.closest(".hamburger-menu, .menu-toggle");
             if (menuBtn) {
                 e.preventDefault();
                 SidebarUI.toggle();

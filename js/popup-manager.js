@@ -121,7 +121,7 @@ class LaTandaPopupManager {
             if (config.message) {
                 const msgP = document.createElement("p");
                 msgP.className = "latanda-popup-message";
-                msgP.textContent = config.message;
+                msgP.innerHTML = config.message;
                 body.appendChild(msgP);
             }
             if (config.details) {

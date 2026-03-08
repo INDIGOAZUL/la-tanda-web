@@ -14,14 +14,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=24.5">
+    <link rel="stylesheet" href="css/header.css?v=24.7">
     <link rel="stylesheet" href="css/onboarding.css?v=1.0">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
-    <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558147">
+    <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558148">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
     <link rel="stylesheet" href="css/dashboard-polish.css?v=1.0">
     <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
-    <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.0">
+    <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
     <link rel="stylesheet" href="css/components/notification-center.css">
     <link rel="stylesheet" href="css/components/wallet-dropdown.css">
     <link rel="stylesheet" href="css/mobile-touch-fixes.css">
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.4">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.5">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -69,12 +69,24 @@
                 <a href="/guardados.html" class="nav-menu-item"><i class="fas fa-bookmark"></i><span>Guardados</span></a>
                 <a href="/mensajes.html" class="nav-menu-item"><i class="fas fa-envelope"></i><span>Mensajes</span></a>
                 <a href="/mineria.html" class="nav-menu-item"><i class="fas fa-hammer"></i><span>Mineria</span></a>
-                <a href="mi-perfil.html" class="nav-menu-item"><i class="fas fa-bars"></i><span>Menu</span></a>
+                <div class="nav-more-container" style="position: relative;">
+                <div class="nav-menu-item nav-more-btn" id="navMoreBtn" data-action="toggle-more-menu" role="button" aria-expanded="false"><i class="fas fa-ellipsis-h"></i><span>Mas</span></div>
+                <div class="more-menu-dropdown" id="moreMenuDropdown" role="menu">
+                    <a href="perfil.html" class="more-menu-item" id="navProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-list"></i><span>Listas</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-users"></i><span>Comunidades</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-briefcase"></i><span>Negocios</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-bullhorn"></i><span>Anuncios</span></a>
+                    <div class="more-menu-divider"></div>
+                    <a href="configuracion.html" class="more-menu-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>
+                    <a href="#" class="more-menu-item" data-action="logout"><i class="fas fa-sign-out-alt"></i><span>Cerrar Sesion</span></a>
+                </div>
+                </div>
             </nav>
             <div class="nav-section-divider"></div>
             <div class="nav-section-label">Accesos Rapidos</div>
             <nav class="nav-menu">
-                <a href="my-wallet.html" class="nav-menu-item"><i class="fas fa-wallet"></i><span>Mi Wallet</span></a>
+                <a href="/mia.html" class="nav-menu-item"><i class="fas fa-robot"></i><span>MIA AI</span></a>
                 <a href="/groups-advanced-system.html" class="nav-menu-item active"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
                 <a href="/marketplace-social.html" class="nav-menu-item"><i class="fas fa-store"></i><span>Marketplace</span></a>
                 <a href="/lottery-predictor.html" class="nav-menu-item"><i class="fas fa-ticket-alt"></i><span>Loteria</span></a>
@@ -309,6 +321,12 @@
                                     adapted.my_alerts = [];
                                     adapted.is_public = true;
                                     adapted.admin_name = g.admin_name || null;
+                                    adapted.admin_verified = g.admin_verified || false;
+                                    adapted.admin_since = g.admin_since || null;
+                                    adapted.tanda_status = g.tanda_status || null;
+                                    adapted.active_members = g.active_members || 0;
+                                    adapted.start_date = g.start_date || null;
+                                    adapted.grace_period = g.grace_period || 5;
                                     return adapted;
                                 });
                             } else {
@@ -750,7 +768,7 @@
 
             // Commission label for card
             var commLabel;
-            if (groupCustomRate === null) commLabel = 'Estandar';
+            if (groupCustomRate === null) commLabel = '5%';
             else if (groupCustomRate === 0) commLabel = 'Sin comision';
             else commLabel = groupCustomRate + '%';
 
@@ -760,8 +778,9 @@
             // Frequency label
             var freqLabel = frequencyLabels[group.frequency] || group.frequency || '--';
 
-            // Members display
-            var membersDisplay = (group.total_positions || group.members_count || 0) + '/' + (group.max_members || '?');
+            // Members display (public cards use active_members if available)
+            var memberNum = group.is_public ? (group.active_members || group.member_count || 0) : (group.total_positions || group.members_count || 0);
+            var membersDisplay = memberNum + '/' + (group.max_members || '?');
 
             // Role pill colors
             var roleClass = group.my_role === 'creator' ? 'gc-role-creator' : group.my_role === 'coordinator' ? 'gc-role-coord' : 'gc-role-member';
@@ -803,12 +822,60 @@
             if (group.is_public) {
                 statusColor = '#f59e0b';
                 roleClass = 'gc-role-open';
+
+                // Creator info with verification badge
+                var creatorParts = [];
                 if (group.admin_name) {
-                    var adminPart = 'Creado por: ' + escapeHtml(group.admin_name);
-                    subtitle = subtitle ? subtitle + ' &middot; ' + adminPart : adminPart;
+                    var verifiedIcon = group.admin_verified
+                        ? ' <span class="gc-verified" title="Creador verificado">&#10003;</span>'
+                        : ' <span class="gc-unverified" title="Correo no verificado">&#9888;</span>';
+                    creatorParts.push('Creado por: ' + escapeHtml(group.admin_name) + verifiedIcon);
                 }
+                subtitle = creatorParts.length > 0 ? creatorParts.join('') : subtitle;
+
+                // Category line below creator
+                var catLine = [];
+                if (group.category) catLine.push(escapeHtml(group.category));
+                if (group.location) catLine.push('&#x1F4CD; ' + escapeHtml(group.location));
+                if (catLine.length > 0) {
+                    subtitle += '<br><span style="font-size:0.72rem;color:#64748b;">' + catLine.join(' &middot; ') + '</span>';
+                }
+
+                // Trust/readiness alerts for public cards
                 alertsHtml = '';
-                actionsHtml = '<button class="btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">Solicitar unirse</button>';
+                var trustAlerts = [];
+
+                // Start date info
+                if (group.start_date) {
+                    var sd = new Date(group.start_date.split('T')[0] + 'T12:00:00');
+                    var sdLabel = sd.toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' });
+                    var now = new Date();
+                    if (sd > now) {
+                        trustAlerts.push({ severity: 'info', message: 'Inicia: ' + sdLabel });
+                    } else {
+                        trustAlerts.push({ severity: 'success', message: 'Activo desde: ' + sdLabel });
+                    }
+                } else {
+                    trustAlerts.push({ severity: 'warning', message: 'Fecha de inicio: Por definir' });
+                }
+
+                // Tanda status
+                if (group.tanda_status === 'active') {
+                    trustAlerts.push({ severity: 'success', message: 'Tanda en progreso' });
+                } else if (group.tanda_status === 'recruiting') {
+                    trustAlerts.push({ severity: 'info', message: 'Reclutando miembros' });
+                }
+
+                if (trustAlerts.length > 0) {
+                    alertsHtml = trustAlerts.map(function(a) {
+                        var sevClass = ({ success: 'gc-alert-success', warning: 'gc-alert-warning', danger: 'gc-alert-danger', info: 'gc-alert-info' })[a.severity] || 'gc-alert-info';
+                        var icon = ({ success: '&#10003;', warning: '&#9888;', info: '&#8505;' })[a.severity] || '&#8505;';
+                        return '<div class="gc-alert ' + sevClass + '"><span class="gc-alert-icon">' + icon + '</span><span class="gc-alert-msg">' + a.message + '</span></div>';
+                    }).join('');
+                }
+
+                actionsHtml = '<button class="btn btn-secondary gc-btn-detail" data-action="grp-public-detail" data-group-id="' + escapeHtml(group.id) + '">Ver Detalles</button>' +
+                    '<button class="btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">Solicitar unirse</button>';
             }
 
             return '<div class="group-card" data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
@@ -819,6 +886,7 @@
                         (subtitle ? '<div class="gc-sub">' + subtitle + '</div>' : '') +
                     '</div>' +
                     '<span class="gc-role ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' +
+                    (isAdmin && group.active_loans_count > 0 ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;font-size:0.68rem;font-weight:600;margin-left:6px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>' + group.active_loans_count + ' deuda' + (group.active_loans_count > 1 ? 's' : '') + '</span>' : '') +
                 '</div>' +
                 (group.description ? '<div class="gc-desc">' + escapeHtml(group.description) + '</div>' : '') +
                 '<div class="gc-stats">' +
@@ -828,7 +896,7 @@
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val cyan">' + _gcFmtL(payout.user_receives) + '</div>' +
-                        '<div class="gc-stat-label">Recibes' + ((group.my_num_positions || 1) > 1 ? '/turno' : '') + '</div>' +
+                        '<div class="gc-stat-label">' + (group.is_public ? 'Pool (meta)' : 'Recibes' + ((group.my_num_positions || 1) > 1 ? '/turno' : '')) + '</div>' +
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val">' + escapeHtml(membersDisplay) + '</div>' +
@@ -842,6 +910,190 @@
                 alertsHtml +
                 '<div class="gc-actions">' + actionsHtml + '</div>' +
             '</div>';
+        }
+
+        // ===== PUBLIC GROUP DETAIL MODAL =====
+        async function openPublicGroupDetail(groupId) {
+            try {
+                var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                var headers = authTk ? { 'Authorization': 'Bearer ' + authTk } : {};
+                var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/public-detail', { headers: headers });
+                var data = await res.json();
+                if (!data.success || !data.data) {
+                    showNotification(data.error || 'Error al cargar detalles', 'error');
+                    return;
+                }
+                var d = data.data;
+                var g = d.group;
+                var c = d.creator;
+                var m = d.mora_policy;
+
+                var freqMap = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+                var freqLabel = freqMap[g.frequency] || g.frequency || '--';
+                var fillPct = Math.round((g.active_members / g.max_members) * 100);
+                var fillColor = fillPct >= 75 ? '#22c55e' : (fillPct >= 40 ? '#f59e0b' : '#64748b');
+
+                // Tanda status badge
+                var statusBadge = '';
+                if (g.tanda_status === 'active') {
+                    statusBadge = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.72rem;font-weight:600;">Activa</span>';
+                } else if (g.tanda_status === 'recruiting') {
+                    statusBadge = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.15);color:#f59e0b;font-size:0.72rem;font-weight:600;">Reclutando</span>';
+                }
+
+                // Start date
+                var startLabel = 'Por definir';
+                if (g.start_date) {
+                    var sd = new Date(g.start_date.split('T')[0] + 'T12:00:00');
+                    startLabel = sd.toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
+                }
+
+                // Creator time on platform
+                var creatorDays = 0;
+                if (c.member_since) {
+                    creatorDays = Math.floor((Date.now() - new Date(c.member_since).getTime()) / 86400000);
+                }
+                var creatorTimeLabel = creatorDays < 1 ? 'Hoy' : (creatorDays === 1 ? '1 dia' : creatorDays + ' dias');
+
+                // Verified badge
+                var verBadge = c.verified
+                    ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.68rem;font-weight:600;">&#10003; Verificado</span>'
+                    : '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(245,158,11,0.15);color:#f59e0b;font-size:0.68rem;font-weight:600;">&#9888; No verificado</span>';
+
+                // Members list
+                var roleLabels = { creator: 'Creador', coordinator: 'Coordinador', member: 'Miembro' };
+                var membersHtml = d.members.map(function(mb) {
+                    var initial = (mb.name || '?').charAt(0).toUpperCase();
+                    var roleLabel = roleLabels[mb.role] || mb.role;
+                    var roleColor = mb.role === 'creator' ? '#a78bfa' : (mb.role === 'coordinator' ? '#00FFFF' : '#64748b');
+                    return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;">' +
+                        '<div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.72rem;color:#94a3b8;font-weight:600;">' + escapeHtml(initial) + '</div>' +
+                        '<div style="flex:1;"><div style="font-size:0.8rem;color:#e2e8f0;">' + escapeHtml(mb.name) + '</div></div>' +
+                        '<span style="font-size:0.68rem;color:' + roleColor + ';">' + escapeHtml(roleLabel) + '</span>' +
+                    '</div>';
+                }).join('');
+
+                // Build modal
+                var _row = function(label, value, valueColor) {
+                    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+                        '<span style="font-size:0.78rem;color:#64748b;">' + label + '</span>' +
+                        '<span style="font-size:0.78rem;color:' + (valueColor || '#e2e8f0') + ';font-weight:600;">' + value + '</span></div>';
+                };
+                var _section = function(icon, title) {
+                    return '<div style="display:flex;align-items:center;gap:6px;margin:16px 0 8px;"><span style="font-size:0.85rem;">' + icon + '</span><span style="font-size:0.75rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">' + title + '</span></div>';
+                };
+
+                var modalHtml = '<div id="publicDetailOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;">' +
+                    '<div style="background:#0f172a;border:1px solid rgba(0,255,255,0.15);border-radius:16px;max-width:420px;width:100%;max-height:85vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);display:flex;flex-direction:column;">' +
+
+                        // Header
+                        '<div style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05));padding:20px;border-bottom:1px solid rgba(245,158,11,0.1);position:relative;">' +
+                            '<div style="display:flex;align-items:center;gap:12px;">' +
+                                '<div style="width:44px;height:44px;border-radius:12px;background:#f59e0b;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#0f172a;">' + escapeHtml((g.name || '?').charAt(0).toUpperCase()) + '</div>' +
+                                '<div style="flex:1;">' +
+                                    '<h3 style="margin:0;font-size:1.15rem;font-weight:600;color:#f8fafc;">' + escapeHtml(g.name) + '</h3>' +
+                                    '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' + statusBadge +
+                                        '<span style="font-size:0.72rem;color:#64748b;">' + escapeHtml(g.category || '') + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<button data-action="grp-close-public-detail" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);border:none;width:30px;height:30px;border-radius:8px;color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;">&times;</button>' +
+                        '</div>' +
+
+                        // Body (scrollable)
+                        '<div style="padding:16px;overflow-y:auto;flex:1;">' +
+
+                            // Description
+                            (g.description ? '<p style="margin:0 0 12px;font-size:0.82rem;color:#94a3b8;line-height:1.4;">' + escapeHtml(g.description) + '</p>' : '') +
+
+                            // Creator section
+                            _section('&#x1F464;', 'Creador') +
+                            '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
+                                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+                                    '<span style="font-size:0.85rem;color:#e2e8f0;font-weight:500;">' + escapeHtml(c.name) + '</span>' +
+                                    verBadge +
+                                '</div>' +
+                                '<div style="display:flex;gap:16px;">' +
+                                    '<span style="font-size:0.72rem;color:#64748b;">En La Tanda: ' + escapeHtml(creatorTimeLabel) + '</span>' +
+                                    '<span style="font-size:0.72rem;color:#64748b;">Grupos activos: ' + c.active_groups + '</span>' +
+                                '</div>' +
+                            '</div>' +
+
+                            // Financial terms
+                            _section('&#x1F4B0;', 'Terminos Financieros') +
+                            '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
+                                _row('Aporte', 'L. ' + g.contribution_amount.toLocaleString('es-HN') + ' ' + escapeHtml(freqLabel), '#00FFFF') +
+                                _row('Pool por turno (meta)', 'L. ' + Math.round(g.pool_meta).toLocaleString('es-HN'), '#22c55e') +
+                                _row('Comision', g.commission_rate + '%', '#f59e0b') +
+                                _row('Periodo de gracia', g.grace_period + ' dias') +
+                            '</div>' +
+
+                            // Mora policy
+                            _section('&#x26A0;', 'Politica de Mora') +
+                            '<div style="background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.1);border-radius:10px;padding:12px;">' +
+                                _row('Interes anual', m.interest_rate + '%', '#f87171') +
+                                _row('Auto-suspension', 'Despues de ' + m.max_cycles + ' ciclos', '#f87171') +
+                                _row('Gracia prestamo', m.loan_grace_days + ' dias') +
+                                '<div style="margin-top:8px;font-size:0.7rem;color:#64748b;line-height:1.3;">Pagos atrasados generan un prestamo formal con interes. Despues de ' + m.max_cycles + ' ciclos consecutivos en mora, el miembro es suspendido automaticamente.</div>' +
+                            '</div>' +
+
+                            // Members progress
+                            _section('&#x1F465;', 'Miembros (' + g.active_members + '/' + g.max_members + ')') +
+                            '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
+                                '<div style="height:6px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:10px;">' +
+                                    '<div style="height:100%;width:' + fillPct + '%;background:' + fillColor + ';border-radius:4px;transition:width 0.5s;"></div>' +
+                                '</div>' +
+                                membersHtml +
+                            '</div>' +
+
+                            // Start date & cycle
+                            _section('&#x1F4C5;', 'Calendario') +
+                            '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
+                                _row('Fecha de inicio', escapeHtml(startLabel)) +
+                                _row('Ciclo actual', g.current_cycle > 0 ? 'Ciclo ' + g.current_cycle : 'No iniciado') +
+                                _row('Frecuencia', escapeHtml(freqLabel)) +
+                            '</div>' +
+
+                        '</div>' +
+
+                        // CTA footer
+                        '<div style="padding:16px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.2);">' +
+                            '<button data-action="grp-join-from-detail" data-group-id="' + escapeHtml(g.id) + '" data-group-name="' + escapeHtml(g.name) + '" style="width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;">Solicitar Unirse</button>' +
+                        '</div>' +
+
+                    '</div>' +
+                '</div>';
+
+                // Remove existing if any
+                var existing = document.getElementById('publicDetailOverlay');
+                if (existing) existing.remove();
+
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+                // Close handlers
+                var overlay = document.getElementById('publicDetailOverlay');
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) overlay.remove();
+                    var actionBtn = e.target.closest('[data-action]');
+                    if (!actionBtn) return;
+                    var action = actionBtn.getAttribute('data-action');
+                    if (action === 'grp-close-public-detail') {
+                        overlay.remove();
+                    } else if (action === 'grp-join-from-detail') {
+                        overlay.remove();
+                        // Find the original join button on the card and click it
+                        var joinGid = actionBtn.getAttribute('data-group-id');
+                        var cardJoinBtn = document.querySelector('[data-action="grp-join-request"][data-group-id="' + joinGid + '"]');
+                        if (cardJoinBtn) {
+                            cardJoinBtn.click();
+                        }
+                    }
+                });
+
+            } catch(e) {
+                console.error('Public detail error:', e);
+                showNotification('Error al cargar detalles del grupo', 'error');
+            }
         }
 
         // ===== FILTERS (SIMPLIFIED) =====
@@ -2285,7 +2537,8 @@ async function loadUsersWithoutPositions(groupId) {
                 <!-- Roles Card -->
                 
                 <!-- Tandas Tab Sidebar Cards -->
-                <div id="tandasSidebarCards" style="display:none;">
+                <div id="creditScoreCard" style="display:none;padding:12px 16px;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:12px;"></div>
+                    <div id="tandasSidebarCards" style="display:none;">
                     <!-- Payout methods (compact in sidebar) -->
                     <div id="collectTandaContainer"></div>
                     <div id="payoutMethodsContainer"></div>
@@ -2976,7 +3229,137 @@ function mergeTandaWithGroup(tanda) {
 }
 
 // ===== updateTandasSidebar =====
-function updateTandasSidebar(tandas) {
+async function showFinancialReport(groupId) {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) return;
+
+            var overlayEl = document.createElement('div');
+            overlayEl.className = 'modal-overlay ch-overlay';
+            overlayEl.innerHTML = '<div class="modal-content ch-modal" style="max-width:600px;"><div class="ch-header" style="border-color:rgba(34,197,94,0.3);"><h3 style="color:#22c55e;"><i class="fas fa-chart-bar" style="margin-right:8px;"></i>Reporte Financiero</h3><button class="ch-close" data-action="fr-close">&times;</button></div><div class="ch-body"><div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#22c55e;"></i><p style="margin-top:12px;">Generando reporte...</p></div></div></div>';
+            document.body.appendChild(overlayEl);
+            setTimeout(function() { overlayEl.classList.add('active'); }, 10);
+
+            overlayEl.addEventListener('click', function(e) {
+                if (e.target === overlayEl || e.target.closest('[data-action="fr-close"]')) {
+                    overlayEl.classList.remove('active');
+                    setTimeout(function() { overlayEl.remove(); }, 300);
+                }
+            });
+
+            try {
+                var resp = await fetch('/api/groups/' + groupId + '/financial-report', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await resp.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+                var r = data.data;
+
+                var fmt = function(n) { return parseFloat(n || 0).toLocaleString('es-HN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); };
+                var pct = function(n) { return (n || 0) + '%'; };
+                var rateColor = function(v) { return v >= 80 ? '#22c55e' : v >= 50 ? '#f59e0b' : '#ef4444'; };
+
+                var bodyHtml = '';
+
+                // Summary cards
+                bodyHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">';
+                bodyHtml += '<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="color:#64748b;font-size:0.72rem;">Recaudado</div>' +
+                    '<div style="color:#22c55e;font-size:1.3rem;font-weight:700;">L. ' + fmt(r.collections.total_collected) + '</div>' +
+                    '<div style="color:#475569;font-size:0.68rem;">de L. ' + fmt(r.collections.theoretical_total) + ' (' + pct(r.collections.collection_rate) + ')</div></div>';
+                bodyHtml += '<div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="color:#64748b;font-size:0.72rem;">Distribuido</div>' +
+                    '<div style="color:#60a5fa;font-size:1.3rem;font-weight:700;">L. ' + fmt(r.distributions.total_distributed) + '</div>' +
+                    '<div style="color:#475569;font-size:0.68rem;">' + r.distributions.total_distributions + ' distribuciones</div></div>';
+                bodyHtml += '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="color:#64748b;font-size:0.72rem;">Deuda Activa</div>' +
+                    '<div style="color:#ef4444;font-size:1.3rem;font-weight:700;">L. ' + fmt(r.debt.total_owed) + '</div>' +
+                    '<div style="color:#475569;font-size:0.68rem;">' + r.debt.active_loans + ' prestamos activos</div></div>';
+                bodyHtml += '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;text-align:center;">' +
+                    '<div style="color:#64748b;font-size:0.72rem;">Tasa de Mora</div>' +
+                    '<div style="color:' + rateColor(100 - r.mora.mora_rate) + ';font-size:1.3rem;font-weight:700;">' + pct(r.mora.mora_rate) + '</div>' +
+                    '<div style="color:#475569;font-size:0.68rem;">' + r.mora.members_in_mora + ' de ' + r.members.length + ' miembros</div></div>';
+                bodyHtml += '</div>';
+
+                // Debt recovery
+                if (r.debt.active_loans > 0) {
+                    var recPct = r.debt.recovery_rate;
+                    bodyHtml += '<div style="background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-bottom:12px;">' +
+                        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+                            '<span style="color:#94a3b8;font-size:0.78rem;">Recuperacion de Deuda</span>' +
+                            '<span style="color:' + rateColor(recPct) + ';font-size:0.78rem;font-weight:600;">' + pct(recPct) + '</span></div>' +
+                        '<div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">' +
+                            '<div style="height:100%;width:' + Math.min(100, recPct) + '%;background:' + rateColor(recPct) + ';border-radius:3px;"></div></div>' +
+                        '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.7rem;color:#475569;">' +
+                            '<span>Recuperado: L. ' + fmt(r.debt.total_recovered) + '</span>' +
+                            '<span>Intereses: L. ' + fmt(r.debt.total_interest) + '</span></div></div>';
+                }
+
+                // Commission summary
+                if (r.distributions.total_platform_fees > 0 || r.distributions.total_coordinator_fees > 0) {
+                    bodyHtml += '<div style="background:rgba(15,23,42,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-bottom:12px;">' +
+                        '<div style="color:#94a3b8;font-size:0.78rem;margin-bottom:6px;">Comisiones Generadas</div>' +
+                        '<div style="display:flex;justify-content:space-between;font-size:0.8rem;">' +
+                            '<span style="color:#64748b;">Coordinador:</span><span style="color:#e2e8f0;">L. ' + fmt(r.distributions.total_coordinator_fees) + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;font-size:0.8rem;">' +
+                            '<span style="color:#64748b;">Plataforma:</span><span style="color:#e2e8f0;">L. ' + fmt(r.distributions.total_platform_fees) + '</span></div></div>';
+                }
+
+                // Member compliance table
+                bodyHtml += '<div style="margin-top:4px;">' +
+                    '<div style="color:#94a3b8;font-size:0.78rem;margin-bottom:8px;">Cumplimiento por Miembro</div>' +
+                    '<div style="max-height:250px;overflow-y:auto;">';
+                r.members.sort(function(a, b) { return b.punctuality - a.punctuality; });
+                for (var i = 0; i < r.members.length; i++) {
+                    var m = r.members[i];
+                    var pColor = rateColor(m.punctuality);
+                    var moraTag = m.active_moras > 0 ? ' <span style="color:#ef4444;font-size:0.65rem;background:rgba(239,68,68,0.15);padding:1px 6px;border-radius:8px;">' + m.active_moras + ' mora' + (m.active_moras > 1 ? 's' : '') + '</span>' : '';
+                    bodyHtml += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+                        '<div style="flex:1;min-width:0;">' +
+                            '<span style="color:#e2e8f0;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + (typeof escapeHtml === 'function' ? escapeHtml(m.name) : m.name) + moraTag + '</span>' +
+                            '<span style="color:#475569;font-size:0.68rem;">' + m.paid + '/' + m.expected + ' pagos</span></div>' +
+                        '<div style="text-align:right;min-width:50px;">' +
+                            '<span style="color:' + pColor + ';font-weight:600;font-size:0.85rem;">' + pct(m.punctuality) + '</span></div></div>';
+                }
+                bodyHtml += '</div></div>';
+
+                // Group info footer
+                bodyHtml += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;font-size:0.68rem;color:#475569;">' +
+                    '<span>' + (r.group.name || '') + '</span>' +
+                    '<span>Ciclo ' + r.group.current_cycle + ' | ' + r.group.max_members + ' miembros</span></div>';
+
+                overlayEl.querySelector('.ch-body').innerHTML = bodyHtml;
+            } catch (err) {
+                overlayEl.querySelector('.ch-body').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i><p style="margin-top:12px;">' + (err.message || 'Error al generar reporte') + '</p></div>';
+            }
+        }
+
+function loadCreditScoreBadge() {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token) return;
+        fetch('/api/users/credit-score', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.data.score) return;
+                var score = data.data.score;
+                var cat = data.data.category;
+                var catMap = { excelente: { label: 'Excelente', color: '#22c55e', bg: 'rgba(34,197,94,0.15)' }, bueno: { label: 'Bueno', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' }, regular: { label: 'Regular', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' }, riesgo: { label: 'Riesgo', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' } };
+                var s = catMap[cat] || catMap.regular;
+                var el = document.getElementById('creditScoreCard');
+                if (el) {
+                    el.innerHTML =
+                        '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+                            '<div style="display:flex;align-items:center;gap:8px;">' +
+                                '<div style="width:40px;height:40px;border-radius:50%;background:' + s.bg + ';display:flex;align-items:center;justify-content:center;"><i class="fas fa-shield-alt" style="color:' + s.color + ';font-size:1rem;"></i></div>' +
+                                '<div><div style="color:#94a3b8;font-size:0.7rem;">Tu Score Crediticio</div><div style="color:' + s.color + ';font-weight:700;font-size:1.2rem;">' + score + '</div></div>' +
+                            '</div>' +
+                            '<span style="padding:3px 10px;border-radius:12px;background:' + s.bg + ';color:' + s.color + ';font-size:0.72rem;font-weight:600;">' + s.label + '</span>' +
+                        '</div>';
+                    el.style.display = 'block';
+                }
+            }).catch(function() {});
+    }
+
+    function updateTandasSidebar(tandas) {
     var recruitingTandas = tandas.filter(function(t) { return t.status === 'recruiting' || t.status === 'pending' || t.status === 'scheduled'; });
     var activeTandas = tandas.filter(function(t) { return t.status === 'active' || t.status === 'waiting-turn' || t.status === 'collecting' || t.status === 'paused'; });
 
@@ -3312,6 +3695,28 @@ function renderTandaCard(tanda) {
     var borderColor = statusColor;
     if (tanda.payment_status === 'late' || tanda.payment_status === 'suspension_recommended') borderColor = '#ef4444';
 
+    // Loan debt section
+    var loanDebtHtml = '';
+    if (tanda.active_loan && !isRecruiting && !isCompleted) {
+        var loan = tanda.active_loan;
+        var loanPaidPct = loan.principal > 0 ? Math.round((loan.paid_amount / loan.principal) * 100) : 0;
+        var loanCycles = (loan.source_cycles || []).map(function(c) { return 'C' + c; }).join(', ');
+        loanDebtHtml = '<div style="margin:0 16px 8px;padding:10px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                '<span style="color:#f87171;font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:4px;"><i class="fas fa-hand-holding-usd"></i> Deuda</span>' +
+                '<span style="color:#ef4444;font-weight:700;font-size:0.95rem;">L. ' + formatTandaNumber(loan.total_owed) + '</span>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                '<span style="color:#64748b;font-size:0.7rem;">' + loanCycles + '</span>' +
+                '<span style="color:#34d399;font-size:0.7rem;">' + loanPaidPct + '% pagado</span>' +
+            '</div>' +
+            '<div style="background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;margin-bottom:8px;">' +
+                '<div style="background:' + (loanPaidPct >= 100 ? '#34d399' : '#f59e0b') + ';height:100%;width:' + Math.min(loanPaidPct, 100) + '%;border-radius:3px;"></div>' +
+            '</div>' +
+            '<button class="btn btn-sm" data-action="grp-pay-loan" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '" data-loan-id="' + escapeHtml(String(loan.id || '')) + '" style="width:100%;padding:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#f87171;font-weight:600;font-size:0.8rem;cursor:pointer;"><i class="fas fa-money-bill-wave" style="margin-right:4px;"></i>Pagar Deuda</button>' +
+        '</div>';
+    }
+
     // Alert banners
     var alertsHtml = '';
     var alerts = tanda.alerts || [];
@@ -3398,6 +3803,7 @@ function renderTandaCard(tanda) {
             '<div class="gc-stat"><span class="gc-stat-val">' + stat4Val + '</span><span class="gc-stat-label">' + s4Icon + stat4Label + '</span></div>' +
         '</div>' +
         alertsHtml +
+        loanDebtHtml +
         '<div class="gc-actions">' + actionsHtml + '</div>' +
     '</div>';
 }
@@ -4795,12 +5201,12 @@ if (document.readyState === "loading") {
         // Confirmation dialog
         window.showConfirm = function(message, onConfirm, onCancel) {
             var overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
+            overlay.className = 'modal-overlay active';
             overlay.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 100000;';
             overlay.innerHTML = '<div style="background: #0f172a; border: 1px solid rgba(0,255,255,0.2); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">' +
                 '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5" style="margin-bottom: 16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
                 '<h3 style="margin: 0 0 8px; color: #f8fafc;">Confirmar Accion</h3>' +
-                '<p style="margin: 0 0 24px; color: #94a3b8; white-space: pre-line;">' + escapeHtml(message) + '</p>' +
+                '<p style="margin: 0 0 24px; color: #94a3b8; white-space: pre-line;">' + message + '</p>' +
                 '<div style="display: flex; gap: 12px; justify-content: center;">' +
                 '<button data-action="grp-confirm-cancel" style="padding: 10px 24px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer;">Cancelar</button>' +
                 '<button data-action="grp-confirm-action" style="padding: 10px 24px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">Confirmar</button>' +
@@ -6291,14 +6697,19 @@ if (document.readyState === "loading") {
                     var currentMember = members.find(function(m) { return m.user_id === currentUserId; });
                     if (currentMember) currentUserRole = currentMember.role;
 
+                    // Search bar
+                    html += '<div style="margin-bottom: 12px;"><input type="text" id="memberSearchInput" placeholder="Buscar miembro..." style="width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #f8fafc; font-size: 0.875rem; box-sizing: border-box;"></div>';
+
+                    var currentCycle = data.data.current_cycle || 1;
+
                     members.forEach(function(member) {
                         var isCurrentUser = member.user_id === currentUserId;
                         var initials = (member.name || 'U').charAt(0).toUpperCase();
                         var roleClass = member.role || 'member';
                         var roleText = member.role === 'creator' ? 'Creador' :
-                                       member.role === 'coordinator' ? 'Coordinador' : 
+                                       member.role === 'coordinator' ? 'Coordinador' :
                                        member.role === 'admin' ? 'Admin' : 'Miembro';
-                        
+
                         // Display name logic (anonymous)
                         var displayName = member.name || 'Usuario';
                         var isAnonymous = member.is_anonymous;
@@ -6306,21 +6717,55 @@ if (document.readyState === "loading") {
                             displayName = 'Miembro Anonimo';
                             initials = '?';
                         }
-                        
+
                         // Anonymous indicator for admin/creator
                         var anonymousIndicator = '';
                         if (isAnonymous && (currentUserRole === 'creator' || currentUserRole === 'admin')) {
                             anonymousIndicator = ' <span style="font-size:0.7rem;color:#f59e0b;">(Anonimo)</span>';
                         }
 
+                        // Payment status for this cycle
+                        var numPos = parseInt(member.num_positions) || 1;
+                        var paidThisCycle = member.paid_this_cycle || 0;
+                        var isPaid = paidThisCycle >= numPos;
+                        var payIcon = isPaid ? '<span style="color:#34d399;font-size:0.85rem;" title="Pagado ciclo ' + currentCycle + '">&#x2714;</span>' : '<span style="color:#ef4444;font-size:0.85rem;" title="Pendiente ciclo ' + currentCycle + '">&#x2716;</span>';
+
+                        // Status + num_positions badges
+                        var statusBadge = '';
+                        if (member.status === 'suspended') statusBadge = ' <span style="font-size:0.65rem;background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 6px;border-radius:4px;">Suspendido</span>';
+                        var posBadge = numPos > 1 ? ' <span style="font-size:0.65rem;background:rgba(0,255,255,0.12);color:#00FFFF;padding:2px 6px;border-radius:4px;">x' + numPos + '</span>' : '';
+
+                        // Joined date
+                        var joinedStr = '';
+                        if (member.joined_at) {
+                            var jd = new Date(member.joined_at);
+                            joinedStr = jd.toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' });
+                        }
+
+                        // Contact info (coordinators only)
+                        var contactHtml = '';
+                        var isCoord = currentUserRole === 'creator' || currentUserRole === 'coordinator' || currentUserRole === 'admin';
+                        if (isCoord && !isCurrentUser && !isAnonymous && member.phone) {
+                            contactHtml = '<a href="tel:' + escapeHtml(member.phone) + '" style="color:#60a5fa;font-size:0.7rem;text-decoration:none;" title="Llamar">&#x1F4DE; ' + escapeHtml(member.phone) + '</a>';
+                        }
+
                         html += '<div class="member-card' + (isCurrentUser ? ' current-user' : '') + '" data-user-id="' + member.user_id + '">' +
-                            '<div class="member-avatar' + (isAnonymous ? ' anonymous' : '') + '">' + initials + '</div>' +
-                            '<div class="member-info">' +
-                                '<div class="member-name">' + escapeHtml(displayName) + anonymousIndicator + (isCurrentUser ? ' <span style="color:#8b5cf6;font-size:0.75rem;">(Tu)</span>' : '') + '</div>' +
-                                '<span class="member-role ' + roleClass + '">' + roleText + '</span>' +
-                                (member.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente de registro</span>' : '') +
+                            '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
+                                '<div class="member-avatar' + (isAnonymous ? ' anonymous' : '') + '">' + initials + '</div>' +
+                                '<div class="member-info" style="flex:1;min-width:0;">' +
+                                    '<div class="member-name" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + escapeHtml(displayName) + posBadge + statusBadge + anonymousIndicator + (isCurrentUser ? ' <span style="color:#8b5cf6;font-size:0.75rem;">(Tu)</span>' : '') + '</div>' +
+                                    '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+                                        '<span class="member-role ' + roleClass + '">' + roleText + '</span>' +
+                                        (member.is_placeholder ? ' <span class="member-placeholder-badge">Pendiente</span>' : '') +
+                                        (joinedStr ? '<span style="font-size:0.65rem;color:#64748b;">' + joinedStr + '</span>' : '') +
+                                    '</div>' +
+                                    (contactHtml ? '<div style="margin-top:2px;">' + contactHtml + '</div>' : '') +
+                                '</div>' +
                             '</div>' +
-                            '<div class="member-position">' + (function() { var pos = userPositions[member.user_id] || (member.turn_position ? [member.turn_position] : []); if (pos.length === 0) return 'Sin turno'; if (pos.length === 1) return 'Turno #' + pos[0]; return 'Turnos #' + pos.join(', #'); })() + '</div>' +
+                            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+                                payIcon +
+                                '<div class="member-position" style="font-size:0.75rem;">' + (function() { var pos = userPositions[member.user_id] || (member.turn_position ? [member.turn_position] : []); if (pos.length === 0) return 'Sin turno'; if (pos.length === 1) return '#' + pos[0]; return '#' + pos.join(', #'); })() + '</div>' +
+                            '</div>' +
                         '</div>';
                         
                         // Add action buttons for current user
@@ -6373,6 +6818,16 @@ if (document.readyState === "loading") {
 
                     list.innerHTML = html;
                     list.style.display = 'block';
+                    // Wire search bar
+                    var searchInput = document.getElementById("memberSearchInput");
+                    if (searchInput) {
+                        searchInput.addEventListener("input", function() {
+                            var v = this.value.toLowerCase();
+                            list.querySelectorAll(".member-card").forEach(function(c) {
+                                c.style.display = c.textContent.toLowerCase().includes(v) ? "" : "none";
+                            });
+                        });
+                    }
                     document.getElementById('membersModalSubtitle').textContent = members.length + ' miembros' + (expandedOrder.length > members.length ? ' (' + expandedOrder.length + ' turnos)' : '');
                 } else {
                     empty.style.display = 'block';
@@ -6451,7 +6906,7 @@ if (document.readyState === "loading") {
         
         function closeLeaveConfirmModal() {
             var modal = document.getElementById('leaveGroupConfirmModal');
-            if (modal) modal.style.display = 'none'; modal.classList.remove('active');
+            if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
             pendingLeaveGroupId = null;
         }
         window.closeLeaveConfirmModal = closeLeaveConfirmModal;
@@ -6527,7 +6982,7 @@ if (document.readyState === "loading") {
         
         function closeRequestRoleModal() {
             var modal = document.getElementById('requestRoleModal');
-            if (modal) modal.style.display = 'none'; modal.classList.remove('active');
+            if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
             pendingRoleRequest = { groupId: null, currentRole: null };
         }
         window.closeRequestRoleModal = closeRequestRoleModal;
@@ -6600,7 +7055,7 @@ if (document.readyState === "loading") {
                     
                     result.data.members.forEach(function(m) {
                         if (m.user_id !== currentUserId) {
-                            html += '<option value="' + m.user_id + '">' + (m.name || m.user_id) + ' (' + m.role + ')</option>';
+                            html += '<option value="' + m.user_id + '">' + escapeHtml(m.name || m.user_id) + ' (' + escapeHtml(m.role) + ')</option>';
                         }
                     });
                     
@@ -6615,7 +7070,7 @@ if (document.readyState === "loading") {
         
         function closeTransferOwnershipModal() {
             var modal = document.getElementById('transferOwnershipModal');
-            if (modal) modal.style.display = 'none'; modal.classList.remove('active');
+            if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); }
             pendingTransferGroupId = null;
         }
         window.closeTransferOwnershipModal = closeTransferOwnershipModal;
@@ -8805,7 +9260,9 @@ function renderTurnsList() {
             function cpGetStatusPill(status) {
                 var map = {
                     'paid': { label: 'Pagado', bg: 'rgba(34,197,94,0.15)', color: '#22c55e' },
+                    'up_to_date': { label: 'Al dia', bg: 'rgba(59,130,246,0.15)', color: '#3b82f6' },
                     'pending': { label: 'Pendiente', bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+                    'mora': { label: 'En Mora', bg: 'rgba(220,38,38,0.2)', color: '#dc2626' },
                     'late': { label: 'Atrasado', bg: 'rgba(239,68,68,0.15)', color: '#ef4444' },
                     'suspended': { label: 'Suspendido', bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' }
                 };
@@ -8841,12 +9298,18 @@ function renderTurnsList() {
                     html = '<div style="text-align:center;padding:40px 0;color:#64748b;">No hay miembros en este grupo</div>';
                 } else {
                     cpState.members.forEach(function(m) {
-                        var canPay = m.payment_status !== 'paid';
+                        var canPay = m.payment_status !== 'paid' && m.payment_status !== 'mora';
+                        var isMora = m.payment_status === 'mora';
+                        var isUpToDate = m.payment_status === 'up_to_date';
                         var amtPending = m.amount_pending != null ? m.amount_pending : cpState.contributionAmount;
                         var amountDisplay = 'L. ' + (amtPending > 0 ? amtPending.toLocaleString('es-HN', { minimumFractionDigits: 2 }) : '0.00');
                         var posLabel = (m.num_positions && m.num_positions > 1) ? '<div style="font-size:0.65rem;color:#00FFFF;margin-top:1px;">' + m.num_positions + ' numeros</div>' : '';
                         var pastUnpaid = (m.unpaid_cycles || []).filter(function(c) { return c < cpState.cycleNumber; });
-                        var cuotasLabel = pastUnpaid.length > 0 ? '<div style="font-size:0.68rem;color:#ef4444;margin-top:1px;">Debe: C' + pastUnpaid.join(', C') + ' (L. ' + (pastUnpaid.length * cpState.contributionAmount * (m.num_positions || 1)).toLocaleString('es-HN') + ')</div>' : (m.cycles_pending > 0 ? '<div style="font-size:0.68rem;color:#f59e0b;margin-top:1px;">Pendiente ciclo actual</div>' : '');
+                        var cuotasLabel = pastUnpaid.length > 0 ? '<div style="font-size:0.68rem;color:#ef4444;margin-top:1px;">Debe: C' + pastUnpaid.join(', C') + ' (L. ' + (pastUnpaid.length * cpState.contributionAmount * (m.num_positions || 1)).toLocaleString('es-HN') + ')</div>' : (m.payment_status === 'up_to_date' ? '<div style="font-size:0.68rem;color:#3b82f6;margin-top:1px;">Al dia - puede adelantar</div>' : (m.cycles_pending > 0 ? '<div style="font-size:0.68rem;color:#f59e0b;margin-top:1px;">Pendiente ciclo actual</div>' : ''));
+                        var loanBadge = '';
+                        if (m.active_loan) {
+                            loanBadge = '<div style="font-size:0.68rem;color:#f87171;margin-top:1px;display:flex;align-items:center;gap:4px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>Prestamo: L. ' + parseFloat(m.active_loan.total_owed).toLocaleString('es-HN') + '</div>';
+                        }
                         html += '<div class="cp-member-row" id="cp-row-' + escapeHtml(m.user_id) + '">' +
                             '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">' +
                                 cpGetAvatar(m) +
@@ -8861,10 +9324,15 @@ function renderTurnsList() {
                             '<div style="display:flex;align-items:center;gap:8px;">' +
                                 '<div style="text-align:right;">' +
                                     '<div style="font-size:0.8rem;font-weight:600;color:#cbd5e1;">' + amountDisplay + '</div>' +
-                                    cpGetStatusPill(m.payment_status) + posLabel + cuotasLabel +
+                                    cpGetStatusPill(m.payment_status) + posLabel + cuotasLabel + loanBadge +
                                 '</div>' +
-                                (canPay ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.1);color:#00FFFF;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Registrar</button>' +
-                                '<button data-action="cp-mark-mora" data-uid="' + escapeHtml(m.user_id) + '" data-name="' + escapeHtml(m.name || 'Usuario') + '" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#f87171;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;">Mora</button>' : '') +
+                                (isMora ? '<span style="padding:4px 10px;border-radius:8px;background:rgba(220,38,38,0.15);color:#dc2626;font-size:0.72rem;font-weight:600;">En Mora' + (m.mora_cycles && m.mora_cycles.length > 0 ? ' (C' + m.mora_cycles.join(',C') + ')' : '') + '</span>' +
+                                '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.1);color:#22c55e;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;">Pagar deuda</button>' +
+                                (m.active_loan ? '<button data-action="cp-loan-pay" data-uid="' + escapeHtml(m.user_id) + '" data-loan-id="' + escapeHtml(m.active_loan.id) + '" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.1);color:#f87171;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;"><i class="fas fa-hand-holding-usd" style="margin-right:3px;font-size:0.65rem;"></i>Abonar</button>' : '') :
+                                isUpToDate ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.1);color:#3b82f6;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Adelantar</button>' :
+                                canPay ? '<button data-action="cp-register-single" data-uid="' + escapeHtml(m.user_id) + '" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(0,255,255,0.3);background:rgba(0,255,255,0.1);color:#00FFFF;font-size:0.78rem;font-weight:500;cursor:pointer;white-space:nowrap;">Registrar</button>' +
+                                '<button data-action="cp-mark-mora" data-uid="' + escapeHtml(m.user_id) + '" data-name="' + escapeHtml(m.name || 'Usuario') + '" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#f87171;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;">Mora</button>' +
+                                (m.active_loan ? '<button data-action="cp-loan-pay" data-uid="' + escapeHtml(m.user_id) + '" data-loan-id="' + escapeHtml(m.active_loan.id) + '" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.1);color:#f87171;font-size:0.72rem;font-weight:500;cursor:pointer;white-space:nowrap;"><i class="fas fa-hand-holding-usd" style="margin-right:3px;font-size:0.65rem;"></i>Abonar</button>' : '') : '') +
                             '</div>' +
                         '</div>' +
                         '<div id="cp-form-' + escapeHtml(m.user_id) + '" style="display:none;"></div>';
@@ -9130,10 +9598,55 @@ function renderTurnsList() {
                     case 'cp-confirm-single':
                         cpConfirmSingle(uid);
                         break;
-                    case 'cp-mark-mora':
+                    case 'cp-loan-pay':
+                    (function() {
+                        var lpLoanId = btn.getAttribute('data-loan-id');
+                        var lpUid = btn.getAttribute('data-uid');
+                        if (!lpLoanId || !cpState || !cpState.groupId) return;
+                        var lpMember = cpState.members.find(function(mm) { return mm.user_id === lpUid; });
+                        var lpLoan = lpMember && lpMember.active_loan ? lpMember.active_loan : null;
+                        if (!lpLoan) { showNotification('Prestamo no encontrado', 'error'); return; }
+                        var lpOwed = parseFloat(lpLoan.total_owed);
+                        showConfirm(
+                            'Registrar Abono a Prestamo',
+                            '<div style="margin-bottom:12px;color:#94a3b8;">Deuda de <strong style="color:#ef4444;">L. ' + lpOwed.toLocaleString('es-HN') + '</strong> para <strong style="color:#e2e8f0;">' + escapeHtml(lpMember.name || 'Miembro') + '</strong></div>' +
+                            '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Monto</label><input type="number" id="cpLoanAmt" min="1" max="' + lpOwed + '" value="' + lpOwed + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;box-sizing:border-box;" /></div>' +
+                            '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Metodo</label><select id="cpLoanMethod" style="width:100%;padding:10px;background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;box-sizing:border-box;">' + cpMethodOptions('cash') + '</select></div>' +
+                            '<div><label style="color:#94a3b8;font-size:0.8rem;">Nota</label><input type="text" id="cpLoanNotes" maxlength="500" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;box-sizing:border-box;" /></div>'
+                        ).then(async function(confirmed) {
+                            if (!confirmed) return;
+                            var amt = parseFloat(document.getElementById('cpLoanAmt')?.value);
+                            var mth = document.getElementById('cpLoanMethod')?.value || 'cash';
+                            var nts = document.getElementById('cpLoanNotes')?.value || '';
+                            if (!amt || amt <= 0) { showNotification('Monto invalido', 'error'); return; }
+                            try {
+                                var r = await fetch('/api/groups/' + encodeURIComponent(cpState.groupId) + '/loans/' + lpLoanId + '/pay', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                                    body: JSON.stringify({ amount: amt, payment_method: mth, notes: nts })
+                                });
+                                var d = await r.json();
+                                if (!d.success) throw new Error(d.data?.error?.message || 'Error');
+                                showNotification(d.data.message, 'success');
+                                cpLoadData();
+                            } catch (err) { showNotification(err.message || 'Error al registrar pago', 'error'); }
+                        });
+                    })();
+                    break;
+
+                case 'cp-mark-mora':
                         var moraName = btn.getAttribute('data-name') || 'este miembro';
-                        showConfirm('Marcar a ' + escapeHtml(moraName) + ' en mora para este ciclo?', function() {
-                            cpMarkMora(uid);
+                        var moraMember = cpState.members ? cpState.members.find(function(mm) { return mm.user_id === uid; }) : null;
+                        var moraUnpaid = moraMember ? (moraMember.unpaid_cycles || []) : [];
+                        if (moraUnpaid.length === 0) {
+                            if (typeof window.showNotification === 'function') window.showNotification('Este miembro no tiene ciclos vencidos sin pagar', 'info');
+                            break;
+                        }
+                        var moraMsg = moraUnpaid.length > 1
+                            ? 'Marcar a ' + escapeHtml(moraName) + ' en mora para ' + moraUnpaid.length + ' ciclos vencidos (C' + moraUnpaid.join(', C') + ')?'
+                            : 'Marcar a ' + escapeHtml(moraName) + ' en mora para ciclo ' + moraUnpaid[0] + '?';
+                        showConfirm(moraMsg, function() {
+                            cpMarkMora(uid, moraUnpaid);
                         });
                         break;
                     case 'cp-cancel-single':
@@ -9168,21 +9681,23 @@ function renderTurnsList() {
             // =============================================
             // v4.11.0: COORDINATOR MARK MORA
             // =============================================
-            async function cpMarkMora(userId) {
+            async function cpMarkMora(userId, unpaidCycles) {
                 try {
                     var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                    var bodyData = unpaidCycles && unpaidCycles.length > 0 ? { cycles: unpaidCycles } : {};
                     var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(cpState.groupId) + '/members/' + encodeURIComponent(userId) + '/mark-mora', {
                         method: 'POST',
                         headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
+                        body: JSON.stringify(bodyData)
                     });
                     var data = await resp.json();
-                    if (!resp.ok || !data.success) throw new Error('Error');
-                    if (typeof window.showSuccess === 'function') window.showSuccess('Mora registrada');
+                    if (!resp.ok || !data.success) throw new Error(data.message || 'Error');
+                    var msg = data.data && data.data.cycles_marked ? data.data.cycles_marked.length + ' ciclo(s) marcados en mora' : 'Mora registrada';
+                    if (typeof window.showSuccess === 'function') window.showSuccess(msg);
                     await cpLoadData();
                     cpRenderTab();
                 } catch (e) {
-                    if (typeof window.showError === 'function') window.showError('Error al registrar mora');
+                    if (typeof window.showError === 'function') window.showError(e.message || 'Error al registrar mora');
                 }
             }
 
@@ -9916,18 +10431,30 @@ function renderTurnsList() {
             currentManagedGroupId = null;
         };
 
-        window.manageGroup = function(groupId) {
+        window.manageGroup = async function(groupId) {
             currentManagedGroupId = groupId;
             var modal = document.getElementById('groupManageModal');
             if (modal) { modal.remove(); }
             var groupData = window.currentGroupsData?.find(function(g) { return g.id === groupId; });
             var userRole = groupData?.my_role || "member";
-            createGroupManageModal(userRole);
+
+            // Fetch live stats for dashboard summary
+            var stats = null;
+            try {
+                var apiBase = window.API_BASE_URL || 'https://latanda.online';
+                var resp = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/stats', { headers: getAuthHeaders() });
+                if (resp.ok) {
+                    var json = await resp.json();
+                    if (json.success) stats = json.data;
+                }
+            } catch (e) {}
+
+            createGroupManageModal(userRole, stats, groupData);
             modal = document.getElementById('groupManageModal');
 
             var titleEl = document.getElementById('manageModalGroupName');
             if (titleEl) {
-                titleEl.textContent = groupData?.name || 'Grupo';
+                titleEl.textContent = (stats && stats.group ? stats.group.name : null) || groupData?.name || 'Grupo';
             }
 
             modal.style.display = 'flex'; modal.classList.add('active');
@@ -9943,7 +10470,7 @@ function renderTurnsList() {
                 '<div style="text-align: left;"><div style="font-weight: 500; color: ' + titleColor + ';">' + title + '</div><div style="font-size: 0.75rem; color: ' + subtitleColor + ';">' + subtitle + '</div></div></button>';
         }
 
-        function createGroupManageModal(userRole) {
+        function createGroupManageModal(userRole, stats, groupData) {
             var canManage = (userRole === "creator" || userRole === "coordinator");
             var canEdit = canManage;
             var canDelete = (userRole === "creator");
@@ -9968,30 +10495,93 @@ function renderTurnsList() {
             var redBg = 'rgba(248,113,113,0.1)';
             var redBorder = 'rgba(248,113,113,0.2)';
 
+            // Dashboard summary (live data from stats endpoint)
+            var summaryHtml = '';
+            if (stats) {
+                var sg = stats.group || {};
+                var sm = stats.members || {};
+                var sp = stats.payments || {};
+                var sCycle = sg.current_cycle || 0;
+                var sMaxM = sg.max_members || sm.total || 1;
+                var sCompRate = sp.completion_rate || 0;
+                var sCompColor = sCompRate >= 80 ? '#34d399' : (sCompRate >= 50 ? '#fbbf24' : '#ef4444');
+
+                summaryHtml = '<div style="background: rgba(0,255,255,0.05); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 14px; margin-bottom: 14px;">' +
+                    '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">' +
+                    '<div style="text-align: center;"><div style="font-size: 1.3rem; font-weight: 700; color: #00FFFF;">' + sCycle + '/' + sMaxM + '</div><div style="font-size: 0.7rem; color: #64748b;">Ciclo</div></div>' +
+                    '<div style="text-align: center;"><div style="font-size: 1.3rem; font-weight: 700; color: #f8fafc;">' + (sm.total || 0) + '/' + sMaxM + '</div><div style="font-size: 0.7rem; color: #64748b;">Miembros</div></div>' +
+                    '<div style="text-align: center;"><div style="font-size: 1.3rem; font-weight: 700; color: #34d399;">L. ' + (sp.total_collected || 0).toLocaleString() + '</div><div style="font-size: 0.7rem; color: #64748b;">Recaudado</div></div>' +
+                    '<div style="text-align: center;"><div style="font-size: 1.3rem; font-weight: 700; color: ' + sCompColor + ';">' + sCompRate + '%</div><div style="font-size: 0.7rem; color: #64748b;">Cumplimiento</div></div>' +
+                    '</div>';
+                if (sp.pending > 0) {
+                    summaryHtml += '<div style="margin-top: 10px; padding: 8px 12px; background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; display: flex; align-items: center; gap: 8px;">' +
+                        '<span style="font-size: 1.1rem;">&#x26A0;</span>' +
+                        '<span style="font-size: 0.8rem; color: #fbbf24; font-weight: 500;">' + sp.pending + ' pago(s) pendiente(s)</span></div>';
+                }
+                summaryHtml += '</div>';
+            }
+
+            var isFull = stats && stats.members && stats.group && stats.members.total >= stats.group.max_members;
+            var _secHead = function(label) { return '<div style="font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 0 6px;">' + label + '</div>'; };
+
             var buttons = '';
-            buttons += _gmBtn('gm-view-members', svgMembers, 'rgba(124,58,237,0.2)', 'Ver Miembros', 'Lista de participantes', '#e2e8f0', '#94a3b8', dark, darkBorder);
-            buttons += _gmBtn('gm-view-payments', svgPayments, 'rgba(52,211,153,0.2)', 'Ver Pagos', 'Historial de contribuciones', '#e2e8f0', '#94a3b8', dark, darkBorder);
-            buttons += _gmBtn('gm-invite', svgInvite, 'rgba(251,191,36,0.2)', 'Invitar Miembros', 'Enviar invitaciones', '#e2e8f0', '#94a3b8', dark, darkBorder);
+
+            // === Acciones del ciclo ===
+            buttons += _secHead('Acciones del ciclo');
             buttons += _gmBtn('gm-register-payment', svgRegPay, 'rgba(96,165,250,0.2)', 'Registrar Pago', 'Agregar contribucion', '#e2e8f0', '#94a3b8', dark, darkBorder);
             if (canManage) {
-                var svgPreAdd = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>';
-                buttons += _gmBtn('gm-pre-add-member', svgPreAdd, 'rgba(251,191,36,0.2)', 'Agregar Manual', 'Pre-registrar por nombre/telefono', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-verify-payments', svgVerify, warnBg, 'Verificar Pagos', 'Aprobar pagos pendientes', '#fbbf24', '#d97706', warnBg, warnBorder);
                 buttons += _gmBtn('gm-distribute', svgDistribute, greenBg, 'Distribuir Ciclo', 'Repartir fondos del ciclo', '#34d399', '#059669', greenBg, greenBorder);
-                buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
-                buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
-                buttons += _gmBtn('gm-contribution-history', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'rgba(0,255,255,0.1)', 'Historial de Pagos', 'Historial completo de contribuciones', '#00FFFF', '#00B8D4', dark, darkBorder);
-                buttons += _gmBtn('gm-show-extensions', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(245,158,11,0.1)', 'Gestionar Prorrogas', 'Moras y solicitudes', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
-                buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente la tanda', '#f87171', '#ef4444', redBg, redBorder);
             }
+
+            // === Informacion ===
+            buttons += _secHead('Informacion');
+            buttons += _gmBtn('gm-view-members', svgMembers, 'rgba(124,58,237,0.2)', 'Miembros', (stats ? (stats.members.total || 0) + '/' + (stats.group.max_members || '?') + ' activos' : 'Lista de participantes'), '#e2e8f0', '#94a3b8', dark, darkBorder);
+            buttons += _gmBtn('gm-view-payments', svgPayments, 'rgba(52,211,153,0.2)', 'Pagos', 'Historial de contribuciones', '#e2e8f0', '#94a3b8', dark, darkBorder);
             if (canManage) {
-                buttons += _gmBtn('gm-commission-manager', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'rgba(0,255,255,0.1)', 'Gestor de Comisiones', 'Ver estado y gestionar comisiones', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-contribution-history', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'rgba(0,255,255,0.1)', 'Historial de Pagos', 'Historial completo', '#00FFFF', '#00B8D4', dark, darkBorder);
             }
-            if (canEdit) {
-                buttons += _gmBtn('gm-edit-group', svgEdit, 'rgba(129,140,248,0.2)', 'Editar Grupo', 'Modificar configuracion', '#e2e8f0', '#94a3b8', dark, darkBorder);
+
+            // === Gestion ===
+            if (canManage) {
+                buttons += _secHead('Gestion');
+                buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
+                buttons += _gmBtn('gm-show-extensions', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(245,158,11,0.1)', 'Prorrogas y Moras', 'Solicitudes y penalizaciones', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
+                buttons += _gmBtn('gm-show-loans', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(239,68,68,0.1)', 'Prestamos', 'Deudas formalizadas', '#ef4444', '#dc2626', 'rgba(239,68,68,0.1)', 'rgba(239,68,68,0.3)');
+                buttons += _gmBtn('gm-commission-manager', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'rgba(0,255,255,0.1)', 'Comisiones', 'Gestionar comisiones', '#00FFFF', '#00B8D4', dark, darkBorder);
+                if (!isFull) {
+                    buttons += _gmBtn('gm-invite', svgInvite, 'rgba(251,191,36,0.2)', 'Invitar Miembros', 'Enviar invitaciones', '#e2e8f0', '#94a3b8', dark, darkBorder);
+                    var svgPreAdd = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>';
+                    buttons += _gmBtn('gm-pre-add-member', svgPreAdd, 'rgba(251,191,36,0.2)', 'Agregar Manual', 'Pre-registrar miembro', '#fbbf24', '#d97706', warnBg, warnBorder);
+                }
             }
-            if (canDelete) {
-                buttons += _gmBtn('gm-delete-group', svgDelete, redBg, 'Eliminar Grupo', 'Esta accion es irreversible', '#f87171', '#ef4444', redBg, redBorder);
+
+            // === Configuracion ===
+            if (canEdit || canDelete || canManage) {
+                buttons += _secHead('Configuracion');
+                if (canManage) {
+                    buttons += _gmBtn('gm-toggle-pause', svgPause, redBg, 'Pausar/Reanudar', 'Detener temporalmente', '#f87171', '#ef4444', redBg, redBorder);
+                }
+                if (canEdit) {
+                    buttons += _gmBtn('gm-edit-group', svgEdit, 'rgba(129,140,248,0.2)', 'Editar Grupo', 'Modificar configuracion', '#e2e8f0', '#94a3b8', dark, darkBorder);
+                    buttons += _gmBtn('gm-loan-config', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4m0 0v4m0-4h4m-4 0H8"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(248,113,113,0.2)', 'Config Prestamos', 'Interes, ciclos, gracia', '#f87171', '#ef4444', 'rgba(248,113,113,0.1)', 'rgba(248,113,113,0.2)');
+                }
+                if (canDelete) {
+                    buttons += _gmBtn('gm-delete-group', svgDelete, redBg, 'Eliminar Grupo', 'Accion irreversible', '#f87171', '#ef4444', redBg, redBorder);
+                }
+            }
+
+
+            // === Exportar ===
+            if (canManage) {
+                buttons += _secHead('Exportar');
+                buttons += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">';
+                buttons += '<button data-action="gm-export-members-pdf" class="admin-option-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;font-size:0.85rem;color:#e2e8f0;transition:background 0.2s"><i class="fas fa-file-pdf" style="color:#ef4444"></i> Miembros PDF</button>';
+                buttons += '<button data-action="gm-export-members-csv" class="admin-option-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;font-size:0.85rem;color:#e2e8f0;transition:background 0.2s"><i class="fas fa-file-csv" style="color:#34d399"></i> Miembros CSV</button>';
+                buttons += '<button data-action="gm-export-payments-pdf" class="admin-option-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;font-size:0.85rem;color:#e2e8f0;transition:background 0.2s"><i class="fas fa-file-pdf" style="color:#ef4444"></i> Pagos PDF</button>';
+                buttons += '<button data-action="gm-export-payments-csv" class="admin-option-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;font-size:0.85rem;color:#e2e8f0;transition:background 0.2s"><i class="fas fa-file-csv" style="color:#34d399"></i> Pagos CSV</button>';
+                buttons += '</div>';
             }
 
             var modalHtml = '<div id="groupManageModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 10000;">' +
@@ -10005,6 +10595,8 @@ function renderTurnsList() {
                         '<button data-action="gm-close" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); border: none; width: 32px; height: 32px; border-radius: 8px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></button>' +
                     '</div>' +
                     '<div class="modal-body" style="padding: 16px; max-height: 65vh; overflow-y: auto;">' +
+                        summaryHtml +
+                        '<div id="gmReadinessChecklist"></div>' +
                         '<div style="display: flex; flex-direction: column; gap: 8px;">' + buttons + '</div>' +
                     '</div>' +
                 '</div>' +
@@ -10013,6 +10605,93 @@ function renderTurnsList() {
             document.body.insertAdjacentHTML('beforeend', modalHtml);
 
             var modal = document.getElementById('groupManageModal');
+
+            // v4.16.1: Fetch and render group readiness checklist
+            (async function() {
+                var rlEl = document.getElementById('gmReadinessChecklist');
+                if (!rlEl) return;
+                try {
+                    var rlToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    var rlRes = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(currentManagedGroupId) + '/readiness', {
+                        headers: { 'Authorization': 'Bearer ' + rlToken }
+                    });
+                    var rlData = await rlRes.json();
+                    if (!rlData.success || !rlData.data) { rlEl.innerHTML = ''; return; }
+                    var checks = rlData.data.checks || [];
+                    var pct = rlData.data.ready_percent || 0;
+                    var allDone = checks.every(function(c) { return c.done; });
+                    if (allDone) { rlEl.innerHTML = ''; return; }
+
+                    var checkHtml = checks.map(function(c) {
+                        var icon = c.done ? '<span style="color:#22c55e;">&#10003;</span>' : (c.severity === 'critical' ? '<span style="color:#ef4444;">&#10007;</span>' : '<span style="color:#f59e0b;">&#9675;</span>');
+                        var textColor = c.done ? '#64748b' : '#e2e8f0';
+                        var textDeco = c.done ? 'line-through' : 'none';
+                        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">' +
+                            '<span style="font-size:0.85rem;width:18px;text-align:center;">' + icon + '</span>' +
+                            '<span style="font-size:0.78rem;color:' + textColor + ';text-decoration:' + textDeco + ';">' + c.label + '</span>' +
+                        '</div>';
+                    }).join('');
+
+                    var barColor = pct >= 75 ? '#22c55e' : (pct >= 50 ? '#f59e0b' : '#ef4444');
+
+                    // Visibility toggle
+                    var isPublic = rlData.data.is_public;
+                    var visToggle = '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;">' +
+                            '<span style="font-size:0.78rem;color:#94a3b8;">' + (isPublic ? '&#x1F30D; Grupo publico' : '&#x1F512; Grupo privado') + '</span>' +
+                        '</div>' +
+                        '<button id="gmTogglePublic" data-public="' + (isPublic ? 'true' : 'false') + '" style="padding:4px 12px;border-radius:6px;border:1px solid ' + (isPublic ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)') + ';background:' + (isPublic ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)') + ';color:' + (isPublic ? '#f59e0b' : '#22c55e') + ';font-size:0.72rem;cursor:pointer;font-weight:600;">' + (isPublic ? 'Ocultar' : 'Publicar') + '</button>' +
+                    '</div>';
+
+                    rlEl.innerHTML = '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;margin-bottom:14px;">' +
+                        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+                            '<span style="font-size:0.75rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Preparacion del Grupo</span>' +
+                            '<span style="font-size:0.72rem;color:' + barColor + ';font-weight:600;">' + pct + '%</span>' +
+                        '</div>' +
+                        '<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:10px;">' +
+                            '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px;transition:width 0.5s;"></div>' +
+                        '</div>' +
+                        checkHtml +
+                        visToggle +
+                    '</div>';
+
+                    // Wire toggle button
+                    var toggleBtn = document.getElementById('gmTogglePublic');
+                    if (toggleBtn) {
+                        toggleBtn.addEventListener('click', async function() {
+                            var nowPublic = toggleBtn.getAttribute('data-public') === 'true';
+                            var newState = !nowPublic;
+                            toggleBtn.disabled = true;
+                            toggleBtn.textContent = '...';
+                            try {
+                                var tRes = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(currentManagedGroupId) + '/toggle-public', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + rlToken },
+                                    body: JSON.stringify({ is_public: newState })
+                                });
+                                var tData = await tRes.json();
+                                if (tData.success) {
+                                    showNotification(tData.data.message, 'success');
+                                    toggleBtn.setAttribute('data-public', String(newState));
+                                    toggleBtn.textContent = newState ? 'Ocultar' : 'Publicar';
+                                    toggleBtn.style.color = newState ? '#f59e0b' : '#22c55e';
+                                    toggleBtn.style.borderColor = newState ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)';
+                                    toggleBtn.style.background = newState ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)';
+                                    toggleBtn.parentElement.querySelector('span').innerHTML = newState ? '&#x1F30D; Grupo publico' : '&#x1F512; Grupo privado';
+                                } else {
+                                    showNotification(tData.error || 'Error', 'error');
+                                }
+                            } catch(e) {
+                                showNotification('Error de conexion', 'error');
+                            }
+                            toggleBtn.disabled = false;
+                        });
+                    }
+                } catch(e) {
+                    console.warn('Readiness check failed:', e);
+                }
+            })();
+
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) { closeModal(); return; }
                 var btn = e.target.closest('[data-action]');
@@ -10032,9 +10711,83 @@ function renderTurnsList() {
                     case 'gm-show-balances': if (typeof showTandaBalances === 'function') showTandaBalances(gid); break;
                     case 'gm-contribution-history': closeModal(); if (typeof showContributionHistory === 'function') showContributionHistory(gid, 'matrix'); break;
                     case 'gm-show-extensions': if (typeof showExtensionManager === 'function') showExtensionManager(gid); break;
+                    case 'gm-show-loans': if (typeof window.showLoanManager === "function") window.showLoanManager(gid); break;
                     case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
+                    case 'gm-loan-config':
+                        (async function() {
+                            var lcGid = gid;
+                            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                            // Fetch current config
+                            var cfgResp = await fetch('/api/groups/' + encodeURIComponent(lcGid) + '/loans', {
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+                            var cfgData = await cfgResp.json();
+                            var cfg = cfgData.data?.config || {};
+
+                            var lcOverlay = document.createElement('div');
+                            lcOverlay.className = 'modal-overlay active';
+                            lcOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10002;display:flex;align-items:center;justify-content:center;padding:16px;';
+                            lcOverlay.innerHTML =
+                                '<div style="background:#1e293b;border-radius:16px;width:100%;max-width:400px;border:1px solid rgba(248,113,113,0.3);">' +
+                                    '<div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;">' +
+                                        '<h3 style="margin:0;color:#f87171;font-size:1.05rem;"><i class="fas fa-cog" style="margin-right:8px;"></i>Config Prestamos</h3>' +
+                                        '<button id="lcClose" style="background:rgba(255,255,255,0.1);border:none;width:32px;height:32px;border-radius:8px;color:#94a3b8;cursor:pointer;font-size:16px;"><i class="fas fa-times"></i></button>' +
+                                    '</div>' +
+                                    '<div style="padding:20px;">' +
+                                        '<div style="margin-bottom:14px;">' +
+                                            '<label style="color:#94a3b8;font-size:0.8rem;display:flex;align-items:center;gap:6px;margin-bottom:4px;"><i class="fas fa-percentage" style="color:#f87171;font-size:0.7rem;"></i>Tasa de interes por mora (%)</label>' +
+                                            '<input type="number" id="lcInterestRate" min="0" max="20" step="0.5" value="' + (cfg.mora_interest_rate != null ? cfg.mora_interest_rate : 5) + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;box-sizing:border-box;" />' +
+                                            '<div style="color:#64748b;font-size:0.68rem;margin-top:2px;">0% = sin interes, max 20%</div>' +
+                                        '</div>' +
+                                        '<div style="margin-bottom:14px;">' +
+                                            '<label style="color:#94a3b8;font-size:0.8rem;display:flex;align-items:center;gap:6px;margin-bottom:4px;"><i class="fas fa-ban" style="color:#f87171;font-size:0.7rem;"></i>Ciclos para auto-suspension</label>' +
+                                            '<input type="number" id="lcMaxCycles" min="2" max="12" value="' + (cfg.max_mora_cycles || 4) + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;box-sizing:border-box;" />' +
+                                            '<div style="color:#64748b;font-size:0.68rem;margin-top:2px;">Miembros con X ciclos consecutivos en mora seran suspendidos</div>' +
+                                        '</div>' +
+                                        '<div style="margin-bottom:16px;">' +
+                                            '<label style="color:#94a3b8;font-size:0.8rem;display:flex;align-items:center;gap:6px;margin-bottom:4px;"><i class="fas fa-calendar-alt" style="color:#f87171;font-size:0.7rem;"></i>Dias de gracia para prestamo</label>' +
+                                            '<input type="number" id="lcGraceDays" min="0" max="30" value="' + (cfg.loan_grace_days || 7) + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;box-sizing:border-box;" />' +
+                                            '<div style="color:#64748b;font-size:0.68rem;margin-top:2px;">Dias despues de mora antes de acumular interes (0-30)</div>' +
+                                        '</div>' +
+                                        '<button id="lcSave" style="width:100%;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:white;font-weight:700;font-size:0.95rem;cursor:pointer;"><i class="fas fa-save" style="margin-right:6px;"></i>Guardar</button>' +
+                                    '</div>' +
+                                '</div>';
+                            document.body.appendChild(lcOverlay);
+                            document.getElementById('lcClose').onclick = function() { lcOverlay.remove(); };
+                            lcOverlay.onclick = function(e) { if (e.target === lcOverlay) lcOverlay.remove(); };
+                            document.getElementById('lcSave').onclick = async function() {
+                                var saveBtn = document.getElementById('lcSave');
+                                saveBtn.disabled = true;
+                                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                                try {
+                                    var r = await fetch('/api/groups/' + encodeURIComponent(lcGid) + '/loans/config', {
+                                        method: 'PUT',
+                                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            mora_interest_rate: parseFloat(document.getElementById('lcInterestRate').value),
+                                            max_mora_cycles: parseInt(document.getElementById('lcMaxCycles').value),
+                                            loan_grace_days: parseInt(document.getElementById('lcGraceDays').value)
+                                        })
+                                    });
+                                    var d = await r.json();
+                                    if (!d.success) throw new Error(d.data?.error?.message || 'Error');
+                                    showNotification('Configuracion guardada', 'success');
+                                    lcOverlay.remove();
+                                } catch (err) {
+                                    showNotification(err.message || 'Error al guardar', 'error');
+                                    saveBtn.disabled = false;
+                                    saveBtn.innerHTML = '<i class="fas fa-save" style="margin-right:6px;"></i>Guardar';
+                                }
+                            };
+                        })();
+                        break;
+
                     case 'gm-edit-group': if (typeof editGroup === 'function') editGroup(gid); break;
                     case 'gm-delete-group': if (typeof confirmDeleteGroup === 'function') confirmDeleteGroup(gid); break;
+                    case 'gm-export-members-pdf': if (typeof window.exportGroupMembers === 'function') window.exportGroupMembers(gid, 'pdf'); break;
+                    case 'gm-export-members-csv': if (typeof window.exportGroupMembers === 'function') window.exportGroupMembers(gid, 'csv'); break;
+                    case 'gm-export-payments-pdf': if (typeof window.exportGroupPayments === 'function') window.exportGroupPayments(gid, 'pdf'); break;
+                    case 'gm-export-payments-csv': if (typeof window.exportGroupPayments === 'function') window.exportGroupPayments(gid, 'csv'); break;
                 }
             });
         }
@@ -10043,6 +10796,473 @@ function renderTurnsList() {
         var styleEl = document.createElement('style');
         styleEl.textContent = '.admin-option-btn:hover { background: rgba(0,255,255,0.08) !important; border-color: rgba(0,255,255,0.2) !important; transform: translateX(4px); }';
         document.head.appendChild(styleEl);
+        // v4.15.0: Loan Manager Panel
+        var loanState = { groupId: null, loans: [], config: null };
+
+        // ========== Member Loan Payment Modal (from tanda cards) ==========
+    async function openMemberLoanPayModal(groupId, loanId) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        // Fetch loan details
+        try {
+            var resp = await fetch('/api/groups/' + encodeURIComponent(groupId) + '/loans/my', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await resp.json();
+            if (!data.success) throw new Error('Error');
+            var loans = data.data.loans || data.data || [];
+            var loan = null;
+            for (var i = 0; i < loans.length; i++) {
+                if (loans[i].id === loanId) { loan = loans[i]; break; }
+            }
+            if (!loan) {
+                showNotification('Prestamo no encontrado', 'error');
+                return;
+            }
+        } catch (e) {
+            showNotification('Error al cargar prestamo', 'error');
+            return;
+        }
+
+        var totalOwed = parseFloat(loan.total_owed || 0);
+        var paidPct = loan.principal > 0 ? Math.round((parseFloat(loan.paid_amount || 0) / parseFloat(loan.principal)) * 100) : 0;
+        var cycles = (loan.source_cycles || []).map(function(c) { return 'C' + c; }).join(', ');
+
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.id = 'memberLoanPayOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+
+        overlay.innerHTML =
+            '<div style="background:#1e293b;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;border:1px solid rgba(239,68,68,0.3);">' +
+                '<div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;">' +
+                    '<h3 style="margin:0;color:#f87171;font-size:1.1rem;"><i class="fas fa-hand-holding-usd" style="margin-right:8px;"></i>Pagar Deuda</h3>' +
+                    '<button id="mlpClose" style="background:rgba(255,255,255,0.1);border:none;width:32px;height:32px;border-radius:8px;color:#94a3b8;cursor:pointer;font-size:16px;"><i class="fas fa-times"></i></button>' +
+                '</div>' +
+                '<div style="padding:20px;">' +
+                    '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:12px;margin-bottom:16px;">' +
+                        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+                            '<span style="color:#94a3b8;font-size:0.8rem;">Deuda total</span>' +
+                            '<span style="color:#ef4444;font-weight:700;font-size:1.1rem;">L. ' + totalOwed.toLocaleString('es-HN') + '</span>' +
+                        '</div>' +
+                        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
+                            '<span style="color:#64748b;font-size:0.75rem;">' + cycles + '</span>' +
+                            '<span style="color:#34d399;font-size:0.75rem;">' + paidPct + '% pagado</span>' +
+                        '</div>' +
+                        '<div style="background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;">' +
+                            '<div style="background:' + (paidPct >= 100 ? '#34d399' : '#f59e0b') + ';height:100%;width:' + Math.min(paidPct, 100) + '%;border-radius:3px;"></div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div style="margin-bottom:12px;">' +
+                        '<label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Monto a pagar</label>' +
+                        '<input type="number" id="mlpAmount" min="1" max="' + totalOwed + '" value="' + totalOwed + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;font-size:1rem;box-sizing:border-box;" />' +
+                    '</div>' +
+
+                    '<div style="margin-bottom:12px;">' +
+                        '<label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Metodo de pago</label>' +
+                        '<select id="mlpMethod" style="width:100%;padding:10px;background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;box-sizing:border-box;">' +
+                            '<option value="cash">Efectivo</option>' +
+                            '<option value="bank_transfer">Transferencia Bancaria</option>' +
+                            '<option value="tigo_money">Tigo Money</option>' +
+                            '<option value="card">Tarjeta</option>' +
+                            '<option value="wallet">Wallet (LTD)</option>' +
+                            '<option value="crypto">Crypto</option>' +
+                        '</select>' +
+                        '<div id="mlpMethodHint" style="color:#64748b;font-size:0.7rem;margin-top:4px;"></div>' +
+                    '</div>' +
+
+                    '<div style="margin-bottom:16px;">' +
+                        '<label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Nota (opcional)</label>' +
+                        '<input type="text" id="mlpNotes" maxlength="500" placeholder="Ej: Transferencia #12345" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;box-sizing:border-box;" />' +
+                    '</div>' +
+
+                    '<button id="mlpSubmit" style="width:100%;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:10px;color:white;font-weight:700;font-size:0.95rem;cursor:pointer;">' +
+                        '<i class="fas fa-money-bill-wave" style="margin-right:6px;"></i>Pagar' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        // Method hint
+        var methodSelect = document.getElementById('mlpMethod');
+        var methodHint = document.getElementById('mlpMethodHint');
+        function updateHint() {
+            var m = methodSelect.value;
+            if (m === 'wallet') methodHint.textContent = 'Se descontara de tu wallet inmediatamente.';
+            else if (m === 'cash') methodHint.textContent = 'Paga al coordinador. El confirmara tu pago.';
+            else if (m === 'bank_transfer') methodHint.textContent = 'Reporta tu transferencia. Tu coordinador la verificara.';
+            else if (m === 'tigo_money') methodHint.textContent = 'Reporta tu pago Tigo Money. Tu coordinador lo verificara.';
+            else methodHint.textContent = 'Tu coordinador verificara el pago.';
+        }
+        updateHint();
+        methodSelect.addEventListener('change', updateHint);
+
+        // Close
+        document.getElementById('mlpClose').addEventListener('click', function() {
+            overlay.remove();
+        });
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
+
+        // Submit
+        document.getElementById('mlpSubmit').addEventListener('click', async function() {
+            var amount = parseFloat(document.getElementById('mlpAmount').value);
+            var method = document.getElementById('mlpMethod').value;
+            var notes = document.getElementById('mlpNotes').value || '';
+
+            if (!amount || amount <= 0) { showNotification('Monto invalido', 'error'); return; }
+            if (amount > totalOwed) { showNotification('El monto excede la deuda', 'error'); return; }
+
+            var submitBtn = document.getElementById('mlpSubmit');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>Procesando...';
+
+            try {
+                var payResp = await fetch('/api/groups/' + encodeURIComponent(groupId) + '/loans/' + loanId + '/pay', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, payment_method: method, notes: notes })
+                });
+                var payData = await payResp.json();
+                if (!payData.success) throw new Error(payData.data?.error?.message || 'Error al procesar pago');
+                showNotification(payData.data.message, 'success');
+                overlay.remove();
+                // Refresh tandas
+                if (typeof fetchTandasData === 'function') fetchTandasData(); if (typeof loadCreditScoreBadge === 'function') loadCreditScoreBadge();
+                else if (typeof fetchMyGroups === 'function') fetchMyGroups();
+            } catch (err) {
+                showNotification(err.message || 'Error al registrar pago', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-money-bill-wave" style="margin-right:6px;"></i>Pagar';
+            }
+        });
+    }
+
+    window.showLoanManager = async function(groupId) {
+            loanState.groupId = groupId;
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+
+            // Create overlay
+            var existing = document.getElementById('loanManagerOverlay');
+            if (existing) existing.remove();
+
+            var overlay = document.createElement('div');
+            overlay.id = 'loanManagerOverlay';
+            overlay.className = 'modal-overlay active';
+            overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);justify-content:center;align-items:center;z-index:10001;';
+            overlay.innerHTML = '<div class="modal-content" style="background:#0f172a;border:1px solid rgba(239,68,68,0.2);border-radius:16px;max-width:500px;width:95%;max-height:85vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);">' +
+                '<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));padding:16px 20px;border-bottom:1px solid rgba(239,68,68,0.15);display:flex;justify-content:space-between;align-items:center;">' +
+                    '<h3 style="margin:0;color:#f8fafc;font-size:1.1rem;display:flex;align-items:center;gap:8px;"><i class="fas fa-hand-holding-usd" style="color:#ef4444;"></i> Prestamos</h3>' +
+                    '<button id="loanCloseBtn" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;padding:0 4px;">&times;</button>' +
+                '</div>' +
+                '<div id="loanContent" style="padding:16px 20px;overflow-y:auto;max-height:calc(85vh - 70px);">' +
+                    '<div style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;color:#ef4444;"></i><p style="color:#94a3b8;margin-top:8px;">Cargando...</p></div>' +
+                '</div></div>';
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay || e.target.id === 'loanCloseBtn') {
+                    overlay.remove();
+                }
+            });
+
+            // Fetch loans
+            try {
+                var resp = await fetch('/api/groups/' + groupId + '/loans', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                var data = await resp.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+                loanState.loans = data.data.loans;
+                loanState.config = data.data.config;
+                renderLoanManager(data.data);
+            } catch (err) {
+                document.getElementById('loanContent').innerHTML = '<div style="text-align:center;padding:30px;color:#f87171;"><i class="fas fa-exclamation-circle" style="font-size:1.5rem;"></i><p style="margin-top:8px;">Error al cargar prestamos</p></div>';
+            }
+        }
+
+        function renderLoanManager(data) {
+            var container = document.getElementById('loanContent');
+            if (!container) return;
+
+            var loans = data.loans || [];
+            var activeLoans = loans.filter(function(l) { return l.status === 'active' || l.status === 'paying'; });
+            var closedLoans = loans.filter(function(l) { return l.status !== 'active' && l.status !== 'paying'; });
+
+            var html = '';
+
+            // Summary card
+            html += '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+            html += '<span style="color:#94a3b8;font-size:0.85rem;">Deuda total activa</span>';
+            html += '<span style="color:#ef4444;font-size:1.3rem;font-weight:700;">L. ' + (data.total_active_debt || 0).toLocaleString('es-HN') + '</span>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:16px;font-size:0.8rem;color:#64748b;">';
+            html += '<span><i class="fas fa-exclamation-triangle" style="color:#ef4444;margin-right:4px;"></i>' + activeLoans.length + ' activo' + (activeLoans.length !== 1 ? 's' : '') + '</span>';
+            html += '<span><i class="fas fa-check-circle" style="color:#34d399;margin-right:4px;"></i>' + closedLoans.length + ' cerrado' + (closedLoans.length !== 1 ? 's' : '') + '</span>';
+            html += '</div></div>';
+
+            // Config bar
+            if (data.config) {
+                html += '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">';
+                html += '<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;font-size:0.75rem;color:#94a3b8;"><i class="fas fa-percentage" style="margin-right:4px;color:#f59e0b;"></i>' + data.config.mora_interest_rate + '% interes</span>';
+                html += '<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;font-size:0.75rem;color:#94a3b8;"><i class="fas fa-calendar" style="margin-right:4px;color:#3b82f6;"></i>' + data.config.loan_grace_days + 'd gracia</span>';
+                html += '<span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;font-size:0.75rem;color:#94a3b8;"><i class="fas fa-ban" style="margin-right:4px;color:#ef4444;"></i>Max ' + data.config.max_mora_cycles + ' ciclos</span>';
+                html += '</div>';
+            }
+
+            // Active loans
+            if (activeLoans.length > 0) {
+                html += '<div style="margin-bottom:8px;color:#e2e8f0;font-size:0.9rem;font-weight:600;">Deudas Activas</div>';
+                activeLoans.forEach(function(loan) {
+                    html += renderLoanCard(loan, true);
+                });
+            }
+
+            // Closed loans
+            if (closedLoans.length > 0) {
+                html += '<div style="margin-top:16px;margin-bottom:8px;color:#64748b;font-size:0.85rem;font-weight:600;">Historial</div>';
+                closedLoans.forEach(function(loan) {
+                    html += renderLoanCard(loan, false);
+                });
+            }
+
+            if (loans.length === 0) {
+                html += '<div style="text-align:center;padding:30px;color:#64748b;"><i class="fas fa-check-circle" style="font-size:2rem;color:#34d399;margin-bottom:8px;display:block;"></i>No hay prestamos en este grupo</div>';
+            }
+
+            container.innerHTML = html;
+
+            // Wire up action buttons
+            container.querySelectorAll('[data-loan-action]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var action = this.getAttribute('data-loan-action');
+                    var loanId = this.getAttribute('data-loan-id');
+                    if (action === 'pay') openLoanPaymentModal(loanId);
+                    if (action === 'plan') openLoanPlanModal(loanId);
+                    if (action === 'writeoff') openLoanWriteOffModal(loanId);
+                });
+            });
+        }
+
+        function renderLoanCard(loan, isActive) {
+            var statusColors = {
+                active: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#ef4444', label: 'Activo', icon: 'fa-exclamation-circle' },
+                paying: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', text: '#f59e0b', label: 'Abonando', icon: 'fa-clock' },
+                paid: { bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.3)', text: '#34d399', label: 'Saldado', icon: 'fa-check-circle' },
+                written_off: { bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.3)', text: '#94a3b8', label: 'Condonado', icon: 'fa-eraser' },
+                defaulted: { bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.4)', text: '#f87171', label: 'Incobrable', icon: 'fa-times-circle' }
+            };
+            var s = statusColors[loan.status] || statusColors.active;
+            var cycles = (loan.source_cycles || []).map(function(c) { return 'C' + c; }).join(', ');
+            var paidPct = loan.principal > 0 ? Math.round((loan.paid_amount / loan.principal) * 100) : 0;
+            var isPlaceholder = loan.user_status === 'placeholder';
+
+            var html = '<div style="background:' + s.bg + ';border:1px solid ' + s.border + ';border-radius:12px;padding:14px;margin-bottom:10px;">';
+
+            // Header: name + status
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">';
+            html += '<div style="display:flex;align-items:center;gap:8px;">';
+            html += '<span style="color:#e2e8f0;font-weight:600;font-size:0.95rem;">' + escapeHtml(loan.user_name || 'Miembro') + '</span>';
+            if (isPlaceholder) html += '<span style="background:rgba(245,158,11,0.2);color:#f59e0b;padding:1px 6px;border-radius:4px;font-size:0.65rem;">Pendiente</span>';
+            html += '</div>';
+            html += '<span style="background:' + s.bg + ';color:' + s.text + ';padding:3px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;"><i class="fas ' + s.icon + '" style="margin-right:3px;"></i>' + s.label + '</span>';
+            html += '</div>';
+
+            // Financial info
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">';
+            html += '<div><div style="color:#64748b;font-size:0.7rem;">Principal</div><div style="color:#e2e8f0;font-weight:600;">L. ' + loan.principal.toLocaleString('es-HN') + '</div></div>';
+            html += '<div><div style="color:#64748b;font-size:0.7rem;">Debe</div><div style="color:' + (loan.total_owed > 0 ? '#ef4444' : '#34d399') + ';font-weight:700;">L. ' + loan.total_owed.toLocaleString('es-HN') + '</div></div>';
+            html += '<div><div style="color:#64748b;font-size:0.7rem;">Pagado</div><div style="color:#34d399;font-weight:600;">L. ' + loan.paid_amount.toLocaleString('es-HN') + '</div></div>';
+            html += '<div><div style="color:#64748b;font-size:0.7rem;">Ciclos</div><div style="color:#94a3b8;font-size:0.85rem;">' + cycles + '</div></div>';
+            html += '</div>';
+
+            // Progress bar
+            if (isActive || loan.status === 'paid') {
+                html += '<div style="background:rgba(255,255,255,0.08);border-radius:4px;height:6px;overflow:hidden;margin-bottom:10px;">';
+                html += '<div style="background:' + (paidPct >= 100 ? '#34d399' : '#f59e0b') + ';height:100%;width:' + Math.min(paidPct, 100) + '%;border-radius:4px;transition:width 0.3s;"></div>';
+                html += '</div>';
+                html += '<div style="text-align:right;font-size:0.7rem;color:#64748b;margin-top:-6px;margin-bottom:6px;">' + paidPct + '% pagado</div>';
+            }
+
+            // Show active plan info
+            if (loan.active_plan) {
+                var ap = loan.active_plan;
+                var freqL = { weekly: 'semanal', biweekly: 'quincenal', monthly: 'mensual' };
+                html += '<div style="margin-bottom:8px;padding:8px 10px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:8px;">' +
+                    '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+                        '<span style="color:#60a5fa;font-size:0.75rem;font-weight:600;"><i class="fas fa-calendar-check" style="margin-right:4px;"></i>Plan de Pago</span>' +
+                        '<span style="color:#94a3b8;font-size:0.72rem;">' + (ap.installments_paid || 0) + '/' + ap.num_installments + ' cuotas</span>' +
+                    '</div>' +
+                    '<div style="display:flex;justify-content:space-between;">' +
+                        '<span style="color:#64748b;font-size:0.72rem;">L. ' + parseFloat(ap.installment_amount).toLocaleString('es-HN') + ' ' + (freqL[ap.frequency] || ap.frequency) + '</span>' +
+                        (ap.next_due ? '<span style="color:#f59e0b;font-size:0.72rem;">Prox: ' + String(ap.next_due).split('T')[0] + '</span>' : '') +
+                    '</div>' +
+                '</div>';
+            }
+
+            // Action buttons (only for active loans)
+            if (isActive) {
+                html += '<div style="display:flex;gap:8px;margin-top:4px;">';
+                html += '<button data-loan-action="pay" data-loan-id="' + loan.id + '" style="flex:1;padding:8px;background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);border-radius:8px;color:#34d399;font-weight:600;font-size:0.85rem;cursor:pointer;"><i class="fas fa-money-bill-wave" style="margin-right:4px;"></i>Abonar</button>';
+                html += '<button data-loan-action="writeoff" data-loan-id="' + loan.id + '" style="padding:8px 12px;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);border-radius:8px;color:#94a3b8;font-size:0.85rem;cursor:pointer;" title="Condonar"><i class="fas fa-eraser"></i></button>';
+                html += '</div>';
+            }
+
+            // Written off info
+            if (loan.written_off_amount > 0) {
+                html += '<div style="margin-top:8px;padding:6px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-size:0.75rem;color:#94a3b8;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>Condonado: L. ' + loan.written_off_amount.toLocaleString('es-HN') + '</div>';
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        async function openLoanPlanModal(loanId) {
+            var loan = loanState.loans.find(function(l) { return l.id === loanId; });
+            if (!loan) return;
+
+            if (loan.active_plan) {
+                var ap = loan.active_plan;
+                var cancelResult = await showConfirm(
+                    'Plan Activo',
+                    '<div style="margin-bottom:10px;color:#94a3b8;">Plan de <strong style="color:#60a5fa;">' + ap.num_installments + ' cuotas</strong> de <strong style="color:#e2e8f0;">L. ' + parseFloat(ap.installment_amount).toLocaleString('es-HN') + '</strong></div>' +
+                    '<div style="color:#94a3b8;font-size:0.85rem;">Progreso: ' + (ap.installments_paid || 0) + '/' + ap.num_installments + ' pagadas</div>' +
+                    '<div style="color:#f59e0b;font-size:0.8rem;margin-top:8px;">Deseas cancelar este plan?</div>'
+                );
+                if (cancelResult) {
+                    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    try {
+                        var dr = await fetch('/api/groups/' + loanState.groupId + '/loans/' + loanId + '/plan', {
+                            method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        var dd = await dr.json();
+                        if (!dd.success) throw new Error(dd.data?.error?.message || 'Error');
+                        showNotification('Plan cancelado', 'success');
+                        window.showLoanManager(loanState.groupId);
+                    } catch (err) { showNotification(err.message || 'Error', 'error'); }
+                }
+                return;
+            }
+
+            var totalOwed = parseFloat(loan.total_owed);
+            var result = await showConfirm(
+                'Crear Plan de Pago',
+                '<div style="margin-bottom:10px;color:#94a3b8;">Deuda: <strong style="color:#ef4444;">L. ' + totalOwed.toLocaleString('es-HN') + '</strong> — ' + escapeHtml(loan.user_name) + '</div>' +
+                '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Cuotas</label>' +
+                '<select id="planInstallments" style="width:100%;padding:10px;background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;box-sizing:border-box;">' +
+                '<option value="2">2 — L. ' + Math.ceil(totalOwed/2).toLocaleString('es-HN') + ' c/u</option>' +
+                '<option value="3">3 — L. ' + Math.ceil(totalOwed/3).toLocaleString('es-HN') + ' c/u</option>' +
+                '<option value="4" selected>4 — L. ' + Math.ceil(totalOwed/4).toLocaleString('es-HN') + ' c/u</option>' +
+                '<option value="6">6 — L. ' + Math.ceil(totalOwed/6).toLocaleString('es-HN') + ' c/u</option>' +
+                '<option value="8">8 — L. ' + Math.ceil(totalOwed/8).toLocaleString('es-HN') + ' c/u</option>' +
+                '<option value="12">12 — L. ' + Math.ceil(totalOwed/12).toLocaleString('es-HN') + ' c/u</option>' +
+                '</select></div>' +
+                '<div><label style="color:#94a3b8;font-size:0.8rem;">Frecuencia</label>' +
+                '<select id="planFrequency" style="width:100%;padding:10px;background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;box-sizing:border-box;">' +
+                '<option value="weekly">Semanal</option><option value="biweekly" selected>Quincenal</option><option value="monthly">Mensual</option>' +
+                '</select></div>'
+            );
+            if (!result) return;
+
+            var numInst = parseInt(document.getElementById('planInstallments')?.value || 4);
+            var freq = document.getElementById('planFrequency')?.value || 'biweekly';
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                var resp = await fetch('/api/groups/' + loanState.groupId + '/loans/' + loanId + '/plan', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ num_installments: numInst, frequency: freq })
+                });
+                var data = await resp.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+                showNotification('Plan creado: ' + numInst + ' cuotas', 'success');
+                window.showLoanManager(loanState.groupId);
+            } catch (err) { showNotification(err.message || 'Error al crear plan', 'error'); }
+        }
+
+        async function openLoanPaymentModal(loanId) {
+            var loan = loanState.loans.find(function(l) { return l.id === loanId; });
+            if (!loan) return;
+
+            var result = await showConfirm(
+                'Registrar Abono',
+                '<div style="margin-bottom:12px;color:#94a3b8;">Deuda de <strong style="color:#ef4444;">L. ' + loan.total_owed.toLocaleString('es-HN') + '</strong> para <strong style="color:#e2e8f0;">' + escapeHtml(loan.user_name) + '</strong></div>' +
+                '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Monto del abono</label>' +
+                '<input type="number" id="loanPayAmount" min="1" max="' + loan.total_owed + '" value="' + loan.total_owed + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;font-size:1rem;margin-top:4px;" /></div>' +
+                '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Metodo</label>' +
+                '<select id="loanPayMethod" style="width:100%;padding:10px;background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;">' +
+                '<option value="cash">Efectivo</option><option value="bank_transfer">Transferencia</option><option value="tigo_money">Tigo Money</option><option value="card">Tarjeta</option><option value="deposit">Deposito</option><option value="wallet">Wallet</option><option value="crypto">Crypto</option></select></div>' +
+                '<div><label style="color:#94a3b8;font-size:0.8rem;">Nota (opcional)</label>' +
+                '<input type="text" id="loanPayNotes" maxlength="500" placeholder="Ej: Abono parcial" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;" /></div>'
+            );
+
+            if (!result) return;
+
+            var amount = parseFloat(document.getElementById('loanPayAmount')?.value);
+            var method = document.getElementById('loanPayMethod')?.value || 'cash';
+            var notes = document.getElementById('loanPayNotes')?.value || '';
+
+            if (!amount || amount <= 0) {
+                showNotification('Monto invalido', 'error');
+                return;
+            }
+
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                var resp = await fetch('/api/groups/' + loanState.groupId + '/loans/' + loanId + '/pay', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, payment_method: method, notes: notes })
+                });
+                var data = await resp.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+                showNotification(data.data.message, 'success');
+                window.showLoanManager(loanState.groupId); // Refresh
+            } catch (err) {
+                showNotification(err.message || 'Error al registrar pago', 'error');
+            }
+        }
+
+        async function openLoanWriteOffModal(loanId) {
+            var loan = loanState.loans.find(function(l) { return l.id === loanId; });
+            if (!loan) return;
+
+            var result = await showConfirm(
+                'Condonar Deuda',
+                '<div style="margin-bottom:12px;color:#f59e0b;font-size:0.85rem;"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Esta accion reduce o elimina la deuda del miembro</div>' +
+                '<div style="margin-bottom:8px;"><label style="color:#94a3b8;font-size:0.8rem;">Monto a condonar</label>' +
+                '<input type="number" id="loanWoAmount" min="1" max="' + loan.total_owed + '" value="' + loan.total_owed + '" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;font-size:1rem;margin-top:4px;" /></div>' +
+                '<div><label style="color:#94a3b8;font-size:0.8rem;">Motivo (requerido)</label>' +
+                '<input type="text" id="loanWoReason" maxlength="500" placeholder="Ej: Acuerdo con el miembro" style="width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;margin-top:4px;" /></div>'
+            );
+
+            if (!result) return;
+
+            var amount = parseFloat(document.getElementById('loanWoAmount')?.value);
+            var reason = document.getElementById('loanWoReason')?.value || '';
+
+            if (!amount || amount <= 0) { showNotification('Monto invalido', 'error'); return; }
+            if (!reason || reason.trim().length < 5) { showNotification('El motivo debe tener al menos 5 caracteres', 'error'); return; }
+
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            try {
+                var resp = await fetch('/api/groups/' + loanState.groupId + '/loans/' + loanId + '/write-off', {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, reason: reason.trim() })
+                });
+                var data = await resp.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+                showNotification(data.data.message, 'success');
+                window.showLoanManager(loanState.groupId); // Refresh
+            } catch (err) {
+                showNotification(err.message || 'Error al condonar', 'error');
+            }
+        }
+
         // v4.10.7: Commission Manager Panel
         var cmState = { groupId: null, rate: null, type: null, members: [], summary: {} };
 
@@ -10413,56 +11633,6 @@ function renderTurnsList() {
     }
 })();
 </script>
-
-<!-- FASE 1: Export Buttons for Admin Modal - Added 2025-11-27 -->
-<script>
-(function() {
-    'use strict';
-    
-    // Override manageGroup to add export buttons after modal is shown
-    var originalManageGroup = window.manageGroup;
-    window.manageGroup = function(groupId) {
-        originalManageGroup(groupId);
-        
-        // Add export buttons after a short delay to ensure modal is rendered
-        setTimeout(function() {
-            var modal = document.getElementById('groupManageModal');
-            if (!modal) return;
-            
-            var modalBody = modal.querySelector('.modal-body > div');
-            if (!modalBody) return;
-            
-            // Check if export section already exists
-            if (modal.querySelector('.export-section')) return;
-            
-            // Create export section
-            var exportSection = document.createElement('div');
-            exportSection.className = 'export-section';
-            exportSection.style.cssText = 'margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);';
-            exportSection.innerHTML = 
-                '<div style="padding: 8px 0; color: #94a3b8; font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">Exportar Datos</div>' +
-                '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">' +
-                    '<button id="export-members-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📄</span> Miembros PDF</button>' +
-                    '<button id="export-members-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📊</span> Miembros CSV</button>' +
-                    '<button id="export-payments-pdf" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📄</span> Pagos PDF</button>' +
-                    '<button id="export-payments-csv" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer; font-size: 0.875rem; color: #e2e8f0;"><span>📊</span> Pagos CSV</button>' +
-                '</div>';
-            
-            modalBody.appendChild(exportSection);
-            
-            // Add click handlers
-            exportSection.querySelector('#export-members-pdf').onclick = function() { window.exportGroupMembers(window.currentManagedGroupId, 'pdf'); };
-            exportSection.querySelector('#export-members-csv').onclick = function() { window.exportGroupMembers(window.currentManagedGroupId, 'csv'); };
-            exportSection.querySelector('#export-payments-pdf').onclick = function() { window.exportGroupPayments(window.currentManagedGroupId, 'pdf'); };
-            exportSection.querySelector('#export-payments-csv').onclick = function() { window.exportGroupPayments(window.currentManagedGroupId, 'csv'); };
-            
-        }, 50);
-    };
-    
-})();
-</script>
-
-
 
 <!-- PAYMENT VERIFICATION MODAL - Redesigned v4.10.7 dark theme -->
 <div id="verifyPaymentsModal" class="vp-overlay" style="display: none;">
@@ -10958,8 +12128,28 @@ function renderTurnsList() {
         }); // end showConfirm
     };
 
+    // M1 FIX: Custom input modal replaces native prompt()
+    function _askReason(title) {
+        return new Promise(function(resolve) {
+            var ov = document.createElement('div');
+            ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10001;display:flex;align-items:center;justify-content:center;';
+            ov.innerHTML = '<div style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 40px rgba(0,0,0,0.4);">' +
+                '<p style="color:#f8fafc;margin:0 0 12px;font-weight:600;">' + title + '</p>' +
+                '<textarea id="_askReasonInput" rows="3" placeholder="Escribe aqui (opcional)..." style="width:100%;padding:10px;background:#0f172a;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#f8fafc;resize:none;font-family:inherit;box-sizing:border-box;"></textarea>' +
+                '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">' +
+                '<button id="_askReasonCancel" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#94a3b8;cursor:pointer;">Cancelar</button>' +
+                '<button id="_askReasonOk" style="padding:8px 16px;border-radius:8px;border:none;background:#ef4444;color:white;cursor:pointer;font-weight:500;">Rechazar</button>' +
+                '</div></div>';
+            document.body.appendChild(ov);
+            ov.querySelector('#_askReasonInput').focus();
+            ov.querySelector('#_askReasonOk').onclick = function() { var v = ov.querySelector('#_askReasonInput').value; document.body.removeChild(ov); resolve(v); };
+            ov.querySelector('#_askReasonCancel').onclick = function() { document.body.removeChild(ov); resolve(null); };
+            ov.onclick = function(e) { if (e.target === ov) { document.body.removeChild(ov); resolve(null); } };
+        });
+    }
+
     window.rejectPayment = async function(contributionId) {
-        var reason = prompt('Motivo del rechazo (opcional):');
+        var reason = await _askReason('Motivo del rechazo:');
         if (reason === null) return;
 
         try {
@@ -11505,39 +12695,6 @@ function renderTurnsList() {
 (function() {
     'use strict';
     
-    // Add Calendar button to admin modal
-    var originalManageGroup = window.manageGroup;
-    var calendarButtonAdded = {};
-    
-    window.manageGroup = function(groupId) {
-        originalManageGroup(groupId);
-        
-        setTimeout(function() {
-            var modal = document.getElementById('groupManageModal');
-            if (!modal) return;
-            
-            // Check if calendar button already exists
-            if (calendarButtonAdded[groupId]) return;
-            
-            var exportSection = modal.querySelector('.export-section');
-            if (!exportSection) return;
-            
-            // Create calendar button before export section
-            var calendarBtn = document.createElement('button');
-            calendarBtn.className = 'admin-option-btn';
-            calendarBtn.style.cssText = 'display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; transition: background 0.2s; margin-bottom: 8px;';
-            calendarBtn.innerHTML = '<div style="width: 40px; height: 40px; background: rgba(217,119,6,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-calendar-alt" style="color: #d97706; font-size: 18px;"></i></div><div style="text-align: left;"><div style="font-weight: 500; color: #f8fafc;">Calendario de Pagos</div><div style="font-size: 0.75rem; color: #94a3b8;">Ver proximas fechas y turnos</div></div>';
-            
-            calendarBtn.onclick = function() {
-                showCalendarModal(window.currentManagedGroupId);
-            };
-            
-            // Insert before export section
-            exportSection.parentNode.insertBefore(calendarBtn, exportSection);
-            calendarButtonAdded[groupId] = true;
-            
-        }, 100);
-    };
     
     window.showCalendarModal = async function(groupId) {
         // Close admin modal first
@@ -11784,15 +12941,17 @@ function renderTurnsList() {
         var members = stats.members || {};
         var payments = stats.payments || {};
         var topContributors = stats.top_contributors || [];
+        var myRole = stats.my_role || 'member';
+        var isAdmin = ['creator', 'coordinator', 'admin'].includes(myRole);
 
         var html = '';
 
-        // Quick stats row
+        // Quick stats row — 4 cards
         html += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">';
 
         html += '<div style="text-align: center; padding: 16px; background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.2); border-radius: 12px;">' +
             '<i class="fas fa-users" style="font-size: 24px; color: #a78bfa;"></i>' +
-            '<p style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 8px 0 0;">' + (members.total || 0) + '</p>' +
+            '<p style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 8px 0 0;">' + (members.total || 0) + (group.max_members ? '/' + group.max_members : '') + '</p>' +
             '<p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Miembros</p></div>';
 
         html += '<div style="text-align: center; padding: 16px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.2); border-radius: 12px;">' +
@@ -11805,21 +12964,54 @@ function renderTurnsList() {
             '<p style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin: 8px 0 0;">' + (payments.completed || 0) + '</p>' +
             '<p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Pagos</p></div>';
 
-        var statusColor = group.status === 'active' ? '#34d399' : '#fbbf24';
+        var statusColor = group.status === 'active' ? '#34d399' : (group.status === 'recruiting' ? '#60a5fa' : '#fbbf24');
+        var statusLabel = { active: 'Activo', recruiting: 'Reclutando', paused: 'Pausado', completed: 'Completado', suspended: 'Suspendido', cancelled: 'Cancelado' };
         html += '<div style="text-align: center; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">' +
             '<i class="fas fa-circle" style="font-size: 24px; color: ' + statusColor + ';"></i>' +
-            '<p style="font-size: 1rem; font-weight: 600; color: #f8fafc; margin: 8px 0 0; text-transform: capitalize;">' + _vdEsc(group.status || '-') + '</p>' +
+            '<p style="font-size: 1rem; font-weight: 600; color: #f8fafc; margin: 8px 0 0;">' + _vdEsc(statusLabel[group.status] || group.status || '-') + '</p>' +
             '<p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Estado</p></div>';
 
         html += '</div>';
 
-        // Group info
+        // Cycle progress bar (if active and has cycles)
+        var currentCycle = group.current_cycle || 0;
+        var maxMembers = group.max_members || members.total || 1;
+        if (currentCycle > 0) {
+            var cyclePercent = Math.min(100, Math.round((currentCycle / maxMembers) * 100));
+            html += '<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
+                '<span style="font-size: 0.875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase;">Progreso</span>' +
+                '<span style="font-size: 0.875rem; font-weight: 600; color: #00FFFF;">Ciclo ' + currentCycle + ' de ' + maxMembers + '</span></div>' +
+                '<div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">' +
+                '<div style="height: 100%; width: ' + cyclePercent + '%; background: linear-gradient(90deg, #00FFFF, #00B8D4); border-radius: 4px; transition: width 0.3s;"></div></div>';
+
+            // Completion rate
+            var compRate = payments.completion_rate || 0;
+            var compColor = compRate >= 80 ? '#34d399' : (compRate >= 50 ? '#fbbf24' : '#ef4444');
+            html += '<div style="display: flex; justify-content: space-between; margin-top: 8px;">' +
+                '<span style="font-size: 0.75rem; color: #64748b;">Cumplimiento</span>' +
+                '<span style="font-size: 0.75rem; font-weight: 600; color: ' + compColor + ';">' + compRate + '%</span></div>' +
+                '</div>';
+        }
+
+        // Group info — 2x2 grid
         html += '<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px;">' +
             '<h4 style="font-size: 0.875rem; font-weight: 600; color: #94a3b8; margin: 0 0 12px 0; text-transform: uppercase;">Informacion del Grupo</h4>' +
             '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">' +
             '<div><span style="font-size: 0.75rem; color: #64748b;">Contribucion</span><p style="font-weight: 600; color: #f8fafc; margin: 0;">L. ' + (group.contribution_amount || 0).toLocaleString() + '</p></div>' +
-            '<div><span style="font-size: 0.75rem; color: #64748b;">Frecuencia</span><p style="font-weight: 600; color: #f8fafc; margin: 0; text-transform: capitalize;">' + _vdEsc(frequencyMap[group.frequency] || group.frequency || '-') + '</p></div>' +
-            '</div></div>';
+            '<div><span style="font-size: 0.75rem; color: #64748b;">Frecuencia</span><p style="font-weight: 600; color: #f8fafc; margin: 0;">' + _vdEsc(frequencyMap[group.frequency] || group.frequency || '-') + '</p></div>';
+
+        // Pending amount (if any)
+        if (payments.pending > 0) {
+            html += '<div><span style="font-size: 0.75rem; color: #64748b;">Pagos pendientes</span><p style="font-weight: 600; color: #fbbf24; margin: 0;">' + payments.pending + ' (L. ' + (payments.pending_amount || 0).toLocaleString() + ')</p></div>';
+        }
+
+        // Grace period
+        if (group.grace_period) {
+            html += '<div><span style="font-size: 0.75rem; color: #64748b;">Periodo de gracia</span><p style="font-weight: 600; color: #f8fafc; margin: 0;">' + group.grace_period + ' dias</p></div>';
+        }
+
+        html += '</div></div>';
 
         // Top contributors
         if (topContributors.length > 0) {
@@ -11839,12 +13031,16 @@ function renderTurnsList() {
             html += '</div></div>';
         }
 
-        // Quick actions — data-action instead of onclick
+        // Quick actions — role-gated
         html += '<div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">' +
             '<h4 style="font-size: 0.875rem; font-weight: 600; color: #94a3b8; margin: 0 0 12px 0; text-transform: uppercase;">Acciones Rapidas</h4>' +
-            '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">' +
-            '<button data-action="grp-vd-manage" data-group-id="' + safeGroupId + '" style="padding: 12px; background: rgba(0,255,255,0.15); border: 1px solid rgba(0,255,255,0.3); color: #00FFFF; border-radius: 8px; cursor: pointer; font-weight: 500;"><i class="fas fa-cog" style="margin-right: 6px;"></i>Administrar</button>' +
-            '<button data-action="grp-vd-calendar" data-group-id="' + safeGroupId + '" style="padding: 12px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; border-radius: 8px; cursor: pointer; font-weight: 500;"><i class="fas fa-calendar" style="margin-right: 6px;"></i>Calendario</button>' +
+            '<div style="display: grid; grid-template-columns: repeat(' + (isAdmin ? '3' : '2') + ', 1fr); gap: 8px;">';
+
+        if (isAdmin) {
+            html += '<button data-action="grp-vd-manage" data-group-id="' + safeGroupId + '" style="padding: 12px; background: rgba(0,255,255,0.15); border: 1px solid rgba(0,255,255,0.3); color: #00FFFF; border-radius: 8px; cursor: pointer; font-weight: 500;"><i class="fas fa-cog" style="margin-right: 6px;"></i>Administrar</button>';
+        }
+
+        html += '<button data-action="grp-vd-calendar" data-group-id="' + safeGroupId + '" style="padding: 12px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; border-radius: 8px; cursor: pointer; font-weight: 500;"><i class="fas fa-calendar" style="margin-right: 6px;"></i>Calendario</button>' +
             '<button data-action="grp-vd-tandas" data-group-id="' + safeGroupId + '" style="padding: 12px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; border-radius: 8px; cursor: pointer; font-weight: 500;"><i class="fas fa-list" style="margin-right: 6px;"></i>Ver Tandas</button>' +
             '</div></div>';
 
@@ -12533,7 +13729,7 @@ function renderTurnsList() {
     <script src="js/dashboard-sections-loader.js?v=14.1"></script>
     <script src="js/header-footer-cleanup.js"></script>
     <script src="js/components/loading-states.js"></script>
-    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/components-loader.js?v=30.5"></script>
     <script src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script src="js/hub/contextual-alerts.js?v=1.03"></script>
     <script src="js/hub/insights-engine.js?v=1.03"></script>
@@ -12543,7 +13739,7 @@ function renderTurnsList() {
     <script src="js/mobile-drawer.js?v=1769469123"></script>
     <script src="js/dashboard-polish.js?v=1.0"></script>
     <script src="js/edge-swipe.js?v=1769558147"></script>
-    <script src="js/hub/user-mini-profile.js?v=2.0"></script>
+    <script src="js/hub/user-mini-profile.js?v=2.1"></script>
 
     <script>
     (function() {
@@ -12672,13 +13868,38 @@ function renderTurnsList() {
                     break;
 
                 // Filter & Retry
+                case 'grp-public-detail':
+                    (function() {
+                        var detailGid = btn.getAttribute('data-group-id');
+                        if (detailGid && typeof openPublicGroupDetail === 'function') openPublicGroupDetail(detailGid);
+                    })();
+                    break;
                 case 'grp-join-request':
                     (function() {
                         var joinBtn = btn;
                         var joinGid = joinBtn.getAttribute('data-group-id');
                         var joinName = joinBtn.getAttribute('data-group-name') || 'este grupo';
                         if (!joinGid) return;
-                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?', function() {
+                        var joinGroup = (window.publicGroupsData || []).find(function(g) { return g.id === joinGid; });
+                        var termsHtml = '';
+                        if (joinGroup) {
+                            var freqMap = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+                            var freq = freqMap[joinGroup.frequency] || joinGroup.frequency || '--';
+                            var contrib = parseFloat(joinGroup.contribution_amount || 0);
+                            var commRate = joinGroup.commission_rate;
+                            var commText = commRate === null || commRate === undefined ? '5%' : (commRate === 0 ? 'Sin comision' : commRate + '%');
+                            termsHtml = '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:12px 0 8px;text-align:left;">' +
+                                '<div style="color:#475569;font-size:0.75rem;font-weight:600;margin-bottom:6px;">Terminos del Grupo</div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Aporte</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">L. ' + contrib.toLocaleString('es-HN') + ' ' + escapeHtml(freq) + '</span></div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Comision</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">' + escapeHtml(commText) + '</span></div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Miembros</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">' + (joinGroup.members_count || joinGroup.member_count || '?') + '/' + (joinGroup.max_members || '?') + '</span></div>' +
+                                '<div style="border-top:1px solid #e2e8f0;margin-top:6px;padding-top:6px;">' +
+                                    '<div style="color:#dc2626;font-size:0.72rem;font-weight:600;margin-bottom:3px;"><i class="fas fa-hand-holding-usd" style="margin-right:4px;"></i>Politica de Mora</div>' +
+                                    '<div style="color:#475569;font-size:0.72rem;">Pagos atrasados generan un prestamo formal. Auto-suspension despues de ' + (joinGroup.max_mora_cycles || 4) + ' ciclos en mora.</div>' +
+                                '</div>' +
+                            '</div>';
+                        }
+                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?' + termsHtml, function() {
                             joinBtn.disabled = true;
                             joinBtn.textContent = 'Enviando...';
                             var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
@@ -13017,6 +14238,14 @@ function renderTurnsList() {
                     var mtTid = btn.getAttribute('data-tanda-id');
                     if (mtTid && typeof makeTandaPayment === 'function') makeTandaPayment(mtTid);
                     break;
+                case 'grp-pay-loan':
+                    (function() {
+                        var payGroupId = btn.getAttribute('data-group-id');
+                        var payLoanId = btn.getAttribute('data-loan-id');
+                        if (payGroupId && payLoanId) openMemberLoanPayModal(payGroupId, payLoanId);
+                    })();
+                    break;
+
                 case 'grp-contribution-history':
                     (function() {
                         var chGroupId = btn.getAttribute('data-group-id');
@@ -13183,7 +14412,7 @@ function renderTurnsList() {
             </div>
         </div>
         <nav class="mobile-drawer-nav">
-            <a href="mi-perfil.html" class="mobile-drawer-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+            <a href="perfil.html" class="mobile-drawer-item" id="drawerProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
             <a href="my-wallet.html" class="mobile-drawer-item"><i class="fas fa-wallet"></i><span>Wallet</span></a>
             <a href="/groups-advanced-system.html" class="mobile-drawer-item"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
             <a href="/marketplace-social.html" class="mobile-drawer-item"><i class="fas fa-store"></i><span>Mercado</span></a>

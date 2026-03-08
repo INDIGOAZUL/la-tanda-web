@@ -85,15 +85,38 @@ const MobileDrawer = {
                     handleEl.textContent = '@' + user.email.split('@')[0];
                 }
 
-                // Update avatar with initials
+                // Update avatar with photo or initials
                 const avatarEl = document.getElementById('mobileDrawerAvatar');
                 if (avatarEl && user.name) {
-                    const initials = user.name.split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .toUpperCase()
-                        .substring(0, 2);
-                    avatarEl.innerHTML = `<span style="font-size:1rem;font-weight:600;">${initials}</span>`;
+                    if (user.avatar_url) {
+                        avatarEl.innerHTML = '';
+                        avatarEl.style.backgroundImage = 'url(' + user.avatar_url.replace(/[<>"']/g, '') + ')';
+                        avatarEl.style.backgroundSize = 'cover';
+                        avatarEl.style.backgroundPosition = 'center';
+                    } else {
+                        const initials = user.name.split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .substring(0, 2);
+                        avatarEl.innerHTML = '<span style="font-size:1rem;font-weight:600;">' + initials + '</span>';
+                    }
+                }
+
+                // Update profile links to /perfil/:handle
+                const profileUrl = user.handle
+                    ? '/perfil/' + user.handle
+                    : '/perfil/?id=' + (user.user_id || user.id || '');
+                const navLink = document.getElementById('navProfileLink');
+                const drawerLink = document.getElementById('drawerProfileLink');
+                if (navLink) navLink.href = profileUrl;
+                if (drawerLink) drawerLink.href = profileUrl;
+
+                // Make drawer user area clickable to profile
+                const drawerUser = document.getElementById('mobileDrawerUser');
+                if (drawerUser) {
+                    drawerUser.style.cursor = 'pointer';
+                    drawerUser.onclick = function() { window.location.href = profileUrl; };
                 }
             }
 
@@ -104,30 +127,30 @@ const MobileDrawer = {
     },
 
     async loadFollowStats() {
-        const token = (localStorage.getItem('auth_token') || localStorage.getItem('authToken'));
+        var token = (localStorage.getItem('auth_token') || localStorage.getItem('authToken'));
         if (!token) return;
 
         try {
-            // Get following count
-            const followingRes = await fetch('/api/feed/social/following?limit=1', {
-                headers: { 'Authorization': `Bearer ${token}` }
+            var userStr = localStorage.getItem('latanda_user');
+            var user = userStr ? JSON.parse(userStr) : {};
+            var userId = user.id || user.user_id;
+            if (!userId) return;
+
+            var res = await fetch('/api/feed/social/user/' + userId + '/profile', {
+                headers: { 'Authorization': 'Bearer ' + token }
             });
-            if (followingRes.ok) {
-                const data = await followingRes.json();
-                const followingEl = document.getElementById('mobileDrawerFollowing');
-                if (followingEl && data.success) {
-                    // Note: This endpoint returns feed, not count. We'd need a proper stats endpoint
-                    // For now, show placeholder or fetch from user profile
-                    followingEl.textContent = '0';
+            if (res.ok) {
+                var data = await res.json();
+                if (data.success && data.data && data.data.stats) {
+                    var stats = data.data.stats;
+                    var followingEl = document.getElementById('mobileDrawerFollowing');
+                    var followersEl = document.getElementById('mobileDrawerFollowers');
+                    if (followingEl) followingEl.textContent = stats.following || 0;
+                    if (followersEl) followersEl.textContent = stats.followers || 0;
                 }
             }
-
-            // Followers would need a different endpoint
-            const followersEl = document.getElementById('mobileDrawerFollowers');
-            if (followersEl) {
-                followersEl.textContent = '0';
-            }
         } catch (error) {
+            console.error('loadFollowStats:', error);
         }
     },
 

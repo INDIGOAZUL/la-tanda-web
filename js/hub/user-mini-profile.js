@@ -39,8 +39,13 @@ const UserMiniProfile = {
     },
 
     attachEventListeners() {
-        // Use event delegation on the social feed container
+        // Detect touch device
+        let isTouchDevice = false;
+        window.addEventListener('touchstart', () => { isTouchDevice = true; }, { once: true, passive: true });
+
+        // Hover popup only on non-touch (desktop)
         document.addEventListener('mouseenter', (e) => {
+            if (isTouchDevice) return;
             const avatar = e.target && e.target.closest && e.target.closest('.actor-avatar[data-user-id]');
             if (avatar) {
                 this.show(avatar);
@@ -48,9 +53,25 @@ const UserMiniProfile = {
         }, true);
 
         document.addEventListener('mouseleave', (e) => {
+            if (isTouchDevice) return;
             const avatar = e.target && e.target.closest && e.target.closest('.actor-avatar[data-user-id]');
             if (avatar) {
                 this.scheduleHide();
+            }
+        }, true);
+
+        // Click on avatar or actor-name opens ProfileViewerModal (works on mobile + desktop)
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('.actor-avatar[data-user-id], .actor-name[data-user-id], .pd-avatar[data-user-id], .pd-actor-name[data-user-id]');
+            if (target) {
+                const userId = target.dataset.userId;
+                if (userId && userId !== 'null' && window.ProfileViewerModal) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.hide();
+                    window.ProfileViewerModal.open(userId, 'posts');
+                    return;
+                }
             }
         }, true);
 
@@ -468,33 +489,72 @@ const ProfileViewerModal = {
         if (!header) return;
 
         const user = data.user;
+        const stats = data.stats;
         const esc = UserMiniProfile.escapeHtml.bind(UserMiniProfile);
         const initials = UserMiniProfile.getInitials(user.name);
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
 
         const avatarContent = user.avatar_url
             ? `<img src="${esc(user.avatar_url)}" alt="${esc(user.name)}">`
             : `<span class="pv-avatar-initials">${initials}</span>`;
 
+        const memberDate = user.member_since ? new Date(user.member_since) : null;
+        const memberLabel = memberDate ? `Se unio en ${memberDate.toLocaleDateString('es-HN', { month: 'long', year: 'numeric' })}` : '';
+
+        let followBtnHtml = '';
+        if (token && !data.is_self) {
+            followBtnHtml = `<button class="pv-header-follow-btn ${data.is_following ? 'following' : ''}" data-user-id="${esc(user.id)}">
+                ${data.is_following ? 'Siguiendo' : 'Seguir'}
+            </button>`;
+        }
+
         header.innerHTML = `
-            <div class="pv-header-info">
+            <div class="pv-cover"></div>
+            <div class="pv-profile-row">
                 <div class="pv-header-avatar ${user.avatar_url ? '' : 'initials'}">
                     ${avatarContent}
                     ${user.verified ? '<i class="fas fa-check-circle pv-verified"></i>' : ''}
                 </div>
-                <div class="pv-header-text">
-                    <span class="pv-header-name">${esc(user.name)}</span>
-                    ${user.bio ? `<p class="pv-header-bio">${esc(user.bio)}</p>` : ''}
+                ${followBtnHtml}
+            </div>
+            <div class="pv-header-details">
+                <span class="pv-header-name">${esc(user.name)} ${user.verified ? '<i class="fas fa-check-circle" style="color:#00FFFF;font-size:14px;"></i>' : ''}</span>
+                ${user.handle ? `<span class="pv-header-handle">@${esc(user.handle)}</span>` : ''}
+                ${user.bio ? `<p class="pv-header-bio">${esc(user.bio)}</p>` : ''}
+                <div class="pv-header-meta">
+                    ${user.location ? `<span class="pv-meta-item"><i class="fas fa-map-marker-alt"></i> ${esc(user.location)}</span>` : ''}
+                    ${memberLabel ? `<span class="pv-meta-item"><i class="far fa-calendar-alt"></i> ${memberLabel}</span>` : ''}
                 </div>
+                <div class="pv-header-stats">
+                    <span class="pv-stat-item" data-tab="posts"><strong>${this.formatCount(stats.posts)}</strong> publicaciones</span>
+                    <span class="pv-stat-item" data-tab="followers"><strong>${this.formatCount(stats.followers)}</strong> seguidores</span>
+                    <span class="pv-stat-item" data-tab="following"><strong>${this.formatCount(stats.following)}</strong> siguiendo</span>
+                </div>
+                <a href="/perfil/${esc(user.handle || user.id)}${user.handle ? '' : '?id=' + esc(user.id)}" class="pv-full-profile-link"><i class="fas fa-external-link-alt"></i> Ver perfil completo</a>
             </div>
         `;
 
-        const stats = data.stats;
+        // Update tab counts
         const cp = document.getElementById('pvCountPosts');
         const cf = document.getElementById('pvCountFollowers');
         const cg = document.getElementById('pvCountFollowing');
         if (cp) cp.textContent = this.formatCount(stats.posts);
         if (cf) cf.textContent = this.formatCount(stats.followers);
         if (cg) cg.textContent = this.formatCount(stats.following);
+
+        // Follow button handler
+        const followBtn = header.querySelector('.pv-header-follow-btn');
+        if (followBtn) {
+            followBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._handleFollowClick(followBtn);
+            });
+        }
+
+        // Stat clicks switch tabs
+        header.querySelectorAll('.pv-stat-item[data-tab]').forEach(item => {
+            item.addEventListener('click', () => this.switchTab(item.dataset.tab));
+        });
     },
 
     async loadTabContent() {
