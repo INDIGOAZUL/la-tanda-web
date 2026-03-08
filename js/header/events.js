@@ -57,6 +57,11 @@ const HeaderEvents = {
             this.openSearch();
             return;
         }
+        if (e.target.closest("#themeToggle")) {
+            e.stopPropagation();
+            this.toggleTheme();
+            return;
+        }
         if (e.target.closest("#profileBtn")) {
             e.stopPropagation();
             this.toggleProfileDropdown();
@@ -94,6 +99,29 @@ const HeaderEvents = {
         const newState = !hidden;
         localStorage.setItem("balanceHidden", newState);
         window.HeaderUI && window.HeaderUI.toggleBalanceVisibility(newState);
+    },
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        
+        // Update theme
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        
+        // Update theme icon
+        const themeIcon = document.getElementById("themeIcon");
+        if (themeIcon) {
+            themeIcon.className = newTheme === "dark" ? "fas fa-moon" : "fas fa-sun";
+        }
+        
+        // Update theme-color meta tag
+        const themeColor = newTheme === "dark" ? "#0f172a" : "#ffffff";
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) metaThemeColor.setAttribute("content", themeColor);
+        
+        // Dispatch theme change event for other components
+        document.dispatchEvent(new CustomEvent("themeChanged", { detail: { theme: newTheme } }));
     },
 
     openNotifications() {

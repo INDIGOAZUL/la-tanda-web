@@ -1,9 +1,46 @@
 /**
  * LA TANDA - Dashboard 3-Column Layout (Twitter-style)
  * Layout con sidebars sticky y feed central scrolleable
- * Version: 1.0.0
+ * Version: 1.1.0
  * Added: 2026-01-25
+ * Updated: 2026-03-08 - Added CSS variables for dark/light theme support
  */
+
+:root {
+    --bg-primary: #0a0a1a;
+    --bg-secondary: #0f172a;
+    --bg-card: rgba(15, 23, 42, 0.6);
+    --bg-card-hover: rgba(15, 23, 42, 0.8);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.85);
+    --text-muted: rgba(255, 255, 255, 0.5);
+    --text-disabled: rgba(255, 255, 255, 0.4);
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(0, 255, 255, 0.3);
+    --accent-cyan: #00FFFF;
+    --accent-cyan-light: #7fff88;
+    --accent-cyan-dark: #00CCCC;
+    --shadow-sm: 0 0 20px rgba(0, 255, 255, 0.2);
+    --shadow-md: 0 4px 20px rgba(0, 255, 255, 0.4);
+}
+
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --text-primary: #0f172a;
+    --text-secondary: #1e293b;
+    --text-muted: #475569;
+    --text-disabled: #94a3b8;
+    --border-primary: rgba(0, 0, 0, 0.08);
+    --border-accent: rgba(0, 255, 255, 0.5);
+    --accent-cyan: #0891b2;
+    --accent-cyan-light: #06b6d4;
+    --accent-cyan-dark: #0e7490;
+    --shadow-sm: 0 0 20px rgba(0, 255, 255, 0.1);
+    --shadow-md: 0 4px 20px rgba(0, 255, 255, 0.2);
+}
 
 /* ================================================
    MAIN LAYOUT CONTAINER
@@ -62,7 +99,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
 .sidebar-brand-logo img {
@@ -75,7 +112,7 @@
     font-family: 'Orbitron', monospace;
     font-size: 1.25rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #00FFFF, #7fff88);
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-cyan-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -94,7 +131,7 @@
     gap: 16px;
     padding: 14px 16px;
     border-radius: 30px;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-secondary);
     text-decoration: none;
     font-size: 1.1rem;
     font-weight: 500;
@@ -102,12 +139,12 @@
 }
 
 .nav-menu-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-primary);
 }
 
 .nav-menu-item.active {
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .nav-menu-item i {
@@ -121,10 +158,10 @@
     width: 100%;
     padding: 16px;
     margin-top: 16px;
-    background: linear-gradient(135deg, #00FFFF 0%, #00CCCC 100%);
+    background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-cyan-dark) 100%);
     border: none;
     border-radius: 30px;
-    color: #0f172a;
+    color: var(--bg-secondary);
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
@@ -133,13 +170,13 @@
 
 .nav-post-btn:hover {
     transform: scale(1.02);
-    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
+    box-shadow: var(--shadow-md);
 }
 
 /* Quick Links Section */
 .nav-section-divider {
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-primary);
     margin: 16px 0;
 }
 
@@ -147,7 +184,7 @@
     padding: 8px 16px;
     font-size: 0.75rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-disabled);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -170,13 +207,17 @@
     -webkit-backdrop-filter: blur(12px);
     z-index: 10;
     padding: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+[data-theme="light"] .main-feed-header {
+    background: rgba(255, 255, 255, 0.85);
 }
 
 .main-feed-title {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
 }
 
 /* ================================================

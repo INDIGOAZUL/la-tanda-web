@@ -33,6 +33,13 @@ const LaTandaHeader = {
         if (balanceHidden && window.HeaderUI) {
             window.HeaderUI.toggleBalanceVisibility(true);
         }
+        
+        // Set theme icon based on current theme
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        const themeIcon = document.getElementById("themeIcon");
+        if (themeIcon) {
+            themeIcon.className = currentTheme === "dark" ? "fas fa-moon" : "fas fa-sun";
+        }
 
         // Load user avatar
         this.loadUserAvatar();
