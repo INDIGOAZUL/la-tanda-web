@@ -16,12 +16,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>👤 Mi Perfil | La Tanda Web3</title>
+    <title>Mi Perfil | La Tanda</title>
     <!-- Critical CSS: Font Awesome with async loading -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Optimized Google Fonts loading -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
@@ -252,26 +250,13 @@
             margin-bottom: 8px;
         }
         
-        .profile-address {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        
-        .profile-address:hover {
-            color: var(--tanda-cyan);
-        }
-        
         .profile-level {
             display: flex;
             align-items: center;
             gap: 12px;
             margin-bottom: 16px;
         }
-        
+
         .level-badge {
             background: linear-gradient(135deg, var(--crypto-gold), #ffa500);
             color: var(--tanda-black);
@@ -279,21 +264,6 @@
             border-radius: 16px;
             font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-        }
-        
-        .level-progress {
-            flex: 1;
-            height: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .level-progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            transition: width 0.3s ease;
         }
         
         .profile-stats {
@@ -433,19 +403,6 @@
             font-weight: 700;
             color: var(--tanda-cyan);
             margin-bottom: 8px;
-        }
-        
-        .portfolio-change {
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .positive {
-            color: var(--success-color);
-        }
-        
-        .negative {
-            color: var(--error-color);
         }
         
         /* ================================
@@ -767,11 +724,8 @@
             <a href="my-wallet.html" class="nav-link">
                 <i class="fas fa-wallet"></i> Wallet
             </a>
-            <a href="nft-memberships.html" class="nav-link">
-                <i class="fas fa-crown"></i> Memberships
-            </a>
-            <a href="governance.html" class="nav-link">
-                <i class="fas fa-vote-yea"></i> Governance
+            <a href="groups-advanced-system.html" class="nav-link">
+                <i class="fas fa-users"></i> Mis Grupos
             </a>
         </div>
     </nav>
@@ -793,30 +747,23 @@
                         <i class="fas fa-question-circle" style="color: #6c757d;"></i>
                         <span>Cargando...</span>
                     </div>
-                    <div class="profile-address" onclick="copyAddress()" title="Click para copiar">
-                        0x1234...5678 <i class="fas fa-copy"></i>
-                    </div>
-                    
                     <div class="profile-level">
-                        <div class="level-badge">Nivel 12 • Diamond Member</div>
-                        <div class="level-progress">
-                            <div class="level-progress-bar" style="width: 73%"></div>
-                        </div>
-                        <span style="font-size: 12px; color: var(--text-secondary);">73%</span>
+                        <div class="level-badge" id="profileLevelBadge">Miembro</div>
                     </div>
-                </div>
+                    <a id="viewPublicProfile" href="/perfil/" style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:5px 14px;border-radius:20px;border:1px solid rgba(0,255,255,0.3);color:#00FFFF;font-size:0.8rem;text-decoration:none;" ><i class="fas fa-external-link-alt"></i> Ver perfil publico</a>
+                    </div>
                 
                 <div class="profile-stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="totalValue">$24,875</div>
-                        <div class="stat-label">Valor Total</div>
+                        <div class="stat-value" id="totalValue">--</div>
+                        <div class="stat-label">Balance Total</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="totalTransactions">1,247</div>
+                        <div class="stat-value" id="totalTransactions">--</div>
                         <div class="stat-label">Transacciones</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="memberSince">186</div>
+                        <div class="stat-value" id="memberSince">--</div>
                         <div class="stat-label">Días Activo</div>
                     </div>
                 </div>
@@ -826,7 +773,10 @@
         <!-- Tabs Section -->
         <div class="tabs-section">
             <div class="tabs-header">
-                <button class="tab-btn active" onclick="switchTab('portfolio')">
+                <button class="tab-btn active" onclick="switchTab('settings')">
+                    <i class="fas fa-cog"></i> Configuración
+                </button>
+                <button class="tab-btn" onclick="switchTab('portfolio')">
                     <i class="fas fa-chart-pie"></i> Portfolio
                 </button>
                 <button class="tab-btn" onclick="switchTab('activity')">
@@ -835,16 +785,13 @@
                 <button class="tab-btn" onclick="switchTab('achievements')">
                     <i class="fas fa-trophy"></i> Logros
                 </button>
-                <button class="tab-btn" onclick="switchTab('settings')">
-                    <i class="fas fa-cog"></i> Configuración
-                </button>
                 <button class="tab-btn" onclick="switchTab('security')">
                     <i class="fas fa-shield-alt"></i> Seguridad
                 </button>
             </div>
 
             <!-- Portfolio Tab -->
-            <div id="portfolio-tab" class="tab-content active">
+            <div id="portfolio-tab" class="tab-content">
                 <div class="portfolio-grid" id="portfolioGrid">
                     <div class="loading">
                         <div class="spinner"></div>
@@ -874,7 +821,7 @@
             </div>
 
             <!-- Settings Tab -->
-            <div id="settings-tab" class="tab-content">
+            <div id="settings-tab" class="tab-content active">
                 <form class="settings-form" id="settingsForm">
                     <div class="form-section">
                         <div class="form-section-title">
@@ -1143,12 +1090,12 @@
         class ProfileManager {
             constructor() {
                 this.userProfile = {};
-                this.currency = "HNL"; // Default to Honduran Lempira
+                this.currency = "HNL";
                 this.userId = null;
                 this.portfolio = [];
                 this.activities = [];
                 this.achievements = [];
-                this.currentTab = 'portfolio';
+                this.currentTab = 'settings';
                 this.init();
             }
 
@@ -1159,6 +1106,7 @@
                 this.loadActivities();
                 this.loadAchievements();
                 this.setupEventListeners();
+                if (typeof load2FAStatus === 'function') load2FAStatus();
             }
 
             setupEventListeners() {
@@ -1183,7 +1131,7 @@
 
                 try {
                     // Load from API
-                    const response = await fetch(`/api/user/profile?user_id=${this.userId}`, { headers: window.getAuthHeaders() });
+                    const response = await fetch('/api/user/profile', { headers: window.getAuthHeaders() });
                     const result = await response.json();
 
                     if (result.success && result.user) {
@@ -1197,9 +1145,7 @@
                             location: result.user.location || '',
                             bio: result.user.bio || '',
                             avatar_url: result.user.avatar_url || '',
-                            address: '0x' + this.userId.replace('user_', '').substring(0, 40),
-                            level: 12,
-                            membership: 'Gold',
+                            created_at: result.user.created_at,
                             totalValue: 0,
                             totalTransactions: 0,
                             memberSince: this.daysSince(result.user.created_at),
@@ -1241,9 +1187,6 @@
                     phone: '',
                     location: '',
                     bio: '',
-                    address: '0x0000000000000000000000000000000000000000',
-                    level: 1,
-                    membership: 'Basic',
                     totalValue: 0,
                     totalTransactions: 0,
                     memberSince: 0,
@@ -1263,6 +1206,13 @@
                 // Update profile name in header
                 const profileNameEl = document.getElementById('profileName');
                 if (profileNameEl) profileNameEl.textContent = this.userProfile.name;
+
+                // Update public profile link
+                const pubLink = document.getElementById("viewPublicProfile");
+                if (pubLink) {
+                    const h = this.userProfile.handle || this.userId;
+                    pubLink.href = "/perfil/" + h + (this.userProfile.handle ? "" : "?id=" + this.userId);
+                }
 
                 // Update avatar initials
                 const avatarEl = document.querySelector(".profile-avatar");
@@ -1316,35 +1266,19 @@
                     verificationBadge.style.background = badge.bg;
                     verificationBadge.innerHTML = `<i class="fas ${badge.icon}" style="color: ${badge.color};"></i><span>${badge.text}</span>`;
 
-                // Hide fake wallet address (not applicable to La Tanda platform)
-                const addressEl = document.querySelector(".profile-address");
-                if (addressEl) {
-                    addressEl.style.display = "none";
-                }
-
                 // Update level badge with real verification level
-                const levelBadge = document.querySelector(".level-badge");
+                const levelBadge = document.getElementById("profileLevelBadge");
                 if (levelBadge) {
-                    const level = this.userProfile.verification_level || "basic";
+                    const lvl = this.userProfile.verification_level || "basic";
                     const levelConfig = {
-                        "basic": { name: "Nivel Básico", icon: "fas fa-user" },
-                        "phone": { name: "Teléfono Verificado", icon: "fas fa-phone" },
+                        "basic": { name: "Miembro", icon: "fas fa-user" },
+                        "phone": { name: "Telefono Verificado", icon: "fas fa-phone" },
                         "intermediate": { name: "Nivel Intermedio", icon: "fas fa-user-check" },
                         "advanced": { name: "Nivel Avanzado", icon: "fas fa-shield-alt" },
                         "full": { name: "Completamente Verificado", icon: "fas fa-certificate" }
                     };
-                    const config = levelConfig[level] || levelConfig["basic"];
+                    const config = levelConfig[lvl] || levelConfig["basic"];
                     levelBadge.innerHTML = `<i class="${config.icon}"></i> ${config.name}`;
-                }
-
-                // Hide fake level progress bar
-                const levelProgress = document.querySelector(".level-progress");
-                if (levelProgress) {
-                    levelProgress.style.display = "none";
-                }
-                const levelProgressLabel = document.querySelector(".profile-level > span");
-                if (levelProgressLabel) {
-                    levelProgressLabel.style.display = "none";
                 }
                 }
             }
@@ -1353,13 +1287,13 @@
             async updateProfileStats() {
                 try {
                     // Fetch THIS USER wallet balance for total value
-                    const balanceRes = await fetch("/api/wallet/balance?user_id=" + this.userId, {
+                    const balanceRes = await fetch("/api/wallet/balance", {
                         headers: window.getAuthHeaders()
                     });
                     const balanceData = await balanceRes.json();
 
                     // Fetch THIS USER stats
-                    const statsRes = await fetch("/api/user/" + this.userId + "/stats", { headers: window.getAuthHeaders() });
+                    const statsRes = await fetch("/api/user/me/stats", { headers: window.getAuthHeaders() });
                     const statsData = await statsRes.json();
 
                     // Update Total Value
@@ -1367,7 +1301,7 @@
                         const total = balanceData.data.balances ? balanceData.data.balances.total_usd || 0 : 0;
                         const totalEl = document.getElementById("totalValue");
                         if (totalEl) {
-                            totalEl.textContent = "$" + total.toLocaleString("es-ES", {
+                            totalEl.textContent = "L " + total.toLocaleString("es-HN", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             });
@@ -1379,7 +1313,7 @@
                         const payments = statsData.data.payments ? statsData.data.payments.total || 0 : 0;
                         const txEl = document.getElementById("totalTransactions");
                         if (txEl) {
-                            txEl.textContent = payments.toLocaleString("es-ES");
+                            txEl.textContent = payments.toLocaleString("es-HN");
                         }
                     }
 
@@ -1392,6 +1326,7 @@
                         }
                     }
                 } catch (error) {
+                    console.error('updateProfileStats:', error);
                 }
             }
 
@@ -1460,7 +1395,7 @@
                         throw new Error(result.message || 'Error al guardar');
                     }
                 } catch (error) {
-                    showError('Error al guardar: ' + error.message);
+                    showError('Error al guardar perfil');
                 } finally {
                     if (saveBtn) {
                         saveBtn.disabled = false;
@@ -1477,13 +1412,13 @@
 
                 try {
                     // Fetch THIS USER wallet balance
-                    const balanceRes = await fetch("/api/wallet/balance?user_id=" + this.userId, {
+                    const balanceRes = await fetch("/api/wallet/balance", {
                         headers: window.getAuthHeaders()
                     });
                     const balanceData = await balanceRes.json();
 
                     // Fetch THIS USER stats (groups/contributions)
-                    const statsRes = await fetch("/api/user/" + this.userId + "/stats", { headers: window.getAuthHeaders() });
+                    const statsRes = await fetch("/api/user/me/stats", { headers: window.getAuthHeaders() });
                     const statsData = await statsRes.json();
 
                     if (balanceData.success) {
@@ -1493,60 +1428,53 @@
 
                         this.portfolio = [
                             {
+                                name: "Balance Wallet",
+                                icon: "fas fa-wallet",
+                                balance: b.available_usd || 0,
+                                currency: "L",
+                                type: "money"
+                            },
+                            {
                                 name: "LTD Tokens",
                                 icon: "fas fa-coins",
                                 balance: b.ltd_tokens || 0,
-                                value: (b.ltd_tokens || 0) * (b.usd_to_ltd_rate || 1),
-                                change: 0,
-                                currency: "LTD"
+                                currency: "LTD",
+                                type: "money"
                             },
                             {
-                                name: "Balance Disponible",
-                                icon: "fas fa-wallet",
-                                balance: b.available_usd || 0,
-                                value: b.available_usd || 0,
-                                change: 0,
-                                currency: this.currency
-                            },
-                            {
-                                name: "Depósitos Pendientes",
-                                icon: "fas fa-clock",
-                                balance: b.pending_deposits_usd || 0,
-                                value: b.pending_deposits_usd || 0,
-                                change: 0,
-                                currency: this.currency
-                            },
-                            {
-                                name: "Total Ahorrado",
+                                name: "Total Aportado",
                                 icon: "fas fa-piggy-bank",
                                 balance: stats.total_saved || 0,
-                                value: stats.total_saved || 0,
-                                change: 0,
-                                currency: this.currency
+                                currency: "L",
+                                type: "money"
                             },
                             {
-                                name: "Tandas Activas",
+                                name: "Depositos Pendientes",
+                                icon: "fas fa-clock",
+                                balance: b.pending_deposits_usd || 0,
+                                currency: "L",
+                                type: "money"
+                            },
+                            {
+                                name: "Grupos Activos",
                                 icon: "fas fa-users",
                                 balance: stats.active_tandas || (userStats.groups ? userStats.groups.total : 0) || 0,
-                                value: 0,
-                                change: 0,
-                                currency: "Grupos"
+                                currency: "",
+                                type: "count"
                             },
                             {
-                                name: "Contribuciones Completadas",
+                                name: "Pagos Completados",
                                 icon: "fas fa-check-circle",
-                                balance: stats.completed_contributions || (userStats.payments ? userStats.payments.completed : 0) || 0,
-                                value: (userStats.payments ? userStats.payments.total_paid : 0) || 0,
-                                change: 0,
-                                currency: "Pagos"
+                                balance: (userStats.payments ? userStats.payments.completed : 0) || 0,
+                                currency: "",
+                                type: "count"
                             },
                             {
-                                name: "Contribuciones Pendientes",
+                                name: "Pagos Pendientes",
                                 icon: "fas fa-hourglass-half",
                                 balance: (userStats.payments ? userStats.payments.pending : 0) || 0,
-                                value: stats.pending_contributions || 0,
-                                change: 0,
-                                currency: this.currency
+                                currency: "",
+                                type: "count"
                             }
                         ];
                     } else {
@@ -1563,35 +1491,34 @@
                 const container = document.getElementById("portfolioGrid");
                 if (!container) return;
 
-                // Check if user has any meaningful data
-                const hasData = this.portfolio && this.portfolio.some(function(item) { return item.balance > 0 || item.value > 0; });
+                const hasData = this.portfolio && this.portfolio.some(function(item) { return item.balance > 0; });
 
                 if (!this.portfolio || this.portfolio.length === 0 || !hasData) {
                     container.innerHTML = "<div class=\"empty-portfolio\" style=\"grid-column: 1/-1; text-align: center; padding: 60px 20px;\">" +
                         "<i class=\"fas fa-wallet\" style=\"font-size: 64px; color: var(--tanda-cyan); margin-bottom: 20px; opacity: 0.5;\"></i>" +
-                        "<h3 style=\"color: var(--text-primary); margin-bottom: 8px;\">Tu portfolio está vacío</h3>" +
-                        "<p style=\"color: var(--text-secondary); margin-bottom: 24px;\">Únete a una tanda o haz un depósito para comenzar</p>" +
+                        "<h3 style=\"color: var(--text-primary); margin-bottom: 8px;\">Tu portfolio esta vacio</h3>" +
+                        "<p style=\"color: var(--text-secondary); margin-bottom: 24px;\">Unite a una tanda o hace un deposito para comenzar</p>" +
                         "<a href=\"groups-advanced-system.html\" class=\"btn-primary\" style=\"display: inline-block; padding: 12px 24px; background: var(--tanda-cyan); color: #000; border-radius: 8px; text-decoration: none; font-weight: 600;\">" +
                         "<i class=\"fas fa-users\"></i> Explorar Tandas</a></div>";
                     return;
                 }
 
-                var self = this;
                 const portfolioHTML = this.portfolio.map(function(item) {
-                    // Only show cards with non-zero values
-                    if (item.balance === 0 && item.value === 0) return "";
+                    if (item.balance === 0) return "";
 
-                    const changeClass = item.change >= 0 ? "positive" : "negative";
-                    const changeIcon = item.change >= 0 ? "fas fa-arrow-up" : "fas fa-arrow-down";
+                    var displayValue;
+                    if (item.type === "money") {
+                        displayValue = item.currency + " " + item.balance.toLocaleString("es-HN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    } else {
+                        displayValue = item.balance.toLocaleString("es-HN");
+                    }
 
                     return "<div class=\"portfolio-card\">" +
                         "<div class=\"portfolio-header\">" +
-                        "<div class=\"portfolio-icon\"><i class=\"" + item.icon + "\"></i></div>" +
-                        "<div class=\"portfolio-title\">" + item.name + "</div>" +
+                        "<div class=\"portfolio-icon\"><i class=\"" + escapeHtml(item.icon) + "\"></i></div>" +
+                        "<div class=\"portfolio-title\">" + escapeHtml(item.name) + "</div>" +
                         "</div>" +
-                        "<div class=\"portfolio-value\">" + item.balance.toLocaleString("es-ES", { minimumFractionDigits: 2 }) + " " + item.currency + "</div>" +
-                        "<div class=\"portfolio-usd\">" + (item.value > 0 ? "~ $" + item.value.toLocaleString("es-ES", { minimumFractionDigits: 2 }) + " USD" : "") + "</div>" +
-                        (item.change !== 0 ? "<div class=\"portfolio-change " + changeClass + "\"><i class=\"" + changeIcon + "\"></i> " + Math.abs(item.change) + "%</div>" : "") +
+                        "<div class=\"portfolio-value\">" + displayValue + "</div>" +
                         "</div>";
                 }).filter(function(html) { return html !== ""; }).join("");
 
@@ -1758,11 +1685,12 @@
         // Global functions
         function switchTab(tabName) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            var btn = event && event.target ? event.target.closest('.tab-btn') : null;
+            if (btn) btn.classList.add('active');
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             const tabEl = document.getElementById(tabName + '-tab');
             if (tabEl) tabEl.classList.add('active');
-            profileManager.currentTab = tabName;
+            if (profileManager) profileManager.currentTab = tabName;
         }
 
         function uploadAvatar() {
@@ -1935,9 +1863,10 @@
                     }
                 }
             } catch (err) {
+                console.error('load2FAStatus:', err);
             }
         }
-        
+
         async function setup2FA() {
             try {
                 const response = await fetch('/api/user/2fa/setup', {
@@ -1990,9 +1919,9 @@
                     document.getElementById('backupCodesSection').style.display = 'block';
                     
                     const codesList = document.getElementById('backupCodesList');
-                    codesList.innerHTML = result.backup_codes.map(code => 
-                        '<div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; text-align: center;">' + code + '</div>'
-                    ).join('');
+                    codesList.innerHTML = result.backup_codes.map(function(c) {
+                        return '<div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; text-align: center;">' + escapeHtml(c) + '</div>';
+                    }).join('');
                     
                     document.getElementById('twoFactorStatus').textContent = 'Activo';
                     document.getElementById('twoFactorStatus').style.background = '#22d55e';
@@ -2014,23 +1943,29 @@
             document.getElementById('disableForm').style.display = 'block';
         }
         
-        async function disable2FA() {
+        function disable2FA() {
             const code = document.getElementById('disableCode')?.value || '';
-            
+
             if (!code) {
                 showWarning('Ingresa un codigo de verificacion o codigo de respaldo');
                 return;
             }
-            
-            if (!confirm('Esta seguro que desea deshabilitar 2FA? Tu cuenta sera menos segura.')) {
-                return;
+
+            if (typeof showConfirm === 'function') {
+                showConfirm('Estas seguro que deseas deshabilitar 2FA? Tu cuenta sera menos segura.', function() {
+                    doDisable2FA(code);
+                });
+            } else {
+                doDisable2FA(code);
             }
-            
+        }
+
+        async function doDisable2FA(code) {
             try {
-                const body = code.length === 6 
+                const body = code.length === 6
                     ? { code: code }
                     : { backup_code: code };
-                
+
                 const response = await fetch('/api/user/2fa/disable', {
                     method: 'POST',
                     headers: {
@@ -2039,9 +1974,9 @@
                     },
                     body: JSON.stringify(body)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showSuccess('2FA deshabilitado exitosamente');
                     document.getElementById('disableCode').value = '';
@@ -2055,17 +1990,6 @@
             }
         }
         
-        // Load 2FA status when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(load2FAStatus, 1000); // Load after profile manager initializes
-        });
-
-        function copyAddress() {
-            const address = profileManager.userProfile.address || '0x0000';
-            navigator.clipboard.writeText(address).then(() => {
-                showSuccess('Direccion copiada al portapapeles!');
-            });
-        }
 
         function toggleSwitch(element) {
             element.classList.toggle("active");
@@ -2080,18 +2004,18 @@
         }
 
         function logout() {
-            if (confirm("Estas seguro que deseas cerrar sesion?")) {
-                // Clear all auth data
+            var doLogout = function() {
                 localStorage.removeItem("auth_token");
                 localStorage.removeItem("latanda_auth_token");
                 localStorage.removeItem("latanda_user");
                 localStorage.removeItem("latanda_ltd");
                 sessionStorage.clear();
-                
-                showSuccess("Sesion cerrada exitosamente");
-                
-                // Redirect to login
                 window.location.href = "auth-enhanced.html";
+            };
+            if (typeof showConfirm === 'function') {
+                showConfirm("Estas seguro que deseas cerrar sesion?", doLogout);
+            } else {
+                doLogout();
             }
         }
 
@@ -2099,12 +2023,30 @@
         let profileManager;
         document.addEventListener('DOMContentLoaded', () => {
             profileManager = new ProfileManager();
+
+            // Handle ?tab= query param
+            var params = new URLSearchParams(window.location.search);
+            var tab = params.get('tab');
+            if (tab && document.getElementById(tab + '-tab')) {
+                document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                document.getElementById(tab + '-tab').classList.add('active');
+                var tabBtns = document.querySelectorAll('.tab-btn');
+                for (var i = 0; i < tabBtns.length; i++) {
+                    if (tabBtns[i].textContent.trim().toLowerCase().indexOf(tab) !== -1 ||
+                        tabBtns[i].getAttribute('onclick').indexOf(tab) !== -1) {
+                        tabBtns[i].classList.add('active');
+                        break;
+                    }
+                }
+                if (profileManager) profileManager.currentTab = tab;
+            }
         });
     </script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
   <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/miPerfil-legacy-CvD272dr.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=30.2"></script>
+    <script src="js/components-loader.js?v=30.5"></script>
     <script src="js/onboarding/onboarding-system.js?v=1.5"></script>
 </body>
 </html>

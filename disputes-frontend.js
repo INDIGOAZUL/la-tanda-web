@@ -677,31 +677,7 @@ async function resolveDispute(disputeId, groupId, isReject) {
 }
 
 // Add disputes tab to coordinator panel
-if (window.memberManagement) {
-    var originalRenderCoordinatorStats = window.renderCoordinatorStats;
-    if (originalRenderCoordinatorStats) {
-        window.renderCoordinatorStats = function(stats) {
-            var html = originalRenderCoordinatorStats(stats);
-
-            // Add disputes button to coordinator actions
-            html = html.replace(
-                '</div>\n        <div class="coordinator-actions">',
-                '</div>\n        <div class="coordinator-actions">'
-            );
-
-            // Try to add disputes button with data-action instead of inline onclick
-            if (html.includes('class="coordinator-actions"')) {
-                var safeGroupId = _dispEscapeHtml(window.memberManagement?.currentGroupId || '');
-                html = html.replace(
-                    '&#x1F4C4; Exportar Reporte',
-                    '&#x1F4C4; Exportar Reporte</button>\n            <button class="coord-action-btn" data-action="dispute-view-group" data-group-id="' + safeGroupId + '">&#x1F6A8; Ver Disputas</button'
-                );
-            }
-
-            return html;
-        };
-    }
-}
+// Disputes button removed from coordinator panel (not applicable to tandas)
 
 // Delegated click handler for all dispute actions
 document.addEventListener('click', function(e) {

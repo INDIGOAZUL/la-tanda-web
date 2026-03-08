@@ -305,13 +305,7 @@ function renderCoordinatorStats(stats) {
         </div>
         <div class="coordinator-actions">
             <button class="coord-action-btn primary" data-action="coord-send-reminder">
-                &#x1F514; Enviar Recordatorio
-            </button>
-            <button class="coord-action-btn" data-action="coord-view-finances">
-                &#x1F4B0; Ver Finanzas
-            </button>
-            <button class="coord-action-btn" data-action="coord-export-report">
-                &#x1F4C4; Exportar Reporte
+                &#x1F514; Enviar Recordatorio de Pago
             </button>
         </div>
     `;
@@ -321,70 +315,41 @@ function renderCoordinatorStats(stats) {
 async function sendPaymentReminder(groupId) {
     if (!groupId) return;
 
+    var proceed = (typeof showConfirm === 'function')
+        ? await showConfirm('Enviar recordatorio de pago a todos los miembros con pagos pendientes?')
+        : confirm('Enviar recordatorio?');
+    if (!proceed) return;
+
     const apiBase = window.API_BASE_URL || 'https://latanda.online';
-    const userId = localStorage.getItem('user_id');
+    var authHeaders = (typeof getAuthHeaders === 'function') ? getAuthHeaders() : {};
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+    if (!authHeaders['Authorization'] && token) {
+        authHeaders['Authorization'] = 'Bearer ' + token;
+    }
+    authHeaders['Content-Type'] = 'application/json';
 
     try {
         showNotification('Enviando recordatorios...', 'info');
 
-        const response = await fetch(apiBase + '/api/groups/' + groupId + '/notifications/payment-reminders', {
+        const response = await fetch(apiBase + '/api/groups/' + encodeURIComponent(groupId) + '/notifications/payment-reminders', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coordinator_id: userId })
+            headers: authHeaders
         });
 
         const data = await response.json();
 
         if (data.success) {
-            showNotification('Recordatorios enviados a ' + (data.data?.sent_count || 0) + ' miembros', 'success');
+            var count = data.data?.sent_count || 0;
+            showNotification(count > 0 ? 'Recordatorios enviados a ' + count + ' miembros' : 'Todos los miembros estan al dia', count > 0 ? 'success' : 'info');
         } else {
-            showNotification('Error al enviar recordatorios', 'error');
+            showNotification(data.data?.error?.message || 'Error al enviar recordatorios', 'error');
         }
     } catch (err) {
-        // Error sending reminders
         showNotification('Error de conexion', 'error');
     }
 }
 
-// View group finances
-function viewGroupFinances(groupId) {
-    if (!groupId) return;
 
-    // Close member management modal
-    if (window.memberManagement) {
-        window.memberManagement.closeModal();
-    }
-
-    // Navigate to group finances view
-    if (typeof manageGroup === 'function') {
-        manageGroup(groupId);
-    } else {
-        showNotification('Navegando a finanzas del grupo...', 'info');
-        sessionStorage.setItem('selected_group_id', groupId);
-        if (typeof switchTab === 'function') {
-            switchTab('tandas');
-        }
-    }
-}
-
-// Export group report
-async function exportGroupReport(groupId) {
-    if (!groupId) return;
-
-    const apiBase = window.API_BASE_URL || 'https://latanda.online';
-
-    try {
-        showNotification('Generando reporte...', 'info');
-
-        // Try to open the export endpoint
-        window.open(apiBase + '/api/groups/' + groupId + '/export/summary?format=pdf', '_blank');
-
-        showNotification('Reporte generado', 'success');
-    } catch (err) {
-        // Error exporting report
-        showNotification('Error al exportar reporte', 'error');
-    }
-}
 
 // Extend MemberManagement to include coordinator stats
 if (window.memberManagement) {
@@ -397,7 +362,8 @@ if (window.memberManagement) {
         const [pending, active, stats] = await Promise.all([
             this.fetchPendingMembers(groupId),
             this.fetchActiveMembers(groupId),
-            fetchGroupStats(groupId)
+            fetchGroupStats(groupId),
+            this.fetchGroupSettings(groupId)
         ]);
 
         this.pendingMembers = pending || [];
@@ -459,14 +425,6 @@ document.addEventListener('click', function(e) {
     switch (action) {
         case 'coord-send-reminder':
             sendPaymentReminder(groupId);
-            break;
-
-        case 'coord-view-finances':
-            viewGroupFinances(groupId);
-            break;
-
-        case 'coord-export-report':
-            exportGroupReport(groupId);
             break;
 
         case 'close-member-modal':

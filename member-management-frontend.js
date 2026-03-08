@@ -648,27 +648,7 @@ class MemberManagement {
                         </label>
                     </div>
 
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-label">Auto-aprobar KYC verificado</div>
-                            <div class="setting-description">Aprobar automaticamente a usuarios con identidad verificada</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="setting-auto-kyc" ${settings.auto_approve_kyc_verified ? 'checked' : ''}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
 
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-label">Auto-aprobar email verificado</div>
-                            <div class="setting-description">Aprobar automaticamente a usuarios con email confirmado</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="setting-auto-email" ${settings.auto_approve_email_verified ? 'checked' : ''}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
                 </div>
 
                 <div class="settings-section">
@@ -717,8 +697,7 @@ class MemberManagement {
 
         const newSettings = {
             auto_approve_invited: document.getElementById('setting-auto-invited')?.checked || false,
-            auto_approve_kyc_verified: document.getElementById('setting-auto-kyc')?.checked || false,
-            auto_approve_email_verified: document.getElementById('setting-auto-email')?.checked || false,
+
             notify_admin_on_request: document.getElementById('setting-notify-request')?.checked || false,
             notify_user_on_decision: document.getElementById('setting-notify-user')?.checked || false,
             require_manual_approval: true

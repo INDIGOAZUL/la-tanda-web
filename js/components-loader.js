@@ -61,7 +61,7 @@ resolve();
             }
             
             const script = document.createElement("script");
-            script.src = src + "?v=30.1";
+            script.src = src + "?v=30.5";
             script.onload = () => setTimeout(resolve, 50);
             script.onerror = reject;
             document.head.appendChild(script);
@@ -80,7 +80,7 @@ resolve();
             
             const link = document.createElement("link");
             link.rel = "stylesheet";
-            link.href = href + "?v=30.1";
+            link.href = href + "?v=30.4";
             link.onload = resolve;
             link.onerror = resolve;
             document.head.appendChild(link);
@@ -157,7 +157,7 @@ for (const module of modules) {
         targetId = targetId || "global-header";
 await this.loadMobileCSS();
         
-        const success = await this.load("components/header.html?v=30.1", targetId);
+        const success = await this.load("components/header.html?v=30.5", targetId);
         if (!success) {
             return false;
         }
@@ -188,13 +188,13 @@ await this.loadMobileCSS();
 const target = document.getElementById(targetId);
         
         if (target) {
-            const success = await this.load("components/sidebar.html?v=30.1", targetId);
+            const success = await this.load("components/sidebar.html?v=30.4", targetId);
             if (!success) {
                 return false;
             }
         } else {
             try {
-                const response = await fetch("components/sidebar.html?v=30.1");
+                const response = await fetch("components/sidebar.html?v=30.4");
                 if (!response.ok) throw new Error("HTTP " + response.status);
                 const html = await response.text();
                 document.body.insertAdjacentHTML("afterbegin", html);
@@ -234,14 +234,14 @@ const target = document.getElementById(targetId);
         const target = document.getElementById(targetId);
         
         if (target) {
-            const success = await this.load("components/footer.html?v=30.1", targetId);
+            const success = await this.load("components/footer.html?v=30.4", targetId);
             if (!success) {
                 return false;
             }
         } else {
             // Append to body end if no target
             try {
-                const response = await fetch("components/footer.html?v=30.1");
+                const response = await fetch("components/footer.html?v=30.4");
                 if (!response.ok) throw new Error("HTTP " + response.status);
                 const html = await response.text();
                 document.body.insertAdjacentHTML("beforeend", html);
@@ -524,6 +524,295 @@ LaTandaComponentLoader.loadExpandedTurns = async function() {
 
 
 // ============================================================
+// EMAIL VERIFICATION INTERCEPTOR + MODAL
+// Tier 1: Global 403 EMAIL_NOT_VERIFIED handler
+// ============================================================
+(function() {
+    var EVS = window._emailVerifySystem = {
+        modalOpen: false,
+        bannerShown: false,
+        pendingRetry: null
+    };
+
+    // --- CSS injection ---
+    var style = document.createElement('style');
+    style.textContent = [
+        '.ev-banner{position:fixed;top:0;left:0;right:0;z-index:10000;background:linear-gradient(135deg,#b45309,#d97706);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:0.9rem;box-shadow:0 2px 12px rgba(0,0,0,0.3)}',
+        '.ev-banner button{background:#fff;color:#b45309;border:none;padding:6px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.85rem}',
+        '.ev-banner button:hover{background:#fef3c7}',
+        '.ev-banner .ev-close{background:none;color:#fff;font-size:1.2rem;padding:4px 8px;opacity:0.7}',
+        '.ev-banner .ev-close:hover{opacity:1}',
+        '.ev-overlay{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}',
+        '.ev-modal{background:#1e293b;border:1px solid rgba(0,255,255,0.2);border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5)}',
+        '.ev-modal h2{color:#f8fafc;font-size:1.3rem;margin:0 0 8px}',
+        '.ev-modal p{color:#94a3b8;font-size:0.9rem;margin:0 0 6px}',
+        '.ev-modal .ev-email{color:#00FFFF;font-size:0.95rem;margin-bottom:20px}',
+        '.ev-code-row{display:flex;gap:8px;justify-content:center;margin:20px 0}',
+        '.ev-code-input{width:46px;height:54px;text-align:center;font-size:1.4rem;font-weight:700;border:2px solid #334155;border-radius:10px;background:#0f172a;color:#f8fafc;outline:none;transition:border-color 0.2s}',
+        '.ev-code-input:focus{border-color:#00FFFF}',
+        '.ev-btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-top:12px;transition:opacity 0.2s}',
+        '.ev-btn:disabled{opacity:0.5;cursor:not-allowed}',
+        '.ev-btn-primary{background:linear-gradient(135deg,#00FFFF,#00b4d8);color:#0f172a}',
+        '.ev-btn-primary:hover:not(:disabled){opacity:0.9}',
+        '.ev-resend{color:#94a3b8;font-size:0.85rem;margin-top:16px}',
+        '.ev-resend button{background:none;border:none;color:#00FFFF;cursor:pointer;font-size:0.85rem}',
+        '.ev-resend button:hover{text-decoration:underline}',
+        '.ev-msg{padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-top:12px;display:none}',
+        '.ev-msg.error{display:block;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)}',
+        '.ev-msg.success{display:block;background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)}',
+        '.ev-timer{color:#64748b;font-size:0.8rem;margin-top:8px}'
+    ].join('\n');
+    document.head.appendChild(style);
+
+    // --- Get user email from localStorage ---
+    function getUserEmail() {
+        try {
+            var u = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+            return u.email || '';
+        } catch(e) { return ''; }
+    }
+
+    function isUserUnverified() {
+        try {
+            var u = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+            return u.email_verified === false;
+        } catch(e) { return false; }
+    }
+
+    function maskEmail(email) {
+        if (!email) return '';
+        var parts = email.split('@');
+        if (parts[0].length <= 2) return email;
+        return parts[0].substring(0, 2) + '***@' + parts[1];
+    }
+
+    // --- Send verification code ---
+    function sendCode(email, cb) {
+        fetch('/api/auth/send-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { cb(null, d); })
+        .catch(function(e) { cb(e); });
+    }
+
+    // --- Verify code ---
+    function verifyCode(email, code, cb) {
+        fetch('/api/auth/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, code: code })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { cb(null, d); })
+        .catch(function(e) { cb(e); });
+    }
+
+    // --- Show verification modal ---
+    function showModal() {
+        if (EVS.modalOpen) return;
+        EVS.modalOpen = true;
+
+        var email = getUserEmail();
+        var overlay = document.createElement('div');
+        overlay.className = 'ev-overlay';
+        overlay.id = 'evOverlay';
+        overlay.innerHTML =
+            '<div class="ev-modal">' +
+                '<h2>Verifica tu correo</h2>' +
+                '<p>Ingresa el codigo de 6 digitos enviado a:</p>' +
+                '<div class="ev-email">' + (email ? maskEmail(email) : '') + '</div>' +
+                '<div class="ev-code-row">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="0">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="1">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="2">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="3">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="4">' +
+                    '<input class="ev-code-input" type="text" maxlength="1" inputmode="numeric" data-idx="5">' +
+                '</div>' +
+                '<button class="ev-btn ev-btn-primary" id="evVerifyBtn">Verificar Codigo</button>' +
+                '<div class="ev-timer" id="evTimer"></div>' +
+                '<div class="ev-msg" id="evMsg"></div>' +
+                '<div class="ev-resend">' +
+                    '<span>No recibiste el codigo? </span>' +
+                    '<button id="evResendBtn">Reenviar</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        // Send code immediately
+        if (email) {
+            sendCode(email, function(err) {
+                if (err) showMsg('error', 'Error al enviar codigo');
+            });
+        }
+
+        // Timer
+        var remaining = 300;
+        var timerEl = document.getElementById('evTimer');
+        var timerInterval = setInterval(function() {
+            remaining--;
+            var m = Math.floor(remaining / 60);
+            var s = remaining % 60;
+            timerEl.textContent = 'Codigo expira en ' + m + ':' + (s < 10 ? '0' : '') + s;
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                timerEl.textContent = 'Codigo expirado';
+            }
+        }, 1000);
+
+        // Wire inputs
+        var inputs = overlay.querySelectorAll('.ev-code-input');
+        inputs.forEach(function(inp, i) {
+            inp.addEventListener('input', function(e) {
+                if (!/^\d*$/.test(e.target.value)) { e.target.value = ''; return; }
+                if (e.target.value.length === 1 && i < 5) inputs[i + 1].focus();
+                if (i === 5 && e.target.value.length === 1) {
+                    var allFilled = true;
+                    inputs.forEach(function(x) { if (!x.value) allFilled = false; });
+                    if (allFilled) doVerify();
+                }
+            });
+            inp.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !e.target.value && i > 0) inputs[i - 1].focus();
+            });
+            inp.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').split('').slice(0, 6);
+                digits.forEach(function(d, idx) { if (inputs[idx]) inputs[idx].value = d; });
+                if (digits.length > 0) inputs[Math.min(digits.length, 6) - 1].focus();
+            });
+        });
+
+        if (window.innerWidth > 768) inputs[0].focus();
+
+        // Verify button
+        document.getElementById('evVerifyBtn').addEventListener('click', doVerify);
+
+        // Resend button
+        document.getElementById('evResendBtn').addEventListener('click', function() {
+            if (!email) return;
+            sendCode(email, function(err) {
+                if (err) showMsg('error', 'Error al reenviar');
+                else showMsg('success', 'Codigo reenviado');
+            });
+            remaining = 300;
+        });
+
+        function getCode() {
+            var c = '';
+            inputs.forEach(function(x) { c += x.value; });
+            return c;
+        }
+
+        function showMsg(type, text) {
+            var msg = document.getElementById('evMsg');
+            msg.className = 'ev-msg ' + type;
+            msg.textContent = text;
+        }
+
+        function doVerify() {
+            var code = getCode();
+            if (code.length !== 6) { showMsg('error', 'Ingresa los 6 digitos'); return; }
+
+            var btn = document.getElementById('evVerifyBtn');
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
+
+            verifyCode(email, code, function(err, result) {
+                if (err || !result || !result.success) {
+                    btn.disabled = false;
+                    btn.textContent = 'Verificar Codigo';
+                    showMsg('error', (result && result.data && result.data.error && result.data.error.message) || 'Codigo invalido o expirado');
+                    return;
+                }
+
+                showMsg('success', 'Correo verificado correctamente');
+
+                // Update auth token and user data
+                if (result.data && result.data.auth_token) {
+                    localStorage.setItem('auth_token', result.data.auth_token);
+                }
+                if (result.data && result.data.user) {
+                    localStorage.setItem('latanda_user', JSON.stringify(result.data.user));
+                }
+
+                // Remove banner if present
+                var banner = document.getElementById('evBanner');
+                if (banner) banner.remove();
+
+                clearInterval(timerInterval);
+
+                setTimeout(function() {
+                    closeModal();
+                    location.reload();
+                }, 1200);
+            });
+        }
+    }
+
+    function closeModal() {
+        var overlay = document.getElementById('evOverlay');
+        if (overlay) overlay.remove();
+        EVS.modalOpen = false;
+    }
+
+    // --- Show persistent banner ---
+    function showBanner() {
+        if (EVS.bannerShown) return;
+        if (document.getElementById('evBanner')) return;
+        EVS.bannerShown = true;
+
+        var banner = document.createElement('div');
+        banner.className = 'ev-banner';
+        banner.id = 'evBanner';
+        banner.innerHTML =
+            '<i class="fas fa-exclamation-triangle"></i>' +
+            '<span>Verifica tu correo para acceder a todas las funciones</span>' +
+            '<button onclick="window._emailVerifySystem.openModal()">Verificar ahora</button>' +
+            '<button class="ev-close" onclick="this.parentElement.remove()">&times;</button>';
+        document.body.prepend(banner);
+
+        // Shift body content down so banner doesn't overlap
+        document.body.style.paddingTop = (banner.offsetHeight) + 'px';
+        banner.style.position = 'fixed';
+    }
+
+    // Public API
+    EVS.openModal = showModal;
+
+    // --- Global fetch interceptor ---
+    var originalFetch = window.fetch;
+    window.fetch = function() {
+        return originalFetch.apply(this, arguments).then(function(response) {
+            if (response.status === 403) {
+                var cloned = response.clone();
+                cloned.json().then(function(body) {
+                    var code = body && body.data && body.data.error && body.data.error.details && body.data.error.details.code;
+                    if (code === 'EMAIL_NOT_VERIFIED') {
+                        showModal();
+                    }
+                }).catch(function() {});
+            }
+            return response;
+        });
+    };
+
+    // --- On page load: check if user is unverified and show banner ---
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if (isUserUnverified()) {
+                showBanner();
+            }
+        }, 1000);
+    });
+})();
+
+
+// ============================================================
 // HUB INTELIGENTE MODULE LOADER
 // ============================================================
 LaTandaComponentLoader.loadHubModules = async function() {
@@ -533,7 +822,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
         // Load CSS
         await this.loadCSS('css/hub/hub-sections.css');
         await this.loadCSS('css/hub/mia-assistant.css');
-        await this.loadCSS('css/hub/social-feed.css?v=11.8');
+        await this.loadCSS('css/hub/social-feed.css?v=12.6');
         
         // Load JS modules
         const modules = [
@@ -542,7 +831,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=12.1'
+            'js/hub/social-feed.js?v=12.2'
         ];
         
         for (const module of modules) {
@@ -554,3 +843,46 @@ LaTandaComponentLoader.loadHubModules = async function() {
     }
 };
 
+
+
+// ============================================================
+// MORE MENU DROPDOWN (Sidebar "Mas" button)
+// ============================================================
+function toggleMoreMenu() {
+    var dropdown = document.getElementById("moreMenuDropdown");
+    if (!dropdown) return;
+    var navMoreBtn = document.getElementById("navMoreBtn");
+    if (dropdown.classList.contains("show")) {
+        dropdown.classList.remove("show");
+        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
+    } else {
+        dropdown.classList.add("show");
+        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "true");
+    }
+}
+function closeMoreMenu() {
+    var dropdown = document.getElementById("moreMenuDropdown");
+    var navMoreBtn = document.getElementById("navMoreBtn");
+    if (dropdown) dropdown.classList.remove("show");
+    if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
+}
+// Close menu when clicking outside
+document.addEventListener("click", function(e) {
+    var container = document.getElementById("navMoreBtn");
+    var dropdown = document.getElementById("moreMenuDropdown");
+    if (!dropdown || !dropdown.classList.contains("show")) return;
+    // If click is inside dropdown or on the toggle button, let it through
+    if ((container && container.contains(e.target)) || dropdown.contains(e.target)) return;
+    closeMoreMenu();
+});
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") closeMoreMenu();
+});
+// Delegated data-action handler for more-menu
+document.addEventListener("click", function(e) {
+    var btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    var action = btn.dataset.action;
+    if (action === "toggle-more-menu") { e.preventDefault(); toggleMoreMenu(); }
+    else if (action === "logout") { e.preventDefault(); if (typeof handleLogout === "function") handleLogout(); }
+});

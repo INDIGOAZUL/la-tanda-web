@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <base href="/">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - La Tanda</title>
+    <meta name="description" content="Perfil de usuario - La Tanda">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/mobile-touch-fixes.css">
+    <link rel="stylesheet" href="css/mobile-notification-fix.css">
+    <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
+    <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
+    <link rel="stylesheet" href="css/transaction-modal.css">
+    <link rel="stylesheet" href="css/components/notification-center.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.7">
+    <link rel="stylesheet" href="css/onboarding.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/mia-assistant.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/social-feed.css?v=11.8">
+    <link rel="stylesheet" href="css/hub/comments-modal.css?v=1.0">
+    <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558148">
+    <link rel="stylesheet" href="css/dashboard-polish.css?v=1.0">
+    <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
+    <link rel="stylesheet" href="css/components/wallet-dropdown.css">
+    <style>
+        :root {
+            --tanda-cyan: #00FFFF;
+            --tanda-cyan-light: #7FFFD8;
+            --tanda-cyan-dark: #00E5E5;
+            --text-primary: #f8fafc;
+            --text-secondary: rgba(248, 250, 252, 0.7);
+            --text-accent: #00FFFF;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: rgba(15, 23, 42, 0.6);
+            --border-card: rgba(0, 255, 255, 0.1);
+            --border-accent: rgba(0, 255, 255, 0.2);
+            --crypto-gold: #ffd700;
+            --success-color: #22d55e;
+            --warning-color: #fbbf24;
+            --error-color: #f87171;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 25% 25%, rgba(0,255,255,0.1) 0%, transparent 70%),
+                        radial-gradient(circle at 75% 75%, rgba(127,255,216,0.05) 0%, transparent 70%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate; z-index: -1;
+        }
+        @keyframes backgroundPulse { 0% { opacity: 0.3; } 100% { opacity: 0.7; } }
+        .bg-effects { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .gradient-orb { position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.7; animation: floatOrb 6s ease-in-out infinite; }
+        .gradient-orb-1 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(0,255,255,0.15), transparent); top: 10%; left: 5%; }
+        .gradient-orb-2 { width: 200px; height: 200px; background: radial-gradient(circle, rgba(127,255,216,0.1), transparent); top: 60%; right: 10%; animation-delay: -2s; }
+        .gradient-orb-3 { width: 250px; height: 250px; background: radial-gradient(circle, rgba(0,255,255,0.08), transparent); bottom: 10%; left: 40%; animation-delay: -4s; }
+        @keyframes floatOrb { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-30px); } }
+    </style>
+    <style>
+        .pf-cover { height: 200px; position: relative; background: linear-gradient(135deg, #0e4166 0%, #0a2647 40%, #144272 100%); background-size: cover; background-position: center; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .pf-cover-edit { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); border: none; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; display: none; }
+        .pf-cover-edit:hover { background: rgba(0,0,0,0.8); }
+        .pf-cover-input { display: none; }
+        .pf-profile-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 0 16px; margin-top: -44px; position: relative; z-index: 2; }
+        .pf-avatar { width: 88px; height: 88px; border-radius: 50%; border: 4px solid #0a0f1e; overflow: hidden; background: rgba(0,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: #00FFFF; position: relative; cursor: pointer; }
+        .pf-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .pf-avatar-edit { position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 0.7rem; cursor: pointer; display: none; }
+        .pf-avatar-input { display: none; }
+        .pf-actions { display: flex; gap: 8px; margin-top: 52px; }
+        .pf-btn { padding: 7px 20px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .pf-btn-follow { border: 1px solid rgba(0,255,255,0.4); background: transparent; color: #00FFFF; }
+        .pf-btn-follow:hover { background: rgba(0,255,255,0.1); }
+        .pf-btn-follow.following { background: rgba(0,255,255,0.12); border-color: rgba(0,255,255,0.3); }
+        .pf-btn-follow.following:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.1); }
+        .pf-btn-edit { border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #e2e8f0; }
+        .pf-btn-edit:hover { background: rgba(255,255,255,0.08); }
+        .pf-btn-share { border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #94a3b8; padding: 7px 10px; }
+        .pf-btn-share:hover { background: rgba(255,255,255,0.06); }
+        .pf-details { padding: 12px 16px 0; }
+        .pf-name { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .pf-verified { color: #00FFFF; font-size: 0.9rem; }
+        .pf-handle { display: block; font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+        .pf-bio { margin-top: 10px; font-size: 0.9rem; line-height: 1.5; color: #cbd5e1; white-space: pre-wrap; }
+        .pf-meta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+        .pf-meta-item { font-size: 0.82rem; color: #64748b; }
+        .pf-meta-item i { margin-right: 4px; font-size: 0.78rem; }
+        .pf-stats { display: flex; gap: 20px; margin-top: 14px; padding: 0 16px 0; }
+        .pf-stat { font-size: 0.85rem; color: #94a3b8; cursor: pointer; }
+        .pf-stat:hover { color: #e2e8f0; text-decoration: underline; }
+        .pf-stat strong { color: #e2e8f0; font-weight: 700; }
+        .pf-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); margin-top: 14px; }
+        .pf-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 0.88rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .pf-tab:hover { color: #94a3b8; }
+        .pf-tab.active { color: #00FFFF; border-bottom-color: #00FFFF; }
+        .pf-tab-content { padding: 0; min-height: 300px; }
+        .pf-tab-panel { display: none; }
+        .pf-tab-panel.active { display: block; }
+        .pf-post { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: background 0.15s; }
+        .pf-post:hover { background: rgba(255,255,255,0.02); }
+        .pf-post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .pf-post-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: rgba(0,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #00FFFF; flex-shrink: 0; }
+        .pf-post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .pf-post-name { font-weight: 600; font-size: 0.88rem; }
+        .pf-post-handle-sm { color: #64748b; font-size: 0.82rem; margin-left: 4px; }
+        .pf-post-date { color: #475569; font-size: 0.78rem; margin-left: auto; }
+        .pf-post-text { font-size: 0.9rem; line-height: 1.5; color: #cbd5e1; }
+        .pf-post-images { display: flex; gap: 4px; margin-top: 10px; border-radius: 12px; overflow: hidden; }
+        .pf-post-images img { width: 100%; max-height: 300px; object-fit: cover; }
+        .pf-post-engagement { display: flex; gap: 20px; margin-top: 10px; }
+        .pf-post-eng-item { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: #64748b; }
+        .pf-user-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .pf-user-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: rgba(0,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: #00FFFF; flex-shrink: 0; cursor: pointer; }
+        .pf-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .pf-user-info { flex: 1; min-width: 0; cursor: pointer; }
+        .pf-user-name { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 4px; }
+        .pf-user-handle-sm { font-size: 0.8rem; color: #64748b; }
+        .pf-user-bio { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pf-user-follow-btn { padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(0,255,255,0.4); background: transparent; color: #00FFFF; }
+        .pf-user-follow-btn:hover { background: rgba(0,255,255,0.1); }
+        .pf-user-follow-btn.following { background: rgba(0,255,255,0.12); border-color: rgba(0,255,255,0.3); }
+        .pf-loading { text-align: center; padding: 40px; color: #64748b; }
+        .pf-loading i { font-size: 1.5rem; margin-bottom: 10px; }
+        .pf-empty { text-align: center; padding: 40px 16px; color: #475569; font-size: 0.88rem; }
+        .pf-error { text-align: center; padding: 60px 16px; }
+        .pf-error i { font-size: 3rem; color: #475569; margin-bottom: 16px; }
+        .pf-error h2 { font-size: 1.2rem; margin-bottom: 8px; }
+        .pf-error p { color: #64748b; font-size: 0.9rem; }
+        .pf-edit-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); align-items: flex-start; justify-content: center; padding-top: 5vh; }
+        .pf-edit-overlay.active { display: flex; }
+        .pf-edit-modal { width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; background: #111827; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); }
+        .pf-edit-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .pf-edit-header h3 { font-size: 1rem; font-weight: 700; }
+        .pf-edit-close { background: none; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 4px; }
+        .pf-edit-save { padding: 6px 18px; border-radius: 20px; border: none; background: #00FFFF; color: #0a0f1e; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+        .pf-edit-save:hover { background: #22d3ee; }
+        .pf-edit-save:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pf-edit-body { padding: 16px; }
+        .pf-edit-group { margin-bottom: 16px; }
+        .pf-edit-label { display: block; font-size: 0.82rem; color: #94a3b8; margin-bottom: 5px; }
+        .pf-edit-input, .pf-edit-textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 0.9rem; font-family: inherit; }
+        .pf-edit-input:focus, .pf-edit-textarea:focus { outline: none; border-color: rgba(0,255,255,0.4); }
+        .pf-edit-textarea { resize: vertical; min-height: 80px; }
+        .pf-edit-char { text-align: right; font-size: 0.75rem; color: #475569; margin-top: 3px; }
+        .pf-edit-handle-prefix { display: flex; align-items: center; }
+        .pf-edit-handle-prefix span { padding: 10px 0 10px 12px; color: #64748b; font-size: 0.9rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-right: none; border-radius: 8px 0 0 8px; }
+        .pf-edit-handle-prefix input { border-radius: 0 8px 8px 0; }
+        .pf-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; z-index: 300; opacity: 0; transition: opacity 0.3s; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); }
+        .pf-toast.show { opacity: 1; }
+        .pf-toast.success { border-color: rgba(34,197,94,0.3); }
+        .pf-toast.error { border-color: rgba(239,68,68,0.3); }
+        @media (max-width: 480px) {
+            .pf-cover { height: 140px; }
+            .pf-avatar { width: 72px; height: 72px; }
+            .pf-profile-row { margin-top: -36px; }
+            .pf-actions { margin-top: 44px; }
+            .pf-name { font-size: 1.1rem; }
+            .pf-stats { gap: 14px; }
+        }
+    </style>
+</head>
+<body data-sidebar="true">
+    <div id="global-header"></div>
+    <div class="bg-effects"><div class="gradient-orb gradient-orb-1"></div><div class="gradient-orb gradient-orb-2"></div><div class="gradient-orb gradient-orb-3"></div></div>
+    <div class="dashboard-3col">
+        <aside class="left-sidebar" id="leftSidebar">
+            <nav class="nav-menu">
+                <a href="/home-dashboard.html" class="nav-menu-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+                <a href="/explorar.html" class="nav-menu-item"><i class="fas fa-hashtag"></i><span>Explorar</span></a>
+                <a href="/trabajo.html" class="nav-menu-item"><i class="fas fa-briefcase"></i><span>Trabajo</span></a>
+                <a href="/creator-hub.html" class="nav-menu-item"><i class="fas fa-palette"></i><span>Creator Hub</span></a>
+                <a href="/guardados.html" class="nav-menu-item"><i class="fas fa-bookmark"></i><span>Guardados</span></a>
+                <a href="/mensajes.html" class="nav-menu-item"><i class="fas fa-envelope"></i><span>Mensajes</span></a>
+                <a href="/mineria.html" class="nav-menu-item"><i class="fas fa-hammer"></i><span>Mineria</span></a>
+                <div class="nav-more-container" style="position: relative;">
+                <div class="nav-menu-item nav-more-btn" id="navMoreBtn" data-action="toggle-more-menu" role="button" aria-expanded="false" aria-controls="moreMenuDropdown" aria-label="Mas opciones"><i class="fas fa-ellipsis-h"></i><span>Mas</span></div>
+                <div class="more-menu-dropdown" id="moreMenuDropdown" role="menu">
+                    <a href="perfil.html" class="more-menu-item" id="navProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-list"></i><span>Listas</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-users"></i><span>Comunidades</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-briefcase"></i><span>Negocios</span></a>
+                    <a href="#" class="more-menu-item"><i class="fas fa-bullhorn"></i><span>Anuncios</span></a>
+                    <div class="more-menu-divider"></div>
+                    <a href="configuracion.html" class="more-menu-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>
+                    <a href="#" class="more-menu-item" data-action="logout"><i class="fas fa-sign-out-alt"></i><span>Cerrar Sesion</span></a>
+                </div>
+                </div>
+            </nav>
+            <div class="nav-section-divider"></div>
+            <div class="nav-section-label">Accesos Rapidos</div>
+            <nav class="nav-menu">
+                <a href="/mia.html" class="nav-menu-item"><i class="fas fa-robot"></i><span>MIA AI</span></a>
+                <a href="/groups-advanced-system.html" class="nav-menu-item"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
+                <a href="/marketplace-social.html" class="nav-menu-item"><i class="fas fa-store"></i><span>Marketplace</span></a>
+                <a href="/lottery-predictor.html" class="nav-menu-item"><i class="fas fa-ticket-alt"></i><span>Loteria</span></a>
+            </nav>
+        </aside>
+        <main class="main-feed" id="mainFeed">
+            <div id="pfMain"><div class="pf-loading" id="pfLoading"><i class="fas fa-spinner fa-spin"></i><p>Cargando perfil...</p></div></div>
+        </main>
+        <aside class="right-sidebar" id="rightSidebar">
+            <div class="right-sidebar-sticky">
+                <div class="sidebar-search"><i class="fas fa-search"></i><input type="text" placeholder="Buscar en La Tanda..." id="sidebarSearch"></div>
+                <div class="sidebar-hub-cards" id="sidebarHubCards">
+                    <div class="sidebar-hub-card"><div class="sidebar-hub-card-header"><span class="sidebar-hub-card-title">Finanzas</span><div class="sidebar-hub-card-icon bg-cyan"><i class="fas fa-wallet"></i></div></div><div class="sidebar-hub-card-value" id="sidebarBalance">0.00 <small style="font-size:0.6em;opacity:0.7">LTD</small></div><div class="sidebar-hub-card-label">Balance disponible</div><div class="sidebar-hub-card-meta" id="sidebarTandasCount">0 tandas activas</div><a href="my-wallet.html" class="sidebar-hub-card-btn">Ver wallet</a></div>
+                    <div class="sidebar-hub-card"><div class="sidebar-hub-card-header"><span class="sidebar-hub-card-title">Mercado</span><div class="sidebar-hub-card-icon bg-yellow"><i class="fas fa-store"></i></div></div><div class="sidebar-hub-card-value" id="sidebarProducts">0</div><div class="sidebar-hub-card-label">Mis productos</div><div class="sidebar-hub-card-meta" id="sidebarSales">0 ventas hoy</div><a href="/marketplace-social.html" class="sidebar-hub-card-btn">Ver marketplace</a></div>
+                </div>
+                <div class="sidebar-widget"><h3 class="sidebar-widget-title">A quien seguir</h3><div id="whoToFollowList"></div></div>
+            </div>
+        </aside>
+    </div>
+    <div class="mobile-drawer-overlay" id="mobileDrawerOverlay" onclick="MobileDrawer.close()"></div>
+    <aside class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-header"><div class="mobile-drawer-brand"><div class="mobile-drawer-logo"><img loading="lazy" src="images/latanda-icon.png" alt="La Tanda" class="logo-fallback"></div><span class="mobile-drawer-title">La Tanda</span></div><button class="mobile-drawer-close" onclick="MobileDrawer.close()"><i class="fas fa-times"></i></button></div>
+        <div class="mobile-drawer-user" id="mobileDrawerUser"><div class="mobile-drawer-avatar" id="mobileDrawerAvatar"><i class="fas fa-bars"></i></div><div class="mobile-drawer-user-info"><div class="mobile-drawer-user-name" id="mobileDrawerUserName">Usuario</div><div class="mobile-drawer-user-handle" id="mobileDrawerUserHandle">@usuario</div></div></div>
+        <div class="mobile-drawer-stats"><div class="mobile-drawer-stat"><span class="mobile-drawer-stat-value" id="mobileDrawerFollowing">0</span><span class="mobile-drawer-stat-label">Siguiendo</span></div><div class="mobile-drawer-stat"><span class="mobile-drawer-stat-value" id="mobileDrawerFollowers">0</span><span class="mobile-drawer-stat-label">Seguidores</span></div></div>
+        <nav class="mobile-drawer-nav">
+            <a href="perfil.html" class="mobile-drawer-item" id="drawerProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
+            <a href="my-wallet.html" class="mobile-drawer-item"><i class="fas fa-wallet"></i><span>Wallet</span></a>
+            <a href="/groups-advanced-system.html" class="mobile-drawer-item"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
+            <a href="/marketplace-social.html" class="mobile-drawer-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+            <a href="/mensajes.html" class="mobile-drawer-item"><i class="fas fa-envelope"></i><span>Mensajes</span></a>
+            <div class="mobile-drawer-divider"></div>
+            <div class="mobile-drawer-section-label">Herramientas</div>
+            <a href="/mia.html" class="mobile-drawer-item"><i class="fas fa-robot" style="color:#00FFFF;"></i><span>MIA Assistant</span></a>
+            <a href="/lottery-predictor.html" class="mobile-drawer-item"><i class="fas fa-ticket-alt"></i><span>Loteria</span></a>
+            <div class="mobile-drawer-divider"></div>
+            <a href="/mi-perfil.html" class="mobile-drawer-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>
+        </nav>
+        <div class="mobile-drawer-divider"></div>
+        <div class="mobile-drawer-section-label">Tu Resumen</div>
+        <div class="mobile-drawer-quick-stats" id="mobileDrawerQuickStats">
+            <div class="drawer-stat-card"><div class="drawer-stat-icon" style="background: linear-gradient(135deg, #00FFFF, #00E5E5);"><i class="fas fa-wallet"></i></div><div class="drawer-stat-info"><div class="drawer-stat-label">Balance</div><div class="drawer-stat-value" id="drawerBalance">0.00 LTD</div></div></div>
+            <div class="drawer-stat-card"><div class="drawer-stat-icon" style="background: linear-gradient(135deg, #22d55e, #16a34a);"><i class="fas fa-users"></i></div><div class="drawer-stat-info"><div class="drawer-stat-label">Tandas Activas</div><div class="drawer-stat-value" id="drawerTandas">0</div></div></div>
+            <div class="drawer-stat-card"><div class="drawer-stat-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"><i class="fas fa-store"></i></div><div class="drawer-stat-info"><div class="drawer-stat-label">Productos</div><div class="drawer-stat-value" id="drawerProducts">0</div></div></div>
+        </div>
+        <div class="mobile-drawer-footer"><button class="mobile-drawer-logout" onclick="MobileDrawer.logout()"><i class="fas fa-sign-out-alt"></i><span>Cerrar Sesion</span></button></div>
+    </aside>
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mobile-nav-item" onclick="EdgeSwipe.toggleLeft()"><i class="fas fa-bars"></i><span>Menu</span></button>
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <button class="mobile-nav-item" onclick="EdgeSwipe.toggleRight()"><i class="fas fa-th-large"></i><span>Widgets</span></button>
+    </nav>
+    <div class="pf-edit-overlay" id="pfEditOverlay">
+        <div class="pf-edit-modal">
+            <div class="pf-edit-header"><button class="pf-edit-close" id="pfEditClose"><i class="fas fa-times"></i></button><h3>Editar perfil</h3><button class="pf-edit-save" id="pfEditSave">Guardar</button></div>
+            <div class="pf-edit-body">
+                <div class="pf-edit-group"><label class="pf-edit-label">Nombre</label><input type="text" class="pf-edit-input" id="pfEditName" maxlength="100"></div>
+                <div class="pf-edit-group"><label class="pf-edit-label">Bio</label><textarea class="pf-edit-textarea" id="pfEditBio" maxlength="500" rows="3"></textarea><div class="pf-edit-char"><span id="pfEditBioCount">0</span>/500</div></div>
+                <div class="pf-edit-group"><label class="pf-edit-label">Handle</label><div class="pf-edit-handle-prefix"><span>@</span><input type="text" class="pf-edit-input" id="pfEditHandle" maxlength="30" pattern="[a-z0-9_]+" placeholder="mi_handle"></div></div>
+                <div class="pf-edit-group"><label class="pf-edit-label">Ubicacion</label><input type="text" class="pf-edit-input" id="pfEditLocation" maxlength="100" placeholder="Tegucigalpa, Honduras"></div>
+            </div>
+        </div>
+    </div>
+    <div class="pf-toast" id="pfToast"></div>
+    <link rel="stylesheet" href="shared-components.css?v=1760032177">
+    <script src="shared-components.js?v=7.20"></script>
+    <div id="latanda-footer" class="auto-footer"></div>
+    <script src="js/components/notification-center.js?v=3.0"></script>
+    <script src="js/components/network-switcher.js"></script>
+    <script src="js/components/transaction-modal.js"></script>
+    <script src="js/dashboard-api-connector.js"></script>
+    <script src="js/dashboard-real-data-patch.js"></script>
+    <script src="js/header-footer-cleanup.js"></script>
+    <script src="js/components/loading-states.js"></script>
+    <script src="js/components-loader.js?v=30.5"></script>
+    <script src="js/hub/hub-api-connector.js?v=1.02"></script>
+    <script src="js/hub/sidebar-widgets.js?v=1770829609"></script>
+    <script src="js/mobile-drawer.js?v=1769469123"></script>
+    <script src="js/dashboard-polish.js?v=1.0"></script>
+    <script src="js/edge-swipe.js?v=1769558147"></script>
+    <script src="js/hub/user-mini-profile.js?v=2.1"></script>
+    <script src="js/hub/contextual-widgets.js?v=1770829609"></script>
+<script>
+(function() {
+    'use strict';
+    var esc = function(str) { if (!str) return ''; var d = document.createElement('div'); d.textContent = String(str); return d.innerHTML; };
+    var getInitials = function(name) { if (!name) return '?'; return name.split(' ').map(function(w){return w[0]}).join('').substring(0,2).toUpperCase(); };
+    var formatCount = function(n) { n = parseInt(n) || 0; if (n >= 1000000) return (n/1000000).toFixed(1)+'M'; if (n >= 1000) return (n/1000).toFixed(1)+'K'; return String(n); };
+    var getToken = function() { return localStorage.getItem('auth_token') || localStorage.getItem('authToken'); };
+    var fetchAuth = function(url, opts) { opts = opts || {}; var token = getToken(); if (token) { opts.headers = opts.headers || {}; opts.headers['Authorization'] = 'Bearer ' + token; } return fetch(url, opts); };
+
+    var profileData = null, currentTab = 'posts';
+    var postsData = [], followersData = [], followingData = [];
+    var postsOffset = 0, followersOffset = 0, followingOffset = 0;
+    var postsHasMore = true, followersHasMore = true, followingHasMore = true;
+    var loadingMore = false;
+
+    function getHandleFromURL() { var p = new URLSearchParams(window.location.search); return p.get('handle') || null; }
+    function getUserIdFromURL() { var p = new URLSearchParams(window.location.search); return p.get('id') || null; }
+    function getCurrentUserId() { try { var u = JSON.parse(localStorage.getItem('latanda_user') || '{}'); return u.user_id || u.id || null; } catch(e) { return null; } }
+
+    async function init() {
+        var handle = getHandleFromURL(), directId = getUserIdFromURL(), userId = directId;
+        if (handle && !userId) {
+            try { var r = await fetchAuth('/api/users/by-handle/' + encodeURIComponent(handle)); var d = await r.json(); if (d.success && d.data) { userId = d.data.user_id; } else { showError('Usuario no encontrado'); return; } } catch(e) { showError('Error al buscar usuario'); return; }
+        }
+        if (!userId) { userId = getCurrentUserId(); if (!userId) { showError('No se especifico un usuario'); return; } }
+        try { var r = await fetchAuth('/api/feed/social/user/' + userId + '/profile'); var d = await r.json(); if (!d.success || !d.data) { showError('Perfil no encontrado'); return; } profileData = d.data; renderProfile(); loadPosts(); } catch(e) { showError('Error al cargar perfil'); }
+    }
+
+    function showError(msg) { document.getElementById('pfLoading').style.display = 'none'; document.getElementById('pfMain').innerHTML = '<div class="pf-error"><i class="fas fa-user-slash"></i><h2>' + esc(msg) + '</h2><p><a href="/home-dashboard.html">Volver al inicio</a></p></div>'; }
+
+    function renderProfile() {
+        var user = profileData.user, stats = profileData.stats, isSelf = profileData.is_self, isFollowing = profileData.is_following;
+        document.title = (user.name || 'Perfil') + (user.handle ? ' (@' + user.handle + ')' : '') + ' - La Tanda';
+        var initials = getInitials(user.name);
+        var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" alt="' + esc(user.name) + '">' : initials;
+        var coverStyle = user.cover_url ? 'background-image: url(' + esc(user.cover_url) + '); background-size: cover; background-position: center;' : '';
+        var memberDate = user.member_since ? new Date(user.member_since) : null;
+        var memberLabel = memberDate ? 'Se unio en ' + memberDate.toLocaleDateString('es-HN', { month: 'long', year: 'numeric' }) : '';
+        var actionsHtml = '';
+        if (isSelf) { actionsHtml = '<button class="pf-btn pf-btn-edit" id="pfBtnEdit"><i class="fas fa-pen"></i> Editar perfil</button><a href="/mi-perfil.html" class="pf-btn pf-btn-share" title="Configuracion de cuenta"><i class="fas fa-cog"></i></a>'; }
+        else if (getToken()) { actionsHtml = '<button class="pf-btn pf-btn-follow ' + (isFollowing ? 'following' : '') + '" id="pfBtnFollow" data-user-id="' + esc(user.id) + '">' + (isFollowing ? 'Siguiendo' : 'Seguir') + '</button>'; }
+        actionsHtml += '<button class="pf-btn pf-btn-share" id="pfBtnShare" title="Compartir perfil"><i class="fas fa-share-from-square"></i></button>';
+        document.getElementById('pfMain').innerHTML =
+            '<div class="pf-cover" style="' + coverStyle + '">' + (isSelf ? '<button class="pf-cover-edit" id="pfCoverEdit" style="display:block"><i class="fas fa-camera"></i> Cambiar</button><input type="file" class="pf-cover-input" id="pfCoverInput" accept="image/jpeg,image/png,image/webp">' : '') + '</div>' +
+            '<div class="pf-profile-row"><div class="pf-avatar">' + avatarHtml + (isSelf ? '<button class="pf-avatar-edit" id="pfAvatarEdit" style="display:block"><i class="fas fa-camera"></i></button><input type="file" class="pf-avatar-input" id="pfAvatarInput" accept="image/jpeg,image/png,image/webp">' : '') + '</div><div class="pf-actions">' + actionsHtml + '</div></div>' +
+            '<div class="pf-details"><div class="pf-name">' + esc(user.name) + (user.verified ? ' <i class="fas fa-check-circle pf-verified"></i>' : '') + '</div>' + (user.handle ? '<span class="pf-handle">@' + esc(user.handle) + '</span>' : '') + (user.bio ? '<p class="pf-bio">' + esc(user.bio) + '</p>' : '') + '<div class="pf-meta">' + (user.location ? '<span class="pf-meta-item"><i class="fas fa-map-marker-alt"></i> ' + esc(user.location) + '</span>' : '') + (memberLabel ? '<span class="pf-meta-item"><i class="far fa-calendar-alt"></i> ' + esc(memberLabel) + '</span>' : '') + '</div></div>' +
+            '<div class="pf-stats"><span class="pf-stat" data-tab="posts"><strong>' + formatCount(stats.posts) + '</strong> publicaciones</span><span class="pf-stat" data-tab="followers"><strong>' + formatCount(stats.followers) + '</strong> seguidores</span><span class="pf-stat" data-tab="following"><strong>' + formatCount(stats.following) + '</strong> siguiendo</span></div>' +
+            '<div class="pf-tabs"><div class="pf-tab active" data-tab="posts">Publicaciones</div><div class="pf-tab" data-tab="followers">Seguidores</div><div class="pf-tab" data-tab="following">Siguiendo</div></div>' +
+            '<div class="pf-tab-content"><div class="pf-tab-panel active" id="pfPanelPosts"></div><div class="pf-tab-panel" id="pfPanelFollowers"></div><div class="pf-tab-panel" id="pfPanelFollowing"></div></div>';
+        attachHandlers();
+    }
+
+    function attachHandlers() {
+        document.querySelectorAll('.pf-tab, .pf-stat[data-tab]').forEach(function(el) { el.addEventListener('click', function() { switchTab(el.dataset.tab); }); });
+        var followBtn = document.getElementById('pfBtnFollow'); if (followBtn) followBtn.addEventListener('click', handleFollow);
+        var editBtn = document.getElementById('pfBtnEdit'); if (editBtn) editBtn.addEventListener('click', openEditModal);
+        var shareBtn = document.getElementById('pfBtnShare'); if (shareBtn) shareBtn.addEventListener('click', handleShare);
+        var coverEdit = document.getElementById('pfCoverEdit'), coverInput = document.getElementById('pfCoverInput');
+        if (coverEdit && coverInput) { coverEdit.addEventListener('click', function() { coverInput.click(); }); coverInput.addEventListener('change', handleCoverUpload); }
+        var avatarEdit = document.getElementById('pfAvatarEdit'), avatarInput = document.getElementById('pfAvatarInput');
+        if (avatarEdit && avatarInput) { avatarEdit.addEventListener('click', function(e) { e.stopPropagation(); avatarInput.click(); }); avatarInput.addEventListener('change', handleAvatarUpload); }
+        document.getElementById('pfEditClose').addEventListener('click', closeEditModal);
+        document.getElementById('pfEditSave').addEventListener('click', saveProfile);
+        document.getElementById('pfEditOverlay').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeEditModal(); });
+        document.getElementById('pfEditBio').addEventListener('input', function(e) { document.getElementById('pfEditBioCount').textContent = e.target.value.length; });
+        window.addEventListener('scroll', handleScroll);
+        document.getElementById('pfMain').addEventListener('click', function(e) {
+            var post = e.target.closest('.pf-post[data-event-id]');
+            if (post && !e.target.closest('.pf-user-avatar, .pf-user-info')) { window.location.href = '/home-dashboard.html?event=' + post.dataset.eventId; }
+            var userItem = e.target.closest('.pf-user-avatar[data-user-id], .pf-user-info[data-user-id]');
+            if (userItem) { var uid = userItem.dataset.userId; if (uid) window.location.href = '/perfil/?id=' + uid; }
+        });
+    }
+
+    function switchTab(tab) {
+        if (tab === currentTab) return; currentTab = tab;
+        document.querySelectorAll('.pf-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === tab); });
+        document.querySelectorAll('.pf-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        if (tab === 'posts') { document.getElementById('pfPanelPosts').classList.add('active'); if (postsData.length === 0) loadPosts(); }
+        else if (tab === 'followers') { document.getElementById('pfPanelFollowers').classList.add('active'); if (followersData.length === 0) loadFollowers(); }
+        else if (tab === 'following') { document.getElementById('pfPanelFollowing').classList.add('active'); if (followingData.length === 0) loadFollowing(); }
+    }
+
+    async function loadPosts() {
+        if (loadingMore || !postsHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelPosts');
+        if (postsOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try { var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/posts?limit=20&offset=' + postsOffset); var d = await r.json(); if (postsOffset === 0) panel.innerHTML = ''; var events = (d.data && d.data.events) || d.events || []; if (events.length < 20) postsHasMore = false; postsData = postsData.concat(events); events.forEach(function(ev) { panel.insertAdjacentHTML('beforeend', renderPost(ev)); }); postsOffset += events.length; if (postsData.length === 0) panel.innerHTML = '<div class="pf-empty"><i class="far fa-newspaper"></i><p>Sin publicaciones aun</p></div>'; } catch(e) { if (postsOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar publicaciones</div>'; }
+        loadingMore = false;
+    }
+
+    async function loadFollowers() {
+        if (loadingMore || !followersHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelFollowers');
+        if (followersOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try { var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/followers?limit=20&offset=' + followersOffset); var d = await r.json(); if (followersOffset === 0) panel.innerHTML = ''; var users = (d.data && d.data.users) || d.users || []; if (users.length < 20) followersHasMore = false; followersData = followersData.concat(users); users.forEach(function(u) { panel.insertAdjacentHTML('beforeend', renderUserItem(u)); }); followersOffset += users.length; if (followersData.length === 0) panel.innerHTML = '<div class="pf-empty">Sin seguidores aun</div>'; } catch(e) { if (followersOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar seguidores</div>'; }
+        loadingMore = false;
+    }
+
+    async function loadFollowing() {
+        if (loadingMore || !followingHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelFollowing');
+        if (followingOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try { var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/following?limit=20&offset=' + followingOffset); var d = await r.json(); if (followingOffset === 0) panel.innerHTML = ''; var users = (d.data && d.data.users) || d.users || []; if (users.length < 20) followingHasMore = false; followingData = followingData.concat(users); users.forEach(function(u) { panel.insertAdjacentHTML('beforeend', renderUserItem(u)); }); followingOffset += users.length; if (followingData.length === 0) panel.innerHTML = '<div class="pf-empty">Sin seguir a nadie aun</div>'; } catch(e) { if (followingOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar</div>'; }
+        loadingMore = false;
+    }
+
+    function renderPost(ev) {
+        var user = profileData.user, content = ev.content || (ev.data && ev.data.content) || '', images = ev.media || (ev.data && ev.data.media) || [], engagement = ev.engagement || {};
+        var createdAt = ev.created_at || ev.timestamp, date = createdAt ? new Date(createdAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '';
+        var imagesHtml = '';
+        if (images.length > 0) { imagesHtml = '<div class="pf-post-images">'; images.slice(0,4).forEach(function(img) { var url = typeof img === 'string' ? img : img.url; if (url) imagesHtml += '<img src="' + esc(url) + '" alt="Imagen" loading="lazy">'; }); imagesHtml += '</div>'; }
+        var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" alt="">' : getInitials(user.name);
+        return '<div class="pf-post" data-event-id="' + esc(ev.id || ev.event_id) + '"><div class="pf-post-header"><div class="pf-post-avatar">' + avatarHtml + '</div><span class="pf-post-name">' + esc(user.name) + '</span>' + (user.handle ? '<span class="pf-post-handle-sm">@' + esc(user.handle) + '</span>' : '') + '<span class="pf-post-date">' + esc(date) + '</span></div>' + (content ? '<div class="pf-post-text">' + esc(content) + '</div>' : '') + imagesHtml + '<div class="pf-post-engagement"><span class="pf-post-eng-item"><i class="far fa-comment"></i> ' + formatCount(engagement.comments || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-heart"></i> ' + formatCount(engagement.likes || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-eye"></i> ' + formatCount(engagement.views || 0) + '</span></div></div>';
+    }
+
+    function renderUserItem(u) {
+        var avatarHtml = u.avatar_url ? '<img src="' + esc(u.avatar_url) + '" alt="">' : getInitials(u.name);
+        var isSelf = u.user_id === getCurrentUserId(), followHtml = '';
+        if (!isSelf && getToken()) { followHtml = '<button class="pf-user-follow-btn ' + (u.is_following ? 'following' : '') + '" data-user-id="' + esc(u.user_id) + '" onclick="window._pfToggleFollow(this)">' + (u.is_following ? 'Siguiendo' : 'Seguir') + '</button>'; }
+        return '<div class="pf-user-item"><div class="pf-user-avatar" data-user-id="' + esc(u.user_id) + '">' + avatarHtml + '</div><div class="pf-user-info" data-user-id="' + esc(u.user_id) + '"><div class="pf-user-name">' + esc(u.name) + (u.verified ? ' <i class="fas fa-check-circle" style="color:#00FFFF;font-size:12px"></i>' : '') + '</div>' + (u.handle ? '<div class="pf-user-handle-sm">@' + esc(u.handle) + '</div>' : '') + (u.bio ? '<div class="pf-user-bio">' + esc(u.bio) + '</div>' : '') + '</div>' + followHtml + '</div>';
+    }
+
+    window._pfToggleFollow = async function(btn) {
+        var userId = btn.dataset.userId; if (!userId) return;
+        var isFollowing = btn.classList.contains('following'), method = isFollowing ? 'DELETE' : 'POST';
+        var url = isFollowing ? '/api/feed/social/unfollow/' + userId : '/api/feed/social/follow/' + userId;
+        try { var r = await fetchAuth(url, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; } } catch(e) {}
+    };
+
+    async function handleFollow() {
+        var btn = document.getElementById('pfBtnFollow'); if (!btn) return;
+        var userId = btn.dataset.userId, isFollowing = btn.classList.contains('following'), method = isFollowing ? 'DELETE' : 'POST';
+        var url = isFollowing ? '/api/feed/social/unfollow/' + userId : '/api/feed/social/follow/' + userId;
+        try { var r = await fetchAuth(url, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; profileData.is_following = !isFollowing; var statsEl = document.querySelector('.pf-stat[data-tab="followers"] strong'); if (statsEl) { var current = parseInt(profileData.stats.followers) || 0; profileData.stats.followers = isFollowing ? current - 1 : current + 1; statsEl.textContent = formatCount(profileData.stats.followers); } } } catch(e) {}
+    }
+
+    function handleShare() {
+        var user = profileData.user, url = user.handle ? window.location.origin + '/perfil/' + user.handle : window.location.href;
+        if (navigator.share) { navigator.share({ title: user.name + ' - La Tanda', url: url }).catch(function(){}); }
+        else { navigator.clipboard.writeText(url).then(function() { showToast('Enlace copiado', 'success'); }); }
+    }
+
+    async function handleCoverUpload(e) {
+        var file = e.target.files[0]; if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { showToast('Maximo 5MB', 'error'); return; }
+        var formData = new FormData(); formData.append('cover', file);
+        try { showToast('Subiendo portada...', ''); var r = await fetchAuth('/api/user/cover-photo', { method: 'POST', body: formData }); var d = await r.json(); if (d.success) { profileData.user.cover_url = d.cover_url; var cover = document.querySelector('.pf-cover'); if (cover) { cover.style.backgroundImage = 'url(' + d.cover_url + ')'; cover.style.backgroundSize = 'cover'; cover.style.backgroundPosition = 'center'; } showToast('Portada actualizada', 'success'); } else { showToast(d.message || 'Error', 'error'); } } catch(e) { showToast('Error al subir', 'error'); }
+    }
+
+    async function handleAvatarUpload(e) {
+        var file = e.target.files[0]; if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { showToast('Maximo 2MB', 'error'); return; }
+        var formData = new FormData(); formData.append('avatar', file);
+        try { showToast('Subiendo avatar...', ''); var r = await fetchAuth('/api/user/avatar', { method: 'POST', body: formData }); var d = await r.json(); if (d.success && d.avatar_url) { profileData.user.avatar_url = d.avatar_url; var avatarEl = document.querySelector('.pf-avatar'); if (avatarEl) { var img = avatarEl.querySelector('img'); if (img) { img.src = d.avatar_url; } else { avatarEl.insertAdjacentHTML('afterbegin', '<img src="' + esc(d.avatar_url) + '" alt="">'); } } showToast('Avatar actualizado', 'success'); } else { showToast(d.message || 'Error', 'error'); } } catch(e) { showToast('Error al subir', 'error'); }
+    }
+
+    function openEditModal() {
+        var user = profileData.user;
+        document.getElementById('pfEditName').value = user.name || '';
+        document.getElementById('pfEditBio').value = user.bio || '';
+        document.getElementById('pfEditBioCount').textContent = (user.bio || '').length;
+        document.getElementById('pfEditHandle').value = user.handle || '';
+        document.getElementById('pfEditLocation').value = user.location || '';
+        document.getElementById('pfEditOverlay').classList.add('active');
+    }
+
+    function closeEditModal() { document.getElementById('pfEditOverlay').classList.remove('active'); }
+
+    async function saveProfile() {
+        var saveBtn = document.getElementById('pfEditSave'); saveBtn.disabled = true; saveBtn.textContent = 'Guardando...';
+        var payload = { name: document.getElementById('pfEditName').value.trim(), bio: document.getElementById('pfEditBio').value.trim(), handle: document.getElementById('pfEditHandle').value.trim().toLowerCase(), location: document.getElementById('pfEditLocation').value.trim() };
+        if (!payload.name || payload.name.length < 2) { showToast('El nombre debe tener al menos 2 caracteres', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Guardar'; return; }
+        try { var r = await fetchAuth('/api/user/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); var d = await r.json();
+            if (d.success) { profileData.user.name = payload.name; profileData.user.bio = payload.bio; profileData.user.handle = payload.handle; profileData.user.location = payload.location;
+                try { var stored = JSON.parse(localStorage.getItem('latanda_user') || '{}'); stored.name = payload.name; stored.handle = payload.handle; localStorage.setItem('latanda_user', JSON.stringify(stored)); } catch(e) {}
+                closeEditModal(); renderProfile(); showToast('Perfil actualizado', 'success'); if (payload.handle) { window.history.replaceState(null, '', '/perfil/' + payload.handle); }
+            } else { showToast(d.message || 'Error al guardar', 'error'); }
+        } catch(e) { showToast('Error de conexion', 'error'); }
+        saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
+    }
+
+    function handleScroll() {
+        if (loadingMore) return;
+        if (window.innerHeight + window.scrollY < document.body.offsetHeight - 300) return;
+        if (currentTab === 'posts' && postsHasMore) loadPosts();
+        else if (currentTab === 'followers' && followersHasMore) loadFollowers();
+        else if (currentTab === 'following' && followingHasMore) loadFollowing();
+    }
+
+    function showToast(msg, type) { var toast = document.getElementById('pfToast'); toast.textContent = msg; toast.className = 'pf-toast show ' + (type || ''); clearTimeout(toast._timer); toast._timer = setTimeout(function() { toast.classList.remove('show'); }, 3000); }
+
+    init();
+})();
+</script>
+</body>
+</html>

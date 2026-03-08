@@ -57,9 +57,6 @@ class LaTandaHeader {
                 case "searchBtn":
                     this.openSearch();
                     break;
-                case "profileBtn":
-                    this.openProfile();
-                    break;
             }
         });
 

@@ -47,7 +47,7 @@ const SocialFeed = {
         lottery_result: { icon: "fa-dice", color: "#8b5cf6", label: "Sorteo" },
         prediction_shared: { icon: "fa-star", color: "#ec4899", label: "Prediccion" },
         milestone: { icon: "fa-trophy", color: "#f59e0b", label: "Logro" },
-        user_post: { icon: "fa-comment-alt", color: "#00FFFF", label: "Publicacion" }
+        user_post: { icon: "fa-comment-alt", color: "#00FFFF", label: "Publicación" }
     },
 
     defaultConfig: { icon: "fa-bell", color: "#6b7280", label: "Actividad" },
@@ -78,6 +78,15 @@ const SocialFeed = {
 
         // Check URL for shared event deep link (?event=ID)
         this.deepLinkEventId = urlParams.get("event") || null;
+
+        // Close post detail on browser back
+        window.addEventListener("popstate", function() {
+            var overlay = document.getElementById("postDetailOverlay");
+            if (overlay) {
+                overlay.classList.remove("pd-active");
+                setTimeout(function() { overlay.remove(); document.body.style.overflow = ""; }, 250);
+            }
+        });
 
         // Handle incoming share from other apps (PWA Share Target)
         const sharedTitle = urlParams.get("shared_title") || "";
@@ -792,7 +801,7 @@ const SocialFeed = {
                 if (addBtn) addBtn.style.display = "";
                 this.events.unshift(result.data.post);
                 this.renderEvents();
-                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicacion creada!");
+                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicación creada!");
 } else {
                 throw new Error(result.message || result.error || "Error al publicar");
             }
@@ -914,7 +923,7 @@ const SocialFeed = {
                 // Remove from local events array
                 this.events = this.events.filter(e => String(e.id) !== eventId);
                 this.renderEvents();
-                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicacion eliminada");
+                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicación eliminada");
 } else {
                 throw new Error(result.message || result.error || "Error al eliminar");
             }
@@ -1013,7 +1022,7 @@ const SocialFeed = {
                 }
                 this.renderEvents();
                 this.closeEditModal();
-                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicacion actualizada");
+                window.LaTandaPopup && window.LaTandaPopup.showSuccess("Publicación actualizada");
 } else {
                 throw new Error(result.message || result.error || "Error al actualizar");
             }
@@ -1128,17 +1137,11 @@ const SocialFeed = {
             });
         }
 
-        // Deep link: scroll to shared event if ?event= param is present
+        // Deep link: open post detail if ?event= param is present
         if (this.deepLinkEventId) {
-            const targetCard = listEl.querySelector('.social-card[data-event-id="' + this.deepLinkEventId + '"]');
-            if (targetCard) {
-                setTimeout(() => {
-                    targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
-                    targetCard.classList.add("highlight-shared");
-                    setTimeout(() => targetCard.classList.remove("highlight-shared"), 3000);
-                }, 300);
-                this.deepLinkEventId = null;
-            }
+            const deepId = this.deepLinkEventId;
+            this.deepLinkEventId = null;
+            setTimeout(() => { this.openPostDetail(deepId); }, 500);
         }
 
         // Pre-fill compose with shared content from other apps
@@ -1181,7 +1184,7 @@ const SocialFeed = {
         const imageHtml = this.renderImageGrid(event.image_url);
 
         // Anonymous posts: show icon next to name
-        const anonBadge = isAnonymous ? ' <i class="fas fa-user-secret" style="color: #8b5cf6; font-size: 0.75rem;" title="Publicacion anonima"></i>' : '';
+        const anonBadge = isAnonymous ? ' <i class="fas fa-user-secret" style="color: #8b5cf6; font-size: 0.75rem;" title="Publicación anonima"></i>' : '';
 
         // Location from metadata
         const locationBadge = meta.location
@@ -1210,7 +1213,7 @@ const SocialFeed = {
                     verifiedBadge +
                 '</div>' +
                 '<div class="actor-info">' +
-                    '<span class="actor-name">' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
+                    '<span class="actor-name"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
                     '<span class="event-type-label" style="color: ' + config.color + '">' +
                         '<i class="fas ' + config.icon + '"></i> ' + config.label +
                         locationBadge +
@@ -1366,6 +1369,30 @@ const SocialFeed = {
                     this.filterByHashtag(tag);
                 }
                 return;
+            }
+
+            // Handle avatar or actor name click → open profile
+            const clickedAvatar = e.target.closest('.actor-avatar[data-user-id]');
+            const clickedName = e.target.closest('.actor-name[data-user-id]');
+            if (clickedAvatar || clickedName) {
+                var userId = (clickedAvatar || clickedName).dataset.userId;
+                if (userId && userId !== 'null' && window.ProfileViewerModal) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.ProfileViewerModal.open(userId, 'posts');
+                    return;
+                }
+            }
+
+            // Handle card body click → post detail
+            const cardBody = e.target.closest(".social-card-body");
+            if (cardBody && !e.target.closest("a") && !e.target.closest("button") && !e.target.closest(".poll-vote-btn") && !e.target.closest("img.lightbox-trigger") && !e.target.closest("video")) {
+                const card = cardBody.closest(".social-card");
+                if (card) {
+                    e.preventDefault();
+                    this.openPostDetail(card.dataset.eventId);
+                    return;
+                }
             }
 
             // Handle image click → lightbox
@@ -3089,6 +3116,334 @@ if (window.CommentsModal) {
                 headers: { 'Content-Type': 'application/json' },
                 body: payload
             }).catch(() => {});
+        }
+    },
+
+    // ========================================
+    // POST DETAIL MODAL
+    // ========================================
+    openPostDetail(eventId) {
+        if (!eventId) return;
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+        const fetchOpts = token ? { headers: { "Authorization": "Bearer " + token } } : {};
+
+        // Show loading overlay immediately
+        this._showPostDetailOverlay();
+
+        fetch("/api/feed/social/" + eventId, fetchOpts)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.data || !data.data.post) {
+                    SocialFeed._closePostDetail();
+                    window.LaTandaPopup && window.LaTandaPopup.showError("Publicación no encontrada");
+                    return;
+                }
+                SocialFeed._renderPostDetail(data.data.post, data.data.comments || [], data.data.total_comments || 0);
+                // Update URL without reload
+                var url = new URL(window.location);
+                url.searchParams.set("event", eventId);
+                history.pushState({ postDetail: eventId }, "", url);
+            })
+            .catch(function() {
+                SocialFeed._closePostDetail();
+                window.LaTandaPopup && window.LaTandaPopup.showError("Error al cargar publicacion");
+            });
+    },
+
+    _showPostDetailOverlay() {
+        var existing = document.getElementById("postDetailOverlay");
+        if (existing) existing.remove();
+
+        var overlay = document.createElement("div");
+        overlay.id = "postDetailOverlay";
+        overlay.className = "pd-overlay";
+        overlay.innerHTML =
+            '<div class="pd-modal">' +
+                '<div class="pd-loading"><i class="fas fa-spinner fa-spin"></i></div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        document.body.style.overflow = "hidden";
+
+        // Close on overlay click
+        overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) SocialFeed._closePostDetail();
+        });
+
+        requestAnimationFrame(function() {
+            overlay.classList.add("pd-active");
+        });
+    },
+
+    _renderPostDetail(post, comments, totalComments) {
+        var overlay = document.getElementById("postDetailOverlay");
+        if (!overlay) return;
+        var modal = overlay.querySelector(".pd-modal");
+        if (!modal) return;
+
+        var meta = post.metadata || {};
+        var isAnonymous = meta.is_anonymous === true;
+        var actor = post.actor || {};
+        var engagement = post.engagement || {};
+
+        var avatarContent = actor.avatar_url
+            ? '<img src="' + this.escapeHtml(actor.avatar_url) + '" alt="" class="avatar-fallback-img">'
+            : '<span style="color: ' + (isAnonymous ? '#8b5cf6' : '#00FFFF') + '">' + this.escapeHtml(actor.initials || '??') + '</span>';
+        var verifiedBadge = !isAnonymous && actor.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : '';
+        var anonBadge = isAnonymous ? ' <i class="fas fa-user-secret" style="color: #8b5cf6; font-size: 0.8rem;"></i>' : '';
+        var locationBadge = meta.location
+            ? '<span class="post-location-badge"><i class="fas fa-map-marker-alt"></i> ' + this.escapeHtml(meta.location) + '</span>'
+            : '';
+
+        var imageHtml = this.renderImageGrid(post.image_url);
+        var pollHtml = this.renderPollDisplay(post);
+        var linkPreviewHtml = this.renderLinkPreviewCard(post);
+
+        // Build comments HTML
+        var commentsHtml = '';
+        if (comments.length > 0) {
+            commentsHtml = comments.map(function(c) {
+                var cAvatar = c.user.avatar_url
+                    ? '<img src="' + SocialFeed.escapeHtml(c.user.avatar_url) + '" alt="" class="avatar-fallback-img">'
+                    : '<span>' + SocialFeed.escapeHtml(c.user.initials || '??') + '</span>';
+                var repliesHtml = '';
+                if (c.replies && c.replies.length > 0) {
+                    repliesHtml = '<div class="pd-replies">' + c.replies.map(function(r) {
+                        var rAvatar = r.user.avatar_url
+                            ? '<img src="' + SocialFeed.escapeHtml(r.user.avatar_url) + '" alt="" class="avatar-fallback-img">'
+                            : '<span>' + SocialFeed.escapeHtml(r.user.initials || '??') + '</span>';
+                        return '<div class="pd-comment pd-reply">' +
+                            '<div class="pd-comment-avatar">' + rAvatar + '</div>' +
+                            '<div class="pd-comment-body">' +
+                                '<span class="pd-comment-name">' + SocialFeed.escapeHtml(r.user.name) + '</span>' +
+                                '<span class="pd-comment-time">' + SocialFeed.escapeHtml(r.time_ago || '') + '</span>' +
+                                '<p class="pd-comment-text">' + SocialFeed.escapeHtml(r.content) + '</p>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('') + '</div>';
+                }
+                return '<div class="pd-comment">' +
+                    '<div class="pd-comment-avatar">' + cAvatar + '</div>' +
+                    '<div class="pd-comment-body">' +
+                        '<span class="pd-comment-name">' + SocialFeed.escapeHtml(c.user.name) + '</span>' +
+                        '<span class="pd-comment-time">' + SocialFeed.escapeHtml(c.time_ago || '') + '</span>' +
+                        '<p class="pd-comment-text">' + SocialFeed.escapeHtml(c.content) + '</p>' +
+                    '</div>' +
+                '</div>' + repliesHtml;
+            }).join('');
+        } else {
+            commentsHtml = '<div class="pd-no-comments"><i class="far fa-comment"></i> Se el primero en comentar</div>';
+        }
+
+        var likesText = engagement.likes || '';
+        var commentsText = engagement.comments || '';
+
+        modal.innerHTML =
+            '<div class="pd-header">' +
+                '<button class="pd-close" id="pdCloseBtn"><i class="fas fa-arrow-left"></i></button>' +
+                '<span class="pd-header-title">Publicación</span>' +
+            '</div>' +
+            '<div class="pd-scroll">' +
+                '<div class="pd-post">' +
+                    '<div class="pd-post-header">' +
+                        '<div class="pd-avatar ' + (actor.avatar_url ? 'has-image' : 'initials') + '"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + ' style="background: ' + (isAnonymous ? '#8b5cf620' : 'rgba(0,255,255,0.12)') + '">' +
+                            avatarContent + verifiedBadge +
+                        '</div>' +
+                        '<div class="pd-actor-info">' +
+                            '<span class="pd-actor-name"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + '</span>' +
+                            '<span class="pd-post-time">' + this.escapeHtml(post.time_ago || '') + locationBadge + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="pd-post-content">' +
+                        '<p class="pd-post-text">' + this.parseContent(post.description || post.title || '') + '</p>' +
+                        imageHtml + pollHtml + linkPreviewHtml +
+                    '</div>' +
+                    '<div class="pd-engagement-bar">' +
+                        '<button class="engagement-btn like-btn' + (post.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(post.id)) + '">' +
+                            '<i class="' + (post.is_liked ? 'fas' : 'far') + ' fa-heart"></i> <span>' + likesText + '</span>' +
+                        '</button>' +
+                        '<button class="engagement-btn comment-btn pd-focus-input" data-id="' + this.escapeHtml(String(post.id)) + '">' +
+                            '<i class="far fa-comment"></i> <span>' + commentsText + '</span>' +
+                        '</button>' +
+                        '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(post.id)) + '">' +
+                            '<i class="fas fa-share-alt"></i>' +
+                        '</button>' +
+                        '<button class="engagement-btn bookmark-btn' + (post.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(post.id)) + '">' +
+                            '<i class="' + (post.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="pd-comments-section">' +
+                    '<h4 class="pd-comments-title">Comentarios <span>(' + totalComments + ')</span></h4>' +
+                    '<div class="pd-comments-list">' + commentsHtml + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="pd-comment-input">' +
+                '<form class="pd-comment-form" id="pdCommentForm">' +
+                    '<textarea id="pdCommentInput" placeholder="Escribe un comentario..." maxlength="500" rows="1"></textarea>' +
+                    '<button type="submit" class="pd-submit-btn" id="pdSubmitBtn" disabled>' +
+                        '<i class="fas fa-paper-plane"></i>' +
+                    '</button>' +
+                '</form>' +
+            '</div>';
+
+        // Wire up event handlers
+        var self = this;
+        var postId = post.id;
+
+        // Close
+        document.getElementById("pdCloseBtn").addEventListener("click", function() {
+            self._closePostDetail();
+        });
+
+        // Escape key
+        var escHandler = function(e) {
+            if (e.key === "Escape") { self._closePostDetail(); document.removeEventListener("keydown", escHandler); }
+        };
+        document.addEventListener("keydown", escHandler);
+
+        // Like
+        var likeBtn = modal.querySelector(".like-btn");
+        if (likeBtn) {
+            likeBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                self.toggleLike(likeBtn);
+            });
+        }
+
+        // Bookmark
+        var bookmarkBtn = modal.querySelector(".bookmark-btn");
+        if (bookmarkBtn) {
+            bookmarkBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                self.toggleBookmark(bookmarkBtn);
+            });
+        }
+
+        // Share
+        var shareBtn = modal.querySelector(".share-btn");
+        if (shareBtn) {
+            shareBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                self.shareEvent(postId);
+            });
+        }
+
+        // Focus comment input
+        var focusBtn = modal.querySelector(".pd-focus-input");
+        if (focusBtn) {
+            focusBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                var input = document.getElementById("pdCommentInput");
+                if (input) input.focus();
+            });
+        }
+
+        // Comment form
+        var commentInput = document.getElementById("pdCommentInput");
+        var submitBtn = document.getElementById("pdSubmitBtn");
+        if (commentInput) {
+            commentInput.addEventListener("input", function() {
+                submitBtn.disabled = !commentInput.value.trim();
+                commentInput.style.height = "auto";
+                commentInput.style.height = Math.min(commentInput.scrollHeight, 120) + "px";
+            });
+        }
+        var commentForm = document.getElementById("pdCommentForm");
+        if (commentForm) {
+            commentForm.addEventListener("submit", function(e) {
+                e.preventDefault();
+                self._submitPostDetailComment(postId);
+            });
+        }
+
+        // Avatar/name click inside detail → open profile
+        modal.addEventListener("click", function(e) {
+            var avatar = e.target.closest('[data-user-id]');
+            if (avatar && (avatar.classList.contains('pd-avatar') || avatar.classList.contains('pd-actor-name'))) {
+                var uid = avatar.dataset.userId;
+                if (uid && uid !== 'null' && window.ProfileViewerModal) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.ProfileViewerModal.open(uid, 'posts');
+                    return;
+                }
+            }
+        });
+
+        // Image lightbox inside detail
+        modal.addEventListener("click", function(e) {
+            var img = e.target.closest("img.lightbox-trigger");
+            if (img && post.image_url) {
+                var urls = [];
+                if (post.image_url.startsWith("[")) {
+                    try { urls = JSON.parse(post.image_url); } catch(ex) { urls = [post.image_url]; }
+                } else {
+                    urls = [post.image_url];
+                }
+                var idx = parseInt(img.dataset.lightboxIndex) || 0;
+                if (urls.length > 0) self.openLightbox(urls, idx);
+            }
+        });
+    },
+
+    _submitPostDetailComment(postId) {
+        var input = document.getElementById("pdCommentInput");
+        var submitBtn = document.getElementById("pdSubmitBtn");
+        if (!input || !input.value.trim()) return;
+        var token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+        if (!token) {
+            window.LaTandaPopup && window.LaTandaPopup.showError("Inicia sesion para comentar");
+            return;
+        }
+        var content = input.value.trim();
+        submitBtn.disabled = true;
+        input.disabled = true;
+
+        fetch("/api/feed/social/" + postId + "/comments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ content: content })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                input.value = "";
+                input.style.height = "auto";
+                // Refresh the post detail to show new comment
+                SocialFeed.openPostDetail(postId);
+                // Update comment count in feed card
+                var feedCard = document.querySelector('.social-card[data-event-id="' + postId + '"] .comment-btn span');
+                if (feedCard) {
+                    var c = parseInt(feedCard.textContent) || 0;
+                    feedCard.textContent = c + 1;
+                }
+            } else {
+                window.LaTandaPopup && window.LaTandaPopup.showError(data.message || "Error al comentar");
+            }
+        })
+        .catch(function() {
+            window.LaTandaPopup && window.LaTandaPopup.showError("Error al enviar comentario");
+        })
+        .finally(function() {
+            submitBtn.disabled = false;
+            input.disabled = false;
+        });
+    },
+
+    _closePostDetail() {
+        var overlay = document.getElementById("postDetailOverlay");
+        if (overlay) {
+            overlay.classList.remove("pd-active");
+            setTimeout(function() {
+                overlay.remove();
+                document.body.style.overflow = "";
+            }, 250);
+        }
+        // Restore URL
+        var url = new URL(window.location);
+        if (url.searchParams.has("event")) {
+            url.searchParams.delete("event");
+            history.pushState({}, "", url);
         }
     },
 

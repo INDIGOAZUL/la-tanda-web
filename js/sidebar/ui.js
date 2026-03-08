@@ -17,6 +17,7 @@ const SidebarUI = {
         document.body.style.overflow = 'hidden';
         
         this.isOpen = true;
+        document.body.classList.add("sidebar-open");
         
         // Emit event for other modules
         if (window.EventBus) {
@@ -36,6 +37,7 @@ const SidebarUI = {
         document.body.style.overflow = '';
         
         this.isOpen = false;
+        document.body.classList.remove("sidebar-open");
         
         // Emit event for other modules
         if (window.EventBus) {
