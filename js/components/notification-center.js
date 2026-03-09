@@ -20,6 +20,9 @@ class NotificationCenter {
         this.userActiveMs = 0;
         this.lastActivityAt = Date.now();
         this.activityTimer = null;
+        this.pushPromptGateInterval = null;
+        this.scheduledUnmuteInterval = null;
+        this.boundActivityHandler = null;
 
         this.initFirebase();
         this.init();
@@ -56,8 +59,9 @@ class NotificationCenter {
 
     startActivityTracking() {
         const markActivity = () => { this.lastActivityAt = Date.now(); };
+        this.boundActivityHandler = markActivity;
         ["click", "keydown", "touchstart", "mousemove", "scroll"].forEach(evt => {
-            window.addEventListener(evt, markActivity, { passive: true });
+            window.addEventListener(evt, this.boundActivityHandler, { passive: true });
         });
 
         this.activityTimer = setInterval(() => {
@@ -66,6 +70,29 @@ class NotificationCenter {
                 this.userActiveMs += 1000;
             }
         }, 1000);
+
+        if (!this.scheduledUnmuteInterval) {
+            this.scheduledUnmuteInterval = setInterval(() => {
+                if (!this.preferences || !this.preferences.snooze_until) return;
+                if (Date.now() >= new Date(this.preferences.snooze_until).getTime()) {
+                    this.preferences.snooze_until = null;
+                }
+            }, 60000);
+        }
+    }
+
+    cleanupTimers() {
+        if (this.activityTimer) { clearInterval(this.activityTimer); this.activityTimer = null; }
+        if (this.pollingInterval) { clearInterval(this.pollingInterval); this.pollingInterval = null; }
+        if (this.pushPromptGateInterval) { clearInterval(this.pushPromptGateInterval); this.pushPromptGateInterval = null; }
+        if (this.scheduledUnmuteInterval) { clearInterval(this.scheduledUnmuteInterval); this.scheduledUnmuteInterval = null; }
+
+        if (this.boundActivityHandler) {
+            ["click", "keydown", "touchstart", "mousemove", "scroll"].forEach(evt => {
+                window.removeEventListener(evt, this.boundActivityHandler, { passive: true });
+            });
+            this.boundActivityHandler = null;
+        }
     }
 
     getAuthHeaders() {
@@ -577,6 +604,8 @@ class NotificationCenter {
         if (!body || !this.preferences) return;
 
         const p = this.preferences;
+        const muteAllDerived = !p.payment_reminders && !p.group_updates && !p.member_activity && !p.marketing;
+        const pushDenied = ("Notification" in window) && Notification.permission === "denied";
         
         body.innerHTML = `
             <div class="prefs-section">
@@ -640,11 +669,19 @@ class NotificationCenter {
                         <div class="prefs-item-desc">Desactiva temporalmente pagos, grupos, actividad y marketing</div>
                     </div>
                     <label class="prefs-toggle">
-                        <input type="checkbox" id="pref_mute_all" ${p.mute_all ? "checked" : ""}>
+                        <input type="checkbox" id="pref_mute_all" ${muteAllDerived ? "checked" : ""}>
                         <span class="prefs-toggle-slider"></span>
                     </label>
                 </div>
             </div>
+                ${pushDenied ? `
+                <div class="prefs-item" style="padding-top: 8px;">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-desc" style="color:#f59e0b;">
+                            Las notificaciones del navegador están bloqueadas. Actívalas desde configuración del navegador para este sitio.
+                        </div>
+                    </div>
+                </div>` : ""}
 
             <div class="prefs-section">
                 <div class="prefs-section-title">
@@ -668,7 +705,7 @@ class NotificationCenter {
                         <div class="prefs-item-desc">Alertas en tu dispositivo aunque no estés en la app</div>
                     </div>
                     <label class="prefs-toggle">
-                        <input type="checkbox" id="pref_push_enabled" ${p.push_enabled ? "checked" : ""}>
+                        <input type="checkbox" id="pref_push_enabled" ${p.push_enabled ? "checked" : ""} ${pushDenied ? "disabled" : ""}>
                         <span class="prefs-toggle-slider"></span>
                     </label>
                 </div>
@@ -773,7 +810,6 @@ class NotificationCenter {
 
         const muteAll = document.getElementById("pref_mute_all")?.checked ?? false;
         const newPrefs = {
-            mute_all: muteAll,
             payment_reminders: muteAll ? false : (document.getElementById("pref_payment_reminders")?.checked ?? true),
             group_updates: muteAll ? false : (document.getElementById("pref_group_updates")?.checked ?? true),
             member_activity: muteAll ? false : (document.getElementById("pref_member_activity")?.checked ?? true),
@@ -893,19 +929,22 @@ class NotificationCenter {
         // Activity-gated prompt: first prompt after 30s active usage, later prompts after 15s active usage
         const requiredActiveMs = promptCount === 0 ? 30000 : 15000;
         const startedAt = Date.now();
-        const gate = setInterval(() => {
+        this.pushPromptGateInterval = setInterval(() => {
             if (Notification.permission !== "default") {
-                clearInterval(gate);
+                clearInterval(this.pushPromptGateInterval);
+                this.pushPromptGateInterval = null;
                 return;
             }
             if (this.userActiveMs >= requiredActiveMs) {
-                clearInterval(gate);
+                clearInterval(this.pushPromptGateInterval);
+                this.pushPromptGateInterval = null;
                 this.showPushBanner();
                 return;
             }
             // hard stop after 5 minutes to avoid infinite timers on idle tabs
             if (Date.now() - startedAt > 300000) {
-                clearInterval(gate);
+                clearInterval(this.pushPromptGateInterval);
+                this.pushPromptGateInterval = null;
             }
         }, 1000);
     }
@@ -1132,10 +1171,16 @@ class NotificationCenter {
 let notificationCenter;
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
+        if (window.notificationCenter && typeof window.notificationCenter.cleanupTimers === "function") {
+            window.notificationCenter.cleanupTimers();
+        }
         notificationCenter = new NotificationCenter();
         window.notificationCenter = notificationCenter;
     });
 } else {
+    if (window.notificationCenter && typeof window.notificationCenter.cleanupTimers === "function") {
+        window.notificationCenter.cleanupTimers();
+    }
     notificationCenter = new NotificationCenter();
     window.notificationCenter = notificationCenter;
 }
@@ -1157,3 +1202,10 @@ document.addEventListener("headerLoaded", function() {
 setTimeout(function() {
     if (window.notificationCenter) window.notificationCenter.updateBadge();
 }, 2000);
+
+
+window.addEventListener("pagehide", () => {
+    if (window.notificationCenter && typeof window.notificationCenter.cleanupTimers === "function") {
+        window.notificationCenter.cleanupTimers();
+    }
+});
