@@ -17,6 +17,9 @@ class NotificationCenter {
         this.preferences = null;
         this.fcmSupported = false;
         this.fcmMessaging = null;
+        this.userActiveMs = 0;
+        this.lastActivityAt = Date.now();
+        this.activityTimer = null;
 
         this.initFirebase();
         this.init();
@@ -45,9 +48,24 @@ class NotificationCenter {
         this.createToastContainer();
         this.createPreferencesModal();
         this.attachEventListeners();
+        this.startActivityTracking();
         this.loadNotificationsFromAPI();
         this.startPolling();
         this.initPushSubscription();
+    }
+
+    startActivityTracking() {
+        const markActivity = () => { this.lastActivityAt = Date.now(); };
+        ["click", "keydown", "touchstart", "mousemove", "scroll"].forEach(evt => {
+            window.addEventListener(evt, markActivity, { passive: true });
+        });
+
+        this.activityTimer = setInterval(() => {
+            const now = Date.now();
+            if (now - this.lastActivityAt < 8000) {
+                this.userActiveMs += 1000;
+            }
+        }, 1000);
     }
 
     getAuthHeaders() {
@@ -834,9 +852,24 @@ class NotificationCenter {
             if (elapsed < waitMs) return;
         }
 
-        // Delay: 30s on first visit, 15s on subsequent
-        const delay = promptCount === 0 ? 30000 : 15000;
-        setTimeout(() => this.showPushBanner(), delay);
+        // Activity-gated prompt: first prompt after 30s active usage, later prompts after 15s active usage
+        const requiredActiveMs = promptCount === 0 ? 30000 : 15000;
+        const startedAt = Date.now();
+        const gate = setInterval(() => {
+            if (Notification.permission !== "default") {
+                clearInterval(gate);
+                return;
+            }
+            if (this.userActiveMs >= requiredActiveMs) {
+                clearInterval(gate);
+                this.showPushBanner();
+                return;
+            }
+            // hard stop after 5 minutes to avoid infinite timers on idle tabs
+            if (Date.now() - startedAt > 300000) {
+                clearInterval(gate);
+            }
+        }, 1000);
     }
 
     showPushBanner() {
@@ -866,8 +899,8 @@ class NotificationCenter {
                     font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 12px;
                 }
                 .push-banner-dismiss {
-                    background: none; border: none; color: #666; cursor: pointer;
-                    padding: 4px; flex-shrink: 0;
+                    background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; cursor: pointer;
+                    padding: 6px 10px; border-radius: 8px; flex-shrink: 0; font-size: 12px;
                 }
                 @keyframes pushSlideUp {
                     from { transform: translateX(-50%) translateY(20px); opacity: 0; }
@@ -885,9 +918,7 @@ class NotificationCenter {
                 <i class="fas fa-bell"></i>
                 <span>Activa las notificaciones para no perderte pagos y turnos</span>
                 <button class="push-banner-btn" id="pushBannerAccept">Activar</button>
-                <button class="push-banner-dismiss" id="pushBannerDismiss">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="push-banner-dismiss" id="pushBannerDismiss">Ahora no</button>
             </div>
         `;
         document.body.appendChild(banner);
