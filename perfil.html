@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="css/onboarding.css?v=1.0">
     <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
     <link rel="stylesheet" href="css/hub/mia-assistant.css?v=1.0">
-    <link rel="stylesheet" href="css/hub/social-feed.css?v=11.8">
+    <link rel="stylesheet" href="css/hub/social-feed.css?v=12.8">
     <link rel="stylesheet" href="css/hub/comments-modal.css?v=1.0">
     <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
@@ -106,10 +106,14 @@
         .pf-stat { font-size: 0.85rem; color: #94a3b8; cursor: pointer; }
         .pf-stat:hover { color: #e2e8f0; text-decoration: underline; }
         .pf-stat strong { color: #e2e8f0; font-weight: 700; }
-        .pf-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); margin-top: 14px; }
-        .pf-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 0.88rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .pf-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); margin-top: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .pf-tabs::-webkit-scrollbar { display: none; }
+        .pf-tab { flex: 0 0 auto; text-align: center; padding: 12px 14px; font-size: 0.82rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
         .pf-tab:hover { color: #94a3b8; }
         .pf-tab.active { color: #00FFFF; border-bottom-color: #00FFFF; }
+        .pf-repost-label { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #22c55e; padding: 0 0 6px; font-weight: 600; }
+        .pf-repost-label i { font-size: 0.82rem; }
+        .pf-repost-quote { margin: 0 0 8px; padding: 6px 10px; background: rgba(34,197,94,0.06); border-left: 2px solid rgba(34,197,94,0.3); border-radius: 0 6px 6px 0; font-size: 0.82rem; color: rgba(255,255,255,0.6); font-style: italic; }
         .pf-tab-content { padding: 0; min-height: 300px; }
         .pf-tab-panel { display: none; }
         .pf-tab-panel.active { display: block; }
@@ -166,6 +170,75 @@
         .pf-toast.show { opacity: 1; }
         .pf-toast.success { border-color: rgba(34,197,94,0.3); }
         .pf-toast.error { border-color: rgba(239,68,68,0.3); }
+        .pf-media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; }
+        .pf-media-item { position: relative; aspect-ratio: 1; overflow: hidden; }
+        .pf-media-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+        .pf-media-item:hover img { transform: scale(1.05); }
+        .pf-media-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; gap: 16px; opacity: 0; transition: opacity 0.2s; font-size: 0.82rem; font-weight: 600; color: #fff; }
+        .pf-media-item:hover .pf-media-overlay { opacity: 1; }
+        .pf-media-overlay span { display: flex; align-items: center; gap: 4px; }
+        .pf-more-wrap { position: relative; display: inline-block; }
+        .pf-btn-more { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: #94a3b8; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .pf-btn-more:hover { background: rgba(255,255,255,0.06); color: #e2e8f0; }
+        .pf-more-menu { display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 170px; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 4px 0; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .pf-more-menu.active { display: block; }
+        .pf-more-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: none; background: none; color: #e2e8f0; font-size: 0.85rem; cursor: pointer; transition: background 0.15s; }
+        .pf-more-item:hover { background: rgba(255,255,255,0.06); }
+        .pf-more-danger { color: #ef4444; }
+        .pf-more-danger:hover { background: rgba(239,68,68,0.1); }
+        .pf-mutual { font-size: 0.82rem; color: rgba(255,255,255,0.45); margin-top: 4px; cursor: pointer; }
+        .pf-mutual:hover { color: rgba(255,255,255,0.65); }
+        .pf-mutual i { margin-right: 4px; }
+        .pf-confirm-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .pf-confirm-overlay.active { opacity: 1; }
+        .pf-confirm-box { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 28px 24px; max-width: 380px; width: 90%; text-align: center; }
+        .pf-confirm-icon { font-size: 2rem; color: #ef4444; margin-bottom: 12px; }
+        .pf-confirm-box h3 { font-size: 1.05rem; margin-bottom: 8px; color: #e2e8f0; }
+        .pf-confirm-box p { font-size: 0.85rem; color: #94a3b8; line-height: 1.5; margin-bottom: 20px; }
+        .pf-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+        .pf-confirm-cancel { padding: 8px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #94a3b8; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .pf-confirm-cancel:hover { background: rgba(255,255,255,0.06); }
+        .pf-confirm-danger { padding: 8px 20px; border-radius: 20px; border: none; background: #ef4444; color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+        .pf-confirm-danger:hover { background: #dc2626; }
+        /* Achievements */
+        .pf-achievements { padding: 0 16px; }
+        .pf-ach-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .pf-ach-title { font-size: 0.82rem; font-weight: 600; color: #94a3b8; }
+        .pf-ach-title i { color: #fbbf24; margin-right: 4px; }
+        .pf-ach-pts { font-size: 0.78rem; color: #64748b; font-weight: 600; }
+        .pf-ach-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .pf-ach-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; background: rgba(0,255,255,0.08); color: #00FFFF; border: 1px solid rgba(0,255,255,0.15); cursor: default; transition: all 0.2s; }
+        .pf-ach-badge:hover { background: rgba(0,255,255,0.14); }
+        .pf-ach-badge i { font-size: 0.7rem; }
+        .pf-ach-locked { opacity: 0.3; filter: grayscale(1); background: rgba(255,255,255,0.04); color: #64748b; border-color: rgba(255,255,255,0.06); }
+        /* Pinned post */
+        .pf-post-pinned { border-left: 2px solid #00FFFF; }
+        .pf-pinned-badge { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: #00FFFF; margin-bottom: 6px; }
+        .pf-pin-btn { background: none; border: none; color: #475569; cursor: pointer; padding: 2px 6px; margin-left: auto; font-size: 0.82rem; transition: color 0.2s; }
+        .pf-pin-btn:hover { color: #00FFFF; }
+        .pf-pin-btn .pf-pinned { color: #00FFFF; }
+        /* Profile views stat */
+        .pf-stat-views { color: #64748b; }
+        .pf-stat-views i { margin-right: 3px; font-size: 0.78rem; }
+        /* Color picker */
+        .pf-color-picker { display: flex; align-items: center; gap: 10px; }
+        .pf-color-input { width: 40px; height: 36px; border: none; border-radius: 8px; cursor: pointer; background: transparent; padding: 0; }
+        .pf-color-input::-webkit-color-swatch-wrapper { padding: 2px; }
+        .pf-color-input::-webkit-color-swatch { border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); }
+        .pf-color-label { font-size: 0.82rem; color: #94a3b8; font-family: monospace; }
+        .pf-color-reset { padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #64748b; font-size: 0.78rem; cursor: pointer; }
+        .pf-color-reset:hover { color: #94a3b8; border-color: rgba(255,255,255,0.2); }
+        /* QR Card */
+        .pf-qr-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .pf-qr-overlay.active { opacity: 1; }
+        .pf-qr-card { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px 28px; max-width: 320px; width: 90%; text-align: center; position: relative; }
+        .pf-qr-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #64748b; font-size: 1rem; cursor: pointer; }
+        .pf-qr-avatar { margin-bottom: 10px; }
+        .pf-qr-name { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }
+        .pf-qr-handle { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; }
+        .pf-qr-code { margin: 16px auto; }
+        .pf-qr-url { font-size: 0.75rem; color: #475569; margin: 12px 0; word-break: break-all; }
+        .pf-qr-actions { margin-top: 12px; }
         @media (max-width: 480px) {
             .pf-cover { height: 140px; }
             .pf-avatar { width: 72px; height: 72px; }
@@ -173,6 +246,7 @@
             .pf-actions { margin-top: 44px; }
             .pf-name { font-size: 1.1rem; }
             .pf-stats { gap: 14px; }
+            .pf-media-grid { grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 2px; }
         }
     </style>
 </head>
@@ -267,6 +341,7 @@
                 <div class="pf-edit-group"><label class="pf-edit-label">Bio</label><textarea class="pf-edit-textarea" id="pfEditBio" maxlength="500" rows="3"></textarea><div class="pf-edit-char"><span id="pfEditBioCount">0</span>/500</div></div>
                 <div class="pf-edit-group"><label class="pf-edit-label">Handle</label><div class="pf-edit-handle-prefix"><span>@</span><input type="text" class="pf-edit-input" id="pfEditHandle" maxlength="30" pattern="[a-z0-9_]+" placeholder="mi_handle"></div></div>
                 <div class="pf-edit-group"><label class="pf-edit-label">Ubicacion</label><input type="text" class="pf-edit-input" id="pfEditLocation" maxlength="100" placeholder="Tegucigalpa, Honduras"></div>
+                <div class="pf-edit-group"><label class="pf-edit-label">Color de acento</label><div class="pf-color-picker"><input type="color" id="pfEditAccent" value="#00FFFF" class="pf-color-input"><span class="pf-color-label" id="pfColorLabel">#00FFFF</span><button type="button" class="pf-color-reset" id="pfColorReset" title="Restablecer">Predeterminado</button></div></div>
             </div>
         </div>
     </div>
@@ -281,7 +356,7 @@
     <script src="js/dashboard-real-data-patch.js"></script>
     <script src="js/header-footer-cleanup.js"></script>
     <script src="js/components/loading-states.js"></script>
-    <script src="js/components-loader.js?v=30.5"></script>
+    <script src="js/components-loader.js?v=30.6"></script>
     <script src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script src="js/hub/sidebar-widgets.js?v=1770829609"></script>
     <script src="js/mobile-drawer.js?v=1769469123"></script>
@@ -299,9 +374,9 @@
     var fetchAuth = function(url, opts) { opts = opts || {}; var token = getToken(); if (token) { opts.headers = opts.headers || {}; opts.headers['Authorization'] = 'Bearer ' + token; } return fetch(url, opts); };
 
     var profileData = null, currentTab = 'posts';
-    var postsData = [], followersData = [], followingData = [];
-    var postsOffset = 0, followersOffset = 0, followingOffset = 0;
-    var postsHasMore = true, followersHasMore = true, followingHasMore = true;
+    var postsData = [], repostsData = [], activityData = [], mediaData = [], likesData = [], followersData = [], followingData = [];
+    var postsOffset = 0, repostsOffset = 0, activityOffset = 0, mediaOffset = 0, likesOffset = 0, followersOffset = 0, followingOffset = 0;
+    var postsHasMore = true, repostsHasMore = true, activityHasMore = true, mediaHasMore = true, likesHasMore = true, followersHasMore = true, followingHasMore = true;
     var loadingMore = false;
 
     function getHandleFromURL() { var p = new URLSearchParams(window.location.search); return p.get('handle') || null; }
@@ -314,7 +389,7 @@
             try { var r = await fetchAuth('/api/users/by-handle/' + encodeURIComponent(handle)); var d = await r.json(); if (d.success && d.data) { userId = d.data.user_id; } else { showError('Usuario no encontrado'); return; } } catch(e) { showError('Error al buscar usuario'); return; }
         }
         if (!userId) { userId = getCurrentUserId(); if (!userId) { showError('No se especifico un usuario'); return; } }
-        try { var r = await fetchAuth('/api/feed/social/user/' + userId + '/profile'); var d = await r.json(); if (!d.success || !d.data) { showError('Perfil no encontrado'); return; } profileData = d.data; renderProfile(); loadPosts(); } catch(e) { showError('Error al cargar perfil'); }
+        try { var r = await fetchAuth('/api/feed/social/user/' + userId + '/profile'); var d = await r.json(); if (!d.success || !d.data) { showError('Perfil no encontrado'); return; } profileData = d.data; renderProfile(); loadPosts(); loadAchievements(); trackProfileView(); } catch(e) { showError('Error al cargar perfil'); }
     }
 
     function showError(msg) { document.getElementById('pfLoading').style.display = 'none'; document.getElementById('pfMain').innerHTML = '<div class="pf-error"><i class="fas fa-user-slash"></i><h2>' + esc(msg) + '</h2><p><a href="/home-dashboard.html">Volver al inicio</a></p></div>'; }
@@ -324,20 +399,41 @@
         document.title = (user.name || 'Perfil') + (user.handle ? ' (@' + user.handle + ')' : '') + ' - La Tanda';
         var initials = getInitials(user.name);
         var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" alt="' + esc(user.name) + '">' : initials;
-        var coverStyle = user.cover_url ? 'background-image: url(' + esc(user.cover_url) + '); background-size: cover; background-position: center;' : '';
+
+        // Private profile — non-follower sees limited view
+        if (profileData.is_private && !isSelf && !isFollowing) {
+            var followBtnHtml = getToken() ? '<button class="pf-btn pf-btn-follow" id="pfBtnFollow" data-user-id="' + esc(user.id) + '">Seguir</button>' : '';
+            document.getElementById('pfMain').innerHTML =
+                '<div class="pf-cover"></div>' +
+                '<div class="pf-profile-row"><div class="pf-avatar">' + avatarHtml + '</div><div class="pf-actions">' + followBtnHtml + '</div></div>' +
+                '<div class="pf-details"><div class="pf-name">' + esc(user.name) + (user.verified ? ' <i class="fas fa-check-circle pf-verified"></i>' : '') + '</div>' + (user.handle ? '<span class="pf-handle">@' + esc(user.handle) + '</span>' : '') + '</div>' +
+                '<div class="pf-stats"><span class="pf-stat"><strong>' + formatCount(stats.followers) + '</strong> seguidores</span><span class="pf-stat"><strong>' + formatCount(stats.following) + '</strong> siguiendo</span><span class="pf-stat"><strong>' + formatCount(stats.posts) + '</strong> publicaciones</span></div>' +
+                '<div style="text-align:center;padding:48px 20px;"><i class="fas fa-lock" style="font-size:2rem;color:rgba(255,255,255,0.2);margin-bottom:12px;display:block;"></i><p style="color:rgba(255,255,255,0.5);font-size:0.95rem;">Este perfil es privado</p><p style="color:rgba(255,255,255,0.35);font-size:0.82rem;">Sigue a este usuario para ver sus publicaciones</p></div>';
+            var pfBtn = document.getElementById('pfBtnFollow');
+            if (pfBtn) pfBtn.addEventListener('click', handleFollow);
+            return;
+        }
+
+        var accentColor = (profileData.profile_theme && profileData.profile_theme.accent_color) || null;
+        var coverStyle = user.cover_url ? 'background-image: url(' + esc(user.cover_url) + '); background-size: cover; background-position: center;' : (accentColor ? 'background: linear-gradient(135deg, ' + esc(accentColor) + '22, ' + esc(accentColor) + '44);' : '');
         var memberDate = user.member_since ? new Date(user.member_since) : null;
         var memberLabel = memberDate ? 'Se unio en ' + memberDate.toLocaleDateString('es-HN', { month: 'long', year: 'numeric' }) : '';
         var actionsHtml = '';
         if (isSelf) { actionsHtml = '<button class="pf-btn pf-btn-edit" id="pfBtnEdit"><i class="fas fa-pen"></i> Editar perfil</button><a href="/mi-perfil.html" class="pf-btn pf-btn-share" title="Configuracion de cuenta"><i class="fas fa-cog"></i></a>'; }
         else if (getToken()) { actionsHtml = '<button class="pf-btn pf-btn-follow ' + (isFollowing ? 'following' : '') + '" id="pfBtnFollow" data-user-id="' + esc(user.id) + '">' + (isFollowing ? 'Siguiendo' : 'Seguir') + '</button>'; }
-        actionsHtml += '<button class="pf-btn pf-btn-share" id="pfBtnShare" title="Compartir perfil"><i class="fas fa-share-from-square"></i></button>';
+        actionsHtml += '<button class="pf-btn pf-btn-share" id="pfBtnShare" title="Compartir perfil"><i class="fas fa-share-from-square"></i></button><button class="pf-btn pf-btn-share" id="pfBtnQr" title="Codigo QR"><i class="fas fa-qrcode"></i></button>';
+        if (!isSelf && getToken()) { actionsHtml += '<div class="pf-more-wrap"><button class="pf-btn pf-btn-more" id="pfBtnMore" title="Mas opciones"><i class="fas fa-ellipsis"></i></button><div class="pf-more-menu" id="pfMoreMenu"><button class="pf-more-item pf-more-danger" id="pfBlockBtn"><i class="fas fa-ban"></i> Bloquear</button></div></div>'; }
+        var mutualHtml = '';
+        if (!isSelf && profileData.mutual_followers > 0) { mutualHtml = '<div class="pf-mutual" id="pfMutual"><i class="fas fa-user-group"></i>' + profileData.mutual_followers + ' seguidores en comun</div>'; }
         document.getElementById('pfMain').innerHTML =
             '<div class="pf-cover" style="' + coverStyle + '">' + (isSelf ? '<button class="pf-cover-edit" id="pfCoverEdit" style="display:block"><i class="fas fa-camera"></i> Cambiar</button><input type="file" class="pf-cover-input" id="pfCoverInput" accept="image/jpeg,image/png,image/webp">' : '') + '</div>' +
             '<div class="pf-profile-row"><div class="pf-avatar">' + avatarHtml + (isSelf ? '<button class="pf-avatar-edit" id="pfAvatarEdit" style="display:block"><i class="fas fa-camera"></i></button><input type="file" class="pf-avatar-input" id="pfAvatarInput" accept="image/jpeg,image/png,image/webp">' : '') + '</div><div class="pf-actions">' + actionsHtml + '</div></div>' +
-            '<div class="pf-details"><div class="pf-name">' + esc(user.name) + (user.verified ? ' <i class="fas fa-check-circle pf-verified"></i>' : '') + '</div>' + (user.handle ? '<span class="pf-handle">@' + esc(user.handle) + '</span>' : '') + (user.bio ? '<p class="pf-bio">' + esc(user.bio) + '</p>' : '') + '<div class="pf-meta">' + (user.location ? '<span class="pf-meta-item"><i class="fas fa-map-marker-alt"></i> ' + esc(user.location) + '</span>' : '') + (memberLabel ? '<span class="pf-meta-item"><i class="far fa-calendar-alt"></i> ' + esc(memberLabel) + '</span>' : '') + '</div></div>' +
-            '<div class="pf-stats"><span class="pf-stat" data-tab="posts"><strong>' + formatCount(stats.posts) + '</strong> publicaciones</span><span class="pf-stat" data-tab="followers"><strong>' + formatCount(stats.followers) + '</strong> seguidores</span><span class="pf-stat" data-tab="following"><strong>' + formatCount(stats.following) + '</strong> siguiendo</span></div>' +
-            '<div class="pf-tabs"><div class="pf-tab active" data-tab="posts">Publicaciones</div><div class="pf-tab" data-tab="followers">Seguidores</div><div class="pf-tab" data-tab="following">Siguiendo</div></div>' +
-            '<div class="pf-tab-content"><div class="pf-tab-panel active" id="pfPanelPosts"></div><div class="pf-tab-panel" id="pfPanelFollowers"></div><div class="pf-tab-panel" id="pfPanelFollowing"></div></div>';
+            '<div class="pf-details"><div class="pf-name">' + esc(user.name) + (user.verified ? ' <i class="fas fa-check-circle pf-verified"></i>' : '') + '</div>' + (user.handle ? '<span class="pf-handle">@' + esc(user.handle) + '</span>' : '') + (user.bio ? '<p class="pf-bio">' + esc(user.bio) + '</p>' : '') + '<div class="pf-meta">' + (user.location ? '<span class="pf-meta-item"><i class="fas fa-map-marker-alt"></i> ' + esc(user.location) + '</span>' : '') + (memberLabel ? '<span class="pf-meta-item"><i class="far fa-calendar-alt"></i> ' + esc(memberLabel) + '</span>' : '') + '</div>' + mutualHtml + '</div>' +
+            '<div class="pf-stats"><span class="pf-stat" data-tab="posts"><strong>' + formatCount(stats.posts) + '</strong> publicaciones</span><span class="pf-stat" data-tab="followers"><strong>' + formatCount(stats.followers) + '</strong> seguidores</span><span class="pf-stat" data-tab="following"><strong>' + formatCount(stats.following) + '</strong> siguiendo</span>' + (isSelf && profileData.profile_views ? '<span class="pf-stat pf-stat-views"><i class="far fa-eye"></i> <strong>' + formatCount(profileData.profile_views) + '</strong> visitas</span>' : '') + '</div>' +
+            '<div class="pf-achievements" id="pfAchievements"></div>' +
+            '<div class="pf-tabs"><div class="pf-tab active" data-tab="posts">Publicaciones</div><div class="pf-tab" data-tab="reposts">Reposts</div><div class="pf-tab" data-tab="activity">Actividad</div><div class="pf-tab" data-tab="media">Media</div><div class="pf-tab" data-tab="likes">Me gusta</div><div class="pf-tab" data-tab="followers">Seguidores</div><div class="pf-tab" data-tab="following">Siguiendo</div></div>' +
+            '<div class="pf-tab-content"><div class="pf-tab-panel active" id="pfPanelPosts"></div><div class="pf-tab-panel" id="pfPanelReposts"></div><div class="pf-tab-panel" id="pfPanelActivity"></div><div class="pf-tab-panel" id="pfPanelMedia"></div><div class="pf-tab-panel" id="pfPanelLikes"></div><div class="pf-tab-panel" id="pfPanelFollowers"></div><div class="pf-tab-panel" id="pfPanelFollowing"></div></div>';
+        if (accentColor) { document.getElementById('pfMain').style.setProperty('--pf-accent', accentColor); var nameEl = document.querySelector('.pf-name'); if (nameEl) nameEl.style.color = accentColor; }
         attachHandlers();
     }
 
@@ -346,20 +442,35 @@
         var followBtn = document.getElementById('pfBtnFollow'); if (followBtn) followBtn.addEventListener('click', handleFollow);
         var editBtn = document.getElementById('pfBtnEdit'); if (editBtn) editBtn.addEventListener('click', openEditModal);
         var shareBtn = document.getElementById('pfBtnShare'); if (shareBtn) shareBtn.addEventListener('click', handleShare);
+        var qrBtn = document.getElementById('pfBtnQr'); if (qrBtn) qrBtn.addEventListener('click', openQrCard);
         var coverEdit = document.getElementById('pfCoverEdit'), coverInput = document.getElementById('pfCoverInput');
         if (coverEdit && coverInput) { coverEdit.addEventListener('click', function() { coverInput.click(); }); coverInput.addEventListener('change', handleCoverUpload); }
         var avatarEdit = document.getElementById('pfAvatarEdit'), avatarInput = document.getElementById('pfAvatarInput');
         if (avatarEdit && avatarInput) { avatarEdit.addEventListener('click', function(e) { e.stopPropagation(); avatarInput.click(); }); avatarInput.addEventListener('change', handleAvatarUpload); }
+        var moreBtn = document.getElementById('pfBtnMore'), moreMenu = document.getElementById('pfMoreMenu');
+        if (moreBtn && moreMenu) {
+            moreBtn.addEventListener('click', function(e) { e.stopPropagation(); moreMenu.classList.toggle('active'); });
+            document.addEventListener('click', function() { moreMenu.classList.remove('active'); });
+        }
+        var blockBtn = document.getElementById('pfBlockBtn');
+        if (blockBtn) blockBtn.addEventListener('click', handleBlock);
+        var mutualEl = document.getElementById('pfMutual');
+        if (mutualEl) mutualEl.addEventListener('click', function() { switchTab('followers'); });
         document.getElementById('pfEditClose').addEventListener('click', closeEditModal);
         document.getElementById('pfEditSave').addEventListener('click', saveProfile);
         document.getElementById('pfEditOverlay').addEventListener('click', function(e) { if (e.target === e.currentTarget) closeEditModal(); });
         document.getElementById('pfEditBio').addEventListener('input', function(e) { document.getElementById('pfEditBioCount').textContent = e.target.value.length; });
+        document.getElementById('pfEditAccent').addEventListener('input', function(e) { document.getElementById('pfColorLabel').textContent = e.target.value; });
+        document.getElementById('pfColorReset').addEventListener('click', function() { document.getElementById('pfEditAccent').value = '#00FFFF'; document.getElementById('pfColorLabel').textContent = '#00FFFF'; });
         window.addEventListener('scroll', handleScroll);
         document.getElementById('pfMain').addEventListener('click', function(e) {
+            // Pin button handler
+            var pinBtn = e.target.closest('.pf-pin-btn');
+            if (pinBtn) { e.stopPropagation(); handlePin(pinBtn.dataset.eventId); return; }
             var post = e.target.closest('.pf-post[data-event-id]');
-            if (post && !e.target.closest('.pf-user-avatar, .pf-user-info')) { window.location.href = '/home-dashboard.html?event=' + post.dataset.eventId; }
+            if (post && !e.target.closest('.pf-user-avatar, .pf-user-info, .pf-pin-btn')) { window.location.href = '/home-dashboard.html?event=' + post.dataset.eventId; }
             var userItem = e.target.closest('.pf-user-avatar[data-user-id], .pf-user-info[data-user-id]');
-            if (userItem) { var uid = userItem.dataset.userId; if (uid) window.location.href = '/perfil/?id=' + uid; }
+            if (userItem) { var uid = userItem.dataset.userId; if (uid) { var userHandle = userItem.dataset.handle; window.location.href = userHandle ? '/perfil/' + encodeURIComponent(userHandle) : '/perfil.html?id=' + uid; } }
         });
     }
 
@@ -368,6 +479,10 @@
         document.querySelectorAll('.pf-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === tab); });
         document.querySelectorAll('.pf-tab-panel').forEach(function(p) { p.classList.remove('active'); });
         if (tab === 'posts') { document.getElementById('pfPanelPosts').classList.add('active'); if (postsData.length === 0) loadPosts(); }
+        else if (tab === 'reposts') { document.getElementById('pfPanelReposts').classList.add('active'); if (repostsData.length === 0) loadReposts(); }
+        else if (tab === 'activity') { document.getElementById('pfPanelActivity').classList.add('active'); if (activityData.length === 0) loadActivity(); }
+        else if (tab === 'media') { document.getElementById('pfPanelMedia').classList.add('active'); if (mediaData.length === 0) loadMedia(); }
+        else if (tab === 'likes') { document.getElementById('pfPanelLikes').classList.add('active'); if (likesData.length === 0) loadLikes(); }
         else if (tab === 'followers') { document.getElementById('pfPanelFollowers').classList.add('active'); if (followersData.length === 0) loadFollowers(); }
         else if (tab === 'following') { document.getElementById('pfPanelFollowing').classList.add('active'); if (followingData.length === 0) loadFollowing(); }
     }
@@ -377,6 +492,50 @@
         var panel = document.getElementById('pfPanelPosts');
         if (postsOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
         try { var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/posts?limit=20&offset=' + postsOffset); var d = await r.json(); if (postsOffset === 0) panel.innerHTML = ''; var events = (d.data && d.data.events) || d.events || []; if (events.length < 20) postsHasMore = false; postsData = postsData.concat(events); events.forEach(function(ev) { panel.insertAdjacentHTML('beforeend', renderPost(ev)); }); postsOffset += events.length; if (postsData.length === 0) panel.innerHTML = '<div class="pf-empty"><i class="far fa-newspaper"></i><p>Sin publicaciones aun</p></div>'; } catch(e) { if (postsOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar publicaciones</div>'; }
+        loadingMore = false;
+    }
+
+    function renderRepostCard(p) {
+        var actor = p.actor || {};
+        var avatarHtml = actor.avatar_url
+            ? '<img src="' + esc(actor.avatar_url) + '" alt="" class="pf-post-avatar-img">'
+            : '<span class="pf-post-avatar-initials">' + esc((actor.name || 'U').substring(0,2).toUpperCase()) + '</span>';
+        var quoteHtml = p.repost_quote ? '<p class="pf-repost-quote"><i class="fas fa-quote-left" style="color:#22c55e;margin-right:4px;font-size:0.7rem;"></i>' + esc(p.repost_quote) + '</p>' : '';
+        return '<div class="pf-post" data-event-id="' + esc(p.id) + '">' +
+            '<div class="pf-repost-label"><i class="fas fa-retweet"></i> Reposteado ' + esc(p.repost_time_ago || '') + '</div>' +
+            quoteHtml +
+            '<div class="pf-post-row">' +
+                '<div class="pf-post-avatar" data-user-id="' + esc(actor.id || '') + '">' + avatarHtml + '</div>' +
+                '<div class="pf-post-body">' +
+                    '<div class="pf-post-header"><span class="pf-post-name">' + esc(actor.name || 'Usuario') + '</span><span class="pf-post-time">' + esc(p.time_ago || '') + '</span></div>' +
+                    '<p class="pf-post-text">' + esc(p.description || p.title || '') + '</p>' +
+                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy">' : '') +
+                    '<div class="pf-post-engagement">' +
+                        '<span><i class="far fa-heart"></i> ' + (p.engagement && p.engagement.likes || 0) + '</span>' +
+                        '<span><i class="far fa-comment"></i> ' + (p.engagement && p.engagement.comments || 0) + '</span>' +
+                        '<span><i class="fas fa-retweet"></i> ' + (p.engagement && p.engagement.reposts || 0) + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    async function loadReposts() {
+        if (loadingMore || !repostsHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelReposts');
+        if (repostsOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try {
+            var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/reposts?limit=20&offset=' + repostsOffset);
+            var d = await r.json();
+            if (!d.success) { if (repostsOffset === 0) panel.innerHTML = '<p class="pf-empty">Error al cargar reposts</p>'; loadingMore = false; return; }
+            if (repostsOffset === 0) panel.innerHTML = '';
+            var posts = d.data.posts || [];
+            if (posts.length < 20) repostsHasMore = false;
+            repostsData = repostsData.concat(posts);
+            posts.forEach(function(p) { panel.insertAdjacentHTML('beforeend', renderRepostCard(p)); });
+            repostsOffset += posts.length;
+            if (repostsData.length === 0) panel.innerHTML = '<p class="pf-empty">Sin reposts todavia</p>';
+        } catch(e) { if (repostsOffset === 0) panel.innerHTML = '<p class="pf-empty">Error al cargar reposts</p>'; }
         loadingMore = false;
     }
 
@@ -396,40 +555,247 @@
         loadingMore = false;
     }
 
+    // Activity feed
+    function renderActivityItem(a) {
+        var icons = { post: 'fa-pen-to-square', like: 'fa-heart', comment: 'fa-comment' };
+        var colors = { post: '#00FFFF', like: '#ef4444', comment: '#f59e0b' };
+        var labels = { post: 'Publico', like: 'Le gusto', comment: 'Comento en' };
+        var icon = icons[a.type] || 'fa-circle';
+        var color = colors[a.type] || '#64748b';
+        var label = labels[a.type] || a.type;
+        var text = a.title || a.description || '';
+        if (text.length > 120) text = text.substring(0, 120) + '...';
+        var date = a.created_at ? new Date(a.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '';
+        var imgHtml = a.image_url ? '<img src="' + esc(a.image_url) + '" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" loading="lazy">' : '';
+        return '<div class="pf-activity-item" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);"' + (a.target_event_id ? ' data-event-id="' + esc(a.target_event_id) + '"' : '') + '>' +
+            '<div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas ' + icon + '" style="color:' + color + ';font-size:0.8rem;"></i></div>' +
+            '<div style="flex:1;min-width:0;"><div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-bottom:2px;">' + esc(label) + ' <span style="color:rgba(255,255,255,0.3);">' + esc(date) + '</span></div>' +
+            (text ? '<p style="font-size:0.88rem;color:#e2e8f0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(text) + '</p>' : '') +
+            '</div>' + imgHtml + '</div>';
+    }
+
+    async function loadActivity() {
+        if (loadingMore || !activityHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelActivity');
+        if (activityOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try {
+            var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/activity?limit=20&offset=' + activityOffset);
+            var d = await r.json();
+            if (activityOffset === 0) panel.innerHTML = '';
+            if (d.data && d.data.is_private) { panel.innerHTML = '<div class="pf-empty"><i class="fas fa-lock"></i><p>Actividad privada</p></div>'; loadingMore = false; return; }
+            var items = (d.data && d.data.activities) || [];
+            if (items.length < 20) activityHasMore = false;
+            activityData = activityData.concat(items);
+            items.forEach(function(a) { panel.insertAdjacentHTML('beforeend', renderActivityItem(a)); });
+            activityOffset += items.length;
+            if (activityData.length === 0) panel.innerHTML = '<div class="pf-empty"><i class="far fa-clock"></i><p>Sin actividad reciente</p></div>';
+        } catch(e) { if (activityOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar actividad</div>'; }
+        loadingMore = false;
+    }
+
+    // Media gallery
+    async function loadMedia() {
+        if (loadingMore || !mediaHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelMedia');
+        if (mediaOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try {
+            var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/media?limit=30&offset=' + mediaOffset);
+            var d = await r.json();
+            if (mediaOffset === 0) { panel.innerHTML = ''; panel.classList.add('pf-media-grid'); }
+            if (d.data && d.data.is_private) { panel.innerHTML = '<div class="pf-empty"><i class="fas fa-lock"></i><p>Media privada</p></div>'; panel.classList.remove('pf-media-grid'); loadingMore = false; return; }
+            var items = (d.data && d.data.media) || [];
+            if (items.length < 30) mediaHasMore = false;
+            mediaData = mediaData.concat(items);
+            items.forEach(function(m) {
+                panel.insertAdjacentHTML('beforeend',
+                    '<div class="pf-media-item" data-event-id="' + esc(m.event_id) + '" style="cursor:pointer;">' +
+                    '<img src="' + esc(m.image_url) + '" alt="" loading="lazy">' +
+                    '<div class="pf-media-overlay"><span><i class="fas fa-heart"></i> ' + (m.engagement.likes || 0) + '</span><span><i class="fas fa-comment"></i> ' + (m.engagement.comments || 0) + '</span></div>' +
+                    '</div>');
+            });
+            mediaOffset += items.length;
+            if (mediaData.length === 0) { panel.innerHTML = '<div class="pf-empty"><i class="far fa-image"></i><p>Sin fotos todavia</p></div>'; panel.classList.remove('pf-media-grid'); }
+        } catch(e) { if (mediaOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar media</div>'; }
+        loadingMore = false;
+    }
+
+    // Likes tab
+    function renderLikeCard(p) {
+        var actor = p.actor || {};
+        var avatarHtml = actor.avatar_url
+            ? '<img src="' + esc(actor.avatar_url) + '" alt="" class="pf-post-avatar-img">'
+            : '<span class="pf-post-avatar-initials">' + esc((actor.name || 'U').substring(0,2).toUpperCase()) + '</span>';
+        var text = p.description || p.title || '';
+        if (text.length > 200) text = text.substring(0, 200) + '...';
+        return '<div class="pf-post" data-event-id="' + esc(p.id) + '">' +
+            '<div class="pf-post-row">' +
+                '<div class="pf-post-avatar" data-user-id="' + esc(actor.id || '') + '"' + (actor.handle ? ' data-handle="' + esc(actor.handle) + '"' : '') + '>' + avatarHtml + '</div>' +
+                '<div class="pf-post-body">' +
+                    '<div class="pf-post-header"><span class="pf-post-name">' + esc(actor.name || 'Usuario') + '</span>' + (actor.handle ? '<span class="pf-post-handle-sm">@' + esc(actor.handle) + '</span>' : '') + '</div>' +
+                    '<p class="pf-post-text">' + esc(text) + '</p>' +
+                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy">' : '') +
+                    '<div class="pf-post-engagement">' +
+                        '<span><i class="far fa-heart"></i> ' + (p.engagement && p.engagement.likes || 0) + '</span>' +
+                        '<span><i class="far fa-comment"></i> ' + (p.engagement && p.engagement.comments || 0) + '</span>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+    async function loadLikes() {
+        if (loadingMore || !likesHasMore) return; loadingMore = true;
+        var panel = document.getElementById('pfPanelLikes');
+        if (likesOffset === 0) panel.innerHTML = '<div class="pf-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        try {
+            var r = await fetchAuth('/api/feed/social/user/' + profileData.user.id + '/likes?limit=20&offset=' + likesOffset);
+            var d = await r.json();
+            if (likesOffset === 0) panel.innerHTML = '';
+            if (d.data && d.data.is_private) { panel.innerHTML = '<div class="pf-empty"><i class="fas fa-lock"></i><p>Likes privados</p></div>'; loadingMore = false; return; }
+            var posts = (d.data && d.data.posts) || [];
+            if (posts.length < 20) likesHasMore = false;
+            likesData = likesData.concat(posts);
+            posts.forEach(function(p) { panel.insertAdjacentHTML('beforeend', renderLikeCard(p)); });
+            likesOffset += posts.length;
+            if (likesData.length === 0) panel.innerHTML = '<div class="pf-empty"><i class="far fa-heart"></i><p>Sin likes todavia</p></div>';
+        } catch(e) { if (likesOffset === 0) panel.innerHTML = '<div class="pf-empty">Error al cargar likes</div>'; }
+        loadingMore = false;
+    }
+
     function renderPost(ev) {
         var user = profileData.user, content = ev.content || (ev.data && ev.data.content) || '', images = ev.media || (ev.data && ev.data.media) || [], engagement = ev.engagement || {};
         var createdAt = ev.created_at || ev.timestamp, date = createdAt ? new Date(createdAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '';
         var imagesHtml = '';
         if (images.length > 0) { imagesHtml = '<div class="pf-post-images">'; images.slice(0,4).forEach(function(img) { var url = typeof img === 'string' ? img : img.url; if (url) imagesHtml += '<img src="' + esc(url) + '" alt="Imagen" loading="lazy">'; }); imagesHtml += '</div>'; }
         var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" alt="">' : getInitials(user.name);
-        return '<div class="pf-post" data-event-id="' + esc(ev.id || ev.event_id) + '"><div class="pf-post-header"><div class="pf-post-avatar">' + avatarHtml + '</div><span class="pf-post-name">' + esc(user.name) + '</span>' + (user.handle ? '<span class="pf-post-handle-sm">@' + esc(user.handle) + '</span>' : '') + '<span class="pf-post-date">' + esc(date) + '</span></div>' + (content ? '<div class="pf-post-text">' + esc(content) + '</div>' : '') + imagesHtml + '<div class="pf-post-engagement"><span class="pf-post-eng-item"><i class="far fa-comment"></i> ' + formatCount(engagement.comments || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-heart"></i> ' + formatCount(engagement.likes || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-eye"></i> ' + formatCount(engagement.views || 0) + '</span></div></div>';
+        var pinnedHtml = ev.is_pinned ? '<div class="pf-pinned-badge"><i class="fas fa-thumbtack"></i> Fijado</div>' : '';
+        var pinBtnHtml = profileData.is_self ? '<button class="pf-pin-btn" data-event-id="' + esc(ev.id || ev.event_id) + '" title="' + (ev.is_pinned ? 'Desfijar' : 'Fijar') + '"><i class="fas fa-thumbtack' + (ev.is_pinned ? ' pf-pinned' : '') + '"></i></button>' : '';
+        return '<div class="pf-post' + (ev.is_pinned ? ' pf-post-pinned' : '') + '" data-event-id="' + esc(ev.id || ev.event_id) + '">' + pinnedHtml + '<div class="pf-post-header"><div class="pf-post-avatar">' + avatarHtml + '</div><span class="pf-post-name">' + esc(user.name) + '</span>' + (user.handle ? '<span class="pf-post-handle-sm">@' + esc(user.handle) + '</span>' : '') + '<span class="pf-post-date">' + esc(date) + '</span>' + pinBtnHtml + '</div>' + (content ? '<div class="pf-post-text">' + esc(content) + '</div>' : '') + imagesHtml + '<div class="pf-post-engagement"><span class="pf-post-eng-item"><i class="far fa-comment"></i> ' + formatCount(engagement.comments || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-heart"></i> ' + formatCount(engagement.likes || 0) + '</span><span class="pf-post-eng-item"><i class="far fa-eye"></i> ' + formatCount(engagement.views || 0) + '</span></div></div>';
     }
 
     function renderUserItem(u) {
         var avatarHtml = u.avatar_url ? '<img src="' + esc(u.avatar_url) + '" alt="">' : getInitials(u.name);
         var isSelf = u.user_id === getCurrentUserId(), followHtml = '';
         if (!isSelf && getToken()) { followHtml = '<button class="pf-user-follow-btn ' + (u.is_following ? 'following' : '') + '" data-user-id="' + esc(u.user_id) + '" onclick="window._pfToggleFollow(this)">' + (u.is_following ? 'Siguiendo' : 'Seguir') + '</button>'; }
-        return '<div class="pf-user-item"><div class="pf-user-avatar" data-user-id="' + esc(u.user_id) + '">' + avatarHtml + '</div><div class="pf-user-info" data-user-id="' + esc(u.user_id) + '"><div class="pf-user-name">' + esc(u.name) + (u.verified ? ' <i class="fas fa-check-circle" style="color:#00FFFF;font-size:12px"></i>' : '') + '</div>' + (u.handle ? '<div class="pf-user-handle-sm">@' + esc(u.handle) + '</div>' : '') + (u.bio ? '<div class="pf-user-bio">' + esc(u.bio) + '</div>' : '') + '</div>' + followHtml + '</div>';
+        return '<div class="pf-user-item"><div class="pf-user-avatar" data-user-id="' + esc(u.user_id) + '"' + (u.handle ? ' data-handle="' + esc(u.handle) + '"' : '') + '>' + avatarHtml + '</div><div class="pf-user-info" data-user-id="' + esc(u.user_id) + '"' + (u.handle ? ' data-handle="' + esc(u.handle) + '"' : '') + '><div class="pf-user-name">' + esc(u.name) + (u.verified ? ' <i class="fas fa-check-circle" style="color:#00FFFF;font-size:12px"></i>' : '') + '</div>' + (u.handle ? '<div class="pf-user-handle-sm">@' + esc(u.handle) + '</div>' : '') + (u.bio ? '<div class="pf-user-bio">' + esc(u.bio) + '</div>' : '') + '</div>' + followHtml + '</div>';
     }
 
     window._pfToggleFollow = async function(btn) {
         var userId = btn.dataset.userId; if (!userId) return;
         var isFollowing = btn.classList.contains('following'), method = isFollowing ? 'DELETE' : 'POST';
-        var url = isFollowing ? '/api/feed/social/unfollow/' + userId : '/api/feed/social/follow/' + userId;
-        try { var r = await fetchAuth(url, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; } } catch(e) {}
+        try { var r = await fetchAuth('/api/feed/social/follow/' + userId, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; if (profileData) { var current = parseInt(profileData.stats.followers) || 0; profileData.stats.followers = isFollowing ? current - 1 : current + 1; var statsEl = document.querySelector('.pf-stat[data-tab="followers"] strong'); if (statsEl) statsEl.textContent = formatCount(profileData.stats.followers); } } } catch(e) {}
     };
 
     async function handleFollow() {
         var btn = document.getElementById('pfBtnFollow'); if (!btn) return;
         var userId = btn.dataset.userId, isFollowing = btn.classList.contains('following'), method = isFollowing ? 'DELETE' : 'POST';
-        var url = isFollowing ? '/api/feed/social/unfollow/' + userId : '/api/feed/social/follow/' + userId;
-        try { var r = await fetchAuth(url, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; profileData.is_following = !isFollowing; var statsEl = document.querySelector('.pf-stat[data-tab="followers"] strong'); if (statsEl) { var current = parseInt(profileData.stats.followers) || 0; profileData.stats.followers = isFollowing ? current - 1 : current + 1; statsEl.textContent = formatCount(profileData.stats.followers); } } } catch(e) {}
+        try { var r = await fetchAuth('/api/feed/social/follow/' + userId, { method: method, headers: { 'Content-Type': 'application/json' } }); if (r.ok) { btn.classList.toggle('following'); btn.textContent = btn.classList.contains('following') ? 'Siguiendo' : 'Seguir'; profileData.is_following = !isFollowing; var statsEl = document.querySelector('.pf-stat[data-tab="followers"] strong'); if (statsEl) { var current = parseInt(profileData.stats.followers) || 0; profileData.stats.followers = isFollowing ? current - 1 : current + 1; statsEl.textContent = formatCount(profileData.stats.followers); } } } catch(e) {}
     }
 
     function handleShare() {
         var user = profileData.user, url = user.handle ? window.location.origin + '/perfil/' + user.handle : window.location.href;
         if (navigator.share) { navigator.share({ title: user.name + ' - La Tanda', url: url }).catch(function(){}); }
         else { navigator.clipboard.writeText(url).then(function() { showToast('Enlace copiado', 'success'); }); }
+    }
+
+    async function handleBlock() {
+        var user = profileData.user;
+        var confirmed = await new Promise(function(resolve) {
+            var ov = document.createElement('div');
+            ov.className = 'pf-confirm-overlay';
+            ov.innerHTML = '<div class="pf-confirm-box"><div class="pf-confirm-icon"><i class="fas fa-ban"></i></div><h3>Bloquear a ' + esc(user.name) + '?</h3><p>No podra ver tu perfil ni contactarte. Tampoco podras ver su perfil.</p><div class="pf-confirm-actions"><button class="pf-confirm-cancel" id="pfConfCancel">Cancelar</button><button class="pf-confirm-danger" id="pfConfBlock">Bloquear</button></div></div>';
+            document.body.appendChild(ov);
+            requestAnimationFrame(function() { ov.classList.add('active'); });
+            document.getElementById('pfConfCancel').onclick = function() { ov.remove(); resolve(false); };
+            document.getElementById('pfConfBlock').onclick = function() { ov.remove(); resolve(true); };
+            ov.addEventListener('click', function(e) { if (e.target === ov) { ov.remove(); resolve(false); } });
+        });
+        if (!confirmed) return;
+        try {
+            var r = await fetchAuth('/api/social/block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ blocked_id: user.id }) });
+            var d = await r.json();
+            if (d.success) { showToast('Usuario bloqueado', 'success'); setTimeout(function() { window.location.href = '/home-dashboard.html'; }, 1200); }
+            else { showToast(d.message || 'Error al bloquear', 'error'); }
+        } catch(e) { showToast('Error al bloquear', 'error'); }
+    }
+
+    async function handlePin(eventId) {
+        if (!eventId) return;
+        try {
+            var r = await fetchAuth('/api/feed/social/' + eventId + '/pin', { method: 'PUT', headers: { 'Content-Type': 'application/json' } });
+            var d = await r.json();
+            if (d.success) {
+                // Update local data and re-render posts
+                postsData.forEach(function(p) { p.is_pinned = (p.id === eventId || p.event_id === eventId) ? d.data.pinned : false; });
+                var panel = document.getElementById('pfPanelPosts');
+                if (panel) {
+                    // Sort: pinned first, then by date
+                    postsData.sort(function(a, b) { if (a.is_pinned && !b.is_pinned) return -1; if (!a.is_pinned && b.is_pinned) return 1; return new Date(b.created_at) - new Date(a.created_at); });
+                    panel.innerHTML = '';
+                    postsData.forEach(function(ev) { panel.insertAdjacentHTML('beforeend', renderPost(ev)); });
+                }
+                showToast(d.data.pinned ? 'Post fijado' : 'Post desfijado', 'success');
+            } else { showToast(d.message || 'Error', 'error'); }
+        } catch(e) { showToast('Error al fijar post', 'error'); }
+    }
+
+    async function loadAchievements() {
+        if (!profileData || !profileData.user) return;
+        try {
+            var r = await fetchAuth('/api/users/' + profileData.user.id + '/achievements');
+            var d = await r.json();
+            if (!d.success || !d.data) return;
+            var achs = d.data.achievements || [];
+            var earned = achs.filter(function(a) { return a.earned; });
+            var container = document.getElementById('pfAchievements');
+            if (!container || earned.length === 0) return;
+            var html = '<div class="pf-ach-header"><span class="pf-ach-title"><i class="fas fa-trophy"></i> Logros</span><span class="pf-ach-pts">' + (d.data.total_points || 0) + ' pts</span></div><div class="pf-ach-grid">';
+            achs.forEach(function(a) {
+                var icon = a.category === 'social' ? 'fa-users' : a.category === 'marketplace' ? 'fa-store' : a.category === 'tanda' ? 'fa-handshake' : 'fa-star';
+                var earnDate = a.earned_at ? new Date(a.earned_at).toLocaleDateString('es-HN', { month: 'short', year: 'numeric' }) : '';
+                html += '<div class="pf-ach-badge' + (a.earned ? '' : ' pf-ach-locked') + '" title="' + esc(a.description) + (earnDate ? ' — ' + earnDate : '') + '">' +
+                    '<i class="fas ' + icon + '"></i>' +
+                    '<span>' + esc(a.name) + '</span>' +
+                '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } catch(e) { /* non-blocking */ }
+    }
+
+    function trackProfileView() {
+        if (!profileData || !profileData.user || profileData.is_self) return;
+        try { fetchAuth('/api/users/' + profileData.user.id + '/profile-view', { method: 'POST' }); } catch(e) { /* fire and forget */ }
+    }
+
+    function openQrCard() {
+        if (!profileData || !profileData.user) return;
+        var user = profileData.user;
+        var url = user.handle ? 'https://latanda.online/perfil/' + user.handle : window.location.href;
+        var initials = getInitials(user.name);
+        var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">' : '<div style="width:64px;height:64px;border-radius:50%;background:rgba(0,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#00FFFF;">' + initials + '</div>';
+        var ov = document.createElement('div');
+        ov.className = 'pf-qr-overlay';
+        ov.innerHTML = '<div class="pf-qr-card">' +
+            '<button class="pf-qr-close" id="pfQrClose"><i class="fas fa-times"></i></button>' +
+            '<div class="pf-qr-avatar">' + avatarHtml + '</div>' +
+            '<div class="pf-qr-name">' + esc(user.name) + '</div>' +
+            (user.handle ? '<div class="pf-qr-handle">@' + esc(user.handle) + '</div>' : '') +
+            '<div class="pf-qr-code" id="pfQrImg"></div>' +
+            '<div class="pf-qr-url">' + esc(url) + '</div>' +
+            '<div class="pf-qr-actions"><button class="pf-btn pf-btn-share" id="pfQrCopy"><i class="fas fa-copy"></i> Copiar enlace</button></div>' +
+        '</div>';
+        document.body.appendChild(ov);
+        requestAnimationFrame(function() { ov.classList.add('active'); });
+        // Generate QR using a simple table-based QR (or use external lib if available)
+        var qrEl = document.getElementById('pfQrImg');
+        if (qrEl) {
+            // Use a simple embedded QR API image
+            qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url) + '&bgcolor=111827&color=00FFFF" alt="QR" style="width:180px;height:180px;border-radius:8px;">';
+        }
+        document.getElementById('pfQrClose').onclick = function() { ov.remove(); };
+        document.getElementById('pfQrCopy').onclick = function() { navigator.clipboard.writeText(url).then(function() { showToast('Enlace copiado', 'success'); }); };
+        ov.addEventListener('click', function(e) { if (e.target === ov) ov.remove(); });
     }
 
     async function handleCoverUpload(e) {
@@ -453,6 +819,9 @@
         document.getElementById('pfEditBioCount').textContent = (user.bio || '').length;
         document.getElementById('pfEditHandle').value = user.handle || '';
         document.getElementById('pfEditLocation').value = user.location || '';
+        var accent = (profileData.profile_theme && profileData.profile_theme.accent_color) || '#00FFFF';
+        document.getElementById('pfEditAccent').value = accent;
+        document.getElementById('pfColorLabel').textContent = accent;
         document.getElementById('pfEditOverlay').classList.add('active');
     }
 
@@ -464,8 +833,15 @@
         if (!payload.name || payload.name.length < 2) { showToast('El nombre debe tener al menos 2 caracteres', 'error'); saveBtn.disabled = false; saveBtn.textContent = 'Guardar'; return; }
         try { var r = await fetchAuth('/api/user/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); var d = await r.json();
             if (d.success) { profileData.user.name = payload.name; profileData.user.bio = payload.bio; profileData.user.handle = payload.handle; profileData.user.location = payload.location;
+                // Save accent color
+                var newAccent = document.getElementById('pfEditAccent').value;
+                if (newAccent && newAccent !== '#00ffff' && newAccent !== '#00FFFF') {
+                    try { await fetchAuth('/api/users/profile-theme', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accent_color: newAccent }) }); profileData.profile_theme = { accent_color: newAccent }; } catch(e) {}
+                } else if (profileData.profile_theme && profileData.profile_theme.accent_color) {
+                    try { await fetchAuth('/api/users/profile-theme', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accent_color: null }) }); profileData.profile_theme = {}; } catch(e) {}
+                }
                 try { var stored = JSON.parse(localStorage.getItem('latanda_user') || '{}'); stored.name = payload.name; stored.handle = payload.handle; localStorage.setItem('latanda_user', JSON.stringify(stored)); } catch(e) {}
-                closeEditModal(); renderProfile(); showToast('Perfil actualizado', 'success'); if (payload.handle) { window.history.replaceState(null, '', '/perfil/' + payload.handle); }
+                closeEditModal(); renderProfile(); loadAchievements(); showToast('Perfil actualizado', 'success'); if (payload.handle) { window.history.replaceState(null, '', '/perfil/' + payload.handle); }
             } else { showToast(d.message || 'Error al guardar', 'error'); }
         } catch(e) { showToast('Error de conexion', 'error'); }
         saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
@@ -475,6 +851,10 @@
         if (loadingMore) return;
         if (window.innerHeight + window.scrollY < document.body.offsetHeight - 300) return;
         if (currentTab === 'posts' && postsHasMore) loadPosts();
+        else if (currentTab === 'reposts' && repostsHasMore) loadReposts();
+        else if (currentTab === 'activity' && activityHasMore) loadActivity();
+        else if (currentTab === 'media' && mediaHasMore) loadMedia();
+        else if (currentTab === 'likes' && likesHasMore) loadLikes();
         else if (currentTab === 'followers' && followersHasMore) loadFollowers();
         else if (currentTab === 'following' && followingHasMore) loadFollowing();
     }

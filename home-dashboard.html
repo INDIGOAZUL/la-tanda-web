@@ -6,8 +6,8 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preload" href="/css/dashboard-layout.css" as="style">
-    <link rel="preload" href="/css/hub/social-feed.css?v=12.6" as="style">
-    <link rel="preload" href="/js/hub/social-feed.js?v=12.2" as="script">
+    <link rel="preload" href="/css/hub/social-feed.css?v=12.8" as="style">
+    <link rel="preload" href="/js/hub/social-feed.js?v=12.4" as="script">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0f172a">
     <title data-i18n="dashboard.page_title">La Tanda - Web3 DeFi Ecosystem</title>
@@ -1853,7 +1853,7 @@
     <link rel="stylesheet" href="css/onboarding.css?v=1.0">
     <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
     <link rel="stylesheet" href="css/hub/mia-assistant.css?v=6911">
-    <link rel="stylesheet" href="css/hub/social-feed.css?v=12.6">
+    <link rel="stylesheet" href="css/hub/social-feed.css?v=12.8">
     <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
     <link rel="stylesheet" href="css/hub/comments-modal.css?v=1.7">
     <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
@@ -2298,7 +2298,7 @@ document.addEventListener("DOMContentLoaded", () => {    const isHidden = localS
     <!-- Loading States Component -->
     <script defer src="js/components/loading-states.js"></script>
     <!-- Global Header Scripts -->
-    <script defer src="js/components-loader.js?v=30.5"></script>
+    <script defer src="js/components-loader.js?v=30.6"></script>
     <!-- Hub Inteligente Modules -->
     <script defer src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script defer src="js/hub/contextual-alerts.js?v=1.03"></script>
@@ -2306,7 +2306,7 @@ document.addEventListener("DOMContentLoaded", () => {    const isHidden = localS
     <script defer src="js/hub/module-cards.js?v=1.02"></script>
     <script defer src="js/hub/mia-assistant.js?v=6912"></script>
     <script defer src="js/hub/comments-modal.js?v=1.5"></script>
-    <script defer src="js/hub/social-feed.js?v=12.2"></script>
+    <script defer src="js/hub/social-feed.js?v=12.4"></script>
     <script defer src="js/hub/contextual-widgets.js?v=1770829609"></script>
     <script defer src="js/hub/sidebar-widgets.js?v=1770829609"></script>
     <script defer src="js/mobile-drawer.js?v=1769469123"></script>
@@ -2759,53 +2759,19 @@ function openMiaAssistant() {
     }
 }
 
-function toggleMoreMenu() {
-    var dropdown = document.getElementById("moreMenuDropdown");
-    if (\!dropdown) return;
-    var navMoreBtn = document.getElementById("navMoreBtn");
-    if (dropdown.classList.contains("show")) {
-        dropdown.classList.remove("show");
-        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
-    } else {
-        dropdown.classList.add("show");
-        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "true");
-    }
-}
-
-function closeMoreMenu() {
-    var dropdown = document.getElementById("moreMenuDropdown");
-    var navMoreBtn = document.getElementById("navMoreBtn");
-    if (dropdown) dropdown.classList.remove("show");
-    if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
-}
-
-// Close menu when clicking outside
-document.addEventListener("click", function(e) {
-    var container = document.getElementById("navMoreBtn");
-    var dropdown = document.getElementById("moreMenuDropdown");
-    if (\!dropdown || \!dropdown.classList.contains("show")) return;
-    if ((container && container.contains(e.target)) || dropdown.contains(e.target)) return;
-    closeMoreMenu();
-});
-document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape") closeMoreMenu();
-});
-
-// Delegated click handler for data-action attributes
+// Delegated click handler for data-action attributes (Más menu handled by components-loader.js)
 document.addEventListener("click", function(e) {
     var btn = e.target.closest("[data-action]");
     if (!btn) return;
     var action = btn.dataset.action;
     switch(action) {
-        case "toggle-more-menu": toggleMoreMenu(); break;
-        case "logout": e.preventDefault(); if (typeof handleLogout === "function") handleLogout(); break;
         case "open-compose":
             var cb = document.getElementById("composeBox");
             var ci = document.getElementById("composeInput");
             if (cb) {
                 cb.scrollIntoView({behavior:"smooth",block:"center"});
                 cb.style.boxShadow = "0 0 0 2px #00FFFF";
-                setTimeout(function(){ if(ci && window.innerWidth > 768) ci.focus(); cb.style.boxShadow = ""; },1200);
+                setTimeout(function(){ if(ci) ci.focus(); cb.style.boxShadow = ""; },600);
             } else {
                 window.scrollTo({top:0,behavior:"smooth"});
             }

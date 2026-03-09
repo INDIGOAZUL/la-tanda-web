@@ -106,7 +106,7 @@ const MobileDrawer = {
                 // Update profile links to /perfil/:handle
                 const profileUrl = user.handle
                     ? '/perfil/' + user.handle
-                    : '/perfil/?id=' + (user.user_id || user.id || '');
+                    : '/perfil.html?id=' + (user.user_id || user.id || '');
                 const navLink = document.getElementById('navProfileLink');
                 const drawerLink = document.getElementById('drawerProfileLink');
                 if (navLink) navLink.href = profileUrl;

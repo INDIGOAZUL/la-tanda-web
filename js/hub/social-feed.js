@@ -1174,6 +1174,7 @@ const SocialFeed = {
         const verifiedBadge = isAnonymous ? '' : (actor.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : '');
         const likesText = engagement.likes || '';
         const commentsText = engagement.comments || '';
+        const repostsText = engagement.reposts || '';
         const viewCount = engagement.views || 0;
 
         const trendingBadge = this.currentTab === "trending" && engagement.score > 5
@@ -1206,7 +1207,16 @@ const SocialFeed = {
 
         const avatarColor = isAnonymous ? '#8b5cf620' : (config.color + '20');
 
+        const repostBanner = event.reposted_by
+            ? '<div class="sf-repost-banner" data-user-id="' + this.escapeHtml(String(event.reposted_by.id)) + '">' +
+                '<i class="fas fa-retweet"></i> ' +
+                '<span>' + this.escapeHtml(event.reposted_by.name) + ' reposteo</span>' +
+                (event.repost_quote ? '<p class="sf-repost-quote">' + this.escapeHtml(event.repost_quote) + '</p>' : '') +
+              '</div>'
+            : '';
+
         return '<div class="social-card' + (isAnonymous ? ' anonymous-post' : '') + '" data-event-id="' + this.escapeHtml(String(event.id)) + '" data-type="' + this.escapeHtml(event.event_type || '') + '">' +
+            repostBanner +
             '<div class="social-card-header">' +
                 '<div class="actor-avatar ' + hasImage + '" style="background: ' + avatarColor + '"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + '>' +
                     avatarContent +
@@ -1243,6 +1253,10 @@ const SocialFeed = {
                 '</button>' +
                 '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Compartir">' +
                     '<i class="fas fa-share-alt"></i>' +
+                '</button>' +
+                '<button class="engagement-btn repost-btn' + (event.is_reposted ? ' reposted' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Repostear">' +
+                    '<i class="fas fa-retweet"></i>' +
+                    '<span>' + repostsText + '</span>' +
                 '</button>' +
                 '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
@@ -1319,6 +1333,7 @@ const SocialFeed = {
             const bookmarkBtn = e.target.closest(".bookmark-btn");
             const commentBtn = e.target.closest(".comment-btn");
             const shareBtn = e.target.closest(".share-btn");
+            const repostBtn = e.target.closest(".repost-btn");
 
             if (likeBtn) {
                 e.preventDefault();
@@ -1335,6 +1350,10 @@ const SocialFeed = {
             if (shareBtn) {
                 e.preventDefault();
                 this.shareEvent(shareBtn.dataset.id);
+            }
+            if (repostBtn) {
+                e.preventDefault();
+                this.handleRepost(repostBtn);
             }
 
             // Handle poll vote clicks
@@ -1514,6 +1533,203 @@ const SocialFeed = {
         } finally {
             button.disabled = false;
         }
+    },
+
+    async toggleRepost(button) {
+        if (button.disabled) return;
+        button.disabled = true;
+        const eventId = button.dataset.id;
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+
+        if (!token) {
+            window.LaTandaPopup && window.LaTandaPopup.showError("Inicia sesion para repostear");
+            button.disabled = false;
+            return;
+        }
+
+        const wasReposted = button.classList.contains("reposted");
+        button.classList.toggle("reposted");
+
+        const countSpan = button.querySelector("span");
+        const count = parseInt(countSpan.textContent) || 0;
+        countSpan.textContent = wasReposted ? (Math.max(0, count - 1) || '') : count + 1;
+
+        if (!wasReposted) {
+            button.animate([
+                { transform: "scale(1)" },
+                { transform: "scale(1.2) rotate(15deg)" },
+                { transform: "scale(1) rotate(0deg)" }
+            ], { duration: 250 });
+        }
+
+        try {
+            const response = await fetch("/api/feed/social/" + eventId + "/repost", {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(function() { return {}; });
+                var errMsg = (errData.data && errData.data.error && errData.data.error.message) || "Error al repostear";
+                window.LaTandaPopup && window.LaTandaPopup.showError(errMsg);
+                button.classList.toggle("reposted");
+                countSpan.textContent = count || '';
+            }
+        } catch (error) {
+            button.classList.toggle("reposted");
+            countSpan.textContent = count || '';
+        } finally {
+            button.disabled = false;
+        }
+    },
+
+    handleRepost(button) {
+        var self = this;
+        var eventId = button.dataset.id;
+        var wasReposted = button.classList.contains("reposted");
+
+        // If already reposted, just un-repost directly
+        if (wasReposted) {
+            this.toggleRepost(button);
+            return;
+        }
+
+        // Show repost menu: simple repost or quote repost
+        this._showRepostMenu(button, eventId);
+    },
+
+    _showRepostMenu(button, eventId) {
+        var self = this;
+
+        // Remove any existing menu
+        var existing = document.querySelector(".repost-menu-popup");
+        if (existing) existing.remove();
+
+        var menu = document.createElement("div");
+        menu.className = "repost-menu-popup";
+        menu.innerHTML =
+            '<button class="repost-menu-item" data-action="simple">' +
+                '<i class="fas fa-retweet"></i> Repostear' +
+            '</button>' +
+            '<button class="repost-menu-item" data-action="quote">' +
+                '<i class="fas fa-quote-left"></i> Citar' +
+            '</button>';
+
+        // Position near the button
+        var rect = button.getBoundingClientRect();
+        menu.style.position = "fixed";
+        menu.style.left = rect.left + "px";
+        menu.style.bottom = (window.innerHeight - rect.top + 4) + "px";
+        menu.style.zIndex = "9999";
+
+        document.body.appendChild(menu);
+
+        menu.addEventListener("click", function(e) {
+            var item = e.target.closest(".repost-menu-item");
+            if (!item) return;
+            menu.remove();
+
+            if (item.dataset.action === "simple") {
+                self.toggleRepost(button);
+            } else if (item.dataset.action === "quote") {
+                self._openQuoteRepostModal(button, eventId);
+            }
+        });
+
+        // Close on outside click
+        var closeMenu = function(e) {
+            if (!menu.contains(e.target) && e.target !== button) {
+                menu.remove();
+                document.removeEventListener("click", closeMenu);
+            }
+        };
+        setTimeout(function() {
+            document.addEventListener("click", closeMenu);
+        }, 10);
+    },
+
+    _openQuoteRepostModal(button, eventId) {
+        var self = this;
+        var event = this.events.find(function(e) { return String(e.id) === eventId; });
+        var actorName = event ? (event.actor && event.actor.name || 'Usuario') : 'Usuario';
+        var postText = event ? self.escapeHtml(String(event.description || event.title || '').slice(0, 120)) : '';
+
+        var overlay = document.createElement("div");
+        overlay.className = "repost-quote-overlay";
+        overlay.innerHTML =
+            '<div class="repost-quote-modal">' +
+                '<div class="repost-quote-header">' +
+                    '<h3>Citar publicacion</h3>' +
+                    '<button class="repost-quote-close"><i class="fas fa-times"></i></button>' +
+                '</div>' +
+                '<div class="repost-quote-body">' +
+                    '<textarea class="repost-quote-input" placeholder="Agrega tu comentario..." maxlength="500" rows="3"></textarea>' +
+                    '<div class="repost-quote-preview">' +
+                        '<i class="fas fa-retweet" style="color:#22c55e;margin-right:6px;"></i>' +
+                        '<span class="repost-quote-author">' + self.escapeHtml(actorName) + '</span>' +
+                        (postText ? '<p class="repost-quote-text">' + postText + '...</p>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div class="repost-quote-footer">' +
+                    '<button class="repost-quote-submit">Repostear con cita</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        var input = overlay.querySelector(".repost-quote-input");
+        var submitBtn = overlay.querySelector(".repost-quote-submit");
+
+        input.focus();
+
+        submitBtn.addEventListener("click", async function() {
+            var quote = input.value.trim();
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Reposteando...";
+
+            var token = localStorage.getItem("auth_token") || localStorage.getItem("authToken");
+            try {
+                var response = await fetch("/api/feed/social/" + eventId + "/repost", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ quote: quote || null })
+                });
+
+                if (response.ok) {
+                    button.classList.add("reposted");
+                    var countSpan = button.querySelector("span");
+                    var count = parseInt(countSpan.textContent) || 0;
+                    countSpan.textContent = count + 1;
+                    button.animate([
+                        { transform: "scale(1)" },
+                        { transform: "scale(1.2) rotate(15deg)" },
+                        { transform: "scale(1) rotate(0deg)" }
+                    ], { duration: 250 });
+                    overlay.remove();
+                    window.LaTandaPopup && window.LaTandaPopup.showSuccess("Reposteado con cita");
+                } else {
+                    var errData = await response.json().catch(function() { return {}; });
+                    var errMsg = (errData.data && errData.data.error && errData.data.error.message) || "Error al repostear";
+                    window.LaTandaPopup && window.LaTandaPopup.showError(errMsg);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Repostear con cita";
+                }
+            } catch (err) {
+                window.LaTandaPopup && window.LaTandaPopup.showError("Error de conexion");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Repostear con cita";
+            }
+        });
+
+        overlay.querySelector(".repost-quote-close").addEventListener("click", function() {
+            overlay.remove();
+        });
+        overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) overlay.remove();
+        });
     },
 
     openComments(eventId) {
@@ -3267,6 +3483,9 @@ if (window.CommentsModal) {
                         '<button class="engagement-btn share-btn" data-id="' + this.escapeHtml(String(post.id)) + '">' +
                             '<i class="fas fa-share-alt"></i>' +
                         '</button>' +
+                        '<button class="engagement-btn repost-btn' + (post.is_reposted ? ' reposted' : '') + '" data-id="' + this.escapeHtml(String(post.id)) + '">' +
+                            '<i class="fas fa-retweet"></i> <span>' + (engagement.reposts || '') + '</span>' +
+                        '</button>' +
                         '<button class="engagement-btn bookmark-btn' + (post.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(post.id)) + '">' +
                             '<i class="' + (post.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                         '</button>' +
@@ -3316,6 +3535,15 @@ if (window.CommentsModal) {
             bookmarkBtn.addEventListener("click", function(e) {
                 e.preventDefault();
                 self.toggleBookmark(bookmarkBtn);
+            });
+        }
+
+        // Repost
+        var repostBtn = modal.querySelector(".repost-btn");
+        if (repostBtn) {
+            repostBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                self.handleRepost(repostBtn);
             });
         }
 
