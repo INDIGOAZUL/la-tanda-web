@@ -15,6 +15,9 @@
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
         /* ========================================
@@ -379,6 +382,10 @@
         
         .password-strength {
             margin-top: 12px;
+            display: none;
+        }
+        .password-strength.show {
+            display: block;
         }
         
         .strength-bar {
@@ -396,6 +403,7 @@
             transition: all 0.3s;
         }
         
+        .strength-fill.very-weak { width: 10%; background: var(--error-color); }
         .strength-fill.weak { width: 25%; background: var(--error-color); }
         .strength-fill.fair { width: 50%; background: var(--warning-color); }
         .strength-fill.good { width: 75%; background: var(--info-color); }
@@ -431,7 +439,7 @@
             color: var(--text-light);
         }
         
-        .requirement.valid i {
+        .requirement.met i {
             color: var(--success-color);
         }
         
@@ -837,11 +845,11 @@
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
 
         @keyframes slideDown {
             from { transform: translate(-50%, -100%); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
-        }
         }
         
         .notification.show {
@@ -979,9 +987,9 @@
                 </button>
                 
                 <div class="divider">o continuar con</div>
-                
+
                 <div class="social-login">
-                    <button type="button" class="social-btn google" onclick="loginWithProvider('google')">
+                    <button type="button" class="social-btn google" id="googleLoginBtn" onclick="handleGoogleClick()">
                         <i class="fab fa-google"></i> Google
                     </button>
                     <button type="button" class="social-btn apple" onclick="loginWithProvider('apple')">
@@ -1013,30 +1021,33 @@
                 <div class="form-group">
                     <label for="registerPassword">Contraseña</label>
                     <div class="input-container">
-                        <input type="password" autocomplete="current-password" id="registerPassword" class="input-field" placeholder="Mínimo 8 caracteres" autocomplete="new-password" required>
+                        <input type="password" autocomplete="new-password" id="registerPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
                         <i class="fas fa-eye input-icon" id="toggleRegisterPassword"></i>
                     </div>
                     <div class="error-message" id="registerPasswordError"></div>
                     
-                    <div class="password-strength">
+                    <div class="password-strength" id="passwordStrengthContainer">
                         <div class="strength-bar">
-                            <div class="strength-fill" id="strengthFill"></div>
+                            <div class="strength-fill" id="passwordStrengthFill"></div>
                         </div>
-                        <div class="strength-text" id="strengthText">Ingresa una contraseña</div>
-                    </div>
-                    
-                    <div class="password-requirements" id="passwordRequirements">
-                        <div class="requirement" id="req-length">
-                            <i class="fas fa-circle"></i> Mínimo 8 caracteres
-                        </div>
-                        <div class="requirement" id="req-upper">
-                            <i class="fas fa-circle"></i> Una mayúscula
-                        </div>
-                        <div class="requirement" id="req-lower">
-                            <i class="fas fa-circle"></i> Una minúscula
-                        </div>
-                        <div class="requirement" id="req-number">
-                            <i class="fas fa-circle"></i> Un número
+                        <div class="strength-text" id="passwordStrengthLabel">Ingresa una contraseña</div>
+
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="requirement" id="lengthReq">
+                                <i class="fas fa-times icon"></i> Mínimo 8 caracteres
+                            </div>
+                            <div class="requirement" id="upperReq">
+                                <i class="fas fa-times icon"></i> Una mayúscula
+                            </div>
+                            <div class="requirement" id="lowerReq">
+                                <i class="fas fa-times icon"></i> Una minúscula
+                            </div>
+                            <div class="requirement" id="numberReq">
+                                <i class="fas fa-times icon"></i> Un número
+                            </div>
+                            <div class="requirement" id="specialReq">
+                                <i class="fas fa-times icon"></i> Un símbolo
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1044,7 +1055,7 @@
                 <div class="form-group">
                     <label for="registerConfirmPassword">Confirmar contraseña</label>
                     <div class="input-container">
-                        <input type="password" autocomplete="current-password" id="registerConfirmPassword" class="input-field" placeholder="Repite tu contraseña" autocomplete="new-password" required>
+                        <input type="password" autocomplete="new-password" id="registerConfirmPassword" class="input-field" placeholder="Repite tu contraseña" required>
                         <i class="fas fa-eye input-icon" id="toggleRegisterConfirmPassword"></i>
                     </div>
                     <div class="error-message" id="registerConfirmPasswordError"></div>
@@ -1063,9 +1074,9 @@
                 </button>
                 
                 <div class="divider">o registrarse con</div>
-                
+
                 <div class="social-login">
-                    <button type="button" class="social-btn google" onclick="registerWithProvider('google')">
+                    <button type="button" class="social-btn google" id="googleRegisterBtn" onclick="handleGoogleClick()">
                         <i class="fab fa-google"></i> Google
                     </button>
                     <button type="button" class="social-btn apple" onclick="registerWithProvider('apple')">
@@ -1092,11 +1103,13 @@
                         <input type="text" class="code-input" id="emailCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
                         <input type="text" class="code-input" id="emailCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
                     </div>
-                    
+
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="emailTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
                     <button type="submit" class="btn-primary" id="verifyEmailBtn">
                         <span>Verificar Código</span>
                     </button>
-                    
+
                     <div class="resend-code">
                         <p>¿No recibiste el código?</p>
                         <button type="button" id="resendVerificationCode">Reenviar código</button>
@@ -1125,12 +1138,12 @@
                         <div class="error-message" id="resetEmailError"></div>
                     </div>
                     
-                    <button type="submit" class="btn-primary">
-                        <span>Enviar Código</span>
+                    <button type="submit" class="btn-primary" id="resetRequestBtn">
+                        <i class="fas fa-paper-plane"></i> <span>Enviar Código</span>
                     </button>
                 </form>
             </div>
-            
+
             <!-- Password Reset Verify Form -->
             <div class="password-reset-container" id="passwordResetVerifyContainer">
                 <button class="back-to-login" onclick="window.auth.showPasswordResetForm()">
@@ -1144,16 +1157,18 @@
                 
                 <form id="passwordResetVerifyForm">
                     <div class="code-input-container" id="resetCodeInputs">
-                        <input type="text" class="code-input" maxlength="1" data-index="0">
-                        <input type="text" class="code-input" maxlength="1" data-index="1">
-                        <input type="text" class="code-input" maxlength="1" data-index="2">
-                        <input type="text" class="code-input" maxlength="1" data-index="3">
-                        <input type="text" class="code-input" maxlength="1" data-index="4">
-                        <input type="text" class="code-input" maxlength="1" data-index="5">
+                        <input type="text" class="code-input" id="resetCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
                     </div>
-                    
-                    <button type="submit" class="btn-primary">
-                        <span>Verificar</span>
+
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="resetTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
+                    <button type="submit" class="btn-primary" id="verifyResetBtn">
+                        <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
                     </button>
                 </form>
             </div>
@@ -1169,7 +1184,7 @@
                     <div class="form-group">
                         <label for="newPassword">Nueva contraseña</label>
                         <div class="input-container">
-                            <input type="password" autocomplete="current-password" id="newPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
+                            <input type="password" autocomplete="new-password" id="newPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
                             <i class="fas fa-eye input-icon" id="toggleNewPassword"></i>
                         </div>
                     </div>
@@ -1177,17 +1192,17 @@
                     <div class="form-group">
                         <label for="confirmNewPassword">Confirmar contraseña</label>
                         <div class="input-container">
-                            <input type="password" autocomplete="current-password" id="confirmNewPassword" class="input-field" placeholder="Repite la contraseña" required>
+                            <input type="password" autocomplete="new-password" id="confirmNewPassword" class="input-field" placeholder="Repite la contraseña" required>
                             <i class="fas fa-eye input-icon" id="toggleConfirmNewPassword"></i>
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn-primary">
-                        <span>Cambiar Contraseña</span>
+                    <button type="submit" class="btn-primary" id="resetPasswordBtn">
+                        <i class="fas fa-save"></i> <span>Cambiar Contraseña</span>
                     </button>
                 </form>
             </div>
-            
+
             <!-- Two Factor Form -->
             <div class="two-factor-container" id="twoFactorContainer">
                 <button class="back-to-login" onclick="window.auth.showLoginForm()">
@@ -1201,16 +1216,18 @@
                 
                 <form id="twoFactorForm">
                     <div class="code-input-container" id="twoFactorCodeInputs">
-                        <input type="text" class="code-input" maxlength="1" data-index="0">
-                        <input type="text" class="code-input" maxlength="1" data-index="1">
-                        <input type="text" class="code-input" maxlength="1" data-index="2">
-                        <input type="text" class="code-input" maxlength="1" data-index="3">
-                        <input type="text" class="code-input" maxlength="1" data-index="4">
-                        <input type="text" class="code-input" maxlength="1" data-index="5">
+                        <input type="text" class="code-input" id="tfaCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
                     </div>
-                    
-                    <button type="submit" class="btn-primary">
-                        <span>Verificar</span>
+
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="tfaTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
+                    <button type="submit" class="btn-primary" id="verify2FABtn">
+                        <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
                     </button>
                 </form>
             </div>
@@ -1593,6 +1610,13 @@
                     console.log('[API] Response:', result);
 
                     if (!response.ok || !result.success) {
+                        // Check if account locked (429)
+                        if (response.status === 429) {
+                            const msg = result.data?.error?.message || 'Cuenta bloqueada temporalmente por demasiados intentos fallidos.';
+                            this.setLoadingState(submitBtn, false);
+                            this.showError(msg);
+                            return;
+                        }
                         // Check if email not verified
                         if (result.data?.error?.details?.code === 'EMAIL_NOT_VERIFIED') {
                             this.setLoadingState(submitBtn, false);
@@ -1802,6 +1826,11 @@
                 return isValid;
             }
 
+            sanitizeInput(str) {
+                if (!str) return '';
+                return String(str).trim().replace(/<[^>]*>/g, '');
+            }
+
             validateEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email) && email.length <= 254;
@@ -1905,20 +1934,15 @@
                 const label = document.getElementById('passwordStrengthLabel');
 
                 fill.style.width = `${strength.percentage}%`;
-                fill.className = `password-strength-fill ${strength.class}`;
+                fill.className = `strength-fill ${strength.class}`;
                 label.textContent = `Fortaleza: ${strength.label}`;
                 label.style.color = getComputedStyle(fill).backgroundColor;
             }
 
             // Rate Limiting
             checkRateLimit() {
-                // Temporarily disable rate limiting for development/testing
-                console.log('🔧 Rate limit check bypassed for testing');
-                return true;
-                
-                /* Original rate limiting code - disabled for testing
                 const now = Date.now();
-                const attempts = this.loginAttempts.filter(attempt => 
+                const attempts = this.loginAttempts.filter(attempt =>
                     now - attempt < this.windowMs
                 );
 
@@ -1926,7 +1950,7 @@
                     const oldestAttempt = Math.min(...attempts);
                     const timeUntilReset = this.windowMs - (now - oldestAttempt);
                     const minutes = Math.ceil(timeUntilReset / 60000);
-                    
+
                     this.showError(`Demasiados intentos fallidos. Intenta nuevamente en ${minutes} minutos.`);
                     return false;
                 }
@@ -1940,7 +1964,6 @@
                 }
 
                 return true;
-                */
             }
 
             incrementLoginAttempts() {
@@ -2337,17 +2360,6 @@
                 }
             }
 
-            // Utility Functions
-            sanitizeInput(input) {
-                if (typeof input !== 'string') return input;
-                
-                return input
-                    .replace(/[<>]/g, '') // Remove brackets
-                    .replace(/javascript:/gi, '') // Remove javascript: URLs
-                    .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
-                    .trim();
-            }
-
             formatAuthError(errorMessage) {
                 const errorMap = {
                     'Invalid credentials': 'Credenciales incorrectas',
@@ -2393,7 +2405,7 @@
                 form.classList.add('active');
                 document.getElementById('resetCode1').focus();
                 this.setupCodeInputs('resetCode');
-                this.startTimer('reset', 30 * 60); // 30 minutes
+                this.startTimer('reset', 10 * 60); // 10 minutes (matches backend expiry)
             }
 
             showPasswordResetNewPasswordForm() {
@@ -2412,7 +2424,7 @@
                 document.getElementById('verifyEmailDisplay').textContent = email;
                 document.getElementById('emailCode1').focus();
                 this.setupCodeInputs('emailCode');
-                this.startTimer("email", 5 * 60); // 5 minutes
+                this.startTimer("email", 10 * 60); // 10 minutes (matches backend expiry)
             }
 
             show2FAForm() {
@@ -2549,7 +2561,7 @@
 
                     if (result.success) {
                         this.showSuccess('Código reenviado a tu email');
-                        this.startTimer("email", 5 * 60);
+                        this.startTimer("email", 10 * 60);
                     } else {
                         throw new Error(result.data?.error?.message || 'Error al reenviar código');
                     }
@@ -2723,6 +2735,14 @@
                     return false;
                 }
 
+                // Full password policy check (matches backend)
+                const reqs = this.checkPasswordRequirements(newPassword);
+                const metCount = [reqs.upper, reqs.lower, reqs.number, reqs.special].filter(Boolean).length;
+                if (metCount < 2) {
+                    this.showError('La contraseña debe cumplir al menos 2 requisitos: mayuscula, minuscula, numero o simbolo');
+                    return false;
+                }
+
                 const btn = document.getElementById('resetPasswordBtn');
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cambiando...';
@@ -2890,9 +2910,12 @@
             localStorage.removeItem('auth_redirect_in_progress');
             
             // Also clear on page refresh or navigation
-            if (performance.navigation.type === 1) { // Page refresh
-                console.log('🔄 Page refreshed, clearing all auth flags');
-            }
+            try {
+                const navEntry = performance.getEntriesByType('navigation')[0];
+                if (navEntry && navEntry.type === 'reload') {
+                    console.log('Page refreshed, clearing all auth flags');
+                }
+            } catch(e) { /* older browsers */ }
             
             // Disable browser password manager suggestions for demo accounts
             const passwordField = document.getElementById('loginPassword');
@@ -2908,22 +2931,6 @@
                     }
                 });
             }
-            
-            // Handle MetaMask connection errors gracefully
-            window.addEventListener('error', (event) => {
-                if (event.message && event.message.includes('MetaMask')) {
-                    console.log('🔧 MetaMask error handled gracefully');
-                    event.preventDefault();
-                    return false;
-                }
-            });
-            
-            window.addEventListener('unhandledrejection', (event) => {
-                if (event.reason && event.reason.message && event.reason.message.includes('MetaMask')) {
-                    console.log('🔧 MetaMask promise rejection handled gracefully');
-                    event.preventDefault();
-                }
-            });
             
             // Check and fix Font Awesome loading
             setTimeout(() => {
@@ -2991,27 +2998,103 @@
             }
         });
 
-        // Social Authentication Placeholders
-        function loginWithProvider(provider) {
-            console.log(`🔗 Social login with ${provider} requested`);
+        // Clear auth data and return to login
+        function clearAuthData() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('latanda_user');
+            localStorage.removeItem('login_attempts');
+            sessionStorage.clear();
             if (window.auth) {
-                window.auth.showError(`Autenticación con ${provider} estará disponible próximamente.`);
+                window.auth.showLoginForm();
             }
         }
 
-        function registerWithProvider(provider) {
-            console.log(`🔗 Social registration with ${provider} requested`);
-            if (window.auth) {
-                window.auth.showError(`Registro con ${provider} estará disponible próximamente.`);
+        // Google OAuth
+        let googleInitialized = false;
+        function initGoogleSignIn() {
+            if (googleInitialized || typeof google === 'undefined') return;
+            google.accounts.id.initialize({
+                client_id: '116807706131-soa935u3n1e5i4ccstl2juhbf9rcq3nv.apps.googleusercontent.com',
+                callback: handleGoogleSignIn,
+                auto_select: false,
+                cancel_on_tap_outside: true,
+            });
+            googleInitialized = true;
+        }
+
+        function handleGoogleClick() {
+            if (typeof google === 'undefined' || !google.accounts) {
+                if (window.auth) window.auth.showError('Google no se pudo cargar. Verifica tu conexion.');
+                return;
             }
+            initGoogleSignIn();
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // One Tap not available, fall back to button render
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:white;padding:32px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+                    tempDiv.innerHTML = '<div id="gsi-btn-container" style="min-width:250px;"></div><button onclick="this.parentElement.remove()" style="display:block;margin:16px auto 0;background:none;border:none;color:#666;cursor:pointer;font-size:14px;">Cancelar</button>';
+                    document.body.appendChild(tempDiv);
+                    google.accounts.id.renderButton(
+                        document.getElementById('gsi-btn-container'),
+                        { theme: 'outline', size: 'large', width: 280, text: 'continue_with', locale: 'es' }
+                    );
+                }
+            });
+        }
+
+        async function handleGoogleSignIn(response) {
+            if (!response.credential) return;
+            // Remove any fallback popup
+            const popup = document.querySelector('#gsi-btn-container');
+            if (popup && popup.parentElement) popup.parentElement.remove();
+
+            if (window.auth) {
+                window.auth.showSuccess('Verificando con Google...');
+            }
+
+            try {
+                const res = await fetch('https://latanda.online/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential }),
+                });
+                const result = await res.json();
+
+                if (result.success && result.data) {
+                    localStorage.setItem('auth_token', result.data.auth_token);
+                    if (result.data.refresh_token) {
+                        localStorage.setItem('refresh_token', result.data.refresh_token);
+                    }
+                    localStorage.setItem('latanda_user', JSON.stringify(result.data.user));
+
+                    const msg = result.data.is_new_user ? 'Cuenta creada con Google' : 'Sesion iniciada con Google';
+                    if (window.auth) window.auth.showSuccess(msg);
+
+                    setTimeout(() => {
+                        const redirect = localStorage.getItem('redirect_after_auth');
+                        localStorage.removeItem('redirect_after_auth');
+                        window.location.href = redirect || result.data.user.dashboard_url || 'home-dashboard.html';
+                    }, 1000);
+                } else {
+                    throw new Error(result.data?.error?.message || 'Error al autenticar con Google');
+                }
+            } catch (err) {
+                console.error('Google sign-in error:', err);
+                if (window.auth) window.auth.showError(err.message || 'Error al conectar con Google');
+            }
+        }
+
+        // Apple placeholder
+        function loginWithProvider(provider) {
+            if (window.auth) window.auth.showSuccess('Autenticacion con ' + provider + ' estara disponible proximamente.');
+        }
+        function registerWithProvider(provider) {
+            if (window.auth) window.auth.showSuccess('Registro con ' + provider + ' estara disponible proximamente.');
         }
     </script>
 
-    <!-- i18next Internationalization -->
     <script src="shared-components.js?v=7.20"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next@23.7.11/i18next.min.js" integrity="sha384-kqrz926ieztN0OKhKR17dS5DPBV82IGrRcqA8/gk9+wzQbGga63usrJmWolShECZ" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@2.4.2/i18nextHttpBackend.min.js" integrity="sha384-yxTj8amMhnhYI1a2BiC6D8XPHPBenxjHwY+BnQuhFYuIl32glJcrevL/W0QyUQP3" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7.2.0/i18nextBrowserLanguageDetector.min.js" integrity="sha384-099MVvR7WaAXsovY5rMvaY+Uq49ZmVhGPTFSyf4wTuyjNEpC/cBjpOJJa0/J97Mk" crossorigin="anonymous"></script>
     <script src="i18next-implementation-backend.js?v=20251124040720"></script>
     <script src="js/user-sync.js"></script>
     <script src="pwa-manager.js"></script>

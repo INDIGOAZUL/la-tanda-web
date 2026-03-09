@@ -509,7 +509,7 @@ const ProfileViewerModal = {
         }
 
         header.innerHTML = `
-            <div class="pv-cover"></div>
+            <div class="pv-cover"${user.cover_url ? ` style="background-image:url('${esc(user.cover_url)}');background-size:cover;background-position:center;"` : ''}></div>
             <div class="pv-profile-row">
                 <div class="pv-header-avatar ${user.avatar_url ? '' : 'initials'}">
                     ${avatarContent}

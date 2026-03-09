@@ -822,6 +822,8 @@
 
             <!-- Settings Tab -->
             <div id="settings-tab" class="tab-content active">
+                <div id="completenessCard" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:20px;"></div>
+
                 <form class="settings-form" id="settingsForm">
                     <div class="form-section">
                         <div class="form-section-title">
@@ -904,6 +906,59 @@
                         </div>
                     </div>
                     
+                    <div class="form-section" id="privacySection">
+                        <div class="form-section-title">
+                            <i class="fas fa-shield-alt"></i> Privacidad
+                        </div>
+
+                        <div class="form-switch">
+                            <div>
+                                <span>Perfil publico</span>
+                                <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin:2px 0 0;">Si desactivas, solo tus seguidores veran tu perfil completo</p>
+                            </div>
+                            <div class="switch active" id="privProfilePublic" onclick="togglePrivacy(this, 'profile_public')">
+                                <div class="switch-handle"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-switch">
+                            <span>Mostrar biografia</span>
+                            <div class="switch active" id="privShowBio" onclick="togglePrivacy(this, 'show_bio')">
+                                <div class="switch-handle"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-switch">
+                            <span>Mostrar ubicacion</span>
+                            <div class="switch active" id="privShowLocation" onclick="togglePrivacy(this, 'show_location')">
+                                <div class="switch-handle"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-switch">
+                            <span>Mostrar fecha de registro</span>
+                            <div class="switch active" id="privShowMemberSince" onclick="togglePrivacy(this, 'show_member_since')">
+                                <div class="switch-handle"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-switch">
+                            <span>Mostrar grupos</span>
+                            <div class="switch active" id="privShowGroups" onclick="togglePrivacy(this, 'show_groups')">
+                                <div class="switch-handle"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Quien puede enviarte mensajes</label>
+                            <select id="privAllowMessages" class="form-select" onchange="savePrivacySelect()">
+                                <option value="everyone">Todos</option>
+                                <option value="followers">Solo seguidores</option>
+                                <option value="nobody">Nadie</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <div class="form-section-title">
                             <i class="fas fa-palette"></i> Preferencias
@@ -1107,6 +1162,8 @@
                 this.loadAchievements();
                 this.setupEventListeners();
                 if (typeof load2FAStatus === 'function') load2FAStatus();
+                loadPrivacySettings();
+                loadProfileCompleteness();
             }
 
             setupEventListeners() {
@@ -1991,6 +2048,106 @@
         }
         
 
+        // Privacy settings
+        var _privacySettings = {};
+
+        async function loadPrivacySettings() {
+            try {
+                var r = await fetch('/api/user/privacy-settings', { headers: window.getAuthHeaders() });
+                var d = await r.json();
+                if (d.success && d.data) {
+                    _privacySettings = d.data;
+                    var map = {
+                        privProfilePublic: 'profile_public',
+                        privShowBio: 'show_bio',
+                        privShowLocation: 'show_location',
+                        privShowMemberSince: 'show_member_since',
+                        privShowGroups: 'show_groups'
+                    };
+                    for (var id in map) {
+                        var el = document.getElementById(id);
+                        if (el) {
+                            var val = d.data[map[id]];
+                            if (val === false) el.classList.remove('active');
+                            else el.classList.add('active');
+                        }
+                    }
+                    var msgEl = document.getElementById('privAllowMessages');
+                    if (msgEl) msgEl.value = d.data.allow_messages || 'everyone';
+                }
+            } catch(e) {}
+        }
+
+        async function togglePrivacy(element, key) {
+            element.classList.toggle('active');
+            _privacySettings[key] = element.classList.contains('active');
+            try {
+                var payload = {}; payload[key] = _privacySettings[key];
+                await fetch('/api/user/privacy-settings', {
+                    method: 'PUT',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, window.getAuthHeaders()),
+                    body: JSON.stringify(payload)
+                });
+            } catch(e) {
+                element.classList.toggle('active');
+                _privacySettings[key] = element.classList.contains('active');
+            }
+        }
+
+        async function savePrivacySelect() {
+            var val = document.getElementById('privAllowMessages')?.value || 'everyone';
+            _privacySettings.allow_messages = val;
+            try {
+                await fetch('/api/user/privacy-settings', {
+                    method: 'PUT',
+                    headers: Object.assign({ 'Content-Type': 'application/json' }, window.getAuthHeaders()),
+                    body: JSON.stringify({ allow_messages: val })
+                });
+            } catch(e) {}
+        }
+
+        // Profile completeness
+        async function loadProfileCompleteness() {
+            try {
+                var r = await fetch('/api/user/profile-completeness', { headers: window.getAuthHeaders() });
+                var d = await r.json();
+                if (d.success && d.data) {
+                    renderCompleteness(d.data);
+                }
+            } catch(e) {}
+        }
+
+        function renderCompleteness(data) {
+            var container = document.getElementById('completenessCard');
+            if (!container) return;
+            var score = data.score;
+            var color = score >= 80 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+            var html = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">' +
+                '<div style="position:relative;width:64px;height:64px;">' +
+                    '<svg viewBox="0 0 36 36" style="width:64px;height:64px;transform:rotate(-90deg);">' +
+                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>' +
+                        '<circle cx="18" cy="18" r="15.9" fill="none" stroke="' + color + '" stroke-width="3" stroke-dasharray="' + score + ' ' + (100 - score) + '" stroke-linecap="round"/>' +
+                    '</svg>' +
+                    '<span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1rem;font-weight:700;color:' + color + ';">' + score + '%</span>' +
+                '</div>' +
+                '<div><div style="font-size:1rem;font-weight:600;color:#e2e8f0;">Perfil ' + (score >= 80 ? 'casi completo' : score >= 50 ? 'en progreso' : 'incompleto') + '</div>' +
+                '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);">Completa tu perfil para mayor visibilidad</div></div></div>';
+
+            var missing = data.items.filter(function(i) { return !i.done; });
+            if (missing.length > 0) {
+                html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+                missing.forEach(function(item) {
+                    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.82rem;">' +
+                        '<i class="far fa-circle" style="color:rgba(255,255,255,0.3);font-size:0.7rem;"></i>' +
+                        '<span style="color:rgba(255,255,255,0.6);">' + item.label + '</span>' +
+                        '<span style="margin-left:auto;color:rgba(255,255,255,0.3);font-size:0.72rem;">+' + item.weight + '%</span></div>';
+                });
+                html += '</div>';
+            }
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+
         function toggleSwitch(element) {
             element.classList.toggle("active");
             // Save to localStorage
@@ -2046,7 +2203,7 @@
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
   <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/miPerfil-legacy-CvD272dr.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=30.5"></script>
+    <script src="js/components-loader.js?v=30.6"></script>
     <script src="js/onboarding/onboarding-system.js?v=1.5"></script>
 </body>
 </html>

@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.5">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.6">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -269,7 +269,9 @@
                 tanda_status: pgGroup.tanda_status || null,
                 tanda_id: pgGroup.tanda_id || null,
                 my_turn_number: pgGroup.my_turn_number || null,
-                turns_until_mine: pgGroup.turns_until_mine
+                turns_until_mine: pgGroup.turns_until_mine,
+                current_turn: parseInt(pgGroup.tanda_current_turn) || 0,
+                max_mora_cycles: parseInt(pgGroup.max_mora_cycles) || 4
             };
         }
 
@@ -12627,7 +12629,7 @@ function renderTurnsList() {
 </script>
 
 
-<script src="member-management-frontend.js?v=12.1"></script>
+<script src="member-management-frontend.js?v=12.9"></script>
 <script src="coordinator-panel.js?v=1771545601"></script>
 <script src="lottery-functions.js?v=1765255172"></script>
 <script src="disputes-frontend.js?v=1.1"></script>
@@ -13299,7 +13301,13 @@ function renderTurnsList() {
             var entry = btn.closest('.ch-entry');
             if (!entry) return;
 
+            // M2 FIX: Show cycle info and mora warning in reversal confirmation
+            var entryLabel = entry.querySelector('.ch-entry-label');
+            var cycleText = entryLabel ? entryLabel.textContent : '';
             var confirmHtml = '<div class="ch-reverse-confirm">';
+            if (cycleText) {
+                confirmHtml += '<div class="ch-reverse-warning"><i class="fas fa-exclamation-triangle"></i> Revertir pago de <strong>' + cycleText + '</strong>. Se creara una mora si el ciclo queda impago.</div>';
+            }
             confirmHtml += '<textarea class="ch-reverse-reason" placeholder="Motivo de la reversion (opcional)" rows="2" maxlength="500"></textarea>';
             confirmHtml += '<div class="ch-reverse-actions">';
             confirmHtml += '<button class="ch-reverse-cancel" type="button">Cancelar</button>';
@@ -13326,7 +13334,8 @@ function renderTurnsList() {
                     });
                     var json = await resp.json();
                     if (!resp.ok || !json.success) throw new Error(json.message || 'Error al revertir');
-                    showNotification(json.data?.message || 'Pago revertido exitosamente', 'success');
+                    var msg = json.data?.message || 'Pago revertido exitosamente';
+                    showNotification(msg, json.data?.mora_created ? 'warning' : 'success');
                     var overlay = document.getElementById('chOverlay');
                     if (overlay) overlay.remove();
                     showContributionHistory(groupId, currentView || 'timeline', currentUserId);
@@ -13729,7 +13738,7 @@ function renderTurnsList() {
     <script src="js/dashboard-sections-loader.js?v=14.1"></script>
     <script src="js/header-footer-cleanup.js"></script>
     <script src="js/components/loading-states.js"></script>
-    <script src="js/components-loader.js?v=30.5"></script>
+    <script src="js/components-loader.js?v=30.6"></script>
     <script src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script src="js/hub/contextual-alerts.js?v=1.03"></script>
     <script src="js/hub/insights-engine.js?v=1.03"></script>

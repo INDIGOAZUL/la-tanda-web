@@ -822,7 +822,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
         // Load CSS
         await this.loadCSS('css/hub/hub-sections.css');
         await this.loadCSS('css/hub/mia-assistant.css');
-        await this.loadCSS('css/hub/social-feed.css?v=12.6');
+        await this.loadCSS('css/hub/social-feed.css?v=12.8');
         
         // Load JS modules
         const modules = [
@@ -831,7 +831,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=12.2'
+            'js/hub/social-feed.js?v=12.4'
         ];
         
         for (const module of modules) {
@@ -847,42 +847,61 @@ LaTandaComponentLoader.loadHubModules = async function() {
 
 // ============================================================
 // MORE MENU DROPDOWN (Sidebar "Mas" button)
+// Single unified handler — works on desktop + mobile drawer
 // ============================================================
-function toggleMoreMenu() {
-    var dropdown = document.getElementById("moreMenuDropdown");
-    if (!dropdown) return;
-    var navMoreBtn = document.getElementById("navMoreBtn");
-    if (dropdown.classList.contains("show")) {
-        dropdown.classList.remove("show");
-        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
-    } else {
+(function() {
+    function openMenu() {
+        var dropdown = document.getElementById("moreMenuDropdown");
+        var btn = document.getElementById("navMoreBtn");
+        if (!dropdown) return;
         dropdown.classList.add("show");
-        if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "true");
+        if (btn) btn.setAttribute("aria-expanded", "true");
     }
-}
-function closeMoreMenu() {
-    var dropdown = document.getElementById("moreMenuDropdown");
-    var navMoreBtn = document.getElementById("navMoreBtn");
-    if (dropdown) dropdown.classList.remove("show");
-    if (navMoreBtn) navMoreBtn.setAttribute("aria-expanded", "false");
-}
-// Close menu when clicking outside
-document.addEventListener("click", function(e) {
-    var container = document.getElementById("navMoreBtn");
-    var dropdown = document.getElementById("moreMenuDropdown");
-    if (!dropdown || !dropdown.classList.contains("show")) return;
-    // If click is inside dropdown or on the toggle button, let it through
-    if ((container && container.contains(e.target)) || dropdown.contains(e.target)) return;
-    closeMoreMenu();
-});
-document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape") closeMoreMenu();
-});
-// Delegated data-action handler for more-menu
-document.addEventListener("click", function(e) {
-    var btn = e.target.closest("[data-action]");
-    if (!btn) return;
-    var action = btn.dataset.action;
-    if (action === "toggle-more-menu") { e.preventDefault(); toggleMoreMenu(); }
-    else if (action === "logout") { e.preventDefault(); if (typeof handleLogout === "function") handleLogout(); }
-});
+    function closeMenu() {
+        var dropdown = document.getElementById("moreMenuDropdown");
+        var btn = document.getElementById("navMoreBtn");
+        if (dropdown) dropdown.classList.remove("show");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+    }
+    function isOpen() {
+        var dropdown = document.getElementById("moreMenuDropdown");
+        return dropdown && dropdown.classList.contains("show");
+    }
+
+    // Direct click on the toggle button (works on desktop + inside mobile drawer)
+    // Using a single document handler that checks the exact target
+    document.addEventListener("click", function(e) {
+        var toggleBtn = e.target.closest("#navMoreBtn");
+        if (toggleBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isOpen()) { closeMenu(); } else { openMenu(); }
+            return;
+        }
+        // Click inside the dropdown items — let it navigate but close menu
+        var dropdownItem = e.target.closest("#moreMenuDropdown .more-menu-item");
+        if (dropdownItem) {
+            closeMenu();
+            return;
+        }
+        // Click anywhere else — close if open
+        if (isOpen()) {
+            closeMenu();
+        }
+    });
+
+    // Escape key closes
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") closeMenu();
+    });
+
+    // Logout handler (was in the old delegated handler)
+    document.addEventListener("click", function(e) {
+        var btn = e.target.closest("[data-action='logout']");
+        if (btn) { e.preventDefault(); if (typeof handleLogout === "function") handleLogout(); }
+    });
+
+    // Expose for external use
+    window.toggleMoreMenu = function() { if (isOpen()) closeMenu(); else openMenu(); };
+    window.closeMoreMenu = closeMenu;
+})();
