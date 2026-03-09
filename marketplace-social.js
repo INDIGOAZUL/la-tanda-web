@@ -41,6 +41,8 @@ class MarketplaceSocialSystem {
 
         // Current user subscription (default to free for logged users, guest for non-logged)
         this.userSubscription = this.isGuest ? 'guest' : (this.currentUser?.subscription || 'free');
+        this.modalFocusCleanup = null;
+        this.lastFocusedElement = null;
 
         // Market statistics
         this.marketStats = {
@@ -485,9 +487,56 @@ class MarketplaceSocialSystem {
         if (modal) {
             document.getElementById('loginAction').textContent = action;
             modal.classList.add('active');
+            this._activateModalFocus(modal);
+            this._activateModalFocus(modal);
         } else {
             this.showNotification(`Inicia sesión para ${action}`, 'info');
         }
+    }
+
+    _activateModalFocus(modalEl) {
+        if (!modalEl) return;
+        if (typeof this.modalFocusCleanup === 'function') this.modalFocusCleanup();
+        this.lastFocusedElement = document.activeElement;
+
+        const selectors = 'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const getFocusable = () => Array.from(modalEl.querySelectorAll(selectors)).filter(el => el.offsetParent !== null || el === document.activeElement);
+
+        const focusables = getFocusable();
+        const first = focusables[0] || modalEl;
+        const last = focusables[focusables.length - 1] || modalEl;
+        if (!modalEl.hasAttribute('tabindex')) modalEl.setAttribute('tabindex', '-1');
+        setTimeout(() => { try { first.focus(); } catch (e) {} }, 0);
+
+        const onKeydown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (modalEl.id === 'bookingModal') this.closeBookingModal();
+                else if (modalEl.id === 'loginPromptModal') closeLoginPromptModal();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const items = getFocusable();
+            const f = items[0] || modalEl;
+            const l = items[items.length - 1] || modalEl;
+            if (e.shiftKey && document.activeElement === f) {
+                e.preventDefault();
+                l.focus();
+            } else if (!e.shiftKey && document.activeElement === l) {
+                e.preventDefault();
+                f.focus();
+            }
+        };
+
+        modalEl.addEventListener('keydown', onKeydown);
+        this.modalFocusCleanup = () => {
+            modalEl.removeEventListener('keydown', onKeydown);
+            this.modalFocusCleanup = null;
+            if (this.lastFocusedElement && typeof this.lastFocusedElement.focus === 'function') {
+                try { this.lastFocusedElement.focus(); } catch (e) {}
+            }
+            this.lastFocusedElement = null;
+        };
     }
     
     setupEventListeners() {
@@ -3985,6 +4034,7 @@ class MarketplaceSocialSystem {
     closeBookingModal() {
         document.getElementById('bookingModal')?.classList.remove('active');
         document.getElementById('bookingForm')?.reset();
+        if (typeof this.modalFocusCleanup === 'function') this.modalFocusCleanup();
     }
     
     // Utility methods
@@ -5705,7 +5755,11 @@ function bookService(serviceId) {
 }
 
 function closeBookingModal() {
-    document.getElementById('bookingModal')?.classList.remove('active');
+    if (window.marketplaceSystem && typeof window.marketplaceSystem.closeBookingModal === 'function') {
+        window.marketplaceSystem.closeBookingModal();
+    } else {
+        document.getElementById('bookingModal')?.classList.remove('active');
+    }
 }
 
 function submitBooking() {
@@ -6188,6 +6242,9 @@ function shareToTwitter(link, title) {
 
 function closeLoginPromptModal() {
     document.getElementById('loginPromptModal')?.classList.remove('active');
+    if (window.marketplaceSystem && typeof window.marketplaceSystem.modalFocusCleanup === 'function') {
+        window.marketplaceSystem.modalFocusCleanup();
+    }
 }
 
 function goToLogin() {
