@@ -631,6 +631,23 @@ class NotificationCenter {
             
             <div class="prefs-section">
                 <div class="prefs-section-title">
+                    <i class="fas fa-volume-mute"></i> Control General
+                </div>
+
+                <div class="prefs-item">
+                    <div class="prefs-item-info">
+                        <div class="prefs-item-label"><span class="prefs-icon">🔕</span> Silenciar todo</div>
+                        <div class="prefs-item-desc">Desactiva temporalmente pagos, grupos, actividad y marketing</div>
+                    </div>
+                    <label class="prefs-toggle">
+                        <input type="checkbox" id="pref_mute_all" ${p.mute_all ? "checked" : ""}>
+                        <span class="prefs-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="prefs-section">
+                <div class="prefs-section-title">
                     <i class="fas fa-paper-plane"></i> Canales de Notificación
                 </div>
                 
@@ -703,8 +720,9 @@ class NotificationCenter {
             </div>
         `;
 
-        // Wire quiet hours toggle visibility
+        // Wire dynamic controls
         this._wireQuietHoursToggle();
+        this._wireMasterMuteToggle();
     }
 
     _wireQuietHoursToggle() {
@@ -715,6 +733,24 @@ class NotificationCenter {
                 range.style.display = toggle.checked ? "flex" : "none";
             });
         }
+    }
+
+    _wireMasterMuteToggle() {
+        const muteToggle = document.getElementById("pref_mute_all");
+        if (!muteToggle) return;
+
+        const categoryIds = ["pref_payment_reminders", "pref_group_updates", "pref_member_activity", "pref_marketing"];
+        const applyMuteState = (muted) => {
+            categoryIds.forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.checked = !muted;
+                el.disabled = muted;
+            });
+        };
+
+        applyMuteState(!!muteToggle.checked);
+        muteToggle.addEventListener("change", () => applyMuteState(!!muteToggle.checked));
     }
 
     _buildHourOptions(selected) {
@@ -735,11 +771,13 @@ class NotificationCenter {
             saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Guardando...`;
         }
 
+        const muteAll = document.getElementById("pref_mute_all")?.checked ?? false;
         const newPrefs = {
-            payment_reminders: document.getElementById("pref_payment_reminders")?.checked ?? true,
-            group_updates: document.getElementById("pref_group_updates")?.checked ?? true,
-            member_activity: document.getElementById("pref_member_activity")?.checked ?? true,
-            marketing: document.getElementById("pref_marketing")?.checked ?? false,
+            mute_all: muteAll,
+            payment_reminders: muteAll ? false : (document.getElementById("pref_payment_reminders")?.checked ?? true),
+            group_updates: muteAll ? false : (document.getElementById("pref_group_updates")?.checked ?? true),
+            member_activity: muteAll ? false : (document.getElementById("pref_member_activity")?.checked ?? true),
+            marketing: muteAll ? false : (document.getElementById("pref_marketing")?.checked ?? false),
             email_enabled: document.getElementById("pref_email_enabled")?.checked ?? true,
             push_enabled: document.getElementById("pref_push_enabled")?.checked ?? true,
             quiet_hours_enabled: document.getElementById("pref_quiet_hours_enabled")?.checked ?? false,
