@@ -1,5 +1,6 @@
 /**
- * Dark/Light Theme Toggle for la-tanda-web
+ * Theme Toggle Module for La Tanda Web
+ * Provides dark/light theme switching with persistence
  * Issue: https://github.com/INDIGOAZUL/la-tanda-web/issues/84
  * Bounty: 200 LTD
  */
@@ -7,16 +8,18 @@
 (function() {
     'use strict';
     
+    // Theme constants
     const THEME_KEY = 'la-tanda-theme';
     const THEME_DARK = 'dark';
     const THEME_LIGHT = 'light';
     
     /**
-     * Get the user's theme preference
+     * Get the user's preferred theme
      * Priority: localStorage > system preference > default (dark)
+     * @returns {string} The theme name ('dark' or 'light')
      */
     function getPreferredTheme() {
-        // Check localStorage first
+        // Check localStorage first (using auth_token pattern)
         const stored = localStorage.getItem(THEME_KEY);
         if (stored) {
             return stored;
@@ -27,17 +30,16 @@
             return THEME_LIGHT;
         }
         
-        // Default to dark
+        // Default to dark theme
         return THEME_DARK;
     }
     
     /**
      * Apply theme to document
+     * @param {string} theme - The theme to apply ('dark' or 'light')
      */
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-        
-        // Update toggle button icon
         updateToggleIcon(theme);
         
         // Dispatch custom event for other components
@@ -47,7 +49,8 @@
     }
     
     /**
-     * Save theme preference
+     * Save theme preference to localStorage
+     * @param {string} theme - The theme to save
      */
     function saveTheme(theme) {
         localStorage.setItem(THEME_KEY, theme);
@@ -65,97 +68,84 @@
     }
     
     /**
-     * Create and insert theme toggle button
-     */
-    function createToggleButton() {
-        const button = document.createElement('button');
-        button.id = 'theme-toggle';
-        button.className = 'theme-toggle-btn';
-        button.setAttribute('aria-label', 'Toggle dark/light theme');
-        button.setAttribute('title', 'Toggle theme');
-        button.innerHTML = `
-            <span class="theme-icon theme-icon-sun">鈽€锔?/span>
-            <span class="theme-icon theme-icon-moon">馃寵</span>
-        `;
-        
-        button.addEventListener('click', toggleTheme);
-        
-        return button;
-    }
-    
-    /**
      * Update toggle button icon based on current theme
+     * @param {string} theme - Current theme
      */
     function updateToggleIcon(theme) {
         const button = document.getElementById('theme-toggle');
         if (!button) return;
         
-        const sunIcon = button.querySelector('.theme-icon-sun');
-        const moonIcon = button.querySelector('.theme-icon-moon');
-        
-        if (theme === THEME_LIGHT) {
-            sunIcon.style.display = 'inline';
-            moonIcon.style.display = 'none';
-        } else {
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'inline';
+        // Spanish text for UI, English for code
+        const isDark = theme === THEME_DARK;
+        button.innerHTML = isDark ? '鈽€锔?' : '鈽?';
+        button.setAttribute('aria-label', isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+        button.setAttribute('title', isDark ? 'Tema claro' : 'Tema oscuro');
+    }
+    
+    /**
+     * Create and insert theme toggle button into DOM
+     */
+    function createToggleButton() {
+        // Check if button already exists
+        if (document.getElementById('theme-toggle')) {
+            return;
         }
+        
+        const button = document.createElement('button');
+        button.id = 'theme-toggle';
+        button.className = 'theme-toggle-btn';
+        button.setAttribute('type', 'button');
+        
+        // Spanish text for accessibility
+        button.setAttribute('aria-label', 'Cambiar tema');
+        button.setAttribute('title', 'Cambiar tema');
+        
+        // Initial icon
+        button.innerHTML = '鈽€锔?';
+        
+        // Add click handler
+        button.addEventListener('click', toggleTheme);
+        
+        // Insert into body
+        document.body.appendChild(button);
     }
     
     /**
      * Initialize theme system
      */
     function init() {
-        // Apply theme early (before page renders) to prevent flash
+        // Apply preferred theme
         const theme = getPreferredTheme();
         applyTheme(theme);
         
-        // Wait for DOM to be ready
+        // Create toggle button when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', insertToggleButton);
+            document.addEventListener('DOMContentLoaded', createToggleButton);
         } else {
-            insertToggleButton();
+            createToggleButton();
         }
         
         // Listen for system theme changes
         if (window.matchMedia) {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
-            mediaQuery.addEventListener('change', (e) => {
-                // Only apply if user hasn't set a preference
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                // Only apply if user hasn't manually set preference
                 if (!localStorage.getItem(THEME_KEY)) {
-                    applyTheme(e.matches ? THEME_LIGHT : THEME_DARK);
+                    applyTheme(e.matches ? THEME_DARK : THEME_LIGHT);
                 }
             });
         }
     }
     
-    /**
-     * Insert toggle button into header
-     */
-    function insertToggleButton() {
-        // Try to find header
-        const header = document.querySelector('header, .header, [role="banner"]');
-        
-        if (header) {
-            const button = createToggleButton();
-            header.appendChild(button);
-            
-            // Update icon based on current theme
-            const currentTheme = document.documentElement.getAttribute('data-theme') || THEME_DARK;
-            updateToggleIcon(currentTheme);
-        }
-    }
+    // Initialize when script loads
+    init();
     
-    // Export for module usage
-    window.ThemeToggle = {
+    // Expose API for other modules
+    window.ThemeManager = {
         toggle: toggleTheme,
-        getTheme: () => document.documentElement.getAttribute('data-theme'),
-        setTheme: (theme) => {
-            applyTheme(theme);
-            saveTheme(theme);
+        getTheme: () => document.documentElement.getAttribute('data-theme') || THEME_DARK,
+        setTheme: applyTheme,
+        onChange: (callback) => {
+            window.addEventListener('themechange', (e) => callback(e.detail.theme));
         }
     };
-    
-    // Initialize
-    init();
 })();
