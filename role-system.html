@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="es-HN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tanda | Sistema de Roles</title>
+    <meta name="description" content="Explora la jerarquia de roles de La Tanda, aplica a nuevos niveles y da seguimiento a tus solicitudes.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #071124;
+            --bg-deep: #050a17;
+            --surface: rgba(10, 20, 36, 0.84);
+            --surface-soft: #0f1d33;
+            --edge: rgba(0, 240, 255, 0.2);
+            --edge-soft: rgba(0, 240, 255, 0.08);
+            --text: #e6edf8;
+            --text-dim: #90a2bd;
+            --cyan: #00f0ff;
+            --gold: #f4c84f;
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --radius: 16px;
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+            --font-body: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-display: 'Orbitron', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-body);
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 12%, rgba(0, 240, 255, 0.16), transparent 45%),
+                radial-gradient(circle at 88% 80%, rgba(244, 200, 79, 0.12), transparent 40%),
+                linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 65%, #02050d 100%);
+            min-height: 100vh;
+        }
+
+        a { color: var(--cyan); }
+
+        .glass {
+            background: var(--surface);
+            border: 1px solid var(--edge-soft);
+            border-radius: var(--radius);
+            backdrop-filter: blur(14px);
+            box-shadow: var(--shadow);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.4rem;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(5, 10, 23, 0.85);
+            border-bottom: 1px solid var(--edge-soft);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--cyan), var(--gold));
+            color: #02111e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 800;
+        }
+
+        .brand-name {
+            font-family: var(--font-display);
+            letter-spacing: 0.05em;
+            font-size: 0.95rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .chip {
+            border: 1px solid var(--edge);
+            border-radius: 999px;
+            padding: 0.32rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .chip.pending {
+            color: var(--amber);
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .container {
+            width: min(1200px, calc(100% - 2rem));
+            margin: 1.25rem auto 2rem;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.25fr 0.95fr;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .hero {
+            padding: 1.35rem 1.3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 2.8vw, 1.6rem);
+            letter-spacing: 0.03em;
+        }
+
+        .hero p {
+            margin: 0.7rem 0 0;
+            color: var(--text-dim);
+            font-size: 1rem;
+            line-height: 1.45;
+            max-width: 65ch;
+        }
+
+        .hero-meta {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .hero-meta .chip { color: #9aeef5; }
+
+        .panel {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel h2 {
+            margin: 0 0 0.7rem;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            letter-spacing: 0.04em;
+        }
+
+        .panel-sub {
+            margin: 0 0 0.9rem;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .role-card {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.82rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+            min-height: 205px;
+        }
+
+        .role-card.current {
+            border-color: rgba(0, 240, 255, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(0, 240, 255, 0.2);
+        }
+
+        .role-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+        }
+
+        .role-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .role-level {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            background: rgba(244, 200, 79, 0.12);
+            border: 1px solid rgba(244, 200, 79, 0.3);
+            color: var(--gold);
+            border-radius: 999px;
+            padding: 0.15rem 0.5rem;
+            white-space: nowrap;
+        }
+
+        .role-summary {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.35;
+            min-height: 40px;
+        }
+
+        .mini-list {
+            margin: 0;
+            padding-left: 1rem;
+            color: #c6d4e6;
+            font-size: 0.8rem;
+            line-height: 1.32;
+        }
+
+        .mini-list li { margin-bottom: 0.2rem; }
+
+        .apply-role-btn {
+            margin-top: auto;
+            border: 1px solid rgba(0, 240, 255, 0.35);
+            border-radius: 10px;
+            background: rgba(0, 240, 255, 0.08);
+            color: var(--cyan);
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 0.48rem 0.6rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .apply-role-btn:hover {
+            background: rgba(0, 240, 255, 0.16);
+            transform: translateY(-1px);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin-bottom: 0.78rem;
+        }
+
+        .field label {
+            font-size: 0.84rem;
+            color: #a7b8cf;
+            font-weight: 600;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            padding: 0.62rem 0.75rem;
+            outline: none;
+        }
+
+        .field textarea {
+            min-height: 132px;
+            resize: vertical;
+            line-height: 1.4;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: rgba(0, 240, 255, 0.48);
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.12);
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.8rem;
+            color: var(--text-dim);
+            font-size: 0.82rem;
+        }
+
+        .btn-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--cyan), #2fd4ff);
+            color: #05202f;
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.09);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .eligibility-box {
+            margin-top: 0.85rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.7rem 0.78rem;
+            font-size: 0.85rem;
+        }
+
+        .eligibility-box.ok {
+            border-color: rgba(34, 197, 94, 0.4);
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .eligibility-box.warn {
+            border-color: rgba(245, 158, 11, 0.45);
+            background: rgba(245, 158, 11, 0.09);
+        }
+
+        .applications {
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .app-item {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.7rem 0.78rem;
+        }
+
+        .app-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.4rem;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 0.15rem 0.5rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid transparent;
+        }
+
+        .status.pending { color: var(--amber); border-color: rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.12); }
+        .status.approved { color: var(--green); border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.1); }
+        .status.rejected { color: var(--red); border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.1); }
+        .status.hold { color: #93c5fd; border-color: rgba(147, 197, 253, 0.35); background: rgba(147, 197, 253, 0.1); }
+
+        .mono {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #bfd2ea;
+            word-break: break-word;
+        }
+
+        .timeline {
+            border-left: 2px solid rgba(0, 240, 255, 0.2);
+            margin-left: 0.45rem;
+            padding-left: 0.75rem;
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            font-size: 0.84rem;
+            color: #c8d9ef;
+            line-height: 1.35;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.02rem;
+            top: 0.15rem;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 0 4px rgba(0, 240, 255, 0.14);
+        }
+
+        .empty,
+        .loading {
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 0.8rem;
+            color: var(--text-dim);
+            font-size: 0.88rem;
+        }
+
+        .toast-region {
+            position: fixed;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 50;
+            display: grid;
+            gap: 0.5rem;
+            width: min(370px, calc(100vw - 2rem));
+        }
+
+        .toast {
+            border-radius: 12px;
+            padding: 0.66rem 0.78rem;
+            border: 1px solid rgba(0, 240, 255, 0.32);
+            background: rgba(7, 18, 36, 0.95);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+            font-size: 0.84rem;
+            line-height: 1.35;
+            animation: toastIn 220ms ease;
+        }
+
+        .toast.ok { border-color: rgba(34, 197, 94, 0.5); }
+        .toast.warn { border-color: rgba(245, 158, 11, 0.5); }
+        .toast.err { border-color: rgba(239, 68, 68, 0.5); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 980px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .container { width: calc(100% - 1rem); }
+            .topbar { padding: 0.75rem 0.7rem; }
+            .brand-name { display: none; }
+            .hero p { font-size: 0.95rem; }
+            .role-grid { grid-template-columns: 1fr; }
+            .btn-row { flex-direction: column; align-items: stretch; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar" aria-label="Encabezado de navegacion">
+        <a class="brand" href="/home-dashboard.html">
+            <div class="brand-mark">LT</div>
+            <div class="brand-name">La Tanda Roles</div>
+        </a>
+        <div class="topbar-actions">
+            <span class="chip" id="currentRoleChip">Rol actual: user</span>
+            <span class="chip pending" id="pendingBadge">Pendientes: 0</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="layout">
+            <section>
+                <section class="hero glass" aria-labelledby="rolesHeroTitle">
+                    <h1 id="rolesHeroTitle">Sistema de Roles y Progresion</h1>
+                    <p>
+                        Revisa los 8 niveles de rol, verifica tus requisitos y envia tu aplicacion para ascender.
+                        Este flujo se integra con la API de roles y actualiza tu estado automaticamente.
+                    </p>
+                    <div class="hero-meta">
+                        <span class="chip">8 niveles</span>
+                        <span class="chip">Aplicacion guiada</span>
+                        <span class="chip">Estado en tiempo real</span>
+                    </div>
+                </section>
+
+                <section class="panel glass" aria-labelledby="roleBrowserTitle">
+                    <h2 id="roleBrowserTitle">Role Browser</h2>
+                    <p class="panel-sub">Jerarquia completa, criterios, beneficios y requisitos de aplicacion.</p>
+                    <div id="roleGrid" class="role-grid" aria-live="polite">
+                        <div class="loading">Cargando definiciones de roles...</div>
+                    </div>
+                </section>
+            </section>
+
+            <aside>
+                <section class="panel glass" aria-labelledby="applyTitle">
+                    <h2 id="applyTitle">Aplicar a un Nuevo Rol</h2>
+                    <p class="panel-sub">Solo roles habilitados para aplicacion apareceran en la lista.</p>
+
+                    <form id="roleApplicationForm" novalidate>
+                        <div class="field">
+                            <label for="currentRoleInput">Tu rol actual</label>
+                            <input id="currentRoleInput" type="text" readonly>
+                        </div>
+
+                        <div class="field">
+                            <label for="requestedRoleSelect">Rol solicitado</label>
+                            <select id="requestedRoleSelect" required>
+                                <option value="">Selecciona un rol...</option>
+                            </select>
+                        </div>
+
+                        <div class="field">
+                            <label for="applicationReason">Motivo (minimo 100 caracteres)</label>
+                            <textarea id="applicationReason" minlength="100" maxlength="2000" required
+                                placeholder="Explica por que cumples los criterios y como aportaras a la comunidad."></textarea>
+                        </div>
+
+                        <div class="meta-row">
+                            <span id="reasonCounter">0 / 100 minimo</span>
+                            <span id="applyStatusText">Listo para validar</span>
+                        </div>
+
+                        <div class="btn-row">
+                            <button type="button" class="btn secondary" id="checkEligibilityBtn">
+                                <i class="fas fa-shield-check"></i> Verificar elegibilidad
+                            </button>
+                            <button type="submit" class="btn primary" id="submitApplicationBtn">
+                                <i class="fas fa-paper-plane"></i> Enviar aplicacion
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="eligibility-box" id="eligibilityBox" aria-live="polite">
+                        Selecciona un rol y ejecuta la verificacion para ver tus criterios cumplidos.
+                    </div>
+                </section>
+
+                <section class="panel glass" aria-labelledby="statusTitle">
+                    <h2 id="statusTitle">Estado de Aplicaciones</h2>
+                    <p class="panel-sub">Se actualiza cada 30 segundos para reflejar cambios de revision.</p>
+
+                    <div id="applicationsList" class="applications" aria-live="polite">
+                        <div class="loading">Cargando aplicaciones...</div>
+                    </div>
+
+                    <h2 style="margin-top:1rem">Timeline de Cambios</h2>
+                    <div id="roleTimeline" class="timeline" aria-live="polite">
+                        <div class="empty">Aun no hay eventos de roles para mostrar.</div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const API_BASE = window.location.origin.includes('localhost')
+            ? 'https://api.latanda.online'
+            : '';
+        const ROLE_BADGE_KEY = 'lt_role_app_badge_count';
+        const ROLE_BADGE_UPDATED_KEY = 'lt_role_app_badge_updated';
+        const ROLE_BADGE_EVENT = 'lt-role-app-badge';
+        const POLL_MS = 30000;
+
+        const DEFAULT_ROLES = [
+            {
+                id: 'user', level: 1, name: 'Usuario', summary: 'Acceso base a funciones publicas.',
+                requirements: ['Cuenta registrada'], benefits: ['Ver contenido', 'Participar en comunidad'], application_enabled: false
+            },
+            {
+                id: 'verified_user', level: 2, name: 'Usuario Verificado', summary: 'Identidad validada por KYC.',
+                requirements: ['KYC aprobado'], benefits: ['Mayor confianza', 'Acceso a funciones verificadas'], application_enabled: false
+            },
+            {
+                id: 'active_member', level: 3, name: 'Miembro Activo', summary: 'Actividad constante y contribuciones reales.',
+                requirements: ['Actividad sostenida'], benefits: ['Mayor visibilidad', 'Prioridad en grupos'], application_enabled: false
+            },
+            {
+                id: 'coordinator', level: 4, name: 'Coordinador', summary: 'Gestiona tandas y coordina operaciones.',
+                requirements: ['Historial positivo de tandas', 'Reputacion comunitaria'], benefits: ['Herramientas de coordinacion', 'Metricas avanzadas'], application_enabled: true
+            },
+            {
+                id: 'moderator', level: 5, name: 'Moderador', summary: 'Supervisa contenido y aplica politicas.',
+                requirements: ['Buena conducta', 'Experiencia comunitaria'], benefits: ['Panel de moderacion', 'Herramientas anti-abuso'], application_enabled: true
+            },
+            {
+                id: 'admin', level: 6, name: 'Administrador', summary: 'Gestion operativa de alto impacto.',
+                requirements: ['Aprobacion interna'], benefits: ['Revision de aplicaciones', 'Control de permisos'], application_enabled: false
+            },
+            {
+                id: 'administrator', level: 7, name: 'Administrador Principal', summary: 'Gobierno avanzado del sistema.',
+                requirements: ['Historial administrativo'], benefits: ['Gestion global', 'Configuracion critica'], application_enabled: false
+            },
+            {
+                id: 'super_admin', level: 8, name: 'Super Administrador', summary: 'Nivel maximo de autoridad.',
+                requirements: ['Designacion ejecutiva'], benefits: ['Control total', 'Auditoria de seguridad'], application_enabled: false
+            }
+        ];
+
+        const roleGridEl = document.getElementById('roleGrid');
+        const roleSelectEl = document.getElementById('requestedRoleSelect');
+        const reasonEl = document.getElementById('applicationReason');
+        const reasonCounterEl = document.getElementById('reasonCounter');
+        const formEl = document.getElementById('roleApplicationForm');
+        const applyStatusTextEl = document.getElementById('applyStatusText');
+        const eligibilityBoxEl = document.getElementById('eligibilityBox');
+        const currentRoleChipEl = document.getElementById('currentRoleChip');
+        const currentRoleInputEl = document.getElementById('currentRoleInput');
+        const pendingBadgeEl = document.getElementById('pendingBadge');
+        const applicationsListEl = document.getElementById('applicationsList');
+        const roleTimelineEl = document.getElementById('roleTimeline');
+        const checkEligibilityBtnEl = document.getElementById('checkEligibilityBtn');
+        const submitApplicationBtnEl = document.getElementById('submitApplicationBtn');
+
+        let roles = DEFAULT_ROLES.slice();
+        let currentUser = null;
+        let currentRole = 'user';
+        let applicationStatusMap = new Map();
+        let hasLoadedApplications = false;
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value == null ? '' : String(value);
+            return div.innerHTML;
+        }
+
+        function formatDate(value) {
+            if (!value) return '--';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleString('es-HN');
+        }
+
+        function statusClass(status) {
+            const normalized = String(status || '').toLowerCase();
+            if (normalized === 'approved') return 'approved';
+            if (normalized === 'rejected') return 'rejected';
+            if (normalized === 'hold' || normalized === 'deferred') return 'hold';
+            return 'pending';
+        }
+
+        function statusLabel(status) {
+            const normalized = String(status || '').toLowerCase();
+            if (normalized === 'approved') return 'Aprobada';
+            if (normalized === 'rejected') return 'Rechazada';
+            if (normalized === 'hold' || normalized === 'deferred') return 'En espera';
+            if (normalized === 'reviewing') return 'En revision';
+            return 'Pendiente';
+        }
+
+        function getToken() {
+            return localStorage.getItem('auth_token') || localStorage.getItem('latanda_auth_token') || '';
+        }
+
+        function apiUrl(path) {
+            if (!API_BASE) return path;
+            return API_BASE + path;
+        }
+
+        async function apiFetch(path, options) {
+            const token = getToken();
+            const headers = Object.assign(
+                { 'Content-Type': 'application/json' },
+                (options && options.headers) || {}
+            );
+            if (token) headers.Authorization = 'Bearer ' + token;
+
+            const response = await fetch(apiUrl(path), Object.assign({}, options, { headers: headers }));
+            const text = await response.text();
+            let payload = {};
+            try { payload = text ? JSON.parse(text) : {}; } catch (_) {}
+
+            if (!response.ok) {
+                const err = new Error((payload && (payload.message || payload.error)) || ('HTTP ' + response.status));
+                err.status = response.status;
+                err.payload = payload;
+                throw err;
+            }
+            return payload;
+        }
+
+        function showToast(message, tone) {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + (tone || 'ok');
+            toast.innerHTML = escapeHtml(message);
+            document.getElementById('toastRegion').appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 240);
+            }, 4300);
+        }
+
+        function setBadgeCount(count) {
+            const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
+            pendingBadgeEl.textContent = 'Pendientes: ' + safeCount;
+            localStorage.setItem(ROLE_BADGE_KEY, String(safeCount));
+            localStorage.setItem(ROLE_BADGE_UPDATED_KEY, new Date().toISOString());
+            window.dispatchEvent(new CustomEvent(ROLE_BADGE_EVENT, { detail: { count: safeCount } }));
+        }
+
+        function parseRoles(payload) {
+            const fromPayload = payload && (
+                payload.roles ||
+                (payload.data && payload.data.roles) ||
+                payload.data ||
+                payload.requirements
+            );
+
+            if (!fromPayload) return DEFAULT_ROLES.slice();
+
+            if (Array.isArray(fromPayload)) {
+                return fromPayload.map(function(item, index) {
+                    return {
+                        id: item.id || item.role || item.name || ('role_' + index),
+                        level: Number(item.level || item.rank || (index + 1)),
+                        name: item.display_name || item.name || item.role || ('Role ' + (index + 1)),
+                        summary: item.summary || item.description || 'Rol de la plataforma.',
+                        requirements: item.requirements || item.criteria || [],
+                        benefits: item.benefits || item.permissions || [],
+                        application_enabled: Boolean(item.application_enabled || item.can_apply || item.applicable)
+                    };
+                }).sort(function(a, b) { return a.level - b.level; });
+            }
+
+            if (typeof fromPayload === 'object') {
+                return Object.keys(fromPayload).map(function(key, index) {
+                    const item = fromPayload[key] || {};
+                    return {
+                        id: key,
+                        level: Number(item.level || (index + 1)),
+                        name: item.display_name || item.name || key,
+                        summary: item.summary || item.description || 'Rol de la plataforma.',
+                        requirements: item.requirements || item.criteria || [],
+                        benefits: item.benefits || item.permissions || [],
+                        application_enabled: Boolean(item.application_enabled || item.can_apply || item.applicable)
+                    };
+                }).sort(function(a, b) { return a.level - b.level; });
+            }
+
+            return DEFAULT_ROLES.slice();
+        }
+
+        function renderRoles() {
+            roleGridEl.innerHTML = roles.map(function(role) {
+                const isCurrent = role.id === currentRole;
+                const requirements = (role.requirements || []).slice(0, 3).map(function(it) {
+                    return '<li>' + escapeHtml(it) + '</li>';
+                }).join('') || '<li>Definicion pendiente</li>';
+                const benefits = (role.benefits || []).slice(0, 2).map(function(it) {
+                    return '<li>' + escapeHtml(it) + '</li>';
+                }).join('') || '<li>Acceso estandar</li>';
+
+                return '<article class="role-card' + (isCurrent ? ' current' : '') + '">' +
+                    '<div class="role-head">' +
+                        '<div class="role-name">' + escapeHtml(role.name) + '</div>' +
+                        '<span class="role-level">Nivel ' + escapeHtml(role.level) + '</span>' +
+                    '</div>' +
+                    '<div class="role-summary">' + escapeHtml(role.summary) + '</div>' +
+                    '<div><strong style="font-size:0.78rem">Criterios</strong><ul class="mini-list">' + requirements + '</ul></div>' +
+                    '<div><strong style="font-size:0.78rem">Beneficios</strong><ul class="mini-list">' + benefits + '</ul></div>' +
+                    (role.application_enabled
+                        ? '<button type="button" class="apply-role-btn" data-role-select="' + escapeHtml(role.id) + '">Aplicar a ' + escapeHtml(role.name) + '</button>'
+                        : '') +
+                '</article>';
+            }).join('');
+        }
+
+        function populateRoleSelect() {
+            const selectable = roles.filter(function(role) {
+                return role.application_enabled === true;
+            });
+
+            roleSelectEl.innerHTML = '<option value="">Selecciona un rol...</option>' + selectable.map(function(role) {
+                return '<option value="' + escapeHtml(role.id) + '">' + escapeHtml(role.name) + ' (Nivel ' + escapeHtml(role.level) + ')</option>';
+            }).join('');
+
+            if (selectable.length === 0) {
+                roleSelectEl.innerHTML += '<option value="" disabled>Sin roles aplicables disponibles</option>';
+            }
+        }
+
+        function renderEligibility(result, targetRole) {
+            const eligible = Boolean(result && (result.eligible === true || result.success === true));
+            const warnings = (result && (result.missing_requirements || result.missing || result.reasons)) || [];
+            const checks = (result && (result.checks || result.criteria)) || [];
+
+            let checksHtml = '';
+            if (Array.isArray(checks) && checks.length > 0) {
+                checksHtml = '<ul class="mini-list">' + checks.map(function(item) {
+                    const label = (item && (item.label || item.rule || item.name)) || item;
+                    const ok = item && (item.passed === true || item.ok === true);
+                    const icon = ok ? '✅' : '⚠️';
+                    return '<li>' + icon + ' ' + escapeHtml(label) + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            let missingHtml = '';
+            if (Array.isArray(warnings) && warnings.length > 0) {
+                missingHtml = '<ul class="mini-list">' + warnings.map(function(item) {
+                    return '<li>• ' + escapeHtml(item) + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            eligibilityBoxEl.className = 'eligibility-box ' + (eligible ? 'ok' : 'warn');
+            eligibilityBoxEl.innerHTML =
+                '<strong>' + (eligible ? 'Elegible para aplicar' : 'Aun no elegible') + '</strong>' +
+                '<div style="margin-top:0.35rem">Rol evaluado: <span class="mono">' + escapeHtml(targetRole) + '</span></div>' +
+                checksHtml +
+                missingHtml;
+        }
+
+        function canReapply(application) {
+            const status = String(application.status || '').toLowerCase();
+            if (status !== 'rejected') return false;
+            const dateValue = application.reviewed_at || application.updated_at || application.created_at;
+            const date = new Date(dateValue);
+            if (Number.isNaN(date.getTime())) return false;
+            const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+            return diffDays >= 30;
+        }
+
+        function renderApplications(applications) {
+            if (!Array.isArray(applications) || applications.length === 0) {
+                applicationsListEl.innerHTML = '<div class="empty">No tienes aplicaciones registradas aun.</div>';
+                roleTimelineEl.innerHTML = '<div class="empty">Aun no hay eventos de roles para mostrar.</div>';
+                setBadgeCount(0);
+                return;
+            }
+
+            const sorted = applications.slice().sort(function(a, b) {
+                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+            });
+
+            const pendingCount = sorted.filter(function(app) {
+                const st = String(app.status || '').toLowerCase();
+                return st === 'pending' || st === 'reviewing' || st === 'hold' || st === 'deferred';
+            }).length;
+            setBadgeCount(pendingCount);
+
+            applicationsListEl.innerHTML = sorted.map(function(app) {
+                const status = String(app.status || 'pending').toLowerCase();
+                const notes = app.admin_notes || app.feedback || app.reason_feedback || '';
+                const timelineStamp = app.reviewed_at || app.updated_at || app.created_at;
+                const canTryAgain = canReapply(app);
+
+                return '<article class="app-item" data-app-id="' + escapeHtml(app.id || '') + '">' +
+                    '<div class="app-head">' +
+                        '<strong>' + escapeHtml(app.requested_role || app.target_role || 'rol') + '</strong>' +
+                        '<span class="status ' + statusClass(status) + '">' + escapeHtml(statusLabel(status)) + '</span>' +
+                    '</div>' +
+                    '<div class="mono">Enviada: ' + escapeHtml(formatDate(app.created_at)) + '</div>' +
+                    '<div class="mono">Ultima actualizacion: ' + escapeHtml(formatDate(timelineStamp)) + '</div>' +
+                    (notes ? '<div style="margin-top:0.45rem;color:#c2d4ea">Notas admin: ' + escapeHtml(notes) + '</div>' : '') +
+                    (canTryAgain
+                        ? '<div style="margin-top:0.55rem"><button type="button" class="btn secondary" data-reapply-role="' + escapeHtml(app.requested_role || app.target_role || '') + '">Reaplicar</button></div>'
+                        : '') +
+                '</article>';
+            }).join('');
+
+            roleTimelineEl.innerHTML = sorted.map(function(app) {
+                return '<div class="timeline-item">' +
+                    '<strong>' + escapeHtml(statusLabel(app.status)) + '</strong> · ' + escapeHtml(app.requested_role || app.target_role || 'rol') +
+                    '<div class="mono">' + escapeHtml(formatDate(app.reviewed_at || app.updated_at || app.created_at)) + '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function normalizeApplications(payload) {
+            const data = payload && (payload.applications || (payload.data && payload.data.applications) || payload.data || payload.items);
+            if (Array.isArray(data)) return data;
+            return [];
+        }
+
+        async function fetchRoleRequirements() {
+            try {
+                const payload = await apiFetch('/api/roles/requirements', { method: 'GET' });
+                roles = parseRoles(payload);
+            } catch (_) {
+                roles = DEFAULT_ROLES.slice();
+                showToast('No se pudo cargar /api/roles/requirements. Usando definiciones base.', 'warn');
+            }
+
+            renderRoles();
+            populateRoleSelect();
+        }
+
+        async function loadCurrentUser() {
+            const localUserRaw = localStorage.getItem('latanda_user');
+            if (localUserRaw) {
+                try {
+                    currentUser = JSON.parse(localUserRaw);
+                } catch (_) {
+                    currentUser = null;
+                }
+            }
+
+            if (currentUser && currentUser.role) {
+                currentRole = currentUser.role;
+            }
+
+            currentRoleChipEl.textContent = 'Rol actual: ' + currentRole;
+            currentRoleInputEl.value = currentRole;
+        }
+
+        async function checkEligibility() {
+            const targetRole = roleSelectEl.value;
+            if (!targetRole) {
+                showToast('Selecciona un rol antes de verificar.', 'warn');
+                return;
+            }
+
+            checkEligibilityBtnEl.disabled = true;
+            checkEligibilityBtnEl.textContent = 'Verificando...';
+
+            try {
+                const payload = await apiFetch('/api/roles/check-upgrade', {
+                    method: 'POST',
+                    body: JSON.stringify({ requested_role: targetRole })
+                });
+                renderEligibility(payload, targetRole);
+            } catch (err) {
+                renderEligibility({ eligible: false, missing: [err.message || 'Verificacion no disponible.'] }, targetRole);
+            } finally {
+                checkEligibilityBtnEl.disabled = false;
+                checkEligibilityBtnEl.innerHTML = '<i class="fas fa-shield-check"></i> Verificar elegibilidad';
+            }
+        }
+
+        async function sendStatusEmailNotification(application) {
+            try {
+                await apiFetch('/api/roles/notifications/email', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        application_id: application.id,
+                        status: application.status,
+                        requested_role: application.requested_role || application.target_role
+                    })
+                });
+            } catch (_) {
+                // Backend may already handle email notifications.
+            }
+        }
+
+        function detectStatusChanges(applications) {
+            const nextMap = new Map();
+            applications.forEach(function(app) {
+                const id = String(app.id || app._id || app.created_at || Math.random());
+                const status = String(app.status || 'pending').toLowerCase();
+                nextMap.set(id, status);
+
+                if (hasLoadedApplications && applicationStatusMap.has(id)) {
+                    const previous = applicationStatusMap.get(id);
+                    if (previous !== status) {
+                        showToast('Tu aplicacion a ' + (app.requested_role || app.target_role || 'rol') + ' cambio a: ' + statusLabel(status), status === 'approved' ? 'ok' : 'warn');
+                        sendStatusEmailNotification(app);
+                    }
+                }
+            });
+
+            applicationStatusMap = nextMap;
+            hasLoadedApplications = true;
+        }
+
+        async function loadApplications(options) {
+            const opts = options || {};
+            try {
+                const payload = await apiFetch('/api/roles/applications', { method: 'GET' });
+                const applications = normalizeApplications(payload);
+                detectStatusChanges(applications);
+                renderApplications(applications);
+
+                if (!opts.silent && applications.length > 0) {
+                    showToast('Aplicaciones sincronizadas correctamente.', 'ok');
+                }
+            } catch (err) {
+                if (!opts.silent) {
+                    applicationsListEl.innerHTML = '<div class="empty">No se pudieron cargar tus aplicaciones: ' + escapeHtml(err.message || 'error') + '</div>';
+                    roleTimelineEl.innerHTML = '<div class="empty">Sin timeline por ahora.</div>';
+                    showToast('Error al cargar aplicaciones.', 'err');
+                }
+            }
+        }
+
+        function validateReason() {
+            const length = (reasonEl.value || '').trim().length;
+            reasonCounterEl.textContent = length + ' / 100 minimo';
+            if (length < 100) {
+                applyStatusTextEl.textContent = 'Motivo insuficiente';
+                applyStatusTextEl.style.color = '#f59e0b';
+                return false;
+            }
+            applyStatusTextEl.textContent = 'Validacion completa';
+            applyStatusTextEl.style.color = '#22c55e';
+            return true;
+        }
+
+        async function submitApplication(event) {
+            event.preventDefault();
+
+            const requestedRole = roleSelectEl.value;
+            const reason = (reasonEl.value || '').trim();
+            const isReasonValid = validateReason();
+
+            if (!requestedRole) {
+                showToast('Selecciona un rol solicitado.', 'warn');
+                return;
+            }
+            if (!isReasonValid) {
+                showToast('El motivo debe tener al menos 100 caracteres.', 'warn');
+                return;
+            }
+
+            submitApplicationBtnEl.disabled = true;
+            submitApplicationBtnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+            try {
+                await apiFetch('/api/roles/apply', {
+                    method: 'POST',
+                    body: JSON.stringify({ requested_role: requestedRole, reason: reason })
+                });
+
+                showToast('Aplicacion enviada correctamente. Te avisaremos del resultado.', 'ok');
+                reasonEl.value = '';
+                validateReason();
+                eligibilityBoxEl.className = 'eligibility-box';
+                eligibilityBoxEl.textContent = 'Solicitud enviada. Puedes monitorear su estado en el panel inferior.';
+                await loadApplications({ silent: true });
+            } catch (err) {
+                showToast(err.message || 'No fue posible enviar la aplicacion.', 'err');
+            } finally {
+                submitApplicationBtnEl.disabled = false;
+                submitApplicationBtnEl.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar aplicacion';
+            }
+        }
+
+        function bindEvents() {
+            reasonEl.addEventListener('input', validateReason);
+            checkEligibilityBtnEl.addEventListener('click', checkEligibility);
+            formEl.addEventListener('submit', submitApplication);
+
+            roleGridEl.addEventListener('click', function(event) {
+                const target = event.target.closest('[data-role-select]');
+                if (!target) return;
+                const roleId = target.getAttribute('data-role-select') || '';
+                roleSelectEl.value = roleId;
+                showToast('Rol seleccionado: ' + roleId, 'ok');
+                roleSelectEl.focus();
+            });
+
+            applicationsListEl.addEventListener('click', function(event) {
+                const btn = event.target.closest('[data-reapply-role]');
+                if (!btn) return;
+                const roleId = btn.getAttribute('data-reapply-role') || '';
+                roleSelectEl.value = roleId;
+                reasonEl.focus();
+                showToast('Puedes reaplicar al rol: ' + roleId, 'ok');
+            });
+        }
+
+        function startPolling() {
+            setInterval(function() {
+                loadApplications({ silent: true });
+            }, POLL_MS);
+        }
+
+        async function init() {
+            bindEvents();
+            validateReason();
+            await loadCurrentUser();
+            await fetchRoleRequirements();
+            await loadApplications({ silent: true });
+            startPolling();
+        }
+
+        init();
+    })();
+    </script>
+</body>
+</html>
