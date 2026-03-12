@@ -33,9 +33,14 @@ jobs:
     - name: Validate HTML files
       run: |
         echo "🔍 Validating HTML files..."
+        # Skip component/partial HTML files that are not full pages
+        SKIP_FILES="realtime-dashboard-stats-component.html"
         for file in *.html; do
           if [ -f "$file" ]; then
-            # Basic HTML validation - check for common issues
+            if echo "$SKIP_FILES" | grep -qw "$file"; then
+              echo "⏭️ $file - Skipped (component file)"
+              continue
+            fi
             if grep -q "</head>" "$file" && grep -q "</body>" "$file" && grep -q "</html>" "$file"; then
               echo "✅ $file - Valid structure"
             else
