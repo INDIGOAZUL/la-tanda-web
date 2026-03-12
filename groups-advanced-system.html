@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.6">
+    <link rel="stylesheet" href="css/groups-page.css?v=3.9">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -258,9 +258,7 @@
                 my_days_late: pgGroup.my_days_late || 0,
                 my_next_payment_due: pgGroup.my_next_payment_due,
                 my_total_paid: parseFloat(pgGroup.my_total_paid || 0),
-                my_turn_number: pgGroup.my_turn_number,
-                turns_until_mine: pgGroup.turns_until_mine,
-                my_alerts: pgGroup.my_alerts || [],  // Empty array to prevent .length error
+                my_alerts: pgGroup.my_alerts || [],
                 my_num_positions: parseInt(pgGroup.my_num_positions) || 1,
                 has_active_tanda: pgGroup.has_active_tanda || false,
                 current_cycle: parseInt(pgGroup.current_cycle) || 0,
@@ -269,14 +267,272 @@
                 tanda_status: pgGroup.tanda_status || null,
                 tanda_id: pgGroup.tanda_id || null,
                 my_turn_number: pgGroup.my_turn_number || null,
-                turns_until_mine: pgGroup.turns_until_mine,
+                turns_until_mine: pgGroup.turns_until_mine !== undefined ? pgGroup.turns_until_mine : null,
                 current_turn: parseInt(pgGroup.tanda_current_turn) || 0,
-                max_mora_cycles: parseInt(pgGroup.max_mora_cycles) || 4
+                max_mora_cycles: parseInt(pgGroup.max_mora_cycles) || 4,
+                my_next_payment_grace_deadline: pgGroup.my_next_payment_grace_deadline || null,
+                grace_period: parseInt(pgGroup.grace_period) || 5
             };
         }
 
         // ===== FETCH GROUPS =====
-        async function fetchMyGroups() {
+        // ALG-06 T3: Show risk radar modal
+    async function showRiskRadar(groupId) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token || !groupId) return;
+
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay ch-overlay active';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = '<div style="background:#0f172a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:650px;width:95%;max-height:85vh;overflow-y:auto;padding:24px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+            '<h3 style="margin:0;color:#f8fafc;font-size:1.1rem;"><i class="fas fa-crosshairs" style="color:#8b5cf6;margin-right:8px;"></i>Radar de Riesgo</h3>' +
+            '<button style="background:none;border:none;color:#64748b;font-size:1.5rem;cursor:pointer;" data-action="rr-close">&times;</button>' +
+            '</div><div id="rrBody" style="color:#e2e8f0;"><div style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;color:#8b5cf6;"></i></div></div></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay || e.target.closest('[data-action="rr-close"]')) overlay.remove();
+        });
+
+        try {
+            var resp = await fetch('/api/groups/' + groupId + '/risk-radar', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await resp.json();
+            var members = (data.data && data.data.members) || [];
+            var summary = (data.data && data.data.summary) || {};
+            var body = document.getElementById('rrBody');
+
+            if (members.length === 0) {
+                body.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;"><i class="fas fa-shield-alt" style="font-size:2rem;color:#22c55e;margin-bottom:8px;display:block;"></i>No hay miembros para analizar.</div>';
+                return;
+            }
+
+            var html = '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">' +
+                '<div style="flex:1;min-width:100px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;text-align:center;">' +
+                '<div style="font-size:1.3rem;font-weight:700;color:#ef4444;">' + (summary.high_risk || 0) + '</div>' +
+                '<div style="font-size:0.7rem;color:#94a3b8;">Alto riesgo</div></div>' +
+                '<div style="flex:1;min-width:100px;padding:10px;background:rgba(245,158,11,0.1);border-radius:8px;text-align:center;">' +
+                '<div style="font-size:1.3rem;font-weight:700;color:#f59e0b;">' + (summary.medium_risk || 0) + '</div>' +
+                '<div style="font-size:0.7rem;color:#94a3b8;">Riesgo medio</div></div>' +
+                '<div style="flex:1;min-width:100px;padding:10px;background:rgba(34,197,94,0.1);border-radius:8px;text-align:center;">' +
+                '<div style="font-size:1.3rem;font-weight:700;color:#22c55e;">' + (summary.total - (summary.high_risk || 0) - (summary.medium_risk || 0)) + '</div>' +
+                '<div style="font-size:0.7rem;color:#94a3b8;">Bajo riesgo</div></div></div>';
+
+            members.forEach(function(m) {
+                var f = m.factors || {};
+                var barWidth = Math.max(5, m.risk_score);
+
+                html += '<div style="padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.03);border-left:3px solid ' + m.risk_color + ';border-radius:0 8px 8px 0;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                    '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<div style="width:32px;height:32px;border-radius:50%;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+                    (m.avatar_url ? '<img src="' + escapeHtml(m.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;">' : '<i class="fas fa-user" style="color:#8b5cf6;font-size:0.8rem;"></i>') +
+                    '</div>' +
+                    '<div><div style="font-weight:600;font-size:0.85rem;">' + escapeHtml(m.name || 'Usuario') + '</div>' +
+                    '<div style="font-size:0.7rem;color:#64748b;">' +
+                    (m.active_flags > 0 ? '<span style="color:#ef4444;">' + m.active_flags + ' alerta' + (m.active_flags > 1 ? 's' : '') + '</span> · ' : '') +
+                    (m.has_loan ? '<span style="color:#f59e0b;">Deuda activa</span> · ' : '') +
+                    'Credit: ' + (f.credit ? f.credit.credit_score : '--') +
+                    '</div></div></div>' +
+                    '<div style="text-align:right;">' +
+                    '<div style="font-size:1.1rem;font-weight:700;color:' + m.risk_color + ';">' + m.risk_score + '%</div>' +
+                    '<div style="font-size:0.65rem;color:#94a3b8;">riesgo</div></div></div>' +
+                    '<div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-bottom:6px;">' +
+                    '<div style="height:100%;width:' + barWidth + '%;background:' + m.risk_color + ';border-radius:2px;"></div></div>' +
+                    '<div style="display:flex;gap:6px;flex-wrap:wrap;font-size:0.65rem;color:#94a3b8;margin-bottom:4px;">' +
+                    '<span>Puntualidad: ' + (f.punctuality ? f.punctuality.rate : 0) + '%</span>' +
+                    '<span>·</span><span>Credit: ' + (f.credit ? f.credit.score + '/' + f.credit.max : '--') + '</span>' +
+                    (f.anomaly_flags && f.anomaly_flags.penalty > 0 ? '<span>·</span><span style="color:#ef4444;">Alertas: -' + f.anomaly_flags.penalty + '</span>' : '') +
+                    (f.debt && f.debt.penalty > 0 ? '<span>·</span><span style="color:#f59e0b;">Deuda: -' + f.debt.penalty + '</span>' : '') +
+                    '</div>';
+
+                if (m.suggestions && m.suggestions.length > 0) {
+                    html += '<div style="margin-top:4px;">';
+                    m.suggestions.forEach(function(s) {
+                        html += '<div style="font-size:0.65rem;color:#a78bfa;padding:2px 0;"><i class="fas fa-lightbulb" style="margin-right:4px;font-size:0.6rem;"></i>' + escapeHtml(s) + '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            body.innerHTML = html;
+        } catch (err) {
+            document.getElementById('rrBody').innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Error al cargar radar de riesgo</div>';
+        }
+    }
+
+    // ALG-06 T1: Show anomaly flags modal
+    async function showAnomalyFlags(groupId) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token || !groupId) return;
+
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay ch-overlay active';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+        overlay.innerHTML = '<div class="af-modal" style="background:#0f172a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;max-width:600px;width:95%;max-height:80vh;overflow-y:auto;padding:24px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+            '<h3 style="margin:0;color:#f8fafc;font-size:1.1rem;"><i class="fas fa-exclamation-triangle" style="color:#ef4444;margin-right:8px;"></i>Alertas de Pago</h3>' +
+            '<button class="af-close" style="background:none;border:none;color:#64748b;font-size:1.5rem;cursor:pointer;" data-action="af-close">&times;</button>' +
+            '</div><div id="afBody" style="color:#e2e8f0;"><div style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;color:#ef4444;"></i></div></div></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay || e.target.closest('[data-action="af-close"]')) {
+                overlay.remove();
+            }
+        });
+
+        try {
+            var resp = await fetch('/api/groups/' + groupId + '/anomaly-flags', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await resp.json();
+            var flags = (data.data && data.data.flags) || [];
+            var body = document.getElementById('afBody');
+
+            if (flags.length === 0) {
+                body.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;"><i class="fas fa-check-circle" style="font-size:2rem;color:#22c55e;margin-bottom:8px;display:block;"></i>No se detectaron anomalias en los patrones de pago.</div>';
+                return;
+            }
+
+            var activeFlags = flags.filter(function(f) { return !f.resolved_at; });
+            var resolvedFlags = flags.filter(function(f) { return f.resolved_at; });
+
+            var html = '<div style="margin-bottom:12px;padding:8px 12px;background:rgba(239,68,68,0.1);border-radius:8px;font-size:0.85rem;">' +
+                '<strong style="color:#ef4444;">' + activeFlags.length + '</strong> alerta' + (activeFlags.length !== 1 ? 's' : '') + ' activa' + (activeFlags.length !== 1 ? 's' : '') +
+                (resolvedFlags.length > 0 ? ' · <span style="color:#22c55e;">' + resolvedFlags.length + '</span> resuelta' + (resolvedFlags.length !== 1 ? 's' : '') : '') +
+                '</div>';
+
+            flags.forEach(function(f) {
+                var d = f.details || {};
+                var isActive = !f.resolved_at;
+                var borderColor = f.severity === 'danger' ? '#ef4444' : '#f59e0b';
+                var typeMap = {
+                    'consecutive_late': { icon: 'fa-clock', label: 'Pagos consecutivos tarde' },
+                    'deterioration': { icon: 'fa-chart-line', label: 'Deterioro en pagos' },
+                    'pay_and_disappear': { icon: 'fa-ghost', label: 'Paga y desaparece' },
+                    'phantom_payments': { icon: 'fa-eye-slash', label: 'Pagos fantasma' },
+                    'rapid_join_collect_leave': { icon: 'fa-running', label: 'Union rapida y abandono' }
+                };
+                var tm = typeMap[f.flag_type] || { icon: 'fa-flag', label: f.flag_type };
+                var icon = tm.icon;
+                var typeLabel = tm.label;
+
+                html += '<div style="display:flex;gap:10px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,0.03);border-left:3px solid ' + borderColor + ';border-radius:0 8px 8px 0;opacity:' + (isActive ? '1' : '0.5') + ';">' +
+                    '<div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;"><i class="fas ' + icon + '" style="color:' + borderColor + ';font-size:0.85rem;"></i></div>' +
+                    '<div style="flex:1;min-width:0;">' +
+                    '<div style="font-weight:600;font-size:0.85rem;">' + escapeHtml(f.user_name || 'Usuario') + '</div>' +
+                    '<div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">' + typeLabel + ' · ' + f.severity + '</div>' +
+                    '<div style="font-size:0.7rem;color:#64748b;margin-top:4px;">' +
+                    (f.flag_type === 'pay_and_disappear' ?
+                        'Pago antes: ' + (d.pre_collection_rate || 0) + '% · Despues: ' + (d.post_collection_rate || 0) + '% · Caida: ' + (d.drop_percentage || 0) + '%' :
+                     f.flag_type === 'phantom_payments' ?
+                        'Manual: ' + (d.manual_count || 0) + '/' + (d.total_count || 0) + ' (' + (d.manual_ratio || 0) + '%) · Verificados: ' + (d.verified_count || 0) :
+                     f.flag_type === 'rapid_join_collect_leave' ?
+                        'Dias como miembro: ' + (d.days_as_member || 0) + ' · Cobros: ' + (d.distributions_collected || 0) + ' · Total: L. ' + ((d.total_collected || 0).toLocaleString()) :
+                        'Promedio reciente: ' + (d.recent_avg_delay || 0) + 'd · Historico: ' + (d.historical_avg_delay || 0) + 'd · Deterioro: ' + (d.deterioration > 0 ? '+' : '') + (d.deterioration || 0) + 'd') +
+                    '</div>' +
+                    (isActive ? '' : '<div style="font-size:0.65rem;color:#22c55e;margin-top:2px;">Resuelta</div>') +
+                    '</div></div>';
+            });
+
+            body.innerHTML = html;
+        } catch (err) {
+            document.getElementById('afBody').innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Error al cargar alertas</div>';
+        }
+    }
+
+    // ALG-05 T1: Load recommended groups for sidebar
+    async function loadRecommendedGroups() {
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token) return;
+        const card = document.getElementById('grRecCard');
+        const list = document.getElementById('grRecList');
+        if (!card || !list) return;
+
+        try {
+            const resp = await fetch('/api/groups/recommended', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await resp.json();
+            const groups = data?.data?.groups || [];
+            if (groups.length === 0) { card.style.display = 'none'; return; }
+
+            card.style.display = '';
+            list.innerHTML = groups.slice(0, 5).map(function(g) {
+                const score = g.recommendation_score || 0;
+                const scoreClass = score >= 60 ? 'gr-rec-score-high' : score >= 40 ? 'gr-rec-score-med' : 'gr-rec-score-low';
+                const freq = g.frequency === 'weekly' ? 'Semanal' : g.frequency === 'biweekly' ? 'Quincenal' : 'Mensual';
+                const contrib = parseFloat(g.contribution_amount || 0).toLocaleString('es-HN');
+                const mf = g.match_factors || {};
+                var tags = [];
+                if (mf.location) tags.push('Cerca');
+                if (mf.contribution_fit) tags.push('Tu rango');
+                if (mf.frequency_match) tags.push(freq);
+                if (mf.friends_in_group > 0) tags.push(mf.friends_in_group + ' amigo' + (mf.friends_in_group > 1 ? 's' : ''));
+                if (mf.similar_users_count > 0) tags.push(mf.similar_users_count + ' similar' + (mf.similar_users_count > 1 ? 'es' : ''));
+                var tagsHtml = tags.length > 0 ? '<div class="gr-rec-match">' + tags.map(function(t) { return '<span class="gr-rec-tag">' + t + '</span>'; }).join('') + '</div>' : '';
+                var proofHtml = g.social_proof ? '<div class="gr-rec-proof"><i class="fas fa-user-friends"></i> ' + escapeHtml(g.social_proof) + '</div>' : '';
+
+                return '<div class="gr-rec-item" data-action="gr-rec-join" data-group-id="' + (g.group_id || g.id) + '">' +
+                    '<div class="gr-rec-avatar"><i class="fas fa-users"></i></div>' +
+                    '<div class="gr-rec-info">' +
+                        '<div class="gr-rec-name">' + escapeHtml(g.name) + '</div>' +
+                        '<div class="gr-rec-meta">L. ' + contrib + ' · ' + freq + ' · ' + (g.member_count || 0) + '/' + (g.max_members || '?') + '</div>' +
+                        tagsHtml +
+                        proofHtml +
+                    '</div>' +
+                    '<span class="gr-rec-score ' + scoreClass + '">' + score + '%</span>' +
+                    '<button class="gr-rec-dismiss" data-action="gr-rec-dismiss" data-group-id="' + (g.group_id || g.id) + '" title="No me interesa"><i class="fas fa-times"></i></button>' +
+                '</div>';
+            }).join('');
+        } catch (e) {
+            card.style.display = 'none';
+        }
+    }
+
+    // ALG-05 T1: Handle click on recommended group
+    document.addEventListener('click', function(e) {
+        // Dismiss button
+        var dismissBtn = e.target.closest('[data-action="gr-rec-dismiss"]');
+        if (dismissBtn) {
+            e.stopPropagation();
+            var gid = dismissBtn.dataset.groupId;
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (gid && token) {
+                fetch('/api/groups/recommended/dismiss', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ group_id: gid })
+                }).then(function() {
+                    var card = dismissBtn.closest('.gr-rec-item');
+                    if (card) { card.style.opacity = '0'; card.style.transition = 'opacity 0.3s'; setTimeout(function() { card.remove(); }, 300); }
+                    // Hide container if empty
+                    setTimeout(function() {
+                        var list = document.getElementById('grRecList');
+                        if (list && list.children.length === 0) {
+                            document.getElementById('grRecCard').style.display = 'none';
+                        }
+                    }, 400);
+                });
+            }
+            return;
+        }
+
+        var item = e.target.closest('[data-action="gr-rec-join"]');
+        if (!item) return;
+        var groupId = item.dataset.groupId;
+        if (!groupId) return;
+        // Navigate to join flow — scroll to open groups section
+        var divider = document.querySelector('.gc-section-divider');
+        if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    async function fetchMyGroups() {
             try {
                 // Read token directly — do NOT require latanda_user (it may not exist)
                 const authToken = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
@@ -322,13 +578,20 @@
                                     adapted.my_payment_status = null;
                                     adapted.my_alerts = [];
                                     adapted.is_public = true;
+                                    adapted.health_score = g.health_score || 50;
+                                    adapted.health_factors = g.health_factors || {};
                                     adapted.admin_name = g.admin_name || null;
                                     adapted.admin_verified = g.admin_verified || false;
                                     adapted.admin_since = g.admin_since || null;
                                     adapted.tanda_status = g.tanda_status || null;
                                     adapted.active_members = g.active_members || 0;
+                      adapted.current_cycle = g.current_cycle || 0;
+                                    adapted.views_count = parseInt(g.views_count) || 0;
+                                    adapted.saves_count = parseInt(g.saves_count) || 0;
                                     adapted.start_date = g.start_date || null;
                                     adapted.grace_period = g.grace_period || 5;
+                                    adapted.creator_score = g.creator_score ? parseInt(g.creator_score) : null;
+                                    adapted.creator_credit_category = g.creator_credit_category || null;
                                     return adapted;
                                 });
                             } else {
@@ -337,8 +600,70 @@
                         } catch(e) {
                             window.publicGroupsData = [];
                         }
-                        // Re-render to include public groups
-                        if (typeof applyFilters === 'function') applyFilters();
+                        // Load saved state for authenticated users
+                        var _authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                        if (_authTk && window.publicGroupsData && window.publicGroupsData.length > 0) {
+                            (async function() {
+                                try {
+                                    var gids = window.publicGroupsData.map(function(g) { return g.id; });
+                                    var svRes = await fetch(API_BASE + '/api/groups/my-saves', {
+                                        headers: { 'Authorization': 'Bearer ' + _authTk }
+                                    });
+                                    // If endpoint doesn't exist yet, silently ignore
+                                    if (svRes.ok) {
+                                        var svData = await svRes.json();
+                                        if (svData.success && Array.isArray(svData.data)) {
+                                            var savedSet = new Set(svData.data.map(function(s) { return s.group_id; }));
+                                            window.publicGroupsData.forEach(function(g) {
+                                                g._is_saved = savedSet.has(g.id);
+                                            });
+                                        }
+                                    }
+                                } catch(e) { /* saved state is non-blocking */ }
+                                if (typeof applyFilters === 'function') applyFilters();
+                    loadRecommendedGroups();
+                            })();
+                        } else {
+                            // Re-render to include public groups
+                            if (typeof applyFilters === 'function') applyFilters();
+                        }
+
+                        // IntersectionObserver for view tracking on public group cards
+                        setTimeout(function() {
+                            if (window._gcViewObserver) window._gcViewObserver.disconnect();
+                            var pendingViews = new Set();
+                            var viewedSession = JSON.parse(sessionStorage.getItem('gc_viewed') || '{}');
+                            window._gcViewObserver = new IntersectionObserver(function(entries) {
+                                entries.forEach(function(entry) {
+                                    var gid = entry.target.getAttribute('data-group-id');
+                                    if (!gid || viewedSession[gid]) return;
+                                    if (entry.isIntersecting) {
+                                        entry.target._viewTimer = setTimeout(function() {
+                                            pendingViews.add(gid);
+                                            viewedSession[gid] = 1;
+                                            sessionStorage.setItem('gc_viewed', JSON.stringify(viewedSession));
+                                        }, 2000);
+                                    } else {
+                                        clearTimeout(entry.target._viewTimer);
+                                    }
+                                });
+                            }, { threshold: 0.5 });
+                            // Observe public group cards
+                            document.querySelectorAll('.gc-card[data-public="true"]').forEach(function(card) {
+                                window._gcViewObserver.observe(card);
+                            });
+                            // Flush every 5 seconds
+                            window._gcViewFlush = setInterval(function() {
+                                if (pendingViews.size === 0) return;
+                                var ids = Array.from(pendingViews);
+                                pendingViews.clear();
+                                fetch(API_BASE + '/api/groups/track-views', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ group_ids: ids })
+                                }).catch(function() {});
+                            }, 5000);
+                        }, 500);
                     })();
 
                     // ✅ Check if there's a newly created group to highlight
@@ -348,7 +673,7 @@
                         sessionStorage.removeItem('newly_created_group_id');
                     }
                 } else {
-                    showError('Error al cargar grupos');
+                    showError(data.error || data.message || 'Error al cargar grupos');
                 }
             } catch (error) {
                 showError('Error de conexión');
@@ -590,7 +915,7 @@
             });
             var finalHtml = '<div class="groups-grid">' + myCards;
             if (pubCards) {
-                finalHtml += '</div><div class="gc-section-divider"><span>Grupos Abiertos</span></div><div class="groups-grid">' + pubCards;
+                finalHtml += '</div><div class="gc-section-divider"><span>Grupos Abiertos</span><select id="sortPublicGroups" class="gc-sort-select" title="Ordenar grupos abiertos"><option value="health">Salud</option><option value="newest">Recientes</option><option value="members">Miembros</option><option value="amount_low">Aporte menor</option></select></div><div class="groups-grid">' + pubCards;
             }
             finalHtml += '</div>';
 
@@ -726,38 +1051,61 @@
                         can: false, reason: "waiting" };
         }
 
-        // ===== RENDER GROUP CARD =====
+        // ===== SHARED LABEL CONSTANTS =====
+        const GC_STATUS_LABELS = { 'active': 'Activo', 'pending': 'Pendiente', 'completed': 'Completado', 'cancelled': 'Cancelado', 'paused': 'Pausado' };
+        const GC_FREQ_LABELS = { 'weekly': 'Semanal', 'biweekly': 'Quincenal', 'monthly': 'Mensual' };
+        const GC_ROLE_LABELS = { 'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro', 'open': 'Abierto' };
+        const GC_ALERT_ICONS = { 'success': '&#10003;', 'warning': '&#9888;', 'danger': '&#10007;', 'info': '&#8505;' };
+
         // ===== RENDER GROUP CARD (v4.10.2 REDESIGN) =====
         function _gcFmtL(val) {
             var n = parseFloat(val);
-            return isNaN(n) || n === 0 ? '--' : 'L. ' + n.toLocaleString('es-HN');
+            return isNaN(n) || n === 0 ? '--' : 'L. ' + n.toLocaleString('es-HN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+
+        // Engagement bar for public group cards
+        function _gcEngagementBar(group) {
+            if (!group.is_public) return '';
+            var views = parseInt(group.views_count) || 0;
+            var saves = parseInt(group.saves_count) || 0;
+            var viewsStr = views >= 1000 ? (views / 1000).toFixed(1) + 'k' : views;
+            var savesStr = saves >= 1000 ? (saves / 1000).toFixed(1) + 'k' : saves;
+            var isSaved = group._is_saved || false;
+            return '<div class="gc-engagement">' +
+                '<span class="gc-eng-stat" title="Vistas"><i class="far fa-eye"></i> ' + viewsStr + '</span>' +
+                '<span class="gc-eng-stat" title="Guardados"><i class="' + (isSaved ? 'fas' : 'far') + ' fa-star"></i> ' + savesStr + '</span>' +
+                '<button class="gc-eng-save ' + (isSaved ? 'gc-saved' : '') + '" data-action="grp-toggle-save" data-group-id="' + escapeHtml(group.id) + '" title="' + (isSaved ? 'Quitar de guardados' : 'Guardar grupo') + '">' +
+                    '<i class="' + (isSaved ? 'fas' : 'far') + ' fa-star"></i>' +
+                '</button>' +
+            '</div>';
+        }
+
+        // v4.16.12: Trust badge for public group cards
+        function _gcTrustBadge(group) {
+            if (!group.is_public) return '';
+            var score = group.creator_score;
+            var cat = group.creator_credit_category;
+            if (!score) return '<span class="gc-trust gc-trust-new" title="Creador nuevo"><i class="fas fa-shield-alt"></i> Nuevo</span>';
+            var cls = 'gc-trust-regular';
+            if (cat === 'excelente') cls = 'gc-trust-excellent';
+            else if (cat === 'bueno') cls = 'gc-trust-good';
+            else if (cat === 'riesgo') cls = 'gc-trust-risk';
+            return '<span class="gc-trust ' + cls + '" title="Puntuacion del creador: ' + score + '"><i class="fas fa-shield-alt"></i> ' + score + '</span>';
         }
 
         function renderGroupCard(group) {
-            const statusLabels = {
-                'active': 'Activo', 'pending': 'Pendiente', 'completed': 'Completado',
-                'cancelled': 'Cancelado', 'paused': 'Pausado'
-            };
-            const frequencyLabels = {
-                'weekly': 'Semanal', 'biweekly': 'Quincenal', 'monthly': 'Mensual'
-            };
-            const roleLabels = {
-                'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro', 'open': 'Abierto'
-            };
-            const alertIcons = {
-                'success': '&#10003;', 'warning': '&#9888;', 'danger': '&#10007;', 'info': '&#8505;'
-            };
+            // M6: Use shared label constants (defined above renderGroupCard)
+            const statusLabels = GC_STATUS_LABELS;
+            const frequencyLabels = GC_FREQ_LABELS;
+            const roleLabels = GC_ROLE_LABELS;
+            const alertIcons = GC_ALERT_ICONS;
 
             // Status color mapping
             var st = group.status || 'active';
             var statusColor = ({ active: '#00FFFF', completed: '#22c55e', pending: '#f59e0b', paused: '#f59e0b', suspended: '#ef4444', cancelled: '#64748b' })[st] || '#00FFFF';
 
-            // Effective payment status (timezone fix)
+            // Payment status from backend (trusted — no client-side override)
             let effectivePaymentStatus = group.my_payment_status;
-            if (group.my_payment_status === 'pending' && group.my_next_payment_due) {
-                const dueDate = new Date(group.my_next_payment_due.split('T')[0] + 'T23:59:59');
-                if (dueDate > new Date()) effectivePaymentStatus = 'up_to_date';
-            }
             // Override card border for late/suspended/suspension_recommended payment
             if (effectivePaymentStatus === 'late' || effectivePaymentStatus === 'suspended' || effectivePaymentStatus === 'suspension_recommended') {
                 statusColor = '#ef4444';
@@ -861,11 +1209,34 @@
                     trustAlerts.push({ severity: 'warning', message: 'Fecha de inicio: Por definir' });
                 }
 
-                // Tanda status
+                // Tanda status + cycle warning
                 if (group.tanda_status === 'active') {
-                    trustAlerts.push({ severity: 'success', message: 'Tanda en progreso' });
+                    var cc = group.current_cycle || 0;
+                    var mm = group.max_members || 1;
+                    if (cc > 1) {
+                        trustAlerts.push({ severity: 'warning', message: 'Tanda en ciclo ' + cc + ' de ' + mm + ' \u2014 al unirte deberas pagar el ciclo actual' });
+                    } else {
+                        trustAlerts.push({ severity: 'success', message: 'Tanda en progreso' });
+                    }
                 } else if (group.tanda_status === 'recruiting') {
                     trustAlerts.push({ severity: 'info', message: 'Reclutando miembros' });
+                }
+
+                // Health score alert
+                if (group.health_score != null) {
+                    var hs = group.health_score;
+                    var hsCat, hsColor, hsIcon;
+                    if (hs >= 80) { hsCat = 'Saludable'; hsColor = '#22c55e'; hsIcon = '&#9829;'; }
+                    else if (hs >= 60) { hsCat = 'Estable'; hsColor = '#f59e0b'; hsIcon = '&#9733;'; }
+                    else if (hs >= 40) { hsCat = 'En Riesgo'; hsColor = '#f97316'; hsIcon = '&#9888;'; }
+                    else { hsCat = 'Critico'; hsColor = '#ef4444'; hsIcon = '&#10007;'; }
+                    trustAlerts.unshift({ severity: hs >= 80 ? 'success' : hs >= 60 ? 'info' : hs >= 40 ? 'warning' : 'danger', message: hsIcon + ' Salud: ' + hs + '/100 (' + hsCat + ')' });
+                }
+
+                // Spaces remaining
+                var spacesLeft = (group.max_members || 0) - (group.active_members || group.member_count || 0);
+                if (spacesLeft <= 3 && spacesLeft > 0) {
+                    trustAlerts.push({ severity: 'warning', message: spacesLeft + ' espacio' + (spacesLeft > 1 ? 's' : '') + ' disponible' + (spacesLeft > 1 ? 's' : '') });
                 }
 
                 if (trustAlerts.length > 0) {
@@ -880,7 +1251,7 @@
                     '<button class="btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">Solicitar unirse</button>';
             }
 
-            return '<div class="group-card" data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
+            return '<div class="group-card" ' + (group.is_public ? 'data-public="true" ' : '') + 'data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
                 '<div class="gc-header">' +
                     '<div class="gc-avatar" style="background:' + statusColor + ';color:' + (st === 'suspended' || st === 'cancelled' ? '#fff' : '#0f172a') + '">' + avatarLetter + '</div>' +
                     '<div class="gc-name">' +
@@ -889,6 +1260,7 @@
                     '</div>' +
                     '<span class="gc-role ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' +
                     (isAdmin && group.active_loans_count > 0 ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;font-size:0.68rem;font-weight:600;margin-left:6px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>' + group.active_loans_count + ' deuda' + (group.active_loans_count > 1 ? 's' : '') + '</span>' : '') +
+                    _gcTrustBadge(group) +
                 '</div>' +
                 (group.description ? '<div class="gc-desc">' + escapeHtml(group.description) + '</div>' : '') +
                 '<div class="gc-stats">' +
@@ -910,6 +1282,7 @@
                     '</div>' +
                 '</div>' +
                 alertsHtml +
+                _gcEngagementBar(group) +
                 '<div class="gc-actions">' + actionsHtml + '</div>' +
             '</div>';
         }
@@ -1008,18 +1381,60 @@
                             // Description
                             (g.description ? '<p style="margin:0 0 12px;font-size:0.82rem;color:#94a3b8;line-height:1.4;">' + escapeHtml(g.description) + '</p>' : '') +
 
-                            // Creator section
+                            // Creator section (v4.16.12: Trust profile)
                             _section('&#x1F464;', 'Creador') +
-                            '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
-                                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-                                    '<span style="font-size:0.85rem;color:#e2e8f0;font-weight:500;">' + escapeHtml(c.name) + '</span>' +
-                                    verBadge +
-                                '</div>' +
-                                '<div style="display:flex;gap:16px;">' +
-                                    '<span style="font-size:0.72rem;color:#64748b;">En La Tanda: ' + escapeHtml(creatorTimeLabel) + '</span>' +
-                                    '<span style="font-size:0.72rem;color:#64748b;">Grupos activos: ' + c.active_groups + '</span>' +
-                                '</div>' +
-                            '</div>' +
+                            (function() {
+                                // Credit score badge
+                                var scoreHtml = '';
+                                if (c.credit_score) {
+                                    // has score — shown below
+                                } else {
+                                    scoreHtml = '<div class="gc-trust-score" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.15);border-radius:8px;margin-bottom:8px;">' +
+                                        '<div style="width:36px;height:36px;border-radius:50%;background:rgba(100,116,139,0.15);display:flex;align-items:center;justify-content:center;"><i class="fas fa-shield-alt" style="color:#64748b;font-size:0.9rem;"></i></div>' +
+                                        '<div style="flex:1;"><div style="font-size:1rem;font-weight:700;color:#64748b;">--</div><div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Sin puntaje aun</div></div>' +
+                                    '</div>';
+                                }
+                                if (c.credit_score) {
+                                    var sColor = '#64748b';
+                                    var sCat = c.credit_category || '';
+                                    if (sCat === 'excelente') sColor = '#22c55e';
+                                    else if (sCat === 'bueno') sColor = '#3b82f6';
+                                    else if (sCat === 'regular') sColor = '#f59e0b';
+                                    else if (sCat === 'riesgo') sColor = '#ef4444';
+                                    var sCatLabel = { excelente: 'Excelente', bueno: 'Bueno', regular: 'Regular', riesgo: 'Riesgo' }[sCat] || '';
+                                    scoreHtml = '<div class="gc-trust-score" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(' + (sCat === 'excelente' ? '34,197,94' : sCat === 'bueno' ? '59,130,246' : sCat === 'regular' ? '245,158,11' : '239,68,68') + ',0.08);border:1px solid rgba(' + (sCat === 'excelente' ? '34,197,94' : sCat === 'bueno' ? '59,130,246' : sCat === 'regular' ? '245,158,11' : '239,68,68') + ',0.15);border-radius:8px;margin-bottom:8px;">' +
+                                        '<div style="width:36px;height:36px;border-radius:50%;background:rgba(' + (sCat === 'excelente' ? '34,197,94' : sCat === 'bueno' ? '59,130,246' : sCat === 'regular' ? '245,158,11' : '239,68,68') + ',0.15);display:flex;align-items:center;justify-content:center;"><i class="fas fa-shield-alt" style="color:' + sColor + ';font-size:0.9rem;"></i></div>' +
+                                        '<div style="flex:1;"><div style="font-size:1rem;font-weight:700;color:' + sColor + ';">' + c.credit_score + '</div><div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">' + sCatLabel + '</div></div>' +
+                                    '</div>';
+                                }
+
+                                // Stats row (always visible to motivate growth)
+                                var punctColor = c.punctuality_rate !== null ? (c.punctuality_rate >= 80 ? '#22c55e' : c.punctuality_rate >= 60 ? '#f59e0b' : '#ef4444') : '#64748b';
+                                var punctVal = c.punctuality_rate !== null ? c.punctuality_rate + '%' : '--';
+                                var statsHtml = '<div class="gc-trust-stats">' +
+                                    '<div class="gc-trust-stat"><div class="gc-trust-stat-val">' + (c.completed_tandas || 0) + '</div><div class="gc-trust-stat-lbl">Completadas</div></div>' +
+                                    '<div class="gc-trust-stat"><div class="gc-trust-stat-val" style="color:' + punctColor + ';">' + punctVal + '</div><div class="gc-trust-stat-lbl">Puntualidad</div></div>' +
+                                    '<div class="gc-trust-stat"><div class="gc-trust-stat-val">' + (c.achievements_count || 0) + '</div><div class="gc-trust-stat-lbl">Logros</div></div>' +
+                                    '<div class="gc-trust-stat"><div class="gc-trust-stat-val">' + (c.followers || 0) + '</div><div class="gc-trust-stat-lbl">Seguidores</div></div>' +
+                                '</div>';
+
+                                // Profile link (always show, fallback to name display)
+                                var profileLink = c.handle ? '<a href="/perfil/' + escapeHtml(c.handle) + '" class="gc-trust-profile-link"><i class="fas fa-external-link-alt"></i> Ver perfil completo</a>' : '<span class="gc-trust-profile-link" style="color:#64748b;cursor:default;"><i class="fas fa-user-circle"></i> Perfil no configurado</span>';
+
+                                return '<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;">' +
+                                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+                                        '<span style="font-size:0.85rem;color:#e2e8f0;font-weight:500;">' + escapeHtml(c.name) + '</span>' +
+                                        verBadge +
+                                    '</div>' +
+                                    '<div style="display:flex;gap:16px;margin-bottom:' + (scoreHtml || statsHtml ? '10' : '0') + 'px;">' +
+                                        '<span style="font-size:0.72rem;color:#64748b;">En La Tanda: ' + escapeHtml(creatorTimeLabel) + '</span>' +
+                                        '<span style="font-size:0.72rem;color:#64748b;">Grupos activos: ' + c.active_groups + '</span>' +
+                                    '</div>' +
+                                    scoreHtml +
+                                    statsHtml +
+                                    profileLink +
+                                '</div>';
+                            })() +
 
                             // Financial terms
                             _section('&#x1F4B0;', 'Terminos Financieros') +
@@ -1055,6 +1470,7 @@
                                 _row('Ciclo actual', g.current_cycle > 0 ? 'Ciclo ' + g.current_cycle : 'No iniciado') +
                                 _row('Frecuencia', escapeHtml(freqLabel)) +
                             '</div>' +
+                            (g.tanda_status === 'active' && g.current_cycle > 1 ? '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:10px 12px;margin-top:8px;"><div style="color:#fbbf24;font-size:0.72rem;font-weight:600;margin-bottom:3px;"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Tanda en curso</div><div style="color:#94a3b8;font-size:0.72rem;">Esta tanda ya va en el ciclo ' + g.current_cycle + '. Al unirte deberas pagar el ciclo actual de inmediato.</div></div>' : '') +
 
                         '</div>' +
 
@@ -1082,13 +1498,55 @@
                     if (action === 'grp-close-public-detail') {
                         overlay.remove();
                     } else if (action === 'grp-join-from-detail') {
-                        overlay.remove();
-                        // Find the original join button on the card and click it
                         var joinGid = actionBtn.getAttribute('data-group-id');
-                        var cardJoinBtn = document.querySelector('[data-action="grp-join-request"][data-group-id="' + joinGid + '"]');
-                        if (cardJoinBtn) {
-                            cardJoinBtn.click();
+                        var joinName = actionBtn.getAttribute('data-group-name') || 'este grupo';
+                        overlay.remove();
+                        // Direct join with terms confirmation (replaces fragile DOM click delegation)
+                        var joinGroup = (window.publicGroupsData || []).find(function(pg) { return pg.id === joinGid; });
+                        var termsHtml = '';
+                        if (joinGroup) {
+                            var fqMap = { weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual' };
+                            var fq = fqMap[joinGroup.frequency] || joinGroup.frequency || '--';
+                            var cAmt = parseFloat(joinGroup.contribution_amount || 0);
+                            var cr = joinGroup.commission_rate;
+                            var crText = cr === null || cr === undefined ? '5%' : (cr === 0 ? 'Sin comision' : cr + '%');
+                            var cwHtml = '';
+                            if (joinGroup.tanda_status === 'active' && (joinGroup.current_cycle || 0) > 1) {
+                                cwHtml = '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;margin:8px 0 4px;">' +
+                                    '<div style="color:#92400e;font-size:0.72rem;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Tanda en curso (Ciclo ' + (joinGroup.current_cycle || 0) + ')</div>' +
+                                    '<div style="color:#92400e;font-size:0.7rem;margin-top:2px;">Al unirte deberas pagar el ciclo actual. Aporte inmediato: L. ' + cAmt.toLocaleString('es-HN') + '</div>' +
+                                '</div>';
+                            }
+                            termsHtml = '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:12px 0 8px;text-align:left;">' +
+                                '<div style="color:#475569;font-size:0.75rem;font-weight:600;margin-bottom:6px;">Terminos del Grupo</div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Aporte</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">L. ' + cAmt.toLocaleString('es-HN') + ' ' + escapeHtml(fq) + '</span></div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Comision</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">' + escapeHtml(crText) + '</span></div>' +
+                                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Miembros</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">' + (joinGroup.members_count || joinGroup.member_count || '?') + '/' + (joinGroup.max_members || '?') + '</span></div>' +
+                            '</div>';
+                            termsHtml += cwHtml;
                         }
+                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?' + termsHtml, function() {
+                            var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                            fetch(API_BASE + '/api/groups/' + encodeURIComponent(joinGid) + '/join-pg', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authTk },
+                                body: JSON.stringify({})
+                            })
+                            .then(function(r) { return r.json(); })
+                            .then(function(result) {
+                                if (result.success) {
+                                    var msg = result.data && result.data.auto_approved
+                                        ? 'Te has unido a ' + escapeHtml(joinName)
+                                        : 'Solicitud enviada a ' + escapeHtml(joinName) + '. El administrador la revisara';
+                                    showNotification(msg, 'success');
+                                    window.publicGroupsData = (window.publicGroupsData || []).filter(function(pg) { return pg.id !== joinGid; });
+                                    fetchMyGroups();
+                                } else {
+                                    showNotification(result.error || 'Error al solicitar ingreso', 'error');
+                                }
+                            })
+                            .catch(function() { showNotification('Error de conexion', 'error'); });
+                        });
                     }
                 });
 
@@ -1114,9 +1572,20 @@
 
             // Append public groups only when both filters are "Todos"
             if (roleFilter === 'all' && paymentFilter === 'all') {
+                var pubSortBy = document.getElementById('sortPublicGroups') ? document.getElementById('sortPublicGroups').value : 'health';
                 var pubGroups = (window.publicGroupsData || []).filter(function(g) {
                     return !searchTerm || (g.name && g.name.toLowerCase().includes(searchTerm));
                 });
+                // Sort public groups
+                if (pubSortBy === 'health') {
+                    pubGroups.sort(function(a, b) { return (b.health_score || 0) - (a.health_score || 0); });
+                } else if (pubSortBy === 'newest') {
+                    pubGroups.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+                } else if (pubSortBy === 'members') {
+                    pubGroups.sort(function(a, b) { return (b.active_members || b.member_count || 0) - (a.active_members || a.member_count || 0); });
+                } else if (pubSortBy === 'amount_low') {
+                    pubGroups.sort(function(a, b) { return parseFloat(a.contribution_amount || 0) - parseFloat(b.contribution_amount || 0); });
+                }
                 if (pubGroups.length > 0) {
                     filteredGroups = filteredGroups.concat(pubGroups);
                 }
@@ -1130,6 +1599,13 @@
                     }
         }
 
+
+        // Sort dropdown for public groups (ALG-01 T3)
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'sortPublicGroups') {
+                applyFilters();
+            }
+        });
         function resetFilters() {
             document.getElementById('filterRole').value = 'all';
             document.getElementById('filterPayment').value = 'all';
@@ -1993,7 +2469,7 @@ async function loadUsersWithoutPositions(groupId) {
 
                             <div class="form-group">
                                 <label for="group-description">Descripción del Grupo <span class="required">*</span></label>
-                                <textarea id="group-description" placeholder="Describe el propósito y objetivos del grupo..." maxlength="250" required></textarea>
+                                <textarea id="group-description" placeholder="Ej: Tanda de ahorro mensual entre companeros de trabajo. Contribucion quincenal para metas de ahorro personal." maxlength="250" required></textarea>
                                 <div class="char-counter"><span id="desc-count">0</span>/250 caracteres</div>
                                 <div class="error-message" id="group-description-error"></div>
                             </div>
@@ -2032,6 +2508,18 @@ async function loadUsersWithoutPositions(groupId) {
                                         <span>Solo reuniones presenciales</span>
                                     </label>
                                 </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">¿Hacer grupo público?</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-option">
+                                        <input type="checkbox" id="group-is-public">
+                                        <span class="checkbox-custom"></span>
+                                        <span>Mostrar en la lista de Grupos Abiertos</span>
+                                    </label>
+                                </div>
+                                <div class="help-text">Los grupos públicos aparecen en la sección de Grupos Abiertos. Cualquier usuario puede solicitar unirse.</div>
                             </div>
                         </div>
                     </div>
@@ -2535,6 +3023,12 @@ async function loadUsersWithoutPositions(groupId) {
                     </div>
                 </div>
 
+
+                <!-- ALG-05 T1: Recommended Groups Card -->
+                <div class="grp-sidebar-stats gr-rec-card" id="grRecCard" style="display:none;">
+                    <h4 class="grp-sidebar-stats-title"><i class="fas fa-magic" style="color:#a855f7;margin-right:6px;"></i>Para Ti</h4>
+                    <div id="grRecList" class="gr-rec-list"></div>
+                </div>
 
                 <!-- Roles Card -->
                 
@@ -3760,7 +4254,16 @@ function renderTandaCard(tanda) {
         actionsHtml = '<button class="btn btn-sm btn-success" data-action="grp-start-tanda" data-tanda-id="' + eid + '"><i class="fas fa-play"></i> Iniciar</button>' +
             '<button class="btn btn-sm tc-btn-dark" data-action="grp-invite-to-tanda" data-tanda-id="' + eid + '"><i class="fas fa-user-plus"></i> Invitar</button>';
     } else if (isRecruiting) {
-        actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
+        actionsHtml = '<div class="tc-pref-picker" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '">' +
+            '<label style="font-size:0.72rem;color:#94a3b8;margin-bottom:4px;display:block;"><i class="fas fa-hand-pointer" style="margin-right:4px;"></i>Cuando prefieres cobrar?</label>' +
+            '<div class="tc-pref-options">' +
+                '<button class="tc-pref-btn' + (tanda.my_preference === 'early' ? ' tc-pref-active' : '') + '" data-action="grp-set-preference" data-pref="early" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '">Temprano</button>' +
+                '<button class="tc-pref-btn' + (tanda.my_preference === 'middle' ? ' tc-pref-active' : '') + '" data-action="grp-set-preference" data-pref="middle" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '">Medio</button>' +
+                '<button class="tc-pref-btn' + (tanda.my_preference === 'late' ? ' tc-pref-active' : '') + '" data-action="grp-set-preference" data-pref="late" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '">Tardio</button>' +
+                '<button class="tc-pref-btn' + (!tanda.my_preference || tanda.my_preference === 'any' ? ' tc-pref-active' : '') + '" data-action="grp-set-preference" data-pref="any" data-group-id="' + escapeHtml(String(tanda.group_id || '')) + '">Cualquiera</button>' +
+            '</div>' +
+        '</div>' +
+        '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
             '<span class="tc-waiting"><i class="fas fa-clock"></i> ' + (tanda.has_turn_assigned ? 'Esperando inicio' : 'Sin turno') + '</span>';
     } else if (isCompleted) {
         actionsHtml = '<button class="btn btn-sm tc-btn-dark" data-action="grp-view-tanda-details" data-tanda-id="' + eid + '"><i class="fas fa-eye"></i> Ver Detalles</button>' +
@@ -4077,6 +4580,19 @@ async function executeLotteryFromModal() {
     
     try {
         const userId = getCurrentUserId();
+
+        // Save lottery mode if set (ALG-02 T1)
+        var modeSelect = document.getElementById('scheduleLotteryMode');
+        if (modeSelect && modeSelect.value) {
+            try {
+                await fetch("/api/groups/" + currentStartGroupId + "/lottery-mode", {
+                    method: "PUT",
+                    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+                    body: JSON.stringify({ mode: modeSelect.value })
+                });
+            } catch (_) {}
+        }
+
         const response = await fetch("/api/groups/" + currentStartGroupId + "/lottery-assign", {
             method: "POST",
             headers: { ...getAuthHeaders(),
@@ -4251,6 +4767,9 @@ function // Show animation with updated data structure
     overlay.innerHTML =
         '<div class="lottery-container">' +
             '<h2 class="lottery-title"><i class="fas fa-dice"></i> TOMBOLA EN VIVO</h2>' +
+            '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:0.5rem;">' +
+                '<span style="background:rgba(0,255,255,0.15);color:#00FFFF;padding:3px 10px;border-radius:12px;font-size:0.72rem;" id="lottery-mode-badge">Aleatorio</span>' +
+            '</div>' +
             '<p style="color: #9ca3af; margin-bottom: 1rem;">' + escapeHtml(groupName) + '</p>' +
             '<div class="lottery-wheel">' +
                 '<div class="lottery-pointer"></div>' +
@@ -8901,6 +9420,15 @@ function renderTurnsList() {
                                 "<input type=\"datetime-local\" id=\"scheduleLotteryDateTime\" style=\"width: 100%; padding: 12px; border: 1px solid #374151; border-radius: 8px; background: #1e293b; color: white; font-size: 1rem; box-sizing: border-box;\">" +
                             "</div>" +
                             "<div style=\"margin-bottom: 20px;\">" +
+                                "<label style=\"display: block; font-weight: 500; color: #e5e7eb; margin-bottom: 8px;\">Modo de Tombola</label>" +
+                                "<select id=\"scheduleLotteryMode\" style=\"width: 100%; padding: 12px; border: 1px solid #374151; border-radius: 8px; background: #1e293b; color: white; font-size: 1rem;\">" +
+                                    "<option value=\"random\">🎲 Aleatorio — Todos tienen la misma probabilidad</option>" +
+                                    "<option value=\"weighted\">🧠 Inteligente — Pagadores confiables cobran al final</option>" +
+                                    "<option value=\"manual\">✋ Manual — Turnos ya asignados manualmente</option>" +
+                                "</select>" +
+                                "<p style=\"margin: 6px 0 0; font-size: 0.75rem; color: #94a3b8;\">Inteligente usa puntaje crediticio + puntualidad para reducir riesgo de impago</p>" +
+                            "</div>" +
+                            "<div style=\"margin-bottom: 20px;\">" +
                                 "<label style=\"display: block; font-weight: 500; color: #e5e7eb; margin-bottom: 8px;\">Tiempo de Conteo (segundos)</label>" +
                                 "<select id=\"scheduleLotteryCountdown\" style=\"width: 100%; padding: 12px; border: 1px solid #374151; border-radius: 8px; background: #1e293b; color: white; font-size: 1rem;\">" +
                                     "<option value=\"5\">5 segundos</option>" +
@@ -8976,6 +9504,18 @@ function renderTurnsList() {
             submitBtn.textContent = "Programando...";
             
             try {
+
+                // Save lottery mode (ALG-02 T1)
+                var lotteryMode = document.getElementById('scheduleLotteryMode');
+                if (lotteryMode && lotteryMode.value !== 'random') {
+                    try {
+                        await fetch((window.API_BASE_URL || "https://latanda.online") + "/api/groups/" + groupId + "/lottery-mode", {
+                            method: "PUT",
+                            headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+                            body: JSON.stringify({ mode: lotteryMode.value })
+                        });
+                    } catch (_) {}
+                }
                 var response = await fetch((window.API_BASE_URL || "https://latanda.online") + "/api/groups/" + groupId + "/lottery-schedule", {
                     method: "POST",
                     headers: {
@@ -10543,12 +11083,17 @@ function renderTurnsList() {
             if (canManage) {
                 buttons += _gmBtn('gm-show-balances', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(0,255,255,0.1)', 'Saldos de Tanda', 'Balance por miembro', '#00FFFF', '#00B8D4', dark, darkBorder);
                 buttons += _gmBtn('gm-contribution-history', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'rgba(0,255,255,0.1)', 'Historial de Pagos', 'Historial completo', '#00FFFF', '#00B8D4', dark, darkBorder);
+                buttons += _gmBtn('gm-health-detail', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'rgba(34,197,94,0.1)', 'Salud del Grupo', 'Puntaje y tendencia', '#22c55e', '#16a34a', 'rgba(34,197,94,0.1)', 'rgba(34,197,94,0.3)');
+                buttons += _gmBtn('gm-creator-insights', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>', 'rgba(34,197,94,0.1)', 'Insights del Grupo', 'Vistas, guardados, conversion', '#22c55e', '#16a34a', 'rgba(34,197,94,0.1)', 'rgba(34,197,94,0.3)');
             }
 
             // === Gestion ===
             if (canManage) {
                 buttons += _secHead('Gestion');
                 buttons += _gmBtn('gm-manage-turns', svgTurns, warnBg, 'Gestionar Turnos', 'Reordenar posiciones', '#fbbf24', '#d97706', warnBg, warnBorder);
+                buttons += _gmBtn('gm-turn-fairness', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-8"/></svg>', 'rgba(245,158,11,0.1)', 'Equidad de Turnos', 'Historial y distribucion', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
+                buttons += _gmBtn('gm-anomaly-flags', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>', 'rgba(239,68,68,0.1)', 'Alertas de Pago', 'Anomalias detectadas', '#ef4444', '#dc2626', 'rgba(239,68,68,0.1)', 'rgba(239,68,68,0.3)');
+                buttons += _gmBtn('gm-risk-radar', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/></svg>', 'rgba(139,92,246,0.1)', 'Radar de Riesgo', 'Probabilidad de impago', '#8b5cf6', '#7c3aed', 'rgba(139,92,246,0.1)', 'rgba(139,92,246,0.3)');
                 buttons += _gmBtn('gm-show-extensions', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>', 'rgba(245,158,11,0.1)', 'Prorrogas y Moras', 'Solicitudes y penalizaciones', '#f59e0b', '#d97706', 'rgba(245,158,11,0.1)', 'rgba(245,158,11,0.3)');
                 buttons += _gmBtn('gm-show-loans', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>', 'rgba(239,68,68,0.1)', 'Prestamos', 'Deudas formalizadas', '#ef4444', '#dc2626', 'rgba(239,68,68,0.1)', 'rgba(239,68,68,0.3)');
                 buttons += _gmBtn('gm-commission-manager', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>', 'rgba(0,255,255,0.1)', 'Comisiones', 'Gestionar comisiones', '#00FFFF', '#00B8D4', dark, darkBorder);
@@ -10624,13 +11169,40 @@ function renderTurnsList() {
                     var allDone = checks.every(function(c) { return c.done; });
                     if (allDone) { rlEl.innerHTML = ''; return; }
 
+                    // v4.16.12: Enhanced readiness with analytics summary
+                    var rdData = rlData.data;
+                    var analyticsHtml = '';
+                    if (rdData.views_count !== undefined || rdData.saves_count !== undefined || rdData.pending_requests !== undefined) {
+                        analyticsHtml = '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+                            '<div style="flex:1;text-align:center;padding:6px 4px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:8px;">' +
+                                '<div style="font-size:0.95rem;font-weight:700;color:#00FFFF;">' + (rdData.fill_percent || 0) + '%</div>' +
+                                '<div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Completo</div>' +
+                            '</div>' +
+                            '<div style="flex:1;text-align:center;padding:6px 4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">' +
+                                '<div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;">' + (rdData.views_count || 0) + '</div>' +
+                                '<div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Vistas</div>' +
+                            '</div>' +
+                            '<div style="flex:1;text-align:center;padding:6px 4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;">' +
+                                '<div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;">' + (rdData.saves_count || 0) + '</div>' +
+                                '<div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Guardados</div>' +
+                            '</div>' +
+                            (rdData.pending_requests > 0 ? '<div style="flex:1;text-align:center;padding:6px 4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:8px;">' +
+                                '<div style="font-size:0.95rem;font-weight:700;color:#f59e0b;">' + rdData.pending_requests + '</div>' +
+                                '<div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Solicitudes</div>' +
+                            '</div>' : '') +
+                        '</div>';
+                    }
+
                     var checkHtml = checks.map(function(c) {
                         var icon = c.done ? '<span style="color:#22c55e;">&#10003;</span>' : (c.severity === 'critical' ? '<span style="color:#ef4444;">&#10007;</span>' : '<span style="color:#f59e0b;">&#9675;</span>');
                         var textColor = c.done ? '#64748b' : '#e2e8f0';
                         var textDeco = c.done ? 'line-through' : 'none';
-                        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">' +
-                            '<span style="font-size:0.85rem;width:18px;text-align:center;">' + icon + '</span>' +
-                            '<span style="font-size:0.78rem;color:' + textColor + ';text-decoration:' + textDeco + ';">' + c.label + '</span>' +
+                        var nextStep = (!c.done && c.next_step) ? '<div style="font-size:0.65rem;color:#64748b;margin-left:26px;margin-top:1px;">' + c.next_step + '</div>' : '';
+                        return '<div style="padding:3px 0;">' +
+                            '<div style="display:flex;align-items:center;gap:8px;">' +
+                                '<span style="font-size:0.85rem;width:18px;text-align:center;">' + icon + '</span>' +
+                                '<span style="font-size:0.78rem;color:' + textColor + ';text-decoration:' + textDeco + ';">' + c.label + (c.progress && !c.done ? ' (' + c.progress + ')' : '') + '</span>' +
+                            '</div>' + nextStep +
                         '</div>';
                     }).join('');
 
@@ -10653,6 +11225,7 @@ function renderTurnsList() {
                         '<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:10px;">' +
                             '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:4px;transition:width 0.5s;"></div>' +
                         '</div>' +
+                        analyticsHtml +
                         checkHtml +
                         visToggle +
                     '</div>';
@@ -10712,6 +11285,89 @@ function renderTurnsList() {
                     case 'gm-toggle-pause': if (typeof toggleTandaPause === 'function') toggleTandaPause(gid); break;
                     case 'gm-show-balances': if (typeof showTandaBalances === 'function') showTandaBalances(gid); break;
                     case 'gm-contribution-history': closeModal(); if (typeof showContributionHistory === 'function') showContributionHistory(gid, 'matrix'); break;
+                    case 'gm-risk-radar': closeModal(); if (typeof showRiskRadar === 'function') showRiskRadar(gid); break;
+                    case 'gm-anomaly-flags': closeModal(); if (typeof showAnomalyFlags === 'function') showAnomalyFlags(gid); break;
+                    case 'gm-turn-fairness':
+                    (function() {
+                        var gid = manageGroupId;
+                        var gname = document.querySelector('.gm-modal-title') ? document.querySelector('.gm-modal-title').textContent : '';
+                        showTurnFairness(gid, gname);
+                    })();
+                    break;
+                case 'gm-health-detail': showGroupHealthDetail(gid, groupData.name); break;
+                    case 'gm-creator-insights':
+                        if (!currentManagedGroupId) break;
+                        (async function() {
+                            try {
+                                var tkn = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                                var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(currentManagedGroupId) + '/creator-insights', {
+                                    headers: { 'Authorization': 'Bearer ' + tkn }
+                                });
+                                var data = await res.json();
+                                if (!data.success || !data.data) { showNotification(data.error || 'Error al cargar insights', 'error'); return; }
+                                var d = data.data;
+                                var f = d.fill;
+                                var e = d.engagement;
+                                var j = d.joins;
+                                var p = d.prediction;
+
+                                var fillColor = f.percent >= 75 ? '#22c55e' : (f.percent >= 50 ? '#f59e0b' : '#ef4444');
+
+                                var modalHtml = '<div id="creatorInsightsOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;">' +
+                                    '<div style="background:#0f172a;border:1px solid rgba(34,197,94,0.15);border-radius:16px;max-width:400px;width:100%;max-height:85vh;overflow:hidden;box-shadow:0 25px 50px rgba(0,0,0,0.5);display:flex;flex-direction:column;">' +
+                                        '<div style="background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05));padding:16px;border-bottom:1px solid rgba(34,197,94,0.1);display:flex;align-items:center;justify-content:space-between;">' +
+                                            '<div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-chart-bar" style="color:#22c55e;font-size:1.1rem;"></i><h3 style="margin:0;font-size:1.1rem;color:#f8fafc;">Insights: ' + escapeHtml(d.name) + '</h3></div>' +
+                                            '<button onclick="document.getElementById(&#39;creatorInsightsOverlay&#39;).remove()" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:8px;color:#94a3b8;cursor:pointer;font-size:1rem;">&times;</button>' +
+                                        '</div>' +
+                                        '<div style="padding:16px;overflow-y:auto;flex:1;">' +
+
+                                            // Fill progress
+                                            '<div style="margin-bottom:14px;">' +
+                                                '<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:0.75rem;color:#94a3b8;font-weight:600;text-transform:uppercase;">Progreso de Miembros</span><span style="font-size:0.85rem;font-weight:700;color:' + fillColor + ';">' + f.active_members + '/' + f.max_members + ' (' + f.percent + '%)</span></div>' +
+                                                '<div style="height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;"><div style="height:100%;width:' + f.percent + '%;background:' + fillColor + ';border-radius:4px;transition:width 0.5s;"></div></div>' +
+                                                (f.spots_left > 0 ? '<div style="font-size:0.7rem;color:#64748b;margin-top:4px;">Faltan ' + f.spots_left + ' miembros</div>' : '<div style="font-size:0.7rem;color:#22c55e;margin-top:4px;">Grupo completo!</div>') +
+                                            '</div>' +
+
+                                            // Engagement stats
+                                            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">' +
+                                                '<div style="text-align:center;padding:10px 4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;"><div style="font-size:1.1rem;font-weight:700;color:#e2e8f0;">' + (e.views_30d || 0) + '</div><div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Vistas 30d</div></div>' +
+                                                '<div style="text-align:center;padding:10px 4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;"><div style="font-size:1.1rem;font-weight:700;color:#e2e8f0;">' + (e.saves || 0) + '</div><div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Guardados</div></div>' +
+                                                '<div style="text-align:center;padding:10px 4px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;"><div style="font-size:1.1rem;font-weight:700;color:' + (e.conversion_rate !== null ? '#22c55e' : '#64748b') + ';">' + (e.conversion_rate !== null ? e.conversion_rate + '%' : '--') + '</div><div style="font-size:0.6rem;color:#64748b;text-transform:uppercase;">Conversion</div></div>' +
+                                            '</div>' +
+
+                                            // Joins breakdown
+                                            '<div style="font-size:0.72rem;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Solicitudes de Union</div>' +
+                                            '<div style="display:flex;gap:6px;margin-bottom:14px;">' +
+                                                '<div style="flex:1;padding:6px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);border-radius:6px;text-align:center;"><div style="font-size:0.9rem;font-weight:700;color:#22c55e;">' + j.approved + '</div><div style="font-size:0.58rem;color:#64748b;">Aprobadas</div></div>' +
+                                                (j.pending > 0 ? '<div style="flex:1;padding:6px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);border-radius:6px;text-align:center;"><div style="font-size:0.9rem;font-weight:700;color:#f59e0b;">' + j.pending + '</div><div style="font-size:0.58rem;color:#64748b;">Pendientes</div></div>' : '') +
+                                                (j.rejected > 0 ? '<div style="flex:1;padding:6px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);border-radius:6px;text-align:center;"><div style="font-size:0.9rem;font-weight:700;color:#ef4444;">' + j.rejected + '</div><div style="font-size:0.58rem;color:#64748b;">Rechazadas</div></div>' : '') +
+                                            '</div>' +
+
+                                            // Prediction
+                                            '<div style="font-size:0.72rem;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Proyeccion</div>' +
+                                            '<div style="padding:10px 12px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:8px;">' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                                                    '<span style="font-size:0.78rem;color:#94a3b8;">Dias desde creacion</span>' +
+                                                    '<span style="font-size:0.78rem;color:#e2e8f0;font-weight:600;">' + p.days_since_creation + '</span>' +
+                                                '</div>' +
+                                                (p.days_to_full !== null ? '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;border-top:1px solid rgba(255,255,255,0.04);padding-top:6px;"><span style="font-size:0.78rem;color:#94a3b8;">Est. dias para completar</span><span style="font-size:0.78rem;color:#00FFFF;font-weight:600;">~' + p.days_to_full + ' dias</span></div>' : '<div style="margin-top:6px;font-size:0.72rem;color:#64748b;">Sin datos suficientes para estimar</div>') +
+                                                (!d.is_public ? '<div style="margin-top:8px;padding:6px 8px;background:rgba(245,158,11,0.1);border-radius:6px;font-size:0.7rem;color:#fbbf24;"><i class="fas fa-lightbulb" style="margin-right:4px;"></i>Tip: Haz tu grupo publico para atraer miembros organicamente</div>' : '') +
+                                            '</div>' +
+
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+
+                                var existingOv = document.getElementById('creatorInsightsOverlay');
+                                if (existingOv) existingOv.remove();
+                                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                                var ov = document.getElementById('creatorInsightsOverlay');
+                                ov.addEventListener('click', function(ev) { if (ev.target === ov) ov.remove(); });
+                            } catch (err) {
+                                showNotification('Error al cargar insights', 'error');
+                            }
+                        })();
+                        break;
                     case 'gm-show-extensions': if (typeof showExtensionManager === 'function') showExtensionManager(gid); break;
                     case 'gm-show-loans': if (typeof window.showLoanManager === "function") window.showLoanManager(gid); break;
                     case 'gm-commission-manager': showCommissionManager(gid); closeModal(); break;
@@ -12663,6 +13319,15 @@ function renderTurnsList() {
                 <i class="fas fa-exclamation-triangle"></i>
                 <div>
                     <p><strong>La tombola no ha sido ejecutada.</strong> Se usaran las posiciones actuales de los miembros.</p>
+                    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+                        <label style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">Modo:</label>
+                        <select id="scheduleLotteryMode" style="flex:1;padding:6px 10px;border:1px solid #374151;border-radius:8px;background:#1e293b;color:white;font-size:0.78rem;">
+                            <option value="random">🎲 Aleatorio</option>
+                            <option value="weighted">🧠 Inteligente</option>
+                            <option value="manual">✋ Manual</option>
+                        </select>
+                    </div>
+                    <div id="stm-pref-summary" style="display:none;margin:8px 0;padding:8px 10px;background:rgba(0,255,255,0.08);border:1px solid rgba(0,255,255,0.15);border-radius:8px;font-size:0.72rem;color:#94a3b8;"></div>
                     <button data-action="grp-execute-lottery"><i class="fas fa-dice"></i> Ejecutar Tombola</button>
                 </div>
             </div>
@@ -13055,6 +13720,182 @@ function renderTurnsList() {
     <!-- Contribution History (v4.11.1) -->
     <script>
         // ===== CONTRIBUTION HISTORY (v4.11.1) =====
+
+    // ========================================
+    // GROUP HEALTH DETAIL MODAL (v4.17.1)
+    // ========================================
+    async function showTurnFairness(groupId, groupName) {
+        var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+        try {
+            var resp = await fetch((window.API_BASE_URL || 'https://latanda.online') + '/api/groups/' + encodeURIComponent(groupId) + '/turn-fairness', {
+                headers: { 'Authorization': 'Bearer ' + authTk }
+            });
+            var result = await resp.json();
+            if (!result.success) { showNotification(result.data?.error?.message || 'Error', 'error'); return; }
+            var d = result.data;
+
+            var membersHtml = '';
+            if (d.members.length === 0) {
+                membersHtml = '<div style="text-align:center;padding:20px;color:#64748b;">No hay historial de tombolas aun</div>';
+            } else {
+                d.members.forEach(function(m) {
+                    var barColor = m.avg_position_pct <= 33 ? '#22c55e' : m.avg_position_pct >= 67 ? '#f59e0b' : '#00FFFF';
+                    var label = m.fairness_label;
+                    membersHtml += '<div class="tf-member">' +
+                        '<div class="tf-member-info">' +
+                            '<span class="tf-name">' + escapeHtml(m.name) + '</span>' +
+                            '<span class="tf-label" style="color:' + barColor + ';">' + label + '</span>' +
+                        '</div>' +
+                        '<div class="tf-bar-wrap">' +
+                            '<div class="tf-bar"><div class="tf-bar-fill" style="width:' + m.avg_position_pct + '%;background:' + barColor + ';"></div></div>' +
+                            '<span class="tf-pct">' + m.avg_position_pct + '%</span>' +
+                        '</div>' +
+                        '<div class="tf-detail">' + m.tandas_participated + ' tombola' + (m.tandas_participated !== 1 ? 's' : '') + '</div>' +
+                    '</div>';
+                });
+            }
+
+            var html = '<div class="gm-overlay" data-action="gm-close-fairness" style="z-index:10004;">' +
+                '<div class="gm-modal" style="max-width:480px;" onclick="event.stopPropagation();">' +
+                    '<div class="gm-modal-header" style="background:linear-gradient(135deg,#f59e0b,#d97706);">' +
+                        '<h3 class="gm-modal-title"><i class="fas fa-balance-scale" style="margin-right:8px;"></i>Equidad de Turnos</h3>' +
+                        '<p style="font-size:0.8rem;opacity:0.9;margin:4px 0 0;">' + escapeHtml(groupName) + ' &mdash; ' + d.total_lotteries + ' tombola' + (d.total_lotteries !== 1 ? 's' : '') + '</p>' +
+                    '</div>' +
+                    '<div class="gm-modal-body">' +
+                        '<p style="font-size:0.72rem;color:#94a3b8;margin:0 0 12px;">Posicion promedio: 0% = siempre primero, 100% = siempre ultimo</p>' +
+                        '<div class="tf-members">' + membersHtml + '</div>' +
+                    '</div>' +
+                    '<div class="gm-modal-footer">' +
+                        '<button class="gm-btn-close" data-action="gm-close-fairness">Cerrar</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+        } catch (e) {
+            showNotification('Error cargando datos de equidad', 'error');
+        }
+    }
+
+    // Close fairness modal
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.getAttribute('data-action') === 'gm-close-fairness' || e.target.closest('[data-action="gm-close-fairness"]'))) {
+            var overlay = e.target.closest('.gm-overlay') || document.querySelector('.gm-overlay[data-action="gm-close-fairness"]');
+            if (overlay) overlay.remove();
+        }
+    });
+
+    async function showGroupHealthDetail(groupId, groupName) {
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay ch-overlay active';
+        overlay.style.zIndex = '10002';
+        overlay.innerHTML = '<div class="modal-content ch-modal" style="max-width:500px;">' +
+            '<div class="ch-header" style="border-color:rgba(34,197,94,0.3);">' +
+                '<h3 style="color:#22c55e;"><i class="fas fa-heartbeat" style="margin-right:8px;"></i>Salud: ' + escapeHtml(groupName || 'Grupo') + '</h3>' +
+                '<button class="ch-close" data-action="gh-close">&times;</button>' +
+            '</div>' +
+            '<div class="ch-body" id="ghBody"><div style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#22c55e;"></i><p style="margin-top:12px;">Cargando datos...</p></div></div></div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay || e.target.closest('[data-action="gh-close"]')) {
+                overlay.remove();
+            }
+        });
+
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        try {
+            var res = await fetch('/api/groups/' + encodeURIComponent(groupId) + '/health-history', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+
+            var d = data.data;
+            var score = d.current_score;
+            var cat, catColor;
+            if (score >= 80) { cat = 'Saludable'; catColor = '#22c55e'; }
+            else if (score >= 60) { cat = 'Estable'; catColor = '#f59e0b'; }
+            else if (score >= 40) { cat = 'En Riesgo'; catColor = '#f97316'; }
+            else { cat = 'Critico'; catColor = '#ef4444'; }
+
+            var trendIcon = d.trend === 'improving' ? '<span style="color:#22c55e;">&#9650; Mejorando</span>' :
+                            d.trend === 'declining' ? '<span style="color:#ef4444;">&#9660; Bajando</span>' :
+                            '<span style="color:#94a3b8;">&#9644; Estable</span>';
+
+            // Build sparkline SVG from history
+            var sparkSvg = '';
+            if (d.history && d.history.length > 1) {
+                var pts = d.history;
+                var maxS = 100, minS = 0;
+                var w = 420, h = 80, pad = 4;
+                var stepX = (w - pad * 2) / (pts.length - 1);
+                var points = pts.map(function(p, i) {
+                    var x = pad + i * stepX;
+                    var y = h - pad - ((p.score - minS) / (maxS - minS)) * (h - pad * 2);
+                    return x.toFixed(1) + ',' + y.toFixed(1);
+                }).join(' ');
+                var lastPt = pts[pts.length - 1];
+                var lastX = (pad + (pts.length - 1) * stepX).toFixed(1);
+                var lastY = (h - pad - ((lastPt.score - minS) / (maxS - minS)) * (h - pad * 2)).toFixed(1);
+
+                // Area fill
+                var areaPoints = points + ' ' + lastX + ',' + (h - pad) + ' ' + pad + ',' + (h - pad);
+
+                sparkSvg = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:80px;margin:12px 0;">' +
+                    '<defs><linearGradient id="ghGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + catColor + '" stop-opacity="0.3"/><stop offset="100%" stop-color="' + catColor + '" stop-opacity="0.02"/></linearGradient></defs>' +
+                    '<polygon points="' + areaPoints + '" fill="url(#ghGrad)"/>' +
+                    '<polyline points="' + points + '" fill="none" stroke="' + catColor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                    '<circle cx="' + lastX + '" cy="' + lastY + '" r="4" fill="' + catColor + '"/>' +
+                    '<line x1="' + pad + '" y1="' + (h - pad - 0.8 * (h - pad * 2)) + '" x2="' + (w - pad) + '" y2="' + (h - pad - 0.8 * (h - pad * 2)) + '" stroke="rgba(34,197,94,0.2)" stroke-dasharray="4,4"/>' +
+                    '<text x="' + (w - pad) + '" y="' + (h - pad - 0.8 * (h - pad * 2) - 4) + '" fill="rgba(34,197,94,0.4)" font-size="9" text-anchor="end">80</text>' +
+                    '</svg>';
+            } else {
+                sparkSvg = '<div style="text-align:center;padding:20px;color:#64748b;font-size:0.8rem;">Datos insuficientes para grafico (se necesitan 2+ dias)</div>';
+            }
+
+            // Factor bars
+            var factors = d.current_factors || {};
+            var factorBars = '';
+            var factorDefs = [
+                { key: 'punctuality', label: 'Puntualidad', max: 30, color: '#22c55e' },
+                { key: 'moras', label: 'Moras', max: 20, color: '#f59e0b' },
+                { key: 'loans', label: 'Prestamos', max: 15, color: '#ef4444' },
+                { key: 'suspended', label: 'Suspendidos', max: 15, color: '#f97316' },
+                { key: 'maturity', label: 'Madurez', max: 20, color: '#3b82f6' }
+            ];
+            factorDefs.forEach(function(fd) {
+                var f = factors[fd.key] || {};
+                var sc = f.score || 0;
+                var pct = Math.round((sc / fd.max) * 100);
+                var detail = '';
+                if (fd.key === 'punctuality') detail = (f.rate || 0) + '% (' + (f.paid || 0) + '/' + (f.expected || 0) + ')';
+                else if (fd.key === 'moras') detail = f.count + ' activa' + (f.count !== 1 ? 's' : '');
+                else if (fd.key === 'loans') detail = f.count + ' activo' + (f.count !== 1 ? 's' : '');
+                else if (fd.key === 'suspended') detail = f.count + ' miembro' + (f.count !== 1 ? 's' : '');
+                else if (fd.key === 'maturity') detail = f.days + ' dias';
+
+                factorBars += '<div class="gh-factor">' +
+                    '<div class="gh-factor-row"><span class="gh-factor-label">' + fd.label + '</span><span class="gh-factor-detail">' + detail + '</span><span class="gh-factor-score">' + sc + '/' + fd.max + '</span></div>' +
+                    '<div class="gh-bar"><div class="gh-bar-fill" style="width:' + pct + '%;background:' + fd.color + ';"></div></div></div>';
+            });
+
+            document.getElementById('ghBody').innerHTML =
+                '<div class="gh-score-row">' +
+                    '<div class="gh-score-circle" style="border-color:' + catColor + ';color:' + catColor + ';">' + score + '</div>' +
+                    '<div class="gh-score-info"><div class="gh-cat" style="color:' + catColor + ';">' + cat + '</div>' +
+                    (d.completion_probability ? '<div class="gh-prob">' + d.completion_probability + '% prob. de completar</div>' : '') +
+                    trendIcon + '<div class="gh-points">' + d.data_points + ' dias de datos</div></div>' +
+                '</div>' +
+                sparkSvg +
+                '<div class="gh-factors-title">Factores</div>' +
+                factorBars;
+
+        } catch (err) {
+            document.getElementById('ghBody').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i><p style="margin-top:12px;">' + escapeHtml(err.message) + '</p></div>';
+        }
+    }
+
         async function showContributionHistory(groupId, view, targetUserId) {
             view = view || 'timeline';
             var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
@@ -13731,7 +14572,7 @@ function renderTurnsList() {
     <script src="real-time-api-integration.js"></script>
     <script src="dashboard-integration-fix.js"></script>
     <script src="js/firebase-config.js"></script>
-    <script src="js/components/notification-center.js?v=3.0"></script>
+    <script src="js/components/notification-center.js?v=3.3"></script>
     <script src="js/components/network-switcher.js"></script>
     <script src="js/components/transaction-modal.js"></script>
     <script src="js/dashboard-api-connector.js"></script>
@@ -13828,7 +14669,13 @@ function renderTurnsList() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', updateSidebarHubCards);
         } else { updateSidebarHubCards(); }
-        window.addEventListener('focus', function() { setTimeout(updateSidebarHubCards, 1000); });
+        var _lastSidebarUpdate = 0;
+        window.addEventListener('focus', function() {
+            var now = Date.now();
+            if (now - _lastSidebarUpdate < 30000) return; // M1: throttle to 30s minimum
+            _lastSidebarUpdate = now;
+            setTimeout(updateSidebarHubCards, 1000);
+        });
     })();
     </script>
 
@@ -13883,6 +14730,44 @@ function renderTurnsList() {
                         if (detailGid && typeof openPublicGroupDetail === 'function') openPublicGroupDetail(detailGid);
                     })();
                     break;
+                case 'grp-toggle-save':
+                    (function() {
+                        var saveBtn = btn;
+                        var saveGid = saveBtn.getAttribute('data-group-id');
+                        if (!saveGid) return;
+                        var isSaved = saveBtn.classList.contains('gc-saved');
+                        var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                        if (!authTk) { showNotification('Inicia sesion para guardar grupos', 'info'); return; }
+                        fetch(API_BASE + '/api/groups/' + encodeURIComponent(saveGid) + '/save', {
+                            method: isSaved ? 'DELETE' : 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authTk }
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(result) {
+                            if (result.success) {
+                                var newSaved = result.data.saved;
+                                saveBtn.classList.toggle('gc-saved', newSaved);
+                                var icon = saveBtn.querySelector('i');
+                                if (icon) { icon.className = newSaved ? 'fas fa-star' : 'far fa-star'; }
+                                // Update count in engagement bar
+                                var card = saveBtn.closest('.gc-card');
+                                if (card) {
+                                    var statEl = card.querySelector('.gc-eng-stat[title="Guardados"]');
+                                    if (statEl) {
+                                        var pg = (window.publicGroupsData || []).find(function(g) { return g.id === saveGid; });
+                                        if (pg) {
+                                            pg.saves_count = (pg.saves_count || 0) + (newSaved ? 1 : -1);
+                                            pg._is_saved = newSaved;
+                                            var cnt = pg.saves_count >= 1000 ? (pg.saves_count / 1000).toFixed(1) + 'k' : pg.saves_count;
+                                            statEl.innerHTML = '<i class="' + (newSaved ? 'fas' : 'far') + ' fa-star"></i> ' + cnt;
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        .catch(function() {});
+                    })();
+                    break;
                 case 'grp-join-request':
                     (function() {
                         var joinBtn = btn;
@@ -13897,6 +14782,13 @@ function renderTurnsList() {
                             var contrib = parseFloat(joinGroup.contribution_amount || 0);
                             var commRate = joinGroup.commission_rate;
                             var commText = commRate === null || commRate === undefined ? '5%' : (commRate === 0 ? 'Sin comision' : commRate + '%');
+                        var cycleWarning = '';
+                        if (joinGroup.tanda_status === 'active' && (joinGroup.current_cycle || 0) > 1) {
+                            cycleWarning = '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;margin:8px 0 4px;">' +
+                                '<div style="color:#92400e;font-size:0.72rem;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Tanda en curso (Ciclo ' + (joinGroup.current_cycle || 0) + ')</div>' +
+                                '<div style="color:#92400e;font-size:0.7rem;margin-top:2px;">Al unirte deberas pagar el ciclo actual. Aporte inmediato: L. ' + contrib.toLocaleString('es-HN') + '</div>' +
+                            '</div>';
+                        }
                             termsHtml = '<div style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:12px 0 8px;text-align:left;">' +
                                 '<div style="color:#475569;font-size:0.75rem;font-weight:600;margin-bottom:6px;">Terminos del Grupo</div>' +
                                 '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#64748b;font-size:0.78rem;">Aporte</span><span style="color:#1e293b;font-size:0.78rem;font-weight:600;">L. ' + contrib.toLocaleString('es-HN') + ' ' + escapeHtml(freq) + '</span></div>' +
@@ -13908,7 +14800,14 @@ function renderTurnsList() {
                                 '</div>' +
                             '</div>';
                         }
-                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?' + termsHtml, function() {
+                        // Health warning for risky groups (ALG-01 T3)
+                        var _jhWarn = '';
+                        if (joinGroup && joinGroup.health_score != null && joinGroup.health_score < 50) {
+                            var _jhCat = joinGroup.health_score >= 40 ? 'En Riesgo' : 'Critico';
+                            _jhWarn = '<div style="margin:8px 0;padding:8px 12px;border-radius:8px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;font-size:0.72rem;">' +
+                                '<i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i><strong>Atencion:</strong> Salud del grupo: <strong>' + joinGroup.health_score + '/100</strong> (' + _jhCat + '). Puede haber pagos atrasados o miembros suspendidos.</div>';
+                        }
+                        showConfirm('Deseas solicitar unirte a ' + escapeHtml(joinName) + '?' + termsHtml + cycleWarning + _jhWarn, function() {
                             joinBtn.disabled = true;
                             joinBtn.textContent = 'Enviando...';
                             var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
@@ -14116,6 +15015,32 @@ function renderTurnsList() {
                     break;
 
                 // Leave group modal
+                case 'grp-set-preference':
+                    (function() {
+                        var prefBtn = btn;
+                        var pref = prefBtn.getAttribute('data-pref');
+                        var gid = prefBtn.getAttribute('data-group-id');
+                        if (!pref || !gid) return;
+                        var authTk = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+                        fetch((window.API_BASE_URL || 'https://latanda.online') + '/api/groups/' + encodeURIComponent(gid) + '/turn-preference', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authTk },
+                            body: JSON.stringify({ preference: pref })
+                        }).then(function(r) { return r.json(); }).then(function(result) {
+                            if (result.success) {
+                                // Update active state
+                                var picker = prefBtn.closest('.tc-pref-picker');
+                                if (picker) {
+                                    picker.querySelectorAll('.tc-pref-btn').forEach(function(b) { b.classList.remove('tc-pref-active'); });
+                                }
+                                prefBtn.classList.add('tc-pref-active');
+                                showNotification(result.data.message, 'success');
+                            } else {
+                                showNotification(result.data?.error?.message || 'Error', 'error');
+                            }
+                        }).catch(function() { showNotification('Error de conexion', 'error'); });
+                    })();
+                    break;
                 case 'grp-close-leave-confirm':
                     if (typeof closeLeaveConfirmModal === 'function') closeLeaveConfirmModal();
                     break;

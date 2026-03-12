@@ -1625,13 +1625,103 @@ class MarketplaceSocialSystem {
         this.loadMarketplaceProducts();
     }
     
+    // ALG-04 T3: Search products/services with query from search bar
+    searchProducts() {
+        const desktopInput = document.getElementById('mpSearchInputDesktop');
+        const mobileInput = document.getElementById('mpSearchInput');
+        const query = (desktopInput?.value || mobileInput?.value || '').trim();
+        if (!query) return;
+
+        // Switch to products tab and load with search param
+        this._expTab = 'exp-productos';
+        this._expOffset = 0;
+        this._expCategory = null;
+        this._expSearchQuery = query;
+
+        // Update tab UI
+        const tabs = document.querySelectorAll('.exp-tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        const prodTab = document.querySelector('[data-exp-tab="exp-productos"]');
+        if (prodTab) prodTab.classList.add('active');
+
+        // Navigate to explore section
+        this.switchSection?.('explore');
+        this.loadExplorarFeed('exp-productos', false);
+    }
+
+    // ALG-04 T3: Autocomplete
+    _setupAutocomplete() {
+        const inputs = [
+            document.getElementById('mpSearchInputDesktop'),
+            document.getElementById('mpSearchInput')
+        ].filter(Boolean);
+
+        inputs.forEach(input => {
+            let dropdown = input.parentElement.querySelector('.mp-autocomplete');
+            if (!dropdown) {
+                dropdown = document.createElement('div');
+                dropdown.className = 'mp-autocomplete';
+                input.parentElement.style.position = 'relative';
+                input.parentElement.appendChild(dropdown);
+            }
+
+            let debounceTimer = null;
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const q = input.value.trim();
+                if (q.length < 2) { dropdown.style.display = 'none'; return; }
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const resp = await this.apiRequest('/api/marketplace/search/suggest?q=' + encodeURIComponent(q));
+                        const suggestions = resp?.data?.suggestions || resp?.suggestions || [];
+                        if (suggestions.length === 0) { dropdown.style.display = 'none'; return; }
+                        dropdown.innerHTML = suggestions.map(s =>
+                            '<div class="mp-ac-item" data-value="' + this.escapeHtml(s.suggestion) + '">' +
+                            '<i class="fas fa-search mp-ac-icon"></i>' +
+                            '<span>' + this.escapeHtml(s.suggestion) + '</span>' +
+                            (s.source === 'popular' ? '<span class="mp-ac-badge">Popular</span>' : '') +
+                            '</div>'
+                        ).join('');
+                        dropdown.style.display = 'block';
+                    } catch (_) { dropdown.style.display = 'none'; }
+                }, 300);
+            });
+
+            // Click on suggestion
+            dropdown.addEventListener('click', (e) => {
+                const item = e.target.closest('.mp-ac-item');
+                if (!item) return;
+                const val = item.dataset.value;
+                input.value = val;
+                // Also sync the other input
+                inputs.forEach(i => { if (i !== input) i.value = val; });
+                dropdown.style.display = 'none';
+                this.searchProducts();
+            });
+
+            // Hide on outside click
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Hide on Escape
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') dropdown.style.display = 'none';
+            });
+        });
+    }
+
     loadMarketplaceProducts() {
         this._expOffset = 0;
         this._expTab = 'exp-tiendas';
         this._expLoading = false;
         this._expCategory = null;
+        this._expSearchQuery = null;
         this._expTabsSetup = false;
         this._setupExpTabs();
+        this._setupAutocomplete();
         this._loadExpCategoryPills('exp-tiendas');
         this.loadExplorarFeed('exp-tiendas', false);
     }
@@ -1650,6 +1740,7 @@ class MarketplaceSocialSystem {
             this._expTab = tabId;
             this._expOffset = 0;
             this._expCategory = null;
+            this._expSearchQuery = null;
             this._loadExpCategoryPills(tabId);
             this.loadExplorarFeed(tabId, false);
         });
@@ -1707,9 +1798,11 @@ class MarketplaceSocialSystem {
         } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
             url = '/api/marketplace/products?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
+            if (this._expSearchQuery) url += '&search=' + encodeURIComponent(this._expSearchQuery);
         } else if (tab === 'exp-servicios') {
             url = '/api/marketplace/services?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
+            if (this._expSearchQuery) url += '&search=' + encodeURIComponent(this._expSearchQuery);
         }
 
         try {

@@ -412,6 +412,21 @@ LaTandaComponentLoader.loadNotificationBridge = async function() {
         await originalLoadPopup.call(this);
         // Load notification bridge after popup manager
         await this.loadNotificationBridge();
+
+        // v4.16.12: Load notification center on all authenticated pages
+        (function() {
+            var authTk = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!authTk) return;
+            // Check if already loaded (some pages load it directly)
+            if (window.NotificationCenter || document.querySelector('script[src*="notification-center.js"]')) return;
+            var ncCss = document.createElement('link');
+            ncCss.rel = 'stylesheet';
+            ncCss.href = 'css/components/notification-center.css?v=3.5';
+            document.head.appendChild(ncCss);
+            var ncScript = document.createElement('script');
+            ncScript.src = 'js/components/notification-center.js?v=3.5';
+            document.body.appendChild(ncScript);
+        })();
     };
 })();
 
@@ -822,7 +837,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
         // Load CSS
         await this.loadCSS('css/hub/hub-sections.css');
         await this.loadCSS('css/hub/mia-assistant.css');
-        await this.loadCSS('css/hub/social-feed.css?v=12.8');
+        await this.loadCSS('css/hub/social-feed.css?v=13.5');
         
         // Load JS modules
         const modules = [
@@ -831,7 +846,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=12.4'
+            'js/hub/social-feed.js?v=13.2'
         ];
         
         for (const module of modules) {

@@ -565,6 +565,59 @@
         }
 
         /* Bounty Payouts Section */
+        /* Intelligence Dashboard — Brain T3 */
+        .intel-section { margin-top: 30px; }
+        .intel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+        .intel-card { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 20px; border: 1px solid rgba(255,255,255,0.06); }
+        .intel-card-value { font-size: 2rem; font-weight: 700; margin: 8px 0 4px; }
+        .intel-card-label { color: #94a3b8; font-size: 0.85rem; }
+        .intel-card.danger .intel-card-value { color: #ef4444; }
+        .intel-card.warning .intel-card-value { color: #f59e0b; }
+        .intel-card.success .intel-card-value { color: #22c55e; }
+        .intel-card.info .intel-card-value { color: #3b82f6; }
+        .intel-card.purple .intel-card-value { color: #a855f7; }
+
+        .intel-risk-bar { display: flex; height: 32px; border-radius: 8px; overflow: hidden; margin: 16px 0; }
+        .intel-risk-bar div { display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: #fff; min-width: 30px; }
+        .intel-risk-high { background: #ef4444; }
+        .intel-risk-medium { background: #f59e0b; }
+        .intel-risk-low { background: #22c55e; }
+
+        .intel-user-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+        .intel-user-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(0,0,0,0.2); border-radius: 8px; border-left: 3px solid transparent; }
+        .intel-user-row.high { border-left-color: #ef4444; }
+        .intel-user-row.medium { border-left-color: #f59e0b; }
+        .intel-user-row.low { border-left-color: #22c55e; }
+        .intel-user-name { font-weight: 600; flex: 1; }
+        .intel-user-score { font-size: 1.1rem; font-weight: 700; }
+        .intel-user-meta { color: #94a3b8; font-size: 0.8rem; }
+
+        .intel-badge-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+        .intel-badge-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .intel-badge-pill .count { font-weight: 700; margin-left: 6px; color: #3b82f6; }
+
+        .intel-alert-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; }
+        .intel-alert-type { font-weight: 600; font-size: 0.85rem; }
+        .intel-alert-count { margin-left: auto; font-weight: 700; }
+        .intel-alert-row.danger { border-left: 3px solid #ef4444; }
+        .intel-alert-row.warning { border-left: 3px solid #f59e0b; }
+        .intel-alert-row.info { border-left: 3px solid #3b82f6; }
+
+        .intel-score-dist { display: flex; gap: 4px; align-items: flex-end; height: 80px; margin: 16px 0; }
+        .intel-score-bar { flex: 1; border-radius: 4px 4px 0 0; min-height: 4px; position: relative; }
+        .intel-score-bar .bar-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #94a3b8; white-space: nowrap; }
+        .intel-score-bar .bar-count { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 600; }
+
+        .intel-subsection { margin-top: 24px; }
+        .intel-subsection h4 { color: #e2e8f0; margin-bottom: 12px; font-size: 1rem; }
+        .intel-avg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .intel-avg-card { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px; text-align: center; }
+        .intel-avg-card .avg-value { font-size: 1.4rem; font-weight: 700; color: #e2e8f0; }
+        .intel-avg-card .avg-label { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+
+        .intel-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .intel-two-col { grid-template-columns: 1fr; } }
+
         .bounty-section {
             background: rgba(0, 0, 0, 0.3);
             border-radius: 16px;
@@ -1353,6 +1406,27 @@
                         <tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 30px;">Cargando...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Intelligence Dashboard — Brain T3 -->
+        <div class="intel-section" id="intelSection" style="margin-top: 30px;">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title"><i class="fas fa-brain"></i> Inteligencia 360°</h2>
+                    <p style="color: var(--text-secondary, #94a3b8); font-size: 0.9rem;">Cerebro central — 14 algoritmos sincronizados</p>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="refresh-btn" onclick="runIntelSync()" id="intelSyncBtn">
+                        <i class="fas fa-sync-alt"></i> Sincronizar
+                    </button>
+                    <button class="refresh-btn" onclick="loadIntelDashboard()">
+                        <i class="fas fa-chart-pie"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+            <div id="intelContent" style="color: #94a3b8; padding: 20px; text-align: center;">
+                <i class="fas fa-spinner fa-spin"></i> Cargando inteligencia...
             </div>
         </div>
 
@@ -3329,6 +3403,164 @@
                 setTimeout(loadBountyHistory, 800);
             }
         })();
+
+        // Init intelligence dashboard
+        (function initIntelSection() {
+            if (document.getElementById('intelSection')) {
+                setTimeout(loadIntelDashboard, 1200);
+            }
+        })();
+
+        // ============================================
+        // Intelligence Dashboard — Brain T3
+        // ============================================
+        async function loadIntelDashboard() {
+            const container = document.getElementById('intelContent');
+            if (!container) return;
+            container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+            try {
+                const res = await fetch('/api/admin/intelligence-dashboard', {
+                    headers: { 'x-admin-token': authToken }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+
+                const d = data.data;
+                const ov = d.overview;
+                const dist = d.score_distribution;
+                const total = ov.total_users || 1;
+
+                const highPct = Math.round((ov.high_risk / total) * 100);
+                const medPct = Math.round((ov.medium_risk / total) * 100);
+                const lowPct = Math.max(100 - highPct - medPct, 0);
+
+                const maxBar = Math.max(dist.tier_80_100, dist.tier_60_79, dist.tier_40_59, dist.tier_20_39, dist.tier_0_19, 1);
+                function barHtml(count, label, color) {
+                    const h = Math.max(Math.round((count / maxBar) * 60), 4);
+                    return '<div class="intel-score-bar" style="height:' + h + 'px;background:' + color + ';">' +
+                           '<span class="bar-count" style="color:' + color + '">' + count + '</span>' +
+                           '<span class="bar-label">' + label + '</span></div>';
+                }
+
+                let topHtml = '';
+                for (const u of d.top_users.slice(0, 8)) {
+                    const cls = u.risk_level === 'high' ? 'high' : u.risk_level === 'medium' ? 'medium' : 'low';
+                    const badgeMap = {verified:'\u2705',punctual:'\u23F0',star_seller:'\u2B50',active_member:'\u26A1',veteran:'\uD83D\uDEE1',influencer:'\uD83D\uDCE3',tanda_enthusiast:'\uD83D\uDC65'};
+                    const badges = (u.badges || []).map(b => badgeMap[b] || '').join(' ');
+                    topHtml += '<div class="intel-user-row ' + cls + '">' +
+                        '<span class="intel-user-name">' + escapeHtml(u.name || u.user_id) + ' ' + badges + '</span>' +
+                        '<span class="intel-user-meta">' + (u.groups || 0) + ' grupos</span>' +
+                        '<span class="intel-user-score" style="color:' + (u.reputation_score >= 70 ? '#22c55e' : u.reputation_score >= 50 ? '#f59e0b' : '#ef4444') + '">' + u.reputation_score + '</span>' +
+                    '</div>';
+                }
+
+                let alertHtml = '';
+                if (d.alert_users && d.alert_users.length > 0) {
+                    for (const u of d.alert_users) {
+                        for (const a of (u.alerts || [])) {
+                            const sev = a.severity === 'danger' ? 'danger' : a.severity === 'info' ? 'info' : 'warning';
+                            alertHtml += '<div class="intel-alert-row ' + sev + '">' +
+                                '<span class="intel-alert-type">' + escapeHtml(u.name) + '</span>' +
+                                '<span style="color:#94a3b8;font-size:0.8rem">' + escapeHtml(a.reason) + '</span>' +
+                            '</div>';
+                        }
+                    }
+                } else {
+                    alertHtml = '<p style="color:#64748b">Sin alertas activas</p>';
+                }
+
+                let badgeHtml = '';
+                const badgeLabelMap = {verified:'Verificado',punctual:'Puntual',star_seller:'Vendedor Estrella',active_member:'Activo',veteran:'Veterano',influencer:'Influencer',tanda_enthusiast:'Entusiasta'};
+                for (const b of (d.badge_distribution || [])) {
+                    const label = badgeLabelMap[b.badge] || b.badge;
+                    badgeHtml += '<span class="intel-badge-pill">' + label + '<span class="count">' + b.count + '</span></span>';
+                }
+
+                container.innerHTML = '' +
+                    '<div class="intel-grid">' +
+                        '<div class="intel-card info"><div class="intel-card-value">' + ov.total_users + '</div><div class="intel-card-label">Usuarios Analizados</div></div>' +
+                        '<div class="intel-card purple"><div class="intel-card-value">' + ov.avg_reputation + '</div><div class="intel-card-label">Reputacion Promedio</div></div>' +
+                        '<div class="intel-card danger"><div class="intel-card-value">' + ov.high_risk + '</div><div class="intel-card-label">Alto Riesgo</div></div>' +
+                        '<div class="intel-card warning"><div class="intel-card-value">' + ov.medium_risk + '</div><div class="intel-card-label">Riesgo Medio</div></div>' +
+                        '<div class="intel-card success"><div class="intel-card-value">' + ov.low_risk + '</div><div class="intel-card-label">Bajo Riesgo</div></div>' +
+                    '</div>' +
+                    '<div class="intel-subsection"><h4><i class="fas fa-shield-alt"></i> Distribucion de Riesgo</h4>' +
+                        '<div class="intel-risk-bar">' +
+                            (highPct > 0 ? '<div class="intel-risk-high" style="width:' + highPct + '%">' + highPct + '%</div>' : '') +
+                            (medPct > 0 ? '<div class="intel-risk-medium" style="width:' + medPct + '%">' + medPct + '%</div>' : '') +
+                            (lowPct > 0 ? '<div class="intel-risk-low" style="width:' + lowPct + '%">' + lowPct + '%</div>' : '') +
+                        '</div>' +
+                        '<div style="display:flex;gap:20px;font-size:0.8rem;color:#94a3b8">' +
+                            '<span><span style="color:#ef4444">&#x25CF;</span> Alto: ' + ov.high_risk + '</span>' +
+                            '<span><span style="color:#f59e0b">&#x25CF;</span> Medio: ' + ov.medium_risk + '</span>' +
+                            '<span><span style="color:#22c55e">&#x25CF;</span> Bajo: ' + ov.low_risk + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="intel-subsection"><h4><i class="fas fa-chart-bar"></i> Distribucion de Reputacion</h4>' +
+                        '<div class="intel-score-dist" style="padding-top:20px;padding-bottom:24px;">' +
+                            barHtml(dist.tier_0_19, '0-19', '#ef4444') +
+                            barHtml(dist.tier_20_39, '20-39', '#f97316') +
+                            barHtml(dist.tier_40_59, '40-59', '#f59e0b') +
+                            barHtml(dist.tier_60_79, '60-79', '#22c55e') +
+                            barHtml(dist.tier_80_100, '80-100', '#3b82f6') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="intel-subsection"><h4><i class="fas fa-tachometer-alt"></i> Promedios del Sistema</h4>' +
+                        '<div class="intel-avg-grid">' +
+                            '<div class="intel-avg-card"><div class="avg-value">' + (dist.avg_credit || 0) + '</div><div class="avg-label">Credito Promedio</div></div>' +
+                            '<div class="intel-avg-card"><div class="avg-value">' + (dist.avg_seller || 0) + '</div><div class="avg-label">Seller Score</div></div>' +
+                            '<div class="intel-avg-card"><div class="avg-value">' + (dist.avg_engagement || 0) + '</div><div class="avg-label">Engagement</div></div>' +
+                            '<div class="intel-avg-card"><div class="avg-value">' + (dist.avg_payment_rate || 0) + '%</div><div class="avg-label">Tasa de Pago</div></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="intel-two-col">' +
+                        '<div class="intel-subsection"><h4><i class="fas fa-trophy"></i> Top Usuarios</h4>' +
+                            '<div class="intel-user-list">' + topHtml + '</div>' +
+                        '</div>' +
+                        '<div class="intel-subsection"><h4><i class="fas fa-exclamation-triangle"></i> Alertas Cruzadas</h4>' +
+                            alertHtml +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="intel-subsection"><h4><i class="fas fa-award"></i> Insignias</h4>' +
+                        '<div class="intel-badge-grid">' + badgeHtml + '</div>' +
+                    '</div>' +
+                    '<div class="intel-subsection"><h4><i class="fas fa-users"></i> Niveles de Confianza</h4>' +
+                        '<div class="intel-grid">' +
+                            '<div class="intel-card success"><div class="intel-card-value">' + ov.excellent + '</div><div class="intel-card-label">Excelente (80+)</div></div>' +
+                            '<div class="intel-card info"><div class="intel-card-value">' + ov.good + '</div><div class="intel-card-label">Bueno (60-79)</div></div>' +
+                            '<div class="intel-card warning"><div class="intel-card-value">' + ov.regular + '</div><div class="intel-card-label">Regular (40-59)</div></div>' +
+                            '<div class="intel-card danger"><div class="intel-card-value">' + ov.new_users + '</div><div class="intel-card-label">Nuevo (0-39)</div></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<p style="color:#475569;font-size:0.75rem;margin-top:20px;text-align:right;">Sincronizacion: ' + new Date(ov.newest_sync).toLocaleString('es-HN') + '</p>';
+
+            } catch (err) {
+                container.innerHTML = '<p style="color:#ef4444">Error: ' + escapeHtml(err.message) + '</p>';
+            }
+        }
+
+        async function runIntelSync() {
+            const btn = document.getElementById('intelSyncBtn');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...'; }
+            try {
+                const cronKey = '9ec70c19bdde5915f656d415e11f2a2b08d6ebd9791860d22b2617c161328b21';
+                const res = await fetch('/api/cron/intelligence-sync', {
+                    method: 'POST',
+                    headers: { 'x-cron-key': cronKey }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showNotification(data.data.stats.users_synced + ' usuarios sincronizados', 'success');
+                    loadIntelDashboard();
+                } else {
+                    showNotification('Error: ' + (data.data?.error?.message || '?'), 'error');
+                }
+            } catch (err) {
+                showNotification('Error: ' + err.message, 'error');
+            }
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sincronizar'; }
+        }
     </script>
 
     <!-- La Tanda Deposit/Receipt System Integration -->
