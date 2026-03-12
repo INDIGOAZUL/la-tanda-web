@@ -160,43 +160,16 @@ const HeaderSync = {
 
     /**
      * Sync notifications count
+     * v4.16.12: Delegates to NotificationCenter (single source of truth)
      */
     async syncNotifications() {
-        const userId = this.getUserId();
-        if (!userId) return null;
-
-        // Check cache first
-        const cached = window.LaTandaCache && window.LaTandaCache.get("notifications");
-        if (cached) return cached;
-
-        try {
-            const api = window.LaTandaAPI || { baseURL: "https://latanda.online" };
-            const url = (api.baseURL || "https://latanda.online") + "/api/notifications?user_id=" + userId + "&status=unread";
-
-            const response = await fetch(url, { headers: this.getAuthHeaders() });
-            const data = await response.json();
-
-            if (data.success) {
-                const notifs = {
-                    count: (data.data?.length || data.notifications?.length || 0),
-                    items: data.data || data.notifications || []
-                };
-
-                // Cache the result
-                window.LaTandaCache && window.LaTandaCache.set("notifications", notifs);
-
-                // Update UI
-                window.HeaderUI && window.HeaderUI.updateNotifCount(notifs.count);
-
-                // Emit event
-                window.LaTandaEvents && window.LaTandaEvents.emit("notifications:updated", notifs);
-
-                return notifs;
-            }
-        } catch (err) {
-            // error handled silently
+        // NotificationCenter handles its own polling + badge updates
+        // Just read its current count to keep header badge in sync
+        if (window.notificationCenter) {
+            const count = window.notificationCenter.unreadCount || 0;
+            window.HeaderUI && window.HeaderUI.updateNotifCount(count);
+            return { count: count };
         }
-
         return null;
     },
 

@@ -1,5 +1,5 @@
-// ===== NOTIFICATION CENTER v2.9 - Intelligence Layer =====
-// Updated: 2026-03-04
+// ===== NOTIFICATION CENTER v3.0 =====
+// Updated: 2026-03-11
 // Features: API sync, type-based colors, toast system, preferences modal
 // Phase 2: Dual push (VAPID + FCM), smart push permission timing
 
@@ -17,6 +17,9 @@ class NotificationCenter {
         this.preferences = null;
         this.fcmSupported = false;
         this.fcmMessaging = null;
+        this.loadedAll = false;
+        this.timeRefreshInterval = null;
+        this._apiLoaded = false;
 
         this.initFirebase();
         this.init();
@@ -48,6 +51,27 @@ class NotificationCenter {
         this.loadNotificationsFromAPI();
         this.startPolling();
         this.initPushSubscription();
+
+        // v4.16.12: Refresh time labels every 60s (M6)
+        this.timeRefreshInterval = setInterval(() => {
+            const panel = document.getElementById("notificationPanel");
+            if (panel && panel.classList.contains("active")) {
+                document.querySelectorAll(".notification-item").forEach(item => {
+                    const id = item.dataset.id;
+                    const n = this.notifications.find(x => String(x.id) === String(id));
+                    const timeEl = item.querySelector(".notification-time");
+                    if (n && timeEl) timeEl.textContent = this.getTimeAgo(n.time);
+                });
+            }
+        }, 60000);
+
+        // v4.16.12: Auto-open panel if redirected from notificaciones.html
+        if (new URLSearchParams(window.location.search).get('open') === 'notifications') {
+            setTimeout(() => this.openPanel(), 1500);
+            const url = new URL(window.location);
+            url.searchParams.delete('open');
+            window.history.replaceState({}, '', url);
+        }
     }
 
     getAuthHeaders() {
@@ -61,9 +85,10 @@ class NotificationCenter {
         return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    async loadNotificationsFromAPI() {
+    async loadNotificationsFromAPI(append) {
         try {
-            const response = await fetch(this.apiBase + "/api/notifications?limit=50", {
+            const offset = append ? this.notifications.length : 0;
+            const response = await fetch(this.apiBase + "/api/notifications?limit=50&offset=" + offset, {
                 method: "GET",
                 headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" })
             });
@@ -73,7 +98,7 @@ class NotificationCenter {
             const result = await response.json();
 
             if (result.success && result.data && result.data.notifications) {
-                this.notifications = result.data.notifications.map(n => ({
+                const mapped = result.data.notifications.map(n => ({
                     id: n.id,
                     type: this.mapNotificationType(n.type),
                     icon: n.icon || this.getIconForType(n.type),
@@ -86,16 +111,34 @@ class NotificationCenter {
                     urgent: this.isUrgentType(n.type)
                 }));
 
+                if (append) {
+                    // Deduplicate by id
+                    const existingIds = new Set(this.notifications.map(n => n.id));
+                    const newItems = mapped.filter(n => !existingIds.has(n.id));
+                    this.notifications = this.notifications.concat(newItems);
+                    this.loadedAll = newItems.length < 50;
+                } else {
+                    this.notifications = mapped;
+                    this.loadedAll = mapped.length < 50;
+                    this._apiLoaded = true;
+                }
+
+                const prevUnread = this.unreadCount;
                 this.unreadCount = result.data.unread || this.notifications.filter(n => !n.read).length;
+                if (this.unreadCount > prevUnread && prevUnread > 0) {
+                    this.playNotificationSound();
+                }
                 this.saveToLocalStorage();
                 this.updateUnreadCount();
                 this.renderNotifications();
+                this._updateSyncStatus(true);
                 return true;
             } else {
                 throw new Error("Invalid API response");
             }
         } catch (error) {
             this.loadFromLocalStorage();
+            this._updateSyncStatus(false);
             return false;
         }
     }
@@ -142,14 +185,29 @@ class NotificationCenter {
             "kyc_approved": "system", "kyc_pending_review": "system",
             "recruitment_starting": "system", "recruitment_halfway": "system",
             "recruitment_almost_full": "system", "recruitment_urgent": "system",
-            "recruitment_reminder": "system"
+            "recruitment_reminder": "system",
+            // v4.16.12: Social
+            "new_follower": "social", "social_repost": "social",
+            "social_like": "social", "social_comment": "social",
+            // v4.16.12: Loans
+            "loan_payment": "transactions", "loan_payment_request": "transactions",
+            "loan_coordinator_alert": "transactions", "loan_plan_created": "transactions",
+            "loan_plan_defaulted": "transactions",
+            // v4.16.12: Group intelligence
+            "group_milestone": "social", "creator_nudge": "system",
+            "creator_nudge_verify": "system", "creator_nudge_empty": "system",
+            "creator_nudge_progress": "system", "creator_nudge_almost": "system",
+            "creator_nudge_pending": "system",
+            // v4.16.12: Other
+            "turn_reminder": "tandas", "suspension_recommendation": "system"
         };
         return typeMap[apiType] || "system";
     }
 
     isUrgentType(apiType) {
         return ["security_alert", "payment_due", "payment_overdue", "suspension_warning",
-            "mora_applied", "suspension_recommended", "compliance_alert", "payment_late"].includes(apiType);
+            "mora_applied", "suspension_recommended", "compliance_alert", "payment_late",
+            "loan_plan_defaulted", "suspension_recommendation", "loan_coordinator_alert"].includes(apiType);
     }
 
     getIconForType(type) {
@@ -190,7 +248,18 @@ class NotificationCenter {
             "recruitment_almost_full": "🔥", "recruitment_urgent": "⏰",
             "recruitment_reminder": "📣", "referral_success": "🎉",
             "achievement": "🏆",
-            "security_alert": "🚨", "system_notice": "📢"
+            "security_alert": "🚨", "system_notice": "📢",
+            // v4.16.12
+            "new_follower": "👤", "social_repost": "🔄",
+            "social_like": "❤️", "social_comment": "💬",
+            "loan_payment": "💳", "loan_payment_request": "📋",
+            "loan_coordinator_alert": "⚠️", "loan_plan_created": "📝",
+            "loan_plan_defaulted": "🚨",
+            "group_milestone": "🎯", "creator_nudge": "💡",
+            "creator_nudge_verify": "📧", "creator_nudge_empty": "👥",
+            "creator_nudge_progress": "📊", "creator_nudge_almost": "🔥",
+            "creator_nudge_pending": "📋",
+            "turn_reminder": "⏰", "suspension_recommendation": "🚨"
         };
         return iconMap[type] || "🔔";
     }
@@ -198,24 +267,54 @@ class NotificationCenter {
     getNavigationUrl(notification) {
         const data = notification.data || {};
         const type = notification.originalType || notification.type;
-        
-        if (type.includes("withdrawal") || type.includes("deposit")) {
-            return "my-wallet.html?tab=transactions";
-        }
-        if (type.includes("payment")) {
-            return "my-wallet.html?tab=transactions";
-        }
-        if (type.includes("tanda") || type.includes("lottery") || type.includes("group")) {
-            if (data.group_id) return "groups-advanced-system.html?group=" + encodeURIComponent(data.group_id);
-            return "groups-advanced-system.html";
-        }
-        if (type.includes("member") || type.includes("social") || type.includes("invited")) {
-            if (data.group_id) return "groups-advanced-system.html?group=" + encodeURIComponent(data.group_id);
-            return "groups-advanced-system.html";
-        }
-        if (type.includes("security")) {
-            return "settings.html?tab=security";
-        }
+        const gid = data.group_id ? encodeURIComponent(data.group_id) : '';
+        const groupUrl = gid ? 'groups-advanced-system.html?group=' + gid : 'groups-advanced-system.html';
+
+        // Wallet / financial → wallet page
+        const walletTypes = ['deposit_confirmed', 'deposit_rejected', 'withdrawal_completed',
+            'withdrawal_requested', 'payout_ready', 'payout_requested', 'payout_approved',
+            'payout_processed', 'payout_confirmed', 'payout_rejected', 'payout_reminder'];
+        if (walletTypes.includes(type)) return 'my-wallet.html?tab=transactions';
+
+        // Payment types → group context (not wallet)
+        const paymentTypes = ['payment_reminder', 'payment_received', 'payment_recorded',
+            'payment_sent', 'payment_due', 'payment_due_soon', 'payment_late',
+            'mora_applied', 'distribution_executed', 'commission_request', 'commission_response',
+            'loan_payment', 'loan_payment_request', 'loan_coordinator_alert',
+            'loan_plan_created', 'loan_plan_defaulted'];
+        if (paymentTypes.includes(type)) return groupUrl;
+
+        // Tanda / lottery / group
+        const tandaTypes = ['lottery_scheduled', 'lottery_starting', 'lottery_completed',
+            'lottery_turn_assigned', 'lottery_executed', 'lottery_cancelled', 'lottery_reset',
+            'lottery_result', 'lottery_skipped', 'lottery_failed', 'turn_assigned', 'turn_updated',
+            'turn_reminder', 'tanda_joined', 'tanda_created', 'tanda_starting', 'tanda_scheduled',
+            'group_update', 'group_joined', 'group_rejected', 'group_invitation', 'group_invited',
+            'group_full', 'group_full_member', 'group_milestone', 'invitation'];
+        if (tandaTypes.includes(type)) return groupUrl;
+
+        // Member management → group context
+        const memberTypes = ['member_joined', 'member_left', 'member_request_pending',
+            'member_auto_approved', 'member_approved', 'membership_reactivated',
+            'member_suspended', 'member_reactivated', 'extension_requested',
+            'extension_approved', 'extension_rejected', 'suspension_warning',
+            'suspension_recommended', 'suspension_recommendation'];
+        if (memberTypes.includes(type)) return groupUrl;
+
+        // Social → home feed
+        const socialTypes = ['new_follower', 'social_repost', 'social_like', 'social_comment'];
+        if (socialTypes.includes(type)) return 'home-dashboard.html';
+
+        // Creator nudges → groups page
+        if (type.startsWith('creator_nudge')) return groupUrl;
+        if (type.startsWith('recruitment_')) return groupUrl;
+
+        // Security
+        if (type === 'security_alert' || type === 'compliance_alert') return 'mi-perfil.html';
+
+        // Achievement / referral
+        if (type === 'achievement' || type === 'referral_success') return 'mi-perfil.html';
+
         return null;
     }
 
@@ -231,12 +330,32 @@ class NotificationCenter {
     }
 
     saveToLocalStorage() {
-        try { localStorage.setItem(this.storageKey, JSON.stringify(this.notifications)); } catch (e) {}
+        try { localStorage.setItem(this.storageKey, JSON.stringify(this.notifications.slice(0, 100))); } catch (e) {}
     }
 
     startPolling() {
         if (!this.pollingEnabled) return;
         this.pollingInterval = setInterval(() => this.loadNotificationsFromAPI(), this.pollIntervalMs);
+
+        // v4.16.12: Auto-toast latest unread notification on page load (improve discovery)
+        setTimeout(() => {
+            try {
+                const unread = (this.notifications || []).filter(n => !n.read);
+                if (unread.length > 0 && this._apiLoaded && !sessionStorage.getItem('_nc_toast_shown')) {
+                    const latest = unread[0];
+                    const icon = this.getIconForType(latest.type || latest.originalType);
+                    const isUrgent = this.isUrgentType(latest.type || latest.originalType);
+                    this.showToast({
+                        type: isUrgent ? 'warning' : 'info',
+                        title: icon + ' ' + (latest.title || 'Nueva notificacion'),
+                        message: latest.message || '',
+                        duration: 5000,
+                        action: { label: 'Ver', onClick: () => this.openPanel() }
+                    });
+                    sessionStorage.setItem('_nc_toast_shown', '1');
+                }
+            } catch (_) {}
+        }, 3000);
     }
 
     stopPolling() {
@@ -249,30 +368,33 @@ class NotificationCenter {
         panel.className = "notification-panel";
         panel.innerHTML = `
             <div class="notification-header">
-                <h3><i class="fas fa-bell"></i> Notificaciones</h3>
-                <div class="notification-header-actions">
-                    <button class="prefs-settings-btn" title="Preferencias" id="openPrefsBtn">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                    <button class="refresh-notifications-btn" title="Actualizar">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <button class="mark-all-read-btn">Marcar todo leído</button>
-                    <button class="close-notification-panel"><i class="fas fa-times"></i></button>
+                <div class="nc-header-top">
+                    <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+                    <div class="notification-header-actions">
+                        <button class="prefs-settings-btn" title="Preferencias" id="openPrefsBtn">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="refresh-notifications-btn" title="Actualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="close-notification-panel"><i class="fas fa-times"></i></button>
+                    </div>
                 </div>
+                <button class="mark-all-read-btn"><i class="fas fa-check-double"></i> Marcar todo leido</button>
             </div>
             <div class="notification-tabs">
-                <button class="notification-tab active" data-filter="all">Todo</button>
-                <button class="notification-tab" data-filter="transactions">Transacciones</button>
-                <button class="notification-tab" data-filter="tandas">Tandas</button>
-                <button class="notification-tab" data-filter="social">Social</button>
-                <button class="notification-tab" data-filter="system">Sistema</button>
+                <button class="notification-tab active" data-filter="all">Todo <span class="tab-count" id="ncTabAll"></span></button>
+                <button class="notification-tab" data-filter="transactions">Pagos <span class="tab-count" id="ncTabTransactions"></span></button>
+                <button class="notification-tab" data-filter="tandas">Tandas <span class="tab-count" id="ncTabTandas"></span></button>
+                <button class="notification-tab" data-filter="social">Social <span class="tab-count" id="ncTabSocial"></span></button>
+                <button class="notification-tab" data-filter="system">Sistema <span class="tab-count" id="ncTabSystem"></span></button>
             </div>
             <div class="notification-list" id="notificationList">
                 <div class="notification-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
             </div>
             <div class="notification-footer">
-                <span class="notification-sync-status"><i class="fas fa-database"></i> Sincronizado</span>
+                <button class="nc-load-more-btn" id="ncLoadMoreBtn" style="display:none">Cargar anteriores</button>
+                <span class="notification-sync-status"><i class="fas fa-check-circle" style="color:#10b981"></i> Sincronizado</span>
             </div>
         `;
         document.body.appendChild(panel);
@@ -325,15 +447,21 @@ class NotificationCenter {
     attachEventListeners() {
         document.querySelectorAll(".notification-tab").forEach(tab => {
             tab.addEventListener("click", (e) => {
+                const btn = e.target.closest(".notification-tab");
+                if (!btn) return;
                 document.querySelectorAll(".notification-tab").forEach(t => t.classList.remove("active"));
-                e.target.classList.add("active");
-                this.currentFilter = e.target.dataset.filter;
+                btn.classList.add("active");
+                this.currentFilter = btn.dataset.filter;
                 this.renderNotifications();
             });
         });
 
         const closeBtn = document.querySelector(".close-notification-panel");
-        if (closeBtn) closeBtn.addEventListener("click", () => this.toggle());
+        if (closeBtn) closeBtn.addEventListener("click", () => {
+            const panel = document.getElementById("notificationPanel");
+            if (panel) panel.classList.remove("active");
+            this._hideBackdrop();
+        });
 
         const refreshBtn = document.querySelector(".refresh-notifications-btn");
         if (refreshBtn) {
@@ -347,12 +475,11 @@ class NotificationCenter {
         const markAllBtn = document.querySelector(".mark-all-read-btn");
         if (markAllBtn) markAllBtn.addEventListener("click", () => this.markAllAsRead());
 
-        const panel = document.getElementById("notificationPanel");
-        if (panel) {
-            panel.addEventListener("click", (e) => {
-                if (e.target.id === "notificationPanel") this.toggle();
-            });
-        }
+        // Panel click-outside handled by backdrop overlay (H5)
+
+        // Load More button
+        const loadMoreBtn = document.getElementById("ncLoadMoreBtn");
+        if (loadMoreBtn) loadMoreBtn.addEventListener("click", () => this.loadMore());
 
         // Preferences buttons
         const openPrefsBtn = document.getElementById("openPrefsBtn");
@@ -372,9 +499,38 @@ class NotificationCenter {
         const list = document.getElementById("notificationList");
         if (!list) return;
 
-        const filtered = this.currentFilter === "all"
+        let filtered = this.currentFilter === "all"
             ? this.notifications
             : this.notifications.filter(n => n.type === this.currentFilter);
+
+        // v4.16.12: Group similar consecutive notifications
+        const grouped = [];
+        let i = 0;
+        while (i < filtered.length) {
+            const n = filtered[i];
+            const type = n.originalType || n.type || '';
+            if (['turn_updated', 'recruitment_starting', 'recruitment_halfway', 'recruitment_almost_full', 'recruitment_urgent'].includes(type)) {
+                let count = 1;
+                const groupId = (n.data || {}).group_id;
+                while (i + count < filtered.length) {
+                    const next = filtered[i + count];
+                    const nextType = next.originalType || next.type || '';
+                    const nextGroup = (next.data || {}).group_id;
+                    if (nextType === type && nextGroup === groupId) { count++; } else { break; }
+                }
+                if (count > 2) {
+                    const gn = Object.assign({}, n);
+                    gn._groupedCount = count;
+                    gn.title = (n.title || '').split(' — ')[0] + ' (' + count + ' notificaciones)';
+                    grouped.push(gn);
+                    i += count;
+                    continue;
+                }
+            }
+            grouped.push(n);
+            i++;
+        }
+        filtered = grouped;
 
         if (filtered.length === 0) {
             list.innerHTML = `
@@ -405,15 +561,29 @@ class NotificationCenter {
                         <p class="notification-message">${this.escapeHtml(notification.message)}</p>
                         <span class="notification-time">${this.getTimeAgo(notification.time)}</span>
                     </div>
-                    ${!notification.read ? `<button class="notification-mark-read" data-id="${this.escapeHtml(String(notification.id))}">✓</button>` : ""}
+                    ${!notification.read ? `<button class="notification-mark-read" data-id="${this.escapeHtml(String(notification.id))}" title="Marcar leido">✓</button>` : ""}
+                    <button class="notification-delete" data-id="${this.escapeHtml(String(notification.id))}" title="Eliminar">×</button>
                 </div>
             `;
         }).join("");
+
+        // Show/hide Load More button
+        const loadMoreBtn = document.getElementById("ncLoadMoreBtn");
+        if (loadMoreBtn) {
+            loadMoreBtn.style.display = this.loadedAll ? 'none' : 'block';
+        }
 
         list.querySelectorAll(".notification-mark-read").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.markAsRead(btn.dataset.id);
+            });
+        });
+
+        list.querySelectorAll(".notification-delete").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.deleteNotification(btn.dataset.id);
             });
         });
 
@@ -439,13 +609,101 @@ class NotificationCenter {
         return date.toLocaleDateString("es-HN");
     }
 
+    // v4.16.12: Update unread counts per tab
+    _updateTabCounts() {
+        const unread = this.notifications.filter(n => !n.read);
+        const counts = { all: unread.length, transactions: 0, tandas: 0, social: 0, system: 0 };
+        unread.forEach(n => { if (counts[n.type] !== undefined) counts[n.type]++; });
+        ['all', 'transactions', 'tandas', 'social', 'system'].forEach(k => {
+            const el = document.getElementById('ncTab' + k.charAt(0).toUpperCase() + k.slice(1));
+            if (el) {
+                el.textContent = counts[k] > 0 ? counts[k] : '';
+                el.style.display = counts[k] > 0 ? 'inline' : 'none';
+            }
+        });
+    }
+
+    // v4.16.12: Sync status accuracy (M7)
+    _updateSyncStatus(online) {
+        const el = document.querySelector('.notification-sync-status');
+        if (el) {
+            if (online) {
+                el.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Sincronizado';
+            } else {
+                el.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b"></i> Sin conexion (datos locales)';
+            }
+        }
+    }
+
+    // v4.16.12: Load more (H1 pagination)
+    async loadMore() {
+        if (this.loadedAll) return;
+        const btn = document.getElementById('ncLoadMoreBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Cargando...'; }
+        await this.loadNotificationsFromAPI(true);
+        if (btn) { btn.disabled = false; btn.textContent = 'Cargar anteriores'; }
+    }
+
+    // v4.16.12: Open panel (was called but undefined)
+    openPanel() {
+        const panel = document.getElementById("notificationPanel");
+        if (panel && !panel.classList.contains("active")) {
+            panel.classList.add("active");
+            this.loadNotificationsFromAPI();
+            this._showBackdrop();
+        }
+    }
+
+    // v4.16.12: Play subtle notification sound (reuses AudioContext)
+    playNotificationSound() {
+        try {
+            if (!this._audioCtx) {
+                this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const ctx = this._audioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.08, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.3);
+        } catch (_) {}
+    }
+
     toggle() {
         const panel = document.getElementById("notificationPanel");
         if (panel) {
+            const isOpening = !panel.classList.contains("active");
             panel.classList.toggle("active");
-            if (panel.classList.contains("active")) {
+            if (isOpening) {
                 this.loadNotificationsFromAPI();
+                this._showBackdrop();
+            } else {
+                this._hideBackdrop();
             }
+        }
+    }
+
+    _showBackdrop() {
+        if (document.getElementById("ncBackdrop")) return;
+        const bd = document.createElement("div");
+        bd.id = "ncBackdrop";
+        bd.className = "nc-backdrop";
+        bd.addEventListener("click", () => this.toggle());
+        document.body.appendChild(bd);
+        requestAnimationFrame(() => bd.classList.add("active"));
+    }
+
+    _hideBackdrop() {
+        const bd = document.getElementById("ncBackdrop");
+        if (bd) {
+            bd.classList.remove("active");
+            setTimeout(() => bd.remove(), 300);
         }
     }
 
@@ -487,9 +745,26 @@ class NotificationCenter {
         }
     }
 
+    async deleteNotification(notificationId) {
+        // Remove from local array
+        this.notifications = this.notifications.filter(n => String(n.id) !== String(notificationId));
+        this.updateUnreadCount();
+        this.renderNotifications();
+        this.saveToLocalStorage();
+
+        // Delete from server (non-blocking)
+        try {
+            await fetch(this.apiBase + "/api/notifications/" + encodeURIComponent(notificationId), {
+                method: "DELETE",
+                headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" })
+            });
+        } catch (_) {}
+    }
+
     updateUnreadCount() {
         this.unreadCount = this.notifications.filter(n => !n.read).length;
         this.updateBadge();
+        this._updateTabCounts();
     }
 
     updateBadge() {
@@ -564,6 +839,9 @@ class NotificationCenter {
             <div class="prefs-section">
                 <div class="prefs-section-title">
                     <i class="fas fa-bell"></i> Tipos de Notificaciones
+                </div>
+                <div style="font-size:0.78rem;color:#94a3b8;margin:-8px 0 12px;padding:0 4px;line-height:1.4;">
+                    Estos controles afectan notificaciones push y email. Las notificaciones dentro de la app siempre se muestran.
                 </div>
                 
                 <div class="prefs-item">

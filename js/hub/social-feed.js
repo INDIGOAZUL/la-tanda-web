@@ -29,6 +29,8 @@ const SocialFeed = {
     viewTimers: {}, // Pending 2-second timers per event ID
     pendingViews: new Set(), // Event IDs ready to flush
     viewFlushInterval: null, // 3-second flush interval
+    feedSortMode: 'relevant', // 'relevant' or 'recent' (ALG-03 T1)
+    hiddenAuthors: JSON.parse(localStorage.getItem('sf_hidden_authors') || '[]'), // ALG-03 T3
 
     tabs: [
         { id: "todos", label: "Todos", icon: "fa-globe", filter: null },
@@ -36,7 +38,7 @@ const SocialFeed = {
         { id: "trending", label: "Trending", icon: "fa-fire", filter: "trending" },
         { id: "grupos", label: "Grupos", icon: "fa-users", filter: "group_created,group_joined" },
         { id: "mercado", label: "Mercado", icon: "fa-shopping-bag", filter: "product_posted" },
-        { id: "loteria", label: "Loteria", icon: "fa-dice", filter: "lottery_result,prediction_shared" },
+        { id: "loteria", label: "Loteria", icon: "fa-dice", filter: "lottery_result,prediction_shared,prediction_hit" },
         { id: "logros", label: "Logros", icon: "fa-trophy", filter: "milestone" }
     ],
 
@@ -46,8 +48,21 @@ const SocialFeed = {
         product_posted: { icon: "fa-shopping-bag", color: "#fbbf24", label: "Producto" },
         lottery_result: { icon: "fa-dice", color: "#8b5cf6", label: "Sorteo" },
         prediction_shared: { icon: "fa-star", color: "#ec4899", label: "Prediccion" },
+        prediction_hit: { icon: "fa-trophy", color: "#f59e0b", label: "Acierto" },
         milestone: { icon: "fa-trophy", color: "#f59e0b", label: "Logro" },
-        user_post: { icon: "fa-comment-alt", color: "#00FFFF", label: "Publicación" }
+        user_post: { icon: "fa-comment-alt", color: "#00FFFF", label: "Publicación" },
+        distribution_completed: { icon: "fa-gift", color: "#22c55e", label: "Distribución" },
+        tanda_started: { icon: "fa-rocket", color: "#3b82f6", label: "Tanda Activa" },
+        weekly_digest: { icon: "fa-newspaper", color: "#8b5cf6", label: "Resumen Semanal" },
+        mia_tip: { icon: "fa-robot", color: "#3b82f6", label: "Tip de MIA" },
+        mia_poll: { icon: "fa-poll", color: "#ec4899", label: "Encuesta MIA" },
+        member_joined: { icon: "fa-user-plus", color: "#10b981", label: "Nuevo Miembro" },
+        group_full: { icon: "fa-users", color: "#f59e0b", label: "Grupo Completo" },
+        perfect_cycle: { icon: "fa-star", color: "#eab308", label: "Ciclo Perfecto" },
+    },
+
+    reactionEmojis: {
+        fire: '🔥', clap: '👏', '100': '💯', heart: '❤️', laugh: '😂', wow: '😮', sad: '😢'
     },
 
     defaultConfig: { icon: "fa-bell", color: "#6b7280", label: "Actividad" },
@@ -154,6 +169,13 @@ const SocialFeed = {
             '<div class="social-feed-wrapper">' +
                 '<div class="feed-tabs-container">' +
                     '<div class="feed-tabs" id="feedTabs">' + tabsHTML + '</div>' +
+                    '<div class="sf-sort-toggle" id="sfSortToggle">' +
+                        '<button class="sf-sort-btn' + (this.feedSortMode === 'relevant' ? ' active' : '') + '" data-sort="relevant"><i class="fas fa-fire-alt"></i> Relevante</button>' +
+                        '<button class="sf-sort-btn' + (this.feedSortMode === 'recent' ? ' active' : '') + '" data-sort="recent"><i class="fas fa-clock"></i> Reciente</button>' +
+                    '</div>' +
+                    '<div class="sf-sort-indicator" id="sfSortIndicator" style="display:none;">' +
+                        '<i class="fas fa-magic"></i> Para ti — personalizado segun tu actividad' +
+                    '</div>' +
                 '</div>' +
                 '<div class="compose-box" id="composeBox">' +
                     '<div class="compose-box-inner">' +
@@ -819,6 +841,21 @@ const SocialFeed = {
         const tabsContainer = document.getElementById("feedTabs");
         if (!tabsContainer) return;
 
+        // Sort toggle handler (ALG-03 T1)
+        const sortToggle = document.getElementById("sfSortToggle");
+        if (sortToggle) {
+            sortToggle.addEventListener("click", (e) => {
+                const btn = e.target.closest(".sf-sort-btn");
+                if (!btn) return;
+                const newSort = btn.dataset.sort;
+                if (newSort === this.feedSortMode) return;
+                this.feedSortMode = newSort;
+                sortToggle.querySelectorAll(".sf-sort-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                this.loadEvents(true);
+            });
+        }
+
         tabsContainer.addEventListener("click", (e) => {
             const tab = e.target.closest(".feed-tab");
             if (!tab) return;
@@ -827,6 +864,9 @@ const SocialFeed = {
             if (tabId === this.currentTab) return;
 
             tabsContainer.querySelectorAll(".feed-tab").forEach(t => t.classList.remove("active"));
+            // Show/hide sort toggle based on tab (ALG-03 T1)
+            const sortEl = document.getElementById("sfSortToggle");
+            if (sortEl) sortEl.style.display = (tabId === "trending" || tabId === "siguiendo") ? "none" : "flex";
             tab.classList.add("active");
 
             this.currentTab = tabId;
@@ -850,6 +890,10 @@ const SocialFeed = {
 
         // Delegate clicks for menu buttons
         this.container.addEventListener("click", (e) => {
+            // Predictor profile link handler
+            const hrefEl = e.target.closest("[data-href]");
+            if (hrefEl) { window.location.href = hrefEl.dataset.href; return; }
+
             const menuBtn = e.target.closest(".post-menu-btn");;
             if (menuBtn) {
                 e.preventDefault();
@@ -1059,9 +1103,9 @@ const SocialFeed = {
             } else if (tab.filter === "following") {
                 url = "/api/feed/social/following?limit=" + this.limit + "&offset=" + this.offset;
             } else if (tab.filter) {
-                url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&types=" + tab.filter;
+                url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&types=" + tab.filter + "&sort=" + this.feedSortMode;
             } else {
-                url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset;
+                url = "/api/feed/social?limit=" + this.limit + "&offset=" + this.offset + "&sort=" + this.feedSortMode;
             }
 
             // Add hashtag filter if active
@@ -1084,6 +1128,14 @@ const SocialFeed = {
                 this.events = [...this.events, ...newEvents];
                 this.hasMore = result.data.pagination ? result.data.pagination.has_more : false;
                 this.offset += newEvents.length;
+
+                // ALG-03 T2: Show personalization indicator
+                const sortIndicator = document.getElementById("sfSortIndicator");
+                if (sortIndicator) {
+                    const isPersonalized = result.data.sort === 'relevant' && (localStorage.getItem('auth_token') || localStorage.getItem('authToken'));
+                    sortIndicator.style.display = isPersonalized && this.offset <= this.limit ? 'flex' : 'none';
+                }
+
                 this.renderEvents();
             } else {
                 this.renderError();
@@ -1121,7 +1173,11 @@ const SocialFeed = {
             return;
         }
 
-        listEl.innerHTML = this.events.map(event => this.renderEventCard(event)).join("");
+        // ALG-03 T3: Filter out hidden authors
+        const visibleEvents = this.hiddenAuthors.length > 0
+            ? this.events.filter(ev => !this.hiddenAuthors.includes(ev.actor?.id))
+            : this.events;
+        listEl.innerHTML = visibleEvents.map(event => this.renderEventCard(event)).join("");
 
         // Observe feed videos for auto-pause on scroll
         if (this.videoVisibilityObserver) {
@@ -1165,12 +1221,17 @@ const SocialFeed = {
         const meta = event.metadata || {};
         const isAnonymous = meta.is_anonymous === true;
         const actor = isAnonymous ? { name: 'Anonimo', initials: '??', avatar_url: null, id: null } : (event.actor || {});
+        // Predictor bot: make clickable even without actor_id
+        const isPredictorBot = !actor.id && (event.event_type === 'prediction_shared' || event.event_type === 'prediction_hit');
+        const predictorLink = isPredictorBot ? '/predictor-profile.html' : null;
         const engagement = event.engagement || {};
 
         const hasImage = actor.avatar_url ? "has-image" : "initials";
         const avatarContent = actor.avatar_url
             ? '<img src="' + this.escapeHtml(actor.avatar_url) + '" alt="' + this.escapeHtml(actor.name) + '" class="avatar-fallback-img">'
-            : '<span style="color: ' + (isAnonymous ? '#8b5cf6' : config.color) + '">' + this.escapeHtml(actor.initials || '??') + '</span>';
+            : isPredictorBot
+                ? '<span style="font-size:1.3rem">' + (event.event_type === 'prediction_hit' ? '🎉' : '🎱') + '</span>'
+                : '<span style="color: ' + (isAnonymous ? '#8b5cf6' : config.color) + '">' + this.escapeHtml(actor.initials || '??') + '</span>';
         const verifiedBadge = isAnonymous ? '' : (actor.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : '');
         const likesText = engagement.likes || '';
         const commentsText = engagement.comments || '';
@@ -1218,12 +1279,12 @@ const SocialFeed = {
         return '<div class="social-card' + (isAnonymous ? ' anonymous-post' : '') + '" data-event-id="' + this.escapeHtml(String(event.id)) + '" data-type="' + this.escapeHtml(event.event_type || '') + '">' +
             repostBanner +
             '<div class="social-card-header">' +
-                '<div class="actor-avatar ' + hasImage + '" style="background: ' + avatarColor + '"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + '>' +
+                '<div class="actor-avatar ' + hasImage + '" style="background: ' + avatarColor + '"' + (isPredictorBot ? ' data-href="/predictor-profile.html" role="button" tabindex="0" style="cursor:pointer"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' +
                     avatarContent +
                     verifiedBadge +
                 '</div>' +
                 '<div class="actor-info">' +
-                    '<span class="actor-name"' + (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"') + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
+                    '<span class="actor-name"' + (isPredictorBot ? ' data-href="/predictor-profile.html" role="button" tabindex="0" style="cursor:pointer;color:#ec4899"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
                     '<span class="event-type-label" style="color: ' + config.color + '">' +
                         '<i class="fas ' + config.icon + '"></i> ' + config.label +
                         locationBadge +
@@ -1242,11 +1303,12 @@ const SocialFeed = {
                 this.renderLinkPreviewCard(event) +
             '</div>' +
             '<div class="social-card-footer">' +
-                (viewCount > 0 ? '<span class="sf-views"><i class="far fa-eye"></i> ' + viewCount + '</span>' : '') +
-                '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta">' +
-                    '<i class="' + (event.is_liked ? 'fas' : 'far') + ' fa-heart"></i>' +
-                    '<span>' + likesText + '</span>' +
-                '</button>' +
+                '<div class="sf-like-wrap">' +
+                    '<button class="engagement-btn like-btn' + (event.is_liked ? ' liked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Me gusta / Reaccionar">' +
+                        '<i class="' + (event.is_liked ? 'fas' : 'far') + ' fa-heart"></i>' +
+                        '<span>' + likesText + '</span>' +
+                    '</button>' +
+                '</div>' +
                 '<button class="engagement-btn comment-btn" data-id="' + this.escapeHtml(String(event.id)) + '" title="Comentar">' +
                     '<i class="far fa-comment"></i>' +
                     '<span>' + commentsText + '</span>' +
@@ -1261,8 +1323,225 @@ const SocialFeed = {
                 '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
+                (actor.id && actor.id !== this.currentUserId ? '<button class="engagement-btn sf-more-btn" data-author-id="' + this.escapeHtml(String(actor.id)) + '" data-author-name="' + this.escapeHtml(String(actor.name)) + '" title="Mas opciones"><i class="fas fa-ellipsis-h"></i></button>' : '') +
             '</div>' +
+            this.renderReactionPills(event) +
+            this.renderReachBar(event, actor) +
+            this.renderSystemBanner(event) +
         '</div>';
+    },
+
+    renderReactionPills(event) {
+        const meta = event.metadata || {};
+        const reactions = meta.reactions || {};
+        const emojis = this.reactionEmojis || {};
+        let summary = '';
+        for (const [type, users] of Object.entries(reactions)) {
+            if (users && users.length > 0) {
+                const isMe = this.currentUserId && users.includes(this.currentUserId);
+                summary += '<span class="sf-reaction-pill' + (isMe ? ' sf-reaction-mine' : '') + '" data-reaction="' + type + '" data-event-id="' + this.escapeHtml(String(event.id)) + '">' + (emojis[type] || type) + ' ' + users.length + '</span>';
+            }
+        }
+        if (!summary) return '';
+        return '<div class="sf-reactions-bar">' + summary + '</div>';
+    },
+
+    renderReachBar(event, actor) {
+        var eng = event.engagement || {};
+        var views = eng.views || 0;
+        if (views <= 0) return '';
+        var isOwner = this.currentUserId && actor.id && String(actor.id) === String(this.currentUserId);
+        var label = isOwner
+            ? '<i class="fas fa-chart-line"></i> Tu post alcanzo <strong>' + views + '</strong> persona' + (views !== 1 ? 's' : '') + ' &middot; <span class="sf-reach-link">Ver estadisticas</span>'
+            : '<i class="far fa-eye"></i> ' + views + ' vista' + (views !== 1 ? 's' : '') + ' &middot; <span class="sf-reach-link">Ver</span>';
+        return '<div class="sf-reach sf-reach-clickable" data-event-id="' + this.escapeHtml(String(event.id)) + '" data-owner="' + (isOwner ? '1' : '0') + '">' + label + '</div>';
+    },
+
+    renderSystemBanner(event) {
+        const meta = event.metadata || {};
+        const type = event.event_type;
+        if (type === 'distribution_completed') {
+            return '<div class="sf-system-banner sf-banner-green"><i class="fas fa-gift"></i> ' + this.escapeHtml(meta.group_name || 'Tanda') + ' — Ciclo ' + (meta.cycle || '?') + ' distribuido</div>';
+        }
+        if (type === 'tanda_started') {
+            return '<div class="sf-system-banner sf-banner-blue"><i class="fas fa-rocket"></i> ' + (meta.members || '?') + ' participantes — L. ' + (meta.contribution || '?').toLocaleString() + '/ciclo</div>';
+        }
+        if (type === 'weekly_digest') {
+            return '<div class="sf-system-banner sf-banner-purple"><i class="fas fa-newspaper"></i> Publicado automaticamente cada lunes</div>';
+        }
+        if (type === 'mia_tip') {
+            var catLabel = (meta.category_label || 'Tip');
+            return '<div class="sf-system-banner sf-banner-blue"><i class="fas fa-robot"></i> MIA — ' + this.escapeHtml(catLabel) + ' · Tip diario</div>';
+        }
+        if (type === 'mia_poll') {
+            return '<div class="sf-system-banner sf-banner-pink"><i class="fas fa-poll"></i> Encuesta semanal — vota!</div>';
+        }
+        if (type === 'member_joined') {
+            return '<div class="sf-system-banner sf-banner-green"><i class="fas fa-user-plus"></i> La comunidad crece</div>';
+        }
+        if (type === 'group_full') {
+            return '<div class="sf-system-banner sf-banner-amber"><i class="fas fa-users"></i> Grupo al completo</div>';
+        }
+        if (type === 'perfect_cycle') {
+            return '<div class="sf-system-banner sf-banner-gold"><i class="fas fa-star"></i> Todos pagaron a tiempo</div>';
+        }
+        if (type === "prediction_hit") {
+            const hitLabels = { exact: "Acierto Exacto", jalador: "Jalador Acertado", hot: "Numero Caliente", near: "Casi Acierto" };
+            const hitType = meta.hit_type || "hit";
+            return '<div class="sf-system-banner celebration"><i class="fas fa-trophy"></i> ' + (hitLabels[hitType] || "Acierto") + ' — Predictor La Tanda v4.0</div>';
+        }
+        return '';
+    },
+
+    async handleReaction(eventId, reaction) {
+        if (!this.currentUserId) return;
+        try {
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            const resp = await fetch('/api/feed/social/' + eventId + '/react', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reaction: reaction })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                // Update event metadata in memory
+                const ev = this.events.find(e => e.id === eventId);
+                if (ev) {
+                    if (!ev.metadata) ev.metadata = {};
+                    if (!ev.metadata.reactions) ev.metadata.reactions = {};
+                    const arr = ev.metadata.reactions[reaction] || [];
+                    const idx = arr.indexOf(this.currentUserId);
+                    if (data.data.added) {
+                        if (idx < 0) arr.push(this.currentUserId);
+                    } else {
+                        if (idx >= 0) arr.splice(idx, 1);
+                    }
+                    ev.metadata.reactions[reaction] = arr;
+                }
+                // Re-render just this card's reaction pills
+                const card = document.querySelector('[data-event-id="' + eventId + '"]');
+                if (card && ev) {
+                    const barEl = card.querySelector('.sf-reactions-bar');
+                    var newPills = this.renderReactionPills(ev);
+                    if (barEl) {
+                        if (newPills) { barEl.outerHTML = newPills; } else { barEl.remove(); }
+                    } else if (newPills) {
+                        // Insert pills after footer
+                        var footer = card.querySelector('.social-card-footer');
+                        if (footer) footer.insertAdjacentHTML('afterend', newPills);
+                    }
+                }
+            }
+        } catch(_) {}
+    },
+
+    showReactionPicker(eventId, likeWrap) {
+        // Remove any existing picker
+        document.querySelectorAll('.sf-reaction-picker').forEach(el => el.remove());
+        const picker = document.createElement('div');
+        picker.className = 'sf-reaction-picker';
+        const emojis = this.reactionEmojis || {};
+        for (const [type, emoji] of Object.entries(emojis)) {
+            const span = document.createElement('span');
+            span.textContent = emoji;
+            span.title = type;
+            span.dataset.reaction = type;
+            span.dataset.eventId = eventId;
+            picker.appendChild(span);
+        }
+        likeWrap.appendChild(picker);
+        setTimeout(() => picker.classList.add('sf-picker-show'), 10);
+        // Close on outside click
+        const close = (e) => { if (!picker.contains(e.target) && !likeWrap.contains(e.target)) { picker.remove(); document.removeEventListener('click', close); } };
+        setTimeout(() => document.addEventListener('click', close), 50);
+    },
+
+    showInsightsModal(eventId, isOwner) {
+        var ev = this.events.find(function(e) { return e.id === eventId; });
+        if (!ev) return;
+        var eng = ev.engagement || {};
+        var meta = ev.metadata || {};
+        var views = eng.views || 0;
+        var likes = eng.likes || 0;
+        var comments = eng.comments || 0;
+        var reposts = eng.reposts || 0;
+        var shares = eng.shares || 0;
+
+        // Count total reactions
+        var reactions = meta.reactions || {};
+        var emojis = this.reactionEmojis || {};
+        var totalReactions = 0;
+        var reactionHtml = '';
+        for (var type in reactions) {
+            if (reactions[type] && reactions[type].length > 0) {
+                totalReactions += reactions[type].length;
+                reactionHtml += '<span class="si-reaction">' + (emojis[type] || type) + ' ' + reactions[type].length + '</span>';
+            }
+        }
+
+        var interactions = likes + comments + reposts + totalReactions;
+        var engRate = views > 0 ? Math.round((interactions / views) * 1000) / 10 : 0;
+        var reachPct = Math.min(100, views > 0 ? Math.round(engRate) : 0);
+
+        // Remove existing
+        document.querySelectorAll('.si-overlay').forEach(function(el) { el.remove(); });
+
+        var overlay = document.createElement('div');
+        overlay.className = 'si-overlay';
+
+        var html = '<div class="si-modal">' +
+            '<div class="si-header"><span class="si-title"><i class="fas fa-chart-bar"></i> Estadisticas</span><button class="si-close">&times;</button></div>' +
+            '<div class="si-body">';
+
+        // Stats grid — basic for everyone
+        html += '<div class="si-stats">' +
+            '<div class="si-stat"><div class="si-stat-val">' + views + '</div><div class="si-stat-lbl"><i class="far fa-eye"></i> Vistas</div></div>' +
+            '<div class="si-stat"><div class="si-stat-val">' + likes + '</div><div class="si-stat-lbl"><i class="far fa-heart"></i> Likes</div></div>' +
+            '<div class="si-stat"><div class="si-stat-val">' + comments + '</div><div class="si-stat-lbl"><i class="far fa-comment"></i> Comentarios</div></div>';
+
+        if (isOwner) {
+            // Full stats for owner
+            html += '<div class="si-stat"><div class="si-stat-val">' + reposts + '</div><div class="si-stat-lbl"><i class="fas fa-retweet"></i> Reposts</div></div>' +
+                '<div class="si-stat"><div class="si-stat-val">' + totalReactions + '</div><div class="si-stat-lbl"><i class="fas fa-fire"></i> Reacciones</div></div>' +
+                '<div class="si-stat"><div class="si-stat-val">' + shares + '</div><div class="si-stat-lbl"><i class="fas fa-share-alt"></i> Compartidos</div></div>';
+        }
+        html += '</div>';
+
+        if (isOwner) {
+            // Reach bar
+            html += '<div class="si-section">' +
+                '<div class="si-section-title">Alcance</div>' +
+                '<div class="si-bar-wrap"><div class="si-bar-fill" style="width:' + Math.min(100, Math.max(5, views > 0 ? 40 + Math.min(60, views) : 5)) + '%"></div></div>' +
+                '<div class="si-bar-label">' + views + ' persona' + (views !== 1 ? 's' : '') + ' alcanzadas</div>' +
+            '</div>';
+
+            // Engagement rate
+            html += '<div class="si-section">' +
+                '<div class="si-section-title">Tasa de Engagement</div>' +
+                '<div class="si-bar-wrap"><div class="si-bar-fill si-bar-engagement" style="width:' + Math.min(100, Math.max(3, reachPct)) + '%"></div></div>' +
+                '<div class="si-bar-label">' + engRate + '% <span class="si-bar-sub">(interacciones / vistas)</span></div>' +
+            '</div>';
+
+            // Reactions breakdown
+            if (reactionHtml) {
+                html += '<div class="si-section">' +
+                    '<div class="si-section-title">Reacciones</div>' +
+                    '<div class="si-reactions">' + reactionHtml + '</div>' +
+                '</div>';
+            }
+
+            html += '<div class="si-footer-note"><i class="fas fa-lock"></i> Solo tu ves las estadisticas completas</div>';
+        }
+
+        html += '</div></div>';
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+        setTimeout(function() { overlay.classList.add('si-show'); }, 10);
+
+        // Close handlers
+        var closeModal = function() { overlay.classList.remove('si-show'); setTimeout(function() { overlay.remove(); }, 200); };
+        overlay.querySelector('.si-close').addEventListener('click', closeModal);
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
     },
 
     isVideoUrl(url) {
@@ -1329,7 +1608,53 @@ const SocialFeed = {
         if (!this.container) return;
 
         this.container.addEventListener("click", async (e) => {
+            // Post insights modal handler
+            var reachBar = e.target.closest('.sf-reach-clickable');
+            if (reachBar) { e.preventDefault(); this.showInsightsModal(reachBar.dataset.eventId, reachBar.dataset.owner === '1'); return; }
+
+            // VIDA SOCIAL: Reaction handlers
+            var reactPill = e.target.closest('.sf-reaction-pill');
+            if (reactPill) { this.handleReaction(reactPill.dataset.eventId, reactPill.dataset.reaction); return; }
+            var pickerItem = e.target.closest('.sf-reaction-picker span');
+            if (pickerItem) { this.handleReaction(pickerItem.dataset.eventId, pickerItem.dataset.reaction); var pk = pickerItem.closest('.sf-reaction-picker'); if (pk) pk.remove(); return; }
+
             const likeBtn = e.target.closest(".like-btn");
+            // ALG-03 T3: "Not interested" handler
+            const moreBtn = e.target.closest(".sf-more-btn");
+            if (moreBtn) {
+                const authorId = moreBtn.dataset.authorId;
+                const authorName = moreBtn.dataset.authorName;
+                // Show small popup
+                const existing = document.querySelector('.sf-more-popup');
+                if (existing) existing.remove();
+                const popup = document.createElement('div');
+                popup.className = 'sf-more-popup';
+                popup.innerHTML = '<button class="sf-more-option" data-action="sf-hide-author" data-author-id="' + this.escapeHtml(authorId) + '"><i class="fas fa-eye-slash"></i> No me interesa (' + this.escapeHtml(authorName) + ')</button>';
+                popup.style.position = 'absolute';
+                const rect = moreBtn.getBoundingClientRect();
+                popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                popup.style.right = (window.innerWidth - rect.right) + 'px';
+                document.body.appendChild(popup);
+                setTimeout(() => { document.addEventListener('click', function rem() { popup.remove(); document.removeEventListener('click', rem); }); }, 10);
+                e.stopPropagation();
+                return;
+            }
+
+            // Handle hide-author action
+            const hideAction = e.target.closest('[data-action="sf-hide-author"]');
+            if (hideAction) {
+                const authorId = hideAction.dataset.authorId;
+                if (authorId && !this.hiddenAuthors.includes(authorId)) {
+                    this.hiddenAuthors.push(authorId);
+                    localStorage.setItem('sf_hidden_authors', JSON.stringify(this.hiddenAuthors));
+                    this.renderEvents();
+                    if (typeof showNotification === 'function') showNotification('Veras menos publicaciones de este autor', 'info');
+                }
+                const popup = hideAction.closest('.sf-more-popup');
+                if (popup) popup.remove();
+                return;
+            }
+
             const bookmarkBtn = e.target.closest(".bookmark-btn");
             const commentBtn = e.target.closest(".comment-btn");
             const shareBtn = e.target.closest(".share-btn");
@@ -1337,7 +1662,20 @@ const SocialFeed = {
 
             if (likeBtn) {
                 e.preventDefault();
-                await this.toggleLike(likeBtn);
+                // Show reaction picker on the heart button
+                var likeWrap = likeBtn.closest('.sf-like-wrap');
+                if (likeWrap) {
+                    var existingPicker = likeWrap.querySelector('.sf-reaction-picker');
+                    if (existingPicker) {
+                        existingPicker.remove();
+                        // If picker was open, a tap closes it — also toggle like
+                        await this.toggleLike(likeBtn);
+                    } else {
+                        this.showReactionPicker(likeBtn.dataset.id, likeWrap);
+                    }
+                } else {
+                    await this.toggleLike(likeBtn);
+                }
             }
             if (bookmarkBtn) {
                 e.preventDefault();

@@ -462,6 +462,8 @@ class CreateGroupFormHandler {
                 this.formData.type = document.getElementById('group-type').value;
                 this.formData.location = document.getElementById('location').value.trim();
                 this.formData.virtualMeetings = document.querySelector('input[name="virtual-meetings"]:checked').value;
+                var publicCb = document.getElementById('group-is-public');
+                this.formData.isPublic = publicCb ? publicCb.checked : false;
                 break;
 
             case 2:
@@ -660,7 +662,8 @@ class CreateGroupFormHandler {
                     grace_period: parseInt(fd.gracePeriod) || 5,
                     start_date: fd.startDate || null,
                     latePaymentPenalty: parseFloat(fd.penaltyAmount) || 0,
-                    commissionRate: fd.commissionRate !== undefined ? fd.commissionRate : null
+                    commissionRate: fd.commissionRate !== undefined ? fd.commissionRate : null,
+                    is_public: fd.isPublic === true
                 })
             });
 
