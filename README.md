@@ -153,7 +153,24 @@ cd smart-contracts
 npm install
 npx hardhat compile
 npx hardhat test
+```
 
+## Development Setup
+To run the La Tanda web application locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve the frontend static files
+npx serve .
+
+# Compile and test smart contracts (optional)
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
 ```bash
 # Clonar
 git clone https://github.com/INDIGOAZUL/la-tanda-web.git
@@ -175,6 +192,16 @@ npx hardhat test
 ---
 
 ## Estructura del Proyecto
+```md
+## Project Structure
+
+Main directories in the repository:
+
+- html/ — frontend application pages
+- js/ — frontend logic and modules
+- css/ — styling
+- smart-contracts/ — Solidity contracts and tests
+- docs/ — documentation files
 ## Project Structure
 
 ```
@@ -275,3 +302,13 @@ MIT — Ver [LICENSE](./LICENSE)
 Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
 *Ultima actualizacion: Marzo 3, 2026*
+
+## Running the Project
+
+You can run the frontend locally using:
+
+npx serve .
+
+Then open the site in your browser:
+
+http://localhost:3000
