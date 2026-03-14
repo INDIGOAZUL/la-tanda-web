@@ -259,3 +259,52 @@ MIT — Ver [LICENSE](./LICENSE)
 Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
 *Ultima actualizacion: Marzo 3, 2026*
+
+---
+
+## Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve locally (choose one)
+npx serve .
+# or
+python -m http.server 8000
+# or
+php -S localhost:8000
+```
+
+Open http://localhost:8000 in your browser.
+
+## Project Structure
+
+```
+la-tanda-web/
+├── index.html                 # Main entry point
+├── chain/                     # Chain explorer
+│   └── index.html
+├── js/                        # JavaScript modules
+│   ├── marketplace-social.js  # Social marketplace logic
+│   ├── api-proxy.js          # Main API handler
+│   ├── components/           # UI components
+│   └── ...
+├── css/                       # Stylesheets
+├── html/                      # Additional HTML pages
+└── README.md                  # This file
+```
+
+## Key Files
+
+- **api-proxy.js**: Main API handler in `js/`
+- **marketplace-social.js**: Social marketplace in `js/`
+- **index.html**: Main entry point
+
+## Links
+
+- [Live Site](https://latanda.online)
+- [Dev Portal](https://latanda.online/dev-dashboard.html)
+- [Chain Explorer](https://latanda.online/chain/)
+- [Swagger UI](https://latanda.online/docs)
