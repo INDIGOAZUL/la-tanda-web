@@ -138,6 +138,21 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 ---
 
 ## Desarrollo Local
+To run the La Tanda web application locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve the frontend static files
+npx serve .
+
+# Compile and test smart contracts (optional)
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
 
 ```bash
 # Clonar
@@ -160,6 +175,7 @@ npx hardhat test
 ---
 
 ## Estructura del Proyecto
+## Project Structure
 
 ```
 la-tanda-web/
