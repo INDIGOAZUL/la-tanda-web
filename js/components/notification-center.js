@@ -822,21 +822,78 @@ class NotificationCenter {
             return;
         }
 
-        // Smart push permission timing — max 3 prompts with progressive delay
+        // Respect push_enabled preference
+        if (this.preferences && this.preferences.push_enabled === false) return;
+
+        // Smart push permission timing — max 3 prompts
         const promptCount = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
         if (promptCount >= 3) return;
 
         const dismissed = localStorage.getItem("push_banner_dismissed");
         if (dismissed) {
             const elapsed = Date.now() - parseInt(dismissed, 10);
-            // 1st dismiss → wait 1 day, 2nd → wait 7 days
-            const waitMs = promptCount <= 1 ? 86400000 : 604800000;
-            if (elapsed < waitMs) return;
+            // Always wait 7 days after any dismissal
+            if (elapsed < 604800000) return;
         }
 
-        // Delay: 30s on first visit, 15s on subsequent
-        const delay = promptCount === 0 ? 30000 : 15000;
-        setTimeout(() => this.showPushBanner(), delay);
+        // Activity-gated: track clicks/scrolls for 30s of active use
+        this._startActivityTracker();
+    }
+
+    _startActivityTracker() {
+        if (this._activityTrackerStarted) return;
+        this._activityTrackerStarted = true;
+
+        var activeMs = 0;
+        var lastTick = 0;
+        var tickInterval = null;
+        var engaged = false;
+        var self = this;
+        var REQUIRED_MS = 30000;
+
+        function onInteraction() {
+            if (!engaged) {
+                engaged = true;
+                lastTick = Date.now();
+            }
+        }
+
+        function resetIdle() {
+            engaged = false;
+        }
+
+        var idleTimer = null;
+        function onActivity() {
+            onInteraction();
+            clearTimeout(idleTimer);
+            // Reset engagement after 5s of inactivity
+            idleTimer = setTimeout(resetIdle, 5000);
+        }
+
+        document.addEventListener("click", onActivity, { passive: true });
+        document.addEventListener("scroll", onActivity, { passive: true });
+        document.addEventListener("touchstart", onActivity, { passive: true });
+
+        tickInterval = setInterval(function() {
+            if (engaged) {
+                var now = Date.now();
+                activeMs += now - (lastTick || now);
+                lastTick = now;
+            }
+
+            if (activeMs >= REQUIRED_MS) {
+                clearInterval(tickInterval);
+                clearTimeout(idleTimer);
+                document.removeEventListener("click", onActivity);
+                document.removeEventListener("scroll", onActivity);
+                document.removeEventListener("touchstart", onActivity);
+                self._activityTrackerStarted = false;
+                // Final check before showing
+                if (Notification.permission === "default") {
+                    self.showPushBanner();
+                }
+            }
+        }, 1000);
     }
 
     showPushBanner() {
