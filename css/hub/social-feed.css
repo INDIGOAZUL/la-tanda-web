@@ -966,13 +966,16 @@
         flex-wrap: nowrap;
         gap: 0;
         padding-top: 8px;
-        margin-left: -46px;
+        margin-left: 0;
         padding-right: 0;
     }
 
     .compose-tools {
         display: flex;
         gap: 0;
+        overflow-x: auto;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     .compose-tool {
@@ -986,6 +989,8 @@
         font-size: 0.8rem;
         white-space: nowrap;
         flex-shrink: 0;
+        flex-grow: 0;
+        max-width: 90px;
         margin-left: auto;
         border-radius: 14px;
     }
@@ -3340,20 +3345,20 @@
     align-items: flex-start;
     opacity: 0;
     transition: opacity 0.25s ease;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
 }
 .pd-overlay.pd-active { opacity: 1; }
 
 .pd-modal {
     width: 100%;
     max-width: 600px;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
     background: #0f172a;
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow: hidden;
 }
 
 .pd-header {
@@ -3586,8 +3591,7 @@
 
 /* Comment input */
 .pd-comment-input {
-    position: sticky;
-    bottom: 0;
+    flex-shrink: 0;
     background: #0f172a;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 10px 16px;
@@ -3597,41 +3601,56 @@
 .pd-comment-form {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
+}
+
+.pd-input-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    transition: border-color 0.2s;
+}
+
+.pd-input-wrap:focus-within {
+    border-color: #00FFFF;
 }
 
 .pd-comment-form textarea {
     flex: 1;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    background: transparent;
+    border: none;
     color: #e2e8f0;
     padding: 10px 16px;
+    padding-right: 48px;
     font-size: 0.9rem;
     resize: none;
     outline: none;
     font-family: inherit;
     max-height: 120px;
-    transition: border-color 0.2s;
-}
-.pd-comment-form textarea:focus {
-    border-color: #00FFFF;
+    min-height: 40px;
+    line-height: 1.4;
 }
 .pd-comment-form textarea::placeholder {
     color: #64748b;
 }
 
 .pd-submit-btn {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
     background: #00FFFF;
     color: #0f172a;
     border: none;
     border-radius: 50%;
-    width: 38px; height: 38px;
+    width: 32px; height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     flex-shrink: 0;
     transition: opacity 0.2s, transform 0.2s;
 }
@@ -3659,6 +3678,7 @@
     .pd-overlay {
         align-items: center;
         padding: 20px 0;
+        overflow-y: auto;
     }
     .pd-modal {
         min-height: auto;
@@ -3706,6 +3726,9 @@
 .sf-more-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: none; background: none; color: #e2e8f0; font-size: 0.78rem; cursor: pointer; width: 100%; border-radius: 6px; white-space: nowrap; }
 .sf-more-option:hover { background: rgba(255,255,255,0.08); }
 .sf-more-option i { color: #94a3b8; font-size: 0.82rem; }
+.sf-more-danger { color: #ef4444; }
+.sf-more-danger i { color: #ef4444; }
+.sf-more-danger:hover { background: rgba(239,68,68,0.1); }
 .sf-reach { padding: 4px 12px 8px; font-size: 0.72rem; color: #64748b; display: flex; align-items: center; gap: 5px; }
 .sf-reach i { color: #22c55e; font-size: 0.72rem; }
 .sf-reach strong { color: #22c55e; }
@@ -3857,6 +3880,16 @@
     background: rgba(255,255,255,0.1);
 }
 
+@media (max-width: 480px) {
+    .sf-reaction-picker {
+        left: 0;
+        transform: translateY(8px) scale(0.9);
+    }
+    .sf-reaction-picker.sf-picker-show {
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* System event banners */
 .sf-system-banner {
     padding: 6px 16px 10px;
@@ -3944,4 +3977,44 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+
+/* Shield post detail comment form from global button/textarea overrides */
+.pd-submit-btn,
+.pd-submit-btn[type="submit"] {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 0.8rem !important;
+    position: absolute !important;
+    right: 4px !important;
+    bottom: 4px !important;
+}
+
+.pd-comment-form textarea {
+    padding: 10px 16px !important;
+    padding-right: 48px !important;
+    min-height: 40px !important;
+    font-size: 16px;
+}
+
+.comments-submit-btn,
+.comments-submit-btn[type="submit"] {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+}
+
+.comments-input-wrapper textarea {
+    padding: 10px 14px !important;
+    padding-right: 60px !important;
 }

@@ -279,20 +279,24 @@ const target = document.getElementById(targetId);
 
 // Auto-load on DOMContentLoaded
 document.addEventListener("DOMContentLoaded", function() {
+    // Design system — loaded first, before any component CSS
+    LaTandaComponentLoader.loadCSS("css/design-tokens.css");
+    LaTandaComponentLoader.loadCSS("css/components.css");
+
     const headerTarget = document.getElementById("global-header");
     const sidebarTarget = document.getElementById("global-sidebar");
     const footerTarget = document.getElementById("latanda-footer");
     const hasSidebar = sidebarTarget || document.body.hasAttribute("data-sidebar");
     const hasFooter = footerTarget || document.body.hasAttribute("data-footer");
-    
+
     if (headerTarget) {
 LaTandaComponentLoader.loadHeader();
     }
-    
+
     if (hasSidebar) {
 LaTandaComponentLoader.loadSidebar();
     }
-    
+
     if (hasFooter) {
 LaTandaComponentLoader.loadFooter();
     }
@@ -837,7 +841,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
         // Load CSS
         await this.loadCSS('css/hub/hub-sections.css');
         await this.loadCSS('css/hub/mia-assistant.css');
-        await this.loadCSS('css/hub/social-feed.css?v=13.5');
+        await this.loadCSS('css/hub/social-feed.css?v=14.2');
         
         // Load JS modules
         const modules = [
@@ -846,7 +850,7 @@ LaTandaComponentLoader.loadHubModules = async function() {
             'js/hub/insights-engine.js',
             'js/hub/module-cards.js',
             'js/hub/mia-assistant.js',
-            'js/hub/social-feed.js?v=13.2'
+            'js/hub/social-feed.js?v=13.4'
         ];
         
         for (const module of modules) {

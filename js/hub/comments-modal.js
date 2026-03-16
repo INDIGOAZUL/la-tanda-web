@@ -1,8 +1,16 @@
 /**
  * LA TANDA - Comments Modal
  * Modal para ver y agregar comentarios en el feed social
- * Version: 1.5.0
+ * Version: 2.0.0
  * Added: 2026-01-25
+ * Updated: 2026-03-13 — Tier 0 audit fixes:
+ *   C1: Reply tracking with explicit state + cancel
+ *   C2: Modal stays open after comment (scrolls to new comment)
+ *   C3: confirm() → showConfirm() for delete
+ *   H2: iOS keyboard handling via visualViewport
+ *   M1: Reply indicator banner with cancel button
+ *   M3/L5: Feed count decremented on delete
+ *   L6: Empty catch blocks → user-facing error toasts
  */
 
 const CommentsModal = {
@@ -10,14 +18,15 @@ const CommentsModal = {
     currentEventId: null,
     comments: [],
     isLoading: false,
+    replyTo: null, // { id, name } — explicit reply state
 
     init() {
         this.createModal();
         this.attachEventListeners();
+        this._setupKeyboardHandler();
     },
 
     createModal() {
-        // Remove existing modal if any
         const existing = document.getElementById('commentsModal');
         if (existing) existing.remove();
 
@@ -36,7 +45,11 @@ const CommentsModal = {
                             <span>Cargando comentarios...</span>
                         </div>
                     </div>
-                    <div class="comments-modal-footer">
+                    <div class="comments-modal-footer" id="commentsModalFooter">
+                        <div class="cm-reply-indicator" id="cmReplyIndicator" style="display:none;">
+                            <span><i class="fas fa-reply"></i> Respondiendo a <strong id="cmReplyName"></strong></span>
+                            <button type="button" id="cmCancelReply" class="cm-reply-cancel"><i class="fas fa-times"></i></button>
+                        </div>
                         <form class="comments-form" id="commentsForm">
                             <div class="comments-input-wrapper">
                                 <textarea
@@ -82,7 +95,10 @@ const CommentsModal = {
             this.submitComment();
         });
 
-        // Character count
+        // Cancel reply
+        document.getElementById('cmCancelReply')?.addEventListener('click', () => this.cancelReply());
+
+        // Character count + auto-resize
         const input = document.getElementById('commentInput');
         const charCount = document.getElementById('charCount');
         const submitBtn = document.getElementById('commentSubmitBtn');
@@ -98,11 +114,31 @@ const CommentsModal = {
         });
     },
 
+    // H2: iOS keyboard handling — adjust modal when virtual keyboard appears
+    _setupKeyboardHandler() {
+        if (window.visualViewport) {
+            const footer = document.getElementById('commentsModalFooter');
+            const handler = () => {
+                if (!this.modal?.classList.contains('active')) return;
+                const vv = window.visualViewport;
+                const keyboardHeight = window.innerHeight - vv.height - vv.offsetTop;
+                if (keyboardHeight > 100 && footer) {
+                    footer.style.paddingBottom = keyboardHeight + 'px';
+                } else if (footer) {
+                    footer.style.paddingBottom = '';
+                }
+            };
+            window.visualViewport.addEventListener('resize', handler);
+            window.visualViewport.addEventListener('scroll', handler);
+        }
+    },
+
     async open(eventId) {
         if (!eventId) return;
 
         this.currentEventId = eventId;
         this.comments = [];
+        this.replyTo = null;
         this.modal?.classList.add('active');
         document.body.style.overflow = 'hidden';
 
@@ -115,6 +151,7 @@ const CommentsModal = {
         }
         if (charCount) charCount.textContent = '0';
         document.getElementById('commentSubmitBtn').disabled = true;
+        this._hideReplyIndicator();
 
         await this.loadComments();
     },
@@ -123,6 +160,10 @@ const CommentsModal = {
         this.modal?.classList.remove('active');
         document.body.style.overflow = '';
         this.currentEventId = null;
+        this.replyTo = null;
+        // Reset keyboard padding
+        const footer = document.getElementById('commentsModalFooter');
+        if (footer) footer.style.paddingBottom = '';
     },
 
     async loadComments() {
@@ -148,7 +189,6 @@ const CommentsModal = {
                 this.renderError();
             }
         } catch (error) {
-
             this.renderError();
         } finally {
             this.isLoading = false;
@@ -253,17 +293,49 @@ const CommentsModal = {
         `;
     },
 
+    // C1: Explicit reply state with indicator
     handleReply(parentId, parentName) {
+        this.replyTo = { id: parentId, name: parentName };
+        this._showReplyIndicator(parentName);
         const input = document.getElementById('commentInput');
         if (input) {
-            input.value = `@${parentName} `;
             input.focus();
-            input.dataset.parentId = parentId;
+            // Don't prepend @Name — the reply indicator is the visual cue
         }
     },
 
+    cancelReply() {
+        this.replyTo = null;
+        this._hideReplyIndicator();
+    },
+
+    _showReplyIndicator(name) {
+        const indicator = document.getElementById('cmReplyIndicator');
+        const nameEl = document.getElementById('cmReplyName');
+        if (indicator && nameEl) {
+            nameEl.textContent = name;
+            indicator.style.display = 'flex';
+        }
+    },
+
+    _hideReplyIndicator() {
+        const indicator = document.getElementById('cmReplyIndicator');
+        if (indicator) indicator.style.display = 'none';
+    },
+
+    // C3: showConfirm instead of native confirm()
     async handleDelete(commentId) {
-        if (!confirm('Eliminar este comentario?')) return;
+        const doDelete = window.LaTandaPopup?.showConfirm
+            ? await new Promise(resolve => {
+                if (typeof window.showConfirm === 'function') {
+                    window.showConfirm('Eliminar este comentario?', () => resolve(true), () => resolve(false));
+                } else {
+                    resolve(confirm('Eliminar este comentario?'));
+                }
+            })
+            : confirm('Eliminar este comentario?');
+
+        if (!doDelete) return;
 
         const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
         if (!token) return;
@@ -276,7 +348,10 @@ const CommentsModal = {
 
             const result = await response.json();
             if (result.success) {
-                // Reload comments
+                // M3/L5: Update feed card count on delete
+                const deletedCount = result.data?.deleted_count || 1;
+                this.updateFeedCommentCount(-deletedCount);
+
                 await this.loadComments();
                 if (window.LaTandaPopup) {
                     window.LaTandaPopup.showSuccess('Comentario eliminado');
@@ -287,14 +362,15 @@ const CommentsModal = {
                 }
             }
         } catch (error) {
-
+            if (window.LaTandaPopup) {
+                window.LaTandaPopup.showError('Error de conexion');
+            }
         }
     },
 
     async submitComment() {
         const input = document.getElementById('commentInput');
         const content = input?.value.trim();
-        const parentId = input?.dataset.parentId || null;
 
         if (!content) return;
 
@@ -309,6 +385,9 @@ const CommentsModal = {
         const submitBtn = document.getElementById('commentSubmitBtn');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // C1: Use explicit replyTo state instead of dataset
+        const parentId = this.replyTo?.id || null;
 
         try {
             const response = await fetch(`/api/feed/social/${this.currentEventId}/comments`, {
@@ -326,31 +405,30 @@ const CommentsModal = {
             const result = await response.json();
 
             if (result.success) {
-                // Reset input
+                // Reset input + reply state
                 input.value = '';
                 input.style.height = 'auto';
-                delete input.dataset.parentId;
                 document.getElementById('charCount').textContent = '0';
+                this.replyTo = null;
+                this._hideReplyIndicator();
 
                 // Reload comments
                 await this.loadComments();
 
-                // Scroll to bottom
+                // C2: Stay open, scroll to bottom to show new comment
                 const body = document.getElementById('commentsModalBody');
                 body.scrollTop = body.scrollHeight;
 
                 // Update comment count in feed
                 this.updateFeedCommentCount(1);
 
-                // Close modal after successful comment
-                this.close();
+                // Do NOT close modal — let user see their comment and continue the conversation
             } else {
                 if (window.LaTandaPopup) {
                     window.LaTandaPopup.showError(result.data?.error?.message || 'Error al comentar');
                 }
             }
         } catch (error) {
-
             if (window.LaTandaPopup) {
                 window.LaTandaPopup.showError('Error de conexion');
             }
@@ -367,7 +445,8 @@ const CommentsModal = {
         const commentBtn = card.querySelector('.comment-btn span');
         if (commentBtn) {
             const current = parseInt(commentBtn.textContent) || 0;
-            commentBtn.textContent = Math.max(0, current + delta) || '';
+            const newCount = Math.max(0, current + delta);
+            commentBtn.textContent = newCount || '';
         }
     },
 

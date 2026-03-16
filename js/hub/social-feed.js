@@ -1221,16 +1221,19 @@ const SocialFeed = {
         const meta = event.metadata || {};
         const isAnonymous = meta.is_anonymous === true;
         const actor = isAnonymous ? { name: 'Anonimo', initials: '??', avatar_url: null, id: null } : (event.actor || {});
-        // Predictor bot: make clickable even without actor_id
-        const isPredictorBot = !actor.id && (event.event_type === 'prediction_shared' || event.event_type === 'prediction_hit');
-        const predictorLink = isPredictorBot ? '/predictor-profile.html' : null;
+        // System bots: make clickable, link to their pages
+        const isPredictorBot = actor.id === 'system_predictor' || (!actor.id && (event.event_type === 'prediction_shared' || event.event_type === 'prediction_hit'));
+        const isMiaBot = actor.id === 'system_mia' || (!actor.id && (event.event_type === 'mia_tip' || event.event_type === 'mia_poll'));
+        const isSystemBot = isPredictorBot || isMiaBot;
+        const botLink = isPredictorBot ? '/predictor-profile.html' : isMiaBot ? '/mia.html' : null;
         const engagement = event.engagement || {};
 
         const hasImage = actor.avatar_url ? "has-image" : "initials";
+        const botEmoji = isPredictorBot ? (event.event_type === 'prediction_hit' ? '🎉' : '🎱') : isMiaBot ? '🤖' : null;
         const avatarContent = actor.avatar_url
             ? '<img src="' + this.escapeHtml(actor.avatar_url) + '" alt="' + this.escapeHtml(actor.name) + '" class="avatar-fallback-img">'
-            : isPredictorBot
-                ? '<span style="font-size:1.3rem">' + (event.event_type === 'prediction_hit' ? '🎉' : '🎱') + '</span>'
+            : botEmoji
+                ? '<span style="font-size:1.3rem">' + botEmoji + '</span>'
                 : '<span style="color: ' + (isAnonymous ? '#8b5cf6' : config.color) + '">' + this.escapeHtml(actor.initials || '??') + '</span>';
         const verifiedBadge = isAnonymous ? '' : (actor.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : '');
         const likesText = engagement.likes || '';
@@ -1279,12 +1282,12 @@ const SocialFeed = {
         return '<div class="social-card' + (isAnonymous ? ' anonymous-post' : '') + '" data-event-id="' + this.escapeHtml(String(event.id)) + '" data-type="' + this.escapeHtml(event.event_type || '') + '">' +
             repostBanner +
             '<div class="social-card-header">' +
-                '<div class="actor-avatar ' + hasImage + '" style="background: ' + avatarColor + '"' + (isPredictorBot ? ' data-href="/predictor-profile.html" role="button" tabindex="0" style="cursor:pointer"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' +
+                '<div class="actor-avatar ' + hasImage + '" style="background: ' + avatarColor + '"' + (isSystemBot ? ' data-href="' + botLink + '" role="button" tabindex="0" style="cursor:pointer"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' +
                     avatarContent +
                     verifiedBadge +
                 '</div>' +
                 '<div class="actor-info">' +
-                    '<span class="actor-name"' + (isPredictorBot ? ' data-href="/predictor-profile.html" role="button" tabindex="0" style="cursor:pointer;color:#ec4899"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
+                    '<span class="actor-name"' + (isSystemBot ? ' data-href="' + botLink + '" role="button" tabindex="0" style="cursor:pointer;color:' + (isPredictorBot ? '#ec4899' : '#3b82f6') + '"' : (isAnonymous ? '' : ' data-user-id="' + this.escapeHtml(String(actor.id || '')) + '" role="button" tabindex="0"')) + '>' + this.escapeHtml(actor.name || 'Usuario') + anonBadge + ' ' + trendingBadge + '</span>' +
                     '<span class="event-type-label" style="color: ' + config.color + '">' +
                         '<i class="fas ' + config.icon + '"></i> ' + config.label +
                         locationBadge +
@@ -1323,7 +1326,7 @@ const SocialFeed = {
                 '<button class="engagement-btn bookmark-btn' + (event.is_bookmarked ? ' bookmarked' : '') + '" data-id="' + this.escapeHtml(String(event.id)) + '" title="Guardar">' +
                     '<i class="' + (event.is_bookmarked ? 'fas' : 'far') + ' fa-bookmark"></i>' +
                 '</button>' +
-                (actor.id && actor.id !== this.currentUserId ? '<button class="engagement-btn sf-more-btn" data-author-id="' + this.escapeHtml(String(actor.id)) + '" data-author-name="' + this.escapeHtml(String(actor.name)) + '" title="Mas opciones"><i class="fas fa-ellipsis-h"></i></button>' : '') +
+                '<button class="engagement-btn sf-more-btn" data-event-id="' + this.escapeHtml(String(event.id)) + '" data-author-id="' + this.escapeHtml(String(actor.id || '')) + '" data-author-name="' + this.escapeHtml(String(actor.name || '')) + '" data-is-own="' + (isOwnPost ? '1' : '') + '" title="Mas opciones"><i class="fas fa-ellipsis-h"></i></button>' +
             '</div>' +
             this.renderReactionPills(event) +
             this.renderReachBar(event, actor) +
@@ -1619,17 +1622,33 @@ const SocialFeed = {
             if (pickerItem) { this.handleReaction(pickerItem.dataset.eventId, pickerItem.dataset.reaction); var pk = pickerItem.closest('.sf-reaction-picker'); if (pk) pk.remove(); return; }
 
             const likeBtn = e.target.closest(".like-btn");
-            // ALG-03 T3: "Not interested" handler
+            // Three-dot menu handler
             const moreBtn = e.target.closest(".sf-more-btn");
             if (moreBtn) {
                 const authorId = moreBtn.dataset.authorId;
                 const authorName = moreBtn.dataset.authorName;
-                // Show small popup
+                const eventId = moreBtn.dataset.eventId;
+                const isOwn = moreBtn.dataset.isOwn === '1';
                 const existing = document.querySelector('.sf-more-popup');
                 if (existing) existing.remove();
                 const popup = document.createElement('div');
                 popup.className = 'sf-more-popup';
-                popup.innerHTML = '<button class="sf-more-option" data-action="sf-hide-author" data-author-id="' + this.escapeHtml(authorId) + '"><i class="fas fa-eye-slash"></i> No me interesa (' + this.escapeHtml(authorName) + ')</button>';
+                let items = '';
+                // Follow (other users only, must be logged in)
+                if (!isOwn && authorId && this.currentUserId) {
+                    items += '<button class="sf-more-option" data-action="sf-follow-author" data-author-id="' + this.escapeHtml(authorId) + '"><i class="fas fa-user-plus"></i> Seguir a @' + this.escapeHtml(authorName) + '</button>';
+                }
+                // Copy link (all posts)
+                items += '<button class="sf-more-option" data-action="sf-copy-link" data-event-id="' + this.escapeHtml(eventId) + '"><i class="fas fa-link"></i> Copiar enlace</button>';
+                // Not interested (other users, not system bots)
+                if (!isOwn && authorId && authorId !== 'system_predictor' && !authorId.startsWith('system_')) {
+                    items += '<button class="sf-more-option" data-action="sf-hide-author" data-author-id="' + this.escapeHtml(authorId) + '"><i class="fas fa-eye-slash"></i> No me interesa</button>';
+                }
+                // Report (other users, not system)
+                if (!isOwn && authorId && !authorId.startsWith('system_')) {
+                    items += '<button class="sf-more-option sf-more-danger" data-action="sf-report-post" data-event-id="' + this.escapeHtml(eventId) + '"><i class="fas fa-flag"></i> Reportar</button>';
+                }
+                popup.innerHTML = items;
                 popup.style.position = 'absolute';
                 const rect = moreBtn.getBoundingClientRect();
                 popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
@@ -1640,17 +1659,47 @@ const SocialFeed = {
                 return;
             }
 
-            // Handle hide-author action
-            const hideAction = e.target.closest('[data-action="sf-hide-author"]');
-            if (hideAction) {
-                const authorId = hideAction.dataset.authorId;
-                if (authorId && !this.hiddenAuthors.includes(authorId)) {
-                    this.hiddenAuthors.push(authorId);
-                    localStorage.setItem('sf_hidden_authors', JSON.stringify(this.hiddenAuthors));
-                    this.renderEvents();
-                    if (typeof showNotification === 'function') showNotification('Veras menos publicaciones de este autor', 'info');
+            // Handle menu actions
+            const menuAction = e.target.closest('[data-action^="sf-"]');
+            if (menuAction) {
+                const action = menuAction.dataset.action;
+                const popup = menuAction.closest('.sf-more-popup');
+                if (action === 'sf-hide-author') {
+                    const authorId = menuAction.dataset.authorId;
+                    if (authorId && !this.hiddenAuthors.includes(authorId)) {
+                        this.hiddenAuthors.push(authorId);
+                        localStorage.setItem('sf_hidden_authors', JSON.stringify(this.hiddenAuthors));
+                        this.renderEvents();
+                        if (typeof showNotification === 'function') showNotification('Veras menos publicaciones de este autor', 'info');
+                    }
+                } else if (action === 'sf-follow-author') {
+                    const authorId = menuAction.dataset.authorId;
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    if (token && authorId) {
+                        fetch('/api/feed/social/follow/' + authorId, {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        }).then(r => r.json()).then(res => {
+                            if (res.success) {
+                                if (typeof showNotification === 'function') showNotification('Ahora sigues a ' + (menuAction.textContent || 'este usuario'), 'success');
+                            } else {
+                                if (typeof showNotification === 'function') showNotification(res.message || 'No se pudo seguir', 'info');
+                            }
+                        }).catch(() => {
+                            if (typeof showNotification === 'function') showNotification('Error de conexion', 'error');
+                        });
+                    }
+                } else if (action === 'sf-copy-link') {
+                    const evId = menuAction.dataset.eventId;
+                    const url = window.location.origin + '/home-dashboard.html?event=' + evId;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(url).then(() => {
+                            if (typeof showNotification === 'function') showNotification('Enlace copiado', 'success');
+                        });
+                    }
+                } else if (action === 'sf-report-post') {
+                    if (typeof showNotification === 'function') showNotification('Reporte recibido. Gracias por ayudarnos a mejorar.', 'info');
                 }
-                const popup = hideAction.closest('.sf-more-popup');
                 if (popup) popup.remove();
                 return;
             }
@@ -3836,10 +3885,12 @@ if (window.CommentsModal) {
             '</div>' +
             '<div class="pd-comment-input">' +
                 '<form class="pd-comment-form" id="pdCommentForm">' +
-                    '<textarea id="pdCommentInput" placeholder="Escribe un comentario..." maxlength="500" rows="1"></textarea>' +
-                    '<button type="submit" class="pd-submit-btn" id="pdSubmitBtn" disabled>' +
-                        '<i class="fas fa-paper-plane"></i>' +
-                    '</button>' +
+                    '<div class="pd-input-wrap">' +
+                        '<textarea id="pdCommentInput" placeholder="Escribe un comentario..." maxlength="500" rows="1"></textarea>' +
+                        '<button type="submit" class="pd-submit-btn" id="pdSubmitBtn" disabled>' +
+                            '<i class="fas fa-paper-plane"></i>' +
+                        '</button>' +
+                    '</div>' +
                 '</form>' +
             '</div>';
 

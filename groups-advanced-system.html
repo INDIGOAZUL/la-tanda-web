@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=3.9">
+    <link rel="stylesheet" href="css/groups-page.css?v=4.6">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -876,7 +876,7 @@
                     '<h3>Comienza tu primera tanda</h3>' +
                     '<p>Crea un grupo de ahorro con amigos, familia o companeros de trabajo.</p>' +
                     '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">' +
-                        '<button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;border-radius:10px;" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
+                        '<button class="btn btn-primary ds-btn ds-btn-primary ds-btn-sm" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
                     '</div>' +
                 '</div>';
                 return;
@@ -890,7 +890,7 @@
                         '<h3>Aun no has creado ningun grupo</h3>' +
                         '<p>Crea tu primer grupo de ahorro y empieza a administrar tu tanda.</p>' +
                         '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;">' +
-                            '<button class="btn btn-primary" style="padding:8px 16px;font-size:0.8rem;border-radius:10px;" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
+                            '<button class="btn btn-primary ds-btn ds-btn-primary ds-btn-sm" data-action="switch-groups-tab" data-tab="create"><i class="fas fa-plus-circle"></i> Crear Grupo</button>' +
                         '</div>' +
                     '</div>';
                 } else {
@@ -1119,7 +1119,7 @@
             // Commission label for card
             var commLabel;
             if (groupCustomRate === null) commLabel = '5%';
-            else if (groupCustomRate === 0) commLabel = 'Sin comision';
+            else if (groupCustomRate === 0) commLabel = '0%';
             else commLabel = groupCustomRate + '%';
 
             // Avatar letter
@@ -1129,11 +1129,11 @@
             var freqLabel = frequencyLabels[group.frequency] || group.frequency || '--';
 
             // Members display (public cards use active_members if available)
-            var memberNum = group.is_public ? (group.active_members || group.member_count || 0) : (group.total_positions || group.members_count || 0);
+            var memberNum = group.is_public ? (group.active_members || group.member_count || 0) : (group.members_count || group.member_count || 0);
             var membersDisplay = memberNum + '/' + (group.max_members || '?');
 
             // Role pill colors
-            var roleClass = group.my_role === 'creator' ? 'gc-role-creator' : group.my_role === 'coordinator' ? 'gc-role-coord' : 'gc-role-member';
+            var roleClass = group.my_role === 'creator' ? 'gc-role-creator ds-badge-purple' : group.my_role === 'coordinator' ? 'gc-role-coord ds-badge-green' : 'gc-role-member ds-badge-blue';
 
             // Category + location subtitle
             var subParts = [];
@@ -1155,12 +1155,10 @@
 
             // Action buttons (contextual by role)
             var isAdmin = ['creator', 'coordinator', 'admin'].includes(group.my_role);
-            var actionsHtml = '<button class="btn btn-primary" style="background:linear-gradient(135deg,#00FFFF,#00B8D4);color:#0f172a" data-action="grp-view-group" data-group-id="' + escapeHtml(group.id) + '">Ver Detalles</button>';
+            var actionsHtml = '<button class="btn btn-primary ds-btn ds-btn-primary" data-action="grp-view-group" data-group-id="' + escapeHtml(group.id) + '">' + (isAdmin ? 'Ver Tandas' : 'Ver Grupo') + '</button>';
             if (isAdmin) {
-                actionsHtml += '<button class="btn btn-secondary" data-action="grp-manage-group" data-group-id="' + escapeHtml(group.id) + '">Administrar</button>';
-                actionsHtml += '<button class="btn btn-icon" data-action="grp-manage-members" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '" title="Gestionar miembros">&#x1F465; <span class="btn-icon-label">Miembros</span></button>';
-            } else {
-                actionsHtml += '<button class="btn btn-secondary" data-action="grp-view-group" data-group-id="' + escapeHtml(group.id) + '">Ver Grupo</button>';
+                actionsHtml += '<button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="grp-manage-group" data-group-id="' + escapeHtml(group.id) + '"><i class="fas fa-cog" style="margin-right:4px;font-size:0.7rem;"></i>Administrar</button>';
+                actionsHtml += '<button class="btn btn-icon ds-btn ds-btn-outline" data-action="grp-manage-members" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '" title="Gestionar miembros">&#x1F465; <span class="btn-icon-label">Miembros</span></button>';
             }
 
             // v4.11.0: Solicitar Prórroga button for members with pending/late payments
@@ -1171,7 +1169,7 @@
             // Public group card overrides (discover open groups)
             if (group.is_public) {
                 statusColor = '#f59e0b';
-                roleClass = 'gc-role-open';
+                roleClass = 'gc-role-open ds-badge-amber';
 
                 // Creator info with verification badge
                 var creatorParts = [];
@@ -1235,7 +1233,9 @@
 
                 // Spaces remaining
                 var spacesLeft = (group.max_members || 0) - (group.active_members || group.member_count || 0);
-                if (spacesLeft <= 3 && spacesLeft > 0) {
+                if (spacesLeft <= 0) {
+                    trustAlerts.push({ severity: 'danger', message: 'Grupo completo \u2014 sin espacios disponibles' });
+                } else if (spacesLeft <= 3) {
                     trustAlerts.push({ severity: 'warning', message: spacesLeft + ' espacio' + (spacesLeft > 1 ? 's' : '') + ' disponible' + (spacesLeft > 1 ? 's' : '') });
                 }
 
@@ -1247,19 +1247,20 @@
                     }).join('');
                 }
 
-                actionsHtml = '<button class="btn btn-secondary gc-btn-detail" data-action="grp-public-detail" data-group-id="' + escapeHtml(group.id) + '">Ver Detalles</button>' +
-                    '<button class="btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '">Solicitar unirse</button>';
+                var joinDisabled = spacesLeft <= 0;
+                actionsHtml = '<button class="btn btn-secondary ds-btn ds-btn-secondary gc-btn-detail" data-action="grp-public-detail" data-group-id="' + escapeHtml(group.id) + '">Ver Detalles</button>' +
+                    '<button class="btn ds-btn gc-btn-join" data-action="grp-join-request" data-group-id="' + escapeHtml(group.id) + '" data-group-name="' + escapeHtml(group.name) + '"' + (joinDisabled ? ' disabled' : '') + '>' + (joinDisabled ? 'Grupo Lleno' : 'Solicitar unirse') + '</button>';
             }
 
-            return '<div class="group-card" ' + (group.is_public ? 'data-public="true" ' : '') + 'data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
+            return '<div class="group-card ds-card" ' + (group.is_public ? 'data-public="true" ' : '') + 'data-group-id="' + escapeHtml(group.id) + '" data-status="' + escapeHtml(st) + '" style="border-color:' + statusColor + '">' +
                 '<div class="gc-header">' +
                     '<div class="gc-avatar" style="background:' + statusColor + ';color:' + (st === 'suspended' || st === 'cancelled' ? '#fff' : '#0f172a') + '">' + avatarLetter + '</div>' +
                     '<div class="gc-name">' +
                         '<h3>' + escapeHtml(group.name) + '</h3>' +
                         (subtitle ? '<div class="gc-sub">' + subtitle + '</div>' : '') +
                     '</div>' +
-                    '<span class="gc-role ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' +
-                    (isAdmin && group.active_loans_count > 0 ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;font-size:0.68rem;font-weight:600;margin-left:6px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>' + group.active_loans_count + ' deuda' + (group.active_loans_count > 1 ? 's' : '') + '</span>' : '') +
+                    '<span class="gc-role ds-badge ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' +
+                    (group.active_loans_count > 0 ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;font-size:0.68rem;font-weight:600;margin-left:6px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>' + (isAdmin ? group.active_loans_count + ' deuda' + (group.active_loans_count > 1 ? 's' : '') : 'Deudas activas') + '</span>' : '') +
                     _gcTrustBadge(group) +
                 '</div>' +
                 (group.description ? '<div class="gc-desc">' + escapeHtml(group.description) + '</div>' : '') +
@@ -1270,7 +1271,7 @@
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val cyan">' + _gcFmtL(payout.user_receives) + '</div>' +
-                        '<div class="gc-stat-label">' + (group.is_public ? 'Pool (meta)' : 'Recibes' + ((group.my_num_positions || 1) > 1 ? '/turno' : '')) + '</div>' +
+                        '<div class="gc-stat-label">' + (group.is_public ? 'Pool (meta)' : 'Recibes' + ((group.my_num_positions || 1) > 1 ? ' \u00d7 ' + (group.my_num_positions || 1) + ' turnos' : '')) + '</div>' +
                     '</div>' +
                     '<div class="gc-stat">' +
                         '<div class="gc-stat-val">' + escapeHtml(membersDisplay) + '</div>' +
@@ -2823,7 +2824,7 @@ async function loadUsersWithoutPositions(groupId) {
                 </form>
 
             <!-- ===== TEMPLATE SELECTOR MODAL ===== -->
-            <div id="template-modal" class="modal-overlay" style="display: none;">
+            <div id="template-modal" class="modal-overlay ds-overlay" style="display: none;">
                 <div class="modal-content template-selector-modal">
                     <div class="modal-header-templates">
                         <h3>🎯 Elige una Plantilla para tu Grupo</h3>
@@ -4102,7 +4103,7 @@ function renderTandaCard(tanda) {
         'scheduled': '#f59e0b', 'paused': '#94a3b8'
     };
     var roleLabels = { 'creator': 'Creador', 'coordinator': 'Coordinador', 'member': 'Miembro' };
-    var roleClasses = { 'creator': 'gc-role-creator', 'coordinator': 'gc-role-coord', 'member': 'gc-role-member' };
+    var roleClasses = { 'creator': 'gc-role-creator ds-badge-purple', 'coordinator': 'gc-role-coord ds-badge-green', 'member': 'gc-role-member ds-badge-blue' };
 
     var statusLabel = statusLabels[tanda.status] || escapeHtml(tanda.status);
     var statusColor = statusColors[tanda.status] || '#94a3b8';
@@ -4224,7 +4225,7 @@ function renderTandaCard(tanda) {
             if (graceDeadline) {
                 var graceDaysLeft = Math.ceil((new Date(graceDeadline + 'T23:59:59') - new Date()) / 86400000);
                 if (graceDaysLeft > 0) {
-                    alerts = [{ severity: 'warning', message: 'Pago vencido. ' + graceDaysLeft + ' d\u00eda' + (graceDaysLeft !== 1 ? 's' : '') + ' de gracia restantes' }];
+                    alerts = [{ severity: 'warning', message: 'Periodo de cobro abierto. ' + graceDaysLeft + ' d\u00eda' + (graceDaysLeft !== 1 ? 's' : '') + ' para pagar' }];
                 } else {
                     alerts = [{ severity: 'danger', message: 'Pago atrasado. Periodo de gracia vencido' }];
                 }
@@ -4233,10 +4234,18 @@ function renderTandaCard(tanda) {
             var dueDate = tanda.next_payment_date;
             if (dueDate) {
                 var todayNoon = new Date(); todayNoon.setHours(12, 0, 0, 0);
-                var daysUntil = Math.round((new Date(dueDate.length === 10 ? dueDate + 'T12:00:00' : dueDate) - todayNoon) / 86400000);
-                if (daysUntil <= 5 && daysUntil > 0) {
-                    var sev = daysUntil <= 2 ? 'warning' : 'info';
-                    alerts = [{ severity: sev, message: 'Tu pago vence en ' + daysUntil + ' d\u00eda' + (daysUntil !== 1 ? 's' : '') }];
+                var dueDateObj = new Date(dueDate.length === 10 ? dueDate + 'T12:00:00' : dueDate);
+                var daysUntil = Math.round((dueDateObj - todayNoon) / 86400000);
+                if (daysUntil > 0 && daysUntil <= 5) {
+                    alerts = [{ severity: 'info', message: 'Periodo de cobro abre en ' + daysUntil + ' d\xeda' + (daysUntil !== 1 ? 's' : '') }];
+                } else if (daysUntil <= 0) {
+                    var graceEnd = tanda.next_payment_grace_deadline || tanda.my_next_payment_grace_deadline;
+                    if (graceEnd) {
+                        var gLeft = Math.ceil((new Date(graceEnd + 'T23:59:59') - new Date()) / 86400000);
+                        if (gLeft > 0) {
+                            alerts = [{ severity: 'warning', message: 'Periodo de cobro abierto. ' + gLeft + ' d\xeda' + (gLeft !== 1 ? 's' : '') + ' para pagar' }];
+                        }
+                    }
                 }
             }
         }
@@ -4286,7 +4295,7 @@ function renderTandaCard(tanda) {
         s1Icon = '&#x1F4B5; '; s2Icon = '&#35; '; s3Icon = '&#x2705; '; s4Icon = '&#x1F4C5; ';
     }
 
-    return '<div class="group-card tc-card' + cardStatusClass + '" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '">' +
+    return '<div class="group-card tc-card ds-card' + cardStatusClass + '" data-tanda-id="' + escapeHtml(String(tanda.tanda_id || '')) + '">' +
         '<div class="tc-top-border" style="background:linear-gradient(90deg,' + borderColor + ',' + (borderColor === '#ef4444' ? '#dc2626' : borderColor === '#f59e0b' ? '#d97706' : borderColor === '#22c55e' ? '#10b981' : '#0ea5e9') + ');"></div>' +
         '<div class="gc-header">' +
             '<div class="gc-avatar" style="background:' + avatarBg + ';color:#000;">' + avatarLetter + '</div>' +
@@ -4294,7 +4303,7 @@ function renderTandaCard(tanda) {
                 '<h3 class="gc-name">' + escapeHtml(groupName) + '</h3>' +
                 '<div class="gc-sub">' + subtitleHtml + '</div>' +
             '</div>' +
-            '<span class="gc-role ' + roleClass + '">' + roleLabel + '</span>' +
+            '<span class="gc-role ds-badge ' + roleClass + '">' + roleLabel + '</span>' +
         '</div>' +
         '<div class="tc-progress">' +
             '<div class="tc-progress-info"><span>' + progressText + '</span></div>' +
@@ -5414,230 +5423,6 @@ if (document.readyState === "loading") {
     <!-- Enhanced Toast Notification System -->
     <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
 
-    <style>
-        /* Toast Animations */
-        @keyframes toastSlideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes toastSlideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-
-        .toast-notification {
-            min-width: 300px;
-            max-width: 400px;
-            padding: 16px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            animation: toastSlideIn 0.3s ease-out;
-            background: #1e293b;
-        }
-
-        .toast-notification.removing {
-            animation: toastSlideOut 0.3s ease-in forwards;
-        }
-
-        .toast-notification.success {
-            border-left: 4px solid #10b981;
-        }
-
-        .toast-notification.error {
-            border-left: 4px solid #ef4444;
-        }
-
-        .toast-notification.info {
-            border-left: 4px solid #3b82f6;
-        }
-
-        .toast-notification.warning {
-            border-left: 4px solid #f59e0b;
-        }
-
-        .toast-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .toast-notification.success .toast-icon {
-            background: rgba(16,185,129,0.15);
-            color: #10b981;
-        }
-
-        .toast-notification.error .toast-icon {
-            background: rgba(239,68,68,0.15);
-            color: #ef4444;
-        }
-
-        .toast-notification.info .toast-icon {
-            background: rgba(59,130,246,0.15);
-            color: #3b82f6;
-        }
-
-        .toast-notification.warning .toast-icon {
-            background: rgba(245,158,11,0.15);
-            color: #f59e0b;
-        }
-
-        .toast-content {
-            flex: 1;
-        }
-
-        .toast-title {
-            font-weight: 600;
-            color: #f8fafc;
-            font-size: 0.9375rem;
-            margin-bottom: 2px;
-        }
-
-        .toast-message {
-            color: #94a3b8;
-            font-size: 0.8125rem;
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: #9ca3af;
-            cursor: pointer;
-            padding: 4px;
-            margin: -4px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .toast-close:hover {
-            background: rgba(255,255,255,0.1);
-            color: #e2e8f0;
-        }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15,23,42,0.9);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 99998;
-        }
-
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #334155;
-            border-top-color: #00FFFF;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .loading-text {
-            margin-top: 16px;
-            color: #94a3b8;
-            font-size: 0.9375rem;
-        }
-
-        /* Button Loading State */
-        .btn-loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            border: 2px solid currentColor;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-left: 8px;
-        }
-
-        /* Smooth transitions for modals */
-        .modal-overlay {
-            transition: opacity 0.3s ease-out;
-        }
-
-        .modal-overlay .modal-content {
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-        }
-
-        /* Ripple effect for buttons */
-        .btn-ripple {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-ripple::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.4s, height 0.4s;
-        }
-
-        .btn-ripple:active::before {
-            width: 200%;
-            height: 200%;
-        }
-
-        /* Skeleton loading */
-        .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-            background-size: 200% 100%;
-            animation: skeletonLoading 1.5s infinite;
-            border-radius: 4px;
-        }
-
-        @keyframes skeletonLoading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* Improved form feedback */
-        input:invalid:not(:placeholder-shown),
-        select:invalid:not(:placeholder-shown) {
-            border-color: #ef4444;
-        }
-
-        input:valid:not(:placeholder-shown) {
-            border-color: #10b981;
-        }
-    </style>
 
     <script>
         // Enhanced Toast System
@@ -5750,7 +5535,7 @@ if (document.readyState === "loading") {
 
 
     <!-- Edit Group Modal -->
-    <div id="editGroupModal" class="modal-overlay" style="display: none;">
+    <div id="editGroupModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow: hidden;">
             <div class="modal-header" style="background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(0,255,255,0.05)); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -5871,47 +5656,11 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
-    <style>
-        #editGroupModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        #editGroupModal .modal-content {
-            background: #0f172a;
-            border: 1px solid rgba(0,255,255,0.15);
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            width: 90%;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        #editGroupModal input:focus,
-        #editGroupModal select:focus,
-        #editGroupModal textarea:focus {
-            outline: none;
-            border-color: #00FFFF;
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
-        }
-
-        #editGroupSubmitBtn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    </style>
 
 
 
     <!-- ===== DELETE GROUP CONFIRMATION MODAL ===== -->
-    <div id="deleteGroupModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; justify-content: center; align-items: center;">
+    <div id="deleteGroupModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 450px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -5976,7 +5725,7 @@ if (document.readyState === "loading") {
     <!-- ===== END DELETE GROUP MODAL ===== -->
 
     <!-- ===== MANAGE TURNS MODAL ===== -->
-    <div id="manageTurnsModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; justify-content: center; align-items: center;">
+    <div id="manageTurnsModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 500px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px; max-height: 80vh;">
             <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6039,7 +5788,7 @@ if (document.readyState === "loading") {
     </div>
     <!-- ===== END MANAGE TURNS MODAL ===== -->
     <!-- Register Payment Modal -->
-    <div id="registerPaymentModal" class="modal-overlay" style="display: none;">
+    <div id="registerPaymentModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
             <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6191,64 +5940,10 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
-    <style>
-        .payment-method-card:hover { border-color: #00FFFF !important; background: rgba(0,255,255,0.05); }
-        .payment-method-card.selected { border-color: #00FFFF !important; background: rgba(0,255,255,0.1); }
-        #proofUploadArea:hover { border-color: #00FFFF; background: rgba(0,255,255,0.05); }
-        .step-dot.active { background: #059669 !important; }
-        .step-dot.completed { background: #059669 !important; }
-        #registerPaymentModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        #registerPaymentModal .modal-content {
-            background: #0f172a;
-            border: 1px solid rgba(0,255,255,0.15);
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        #registerPaymentModal .modal-body {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        #registerPaymentModal .modal-footer {
-            flex-shrink: 0;
-        }
-
-        #registerPaymentModal input:focus,
-        #registerPaymentModal select:focus,
-        #registerPaymentModal textarea:focus {
-            outline: none;
-            border-color: #00FFFF;
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
-        }
-
-        #paymentSubmitBtn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    </style>
 
 
     <!-- View Members Modal -->
-    <div id="groupMembersModal" class="modal-overlay" style="display: none;">
+    <div id="groupMembersModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow: hidden;">
             <div class="modal-header" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6295,156 +5990,12 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
-    <style>
-        #groupMembersModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        #groupMembersModal .modal-content {
-            background: #0f172a;
-            border: 1px solid rgba(0,255,255,0.15);
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            width: 90%;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        .member-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            margin-bottom: 8px;
-        }
-
-        .member-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.125rem;
-        }
-
-        .member-info {
-            flex: 1;
-        }
-
-        .member-name {
-            font-weight: 500;
-            color: #f8fafc;
-            margin-bottom: 2px;
-        }
-
-        .member-role {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 9999px;
-            display: inline-block;
-        }
-
-        .member-role.creator { background: rgba(217,119,6,0.15); color: #fbbf24; }
-        .member-role.coordinator { background: rgba(37,99,235,0.15); color: #60a5fa; }
-        .member-role.member { background: rgba(255,255,255,0.1); color: #94a3b8; }
-
-        .member-position {
-            font-size: 0.8125rem;
-            color: #94a3b8;
-        }
-
-        /* Current user highlight */
-        .member-card.current-user {
-            background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));
-            border: 2px solid #8b5cf6;
-        }
-
-        .member-avatar.anonymous {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-        }
-
-        /* Member action buttons */
-        .member-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 12px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 0 0 12px 12px;
-            margin-top: -8px;
-            margin-bottom: 8px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 12px;
-            font-size: 0.8125rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .action-btn.anonymous-btn {
-            background: rgba(217,119,6,0.15);
-            color: #fbbf24;
-        }
-        .action-btn.anonymous-btn:hover {
-            background: rgba(217,119,6,0.25);
-        }
-
-        .action-btn.role-btn {
-            background: rgba(37,99,235,0.15);
-            color: #60a5fa;
-        }
-        .action-btn.role-btn:hover {
-            background: rgba(37,99,235,0.25);
-        }
-
-        .action-btn.leave-btn {
-            background: rgba(220,38,38,0.15);
-            color: #f87171;
-        }
-        .action-btn.leave-btn:hover {
-            background: rgba(220,38,38,0.25);
-        }
-
-        .action-btn.leave-btn.warning {
-            background: rgba(234,88,12,0.15);
-            color: #fb923c;
-        }
-        .action-btn.leave-btn.warning:hover {
-            background: rgba(234,88,12,0.25);
-        }
-
-        .member-position {
-            font-size: 0.8125rem;
-            color: #94a3b8;
-        }
-    </style>
 
 
     <!-- View Payments Modal -->
 
     <!-- Leave Group Confirmation Modal -->
-    <div id="leaveGroupConfirmModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100001; justify-content: center; align-items: center;">
+    <div id="leaveGroupConfirmModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 400px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #dc2626, #991b1b); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6473,7 +6024,7 @@ if (document.readyState === "loading") {
     </div>
 
     <!-- Request Role Modal -->
-    <div id="requestRoleModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100001; justify-content: center; align-items: center;">
+    <div id="requestRoleModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 420px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6494,23 +6045,6 @@ if (document.readyState === "loading") {
             </div>
             <div style="padding: 24px;">
                 <div id="roleOptionsContainer" style="margin-bottom: 16px;"></div>
-                <style>
-                    .role-option {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        padding: 12px;
-                        background: #243447;
-                        border-radius: 10px;
-                        margin-bottom: 8px;
-                        cursor: pointer;
-                        color: #e5e7eb;
-                    }
-                    .role-option:hover { background: #2d4156; }
-                    .role-option input { width: 18px; height: 18px; }
-                    .role-option span { font-weight: 500; }
-                    .role-option small { display: block; font-size: 0.75rem; color: #9ca3af; margin-top: 2px; }
-                </style>
                 <textarea id="roleRequestReason" placeholder="Razon de la solicitud (opcional)..." style="width: 100%; padding: 12px; background: #243447; border: 1px solid #374151; border-radius: 10px; color: #e5e7eb; resize: none; height: 80px; margin-bottom: 16px;"></textarea>
                 <div style="display: flex; gap: 12px;">
                     <button data-action="grp-close-request-role" style="flex: 1; padding: 12px; background: #374151; border: none; border-radius: 10px; color: white; cursor: pointer;">Cancelar</button>
@@ -6521,7 +6055,7 @@ if (document.readyState === "loading") {
     </div>
 
     <!-- Transfer Ownership Modal -->
-    <div id="transferOwnershipModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100001; justify-content: center; align-items: center;">
+    <div id="transferOwnershipModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 420px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px;">
             <div class="modal-header" style="background: linear-gradient(135deg, #ea580c, #c2410c); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -6619,289 +6153,11 @@ if (document.readyState === "loading") {
     </div>
 
 
-    <style>
-        /* Payment History Modal (ph-) */
-        .ph-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-        .ph-modal {
-            background: #0f172a;
-            border-radius: 16px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-            width: 90%;
-            max-width: 700px;
-            max-height: 85vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-        .ph-header {
-            background: linear-gradient(135deg, #0e2a47 0%, #0f172a 100%);
-            color: #e2e8f0;
-            padding: 18px 20px;
-            border-bottom: 1px solid rgba(0,255,255,0.15);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-        }
-        .ph-header-icon {
-            background: rgba(0,255,255,0.12);
-            padding: 9px;
-            border-radius: 10px;
-            color: #00FFFF;
-        }
-        .ph-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: #f1f5f9; }
-        .ph-subtitle { margin: 3px 0 0; font-size: 0.8rem; color: #64748b; }
-        .ph-close-btn {
-            background: rgba(255,255,255,0.08);
-            border: none;
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s, color 0.2s;
-        }
-        .ph-close-btn:hover { background: rgba(255,255,255,0.15); color: #e2e8f0; }
-
-        /* Tabs */
-        .ph-tabs {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 10px 20px;
-            background: #0f172a;
-            border-bottom: 1px solid #1e293b;
-        }
-        .ph-tab {
-            padding: 7px 16px;
-            background: transparent;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #94a3b8;
-            font-size: 0.82rem;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
-        .ph-tab:hover { background: #1e293b; color: #e2e8f0; }
-        .ph-tab-active { background: rgba(0,255,255,0.1); border-color: #00FFFF; color: #00FFFF; }
-        .ph-cycle-filter { margin-left: auto; }
-        .ph-cycle-select {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #e2e8f0;
-            border-radius: 6px;
-            padding: 5px 8px;
-            font-size: 0.78rem;
-            cursor: pointer;
-        }
-        .ph-cycle-select:focus { outline: 1px solid #00FFFF; border-color: #00FFFF; }
-
-        /* Stats Bar */
-        .ph-stats-bar {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            padding: 10px 20px;
-            background: #0f172a;
-            border-bottom: 1px solid #1e293b;
-        }
-        .ph-stat {
-            text-align: center;
-            padding: 6px 0;
-            background: rgba(30,41,59,0.5);
-            border-radius: 8px;
-        }
-        .ph-stat-val { display: block; font-size: 1.2rem; font-weight: 700; }
-        .ph-stat-label { font-size: 0.7rem; color: #64748b; }
-        .ph-stat-ok { color: #00FFFF; }
-        .ph-stat-warn { color: #f59e0b; }
-        .ph-stat-danger { color: #ef4444; }
-
-        /* Body */
-        .ph-body {
-            padding: 16px 20px;
-            overflow-y: auto;
-            flex: 1;
-            max-height: calc(85vh - 200px);
-        }
-        .ph-loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: #64748b;
-        }
-        .ph-spinner {
-            width: 36px; height: 36px;
-            border: 3px solid #1e293b;
-            border-top-color: #00FFFF;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 12px;
-        }
-        .ph-empty { text-align: center; padding: 40px; color: #475569; }
-
-        /* Resumen tab: member rows */
-        .ph-member-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: #1e293b;
-            border-radius: 10px;
-            margin-bottom: 6px;
-            border: 1px solid #334155;
-        }
-        .ph-avatar {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .ph-member-info { flex: 1; min-width: 0; }
-        .ph-member-name {
-            font-weight: 500;
-            font-size: 0.88rem;
-            color: #e2e8f0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .ph-member-meta { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
-        .ph-member-right { text-align: right; flex-shrink: 0; }
-        .ph-member-progress { font-size: 0.78rem; color: #94a3b8; }
-        .ph-member-debt { font-size: 0.75rem; color: #ef4444; margin-top: 2px; }
-        .ph-pill {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.68rem;
-            font-weight: 600;
-        }
-        .ph-pill-paid { background: rgba(0,255,255,0.12); color: #00FFFF; }
-        .ph-pill-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-        .ph-pill-late { background: rgba(239,68,68,0.15); color: #ef4444; }
-        .ph-pill-suspended { background: rgba(239,68,68,0.2); color: #fca5a5; }
-        .ph-pill-ahead { background: rgba(34,197,94,0.15); color: #22c55e; }
-        .ph-pill-numpos { background: rgba(0,255,255,0.1); color: #67e8f9; font-size: 0.65rem; margin-left: 4px; }
-
-        /* Historial tab: contribution cards */
-        .ph-cycle-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 14px 0 8px;
-            color: #64748b;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .ph-cycle-header:first-child { margin-top: 0; }
-        .ph-cycle-header::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #334155;
-        }
-        .ph-cycle-badge-hdr {
-            background: rgba(0,255,255,0.1);
-            color: #00FFFF;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-        }
-        .ph-contrib-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: #1e293b;
-            border-radius: 10px;
-            margin-bottom: 6px;
-            border: 1px solid #334155;
-        }
-        .ph-contrib-icon {
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .ph-contrib-icon.completed { background: rgba(0,255,255,0.12); color: #00FFFF; }
-        .ph-contrib-icon.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-        .ph-contrib-info { flex: 1; min-width: 0; }
-        .ph-contrib-name {
-            font-weight: 500;
-            font-size: 0.85rem;
-            color: #e2e8f0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .ph-contrib-detail { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
-        .ph-contrib-right { text-align: right; flex-shrink: 0; }
-        .ph-contrib-amount { font-weight: 600; font-size: 0.92rem; color: #00FFFF; }
-        .ph-contrib-date { font-size: 0.7rem; color: #475569; margin-top: 2px; }
-        .ph-method-pill {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 0.62rem;
-            background: rgba(100,116,139,0.2);
-            color: #94a3b8;
-            margin-left: 4px;
-        }
-        .ph-verified-line { font-size: 0.68rem; color: #475569; margin-top: 3px; }
-        .ph-verified-badge {
-            display: inline-block;
-            padding: 1px 5px;
-            border-radius: 3px;
-            font-size: 0.6rem;
-            background: rgba(0,255,255,0.08);
-            color: #67e8f9;
-            margin-left: 3px;
-        }
-
-        @media (max-width: 480px) {
-            .ph-modal { width: 96%; max-height: 92vh; border-radius: 12px; }
-            .ph-header { padding: 14px 16px; }
-            .ph-tabs { padding: 8px 12px; flex-wrap: wrap; gap: 6px; }
-            .ph-cycle-filter { margin-left: 0; width: 100%; }
-            .ph-cycle-select { width: 100%; }
-            .ph-stats-bar { padding: 8px 12px; gap: 6px; }
-            .ph-body { padding: 12px; }
-            .ph-member-row, .ph-contrib-card { padding: 8px 10px; gap: 8px; }
-            .ph-member-name, .ph-contrib-name { font-size: 0.82rem; }
-        }
-
-    </style>
 
 
 
     <!-- Invite Members Modal -->
-    <div id="inviteMembersModal" class="modal-overlay" style="display: none;">
+    <div id="inviteMembersModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
             <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -7032,7 +6288,7 @@ if (document.readyState === "loading") {
     </div>
 
     <!-- Pre-Add Member Modal -->
-    <div id="preAddMemberModal" class="modal-overlay" style="display: none;">
+    <div id="preAddMemberModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 460px; max-height: 90vh; display: flex; flex-direction: column; background: #0f172a; border: 1px solid rgba(251,191,36,0.2); border-radius: 16px;">
             <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -7086,70 +6342,6 @@ if (document.readyState === "loading") {
         </div>
     </div>
 
-    <style>
-        #inviteMembersModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        #inviteMembersModal .modal-content {
-            background: #0f172a;
-            border: 1px solid rgba(0,255,255,0.15);
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-            width: 90%;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        /* Mobile fixes for invite modal */
-        @media (max-width: 480px) {
-            #inviteMembersModal .modal-content {
-                max-height: 95vh !important;
-                margin: 10px;
-                border-radius: 12px;
-            }
-            #inviteMembersModal .modal-header {
-                padding: 16px !important;
-            }
-            #inviteMembersModal .modal-body {
-                padding: 16px !important;
-            }
-            #inviteMembersModal .modal-footer {
-                padding: 12px 16px !important;
-                flex-wrap: wrap;
-            }
-            #inviteMembersModal .modal-footer button {
-                flex: 1;
-                min-width: 120px;
-            }
-        }
-
-        #inviteMembersModal input:focus,
-        #inviteMembersModal textarea:focus {
-            outline: none;
-            border-color: #00FFFF;
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
-        }
-
-        .invite-method-btn.active {
-            border-color: #f59e0b !important;
-            background: rgba(245,158,11,0.1) !important;
-            color: #d97706 !important;
-        }
-
-        #inviteSubmitBtn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    </style>
 
 
     <script>
@@ -11131,8 +10323,8 @@ function renderTurnsList() {
                 buttons += '</div>';
             }
 
-            var modalHtml = '<div id="groupManageModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 10000;">' +
-                '<div class="modal-content" style="background: #0f172a; border: 1px solid rgba(0,255,255,0.15); border-radius: 16px; max-width: 400px; width: 90%; max-height: 85vh; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">' +
+            var modalHtml = '<div id="groupManageModal" class="modal-overlay ds-overlay" style="display: none;">' +
+                '<div class="modal-content ds-modal" style="max-width: 400px;">' +
                     '<div class="modal-header" style="background: linear-gradient(135deg, rgba(0,255,255,0.15) 0%, rgba(0,255,255,0.05) 100%); color: #f8fafc; padding: 20px; border-bottom: 1px solid rgba(0,255,255,0.1); position: relative;">' +
                         '<div style="display: flex; align-items: center; gap: 12px;">' +
                             '<div style="background: rgba(0,255,255,0.15); padding: 10px; border-radius: 12px;"><i class="fas fa-cog" style="font-size: 20px; color: #00FFFF;"></i></div>' +
@@ -12172,17 +11364,6 @@ function renderTurnsList() {
 </script>
 
 <!-- FASE 1: Export Functions - Fixed 2026-03-04: auth + cycle picker -->
-<style>
-.exp-cycle-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100002; display: flex; align-items: center; justify-content: center; }
-.exp-cycle-modal { background: #1e293b; border-radius: 16px; padding: 24px; width: 340px; max-width: 90vw; color: #e2e8f0; }
-.exp-cycle-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
-.exp-cycle-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
-.exp-cycle-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 16px; color: #e2e8f0; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; transition: background 0.15s; }
-.exp-cycle-btn:hover { background: rgba(5,150,105,0.15); border-color: #059669; }
-.exp-cycle-btn .exp-cycle-meta { color: #9ca3af; font-size: 0.78rem; }
-.exp-cycle-close { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 0.85rem; margin-top: 12px; width: 100%; text-align: center; padding: 8px; }
-.exp-cycle-close:hover { color: #e2e8f0; }
-</style>
 <script>
 (function() {
     'use strict';
@@ -12328,239 +11509,6 @@ function renderTurnsList() {
     </div>
 </div>
 
-<style>
-    /* Verify Payments Modal (vp-) */
-    .vp-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.7);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        justify-content: center;
-        align-items: center;
-        z-index: 10001;
-    }
-    .vp-modal {
-        background: #0f172a;
-        border-radius: 16px;
-        box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-        width: 95%;
-        max-width: 620px;
-        max-height: 90vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        animation: modalSlideIn 0.3s ease-out;
-    }
-    .vp-header {
-        background: linear-gradient(135deg, #0e2a47 0%, #0f172a 100%);
-        color: #e2e8f0;
-        padding: 18px 20px;
-        border-bottom: 1px solid rgba(245,158,11,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .vp-header-icon {
-        background: rgba(245,158,11,0.15);
-        padding: 9px;
-        border-radius: 10px;
-        color: #f59e0b;
-    }
-    .vp-title { margin: 0; font-size: 1.15rem; font-weight: 600; color: #f1f5f9; }
-    .vp-subtitle { margin: 3px 0 0; font-size: 0.8rem; color: #64748b; }
-    .vp-close-btn {
-        background: rgba(255,255,255,0.08);
-        border: none;
-        width: 32px; height: 32px;
-        border-radius: 8px;
-        color: #94a3b8;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s, color 0.2s;
-    }
-    .vp-close-btn:hover { background: rgba(255,255,255,0.15); color: #e2e8f0; }
-    .vp-stats-bar {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        padding: 10px 20px;
-        background: #0f172a;
-        border-bottom: 1px solid #1e293b;
-    }
-    .vp-stat {
-        text-align: center;
-        padding: 6px 0;
-        background: rgba(30,41,59,0.5);
-        border-radius: 8px;
-    }
-    .vp-stat-val { display: block; font-size: 1.2rem; font-weight: 700; }
-    .vp-stat-label { font-size: 0.7rem; color: #64748b; }
-    .vp-body {
-        padding: 16px 20px;
-        overflow-y: auto;
-        flex: 1;
-        max-height: calc(90vh - 160px);
-    }
-    .vp-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px;
-        color: #64748b;
-    }
-    .vp-spinner {
-        width: 36px; height: 36px;
-        border: 3px solid #1e293b;
-        border-top-color: #f59e0b;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 12px;
-    }
-    .vp-card {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 14px;
-        margin-bottom: 10px;
-        transition: border-color 0.2s;
-    }
-    .vp-card:hover { border-color: #475569; }
-    .vp-card-top {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-    }
-    .vp-card-avatar {
-        width: 40px; height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.9rem;
-        background: rgba(245,158,11,0.15);
-        color: #f59e0b;
-        flex-shrink: 0;
-    }
-    .vp-card-body { flex: 1; min-width: 0; }
-    .vp-card-name {
-        font-weight: 500;
-        font-size: 0.9rem;
-        color: #e2e8f0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .vp-card-contact { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
-    .vp-card-right { text-align: right; flex-shrink: 0; }
-    .vp-card-amount { font-weight: 600; font-size: 1rem; color: #f59e0b; }
-    .vp-card-date { font-size: 0.7rem; color: #475569; margin-top: 2px; }
-    .vp-card-details {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(51,65,85,0.5);
-    }
-    .vp-detail {
-        font-size: 0.72rem;
-        color: #94a3b8;
-    }
-    .vp-detail strong { color: #cbd5e1; font-weight: 500; }
-    .vp-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.68rem;
-        font-weight: 600;
-    }
-    .vp-badge-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-    .vp-badge-awaiting { background: rgba(100,116,139,0.2); color: #94a3b8; }
-    .vp-badge-cycle { background: rgba(0,255,255,0.1); color: #67e8f9; }
-    .vp-badge-method { background: rgba(100,116,139,0.15); color: #94a3b8; }
-    .vp-proof-thumb {
-        width: 56px; height: 56px;
-        object-fit: cover;
-        border-radius: 8px;
-        cursor: pointer;
-        border: 2px solid #334155;
-        flex-shrink: 0;
-        transition: border-color 0.2s;
-    }
-    .vp-proof-thumb:hover { border-color: #f59e0b; }
-    .vp-proof-placeholder {
-        width: 56px; height: 56px;
-        background: rgba(30,41,59,0.8);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #475569;
-        font-size: 0.65rem;
-        text-align: center;
-        flex-shrink: 0;
-        line-height: 1.2;
-    }
-    .vp-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 10px;
-    }
-    .vp-btn {
-        padding: 7px 14px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-weight: 500;
-        font-size: 0.82rem;
-        transition: opacity 0.2s;
-    }
-    .vp-btn:hover { opacity: 0.85; }
-    .vp-btn-approve { background: rgba(0,255,255,0.15); color: #00FFFF; }
-    .vp-btn-reject { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .vp-verified-line { font-size: 0.68rem; color: #475569; margin-top: 6px; }
-    .vp-verified-badge {
-        display: inline-block;
-        padding: 1px 5px;
-        border-radius: 3px;
-        font-size: 0.6rem;
-        background: rgba(0,255,255,0.08);
-        color: #67e8f9;
-        margin-left: 3px;
-    }
-    .vp-empty {
-        text-align: center;
-        padding: 40px;
-        color: #64748b;
-    }
-    .vp-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.7; }
-    .vp-awaiting-note {
-        font-size: 0.78rem;
-        color: #64748b;
-        font-style: italic;
-        margin-top: 8px;
-        padding: 8px 12px;
-        background: rgba(30,41,59,0.5);
-        border-radius: 8px;
-    }
-
-    @media (max-width: 480px) {
-        .vp-modal { width: 98%; max-height: 94vh; border-radius: 12px; }
-        .vp-header { padding: 14px 16px; }
-        .vp-stats-bar { padding: 8px 12px; gap: 6px; }
-        .vp-body { padding: 12px; }
-        .vp-card { padding: 12px; }
-        .vp-card-name { font-size: 0.84rem; }
-        .vp-card-details { gap: 6px; }
-    }
-</style>
 
 <script>
 (function() {
@@ -12873,7 +11821,7 @@ function renderTurnsList() {
 
 
 <!-- CYCLE DISTRIBUTION MODAL - v4.10.8 Dark theme with target_total -->
-<div id="distributionModal" class="dist-overlay" style="display: none;">
+<div id="distributionModal" class="dist-overlay ds-overlay" style="display: none;">
     <div class="dist-modal">
         <div class="dist-header">
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -12909,7 +11857,7 @@ function renderTurnsList() {
 </div>
 
 <!-- TANDA BALANCES MODAL - v4.10.8 -->
-<div id="tandaBalancesModal" class="tb-overlay" style="display: none;">
+<div id="tandaBalancesModal" class="tb-overlay ds-overlay" style="display: none;">
     <div class="tb-modal">
         <div class="tb-header">
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -14579,7 +13527,7 @@ function renderTurnsList() {
     <script src="js/dashboard-sections-loader.js?v=14.1"></script>
     <script src="js/header-footer-cleanup.js"></script>
     <script src="js/components/loading-states.js"></script>
-    <script src="js/components-loader.js?v=30.6"></script>
+    <script src="js/components-loader.js?v=30.8"></script>
     <script src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script src="js/hub/contextual-alerts.js?v=1.03"></script>
     <script src="js/hub/insights-engine.js?v=1.03"></script>

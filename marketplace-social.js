@@ -306,7 +306,7 @@ class MarketplaceSocialSystem {
         `).join('');
 
         const overlay = document.createElement('div');
-        overlay.className = 'upgrade-overlay';
+        overlay.className = 'upgrade-overlay ds-overlay';
         overlay.innerHTML = `
             <div class="upgrade-modal">
                 <div class="upgrade-modal-header">
@@ -620,10 +620,10 @@ class MarketplaceSocialSystem {
                         📍 ${service.serviceAreas.join(', ')}
                     </div>
                     <div class="service-actions" style="display: flex; gap: 8px; margin-top: 12px;">
-                        <button class="btn btn-primary" style="flex: 1;" data-action="book-service" data-id="${this.escapeHtml(service.id)}">
+                        <button class="btn btn-primary ds-btn ds-btn-primary" style="flex: 1;" data-action="book-service" data-id="${this.escapeHtml(service.id)}">
                             <span>📅</span> Reservar
                         </button>
-                        <button class="btn btn-secondary share-btn" style="padding: 10px 14px;" data-action="share-service" data-id="${this.escapeHtml(service.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary share-btn" style="padding: 10px 14px;" data-action="share-service" data-id="${this.escapeHtml(service.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
                             <span>💰</span>
                         </button>
                     </div>
@@ -646,7 +646,7 @@ class MarketplaceSocialSystem {
         if (!this.authToken) {
             const pc = document.getElementById('mcProductsContent');
             const sc = document.getElementById('mcServicesContent');
-            const loginHtml = '<div class="mc-empty"><i class="fas fa-lock"></i><h3>Inicia sesion para ver tus compras</h3><button class="btn btn-primary" style="margin-top:12px;" onclick="goToLogin()">Iniciar Sesion</button></div>';
+            const loginHtml = '<div class="mc-empty"><i class="fas fa-lock"></i><h3>Inicia sesion para ver tus compras</h3><button class="btn btn-primary ds-btn ds-btn-primary" style="margin-top:12px;" onclick="goToLogin()">Iniciar Sesion</button></div>';
             if (pc) pc.innerHTML = loginHtml;
             if (sc) sc.innerHTML = loginHtml;
             return;
@@ -670,7 +670,7 @@ class MarketplaceSocialSystem {
             const esc = this.escapeHtml.bind(this);
             container.innerHTML = orders.map(o => this._renderBuyerOrderCard(o, esc)).join('');
         } catch (err) {
-            container.innerHTML = '<div class="mc-empty"><i class="fas fa-exclamation-circle"></i><h3>Error cargando pedidos</h3><button class="btn btn-secondary" style="margin-top:8px;" data-action="retry-purchases">Reintentar</button></div>';
+            container.innerHTML = '<div class="mc-empty"><i class="fas fa-exclamation-circle"></i><h3>Error cargando pedidos</h3><button class="btn btn-secondary ds-btn ds-btn-secondary" style="margin-top:8px;" data-action="retry-purchases">Reintentar</button></div>';
         }
     }
 
@@ -683,13 +683,13 @@ class MarketplaceSocialSystem {
         const status = o.status || 'pending';
         const dispute = o.dispute_id ? `<span class="mc-dispute-badge">Disputa</span>` : '';
         let actions = '';
-        if (status === 'pending') actions = `<button class="mc-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar</button>`;
-        else if (status === 'shipped') actions = `<button class="mc-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
+        if (status === 'pending') actions = `<button class="mc-btn-danger ds-btn ds-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar</button>`;
+        else if (status === 'shipped') actions = `<button class="mc-btn-success ds-btn ds-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
         else if (status === 'delivered') {
-            actions = `<button class="mc-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Resena</button>`;
-            if (!o.dispute_id) actions += `<button class="mc-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Disputa</button>`;
+            actions = `<button class="mc-btn-primary ds-btn ds-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Resena</button>`;
+            if (!o.dispute_id) actions += `<button class="mc-btn-danger ds-btn ds-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Disputa</button>`;
         }
-        return `<div class="mc-order-card" data-status="${esc(status)}" data-action="mc-order-detail" data-id="${o.id}">
+        return `<div class="mc-order-card ds-card ds-card-static" data-status="${esc(status)}" data-action="mc-order-detail" data-id="${o.id}">
             ${imgTag}
             <div class="mc-order-info">
                 <p class="mc-order-title">${esc(o.product_title || 'Producto')}</p>
@@ -775,7 +775,7 @@ class MarketplaceSocialSystem {
         const esc = this.escapeHtml.bind(this);
         const overlay = document.createElement('div');
         overlay.id = 'mcCartOverlay';
-        overlay.className = 'mc-cart-overlay';
+        overlay.className = 'mc-cart-overlay ds-overlay';
         let itemsHtml = '';
         if (items.length === 0) {
             itemsHtml = '<div class="mc-cart-empty"><i class="fas fa-shopping-cart"></i><p>Tu carrito esta vacio</p></div>';
@@ -867,16 +867,16 @@ class MarketplaceSocialSystem {
             const createdDate = new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' });
             const steps = this._buildTimeline(o);
             let actions = '';
-            if (o.status === 'pending') actions = `<button class="mc-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar Pedido</button>`;
-            else if (o.status === 'shipped') actions = `<button class="mc-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
+            if (o.status === 'pending') actions = `<button class="mc-btn-danger ds-btn ds-btn-danger" data-action="mc-buyer-cancel" data-id="${o.id}">Cancelar Pedido</button>`;
+            else if (o.status === 'shipped') actions = `<button class="mc-btn-success ds-btn ds-btn-success" data-action="mc-buyer-confirm" data-id="${o.id}">Confirmar Recepcion</button>`;
             else if (o.status === 'delivered') {
-                actions = `<button class="mc-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Dejar Resena</button>`;
-                if (!o.dispute_id) actions += `<button class="mc-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Abrir Disputa</button>`;
+                actions = `<button class="mc-btn-primary ds-btn ds-btn-primary" data-action="mc-product-review" data-id="${o.id}" data-product-id="${o.product_id}">Dejar Resena</button>`;
+                if (!o.dispute_id) actions += `<button class="mc-btn-danger ds-btn ds-btn-danger" data-action="mc-open-dispute-form" data-order-id="${o.id}">Abrir Disputa</button>`;
             }
             const disputeInfo = o.dispute_id ? `<div class="mc-detail-section"><h4>Disputa</h4><div class="mc-detail-row"><span>Estado</span><span class="mc-dispute-status mc-dstatus-${esc(o.dispute_status || 'open')}">${esc(o.dispute_status || 'open')}</span></div><button class="btn btn-sm" style="margin-top:6px;padding:6px 12px;font-size:0.8rem;background:rgba(239,68,68,0.15);color:#EF4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;cursor:pointer;" data-action="mc-view-dispute" data-id="${o.dispute_id}">Ver Disputa</button></div>` : '';
             const overlay = document.createElement('div');
             overlay.id = 'mcDetailOverlay';
-            overlay.className = 'mc-detail-overlay';
+            overlay.className = 'mc-detail-overlay ds-overlay';
             overlay.innerHTML = `<div class="mc-detail-modal">
                 <div class="mc-detail-header"><h3>Pedido #${o.id}</h3><button class="mc-detail-close" data-action="mc-close-detail"><i class="fas fa-times"></i></button></div>
                 <div class="mc-detail-body">
@@ -954,7 +954,7 @@ class MarketplaceSocialSystem {
         if (existing) existing.remove();
         const overlay = document.createElement('div');
         overlay.id = 'mcReviewOverlay';
-        overlay.className = 'mc-review-overlay';
+        overlay.className = 'mc-review-overlay ds-overlay';
         overlay.innerHTML = `<div class="mc-review-modal">
             <h3 style="margin:0 0 12px;color:#fff;">Dejar Resena</h3>
             <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin:0 0 8px;">Califica tu experiencia con este producto</p>
@@ -1020,7 +1020,7 @@ class MarketplaceSocialSystem {
         ];
         const overlay = document.createElement('div');
         overlay.id = 'mcDisputeOverlay';
-        overlay.className = 'mc-dispute-overlay';
+        overlay.className = 'mc-dispute-overlay ds-overlay';
         overlay.innerHTML = `<div class="mc-dispute-modal">
             <div class="mc-dispute-header"><h3><i class="fas fa-exclamation-triangle"></i> Abrir Disputa</h3><button class="mc-detail-close" data-action="mc-close-dispute-form"><i class="fas fa-times"></i></button></div>
             <div class="mc-dispute-body mc-dispute-form">
@@ -1065,7 +1065,7 @@ class MarketplaceSocialSystem {
         if (existing) existing.remove();
         const overlay = document.createElement('div');
         overlay.id = 'mcDisputeOverlay';
-        overlay.className = 'mc-dispute-overlay';
+        overlay.className = 'mc-dispute-overlay ds-overlay';
         overlay.innerHTML = `<div class="mc-dispute-modal">
             <div class="mc-dispute-header"><h3>Mis Disputas</h3><button class="mc-detail-close" data-action="mc-close-dispute-form"><i class="fas fa-times"></i></button></div>
             <div class="mc-dispute-body"><div style="text-align:center;padding:20px;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i> Cargando...</div></div>
@@ -1107,7 +1107,7 @@ class MarketplaceSocialSystem {
             if (existing) existing.remove();
             const overlay = document.createElement('div');
             overlay.id = 'mcDisputeOverlay';
-            overlay.className = 'mc-dispute-overlay';
+            overlay.className = 'mc-dispute-overlay ds-overlay';
             let actionsHtml = '';
             if (d.status === 'open' && d.respondent_id === this.userId) {
                 actionsHtml = `<div class="mc-dispute-respond"><h4 style="color:rgba(255,255,255,0.5);font-size:0.8rem;text-transform:uppercase;">Tu respuesta</h4><textarea id="mcDisputeResponse" placeholder="Escribe tu respuesta..." maxlength="2000"></textarea><button data-action="mc-respond-dispute" data-id="${d.id}">Enviar Respuesta</button></div>`;
@@ -1187,7 +1187,7 @@ class MarketplaceSocialSystem {
                         <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
                         <h3>Inicia sesión para ver tus reservas</h3>
                         <p>Crea una cuenta gratis para empezar a reservar servicios</p>
-                        <button class="btn btn-primary" style="margin-top: 15px;" onclick="goToLogin()">Iniciar Sesión</button>
+                        <button class="btn btn-primary ds-btn ds-btn-primary" style="margin-top: 15px;" onclick="goToLogin()">Iniciar Sesión</button>
                     </div>
                 `;
                 return;
@@ -1220,7 +1220,7 @@ class MarketplaceSocialSystem {
                             <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
                             <h3>No tienes reservas aún</h3>
                             <p>Explora los servicios disponibles y haz tu primera reserva</p>
-                            <button class="btn btn-primary" style="margin-top: 15px;" onclick="window.marketplaceSystem.switchTab('services')">Ver Servicios</button>
+                            <button class="btn btn-primary ds-btn ds-btn-primary" style="margin-top: 15px;" onclick="window.marketplaceSystem.switchTab('services')">Ver Servicios</button>
                         </div>
                     `;
                     return;
@@ -1236,7 +1236,7 @@ class MarketplaceSocialSystem {
                     <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
                     <h3>Error cargando reservas</h3>
                     <p>Intenta de nuevo mas tarde.</p>
-                    <button class="btn btn-secondary" style="margin-top: 15px;" data-action="retry-bookings">Reintentar</button>
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" style="margin-top: 15px;" data-action="retry-bookings">Reintentar</button>
                 </div>
             `;
         }
@@ -1275,16 +1275,16 @@ class MarketplaceSocialSystem {
                     ${booking.address ? `<div style="margin-top: 8px; color: rgba(255,255,255,0.6); font-size: 13px;">📍 ${booking.address}</div>` : ''}
                     <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                         ${booking.status === 'pending' ? `
-                            <button class="btn btn-danger" data-action="cancel-booking" data-id="${this.escapeHtml(booking.id)}">Cancelar</button>
-                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-danger ds-btn ds-btn-danger" data-action="cancel-booking" data-id="${this.escapeHtml(booking.id)}">Cancelar</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         ` : booking.status === 'confirmed' ? `
-                            <button class="btn btn-secondary" data-action="reschedule-booking" data-id="${this.escapeHtml(booking.id)}">Reprogramar</button>
-                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="reschedule-booking" data-id="${this.escapeHtml(booking.id)}">Reprogramar</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         ` : booking.status === 'completed' ? `
-                            <button class="btn btn-primary" data-action="leave-review" data-id="${this.escapeHtml(booking.id)}">Dejar Reseña</button>
-                            <button class="btn btn-secondary" data-action="rebook-service" data-id="${this.escapeHtml(booking.id)}">Reservar de Nuevo</button>
+                            <button class="btn btn-primary ds-btn ds-btn-primary" data-action="leave-review" data-id="${this.escapeHtml(booking.id)}">Dejar Reseña</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="rebook-service" data-id="${this.escapeHtml(booking.id)}">Reservar de Nuevo</button>
                         ` : `
-                            <button class="btn btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="contact-provider" data-id="${this.escapeHtml(booking.id)}">Contactar</button>
                         `}
                     </div>
                 </div>
@@ -1850,7 +1850,7 @@ class MarketplaceSocialSystem {
             const reviews = item.total_reviews ? ('<span>(' + esc(item.total_reviews) + ')</span>') : '';
             const city = item.city ? ('<span>📍 ' + esc(item.city) + '</span>') : '';
             const shopType = item.shop_type === 'services' ? 'Servicios' : item.shop_type === 'products' ? 'Productos' : 'Tienda';
-            return '<div class="exp-card" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '">' +
+            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '">' +
                 '<div class="exp-card-avatar">' + avatarHtml + '</div>' +
                 '<div class="exp-card-body">' +
                     '<div class="exp-card-title">' + esc(item.business_name) + verified + '</div>' +
@@ -1867,7 +1867,7 @@ class MarketplaceSocialSystem {
             const priceLabel = item.price_type === 'fixed' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN')) : item.price_type === 'range' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + '/hora') : 'Consultar');
             const rating = item.avg_rating ? ('⭐ ' + Number(item.avg_rating).toFixed(1)) : '';
             const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-            return '<div class="exp-card" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
+            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
                 '<div class="exp-card-avatar">' + img + '</div>' +
                 '<div class="exp-card-body">' +
                     '<div class="exp-card-title">' + esc(item.title) + '</div>' +
@@ -1884,7 +1884,7 @@ class MarketplaceSocialSystem {
         const condMap = { new: 'Nuevo', used: 'Usado', refurbished: 'Reacondicionado' };
         const cond = condMap[item.condition] || '';
         const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-        return '<div class="exp-card" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
+        return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
             '<div class="exp-card-avatar">' + pImg + '</div>' +
             '<div class="exp-card-body">' +
                 '<div class="exp-card-title">' + esc(item.title) + '</div>' +
@@ -1996,14 +1996,14 @@ class MarketplaceSocialSystem {
                     </div>
                     <div class="service-actions" style="display:flex;gap:8px;margin-top:12px;">
                         ${product.quantity > 0 ? `
-                        <button class="btn btn-primary" style="flex:1;" data-action="buy-product" data-id="${esc(product.id)}">
+                        <button class="btn btn-primary ds-btn ds-btn-primary" style="flex:1;" data-action="buy-product" data-id="${esc(product.id)}">
                             Comprar
                         </button>
-                        <button class="btn btn-secondary" style="padding:10px 14px;" data-action="add-to-cart" data-id="${esc(product.id)}" title="Agregar al carrito">
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary" style="padding:10px 14px;" data-action="add-to-cart" data-id="${esc(product.id)}" title="Agregar al carrito">
                             <i class="fas fa-cart-plus"></i>
                         </button>` : `
-                        <button class="btn btn-secondary" style="flex:1;opacity:0.5;" disabled>Agotado</button>`}
-                        <button class="btn btn-secondary share-btn" style="padding:10px 14px;" data-action="share-product" data-id="${esc(product.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary" style="flex:1;opacity:0.5;" disabled>Agotado</button>`}
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary share-btn" style="padding:10px 14px;" data-action="share-product" data-id="${esc(product.id)}" title="Compartir y ganar ${this.formatPrice(parseFloat(estimatedCommission), cur)}">
                             <span>💰</span>
                         </button>
                     </div>
@@ -2051,14 +2051,11 @@ class MarketplaceSocialSystem {
         const container = document.getElementById('myStoreContent');
         if (!container) return;
 
-        // Fetch total provider count for early adopter banner
+        // Fetch total provider count for early adopter banner (H4 fix: single request)
         let totalProviders = 0;
         try {
-            const res = await this.apiRequest('/api/marketplace/providers?limit=1&offset=0');
-            if (res.success && res.data?.providers) {
-                const countRes = await this.apiRequest('/api/marketplace/providers?limit=100&offset=0');
-                totalProviders = countRes.data?.providers?.length || 0;
-            }
+            const res = await this.apiRequest('/api/marketplace/providers?limit=100&offset=0');
+            totalProviders = res.data?.providers?.length || 0;
         } catch (e) { /* proceed without count */ }
 
         let earlyBannerHtml = '';
@@ -2081,7 +2078,7 @@ class MarketplaceSocialSystem {
             ${earlyBannerHtml}
             <div class="store-onboarding-icon">🏪</div>
             <h2>Crea tu Tienda</h2>
-            <div class="store-subtitle">Selecciona que vas a ofrecer. Esta eleccion no se puede cambiar despues.</div>
+            <div class="store-subtitle">Selecciona que vas a ofrecer. El tipo de tienda no se puede cambiar despues. Layout y tema si.</div>
             <div class="store-type-grid">
                 <div class="store-type-card" data-action="select-shop-type" data-id="services">
                     <div class="store-type-icon">🔧</div>
@@ -2487,6 +2484,12 @@ class MarketplaceSocialSystem {
             case 'compact':  this._renderDashboardCompact(container, provider, storeData, theme); break;
             default:         this._renderDashboardClassicV2(container, provider, storeData, theme); break;
         }
+        // Fetch portfolio state once (M11 fix: was fetched 2-3 times)
+        try {
+            const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+            this._currentPortfolio = cvRes.data?.portfolio || null;
+        } catch { this._currentPortfolio = null; }
+
         // Portfolio banner + CTA (v4.5.0 / v4.6.0) — only for showcase/compact; V2 classic has inline quick actions
         if (layout !== 'classic') {
             const handle = provider.handle;
@@ -2500,10 +2503,6 @@ class MarketplaceSocialSystem {
                     dashboard.insertBefore(banner, dashboard.firstChild);
                 }
             }
-            try {
-                const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
-                this._currentPortfolio = cvRes.data?.portfolio || null;
-            } catch { this._currentPortfolio = null; }
             const dashboard2 = container.querySelector('.store-dashboard');
             if (dashboard2) {
                 const cta = document.createElement('div');
@@ -2512,12 +2511,6 @@ class MarketplaceSocialSystem {
                 const banner2 = dashboard2.querySelector('.store-portfolio-banner');
                 if (banner2) { banner2.after(cta); } else { dashboard2.insertBefore(cta, dashboard2.firstChild); }
             }
-        } else {
-            // V2 classic: still fetch portfolio state for portfolio maker button
-            try {
-                const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
-                this._currentPortfolio = cvRes.data?.portfolio || null;
-            } catch { this._currentPortfolio = null; }
         }
     }
 
@@ -2528,15 +2521,18 @@ class MarketplaceSocialSystem {
         if (!container) return;
         const esc = (v) => this.escapeHtml(String(v ?? ''));
 
-        // Fetch user identity + portfolio
+        // Use cached portfolio or fetch if not loaded yet
         let portfolio = this._currentPortfolio || null;
         let userName = '', userEmail = '';
-        try {
-            const res = await this.apiRequest('/api/marketplace/portfolio/cv/me');
-            portfolio = res.data?.portfolio || null;
-            userName = portfolio?.full_name || '';
-            userEmail = portfolio?.email || '';
-        } catch { /* use defaults */ }
+        if (!portfolio) {
+            try {
+                const res = await this.apiRequest('/api/marketplace/portfolio/cv/me');
+                portfolio = res.data?.portfolio || null;
+                this._currentPortfolio = portfolio;
+            } catch { /* use defaults */ }
+        }
+        userName = portfolio?.full_name || '';
+        userEmail = portfolio?.email || '';
 
         // If no name/email from portfolio, fetch from provider
         if (!userName && this._currentProvider) {
@@ -3498,77 +3494,6 @@ class MarketplaceSocialSystem {
         container.querySelectorAll('.sd-listings-content').forEach(c => c.classList.toggle('active', c.dataset.tab === tabName));
     }
 
-    // ===================== CLASSIC LAYOUT (Legacy) =====================
-    _renderDashboardClassic(container, provider, storeData, theme) {
-        const esc = (v) => this.escapeHtml(String(v ?? ''));
-        const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
-        const avatarHtml = provider.profile_image
-            ? `<img src="${esc(provider.profile_image)}" alt="">`
-            : esc(initial);
-        const badges = this._buildBadgesHtml(provider);
-        const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
-        const contactItems = this._buildContactItems(provider);
-        const { services, products, showServices, showProducts } = storeData;
-        const servicesHtml = this._buildStoreItemCards(services, 'services');
-        const productsHtml = this._buildStoreItemCards(products, 'products');
-
-        container.innerHTML = `<div class="store-dashboard" data-layout="classic" data-theme="${esc(theme)}">
-            <div class="store-header">
-                <div class="store-avatar">${avatarHtml}</div>
-                <div class="store-info">
-                    <div class="store-name">${esc(provider.business_name || 'Mi Tienda')} ${badges}</div>
-                    ${loc ? `<div class="store-location">📍 ${esc(loc)}</div>` : ''}
-                </div>
-                <div class="store-actions">
-                    <button class="store-btn-edit" data-action="edit-store">✏️ Editar Tienda</button>
-                </div>
-            </div>
-
-            <div class="store-stats-grid">
-                <div class="store-stat-card">
-                    <div class="store-stat-value store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</div>
-                    <div class="store-stat-label">Rating</div>
-                </div>
-                <div class="store-stat-card">
-                    <div class="store-stat-value store-stat-jobs">${esc(provider.completed_jobs || 0)}</div>
-                    <div class="store-stat-label">Trabajos</div>
-                </div>
-                <div class="store-stat-card">
-                    <div class="store-stat-value store-stat-reviews">${esc(provider.total_reviews || 0)}</div>
-                    <div class="store-stat-label">Resenas</div>
-                </div>
-                <div class="store-stat-card">
-                    <div class="store-stat-value store-stat-response">${esc(provider.response_rate || 100)}%</div>
-                    <div class="store-stat-label">Respuesta</div>
-                </div>
-            </div>
-
-            ${showServices ? `<div class="store-section">
-                <div class="store-section-header">
-                    <div class="store-section-title">Mis Servicios (${services.length})</div>
-                    <button class="store-section-btn" data-action="add-service">+ Agregar</button>
-                </div>
-                ${servicesHtml}
-            </div>` : ''}
-
-            ${showProducts ? `<div class="store-section">
-                <div class="store-section-header">
-                    <div class="store-section-title">Mis Productos (${products.length})</div>
-                    <button class="store-section-btn" data-action="add-product">+ Agregar</button>
-                </div>
-                ${productsHtml}
-            </div>` : ''}
-
-            <div class="store-section">
-                <div class="store-section-header">
-                    <div class="store-section-title">Informacion de Contacto</div>
-                    <button class="store-section-btn" data-action="edit-store">Editar</button>
-                </div>
-                <div class="store-contact-grid">${contactItems}</div>
-            </div>
-        </div>`;
-    }
-
     // ===================== SHOWCASE LAYOUT =====================
     _renderDashboardShowcase(container, provider, storeData, theme) {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
@@ -3576,13 +3501,11 @@ class MarketplaceSocialSystem {
         const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
         const contactItems = this._buildContactItems(provider);
         const { services, products, reviews, showServices, showProducts } = storeData;
-        const servicesHtml = this._buildStoreItemCards(services, 'services');
-        const productsHtml = this._buildStoreItemCards(products, 'products');
 
-        // Collect images for gallery from services + products
+        // Collect images for gallery from services + products (M6 fix: handle image objects)
         const allImages = [];
-        services.forEach(s => { if (s.images) s.images.forEach(img => allImages.push({ url: img, title: s.title })); });
-        products.forEach(p => { if (p.images) p.images.forEach(img => allImages.push({ url: img, title: p.title })); });
+        services.forEach(s => { if (s.images) s.images.forEach(img => { const url = typeof img === 'object' ? img.url : img; allImages.push({ url, title: s.title }); }); });
+        products.forEach(p => { if (p.images) p.images.forEach(img => { const url = typeof img === 'object' ? img.url : img; allImages.push({ url, title: p.title }); }); });
         const galleryItems = allImages.slice(0, 6);
 
         let galleryHtml = '';
@@ -3608,7 +3531,7 @@ class MarketplaceSocialSystem {
                             <div class="store-testimonial-avatar">${r.reviewer_avatar ? `<img src="${esc(r.reviewer_avatar)}" alt="">` : esc((r.reviewer_name || '?').charAt(0))}</div>
                             <div class="store-testimonial-info">
                                 <div class="store-testimonial-name">${esc(r.reviewer_name)}</div>
-                                <div class="store-testimonial-rating">${'⭐'.repeat(Math.min(Math.max(Math.round(r.overall_rating || 0), 0), 5))}</div>
+                                <div class="store-testimonial-rating">${'\u2b50'.repeat(Math.min(Math.max(Math.round(r.overall_rating || 0), 0), 5))}</div>
                             </div>
                         </div>
                         ${r.comment ? `<div class="store-testimonial-text">${esc(r.comment)}</div>` : ''}
@@ -3622,42 +3545,51 @@ class MarketplaceSocialSystem {
             </div>`;
         }
 
+        // Use shared builders for full feature parity with Classic V2
+        const quickActions = this._buildQuickActionsToolbar(provider, esc);
+        const listings = this._buildTabbedListings(storeData, provider, esc);
+        const themes = this._buildThemeBrowser(provider, esc);
+        const referralDash = this._buildReferralDashboard(esc);
         const tierCard = this.renderTierProgressCard();
+
+        // Enhanced analytics for plan+ tiers
+        let sellerAnalytics = '';
+        if (storeData.analytics && storeData.analyticsLevel !== 'basic') {
+            const a = storeData.analytics;
+            const summary = a.summary || {};
+            sellerAnalytics += `<div class="sd-analytics"><div class="sd-analytics-card">
+                <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
+                <div class="sd-analytics-body">
+                    <div class="sd-analytics-value">L. ${parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
+                    <div class="sd-analytics-label">Ingresos totales</div>
+                </div>
+            </div></div>`;
+        }
+
         container.innerHTML = `<div class="store-dashboard" data-layout="showcase" data-theme="${esc(theme)}">
             ${tierCard}
             <div class="store-showcase-hero">
                 <div class="store-showcase-hero-content">
                     <div class="store-name">${esc(provider.business_name || 'Mi Tienda')} ${badges}</div>
-                    ${loc ? `<div class="store-location" style="margin-top:4px;">📍 ${esc(loc)}</div>` : ''}
+                    ${loc ? `<div class="store-location" style="margin-top:4px;"><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</div>` : ''}
                     <div class="store-showcase-mini-stats">
-                        <span class="store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</span>
+                        <span class="store-stat-rating"><i class="fas fa-star"></i> ${esc(provider.avg_rating || '0')}</span>
                         <span class="store-stat-jobs">${esc(provider.completed_jobs || 0)} trabajos</span>
                         <span class="store-stat-reviews">${esc(provider.total_reviews || 0)} resenas</span>
                     </div>
                 </div>
                 <div class="store-actions">
-                    <button class="store-btn-edit" data-action="edit-store">✏️ Editar</button>
+                    <button class="store-btn-edit" data-action="edit-store"><i class="fas fa-pen"></i> Editar</button>
                 </div>
             </div>
 
+            ${quickActions}
+            ${sellerAnalytics}
             ${galleryHtml}
+            ${listings}
             ${testimonialsHtml}
-
-            ${showServices ? `<div class="store-section">
-                <div class="store-section-header">
-                    <div class="store-section-title">Servicios (${services.length})</div>
-                    <button class="store-section-btn" data-action="add-service">+ Agregar</button>
-                </div>
-                ${servicesHtml}
-            </div>` : ''}
-
-            ${showProducts ? `<div class="store-section">
-                <div class="store-section-header">
-                    <div class="store-section-title">Productos (${products.length})</div>
-                    <button class="store-section-btn" data-action="add-product">+ Agregar</button>
-                </div>
-                ${productsHtml}
-            </div>` : ''}
+            ${referralDash}
+            ${themes}
 
             <div class="store-section">
                 <div class="store-section-header">
@@ -3667,6 +3599,9 @@ class MarketplaceSocialSystem {
                 <div class="store-contact-grid">${contactItems}</div>
             </div>
         </div>`;
+
+        // Load async data
+        this._loadReferralDashboard();
     }
 
     // ===================== COMPACT LAYOUT =====================
@@ -3678,36 +3613,16 @@ class MarketplaceSocialSystem {
             : esc(initial);
         const badges = this._buildBadgesHtml(provider);
         const contactItems = this._buildContactItems(provider);
-        const { services, products, showServices, showProducts } = storeData;
 
-        // Unified items list
-        const allItems = [];
-        if (showServices) services.forEach(s => allItems.push({ ...s, _type: 'service' }));
-        if (showProducts) products.forEach(p => allItems.push({ ...p, _type: 'product' }));
-        const itemsHtml = allItems.length > 0
-            ? allItems.map(item => {
-                const icon = item._type === 'service' ? '🔧' : '📦';
-                const img = item.images && item.images[0] ? `<img src="${esc(item.images[0])}" alt="">` : icon;
-                const meta = item._type === 'service'
-                    ? `${item.price_type === 'fixed' ? `L. ${esc(item.price)}` : esc(item.price_type)}`
-                    : `L. ${esc(item.price)}`;
-                return `<div class="store-item-card">
-                    <div class="store-item-img">${img}</div>
-                    <div class="store-item-info">
-                        <div class="store-item-title">${esc(item.title)}</div>
-                        <div class="store-item-meta">${meta}</div>
-                    </div>
-                </div>`;
-            }).join('')
-            : '<div class="store-empty">No tienes listados aun.</div>';
-
-        // Action buttons
-        const actionBtns = [];
-        actionBtns.push('<button class="store-compact-action-btn" data-action="edit-store">✏️ Editar</button>');
-        if (showServices) actionBtns.push('<button class="store-compact-action-btn" data-action="add-service">+ Servicio</button>');
-        if (showProducts) actionBtns.push('<button class="store-compact-action-btn" data-action="add-product">+ Producto</button>');
-
+        // Use shared builders for full feature parity with Classic V2
+        const quickActions = this._buildQuickActionsToolbar(provider, esc);
+        const listings = this._buildTabbedListings(storeData, provider, esc);
+        const themes = this._buildThemeBrowser(provider, esc);
+        const referralDash = this._buildReferralDashboard(esc);
         const tierCard = this.renderTierProgressCard();
+
+        const totalItems = (storeData.services?.length || 0) + (storeData.products?.length || 0);
+
         container.innerHTML = `<div class="store-dashboard" data-layout="compact" data-theme="${esc(theme)}">
             ${tierCard}
             <div class="store-compact-card">
@@ -3716,17 +3631,16 @@ class MarketplaceSocialSystem {
                 <div class="store-compact-badges">${badges}</div>
                 ${provider.description ? `<div class="store-compact-desc">${esc(provider.description.length > 120 ? provider.description.slice(0, 120) + '...' : provider.description)}</div>` : ''}
                 <div class="store-compact-stats">
-                    <div class="store-compact-stat"><span class="store-stat-rating">⭐ ${esc(provider.avg_rating || '0')}</span><small>Rating</small></div>
+                    <div class="store-compact-stat"><span class="store-stat-rating"><i class="fas fa-star"></i> ${esc(provider.avg_rating || '0')}</span><small>Rating</small></div>
                     <div class="store-compact-stat"><span class="store-stat-jobs">${esc(provider.completed_jobs || 0)}</span><small>Trabajos</small></div>
-                    <div class="store-compact-stat"><span class="store-stat-reviews">${esc(provider.total_reviews || 0)}</span><small>Listados</small></div>
+                    <div class="store-compact-stat"><span class="store-stat-reviews">${esc(String(totalItems))}</span><small>Listados</small></div>
                 </div>
-                <div class="store-compact-actions">${actionBtns.join('')}</div>
             </div>
 
-            <div class="store-section">
-                <div class="store-section-header"><div class="store-section-title">Listados (${allItems.length})</div></div>
-                ${itemsHtml}
-            </div>
+            ${quickActions}
+            ${listings}
+            ${referralDash}
+            ${themes}
 
             <div class="store-section">
                 <div class="store-section-header">
@@ -3735,8 +3649,10 @@ class MarketplaceSocialSystem {
                 <div class="store-contact-grid">${contactItems}</div>
             </div>
         </div>`;
-    }
 
+        // Load async data
+        this._loadReferralDashboard();
+    }
     // ===================== EDIT STORE MODAL =====================
     openEditStoreModal() {
         const provider = this._currentProvider;
@@ -3749,7 +3665,7 @@ class MarketplaceSocialSystem {
         const currentTheme = provider.store_theme || 'dark';
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay';
+        overlay.className = 'store-edit-overlay ds-overlay';
         overlay.id = 'storeEditOverlay';
         const editTypeIcon = (provider.shop_type || 'services') === 'products' ? '📦' : (provider.shop_type || 'services') === 'mixed' ? '🏬' : '🔧';
         const editTypeLabel = (provider.shop_type || 'services') === 'products' ? 'Productos' : (provider.shop_type || 'services') === 'mixed' ? 'Mixta' : 'Servicios';
@@ -3937,8 +3853,16 @@ class MarketplaceSocialSystem {
                 // Get selected layout and theme from active buttons
                 const activeLayout = overlay.querySelector('.store-edit-layout-opt.active');
                 const activeTheme = overlay.querySelector('.store-edit-theme-opt.active');
-                const selectedLayout = activeLayout ? activeLayout.dataset.id : currentLayout;
-                const selectedTheme = activeTheme ? activeTheme.dataset.id : currentTheme;
+                let selectedLayout = activeLayout ? activeLayout.dataset.id : currentLayout;
+                let selectedTheme = activeTheme ? activeTheme.dataset.id : currentTheme;
+
+                // Tier gate: revert to current if user can't use selected option
+                if (selectedLayout !== currentLayout && !this.checkTierGate('select_layout', { layout: selectedLayout })) {
+                    selectedLayout = currentLayout;
+                }
+                if (selectedTheme !== currentTheme && !this.checkTierGate('select_theme', { theme: selectedTheme })) {
+                    selectedTheme = currentTheme;
+                }
 
                 const updateBody = {
                     business_name: document.getElementById('editStoreName').value.trim(),
@@ -4171,8 +4095,8 @@ class MarketplaceSocialSystem {
                         <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
                         <p style="font-size:16px;margin-bottom:24px;color:rgba(255,255,255,0.9);">${this.escapeHtml(message)}</p>
                         <div style="display:flex;gap:12px;justify-content:center;">
-                            <button class="btn btn-secondary" id="mpConfirmCancel">${this.escapeHtml(cancelLabel)}</button>
-                            <button class="btn btn-danger" id="mpConfirmOk">${this.escapeHtml(confirmLabel)}</button>
+                            <button class="btn btn-secondary ds-btn ds-btn-secondary" id="mpConfirmCancel">${this.escapeHtml(cancelLabel)}</button>
+                            <button class="btn btn-danger ds-btn ds-btn-danger" id="mpConfirmOk">${this.escapeHtml(confirmLabel)}</button>
                         </div>
                     </div>
                 </div>
@@ -4250,7 +4174,7 @@ class MarketplaceSocialSystem {
                     <div style="font-size: 48px; margin-bottom: 20px;">❌</div>
                     <h3>Error al cargar mensajes</h3>
                     <p>Intenta de nuevo mas tarde.</p>
-                    <button class="btn btn-secondary" style="margin-top: 15px;" data-action="retry-conversations">
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" style="margin-top: 15px;" data-action="retry-conversations">
                         Reintentar
                     </button>
                 </div>
@@ -4548,7 +4472,7 @@ class MarketplaceSocialSystem {
                 <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
                 <h3>Inicia sesión para ver tus mensajes</h3>
                 <p style="margin-bottom: 20px;">Crea una cuenta o inicia sesión para contactar vendedores y ver tus conversaciones</p>
-                <button class="btn btn-primary" onclick="goToLogin()">
+                <button class="btn btn-primary ds-btn ds-btn-primary" onclick="goToLogin()">
                     Iniciar Sesión
                 </button>
             </div>
@@ -4736,7 +4660,7 @@ class MarketplaceSocialSystem {
         this._images.service = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay';
+        overlay.className = 'store-edit-overlay ds-overlay';
         overlay.id = 'serviceCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -4809,8 +4733,8 @@ class MarketplaceSocialSystem {
                         <input type="text" id="csTags" placeholder="Ej: rapido, profesional, garantizado">
                     </div>
                     <div class="store-form-actions">
-                        <button class="btn btn-secondary" data-action="close-create-service">Cancelar</button>
-                        <button class="btn btn-primary" data-action="submit-service">&#128736; Publicar Servicio</button>
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="close-create-service">Cancelar</button>
+                        <button class="btn btn-primary ds-btn ds-btn-primary" data-action="submit-service">&#128736; Publicar Servicio</button>
                     </div>
                 </div>
             </div>
@@ -4931,7 +4855,7 @@ class MarketplaceSocialSystem {
         this._images.product = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay';
+        overlay.className = 'store-edit-overlay ds-overlay';
         overlay.id = 'productCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -5027,8 +4951,8 @@ class MarketplaceSocialSystem {
                         </div>
                     </div>
                     <div class="store-form-actions">
-                        <button class="btn btn-secondary" data-action="close-create-product">Cancelar</button>
-                        <button class="btn btn-primary" data-action="submit-product">&#128230; Publicar Producto</button>
+                        <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="close-create-product">Cancelar</button>
+                        <button class="btn btn-primary ds-btn ds-btn-primary" data-action="submit-product">&#128230; Publicar Producto</button>
                     </div>
                 </div>
             </div>
@@ -5058,7 +4982,7 @@ class MarketplaceSocialSystem {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const overlay = document.createElement('div');
         overlay.id = 'productEditOverlay';
-        overlay.className = 'store-edit-overlay';
+        overlay.className = 'store-edit-overlay ds-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Producto</h3><button data-action="close-edit-product" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editProductForm">
@@ -5086,14 +5010,15 @@ class MarketplaceSocialSystem {
             form.innerHTML = `
                 <div class="store-form-group"><label>Titulo *</label><input type="text" id="epTitle" maxlength="200" value="${esc(p.title || '')}"></div>
                 <div class="store-form-row">
+                    <div class="store-form-group"><label>Categoria</label><select id="epCategory"></select></div>
+                    <div class="store-form-group"><label>Condicion</label><select id="epCondition"><option value="new"${p.condition === 'new' ? ' selected' : ''}>Nuevo</option><option value="like_new"${p.condition === 'like_new' ? ' selected' : ''}>Como nuevo</option><option value="used"${p.condition === 'used' ? ' selected' : ''}>Usado</option></select></div>
+                </div>
+                <div class="store-form-row">
                     <div class="store-form-group"><label>Precio *</label><input type="number" id="epPrice" min="0" max="1000000" step="0.01" value="${esc(String(p.price || ''))}"></div>
                     <div class="store-form-group"><label>Moneda</label><select id="epCurrency"><option value="HNL"${p.currency === 'HNL' ? ' selected' : ''}>HNL</option><option value="USD"${p.currency === 'USD' ? ' selected' : ''}>USD</option><option value="LTD"${p.currency === 'LTD' ? ' selected' : ''}>LTD</option></select></div>
                     <div class="store-form-group"><label>Cantidad *</label><input type="number" id="epQuantity" min="0" max="10000" value="${esc(String(p.quantity || 0))}"></div>
                 </div>
-                <div class="store-form-row">
-                    <div class="store-form-group"><label>Condicion</label><select id="epCondition"><option value="new"${p.condition === 'new' ? ' selected' : ''}>Nuevo</option><option value="like_new"${p.condition === 'like_new' ? ' selected' : ''}>Como nuevo</option><option value="used"${p.condition === 'used' ? ' selected' : ''}>Usado</option></select></div>
-                    <div class="store-form-group"><label>Ubicacion</label><input type="text" id="epLocation" maxlength="100" value="${esc(p.location || '')}"></div>
-                </div>
+                <div class="store-form-group"><label>Ubicacion</label><input type="text" id="epLocation" maxlength="100" value="${esc(p.location || '')}"></div>
                 <div class="store-form-group"><label>Descripcion *</label><textarea id="epDescription" rows="4" maxlength="2000">${esc(p.description || '')}</textarea></div>
                 <div class="store-form-group"><label>Imagenes actuales</label><div class="store-image-previews" id="epImagePreviews">${imgPreviews}</div>
                     <div class="store-image-dropzone" id="editProductDropzone"><input type="file" id="editProductFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none"><div class="store-image-dropzone-text">Agregar mas imagenes</div></div>
@@ -5106,10 +5031,15 @@ class MarketplaceSocialSystem {
                 <input type="hidden" id="epProductId" value="${esc(String(productId))}">
                 <input type="hidden" id="epExistingImages" value='${JSON.stringify(images).replace(/'/g, "&#39;")}'>
                 <div class="store-form-actions">
-                    <button class="btn btn-secondary" data-action="close-edit-product">Cancelar</button>
-                    <button class="btn btn-primary" data-action="submit-edit-product"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="close-edit-product">Cancelar</button>
+                    <button class="btn btn-primary ds-btn ds-btn-primary" data-action="submit-edit-product"><i class="fas fa-save"></i> Guardar Cambios</button>
                 </div>`;
             this._setupDropzone('editProductDropzone', 'editProductFileInput', 'editProduct');
+            // Load categories and pre-select current (M7 fix)
+            this._loadCategories('epCategory').then(() => {
+                const sel = document.getElementById('epCategory');
+                if (sel && p.category_id) sel.value = String(p.category_id);
+            });
             const shipCb = document.getElementById('epShipping');
             if (shipCb) shipCb.addEventListener('change', () => {
                 const g = document.getElementById('epShippingPriceGroup');
@@ -5142,6 +5072,7 @@ class MarketplaceSocialSystem {
                 method: 'PUT',
                 body: JSON.stringify({
                     title, description, price, quantity,
+                    category_id: document.getElementById('epCategory')?.value || null,
                     currency: document.getElementById('epCurrency')?.value || 'HNL',
                     condition: document.getElementById('epCondition')?.value || 'new',
                     location: document.getElementById('epLocation')?.value?.trim() || null,
@@ -5168,7 +5099,7 @@ class MarketplaceSocialSystem {
         document.getElementById('serviceEditOverlay')?.remove();
         const overlay = document.createElement('div');
         overlay.id = 'serviceEditOverlay';
-        overlay.className = 'store-edit-overlay';
+        overlay.className = 'store-edit-overlay ds-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Servicio</h3><button data-action="close-edit-service" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editServiceForm">
@@ -5196,6 +5127,7 @@ class MarketplaceSocialSystem {
             const tags = Array.isArray(s.tags) ? s.tags.join(', ') : (s.tags || '');
             form.innerHTML = `
                 <div class="store-form-group"><label>Titulo *</label><input type="text" id="esTitle" maxlength="200" value="${esc(s.title || '')}"></div>
+                <div class="store-form-group"><label>Categoria</label><select id="esCategory"></select></div>
                 <div class="store-form-group"><label>Descripcion Corta</label><input type="text" id="esShortDesc" maxlength="160" value="${esc(s.short_description || '')}"></div>
                 <div class="store-form-row">
                     <div class="store-form-group"><label>Tipo de Precio *</label><select id="esPriceType"><option value="fixed"${s.price_type === 'fixed' ? ' selected' : ''}>Precio Fijo</option><option value="hourly"${s.price_type === 'hourly' ? ' selected' : ''}>Por Hora</option><option value="quote"${s.price_type === 'quote' ? ' selected' : ''}>Negociable</option><option value="free"${s.price_type === 'free' ? ' selected' : ''}>Gratis</option></select></div>
@@ -5213,10 +5145,15 @@ class MarketplaceSocialSystem {
                 <input type="hidden" id="esServiceId" value="${esc(String(serviceId))}">
                 <input type="hidden" id="esExistingImages" value='${JSON.stringify(images).replace(/'/g, "&#39;")}'>
                 <div class="store-form-actions">
-                    <button class="btn btn-secondary" data-action="close-edit-service">Cancelar</button>
-                    <button class="btn btn-primary" data-action="submit-edit-service"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="close-edit-service">Cancelar</button>
+                    <button class="btn btn-primary ds-btn ds-btn-primary" data-action="submit-edit-service"><i class="fas fa-save"></i> Guardar Cambios</button>
                 </div>`;
             this._setupDropzone('editServiceDropzone', 'editServiceFileInput', 'editService');
+            // Load categories and pre-select current (M8 fix)
+            this._loadCategories('esCategory').then(() => {
+                const sel = document.getElementById('esCategory');
+                if (sel && s.category_id) sel.value = String(s.category_id);
+            });
         } catch (err) {
             const form = document.getElementById('editServiceForm');
             if (form) form.innerHTML = '<div class="sd-empty"><div class="sd-empty-title">Error al cargar servicio</div></div>';
@@ -5245,9 +5182,11 @@ class MarketplaceSocialSystem {
                 method: 'PUT',
                 body: JSON.stringify({
                     title, description,
+                    category_id: document.getElementById('esCategory')?.value || null,
                     short_description: document.getElementById('esShortDesc')?.value?.trim() || null,
                     price_type: document.getElementById('esPriceType')?.value || 'fixed',
                     price: price || 0,
+                    currency: document.getElementById('esCurrency')?.value || 'HNL',
                     duration_hours: parseFloat(document.getElementById('esDuration')?.value) || 1,
                     images, tags
                 })
@@ -5312,16 +5251,16 @@ class MarketplaceSocialSystem {
                 ${current ? `<div class="boost-active-badge"><i class="fas fa-check-circle"></i> Impulso activo — ${Math.ceil(parseFloat(current.remaining_days))} dias restantes</div>` : ''}
                 <p style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:16px;">Tu articulo aparecera destacado en la tienda y resultados de busqueda.</p>
                 <div class="boost-tiers">
-                    <div class="boost-tier-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="3">
+                    <div class="boost-tier-card ds-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="3">
                         <div class="boost-tier-days">3 dias</div>
                         <div class="boost-tier-price">25 LTD</div>
                     </div>
-                    <div class="boost-tier-card boost-tier-recommended" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="7">
+                    <div class="boost-tier-card ds-card boost-tier-recommended" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="7">
                         <div class="boost-tier-badge">Recomendado</div>
                         <div class="boost-tier-days">7 dias</div>
                         <div class="boost-tier-price">50 LTD</div>
                     </div>
-                    <div class="boost-tier-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="14">
+                    <div class="boost-tier-card ds-card" data-action="boost-select-tier" data-type="${esc(itemType)}" data-id="${esc(String(itemId))}" data-duration="14">
                         <div class="boost-tier-days">14 dias</div>
                         <div class="boost-tier-price">100 LTD</div>
                     </div>
@@ -5396,7 +5335,7 @@ class MarketplaceSocialSystem {
                 <p style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;">Vincula tu direccion de La Tanda Chain</p>
                 <div style="display:flex;gap:8px;">
                     <input type="text" id="chainAddrInput" class="chain-link-input" placeholder="ltd1..." maxlength="59">
-                    <button class="btn btn-primary" id="chainLinkBtn" style="white-space:nowrap;padding:6px 12px;font-size:13px;">Vincular</button>
+                    <button class="btn btn-primary ds-btn ds-btn-primary" id="chainLinkBtn" style="white-space:nowrap;padding:6px 12px;font-size:13px;">Vincular</button>
                 </div>
             </div>`;
             document.getElementById('chainLinkBtn')?.addEventListener('click', async () => {
@@ -5432,13 +5371,10 @@ class MarketplaceSocialSystem {
         const body = document.getElementById('referralDashBody');
         if (!body) return;
         try {
-            const [statsRes, codeRes] = await Promise.all([
-                this.apiRequest('/api/marketplace/referrals/stats'),
-                this.apiRequest('/api/marketplace/referrals/code')
-            ]);
-            const stats = statsRes.data || statsRes;
-            const code = codeRes.data?.referral_code || codeRes.referral_code || '';
-            const totalEarnings = parseFloat(stats.total_earnings || 0).toFixed(2);
+            const res = await this.apiRequest('/api/marketplace/referrals/my-code');
+            const stats = res.data || res;
+            const code = stats.referral_code || '';
+            const totalEarnings = parseFloat((parseFloat(stats.approved_earnings || 0) + parseFloat(stats.paid_earnings || 0)) || 0).toFixed(2);
             const totalConversions = parseInt(stats.total_conversions || 0);
             const pendingEarnings = parseFloat(stats.pending_earnings || 0).toFixed(2);
             const esc = this.escapeHtml.bind(this);
@@ -5695,8 +5631,8 @@ async function buyProduct(productId) {
                     <div id="purchaseCommission" class="mc-commission-line" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;"></div>
                 </div>
                 <div style="display:flex;gap:12px;">
-                    <button class="btn btn-secondary" id="purchaseAddCartBtn" style="flex:1;"><i class="fas fa-cart-plus"></i> Al Carrito</button>
-                    <button class="btn btn-primary" id="purchaseConfirmBtn" style="flex:1;">Comprar Ahora</button>
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" id="purchaseAddCartBtn" style="flex:1;"><i class="fas fa-cart-plus"></i> Al Carrito</button>
+                    <button class="btn btn-primary ds-btn ds-btn-primary" id="purchaseConfirmBtn" style="flex:1;">Comprar Ahora</button>
                 </div>
             </div>
         </div>
@@ -6010,8 +5946,8 @@ function leaveReview(bookingId) {
                     <textarea id="reviewComment" rows="3" placeholder="Comparte tu experiencia..." style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:white;resize:vertical;"></textarea>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:20px;">
-                    <button class="btn btn-secondary" id="reviewCancelBtn" style="flex:1;">Cancelar</button>
-                    <button class="btn btn-primary" id="reviewSubmitBtn" style="flex:1;">Enviar Resena</button>
+                    <button class="btn btn-secondary ds-btn ds-btn-secondary" id="reviewCancelBtn" style="flex:1;">Cancelar</button>
+                    <button class="btn btn-primary ds-btn ds-btn-primary" id="reviewSubmitBtn" style="flex:1;">Enviar Resena</button>
                 </div>
             </div>
         </div>
@@ -6170,7 +6106,7 @@ async function showShareModal(itemId, type = 'service') {
                             <div style="display: flex; gap: 8px;">
                                 <input type="text" id="referralLinkInput" value="${safeLink}" readonly
                                        style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: white; font-size: 12px;">
-                                <button data-action="copy-referral-link" class="btn btn-secondary" style="padding: 12px 16px;">
+                                <button data-action="copy-referral-link" class="btn btn-secondary ds-btn ds-btn-secondary" style="padding: 12px 16px;">
                                     📋
                                 </button>
                             </div>
@@ -6585,12 +6521,18 @@ function setupMarketplaceDelegatedListeners() {
             }
             case 'sd-apply-theme': {
                 const themeId = btn.dataset.theme;
-                if (themeId) window.marketplaceSystem?.applyThemeInline(themeId);
+                if (themeId && window.marketplaceSystem) {
+                    if (!window.marketplaceSystem.checkTierGate('select_theme', { theme: themeId })) break;
+                    window.marketplaceSystem.applyThemeInline(themeId);
+                }
                 break;
             }
             case 'sd-apply-layout': {
                 const layoutId = btn.dataset.layout || btn.closest('[data-layout]')?.dataset.layout;
-                if (layoutId) window.marketplaceSystem?.applyLayoutInline(layoutId);
+                if (layoutId && window.marketplaceSystem) {
+                    if (!window.marketplaceSystem.checkTierGate('select_layout', { layout: layoutId })) break;
+                    window.marketplaceSystem.applyLayoutInline(layoutId);
+                }
                 break;
             }
             case 'sd-share-store': {
@@ -6677,7 +6619,7 @@ function setupMarketplaceDelegatedListeners() {
                 const fType = btn.dataset.type;
                 const fId = btn.dataset.id;
                 const wasFeatured = btn.dataset.featured === 'true';
-                const fEndpoint = fType === 'services' ? '/services/' + fId : '/products/' + fId;
+                const fEndpoint = fType === 'services' ? '/api/marketplace/services/' + fId : '/api/marketplace/products/' + fId;
                 btn.disabled = true;
                 msF.apiRequest(fEndpoint, { method: 'PATCH', body: JSON.stringify({ featured: !wasFeatured }) })
                     .then(() => { msF.showNotification(wasFeatured ? 'Quitado de destacados' : 'Marcado como destacado', 'success'); msF.loadMyStore(); })
@@ -6692,7 +6634,7 @@ function setupMarketplaceDelegatedListeners() {
                 const mId = btn.dataset.id;
                 const currentOrder = parseInt(btn.dataset.order) || 0;
                 const newOrder = action === 'move-item-up' ? Math.max(0, currentOrder - 1) : currentOrder + 1;
-                const mEndpoint = mType === 'services' ? '/services/' + mId : '/products/' + mId;
+                const mEndpoint = mType === 'services' ? '/api/marketplace/services/' + mId : '/api/marketplace/products/' + mId;
                 btn.disabled = true;
                 msM.apiRequest(mEndpoint, { method: 'PATCH', body: JSON.stringify({ display_order: newOrder }) })
                     .then(() => { msM.loadMyStore(); })
