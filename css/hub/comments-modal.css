@@ -1,8 +1,13 @@
 /**
  * LA TANDA - Comments Modal Styles
  * Estilos para el modal de comentarios
- * Version: 1.0.0
+ * Version: 2.0.0
  * Added: 2026-01-25
+ * Updated: 2026-03-13 — Tier 0 audit:
+ *   M1: Reply indicator banner
+ *   H2: iOS keyboard-safe footer
+ *   L3: font-size 16px across all mobile breakpoints
+ *   M2: Char counter repositioned
  */
 
 /* === Modal Overlay === */
@@ -53,6 +58,7 @@
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 
 .comments-modal-header h3 {
@@ -87,6 +93,7 @@
     overflow-y: auto;
     padding: 16px 20px;
     min-height: 200px;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* === Comments List === */
@@ -201,11 +208,57 @@
     border-left: 2px solid rgba(255, 255, 255, 0.1);
 }
 
+/* === Reply Indicator (M1) === */
+.cm-reply-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    background: rgba(0, 255, 255, 0.06);
+    border-left: 3px solid #00FFFF;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cm-reply-indicator span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cm-reply-indicator i.fa-reply {
+    color: #00FFFF;
+    font-size: 0.75rem;
+}
+
+.cm-reply-indicator strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.cm-reply-cancel {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 0.75rem;
+    transition: color 0.2s;
+}
+
+.cm-reply-cancel:hover {
+    color: #ff6b6b;
+}
+
 /* === Modal Footer === */
 .comments-modal-footer {
     padding: 12px 20px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(15, 23, 42, 1);
+    flex-shrink: 0;
 }
 
 .comments-form {
@@ -217,6 +270,7 @@
 .comments-input-wrapper {
     flex: 1;
     position: relative;
+    min-width: 0;
 }
 
 .comments-input-wrapper textarea {
@@ -229,11 +283,12 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     color: #fff;
-    font-size: 0.9rem;
+    font-size: 16px;
     font-family: inherit;
     resize: none;
     line-height: 1.4;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .comments-input-wrapper textarea:focus {
@@ -251,11 +306,13 @@
     bottom: 10px;
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
 }
 
 .comments-submit-btn {
     width: 44px;
     height: 44px;
+    min-width: 44px;
     border-radius: 50%;
     background: linear-gradient(135deg, #00FFFF 0%, #00CCCC 100%);
     border: none;
@@ -369,6 +426,7 @@
 
     .comments-modal-footer {
         padding: 10px 16px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     }
 
     .comment.comment-reply {
@@ -388,6 +446,12 @@
     .comment-text {
         font-size: 0.85rem;
     }
+
+    .cm-reply-indicator {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+    }
 }
 
 /* Desktop centered modal */
@@ -406,58 +470,5 @@
     .comments-modal-overlay.active .comments-modal {
         transform: translateY(0);
         opacity: 1;
-    }
-}
-
-
-/* === Mobile Footer Fix v2 === */
-@media (max-width: 480px) {
-    .comments-modal-footer {
-        padding: 12px;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .comments-form {
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .comments-input-wrapper {
-        flex: 1;
-        min-width: 0;
-        position: relative;
-    }
-
-    .comments-input-wrapper textarea {
-        width: 100%;
-        min-height: 44px;
-        max-height: 100px;
-        padding: 12px 14px;
-        font-size: 16px;
-        border-radius: 22px;
-        writing-mode: horizontal-tb;
-        text-orientation: mixed;
-        direction: ltr;
-        resize: none;
-        box-sizing: border-box;
-    }
-
-    .char-count {
-        position: absolute;
-        right: 12px;
-        bottom: 8px;
-        font-size: 0.65rem;
-    }
-
-    .comments-submit-btn {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        max-width: 44px !important;
-        border-radius: 50% !important;
-        flex: 0 0 44px !important;
-        padding: 0;
     }
 }
