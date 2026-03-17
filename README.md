@@ -259,3 +259,36 @@ MIT — Ver [LICENSE](./LICENSE)
 Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
 *Ultima actualizacion: Marzo 3, 2026*
+
+
+## Developer Onboarding (Bounty #50)
+
+### Development Setup
+
+```bash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+npx serve .
+# open http://localhost:3000
+```
+
+- Frontend is static HTML/JS/CSS served from repo root.
+- Production API is available via `https://latanda.online`.
+- API docs (Swagger UI): `https://latanda.online/docs`
+- Developer Portal: `https://latanda.online/dev-dashboard.html`
+- Chain Explorer: `https://latanda.online/chain/`
+
+### Project Structure (developer-focused)
+
+- `*.html` (repo root): main app pages.
+- `marketplace-social.js` (repo root): Marketplace singleton module.
+- `js/hub/social-feed.js`: SocialFeed singleton.
+- `integrated-api-complete-95-endpoints.js`: main API server file.
+- `css/`: styling modules.
+- `docs/swagger/openapi.json`: OpenAPI spec.
+- `smart-contracts/`: Solidity contracts and Hardhat tests.
+
+### Verification Answers (for bounty claim)
+
+- `marketplace-social.js` lives at the **HTML root** (not in `js/`).
+- Main API file: **`integrated-api-complete-95-endpoints.js`**.
