@@ -1330,6 +1330,11 @@
         <!-- Social Feed -->
         <div class="social-feed">
             <h3>🌐 Feed de Predicciones</h3>
+            <div class="feed-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="feed-tab active" data-feed="all" onclick="switchFeedTab('all')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(102,126,234,0.3);color:#fff;cursor:pointer;font-size:0.85rem;">Todos</button>
+                <button class="feed-tab" data-feed="auto" onclick="switchFeedTab('auto')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#aaa;cursor:pointer;font-size:0.85rem;">🤖 Predictor</button>
+                <button class="feed-tab" data-feed="users" onclick="switchFeedTab('users')" style="padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#aaa;cursor:pointer;font-size:0.85rem;">👥 Usuarios</button>
+            </div>
             <div class="feed-list" id="socialFeed">
                 <div class="feed-empty">Cargando predicciones...</div>
             </div>
@@ -1889,16 +1894,56 @@
         let feedOffset = 0;
         let feedHasMore = false;
 
+        let currentFeedTab = 'all';
+
+        function switchFeedTab(tab) {
+            currentFeedTab = tab;
+            feedOffset = 0;
+            document.querySelectorAll('.feed-tab').forEach(t => {
+                const isActive = t.dataset.feed === tab;
+                t.classList.toggle('active', isActive);
+                t.style.background = isActive ? 'rgba(102,126,234,0.3)' : 'transparent';
+                t.style.color = isActive ? '#fff' : '#aaa';
+            });
+            loadSocialFeed();
+        }
+
         async function loadSocialFeed() {
             try {
-                const response = await fetch(`/api/lottery/social-feed?limit=10&offset=${feedOffset}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    renderFeedItems(result.data.predictions, feedOffset === 0);
-                    feedHasMore = result.data.pagination.hasMore;
-                    document.getElementById('loadMoreFeed').style.display = feedHasMore ? 'block' : 'none';
+                const items = [];
+                feedHasMore = false;
+
+                // Load user predictions (from hn_lottery_predictions)
+                if (currentFeedTab === 'all' || currentFeedTab === 'users') {
+                    const response = await fetch('/api/lottery/social-feed?limit=10&offset=' + feedOffset);
+                    const result = await response.json();
+                    if (result.success && result.data.predictions) {
+                        result.data.predictions.forEach(p => {
+                            items.push(Object.assign({}, p, { source: 'user' }));
+                        });
+                        if (result.data.pagination.hasMore) feedHasMore = true;
+                    }
                 }
+
+                // Load automated predictor posts (from social_feed)
+                if (currentFeedTab === 'all' || currentFeedTab === 'auto') {
+                    try {
+                        const autoRes = await fetch('/api/lottery/predictor-feed?limit=10&offset=' + feedOffset);
+                        const autoResult = await autoRes.json();
+                        if (autoResult.success && autoResult.data) {
+                            autoResult.data.posts.forEach(p => {
+                                items.push(Object.assign({}, p, { source: 'auto' }));
+                            });
+                            if (autoResult.data.pagination && autoResult.data.pagination.hasMore) feedHasMore = true;
+                        }
+                    } catch(_) {}
+                }
+
+                // Sort by date descending
+                items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                renderMixedFeedItems(items, feedOffset === 0);
+                document.getElementById('loadMoreFeed').style.display = feedHasMore ? 'block' : 'none';
             } catch (error) {
                 console.error('Error loading feed:', error);
                 document.getElementById('socialFeed').innerHTML = '<div class="feed-empty">Error al cargar el feed</div>';
@@ -1954,7 +1999,91 @@
             }
         }
 
-        function formatTimeAgo(dateStr) {
+        function renderMixedFeedItems(items, replace = false) {
+            const feedEl = document.getElementById('socialFeed');
+
+            if (items.length === 0 && replace) {
+                feedEl.innerHTML = '<div class="feed-empty">No hay predicciones aún.</div>';
+                return;
+            }
+
+            const html = items.map(item => {
+                if (item.source === 'auto') {
+                    // Automated predictor post from social_feed
+                    const meta = item.metadata || {};
+                    const predictions = meta.predictions || [];
+                    const hotNums = (meta.hotNumbers || []).slice(0, 5);
+
+                    let numbersHtml = '';
+                    if (hotNums.length > 0) {
+                        numbersHtml = hotNums.map(h => {
+                            const num = String(h.number).padStart(2, '0');
+                            return '<span class="feed-number" style="background:linear-gradient(135deg,#f093fb,#f5576c);">' + num + '</span>';
+                        }).join('');
+                    } else if (predictions.length > 0) {
+                        numbersHtml = predictions[0].numbers.slice(0, 5).map(n => {
+                            return '<span class="feed-number">' + n.number + '</span>';
+                        }).join('');
+                    }
+
+                    const drawSummary = predictions.map(p => {
+                        const nums = p.numbers.slice(0, 3).map(n => n.number).join(', ');
+                        return p.drawTime + ': ' + nums;
+                    }).join(' | ');
+
+                    return '<div class="feed-item" style="border-left:3px solid #667eea;">' +
+                        '<div class="feed-item-header">' +
+                            '<span class="feed-user">🤖 Predictor La Tanda</span>' +
+                            '<span class="feed-time">' + formatTimeAgo(item.created_at) + '</span>' +
+                        '</div>' +
+                        '<div class="feed-numbers">' + numbersHtml + '</div>' +
+                        '<div class="feed-meta">' +
+                            '<span style="font-size:0.75rem;color:#aaa;">' + drawSummary + '</span>' +
+                            (meta.avgConfidence ? '<span>📊 ' + meta.avgConfidence + '%</span>' : '') +
+                        '</div>' +
+                    '</div>';
+                }
+
+                // User prediction from hn_lottery_predictions
+                const numbers = typeof item.predicted_numbers === 'string' ?
+                    JSON.parse(item.predicted_numbers) : item.predicted_numbers;
+
+                let resultClass = 'pending';
+                let resultText = '⏳ Pendiente';
+                if (item.was_correct === true) {
+                    resultClass = 'win';
+                    resultText = '🎉 ¡Acertó!';
+                } else if (item.was_correct === false) {
+                    resultClass = 'miss';
+                    resultText = '❌ No acertó';
+                }
+
+                return '<div class="feed-item">' +
+                    '<div class="feed-item-header">' +
+                        '<span class="feed-user">👤 ' + (item.display_name || 'Anónimo') + '</span>' +
+                        '<span class="feed-time">' + formatTimeAgo(item.created_at) + '</span>' +
+                    '</div>' +
+                    '<div class="feed-numbers">' +
+                        (numbers || []).filter(function(n) { return n !== null && n !== undefined && !isNaN(parseInt(typeof n === 'object' ? (n.number || n.value) : n)); }).map(function(n) {
+                            var num = typeof n === 'object' ? (n.number || n.value || 0) : n;
+                            return '<span class="feed-number">' + String(num).padStart(2, '0') + '</span>';
+                        }).join('') +
+                    '</div>' +
+                    '<div class="feed-meta">' +
+                        '<span>🎯 ' + (item.target_time || '') + '</span>' +
+                        '<span class="feed-result ' + resultClass + '">' + resultText + '</span>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            if (replace) {
+                feedEl.innerHTML = html;
+            } else {
+                feedEl.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+                function formatTimeAgo(dateStr) {
             const date = new Date(dateStr);
             const now = new Date();
             const diff = Math.floor((now - date) / 1000);
@@ -1975,30 +2104,46 @@
                 showToast('Primero genera una predicción');
                 return;
             }
-            
-            const displayName = prompt('¿Con qué nombre quieres aparecer en el feed?', 'Anónimo') || 'Anónimo';
-            
+
+            const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
+            if (!token) {
+                showToast('Inicia sesión para compartir');
+                return;
+            }
+
             try {
-                const token = localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token");
-                const userId = localStorage.getItem('userId') || 'guest_' + Math.random().toString(36).substr(2, 9);
+                // P5 FIX: Use profile name instead of prompt()
+                let displayName = localStorage.getItem('user_display_name') || localStorage.getItem('userName');
+                if (!displayName) {
+                    try {
+                        const profileRes = await fetch('/api/users/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                        const profileData = await profileRes.json();
+                        if (profileData.success && profileData.data) {
+                            displayName = profileData.data.display_name || profileData.data.full_name || profileData.data.username;
+                            if (displayName) localStorage.setItem('user_display_name', displayName);
+                        }
+                    } catch(_) {}
+                }
+                displayName = displayName || 'Anónimo';
+
                 const response = await fetch('/api/lottery/share-prediction', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token ? 'Bearer ' + token : '' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({
                         prediction_id: lastPrediction.id,
-                        user_id: userId,
                         display_name: displayName,
                         is_public: true
                     })
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
-                    showToast('¡Predicción compartida en el feed!');
+                    showToast('¡Compartida en el feed!');
                     feedOffset = 0;
                     loadSocialFeed();
                 } else {
-                    showToast(result.data.error.message || 'Error al compartir');
+                    // P6 FIX: Correct error path
+                    showToast(result.error?.message || 'Error al compartir');
                 }
             } catch (error) {
                 showToast('Error al compartir');

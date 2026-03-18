@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=4.6">
+    <link rel="stylesheet" href="css/groups-page.css?v=4.7">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -3941,7 +3941,7 @@ function loadCreditScoreBadge() {
     var totalPaidEl = document.getElementById('tscTotalPaid');
 
     var paidCount = tandas.reduce(function(s, t) { return s + (t.my_contributions_paid || 0); }, 0);
-    var totalPaid = tandas.reduce(function(s, t) { return s + ((t.my_contributions_paid || 0) * (t.contribution_amount || 0)); }, 0);
+    var totalPaid = tandas.reduce(function(s, t) { var np = parseInt(t.num_positions) || 1; return s + ((t.my_contributions_paid || 0) * (t.contribution_amount || 0) * np); }, 0);
 
     if (totalEl) totalEl.textContent = tandas.length;
     if (activeEl) activeEl.textContent = activeTandas.length;
@@ -6119,6 +6119,7 @@ if (document.readyState === "loading") {
                         <option value="0">Todos los ciclos</option>
                     </select>
                 </div>
+                <button class="ph-print-btn" data-action="ph-print" title="Imprimir reporte"><i class="fas fa-print"></i></button>
             </div>
 
             <!-- Stats Summary Bar -->
@@ -6889,10 +6890,12 @@ if (document.readyState === "loading") {
         }
 
         function phGetStatusPill(paymentStatus, cyclesPaid, currentCycle) {
-            if (cyclesPaid > currentCycle) return '<span class="ph-pill ph-pill-ahead">Adelantado</span>';
+            // v4.25.4: Use API payment_status as source of truth (not cyclesPaid comparison)
             switch(paymentStatus) {
                 case 'paid': return '<span class="ph-pill ph-pill-paid">Al dia</span>';
+                case 'up_to_date': return '<span class="ph-pill ph-pill-paid">Al dia</span>';
                 case 'pending': return '<span class="ph-pill ph-pill-pending">Pendiente</span>';
+                case 'mora': return '<span class="ph-pill ph-pill-mora">En Mora</span>';
                 case 'late': return '<span class="ph-pill ph-pill-late">Atrasado</span>';
                 case 'suspended': return '<span class="ph-pill ph-pill-suspended">Suspendido</span>';
                 default: return '<span class="ph-pill ph-pill-pending">Pendiente</span>';
@@ -6901,7 +6904,9 @@ if (document.readyState === "loading") {
 
         function phGetAvatarColor(status) {
             switch(status) {
-                case 'paid': return 'background:rgba(0,255,255,0.15);color:#00FFFF;';
+                case 'paid':
+                case 'up_to_date': return 'background:rgba(0,255,255,0.15);color:#00FFFF;';
+                case 'mora': return 'background:rgba(249,115,22,0.15);color:#f97316;';
                 case 'late': return 'background:rgba(239,68,68,0.15);color:#ef4444;';
                 case 'suspended': return 'background:rgba(239,68,68,0.2);color:#fca5a5;';
                 default: return 'background:rgba(245,158,11,0.15);color:#f59e0b;';
@@ -7030,28 +7035,25 @@ if (document.readyState === "loading") {
                 var cyclesPaid = parseInt(m.cycles_paid) || 0;
                 var status = m.payment_status;
 
-                // Adelantos detection
-                var isAhead = cyclesPaid > currentCycle;
-                if (isAhead) status = 'ahead';
-
-                // Count stats
-                if (status === 'paid' || status === 'ahead') alDia++;
-                else if (status === 'late' || status === 'suspended') atrasados++;
+                // v4.25.4: Use API payment_status as source of truth for stats
+                if (status === 'paid' || status === 'up_to_date') alDia++;
+                else if (status === 'late' || status === 'suspended' || status === 'mora') atrasados++;
                 else pendientes++;
 
-                var avatarStyle = isAhead ? 'background:rgba(34,197,94,0.15);color:#22c55e;' : phGetAvatarColor(m.payment_status);
-                var statusPill = phGetStatusPill(m.payment_status, cyclesPaid, currentCycle);
+                var avatarStyle = phGetAvatarColor(status);
+                var statusPill = phGetStatusPill(status, cyclesPaid, currentCycle);
                 var turnLabel = m.turn_position ? 'Turno ' + escapeHtml(String(m.turn_position)) : '';
                 var numPosBadge = positions > 1 ? ' <span class="ph-pill ph-pill-numpos">' + positions + ' num.</span>' : '';
                 var progress = cyclesPaid + '/' + currentCycle + ' ciclos';
                 var amountPending = parseFloat(m.amount_pending) || 0;
                 var debtLine = amountPending > 0 ? '<div class="ph-member-debt">Debe: ' + phFormatAmount(amountPending) + '</div>' : '';
+                var loanBadge = m.active_loan ? '<span class="ph-pill ph-pill-loan">Prestamo: ' + phFormatAmount(m.active_loan.total_owed) + '</span>' : '';
 
                 html += '<div class="ph-member-row">' +
                     '<div class="ph-avatar" style="' + avatarStyle + '">' + escapeHtml(initial) + '</div>' +
                     '<div class="ph-member-info">' +
                         '<div class="ph-member-name">' + name + numPosBadge + '</div>' +
-                        '<div class="ph-member-meta">' + turnLabel + (turnLabel ? ' &middot; ' : '') + statusPill + '</div>' +
+                        '<div class="ph-member-meta">' + turnLabel + (turnLabel ? ' &middot; ' : '') + statusPill + loanBadge + '</div>' +
                     '</div>' +
                     '<div class="ph-member-right">' +
                         '<div class="ph-member-progress">' + escapeHtml(progress) + '</div>' +
@@ -7069,6 +7071,71 @@ if (document.readyState === "loading") {
             document.getElementById('phStatPendientes').textContent = pendientes;
             document.getElementById('phStatAtrasados').textContent = atrasados;
             statsBar.style.display = 'grid';
+        }
+
+        // v4.25.4: Print report
+        function phPrintReport() {
+            var groupName = '';
+            try {
+                var titleEl = document.querySelector('#groupPaymentsModal .ph-modal-title');
+                groupName = titleEl ? titleEl.textContent : 'Grupo';
+            } catch(e) { groupName = 'Grupo'; }
+
+            var activeTab = document.querySelector('.ph-tab.ph-tab-active');
+            var tabName = activeTab && activeTab.dataset.action === 'ph-tab-historial' ? 'Historial' : 'Resumen';
+
+            var contentEl = tabName === 'Resumen'
+                ? document.getElementById('phResumenContent')
+                : document.getElementById('phHistorialContent');
+            var statsBar = document.getElementById('phStatsBar');
+
+            if (!contentEl) return;
+
+            var printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write('<html><head><title>' + groupName + ' - ' + tabName + '</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: Inter, Arial, sans-serif; padding: 24px; color: #1e293b; }');
+            printWindow.document.write('h1 { font-size: 18px; margin-bottom: 4px; }');
+            printWindow.document.write('h2 { font-size: 14px; color: #64748b; font-weight: normal; margin-bottom: 16px; }');
+            printWindow.document.write('.ph-stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }');
+            printWindow.document.write('.ph-stat { text-align: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; }');
+            printWindow.document.write('.ph-stat-val { display: block; font-size: 20px; font-weight: 700; }');
+            printWindow.document.write('.ph-stat-label { font-size: 11px; color: #64748b; }');
+            printWindow.document.write('.ph-stat-ok { color: #00b8b8; }');
+            printWindow.document.write('.ph-stat-warn { color: #f59e0b; }');
+            printWindow.document.write('.ph-stat-danger { color: #ef4444; }');
+            printWindow.document.write('.ph-member-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }');
+            printWindow.document.write('.ph-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; }');
+            printWindow.document.write('.ph-member-info { flex: 1; }');
+            printWindow.document.write('.ph-member-name { font-weight: 600; font-size: 13px; }');
+            printWindow.document.write('.ph-member-meta { font-size: 11px; color: #64748b; }');
+            printWindow.document.write('.ph-member-right { text-align: right; }');
+            printWindow.document.write('.ph-member-progress { font-size: 12px; }');
+            printWindow.document.write('.ph-member-debt { font-size: 11px; color: #ef4444; }');
+            printWindow.document.write('.ph-pill { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }');
+            printWindow.document.write('.ph-pill-paid { background: #e0f7fa; color: #00838f; }');
+            printWindow.document.write('.ph-pill-pending { background: #fff8e1; color: #f57f17; }');
+            printWindow.document.write('.ph-pill-mora { background: #fff3e0; color: #e65100; }');
+            printWindow.document.write('.ph-pill-late { background: #ffebee; color: #c62828; }');
+            printWindow.document.write('.ph-pill-suspended { background: #fce4ec; color: #b71c1c; }');
+            printWindow.document.write('.ph-pill-loan { background: #fce4ec; color: #c62828; margin-left: 4px; }');
+            printWindow.document.write('.ph-pill-numpos { background: #e0f7fa; color: #0097a7; margin-left: 4px; }');
+            printWindow.document.write('.ch-entry { padding: 8px; margin-bottom: 6px; border-left: 3px solid #ccc; }');
+            printWindow.document.write('.ch-entry-paid { border-left-color: #22c55e; }');
+            printWindow.document.write('.ch-entry-pending { border-left-color: #f59e0b; }');
+            printWindow.document.write('.ch-entry-rejected { border-left-color: #ef4444; }');
+            printWindow.document.write('@media print { body { padding: 12px; } }');
+            printWindow.document.write('</style></head><body>');
+            printWindow.document.write('<h1>' + groupName + '</h1>');
+            printWindow.document.write('<h2>' + tabName + ' — ' + new Date().toLocaleDateString('es-HN', { day: '2-digit', month: 'long', year: 'numeric' }) + '</h2>');
+            if (statsBar && tabName === 'Resumen') {
+                printWindow.document.write(statsBar.outerHTML);
+            }
+            printWindow.document.write(contentEl.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(function() { printWindow.print(); }, 300);
         }
 
         function phRenderHistorial(cycleFilter) {
@@ -10277,6 +10344,7 @@ function renderTurnsList() {
                 buttons += _gmBtn('gm-contribution-history', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', 'rgba(0,255,255,0.1)', 'Historial de Pagos', 'Historial completo', '#00FFFF', '#00B8D4', dark, darkBorder);
                 buttons += _gmBtn('gm-health-detail', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>', 'rgba(34,197,94,0.1)', 'Salud del Grupo', 'Puntaje y tendencia', '#22c55e', '#16a34a', 'rgba(34,197,94,0.1)', 'rgba(34,197,94,0.3)');
                 buttons += _gmBtn('gm-creator-insights', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>', 'rgba(34,197,94,0.1)', 'Insights del Grupo', 'Vistas, guardados, conversion', '#22c55e', '#16a34a', 'rgba(34,197,94,0.1)', 'rgba(34,197,94,0.3)');
+                buttons += _gmBtn('gm-financial-report', '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7v10"/><path d="M12 10v7"/><path d="M16 13v4"/></svg>', 'rgba(34,197,94,0.1)', 'Reporte Financiero', 'Recaudacion, deuda, cumplimiento', '#22c55e', '#16a34a', 'rgba(34,197,94,0.1)', 'rgba(34,197,94,0.3)');
             }
 
             // === Gestion ===
@@ -10481,12 +10549,13 @@ function renderTurnsList() {
                     case 'gm-anomaly-flags': closeModal(); if (typeof showAnomalyFlags === 'function') showAnomalyFlags(gid); break;
                     case 'gm-turn-fairness':
                     (function() {
-                        var gid = manageGroupId;
+                        var gid = currentManagedGroupId;
                         var gname = document.querySelector('.gm-modal-title') ? document.querySelector('.gm-modal-title').textContent : '';
                         showTurnFairness(gid, gname);
                     })();
                     break;
                 case 'gm-health-detail': showGroupHealthDetail(gid, groupData.name); break;
+                    case 'gm-financial-report': if (typeof showFinancialReport === 'function') showFinancialReport(gid); break;
                     case 'gm-creator-insights':
                         if (!currentManagedGroupId) break;
                         (async function() {
@@ -12524,7 +12593,7 @@ function renderTurnsList() {
                     break;
                 case 'grp-vd-manage':
                     closeViewDetailsModal();
-                    if (gid && typeof manageGroup === 'function') manageGroup(gid);
+                    if (gid) window.location.href = '/gestionar/' + encodeURIComponent(gid);
                     break;
                 case 'grp-vd-calendar':
                     closeViewDetailsModal();
@@ -13660,7 +13729,7 @@ function renderTurnsList() {
                     break;
                 case 'grp-manage-group':
                     var gid2 = btn.getAttribute('data-group-id');
-                    if (gid2 && typeof manageGroup === 'function') manageGroup(gid2);
+                    if (gid2) window.location.href = '/gestionar/' + encodeURIComponent(gid2);
                     break;
 
                 case 'grp-request-extension':
@@ -14023,6 +14092,10 @@ function renderTurnsList() {
                     if (typeof phSwitchTab === 'function') phSwitchTab('historial');
                     break;
 
+                    case 'ph-print':
+                        phPrintReport();
+                        break;
+
                 // Sidebar quick actions
                 case 'gs-view-invitations':
                     window.location.href = '/notificaciones.html';
@@ -14382,7 +14455,44 @@ function renderTurnsList() {
             }
         });
     })();
-    </script>
+    
+    // Handle deep-link from gestionar.html — call functions directly (no modal)
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var manageGid = params.get('manage');
+        var action = params.get('action');
+        if (manageGid && action) {
+            // Wait for page scripts to load, then execute
+            var attempts = 0;
+            function tryDeepLink() {
+                attempts++;
+                currentManagedGroupId = manageGid;
+                switch(action) {
+                    case 'turns':
+                        if (typeof manageTurns === 'function') { manageTurns(manageGid); return; }
+                        break;
+                    case 'loans':
+                        if (typeof window.showLoanManager === 'function') window.showLoanManager(manageGid);
+                        break;
+                    case 'insights':
+                        // Insights is inline in the modal handler — open modal and click button
+                        if (typeof window.manageGroup === 'function') {
+                            window.manageGroup(manageGid).then(function() {
+                                setTimeout(function() {
+                                    var btn = document.querySelector('[data-action="gm-creator-insights"]');
+                                    if (btn) btn.click();
+                                }, 400);
+                            });
+                        }
+                        break;
+                }
+                // Retry if function not found yet (scripts still loading)
+                if (attempts < 5) setTimeout(tryDeepLink, 800);
+            }
+            setTimeout(tryDeepLink, 1200);
+        }
+    })();
+</script>
 
 </body>
 </html>
