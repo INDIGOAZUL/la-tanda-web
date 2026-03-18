@@ -378,6 +378,12 @@ const SocialFeed = {
                     window.LaTandaPopup && window.LaTandaPopup.showWarning("Maximo " + this.maxMedia + " archivos");
                     return;
                 }
+                // On mobile, skip dropdown and open file picker directly
+                // Mobile OS file pickers already offer camera/gallery options
+                if (window.innerWidth <= 768) {
+                    if (mediaInput) mediaInput.click();
+                    return;
+                }
                 mediaMenu.classList.toggle("show");
             });
         }

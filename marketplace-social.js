@@ -172,7 +172,7 @@ class MarketplaceSocialSystem {
             this.categoriesData.forEach(cat => {
                 if (cat.is_active) {
                     serviceCategoryFilter.innerHTML += `
-                        <option value="${cat.category_id}">${cat.icon} ${cat.name_es}</option>
+                        <option value="${this.escapeHtml(String(cat.category_id))}">${this.escapeHtml(cat.icon || '')} ${this.escapeHtml(cat.name_es || '')}</option>
                     `;
                 }
             });
@@ -369,14 +369,15 @@ class MarketplaceSocialSystem {
     }
 
     // Select a tier in upgrade modal → show payment step
-    selectUpgradeTier(tier) {
+    async selectUpgradeTier(tier) {
         const prices = { free: 0, plan: 99, premium: 299 };
         const labels = { free: 'Gratis', plan: 'Plan', premium: 'Premium' };
         this._pendingUpgradeTier = tier;
 
         if (tier === 'free') {
             // Downgrade confirmation
-            if (!confirm('Deseas cambiar a plan Gratis? Perderas los beneficios al finalizar el periodo actual.')) return;
+            const confirmed = await this.showConfirm('Deseas cambiar a plan Gratis? Perderas los beneficios al finalizar el periodo actual.');
+            if (!confirmed) return;
             this.confirmUpgrade();
             return;
         }
@@ -660,7 +661,7 @@ class MarketplaceSocialSystem {
         container.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i> Cargando pedidos...</div>';
         try {
             const response = await this.apiRequest('/api/marketplace/product-orders?role=buyer&limit=30');
-            if (!response.success) throw new Error('Error');
+            if (!response.success) throw new Error('No se pudieron cargar los pedidos');
             const orders = response.orders || response.data?.orders || [];
             this._buyerOrders = orders;
             if (orders.length === 0) {
@@ -857,7 +858,7 @@ class MarketplaceSocialSystem {
         if (existing) existing.remove();
         try {
             const resp = await this.apiRequest(`/api/marketplace/product-orders/${orderId}`);
-            if (!resp.success) throw new Error('Error');
+            if (!resp.success) throw new Error('No se pudo cargar el pedido');
             const o = resp.order || resp.data?.order;
             if (!o) throw new Error('No data');
             const esc = this.escapeHtml.bind(this);
@@ -1152,8 +1153,8 @@ class MarketplaceSocialSystem {
             if (resp.success) {
                 this.showNotification('Respuesta enviada', 'success');
                 this.openDisputeDetail(disputeId);
-            } else throw new Error(resp.error || 'Error');
-        } catch (err) { this.showNotification(err.message || 'Error', 'error'); }
+            } else throw new Error(resp.error || 'Algo salio mal');
+        } catch (err) { this.showNotification(err.message || 'Algo salio mal', 'error'); }
     }
 
     async _closeDispute(disputeId) {
@@ -1162,8 +1163,8 @@ class MarketplaceSocialSystem {
             if (resp.success) {
                 this.showNotification('Disputa cerrada', 'success');
                 document.getElementById('mcDisputeOverlay')?.remove();
-            } else throw new Error(resp.error || 'Error');
-        } catch (err) { this.showNotification(err.message || 'Error', 'error'); }
+            } else throw new Error(resp.error || 'Algo salio mal');
+        } catch (err) { this.showNotification(err.message || 'Algo salio mal', 'error'); }
     }
 
     // Booking system
@@ -1630,19 +1631,46 @@ class MarketplaceSocialSystem {
         const desktopInput = document.getElementById('mpSearchInputDesktop');
         const mobileInput = document.getElementById('mpSearchInput');
         const query = (desktopInput?.value || mobileInput?.value || '').trim();
-        if (!query) return;
+
+        // Read filter dropdowns
+        const categoryVal = document.getElementById('categoryFilter')?.value || '';
+        const locationVal = document.getElementById('locationFilter')?.value || '';
+        const priceVal = document.getElementById('priceFilter')?.value || '';
+
+        // If no query and no filters, do nothing
+        if (!query && !categoryVal && !locationVal && !priceVal) return;
 
         // Switch to products tab and load with search param
         this._expTab = 'exp-productos';
         this._expOffset = 0;
-        this._expCategory = null;
-        this._expSearchQuery = query;
+        this._expSearchQuery = query || null;
+
+        // Apply category from dropdown if set
+        if (categoryVal) {
+            this._expCategory = categoryVal;
+        } else {
+            this._expCategory = null;
+        }
+
+        // Store price filter for URL building
+        this._expMinPrice = null;
+        this._expMaxPrice = null;
+        if (priceVal) {
+            const parts = priceVal.split('-');
+            this._expMinPrice = parseInt(parts[0]) || null;
+            this._expMaxPrice = parts[1] ? parseInt(parts[1]) : null;
+        }
 
         // Update tab UI
         const tabs = document.querySelectorAll('.exp-tab');
         tabs.forEach(t => t.classList.remove('active'));
         const prodTab = document.querySelector('[data-exp-tab="exp-productos"]');
         if (prodTab) prodTab.classList.add('active');
+
+        // Reset category pills to "Todos"
+        document.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
+        const todosP = document.querySelector('.exp-pill[data-value=""]');
+        if (todosP) todosP.classList.add('active');
 
         // Navigate to explore section
         this.switchSection?.('explore');
@@ -1651,6 +1679,8 @@ class MarketplaceSocialSystem {
 
     // ALG-04 T3: Autocomplete
     _setupAutocomplete() {
+        if (this._autocompleteSetup) return;
+        this._autocompleteSetup = true;
         const inputs = [
             document.getElementById('mpSearchInputDesktop'),
             document.getElementById('mpSearchInput')
@@ -1754,6 +1784,9 @@ class MarketplaceSocialSystem {
                 pill.classList.add('active');
                 this._expCategory = pill.dataset.value || null;
                 this._expOffset = 0;
+                this._expSearchQuery = null;
+                this._expMinPrice = null;
+                this._expMaxPrice = null;
                 this.loadExplorarFeed(this._expTab, false);
             });
         }
@@ -1799,6 +1832,8 @@ class MarketplaceSocialSystem {
             url = '/api/marketplace/products?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
             if (this._expSearchQuery) url += '&search=' + encodeURIComponent(this._expSearchQuery);
+            if (this._expMinPrice) url += '&minPrice=' + this._expMinPrice;
+            if (this._expMaxPrice) url += '&maxPrice=' + this._expMaxPrice;
         } else if (tab === 'exp-servicios') {
             url = '/api/marketplace/services?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
@@ -1813,8 +1848,10 @@ class MarketplaceSocialSystem {
             else if (tab === 'exp-servicios') items = d.services || [];
             else items = d.products || [];
 
-            if (items.length === 0 && !append) {
-                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">📭</div><div class="exp-empty-text">No se encontraron resultados</div></div>';
+            if (items.length === 0) {
+                if (!append) {
+                    container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">📭</div><div class="exp-empty-text">No se encontraron resultados</div></div>';
+                }
                 if (loadMoreEl) loadMoreEl.style.display = 'none';
                 this._expLoading = false;
                 return;
@@ -1896,53 +1933,7 @@ class MarketplaceSocialSystem {
     }
     
     
-    filterProducts() {
-        const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
-        const categoryFilter = document.getElementById('categoryFilter')?.value || '';
-        const priceFilter = document.getElementById('priceFilter')?.value || '';
-        const locationFilter = document.getElementById('locationFilter')?.value || '';
-        
-        let filteredProducts = this.products.filter(product => {
-            const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
-                                product.description.toLowerCase().includes(searchTerm);
-            const matchesCategory = !categoryFilter || product.category === categoryFilter;
-            const matchesPrice = this.matchesPriceRange(product.price, priceFilter);
-            
-            return matchesSearch && matchesCategory && matchesPrice;
-        });
-        
-        this.displayFilteredProducts(filteredProducts);
-    }
-    
-    matchesPriceRange(price, priceFilter) {
-        if (!priceFilter) return true;
-        
-        const [min, max] = priceFilter.includes('-') 
-            ? priceFilter.split('-').map(Number)
-            : priceFilter === '1000+' 
-                ? [1000, Infinity]
-                : [0, Infinity];
-        
-        return price >= min && price <= max;
-    }
-    
-    displayFilteredProducts(products) {
-        const container = document.getElementById('recentProducts');
-        if (!container) return;
-        
-        if (products.length === 0) {
-            container.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.6);">
-                    <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
-                    <h3>No se encontraron productos</h3>
-                    <p>Intenta ajustar los filtros de búsqueda</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = products.map(product => this.createProductCard(product)).join('');
-    }
+    // filterProducts(), matchesPriceRange(), displayFilteredProducts() removed in v4.25.2 audit (dead code — Explorar uses loadExplorarFeed)
 
     createProductCard(product) {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
@@ -5062,7 +5053,7 @@ class MarketplaceSocialSystem {
             return;
         }
         let images = [];
-        try { images = JSON.parse(document.getElementById('epExistingImages')?.value || '[]'); } catch(e) {}
+        try { images = JSON.parse(document.getElementById('epExistingImages')?.value || '[]'); } catch(e) { console.warn('Error parsing product images:', e.message); }
         if (this._editProductImages?.length) {
             const uploaded = await this._uploadImages(this._editProductImages, 'product');
             if (uploaded) images = images.concat(uploaded);
@@ -5170,7 +5161,7 @@ class MarketplaceSocialSystem {
             return;
         }
         let images = [];
-        try { images = JSON.parse(document.getElementById('esExistingImages')?.value || '[]'); } catch(e) {}
+        try { images = JSON.parse(document.getElementById('esExistingImages')?.value || '[]'); } catch(e) { console.warn('Error parsing service images:', e.message); }
         if (this._editServiceImages?.length) {
             const uploaded = await this._uploadImages(this._editServiceImages, 'service');
             if (uploaded) images = images.concat(uploaded);
@@ -5232,7 +5223,7 @@ class MarketplaceSocialSystem {
         try {
             const res = await this.apiRequest('/api/marketplace/featured-boost/active');
             if (res.success) activeBoosts = res.data?.boosts || [];
-        } catch {}
+        } catch (err) { console.warn('Error loading boosts:', err.message); }
         const current = activeBoosts.find(b => b.item_type === itemType && String(b.item_id) === String(itemId));
 
         // Fetch wallet balance
@@ -5240,7 +5231,7 @@ class MarketplaceSocialSystem {
         try {
             const bal = await this.apiRequest('/api/wallet/balance');
             balance = parseFloat(bal.data?.balance || bal.data?.crypto_balances?.LTD || bal.balance || 0);
-        } catch {}
+        } catch (err) { console.warn('Error loading balance:', err.message); }
 
         const overlay = document.createElement('div');
         overlay.id = 'boostOverlay';
@@ -5561,12 +5552,72 @@ function closeCreateServiceModal() {
     document.getElementById('serviceCreateOverlay')?.remove();
 }
 
-function viewProduct(productId) {
+async function viewProduct(productId) {
     const ms = window.marketplaceSystem;
     if (!ms) return;
-    const product = ms.products.find(p => String(p.id) === String(productId) || String(p.productId) === String(productId));
-    if (product) {
-        ms.showNotification(`${ms.escapeHtml(product.name)} - ${ms.formatPrice(product.price, product.currency || 'HNL')}`, 'info');
+    const esc = (v) => ms.escapeHtml(String(v ?? ''));
+    try {
+        const resp = await ms.apiRequest('/api/marketplace/products/' + encodeURIComponent(productId));
+        const p = resp?.data?.product || resp?.product || resp?.data;
+        if (!p) { ms.showNotification('Producto no encontrado', 'error'); return; }
+
+        // Parse images
+        let imgs = p.images || [];
+        if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch { imgs = []; } }
+        if (!Array.isArray(imgs)) imgs = [];
+        const mainImg = imgs.length > 0 ? (typeof imgs[0] === 'object' ? imgs[0].url : imgs[0]) : null;
+
+        const condMap = { new: 'Nuevo', used: 'Usado', like_new: 'Como nuevo', refurbished: 'Reacondicionado', good: 'Bueno', acceptable: 'Aceptable' };
+        const condLabel = condMap[p.condition] || '';
+        const stockColor = (p.quantity > 0) ? '#10B981' : '#EF4444';
+        const stockLabel = (p.quantity > 0) ? (p.quantity + ' disponible' + (p.quantity > 1 ? 's' : '')) : 'Agotado';
+        const price = 'L. ' + Number(p.price || 0).toLocaleString('es-HN');
+        const sellerName = esc(p.seller_name || p.seller?.name || 'Vendedor');
+
+        // Gallery thumbnails
+        const gallery = imgs.length > 1 ? '<div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;">' +
+            imgs.map((img, i) => {
+                const src = typeof img === 'object' ? img.url : img;
+                return '<img src="' + esc(src) + '" style="width:52px;height:52px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + (i === 0 ? 'var(--mp-orange,#FF6B35)' : 'transparent') + ';" onclick="this.closest(\'.vp-modal\').querySelector(\'.vp-main-img\').src=this.src" loading="lazy">';
+            }).join('') + '</div>' : '';
+
+        const existing = document.getElementById('vpOverlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'vpOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
+        overlay.innerHTML = '<div class="vp-modal" style="background:#1a1f2e;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">' +
+            '<div style="position:relative;">' +
+                (mainImg ? '<img class="vp-main-img" src="' + esc(mainImg) + '" style="width:100%;height:260px;object-fit:cover;border-radius:16px 16px 0 0;">' : '<div style="width:100%;height:160px;display:flex;align-items:center;justify-content:center;font-size:64px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">📦</div>') +
+                '<button onclick="document.getElementById(\'vpOverlay\').remove()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>' +
+                (condLabel ? '<span style="position:absolute;top:12px;left:12px;background:rgba(139,92,246,0.9);color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;">' + esc(condLabel) + '</span>' : '') +
+            '</div>' +
+            '<div style="padding:16px;">' +
+                gallery +
+                '<h2 style="color:#fff;margin:12px 0 4px;font-size:18px;">' + esc(p.title || p.name) + '</h2>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">' +
+                    '<span style="color:var(--mp-orange,#FF6B35);font-size:22px;font-weight:700;">' + price + '</span>' +
+                    '<span style="color:' + stockColor + ';font-size:13px;font-weight:600;">' + stockLabel + '</span>' +
+                '</div>' +
+                '<div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:16px;line-height:1.5;">' + esc(p.description || '') + '</div>' +
+                '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:16px;">' +
+                    '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + sellerName.charAt(0) + '</div>' +
+                    '<div><div style="color:#fff;font-size:14px;font-weight:600;">' + sellerName + '</div>' +
+                    (p.seller_city ? '<div style="color:rgba(255,255,255,0.5);font-size:12px;">📍 ' + esc(p.seller_city || p.location || '') + '</div>' : '') +
+                    '</div>' +
+                '</div>' +
+                (p.quantity > 0 ? '<div style="display:flex;gap:8px;">' +
+                    '<button class="ds-btn ds-btn-primary" style="flex:1;padding:12px;font-size:15px;" onclick="document.getElementById(\'vpOverlay\').remove(); buyProduct(\'' + esc(p.id) + '\')">Comprar ahora</button>' +
+                    '<button class="ds-btn ds-btn-secondary" style="padding:12px 16px;" data-action="add-to-cart" data-id="' + esc(p.id) + '"><i class="fas fa-cart-plus"></i></button>' +
+                '</div>' : '<button class="ds-btn ds-btn-secondary" style="width:100%;padding:12px;opacity:0.5;" disabled>Agotado</button>') +
+            '</div>' +
+        '</div>';
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+    } catch (err) {
+        ms.showNotification('Error al cargar producto', 'error');
+        console.warn('viewProduct error:', err.message);
     }
 }
 
@@ -5718,12 +5769,61 @@ function sharePost(postId) {
 }
 
 // Service-related global functions
-function viewService(serviceId) {
+async function viewService(serviceId) {
     const ms = window.marketplaceSystem;
     if (!ms) return;
-    const service = ms.services.find(s => s.id === serviceId);
-    if (service) {
-        ms.showNotification(`${ms.escapeHtml(service.title)} - ${ms.escapeHtml(service.provider.name)}`, 'info');
+    const esc = (v) => ms.escapeHtml(String(v ?? ''));
+    try {
+        const resp = await ms.apiRequest('/api/marketplace/services/' + encodeURIComponent(serviceId));
+        const s = resp?.data?.service || resp?.service || resp?.data;
+        if (!s) { ms.showNotification('Servicio no encontrado', 'error'); return; }
+
+        let imgs = s.images || [];
+        if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch { imgs = []; } }
+        if (!Array.isArray(imgs)) imgs = [];
+        const mainImg = imgs.length > 0 ? (typeof imgs[0] === 'object' ? imgs[0].url : imgs[0]) : null;
+
+        const priceLabel = s.price_type === 'fixed' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN'))
+            : s.price_type === 'range' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN') + ' - ' + Number(s.price_max || 0).toLocaleString('es-HN'))
+            : s.price_type === 'hourly' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN') + '/hora')
+            : 'Consultar';
+        const provName = esc(s.provider_name || s.provider?.name || 'Proveedor');
+        const rating = s.avg_rating ? ('⭐ ' + Number(s.avg_rating).toFixed(1) + ' (' + (s.total_reviews || 0) + ')') : 'Sin resenas';
+        const duration = s.duration_minutes ? (s.duration_minutes + ' min') : '';
+
+        const existing = document.getElementById('vsOverlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'vsOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
+        overlay.innerHTML = '<div style="background:#1a1f2e;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">' +
+            '<div style="position:relative;">' +
+                (mainImg ? '<img src="' + esc(mainImg) + '" style="width:100%;height:220px;object-fit:cover;border-radius:16px 16px 0 0;">' : '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">🛠️</div>') +
+                '<button onclick="document.getElementById(\'vsOverlay\').remove()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>' +
+            '</div>' +
+            '<div style="padding:16px;">' +
+                '<h2 style="color:#fff;margin:0 0 6px;font-size:18px;">' + esc(s.title) + '</h2>' +
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">' +
+                    '<span style="color:var(--mp-orange,#FF6B35);font-size:20px;font-weight:700;">' + priceLabel + '</span>' +
+                    (duration ? '<span style="color:rgba(255,255,255,0.5);font-size:13px;">⏱ ' + duration + '</span>' : '') +
+                    '<span style="color:rgba(255,255,255,0.5);font-size:13px;">' + rating + '</span>' +
+                '</div>' +
+                (s.short_description ? '<div style="color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:8px;">' + esc(s.short_description) + '</div>' : '') +
+                '<div style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:16px;line-height:1.5;">' + esc(s.description || '') + '</div>' +
+                (s.tags ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">' + (Array.isArray(s.tags) ? s.tags : []).map(t => '<span style="background:rgba(255,107,53,0.15);color:#FF6B35;padding:3px 10px;border-radius:12px;font-size:12px;">' + esc(t) + '</span>').join('') + '</div>' : '') +
+                '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:16px;">' +
+                    '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + provName.charAt(0) + '</div>' +
+                    '<div style="color:#fff;font-size:14px;font-weight:600;">' + provName + '</div>' +
+                '</div>' +
+                '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="document.getElementById(\'vsOverlay\').remove(); bookService(' + parseInt(serviceId) + ')">Reservar</button>' +
+            '</div>' +
+        '</div>';
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+    } catch (err) {
+        ms.showNotification('Error al cargar servicio', 'error');
+        console.warn('viewService error:', err.message);
     }
 }
 
@@ -5852,7 +5952,9 @@ async function contactProvider(bookingId) {
             links.push(`<a href="${ms.escapeHtml(socialLinks.linkedin)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(10,102,194,0.15); border: 1px solid rgba(10,102,194,0.3); border-radius: 10px; color: #0A66C2; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">💼</span> LinkedIn</a>`);
         }
         if (socialLinks.website) {
-            links.push(`<a href="${ms.escapeHtml(socialLinks.website)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.25); border-radius: 10px; color: #00FFFF; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">🌐</span> ${ms.escapeHtml(new URL(socialLinks.website).hostname)}</a>`);
+            let hostname = socialLinks.website;
+            try { hostname = new URL(socialLinks.website).hostname; } catch { /* invalid URL, show raw */ }
+            links.push(`<a href="${ms.escapeHtml(socialLinks.website)}" target="_blank" rel="noopener noreferrer" style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: rgba(0,255,255,0.1); border: 1px solid rgba(0,255,255,0.25); border-radius: 10px; color: #00FFFF; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.2s;"><span style="font-size: 24px;">🌐</span> ${ms.escapeHtml(hostname)}</a>`);
         }
 
         if (links.length === 0) {
@@ -6274,7 +6376,7 @@ document.head.appendChild(style);
 
 // v4.4.0: Delegated click handler for marketplace actions (moved out of CSS template)
 function setupMarketplaceDelegatedListeners() {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
         const action = btn.dataset.action;
@@ -6290,9 +6392,19 @@ function setupMarketplaceDelegatedListeners() {
                 const msCart = window.marketplaceSystem;
                 if (!msCart) break;
                 if (msCart.isGuest) { msCart.showLoginPrompt('agregar al carrito'); break; }
-                const cartProduct = msCart.products?.find(p => String(p.id) === String(id) || String(p.productId) === String(id));
-                if (cartProduct) msCart._addToCart(cartProduct, 1);
-                else msCart.showNotification('Producto no encontrado', 'error');
+                let cartProduct = msCart.products?.find(p => String(p.id) === String(id) || String(p.productId) === String(id));
+                if (cartProduct) {
+                    msCart._addToCart(cartProduct, 1);
+                    msCart.showNotification('Agregado al carrito', 'success');
+                } else {
+                    // Product from Explorar feed — fetch from API
+                    try {
+                        const pr = await msCart.apiRequest('/api/marketplace/products/' + encodeURIComponent(id));
+                        const pd = pr?.data?.product || pr?.product;
+                        if (pd) { msCart._addToCart(pd, 1); msCart.showNotification('Agregado al carrito', 'success'); }
+                        else msCart.showNotification('Producto no encontrado', 'error');
+                    } catch { msCart.showNotification('Error al agregar', 'error'); }
+                }
                 break;
             }
             case 'share-product': e.stopPropagation(); if (typeof showShareModal === 'function') showShareModal(id, 'product'); break;
@@ -6458,7 +6570,7 @@ function setupMarketplaceDelegatedListeners() {
                         imgs.splice(epIdx, 1);
                         epImagesEl.value = JSON.stringify(imgs);
                         btn.closest('.store-image-preview')?.remove();
-                    } catch(e) {}
+                    } catch(e) { console.warn('Error removing product image:', e.message); }
                 }
                 break;
             }
@@ -6471,7 +6583,7 @@ function setupMarketplaceDelegatedListeners() {
                         imgs.splice(esIdx, 1);
                         esImagesEl.value = JSON.stringify(imgs);
                         btn.closest('.store-image-preview')?.remove();
-                    } catch(e) {}
+                    } catch(e) { console.warn('Error removing service image:', e.message); }
                 }
                 break;
             }
@@ -6670,7 +6782,7 @@ function setupMarketplaceDelegatedListeners() {
             }
             case 'exp-retry': {
                 const msR = window.marketplaceSystem;
-                if (msR) msR.loadExplorarFeed(msR._expTab, false);
+                if (msR && !msR._expLoading) msR.loadExplorarFeed(msR._expTab, false);
                 break;
             }
             case 'retry-bookings': {
