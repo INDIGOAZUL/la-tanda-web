@@ -145,8 +145,13 @@ class AdvancedGroupsSystemV3 {
             console.log('🔍 Raw result from API Proxy:', result);
             
             if (result.success) {
-                // Reduced noisy debug logging for production巡逻
-
+                // DEBUG: Log complete result structure
+                console.log('🔍 DEBUG - Complete result:', result);
+                console.log('🔍 DEBUG - result.data:', result.data);
+                console.log('🔍 DEBUG - result.data.groups:', result.data.groups);
+                console.log('🔍 DEBUG - typeof result.data:', typeof result.data);
+                console.log('🔍 DEBUG - Array.isArray(result.data):', Array.isArray(result.data));
+                
                 // Handle different data structures from API
                 let groupsData = [];
                 if (result.data && Array.isArray(result.data)) {
@@ -160,6 +165,7 @@ class AdvancedGroupsSystemV3 {
                 
                 console.log('✅ Grupos cargados desde API Proxy:', groupsData.length, 'grupos');
                 console.log('🔍 Fuente de datos:', result.meta?.source || 'unknown');
+                console.log('🔍 DEBUG - groupsData:', groupsData);
                 if (groupsData.length > 0) {
                     console.log('📋 IDs de grupos obtenidos:', groupsData.map(g => g.id || g._id));
                 }
