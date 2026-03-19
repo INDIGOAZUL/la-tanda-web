@@ -137,29 +137,34 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 
 ---
 
-## Desarrollo Local
+## Development Setup
 
 ```bash
-# Clonar
+# Clone
 git clone https://github.com/INDIGOAZUL/la-tanda-web.git
 cd la-tanda-web
 
-# Frontend (archivos estaticos)
-# Abrir cualquier .html en el navegador o servir con:
+# Serve static frontend locally
 npx serve .
+# open http://localhost:3000
 
-# Smart contracts
+# Smart contracts (optional)
 cd smart-contracts
 npm install
 npx hardhat compile
 npx hardhat test
 ```
 
-> **Nota:** El backend (API + DB) corre en el servidor de produccion. Para desarrollo backend se requiere acceso SSH al servidor.
+Backend services (API + DB) run on the production server; backend development requires SSH access.
+
+### Developer Links (verified)
+- Swagger UI: https://latanda.online/docs
+- Dev Portal: https://latanda.online/dev-dashboard.html
+- Chain Explorer: https://latanda.online/chain/
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 la-tanda-web/
