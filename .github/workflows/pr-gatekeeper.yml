@@ -58,13 +58,20 @@ jobs:
               const patterns = [
                 /(?:closes|fixes|resolves)\s+#(\d+)/gi,
                 /(?:bounty|issue)\s*#(\d+)/gi,
-                /(?:bounty|issue):\s*#(\d+)/gi
+                /(?:bounty|issue):\s*#(\d+)/gi,
+                /(?:related|ref|references|see)\s*:?\s*#(\d+)/gi
               ];
               for (const pattern of patterns) {
                 let match;
                 while ((match = pattern.exec(body)) !== null) {
                   issueRefs.push(parseInt(match[1]));
                 }
+              }
+              // Catch-all: any #NNN in body not already matched
+              const catchAll = /(?<!\w)#(\d+)/g;
+              let catchMatch;
+              while ((catchMatch = catchAll.exec(body)) !== null) {
+                issueRefs.push(parseInt(catchMatch[1]));
               }
               // Also check PR title for issue refs
               const titleMatch = pr.title.match(/#(\d+)/g);
