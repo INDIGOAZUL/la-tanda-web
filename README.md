@@ -137,6 +137,41 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 
 ---
 
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+ (for `npx serve`)
+- Git
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve the frontend locally
+npx serve .
+
+# Open http://localhost:3000 in your browser
+```
+
+The frontend connects to the production API at `latanda.online`. No local backend setup required.
+
+### Smart Contracts (Optional)
+
+```bash
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
+```
+
+> **Note:** The backend (API + PostgreSQL) runs on the production server. Backend development requires SSH access. For frontend-only work, the production API is fully accessible.
+
+---
+
 ## Desarrollo Local
 
 ```bash
@@ -159,11 +194,11 @@ npx hardhat test
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 la-tanda-web/
-├── *.html                        # 30+ paginas frontend (home-dashboard, explorar, etc.)
+├── *.html                        # Pages at root (30+ frontend pages)
 ├── marketplace-social.js         # Marketplace SPA (AT ROOT, not in js/)
 ├── marketplace-social.html       # Marketplace HTML (AT ROOT)
 ├── js/
@@ -185,7 +220,7 @@ la-tanda-web/
 │   ├── dashboard-layout.css      # Main layout
 │   └── groups-page.css           # Groups/Tandas styles
 ├── chain/                        # La Tanda Chain explorer + files
-├── docs/swagger/openapi.json     # OpenAPI spec (220+ paths)
+├── docs/swagger/openapi.json     # OpenAPI spec (240+ paths)
 ├── smart-contracts/
 │   ├── contracts/                # LTDToken, Vesting, Reserve (Solidity)
 │   ├── scripts/                  # Deploy scripts
