@@ -708,3 +708,211 @@
         color: #94a3b8;
     }
 }
+
+/* ============================================================
+   GUIDED TOUR (onboarding-tour.js)
+   First-time user walkthrough — home-dashboard.html
+   localStorage key: onboarding_completed
+   ============================================================ */
+
+#lt-tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 19000;
+    transition: opacity 0.3s ease;
+}
+
+#lt-tour-highlight {
+    position: fixed;
+    z-index: 19001;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 0 3px #00FFFF;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#lt-tour-tooltip {
+    position: fixed;
+    z-index: 19002;
+    width: 300px;
+    max-width: calc(100vw - 24px);
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.08);
+    padding: 20px;
+    color: #f8fafc;
+    font-family: 'Rajdhani', sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+#lt-tour-tooltip.lt-tour-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.lt-tour-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    transform: rotate(45deg);
+}
+
+.lt-tour-arrow.lt-arr-top {
+    top: -7px;
+    left: 50%;
+    margin-left: -6px;
+    border-bottom: none;
+    border-right: none;
+}
+
+.lt-tour-arrow.lt-arr-bottom {
+    bottom: -7px;
+    left: 50%;
+    margin-left: -6px;
+    border-top: none;
+    border-left: none;
+}
+
+.lt-tour-arrow.lt-arr-left {
+    left: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-right: none;
+    border-top: none;
+}
+
+.lt-tour-arrow.lt-arr-right {
+    right: -7px;
+    top: 50%;
+    margin-top: -6px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.lt-tour-step-indicator {
+    font-size: 11px;
+    color: rgba(0, 255, 255, 0.6);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.lt-tour-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #00FFFF;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.lt-tour-message {
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-bottom: 18px;
+}
+
+.lt-tour-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lt-tour-btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lt-tour-btn-next {
+    background: linear-gradient(135deg, #00FFFF, #00b4d8);
+    color: #0f172a;
+    flex: 1;
+}
+
+.lt-tour-btn-next:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.lt-tour-btn-prev {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lt-tour-btn-prev:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #f8fafc;
+}
+
+.lt-tour-btn-skip {
+    background: none;
+    color: rgba(148, 163, 184, 0.7);
+    font-size: 0.8rem;
+    margin-left: auto;
+    border: none;
+    padding: 9px 4px;
+}
+
+.lt-tour-btn-skip:hover {
+    color: #94a3b8;
+}
+
+.lt-tour-progress {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.lt-tour-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    transition: all 0.2s;
+}
+
+.lt-tour-dot.active {
+    background: #00FFFF;
+    transform: scale(1.3);
+}
+
+.lt-tour-dot.done {
+    background: rgba(0, 255, 255, 0.45);
+}
+
+@media (max-width: 420px) {
+    #lt-tour-tooltip {
+        width: calc(100vw - 20px);
+        font-size: 0.85rem;
+    }
+
+    .lt-tour-title {
+        font-size: 0.95rem;
+    }
+
+    .lt-tour-message {
+        font-size: 0.83rem;
+        margin-bottom: 14px;
+    }
+
+    .lt-tour-btn {
+        padding: 8px 12px;
+        font-size: 0.83rem;
+    }
+}

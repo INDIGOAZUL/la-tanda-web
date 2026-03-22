@@ -312,18 +312,52 @@ window.LaTandaComponentLoader = LaTandaComponentLoader;
 // ============================================================
 LaTandaComponentLoader.loadOnboarding = async function() {
     if (this.onboardingLoaded) return;
-    
+
     try {
         // Load CSS
         await this.loadCSS("css/onboarding.css");
-        
+
         // Load JS
         await this.loadScript("js/onboarding/onboarding-system.js");
-        
+
         this.onboardingLoaded = true;
 } catch (err) {
     }
 };
+
+// ============================================================
+// ONBOARDING TOUR LOADER
+// First-time guided tour for home-dashboard.html
+// Stores completion in localStorage key: onboarding_completed
+// ============================================================
+LaTandaComponentLoader.loadOnboardingTour = async function() {
+    if (this.onboardingTourLoaded) return;
+
+    // Only load on home-dashboard.html
+    var path = window.location.pathname;
+    var isHomeDashboard = path.indexOf("home-dashboard") !== -1 ||
+                          path === "/" || path === "";
+    if (!isHomeDashboard) return;
+
+    // Skip if tour already completed
+    try {
+        if (localStorage.getItem("onboarding_completed")) return;
+    } catch (e) {}
+
+    try {
+        await this.loadScript("js/onboarding/onboarding-tour.js");
+        this.onboardingTourLoaded = true;
+    } catch (err) {}
+};
+
+// Auto-load onboarding tour on home-dashboard
+(function() {
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(function() {
+            LaTandaComponentLoader.loadOnboardingTour();
+        }, 800);
+    });
+})();
 
 // Auto-load onboarding on pages with auth (not landing page)
 (function() {
