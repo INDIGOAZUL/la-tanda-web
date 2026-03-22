@@ -159,6 +159,35 @@ npx hardhat test
 
 ---
 
+## Development Setup
+
+For English-speaking developers:
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve frontend locally (requires Node.js)
+npx serve .
+# Open http://localhost:3000 in your browser
+
+# For smart contract development
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
+```
+
+**Note:** The backend API runs on the production server. Frontend development only requires serving static files locally. The frontend calls the production API at `latanda.online`.
+
+**Key Resources:**
+- [Swagger UI](https://latanda.online/docs) — Interactive API documentation (220+ endpoints)
+- [Dev Portal](https://latanda.online/dev-dashboard.html) — Sandbox, WebSocket test, SDK
+- [Chain Explorer](https://latanda.online/chain/) — La Tanda Chain block explorer
+
+---
+
 ## Estructura del Proyecto
 
 ```
