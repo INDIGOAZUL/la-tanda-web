@@ -9,7 +9,7 @@
     <link rel="icon" href="/icons/icon-192x192.png" type="image/png">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+        html, body { padding-bottom: 60px; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
 
         /* Theme variables — default (dark/purple) */
         :root {
@@ -63,7 +63,7 @@
         .portfolio-nav button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
 
         /* Slide labels */
-        .nav-label {
+        .nav-label { display:none !important;
             position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%);
             font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;
             z-index: 100; transition: opacity 0.3s;
@@ -71,12 +71,12 @@
 
         /* Horizontal scroll container */
         .portfolio-slides {
-            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+            display: block; overflow-x: visible;
             scroll-behavior: smooth; height: 100vh; scrollbar-width: none;
         }
         .portfolio-slides::-webkit-scrollbar { display: none; }
         .portfolio-slides > section {
-            min-width: 100vw; scroll-snap-align: start; overflow-y: auto;
+            min-width: unset; scroll-snap-align: unset; overflow-y: visible;
             padding: 48px 24px 96px; display: flex; flex-direction: column; align-items: center;
         }
         .slide-inner { max-width: 640px; width: 100%; }
@@ -249,7 +249,7 @@
             .about-avatar, .about-avatar-placeholder { width: 96px; height: 96px; }
             .about-avatar-placeholder { font-size: 36px; }
             .gallery-grid { columns: 2; }
-            .portfolio-slides > section { padding: 32px 16px 96px; }
+            .portfolio-slides > section { padding: 32px 16px 24px; }
             .item-card-img, .item-card-img-placeholder { height: 140px; }
         }
         @media (min-width: 768px) {
@@ -304,7 +304,57 @@
         .cv-modal-cancel { background: rgba(255,255,255,0.08); color: #ccc; }
         .cv-modal-download { background: var(--gradient); color: #fff; font-weight: 600; }
         .cv-modal-download:disabled { opacity: 0.4; cursor: not-allowed; }
-    </style>
+    
+/* Negocio CTA modals */
+.negocio-modal-overlay { position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:16px; }
+.negocio-modal { background:#1e293b; border:1px solid rgba(0,255,255,0.2); border-radius:16px; max-width:480px; width:100%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.negocio-modal-header { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+.negocio-modal-header h3 { margin:0; color:#f8fafc; font-size:1.1rem; }
+.negocio-modal-close { background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer; padding:0 4px; }
+.negocio-modal-body { padding:20px; }
+.negocio-modal-img { width:100%; height:200px; object-fit:cover; border-radius:10px; margin-bottom:14px; }
+.negocio-modal-price { font-size:1.3rem; font-weight:700; color:#00ffff; margin:8px 0; }
+.negocio-modal-desc { font-size:0.85rem; color:#94a3b8; line-height:1.5; margin-bottom:16px; }
+.negocio-modal-meta { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.negocio-modal-tag { background:rgba(0,255,255,0.1); color:#67e8f9; padding:4px 10px; border-radius:20px; font-size:0.75rem; }
+.negocio-btn { display:block; width:100%; padding:12px; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-top:8px; transition:opacity 0.2s; }
+.negocio-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.negocio-btn-primary { background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; }
+.negocio-btn-secondary { background:rgba(255,255,255,0.1); color:#e2e8f0; border:1px solid rgba(255,255,255,0.15); }
+.negocio-input { width:100%; padding:10px 14px; background:#0f172a; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#f8fafc; font-size:0.9rem; margin-bottom:10px; box-sizing:border-box; font-size:16px; }
+.negocio-input:focus { border-color:#00ffff; outline:none; }
+.negocio-contact-fab { position:fixed; bottom:24px; right:24px; z-index:9000; background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; border:none; border-radius:50px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,255,255,0.3); display:flex; align-items:center; gap:8px; }
+.negocio-contact-fab:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,255,255,0.4); }
+.negocio-toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10001; padding:10px 20px; border-radius:10px; font-size:0.85rem; font-weight:600; color:#fff; animation:toastIn 0.3s ease; }
+.negocio-toast.success { background:#059669; }
+.negocio-toast.error { background:#dc2626; }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+@media (max-width:600px) { .negocio-contact-fab { bottom:16px; right:16px; padding:10px 16px; font-size:0.82rem; } }
+
+/* Phase C: Trust indicators */
+.trust-indicators { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; justify-content:center; }
+.trust-badge { display:inline-flex; align-items:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:4px 12px; font-size:0.72rem; color:#94a3b8; }
+.trust-verified { border-color:rgba(16,185,129,0.3); color:#6ee7b7; }
+.trust-fast { border-color:rgba(0,255,255,0.2); color:#67e8f9; }
+.trust-expert { border-color:rgba(251,191,36,0.2); color:#fde68a; }
+
+/* Sticky CTA bar */
+.negocio-sticky-bar { position:fixed; bottom:0; left:0; right:0; z-index:9000; background:rgba(15,23,42,0.97); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08); padding:10px 16px; display:flex; gap:8px; justify-content:center; padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px)); }
+.nsb-btn { flex:1; max-width:160px; display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border:none; border-radius:10px; font-size:0.82rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all 0.2s; }
+.nsb-primary { background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; }
+.nsb-whatsapp { background:#25d366; color:#fff; }
+.nsb-share { background:rgba(255,255,255,0.1); color:#e2e8f0; border:1px solid rgba(255,255,255,0.15); }
+.nsb-btn:hover { transform:translateY(-1px); }
+.negocio-contact-fab { display:none !important; }
+@media (max-width:480px) { .nsb-btn { font-size:0.75rem; padding:8px 10px; } }
+
+
+/* Cover/Hero banner */
+.negocio-cover { width:100%; max-height:280px; overflow:hidden; border-radius:0 0 16px 16px; margin-bottom:16px; }
+.negocio-cover img { width:100%; height:280px; object-fit:cover; display:block; }
+@media (max-width:600px) { .negocio-cover img { height:180px; } }
+
+</style>
 </head>
 <body>
     <div class="loading" id="loadingState">
@@ -387,6 +437,9 @@
             window._portfolioCV = cv;
             window._portfolioUser = u;
             window._portfolioProvider = p;
+            window._sellerId = u.user_id;
+            window._sellerName = p.business_name || u.full_name;
+            window._sellerHandle = u.handle;
 
             // Set theme
             document.body.setAttribute('data-theme', p.store_theme || 'dark');
@@ -432,10 +485,15 @@
             // Nav (dynamic based on CV presence)
             html += '<nav class="portfolio-nav" role="navigation" aria-label="Secciones del portafolio">';
             dynamicLabels.forEach(function(label, i) {
-                html += '<button data-slide="' + i + '"' + (i === 0 ? ' class="active"' : '') + ' aria-label="' + esc(label) + '" title="' + esc(label) + '"></button>';
+                html += '<button data-slide="' + i + '"' + (i === 0 ? ' class="active"' : '') + '>' + esc(label) + '</button>';
             });
             html += '</nav>';
             html += '<div class="nav-label" id="navLabel">Sobre mi</div>';
+
+            // Cover image hero banner
+            if (p.cover_image) {
+                html += '<div class="negocio-cover"><img src="' + esc(p.cover_image) + '" alt="' + esc(p.business_name || u.full_name) + '"></div>';
+            }
 
             html += '<main class="portfolio-slides" id="slidesContainer">';
 
@@ -468,6 +526,13 @@
             html += '<div class="about-stat"><div class="about-stat-value">' + esc(p.total_reviews || 0) + '</div><div class="about-stat-label">Resenas</div></div>';
             html += '<div class="about-stat"><div class="about-stat-value">' + esc(parseFloat(p.response_rate || 0).toFixed(0)) + '%</div><div class="about-stat-label">Respuesta</div></div>';
             html += '</div>';
+            // Trust indicators
+            var trustHtml = '<div class="trust-indicators">';
+            if (p.is_verified) trustHtml += '<span class="trust-badge trust-verified">\u2705 Vendedor Verificado</span>';
+            if (parseFloat(p.response_rate || 0) >= 90) trustHtml += '<span class="trust-badge trust-fast">\u26A1 Respuesta rapida</span>';
+            if (parseInt(p.completed_jobs || 0) >= 10) trustHtml += '<span class="trust-badge trust-expert">\u2B50 ' + (p.completed_jobs) + ' trabajos</span>';
+            trustHtml += '</div>';
+            html += trustHtml;
             // Description / CV summary
             if (hasCV && cv.summary) {
                 html += '<div class="cv-summary">' + esc(cv.summary) + '</div>';
@@ -594,7 +659,7 @@
                         imgUrl = typeof s.images[0] === 'string' ? s.images[0] : (s.images[0].url || s.images[0].thumbnail || '');
                     }
                     var cardClass = 'item-card' + (s.featured ? ' item-card-featured' : '');
-                    html += '<div class="' + cardClass + '">';
+                    html += '<div class="' + cardClass + '" data-action="view-item" data-id="' + s.id + '" data-type="service" style="cursor:pointer">';
                     if (imgUrl) {
                         html += '<img class="item-card-img" src="' + esc(imgUrl) + '" alt="' + esc(s.title) + '" loading="lazy">';
                     } else {
@@ -620,7 +685,7 @@
                         imgUrl = typeof pr.images[0] === 'string' ? pr.images[0] : (pr.images[0].url || pr.images[0].thumbnail || '');
                     }
                     var cardClass = 'item-card' + (pr.featured ? ' item-card-featured' : '');
-                    html += '<div class="' + cardClass + '">';
+                    html += '<div class="' + cardClass + '" data-action="view-item" data-id="' + pr.id + '" data-type="product" style="cursor:pointer">';
                     if (imgUrl) {
                         html += '<img class="item-card-img" src="' + esc(imgUrl) + '" alt="' + esc(pr.title) + '" loading="lazy">';
                     } else {
@@ -716,6 +781,19 @@
 
             // Setup navigation
             setupNav();
+            // Add sticky contact FAB
+            var fab = document.createElement('div');
+            fab.innerHTML = '<button class="negocio-contact-fab" data-action="open-message" aria-label="Contactar vendedor"><i style="font-size:18px">💬</i> Contactar</button>';
+            document.body.appendChild(fab.firstChild);
+            // Phase C: Sticky CTA bar
+            var whatsappNum = (p.whatsapp || '').replace(/[^0-9]/g, '');
+            var stickyBar = document.createElement('div');
+            stickyBar.className = 'negocio-sticky-bar';
+            stickyBar.innerHTML = '<button data-action="open-message" class="nsb-btn nsb-primary">\u{1F4AC} Mensaje</button>' +
+                (whatsappNum ? '<a href="https://wa.me/' + whatsappNum + '" target="_blank" rel="noopener" class="nsb-btn nsb-whatsapp">\u{1F4F1} WhatsApp</a>' : '') +
+                '<button data-action="copy-url" data-url="' + portfolioUrl + '" class="nsb-btn nsb-share">\u{1F517} Compartir</button>';
+            document.body.appendChild(stickyBar);
+
             // Store images for lightbox
             window._galleryImages = allImages;
         }
@@ -733,7 +811,7 @@
                 btn.addEventListener('click', function() {
                     var idx = parseInt(btn.getAttribute('data-slide'));
                     var target = slides.children[idx];
-                    if (target) target.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             });
 
@@ -749,32 +827,20 @@
                         if (navLabel) navLabel.textContent = slideLabels[idx] || '';
                     }
                 });
-            }, { root: slides, threshold: 0.5 });
+            }, { rootMargin: '-80px 0px -60% 0px', threshold: 0.1 });
             sections.forEach(function(s) { observer.observe(s); });
 
             // Keyboard navigation
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     var current = 0;
                     navBtns.forEach(function(b, i) { if (b.classList.contains('active')) current = i; });
-                    var next = e.key === 'ArrowRight' ? Math.min(current + 1, sections.length - 1) : Math.max(current - 1, 0);
+                    var next = e.key === 'ArrowDown' ? Math.min(current + 1, sections.length - 1) : Math.max(current - 1, 0);
                     if (next !== current) sections[next].scrollIntoView({ behavior: 'smooth', inline: 'start' });
                 }
             });
 
-            // Touch swipe
-            var touchStartX = 0;
-            slides.addEventListener('touchstart', function(e) {
-                touchStartX = e.changedTouches[0].clientX;
-            }, { passive: true });
-            slides.addEventListener('touchend', function(e) {
-                var dx = e.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(dx) < 50) return;
-                var current = 0;
-                navBtns.forEach(function(b, i) { if (b.classList.contains('active')) current = i; });
-                var next = dx < 0 ? Math.min(current + 1, sections.length - 1) : Math.max(current - 1, 0);
-                if (next !== current) sections[next].scrollIntoView({ behavior: 'smooth', inline: 'start' });
-            }, { passive: true });
+            // Touch swipe removed — vertical scroll is natural
         }
 
         // Lightbox — delegated
@@ -812,6 +878,28 @@
                 generateCVPDF();
                 document.getElementById('cvDownloadModal').classList.remove('active');
             }
+            if (action === 'view-item') {
+                viewItem(btn.getAttribute('data-id'), btn.getAttribute('data-type'));
+            }
+            if (action === 'close-modal') {
+                _closeModals();
+                document.body.style.overflow = '';
+            }
+            if (action === 'buy-product') {
+                buyProduct(btn.getAttribute('data-id'));
+            }
+            if (action === 'open-booking') {
+                openBookingForm(btn.getAttribute('data-id'));
+            }
+            if (action === 'submit-booking') {
+                submitBooking(btn.getAttribute('data-id'));
+            }
+            if (action === 'open-message') {
+                openMessageModal();
+            }
+            if (action === 'send-message') {
+                sendMessage();
+            }
             if (action === 'copy-url') {
                 var copyUrl = btn.getAttribute('data-url');
                 if (copyUrl && navigator.clipboard) {
@@ -822,6 +910,14 @@
                 }
             }
         });
+        // Close negocio modals on overlay click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('negocio-modal-overlay')) {
+                _closeModals();
+                document.body.style.overflow = '';
+            }
+        });
+
         // Close lightbox on backdrop click
         document.getElementById('lightbox').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -832,6 +928,8 @@
         // Escape key closes lightbox / modal
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
+                _closeModals();
+                document.body.style.overflow = '';
                 var lb = document.getElementById('lightbox');
                 if (lb.classList.contains('active')) {
                     lb.classList.remove('active');
@@ -843,6 +941,206 @@
                 }
             }
         });
+
+
+
+        // ====== NEGOCIO CTA FUNCTIONS ======
+        function _authCheck() {
+            var token = null;
+            try { token = localStorage.getItem('auth_token') || localStorage.getItem('authToken'); } catch(e) {}
+            if (!token) {
+                var redirect = window.location.pathname;
+                window.location.href = '/auth-enhanced.html?redirect=' + encodeURIComponent(redirect);
+                return null;
+            }
+            return token;
+        }
+
+        function _showToast(msg, type) {
+            var existing = document.querySelector('.negocio-toast');
+            if (existing) existing.remove();
+            var el = document.createElement('div');
+            el.className = 'negocio-toast ' + (type || 'success');
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(function() { el.remove(); }, 3500);
+        }
+
+        function _closeModals() {
+            var m = document.getElementById('negocioModal');
+            if (m) m.remove();
+        }
+
+        function viewItem(id, type) {
+            var endpoint = type === 'service' ? '/api/marketplace/services/' : '/api/marketplace/products/';
+            fetch(endpoint + id).then(function(r) { return r.json(); }).then(function(json) {
+                if (!json.success) throw new Error('not found');
+                var d = json.data;
+                var imgUrl = '';
+                if (d.images && d.images[0]) {
+                    imgUrl = typeof d.images[0] === 'string' ? d.images[0] : (d.images[0].url || d.images[0].thumbnail || '');
+                }
+                var priceText = type === 'service'
+                    ? (d.price_type === 'fixed' ? 'L. ' + d.price : d.price_type === 'hourly' ? 'L. ' + d.price + '/hora' : d.price_type === 'negotiable' ? 'Negociable' : 'L. ' + d.price)
+                    : 'L. ' + parseFloat(d.price || 0).toLocaleString('es-HN', {minimumFractionDigits:2});
+
+                var stockInfo = type === 'product' ? '<div class="negocio-modal-tag">Stock: ' + (d.quantity || 0) + '</div>' : '';
+                if (type === 'service' && d.duration_minutes) stockInfo = '<div class="negocio-modal-tag">' + d.duration_minutes + ' min</div>';
+
+                var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                    '<div class="negocio-modal">' +
+                    '<div class="negocio-modal-header"><h3>' + esc(d.title) + '</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                    '<div class="negocio-modal-body">' +
+                    (imgUrl ? '<img class="negocio-modal-img" src="' + esc(imgUrl) + '" alt="' + esc(d.title) + '">' : '') +
+                    '<div class="negocio-modal-price">' + priceText + '</div>' +
+                    '<div class="negocio-modal-meta">' +
+                    (d.category_name ? '<div class="negocio-modal-tag">' + esc(d.category_name) + '</div>' : '') +
+                    stockInfo +
+                    '<div class="negocio-modal-tag">' + (type === 'service' ? 'Servicio' : 'Producto') + '</div>' +
+                    '</div>' +
+                    (d.description ? '<div class="negocio-modal-desc">' + esc(d.description) + '</div>' : '') +
+                    (type === 'product' ?
+                        '<button class="negocio-btn negocio-btn-primary" data-action="buy-product" data-id="' + d.id + '">Comprar Ahora</button>' :
+                        '<button class="negocio-btn negocio-btn-primary" data-action="open-booking" data-id="' + d.id + '">Reservar</button>') +
+                    '<button class="negocio-btn negocio-btn-secondary" data-action="open-message">Enviar Mensaje</button>' +
+                    '</div></div></div>';
+
+                _closeModals();
+                document.body.insertAdjacentHTML('beforeend', html);
+                document.body.style.overflow = 'hidden';
+            }).catch(function() {
+                _showToast('No se pudo cargar el detalle', 'error');
+            });
+        }
+
+        function buyProduct(id) {
+            var token = _authCheck();
+            if (!token) return;
+            var btn = document.querySelector('[data-action="buy-product"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+
+            fetch('/api/marketplace/products/' + id + '/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ quantity: 1, payment_method: 'wallet' })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Compra realizada exitosamente', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al comprar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Comprar Ahora'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Comprar Ahora'; }
+            });
+        }
+
+        function openBookingForm(serviceId) {
+            var token = _authCheck();
+            if (!token) return;
+            _closeModals();
+            var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+            var minDate = tomorrow.toISOString().split('T')[0];
+            var maxDate = new Date(); maxDate.setDate(maxDate.getDate() + 30);
+            var maxDateStr = maxDate.toISOString().split('T')[0];
+
+            var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                '<div class="negocio-modal">' +
+                '<div class="negocio-modal-header"><h3>Reservar Servicio</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                '<div class="negocio-modal-body">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Fecha</label>' +
+                '<input type="date" class="negocio-input" id="bookDate" min="' + minDate + '" max="' + maxDateStr + '">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Hora</label>' +
+                '<input type="time" class="negocio-input" id="bookTime" value="09:00">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Notas (opcional)</label>' +
+                '<textarea class="negocio-input" id="bookNotes" rows="3" placeholder="Instrucciones, direccion, etc."></textarea>' +
+                '<button class="negocio-btn negocio-btn-primary" data-action="submit-booking" data-id="' + serviceId + '">Confirmar Reserva</button>' +
+                '<button class="negocio-btn negocio-btn-secondary" data-action="close-modal">Cancelar</button>' +
+                '</div></div></div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function submitBooking(serviceId) {
+            var token = _authCheck();
+            if (!token) return;
+            var date = document.getElementById('bookDate')?.value;
+            var time = document.getElementById('bookTime')?.value;
+            var notes = document.getElementById('bookNotes')?.value || '';
+            if (!date) { _showToast('Selecciona una fecha', 'error'); return; }
+
+            var btn = document.querySelector('[data-action="submit-booking"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Reservando...'; }
+
+            fetch('/api/marketplace/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ service_id: serviceId, scheduled_date: date, scheduled_time: time || '09:00', customer_notes: notes })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Reserva creada exitosamente', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al reservar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Reserva'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Reserva'; }
+            });
+        }
+
+        function openMessageModal() {
+            var token = _authCheck();
+            if (!token) return;
+            _closeModals();
+            var sellerName = window._sellerName || 'Vendedor';
+
+            var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                '<div class="negocio-modal">' +
+                '<div class="negocio-modal-header"><h3>Mensaje a ' + esc(sellerName) + '</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                '<div class="negocio-modal-body">' +
+                '<textarea class="negocio-input" id="msgText" rows="4" placeholder="Escribe tu mensaje..." style="font-size:16px;"></textarea>' +
+                '<button class="negocio-btn negocio-btn-primary" data-action="send-message">Enviar Mensaje</button>' +
+                '<button class="negocio-btn negocio-btn-secondary" data-action="close-modal">Cancelar</button>' +
+                '</div></div></div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function sendMessage() {
+            var token = _authCheck();
+            if (!token) return;
+            var msg = document.getElementById('msgText')?.value?.trim();
+            if (!msg) { _showToast('Escribe un mensaje', 'error'); return; }
+
+            var btn = document.querySelector('[data-action="send-message"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+            fetch('/api/marketplace/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ recipient_id: window._sellerId, message: msg })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Mensaje enviado', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al enviar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Enviar Mensaje'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Enviar Mensaje'; }
+            });
+        }
 
         // Accept terms checkbox toggles download button
         document.getElementById('cvAcceptTerms').addEventListener('change', function() {

@@ -842,8 +842,11 @@ document.addEventListener('click', function(e) {
             handler.previousStep();
             break;
         case 'cgf-retry':
-            // Go back to step 4 (confirmation) and regenerate summary
+            // v4.25.4: Clear error state, regenerate summary, re-enable submit
             handler.generateConfirmationSummary();
+            // Reset next button to allow re-submission
+            var nextBtn = document.getElementById('next-step');
+            if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'Crear Grupo'; }
             break;
         case 'cgf-toggle-collapsible':
             // Handled inside setupCollapsibles via form-scoped listener

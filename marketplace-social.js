@@ -698,7 +698,7 @@ class MarketplaceSocialSystem {
                 <div class="mc-order-actions" onclick="event.stopPropagation();">${actions}</div>
             </div>
             <div class="mc-order-right">
-                <div class="mc-order-price">L. ${total.toLocaleString('es-HN', {minimumFractionDigits:2})}</div>
+                <div class="mc-order-price">L. ${window.ltFormatNumber ? ltFormatNumber(total, 2) : total.toLocaleString('es-HN', {minimumFractionDigits:2})}</div>
                 <span class="mc-order-status mc-status-${esc(status)}">${statusLabels[status] || status}</span>
             </div>
         </div>`;
@@ -748,7 +748,7 @@ class MarketplaceSocialSystem {
             });
         }
         this._saveCart(items);
-        this.showNotification('Agregado al carrito', 'success');
+        this.showNotification(t('marketplace.added_to_cart',{defaultValue:'Agregado al carrito'}), 'success');
     }
     _removeFromCart(productId) {
         const items = this._getCart().filter(i => i.product_id !== String(productId));
@@ -787,7 +787,7 @@ class MarketplaceSocialSystem {
                     ${imgTag}
                     <div class="mc-cart-item-info">
                         <div class="mc-cart-item-title">${esc(i.title)}</div>
-                        <div class="mc-cart-item-price">L. ${parseFloat(i.price).toLocaleString('es-HN',{minimumFractionDigits:2})} x ${i.quantity}</div>
+                        <div class="mc-cart-item-price">L. ${window.ltFormatNumber ? ltFormatNumber(i.price, 2) : parseFloat(i.price).toLocaleString('es-HN',{minimumFractionDigits:2})} x ${i.quantity}</div>
                     </div>
                     <input type="number" class="mc-cart-item-qty" value="${i.quantity}" min="1" max="${i.max_qty}" data-action="mc-cart-qty" data-product-id="${esc(i.product_id)}">
                     <button class="mc-cart-item-remove" data-action="mc-cart-remove" data-product-id="${esc(i.product_id)}"><i class="fas fa-times"></i></button>
@@ -799,7 +799,7 @@ class MarketplaceSocialSystem {
             <div class="mc-cart-header"><h3><i class="fas fa-shopping-cart"></i> Carrito (${items.length})</h3><button class="mc-cart-close" data-action="mc-close-cart"><i class="fas fa-times"></i></button></div>
             <div class="mc-cart-body">${itemsHtml}</div>
             ${items.length > 0 ? `<div class="mc-cart-footer">
-                <div class="mc-cart-total"><span>Total</span><span>L. ${total.toLocaleString('es-HN',{minimumFractionDigits:2})}</span></div>
+                <div class="mc-cart-total"><span>Total</span><span>L. ${window.ltFormatNumber ? ltFormatNumber(total, 2) : total.toLocaleString('es-HN', {minimumFractionDigits:2})}</span></div>
                 <div class="mc-cart-payment">
                     <select id="mcCartPayment"><option value="wallet">Wallet LTD</option><option value="cash">Efectivo</option></select>
                 </div>
@@ -885,8 +885,8 @@ class MarketplaceSocialSystem {
                         ${img ? `<img src="${esc(img)}" alt="">` : '<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:8px;font-size:2rem;">📦</div>'}
                         <div class="mc-detail-product-info">
                             <h4>${esc(o.product_title || 'Producto')}</h4>
-                            <p>${o.quantity || 1} x L. ${parseFloat(o.unit_price || 0).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>
-                            <p style="color:#10B981;font-weight:700;">Total: L. ${total.toLocaleString('es-HN',{minimumFractionDigits:2})}</p>
+                            <p>${o.quantity || 1} x L. ${window.ltFormatNumber ? ltFormatNumber(o.unit_price || 0, 2) : parseFloat(o.unit_price || 0).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>
+                            <p style="color:#10B981;font-weight:700;">Total: L. ${window.ltFormatNumber ? ltFormatNumber(total, 2) : total.toLocaleString('es-HN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                     <div class="mc-detail-section">
@@ -1134,7 +1134,7 @@ class MarketplaceSocialSystem {
                     </div>
                     ${d.product_title ? `<div class="mc-dispute-detail-section"><h4>Producto</h4><p>${esc(d.product_title)}</p></div>` : ''}
                     ${d.respondent_message ? `<div class="mc-dispute-detail-section"><h4>Respuesta del vendedor</h4><p>${esc(d.respondent_message)}</p><p style="font-size:0.75rem;color:rgba(255,255,255,0.4);">${d.respondent_at ? new Date(d.respondent_at).toLocaleDateString('es-HN') : ''}</p></div>` : ''}
-                    ${d.resolution ? `<div class="mc-dispute-detail-section"><h4>Resolucion</h4><p>${esc(d.resolution_notes || d.resolution)}</p>${d.refund_amount > 0 ? `<p style="color:#10B981;">Reembolso: L. ${parseFloat(d.refund_amount).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>` : ''}</div>` : ''}
+                    ${d.resolution ? `<div class="mc-dispute-detail-section"><h4>Resolucion</h4><p>${esc(d.resolution_notes || d.resolution)}</p>${d.refund_amount > 0 ? `<p style="color:#10B981;">Reembolso: L. ${window.ltFormatNumber ? ltFormatNumber(d.refund_amount, 2) : parseFloat(d.refund_amount).toLocaleString('es-HN',{minimumFractionDigits:2})}</p>` : ''}</div>` : ''}
                     ${actionsHtml}
                 </div>
             </div>`;
@@ -1305,7 +1305,7 @@ class MarketplaceSocialSystem {
 
         const service = this.services.find(s => s.id === serviceId);
         if (!service) {
-            this.showNotification('Servicio no encontrado', 'error');
+            this.showNotification(t('marketplace.service_not_found',{defaultValue:'Servicio no encontrado'}), 'error');
             return;
         }
 
@@ -1380,7 +1380,7 @@ class MarketplaceSocialSystem {
 
         const service = this.services.find(s => s.id === serviceId);
         if (!service) {
-            this.showNotification('Servicio no encontrado', 'error');
+            this.showNotification(t('marketplace.service_not_found',{defaultValue:'Servicio no encontrado'}), 'error');
             return;
         }
 
@@ -1901,7 +1901,7 @@ class MarketplaceSocialSystem {
             const img = (Array.isArray(item.images) && item.images.length > 0)
                 ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
                 : '<span class="exp-card-icon">🛠️</span>';
-            const priceLabel = item.price_type === 'fixed' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN')) : item.price_type === 'range' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ('L. ' + Number(item.price || 0).toLocaleString('es-HN') + '/hora') : 'Consultar');
+            const priceLabel = item.price_type === 'fixed' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN'))))) : item.price_type === 'range' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + '/hora') : 'Consultar');
             const rating = item.avg_rating ? ('⭐ ' + Number(item.avg_rating).toFixed(1)) : '';
             const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
             return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
@@ -1925,7 +1925,7 @@ class MarketplaceSocialSystem {
             '<div class="exp-card-avatar">' + pImg + '</div>' +
             '<div class="exp-card-body">' +
                 '<div class="exp-card-title">' + esc(item.title) + '</div>' +
-                '<div class="exp-card-sub"><span class="exp-card-price">L. ' + Number(item.price || 0).toLocaleString('es-HN') + '</span>' + (cond ? ' · ' + esc(cond) : '') + '</div>' +
+                '<div class="exp-card-sub"><span class="exp-card-price">L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')) + '</span>' + (cond ? ' · ' + esc(cond) : '') + '</div>' +
                 catPill +
             '</div>' +
             '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
@@ -2092,113 +2092,9 @@ class MarketplaceSocialSystem {
         </div>`;
     }
 
-    // ===================== LAYOUT PICKER (Onboarding Step 2) =====================
-    renderStoreLayoutPicker() {
-        const container = document.getElementById('myStoreContent');
-        if (!container) return;
-        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : this._selectedShopType === 'mixed' ? '🏬 Mixta' : '📦 Productos';
-        const limits = this.tierLimits || getTierLimitsClient(this.userSubscription);
-        const lockClass = (layout) => limits.layouts.includes(layout) ? '' : ' store-layout-locked';
-        const lockBadge = (layout) => limits.layouts.includes(layout) ? '' : '<span class="store-lock-badge">🔒</span>';
-        container.innerHTML = `<div class="store-onboarding">
-            ${this._earlyBannerHtml || ''}
-            <div class="store-type-selected">
-                <span class="store-type-chip">${typeLabel}</span>
-                <button class="store-type-change" data-action="change-shop-type">Cambiar</button>
-            </div>
-            <div class="store-onboarding-icon">🎨</div>
-            <h2>Elige el estilo de tu tienda</h2>
-            <div class="store-subtitle">Puedes cambiarlo despues.</div>
-            <div class="store-layout-grid">
-                <div class="store-layout-card${lockClass('classic')}" data-action="select-layout" data-id="classic">
-                    ${lockBadge('classic')}
-                    <div class="store-layout-preview">
-                        <div class="slp-header"><div class="slp-avatar"></div><div class="slp-lines"><div class="slp-line w60"></div><div class="slp-line w40"></div></div></div>
-                        <div class="slp-stats"><span></span><span></span><span></span><span></span></div>
-                        <div class="slp-section"><div class="slp-line w80"></div><div class="slp-line w50"></div></div>
-                    </div>
-                    <div class="store-layout-name">Clasica</div>
-                    <div class="store-layout-desc">Header, estadisticas, secciones</div>
-                </div>
-                <div class="store-layout-card${lockClass('showcase')}" data-action="select-layout" data-id="showcase">
-                    ${lockBadge('showcase')}
-                    <div class="store-layout-preview">
-                        <div class="slp-banner"><div class="slp-line w60" style="background:rgba(6,182,212,0.4);"></div></div>
-                        <div class="slp-gallery"><span></span><span></span><span></span><span></span></div>
-                        <div class="slp-section"><div class="slp-line w40"></div></div>
-                    </div>
-                    <div class="store-layout-name">Escaparate</div>
-                    <div class="store-layout-desc">Banner, galeria, testimonios</div>
-                </div>
-                <div class="store-layout-card${lockClass('compact')}" data-action="select-layout" data-id="compact">
-                    ${lockBadge('compact')}
-                    <div class="store-layout-preview slp-compact-prev">
-                        <div class="slp-avatar-lg"></div>
-                        <div class="slp-line w40" style="margin:0 auto;"></div>
-                        <div class="slp-mini-stats"><span></span><span></span><span></span></div>
-                        <div class="slp-btns"><span></span><span></span></div>
-                    </div>
-                    <div class="store-layout-name">Tarjeta</div>
-                    <div class="store-layout-desc">Compacta, tipo red social</div>
-                </div>
-            </div>
-        </div>`;
-    }
-
-    // ===================== THEME PICKER (Onboarding Step 3) =====================
-    renderStoreThemePicker() {
-        const container = document.getElementById('myStoreContent');
-        if (!container) return;
-        const typeLabel = this._selectedShopType === 'services' ? '🔧 Servicios' : this._selectedShopType === 'mixed' ? '🏬 Mixta' : '📦 Productos';
-        const layoutLabels = { classic: 'Clasica', showcase: 'Escaparate', compact: 'Tarjeta' };
-        const layoutLabel = layoutLabels[this._selectedLayout] || 'Clasica';
-        const limits = this.tierLimits || getTierLimitsClient(this.userSubscription);
-        const lockClass = (theme) => limits.themes.includes(theme) ? '' : ' store-theme-locked';
-        const lockBadge = (theme) => limits.themes.includes(theme) ? '' : '<span class="store-lock-badge">🔒</span>';
-        container.innerHTML = `<div class="store-onboarding">
-            ${this._earlyBannerHtml || ''}
-            <div class="store-type-selected">
-                <span class="store-type-chip">${typeLabel}</span>
-                <span class="store-type-chip">🎨 ${this.escapeHtml(layoutLabel)}</span>
-                <button class="store-type-change" data-action="change-layout">Cambiar</button>
-            </div>
-            <div class="store-onboarding-icon">🎨</div>
-            <h2>Elige tu tema de color</h2>
-            <div class="store-subtitle">Puedes cambiarlo despues.</div>
-            <div class="store-theme-grid">
-                <div class="store-theme-card${lockClass('dark')}" data-action="select-theme" data-id="dark">
-                    ${lockBadge('dark')}
-                    <div class="store-theme-swatch"><span style="background:#8B5CF6;"></span><span style="background:#06B6D4;"></span></div>
-                    <div class="store-theme-name">Oscuro</div>
-                </div>
-                <div class="store-theme-card${lockClass('cyan')}" data-action="select-theme" data-id="cyan">
-                    ${lockBadge('cyan')}
-                    <div class="store-theme-swatch"><span style="background:#06B6D4;"></span><span style="background:#14B8A6;"></span></div>
-                    <div class="store-theme-name">Cyan / Tech</div>
-                </div>
-                <div class="store-theme-card${lockClass('gold')}" data-action="select-theme" data-id="gold">
-                    ${lockBadge('gold')}
-                    <div class="store-theme-swatch"><span style="background:#F59E0B;"></span><span style="background:#D97706;"></span></div>
-                    <div class="store-theme-name">Dorado</div>
-                </div>
-                <div class="store-theme-card${lockClass('green')}" data-action="select-theme" data-id="green">
-                    ${lockBadge('green')}
-                    <div class="store-theme-swatch"><span style="background:#10B981;"></span><span style="background:#059669;"></span></div>
-                    <div class="store-theme-name">Verde / Eco</div>
-                </div>
-                <div class="store-theme-card${lockClass('coral')}" data-action="select-theme" data-id="coral">
-                    ${lockBadge('coral')}
-                    <div class="store-theme-swatch"><span style="background:#EF4444;"></span><span style="background:#F97316;"></span></div>
-                    <div class="store-theme-name">Rojo / Coral</div>
-                </div>
-                <div class="store-theme-card${lockClass('purple')}" data-action="select-theme" data-id="purple">
-                    ${lockBadge('purple')}
-                    <div class="store-theme-swatch"><span style="background:#A855F7;"></span><span style="background:#7C3AED;"></span></div>
-                    <div class="store-theme-name">Purpura</div>
-                </div>
-            </div>
-        </div>`;
-    }
+    // Layout + Theme pickers merged into Quick Setup form below
+    renderStoreLayoutPicker() { this.renderStoreOnboardingForm(); }
+    renderStoreThemePicker() { this.renderStoreOnboardingForm(); }
 
     // ===================== ONBOARDING FORM (Step 4) =====================
     renderStoreOnboardingForm() {
@@ -2257,22 +2153,8 @@ class MarketplaceSocialSystem {
                     <label>Areas de servicio (separadas por coma)</label>
                     <input type="text" id="storeAreasInput" placeholder="Tegucigalpa, SPS, Comayagua">
                 </div>
-                <div class="store-form-section">Links sociales (opcional)</div>
-                <div class="store-form-group">
-                    <label>Sitio Web</label>
-                    <input type="url" id="storeLinkWebsite" maxlength="500" placeholder="https://mi-sitio.com">
-                </div>
-                <div class="store-form-row">
-                    <div class="store-form-group">
-                        <label>GitHub</label>
-                        <input type="url" id="storeLinkGithub" maxlength="500" placeholder="https://github.com/user">
-                    </div>
-                    <div class="store-form-group">
-                        <label>LinkedIn</label>
-                        <input type="url" id="storeLinkLinkedin" maxlength="500" placeholder="https://linkedin.com/in/user">
-                    </div>
-                </div>
-                <button type="submit" class="store-btn-create" id="storeCreateBtn">Crear mi Tienda</button>
+                <button type="submit" class="store-btn-create" id="storeCreateBtn">Crear mi Tienda \u2192</button>
+                <div class="so-cta-note" style="margin-top:8px;">Links sociales se pueden agregar despues desde el dashboard.</div>
             </form>
         </div>`;
 
@@ -2288,12 +2170,6 @@ class MarketplaceSocialSystem {
                     .split(',').map(s => s.trim()).filter(Boolean);
 
                 const socialLinks = {};
-                const website = document.getElementById('storeLinkWebsite').value.trim();
-                const github = document.getElementById('storeLinkGithub').value.trim();
-                const linkedin = document.getElementById('storeLinkLinkedin').value.trim();
-                if (website) socialLinks.website = website;
-                if (github) socialLinks.github = github;
-                if (linkedin) socialLinks.linkedin = linkedin;
 
                 try {
                     const res = await this.apiRequest('/api/marketplace/providers/register', {
@@ -2327,12 +2203,12 @@ class MarketplaceSocialSystem {
                             <button class="store-btn-create" data-action="view-my-store" style="max-width: 280px; margin: 20px auto 0;">Ver mi Tienda</button>
                         </div>`;
                     } else {
-                        this.showNotification('Error al crear la tienda', 'error');
+                        this.showNotification(t('marketplace.create_store_error',{defaultValue:'Error al crear la tienda'}), 'error');
                         btn.disabled = false;
                         btn.textContent = 'Crear mi Tienda';
                     }
                 } catch (err) {
-                    this.showNotification('Error al crear la tienda', 'error');
+                    this.showNotification(t('marketplace.create_store_error',{defaultValue:'Error al crear la tienda'}), 'error');
                     btn.disabled = false;
                     btn.textContent = 'Crear mi Tienda';
                 }
@@ -2895,7 +2771,7 @@ class MarketplaceSocialSystem {
         // Basic validation
         const required = { experience: ['company', 'position'], education: ['institution', 'degree'], skills: ['name'], certifications: ['name', 'issuer'], projects: ['title'], languages: ['language'] };
         const missing = (required[sectionKey] || []).some(f => !data[f]);
-        if (missing) { this.showNotification('Completa los campos obligatorios', 'error'); return; }
+        if (missing) { this.showNotification(t('forms.complete_required',{defaultValue:'Completa los campos obligatorios'}), 'error'); return; }
         if (!this._portfolioData[sectionKey]) this._portfolioData[sectionKey] = [];
         if (this._cvEditIndex != null) {
             this._portfolioData[sectionKey][this._cvEditIndex] = data;
@@ -3093,7 +2969,7 @@ class MarketplaceSocialSystem {
             extraCards += `<div class="sd-analytics-card">
                 <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
                 <div class="sd-analytics-body">
-                    <div class="sd-analytics-value">L. ${parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
+                    <div class="sd-analytics-value">L. ${window.ltFormatNumber ? ltFormatNumber(summary.total_revenue || 0) : parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
                     <div class="sd-analytics-label">Ingresos totales</div>
                     <div class="sd-analytics-sub">${esc(String(summary.total_orders || 0))} pedidos</div>
                 </div>
@@ -3121,7 +2997,10 @@ class MarketplaceSocialSystem {
         const chainCard = this._buildChainBalanceCard(esc);
         const referralDash = this._buildReferralDashboard(esc);
 
+        const setupBanner = this._buildSetupBanner(provider, storeData);
+
         container.innerHTML = `<div class="store-dashboard" data-layout="classic" data-theme="${esc(theme)}">
+            ${setupBanner}
             ${header}
             ${tierCard}
             ${chainCard}
@@ -3142,9 +3021,105 @@ class MarketplaceSocialSystem {
             </div>
         </div>`;
 
+        // Cover image upload handler
+        const coverInput = document.getElementById('coverFileInput');
+        if (coverInput) {
+            coverInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { this.showNotification('La imagen excede 5MB', 'error'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const resp = await fetch('/api/marketplace/providers/cover-image', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                        body: formData
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        this.showNotification('Portada actualizada', 'success');
+                        this.loadMyStore();
+                    } else {
+                        this.showNotification(result.data?.error?.message || 'Error al subir portada', 'error');
+                    }
+                } catch (err) {
+                    this.showNotification('Error de conexion', 'error');
+                }
+                coverInput.value = '';
+            });
+        }
+
         // Load chain balance and referral data asynchronously
         this._loadChainBalance();
         this._loadReferralDashboard();
+    }
+
+
+    // Phase B: Guided first-use banner
+    _buildSetupBanner(provider, storeData) {
+        // Check setup completion
+        let checklist = null;
+        try { checklist = JSON.parse(localStorage.getItem('store_setup_checklist')); } catch(e) {}
+        if (!checklist) {
+            // Infer checklist from data
+            const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
+            const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
+            checklist = {
+                add_listing: hasListings,
+                complete_contact: hasContact,
+                share_store: false,
+                create_portfolio: false
+            };
+            try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
+        }
+
+        // Auto-update based on current data
+        const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
+        const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
+        if (hasListings) checklist.add_listing = true;
+        if (hasContact) checklist.complete_contact = true;
+        try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
+
+        const done = Object.values(checklist).filter(Boolean).length;
+        const total = Object.keys(checklist).length;
+
+        if (done >= total) {
+            // All done — show completion + share prompt
+            const handle = provider.handle;
+            if (!handle) return '';
+            return `<div class="sd-setup-banner sd-setup-complete">
+                <div class="sd-setup-icon">\u2705</div>
+                <div class="sd-setup-text">
+                    <strong>Tu tienda esta completa</strong>
+                    <span>Comparte tu link para atraer clientes:</span>
+                </div>
+                <button class="sd-setup-action" data-action="sd-share-store" data-url="https://latanda.online/negocio/${this.escapeHtml(handle)}">Compartir \u2192</button>
+            </div>`;
+        }
+
+        // Find next incomplete step
+        const steps = [
+            { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: (provider.shop_type === 'products' || provider.shop_type === 'mixed') ? 'add-product' : 'add-service' },
+            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'edit-store' },
+            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'sd-share-store' },
+            { key: 'create_portfolio', label: 'Crea tu portafolio/CV', action: 'open-portfolio-maker' }
+        ];
+        let nextStep = steps.find(s => !checklist[s.key]) || steps[0];
+        const pct = Math.round((done / total) * 100);
+        const bars = Array.from({length: total}, (_, i) => `<span class="sd-setup-bar-seg${i < done ? ' done' : ''}"></span>`).join('');
+
+        return `<div class="sd-setup-banner">
+            <div class="sd-setup-progress">
+                <div class="sd-setup-progress-label">\u{1F680} Completa tu tienda \u2014 ${done} de ${total}</div>
+                <div class="sd-setup-bar">${bars}</div>
+            </div>
+            <div class="sd-setup-next">
+                <span>Siguiente: ${this.escapeHtml(nextStep.label)}</span>
+                <button class="sd-setup-action" data-action="${nextStep.action}">Continuar \u2192</button>
+            </div>
+        </div>`;
     }
 
     _buildDashboardHeader(provider, esc) {
@@ -3168,7 +3143,25 @@ class MarketplaceSocialSystem {
             <div class="sd-header-actions">
                 <button class="sd-header-btn" data-action="edit-store"><i class="fas fa-pen"></i> Editar</button>
                 <button class="sd-header-btn sd-header-btn-accent" data-action="sd-scroll-themes"><i class="fas fa-palette"></i> Personalizar</button>
+                ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/negocio/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Vista previa</a>` : ''}
             </div>
+        </div>
+        <div class="sd-cover-section">
+            ${provider.cover_image
+                ? `<div class="sd-cover-preview">
+                    <img src="${esc(provider.cover_image)}" alt="Portada">
+                    <div class="sd-cover-actions">
+                        <button class="sd-cover-btn" data-action="upload-cover"><i class="fas fa-camera"></i> Cambiar</button>
+                        <button class="sd-cover-btn sd-cover-btn-remove" data-action="remove-cover"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`
+                : `<div class="sd-cover-empty" data-action="upload-cover">
+                    <i class="fas fa-image" style="font-size:24px;color:rgba(255,255,255,0.2);margin-bottom:8px;"></i>
+                    <div style="color:#94a3b8;font-size:0.82rem;">Agrega una imagen de portada</div>
+                    <div style="color:#64748b;font-size:0.72rem;">Recomendado: 1200x400px. Se muestra en tu tienda publica.</div>
+                </div>`
+            }
+            <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
         </div>`;
     }
 
@@ -3184,6 +3177,9 @@ class MarketplaceSocialSystem {
         }
         if (handle) {
             btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/negocio/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
+        }
+        if (handle) {
+            btns += `<a class="sd-quick-btn" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-eye"></i> Ver Tienda</a>`;
         }
         btns += `<button class="sd-quick-btn" data-action="open-portfolio-maker"><i class="fas fa-file-alt"></i> Portafolio</button>`;
         return `<div class="sd-quick-actions">${btns}</div>`;
@@ -3357,7 +3353,7 @@ class MarketplaceSocialSystem {
         return `<div class="sd-empty">
             <div class="sd-empty-icon">${isService ? '\u{1f527}' : '\u{1f4e6}'}</div>
             <div class="sd-empty-title">Sin ${isService ? 'servicios' : 'productos'} aun</div>
-            <div class="sd-empty-desc">${isService ? 'Agrega tu primer servicio y empieza a recibir reservas.' : 'Publica tu primer producto para que los clientes lo encuentren.'}</div>
+            <div class="sd-empty-desc">${isService ? 'Publica un servicio y empieza a recibir reservas. Tus clientes ya estan aqui.' : 'Publica tu primer producto y empieza a ganar LTD. Control de stock automatico.'}</div>
             <button class="sd-empty-cta" data-action="${isService ? 'add-service' : 'add-product'}"><i class="fas fa-plus"></i> Agregar ${isService ? 'servicio' : 'producto'}</button>
         </div>`;
     }
@@ -3452,10 +3448,10 @@ class MarketplaceSocialSystem {
                 this.showNotification('Tema aplicado', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al aplicar tema', 'error');
+                this.showNotification(t('marketplace.theme_error',{defaultValue:'Error al aplicar tema'}), 'error');
             }
         } catch (err) {
-            this.showNotification('Error al aplicar tema', 'error');
+            this.showNotification(t('marketplace.theme_error',{defaultValue:'Error al aplicar tema'}), 'error');
         }
     }
 
@@ -3471,10 +3467,10 @@ class MarketplaceSocialSystem {
                 this.showNotification('Layout aplicado', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al cambiar layout', 'error');
+                this.showNotification(t('marketplace.layout_error',{defaultValue:'Error al cambiar layout'}), 'error');
             }
         } catch (err) {
-            this.showNotification('Error al cambiar layout', 'error');
+            this.showNotification(t('marketplace.layout_error',{defaultValue:'Error al cambiar layout'}), 'error');
         }
     }
 
@@ -3551,13 +3547,15 @@ class MarketplaceSocialSystem {
             sellerAnalytics += `<div class="sd-analytics"><div class="sd-analytics-card">
                 <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
                 <div class="sd-analytics-body">
-                    <div class="sd-analytics-value">L. ${parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
+                    <div class="sd-analytics-value">L. ${window.ltFormatNumber ? ltFormatNumber(summary.total_revenue || 0) : parseFloat(summary.total_revenue || 0).toLocaleString('es-HN')}</div>
                     <div class="sd-analytics-label">Ingresos totales</div>
                 </div>
             </div></div>`;
         }
 
+        const setupBanner2 = this._buildSetupBanner(provider, storeData);
         container.innerHTML = `<div class="store-dashboard" data-layout="showcase" data-theme="${esc(theme)}">
+            ${setupBanner2}
             ${tierCard}
             <div class="store-showcase-hero">
                 <div class="store-showcase-hero-content">
@@ -3614,7 +3612,9 @@ class MarketplaceSocialSystem {
 
         const totalItems = (storeData.services?.length || 0) + (storeData.products?.length || 0);
 
+        const setupBanner3 = this._buildSetupBanner(provider, storeData);
         container.innerHTML = `<div class="store-dashboard" data-layout="compact" data-theme="${esc(theme)}">
+            ${setupBanner3}
             ${tierCard}
             <div class="store-compact-card">
                 <div class="store-compact-avatar">${avatarHtml}</div>
@@ -3811,11 +3811,11 @@ class MarketplaceSocialSystem {
                         avatarPreview.innerHTML = `<img src="${this.escapeHtml(pendingProfileImage)}" alt="">`;
                         avatarBtn.textContent = 'Cambiar logo';
                     } else {
-                        this.showNotification('Error al subir imagen', 'error');
+                        this.showNotification(t('messages.image_upload_error',{defaultValue:'Error al subir imagen'}), 'error');
                         avatarBtn.textContent = 'Cambiar logo';
                     }
                 } catch (err) {
-                    this.showNotification('Error al subir imagen', 'error');
+                    this.showNotification(t('messages.image_upload_error',{defaultValue:'Error al subir imagen'}), 'error');
                     avatarBtn.textContent = 'Cambiar logo';
                 }
                 avatarBtn.disabled = false;
@@ -3883,12 +3883,12 @@ class MarketplaceSocialSystem {
                         this.showNotification('Tienda actualizada', 'success');
                         this.loadMyStore();
                     } else {
-                        this.showNotification('Error al guardar', 'error');
+                        this.showNotification(t('messages.save_error',{defaultValue:'Error al guardar'}), 'error');
                         saveBtn.disabled = false;
                         saveBtn.textContent = 'Guardar Cambios';
                     }
                 } catch (err) {
-                    this.showNotification('Error al guardar', 'error');
+                    this.showNotification(t('messages.save_error',{defaultValue:'Error al guardar'}), 'error');
                     saveBtn.disabled = false;
                     saveBtn.textContent = 'Guardar Cambios';
                 }
@@ -3923,7 +3923,7 @@ class MarketplaceSocialSystem {
             };
 
             if (!formData.title || !formData.category_id || !formData.description) {
-                this.showNotification('Por favor completa todos los campos requeridos', 'error');
+                this.showNotification(t('forms.complete_all_required',{defaultValue:'Por favor completa todos los campos requeridos'}), 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 return;
@@ -3962,10 +3962,10 @@ class MarketplaceSocialSystem {
                 this.showNotification('Producto publicado exitosamente', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al publicar el producto', 'error');
+                this.showNotification(t('marketplace.publish_product_error',{defaultValue:'Error al publicar el producto'}), 'error');
             }
         } catch (error) {
-            this.showNotification('Error al publicar el producto', 'error');
+            this.showNotification(t('marketplace.publish_product_error',{defaultValue:'Error al publicar el producto'}), 'error');
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -4535,8 +4535,18 @@ class MarketplaceSocialSystem {
             }
             const reader = new FileReader();
             reader.onload = (e) => {
-                this._images[contextKey].push({ file, preview: e.target.result });
-                this._renderImagePreviews(contextKey);
+                // Read dimensions for display
+                const img = new Image();
+                img.onload = () => {
+                    const lowRes = img.width < 400 || img.height < 400;
+                    this._images[contextKey].push({ file, preview: e.target.result, width: img.width, height: img.height, lowRes });
+                    this._renderImagePreviews(contextKey);
+                };
+                img.onerror = () => {
+                    this._images[contextKey].push({ file, preview: e.target.result, width: 0, height: 0, lowRes: false });
+                    this._renderImagePreviews(contextKey);
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -4546,12 +4556,21 @@ class MarketplaceSocialSystem {
         const container = document.getElementById(contextKey + 'ImagePreviews');
         if (!container) return;
         const imgs = this._images?.[contextKey] || [];
-        container.innerHTML = imgs.map((img, i) =>
-            '<div class="store-image-preview">' +
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        container.innerHTML = imgs.map((img, i) => {
+            const badge = i === 0 ? '<span class="img-badge img-badge-primary">Principal</span>' : '<span class="img-badge">' + (i + 1) + '</span>';
+            const dims = (img.width && img.height) ? '<span class="img-dimensions">' + img.width + 'x' + img.height + (img.lowRes ? ' \u26A0' : ' \u2713') + '</span>' : '';
+            const lowClass = img.lowRes ? ' low-res' : '';
+            return '<div class="store-image-preview' + lowClass + '" draggable="true" data-img-idx="' + i + '" data-context="' + esc(contextKey) + '">' +
+                '<div class="drag-handle" title="Arrastrar para reordenar">\u2801\u2801\u2801</div>' +
                 '<img loading="lazy" src="' + img.preview + '" alt="">' +
-                '<button type="button" class="store-image-preview-remove" data-action="remove-' + this.escapeHtml(contextKey) + '-image" data-index="' + i + '">&times;</button>' +
-            '</div>'
-        ).join('');
+                badge + dims +
+                '<button type="button" class="store-image-preview-remove" data-action="remove-' + esc(contextKey) + '-image" data-index="' + i + '">\u00D7</button>' +
+            '</div>';
+        }).join('');
+
+        // Setup drag-to-reorder
+        this._setupImageReorder(container, contextKey);
 
         // Update dropzone text
         const dropzone = document.getElementById(contextKey + 'Dropzone');
@@ -4566,6 +4585,39 @@ class MarketplaceSocialSystem {
         }
     }
 
+    // Drag-to-reorder images
+    _setupImageReorder(container, contextKey) {
+        let dragIdx = null;
+        container.querySelectorAll('.store-image-preview').forEach(el => {
+            el.addEventListener('dragstart', (e) => {
+                dragIdx = parseInt(el.dataset.imgIdx);
+                el.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            el.addEventListener('dragend', () => {
+                el.classList.remove('dragging');
+                container.querySelectorAll('.store-image-preview').forEach(p => p.classList.remove('drop-target'));
+            });
+            el.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                container.querySelectorAll('.store-image-preview').forEach(p => p.classList.remove('drop-target'));
+                el.classList.add('drop-target');
+            });
+            el.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const dropIdx = parseInt(el.dataset.imgIdx);
+                if (dragIdx !== null && dragIdx !== dropIdx && this._images?.[contextKey]) {
+                    const arr = this._images[contextKey];
+                    const item = arr.splice(dragIdx, 1)[0];
+                    arr.splice(dropIdx, 0, item);
+                    this._renderImagePreviews(contextKey);
+                }
+                dragIdx = null;
+            });
+        });
+    }
+
     _removeImage(contextKey, index) {
         if (!this._images?.[contextKey]) return;
         this._images[contextKey].splice(index, 1);
@@ -4576,10 +4628,17 @@ class MarketplaceSocialSystem {
         const imgs = this._images?.[contextKey];
         if (!imgs || imgs.length === 0) return { success: true, data: { images: [] } };
 
+        // Show uploading indicator
+        const container = document.getElementById(contextKey + 'ImagePreviews');
+        if (container) container.querySelectorAll('.store-image-preview').forEach(p => p.classList.add('uploading'));
+
         const formData = new FormData();
-        for (const img of imgs) {
-            const compressed = await this._compressImage(img.file);
+        for (let i = 0; i < imgs.length; i++) {
+            const compressed = await this._compressImage(imgs[i].file);
             formData.append('images', compressed, compressed.name);
+            // Mark each as compressed
+            const previewEl = container?.children[i];
+            if (previewEl) { const b = previewEl.querySelector('.img-badge'); if (b) b.textContent = '\u2713'; }
         }
 
         const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
@@ -4715,7 +4774,7 @@ class MarketplaceSocialSystem {
                             <input type="file" id="serviceFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none">
                             <div class="store-image-dropzone-icon">&#128247;</div>
                             <div class="store-image-dropzone-text">Haz clic o arrastra imagenes aqui</div>
-                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF - Max 5MB cada una</div>
+                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF \u2014 Max 5MB. Recomendado: 800x600px o mayor.</div>
                         </div>
                         <div class="store-image-previews" id="serviceImagePreviews"></div>
                     </div>
@@ -4781,7 +4840,7 @@ class MarketplaceSocialSystem {
             };
 
             if (!formData.title || !formData.category_id || !formData.description) {
-                this.showNotification('Por favor completa todos los campos requeridos', 'error');
+                this.showNotification(t('forms.complete_all_required',{defaultValue:'Por favor completa todos los campos requeridos'}), 'error');
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 return;
@@ -4824,10 +4883,10 @@ class MarketplaceSocialSystem {
                 this.showNotification('Servicio publicado exitosamente', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al crear servicio', 'error');
+                this.showNotification(t('marketplace.create_service_error',{defaultValue:'Error al crear servicio'}), 'error');
             }
         } catch (error) {
-            this.showNotification('Error al crear servicio', 'error');
+            this.showNotification(t('marketplace.create_service_error',{defaultValue:'Error al crear servicio'}), 'error');
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -4906,7 +4965,7 @@ class MarketplaceSocialSystem {
                             <input type="file" id="productFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none">
                             <div class="store-image-dropzone-icon">&#128247;</div>
                             <div class="store-image-dropzone-text">Haz clic o arrastra imagenes aqui</div>
-                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF - Max 5MB cada una</div>
+                            <div class="store-image-dropzone-hint">JPEG, PNG, WebP o GIF \u2014 Max 5MB. Recomendado: 800x600px o mayor.</div>
                         </div>
                         <div class="store-image-previews" id="productImagePreviews"></div>
                     </div>
@@ -5049,7 +5108,7 @@ class MarketplaceSocialSystem {
         const quantity = parseInt(document.getElementById('epQuantity')?.value);
         const description = document.getElementById('epDescription')?.value?.trim();
         if (!title || !price || isNaN(quantity) || !description) {
-            this.showNotification('Completa los campos obligatorios', 'error');
+            this.showNotification(t('forms.complete_required',{defaultValue:'Completa los campos obligatorios'}), 'error');
             return;
         }
         let images = [];
@@ -5078,7 +5137,7 @@ class MarketplaceSocialSystem {
                 this.showNotification('Producto actualizado', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al actualizar', 'error');
+                this.showNotification(t('messages.update_error',{defaultValue:'Error al actualizar'}), 'error');
             }
         } catch (err) {
             this.showNotification('Error al actualizar producto', 'error');
@@ -5157,7 +5216,7 @@ class MarketplaceSocialSystem {
         const price = parseFloat(document.getElementById('esPrice')?.value);
         const description = document.getElementById('esDescription')?.value?.trim();
         if (!title || !description) {
-            this.showNotification('Completa los campos obligatorios', 'error');
+            this.showNotification(t('forms.complete_required',{defaultValue:'Completa los campos obligatorios'}), 'error');
             return;
         }
         let images = [];
@@ -5187,7 +5246,7 @@ class MarketplaceSocialSystem {
                 this.showNotification('Servicio actualizado', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al actualizar', 'error');
+                this.showNotification(t('messages.update_error',{defaultValue:'Error al actualizar'}), 'error');
             }
         } catch (err) {
             this.showNotification('Error al actualizar servicio', 'error');
@@ -5202,14 +5261,14 @@ class MarketplaceSocialSystem {
             if (type === 'products') {
                 const res = await this.apiRequest(`/api/marketplace/products/${id}`, { method: 'DELETE' });
                 if (res.success) { this.showNotification('Producto eliminado', 'success'); this.loadMyStore(); }
-                else this.showNotification('Error al eliminar', 'error');
+                else this.showNotification(t('messages.delete_error',{defaultValue:'Error al eliminar'}), 'error');
             } else {
                 const res = await this.apiRequest(`/api/marketplace/services/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'inactive' }) });
                 if (res.success) { this.showNotification('Servicio desactivado', 'success'); this.loadMyStore(); }
                 else this.showNotification('Error al desactivar', 'error');
             }
         } catch (err) {
-            this.showNotification('Error al eliminar', 'error');
+            this.showNotification(t('messages.delete_error',{defaultValue:'Error al eliminar'}), 'error');
         }
     }
 
@@ -5342,7 +5401,7 @@ class MarketplaceSocialSystem {
             </div>`;
         } else {
             body.innerHTML = `<div style="text-align:center;padding:8px;">
-                <div style="font-size:22px;font-weight:700;color:#10B981;">${parseFloat(data.chain_balance).toLocaleString('es-HN', { minimumFractionDigits: 2 })} LTD</div>
+                <div style="font-size:22px;font-weight:700;color:#10B981;">${window.ltFormatNumber ? ltFormatNumber(data.chain_balance, 2) : parseFloat(data.chain_balance).toLocaleString('es-HN', { minimumFractionDigits: 2 })} LTD</div>
                 <div class="chain-address">${esc(data.wallet_address)}</div>
                 <button class="chain-refresh-btn" id="chainRefreshBtn" title="Actualizar"><i class="fas fa-sync-alt"></i></button>
             </div>`;
@@ -5423,8 +5482,8 @@ class MarketplaceSocialSystem {
                     <div class="sd-order-date">${esc(dateStr)}</div>
                 </div>
                 <div class="sd-order-right">
-                    <div class="sd-order-amount">${esc(String(o.quantity || 1))} x L. ${esc(String(parseFloat(o.unit_price || 0).toLocaleString('es-HN')))}</div>
-                    <div class="sd-order-total">L. ${esc(String(parseFloat(o.total_price || 0).toLocaleString('es-HN')))}</div>
+                    <div class="sd-order-amount">${esc(String(o.quantity || 1))} x L. ${esc((window.ltFormatNumber ? ltFormatNumber(o.unit_price || 0) : String(parseFloat(o.unit_price || 0).toLocaleString('es-HN'))))}</div>
+                    <div class="sd-order-total">L. ${esc((window.ltFormatNumber ? ltFormatNumber(o.total_price || 0) : String(parseFloat(o.total_price || 0).toLocaleString('es-HN'))))}</div>
                     <span class="sd-order-status sd-order-${statusClass}">${statusLabel}</span>
                 </div>
                 ${actionsHtml ? `<div class="sd-order-actions">${actionsHtml}</div>` : ''}
@@ -5448,10 +5507,10 @@ class MarketplaceSocialSystem {
                 this.showNotification('Estado actualizado', 'success');
                 this.loadMyStore();
             } else {
-                this.showNotification('Error al actualizar pedido', 'error');
+                this.showNotification(t('marketplace.order_update_error',{defaultValue:'Error al actualizar pedido'}), 'error');
             }
         } catch (err) {
-            this.showNotification('Error al actualizar pedido', 'error');
+            this.showNotification(t('marketplace.order_update_error',{defaultValue:'Error al actualizar pedido'}), 'error');
         }
     }
 
@@ -5479,14 +5538,14 @@ class MarketplaceSocialSystem {
             const dateLabel = new Date(d.date + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
             const showLabel = i % Math.max(1, Math.floor(dailyData.length / 6)) === 0;
             return `<div class="sd-chart-col">
-                <div class="sd-chart-bar" style="height:${heightPct}%" title="L. ${rev.toLocaleString('es-HN')} - ${dateLabel}">
-                    <span class="sd-chart-tooltip">L. ${rev.toLocaleString('es-HN')}<br>${esc(dateLabel)}</span>
+                <div class="sd-chart-bar" style="height:${heightPct}%" title="L. ${window.ltFormatNumber ? ltFormatNumber(rev) : rev.toLocaleString('es-HN')} - ${dateLabel}">
+                    <span class="sd-chart-tooltip">L. ${window.ltFormatNumber ? ltFormatNumber(rev) : rev.toLocaleString('es-HN')}<br>${esc(dateLabel)}</span>
                 </div>
                 ${showLabel ? `<span class="sd-chart-label">${esc(dateLabel)}</span>` : '<span class="sd-chart-label"></span>'}
             </div>`;
         }).join('');
         return `<div class="sd-chart">
-            <div class="sd-chart-ymax">L. ${maxRev.toLocaleString('es-HN')}</div>
+            <div class="sd-chart-ymax">L. ${window.ltFormatNumber ? ltFormatNumber(maxRev) : maxRev.toLocaleString('es-HN')}</div>
             <div class="sd-chart-bars">${bars}</div>
         </div>`;
     }
@@ -5501,7 +5560,7 @@ class MarketplaceSocialSystem {
                 <td class="sd-top-rank ${rankColors[i] || ''}">${i + 1}</td>
                 <td>${esc(p.title)}</td>
                 <td>${esc(String(p.total_orders))}</td>
-                <td>L. ${parseFloat(p.total_revenue || 0).toLocaleString('es-HN')}</td>
+                <td>L. ${window.ltFormatNumber ? ltFormatNumber(p.total_revenue || 0) : parseFloat(p.total_revenue || 0).toLocaleString('es-HN')}</td>
             </tr>`;
         }).join('');
         return `<table class="sd-top-products">
@@ -5559,7 +5618,7 @@ async function viewProduct(productId) {
     try {
         const resp = await ms.apiRequest('/api/marketplace/products/' + encodeURIComponent(productId));
         const p = resp?.data?.product || resp?.product || resp?.data;
-        if (!p) { ms.showNotification('Producto no encontrado', 'error'); return; }
+        if (!p) { ms.showNotification(t('marketplace.product_not_found',{defaultValue:'Producto no encontrado'}), 'error'); return; }
 
         // Parse images
         let imgs = p.images || [];
@@ -5571,7 +5630,7 @@ async function viewProduct(productId) {
         const condLabel = condMap[p.condition] || '';
         const stockColor = (p.quantity > 0) ? '#10B981' : '#EF4444';
         const stockLabel = (p.quantity > 0) ? (p.quantity + ' disponible' + (p.quantity > 1 ? 's' : '')) : 'Agotado';
-        const price = 'L. ' + Number(p.price || 0).toLocaleString('es-HN');
+        const price = (window.ltFormatCurrency ? ltFormatCurrency(Number(p.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(p.price || 0) : 'L. ' + Number(p.price || 0).toLocaleString('es-HN')));
         const sellerName = esc(p.seller_name || p.seller?.name || 'Vendedor');
 
         // Gallery thumbnails
@@ -5627,7 +5686,7 @@ async function buyProduct(productId) {
     if (ms.isGuest) { ms.showLoginPrompt('comprar productos'); return; }
 
     const product = ms.products.find(p => String(p.id) === String(productId) || String(p.productId) === String(productId));
-    if (!product) { ms.showNotification('Producto no encontrado', 'error'); return; }
+    if (!product) { ms.showNotification(t('marketplace.product_not_found',{defaultValue:'Producto no encontrado'}), 'error'); return; }
     if (product.quantity < 1) { ms.showNotification('Producto agotado', 'error'); return; }
 
     const esc = ms.escapeHtml.bind(ms);
@@ -5757,15 +5816,15 @@ function toggleLike(postId) {
         window.marketplaceSystem.showLoginPrompt('dar like');
         return;
     }
-    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
+    window.marketplaceSystem?.showNotification(t('messages.coming_soon',{defaultValue:'Funcion disponible proximamente'}), 'info');
 }
 
 function showComments(postId) {
-    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
+    window.marketplaceSystem?.showNotification(t('messages.coming_soon',{defaultValue:'Funcion disponible proximamente'}), 'info');
 }
 
 function sharePost(postId) {
-    window.marketplaceSystem?.showNotification('Funcion disponible proximamente', 'info');
+    window.marketplaceSystem?.showNotification(t('messages.coming_soon',{defaultValue:'Funcion disponible proximamente'}), 'info');
 }
 
 // Service-related global functions
@@ -5776,16 +5835,16 @@ async function viewService(serviceId) {
     try {
         const resp = await ms.apiRequest('/api/marketplace/services/' + encodeURIComponent(serviceId));
         const s = resp?.data?.service || resp?.service || resp?.data;
-        if (!s) { ms.showNotification('Servicio no encontrado', 'error'); return; }
+        if (!s) { ms.showNotification(t('marketplace.service_not_found',{defaultValue:'Servicio no encontrado'}), 'error'); return; }
 
         let imgs = s.images || [];
         if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch { imgs = []; } }
         if (!Array.isArray(imgs)) imgs = [];
         const mainImg = imgs.length > 0 ? (typeof imgs[0] === 'object' ? imgs[0].url : imgs[0]) : null;
 
-        const priceLabel = s.price_type === 'fixed' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN'))
-            : s.price_type === 'range' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN') + ' - ' + Number(s.price_max || 0).toLocaleString('es-HN'))
-            : s.price_type === 'hourly' ? ('L. ' + Number(s.price || 0).toLocaleString('es-HN') + '/hora')
+        const priceLabel = s.price_type === 'fixed' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(s.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(s.price || 0) : 'L. ' + Number(s.price || 0).toLocaleString('es-HN'))))
+            : s.price_type === 'range' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(s.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(s.price || 0) : 'L. ' + Number(s.price || 0).toLocaleString('es-HN'))) + ' - ' + Number(s.price_max || 0).toLocaleString('es-HN'))
+            : s.price_type === 'hourly' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(s.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(s.price || 0) : 'L. ' + Number(s.price || 0).toLocaleString('es-HN'))) + '/hora')
             : 'Consultar';
         const provName = esc(s.provider_name || s.provider?.name || 'Proveedor');
         const rating = s.avg_rating ? ('⭐ ' + Number(s.avg_rating).toFixed(1) + ' (' + (s.total_reviews || 0) + ')') : 'Sin resenas';
@@ -5879,7 +5938,7 @@ async function rescheduleBooking(bookingId) {
     if (!ms) return;
 
     const booking = ms.bookings?.find(b => String(b.id) === String(bookingId));
-    if (!booking) { ms.showNotification('Reserva no encontrada', 'error'); return; }
+    if (!booking) { ms.showNotification(t('marketplace.booking_not_found',{defaultValue:'Reserva no encontrada'}), 'error'); return; }
 
     const confirmed = await ms.showConfirm(
         'Se cancelara la reserva actual y podras crear una nueva con diferente fecha/hora.',
@@ -6010,7 +6069,7 @@ function leaveReview(bookingId) {
     if (ms.isGuest) { ms.showLoginPrompt('dejar resenas'); return; }
 
     const booking = ms.bookings?.find(b => String(b.id) === String(bookingId));
-    if (!booking) { ms.showNotification('Reserva no encontrada', 'error'); return; }
+    if (!booking) { ms.showNotification(t('marketplace.booking_not_found',{defaultValue:'Reserva no encontrada'}), 'error'); return; }
 
     const esc = ms.escapeHtml.bind(ms);
     const existing = document.getElementById('reviewModal');
@@ -6395,14 +6454,14 @@ function setupMarketplaceDelegatedListeners() {
                 let cartProduct = msCart.products?.find(p => String(p.id) === String(id) || String(p.productId) === String(id));
                 if (cartProduct) {
                     msCart._addToCart(cartProduct, 1);
-                    msCart.showNotification('Agregado al carrito', 'success');
+                    msCart.showNotification(t('marketplace.added_to_cart',{defaultValue:'Agregado al carrito'}), 'success');
                 } else {
                     // Product from Explorar feed — fetch from API
                     try {
                         const pr = await msCart.apiRequest('/api/marketplace/products/' + encodeURIComponent(id));
                         const pd = pr?.data?.product || pr?.product;
-                        if (pd) { msCart._addToCart(pd, 1); msCart.showNotification('Agregado al carrito', 'success'); }
-                        else msCart.showNotification('Producto no encontrado', 'error');
+                        if (pd) { msCart._addToCart(pd, 1); msCart.showNotification(t('marketplace.added_to_cart',{defaultValue:'Agregado al carrito'}), 'success'); }
+                        else msCart.showNotification(t('marketplace.product_not_found',{defaultValue:'Producto no encontrado'}), 'error');
                     } catch { msCart.showNotification('Error al agregar', 'error'); }
                 }
                 break;
@@ -6499,7 +6558,7 @@ function setupMarketplaceDelegatedListeners() {
                 const ms4 = window.marketplaceSystem;
                 if (ms4?.isGuest) { ms4.showLoginPrompt('publicar productos'); break; }
                 if (ms4?._currentProvider?.shop_type === 'services') {
-                    ms4.showNotification('Tu tienda es de tipo Servicios. No puedes crear productos.', 'error');
+                    // Removed: unhelpful message for service-only stores
                 } else if (ms4) {
                     if (!ms4.checkTierGate('create_listing')) break;
                     ms4.openCreateProductModal();
@@ -6619,9 +6678,9 @@ function setupMarketplaceDelegatedListeners() {
                 const url = btn.dataset.url;
                 if (url && navigator.clipboard) {
                     navigator.clipboard.writeText(url).then(() => {
-                        window.marketplaceSystem?.showNotification('URL copiada al portapapeles', 'success');
+                        window.marketplaceSystem?.showNotification(t('messages.url_copied',{defaultValue:'URL copiada al portapapeles'}), 'success');
                     }).catch(() => {
-                        window.marketplaceSystem?.showNotification('No se pudo copiar', 'error');
+                        window.marketplaceSystem?.showNotification(t('messages.copy_failed',{defaultValue:'No se pudo copiar'}), 'error');
                     });
                 }
                 break;
@@ -6653,9 +6712,9 @@ function setupMarketplaceDelegatedListeners() {
                     navigator.share({ title: 'Mi Tienda en La Tanda', url: shareUrl }).catch(() => {});
                 } else if (shareUrl && navigator.clipboard) {
                     navigator.clipboard.writeText(shareUrl).then(() => {
-                        window.marketplaceSystem?.showNotification('URL copiada al portapapeles', 'success');
+                        window.marketplaceSystem?.showNotification(t('messages.url_copied',{defaultValue:'URL copiada al portapapeles'}), 'success');
                     }).catch(() => {
-                        window.marketplaceSystem?.showNotification('No se pudo copiar', 'error');
+                        window.marketplaceSystem?.showNotification(t('messages.copy_failed',{defaultValue:'No se pudo copiar'}), 'error');
                     });
                 }
                 break;
@@ -6735,7 +6794,7 @@ function setupMarketplaceDelegatedListeners() {
                 btn.disabled = true;
                 msF.apiRequest(fEndpoint, { method: 'PATCH', body: JSON.stringify({ featured: !wasFeatured }) })
                     .then(() => { msF.showNotification(wasFeatured ? 'Quitado de destacados' : 'Marcado como destacado', 'success'); msF.loadMyStore(); })
-                    .catch(() => { msF.showNotification('Error al actualizar', 'error'); btn.disabled = false; });
+                    .catch(() => { msF.showNotification(t('messages.update_error',{defaultValue:'Error al actualizar'}), 'error'); btn.disabled = false; });
                 break;
             }
             case 'move-item-up':
@@ -6948,8 +7007,8 @@ document.addEventListener('change', (e) => {
             body: JSON.stringify({ quantity: newQty })
         }).then(res => {
             if (res.success) ms.showNotification('Stock actualizado', 'success');
-            else ms.showNotification('Error al actualizar stock', 'error');
-        }).catch(() => ms.showNotification('Error al actualizar stock', 'error'));
+            else ms.showNotification(t('marketplace.stock_error',{defaultValue:'Error al actualizar stock'}), 'error');
+        }).catch(() => ms.showNotification(t('marketplace.stock_error',{defaultValue:'Error al actualizar stock'}), 'error'));
     }
 });
 

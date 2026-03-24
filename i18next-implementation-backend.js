@@ -19,8 +19,8 @@ const I18N_CONFIG = {
         USER_PREFERENCES: '/api/users/preferences'
     },
     STORAGE_KEYS: {
-        AUTH_TOKEN: 'latanda_auth_token',  // Primary auth token
-        ALT_AUTH_TOKEN: 'latanda_token',   // Alternative token location
+        AUTH_TOKEN: 'auth_token',          // Primary auth token (matches auth system)
+        ALT_AUTH_TOKEN: 'authToken',       // Alternative token location
         LANGUAGE: 'latanda_language'
     },
     SUPPORTED_LANGUAGES: ['en', 'es', 'pt'],
@@ -438,6 +438,9 @@ async function initializeI18next() {
         // Translate page
         translatePage();
 
+        // Phase 7: Start observer for dynamic content
+        startI18nObserver();
+
         // Create language selector
         createLanguageSelector();
 
@@ -459,34 +462,67 @@ async function initializeI18next() {
 /**
  * Translate all elements on the page
  */
-function translatePage() {
-    const selectors = ['[data-i18n]', '[data-translate]'];
-    let totalTranslated = 0;
+function translateElement(element) {
+    const raw = element.getAttribute('data-i18n') || element.getAttribute('data-translate');
+    if (!raw) return false;
 
-    selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
+    // Support attribute prefixes: [placeholder]key, [aria-label]key
+    const attrMatch = raw.match(/^\[([^\]]+)\](.+)$/);
+    if (attrMatch) {
+        const attr = attrMatch[1];
+        const key = attrMatch[2];
+        const translation = i18next.t(key);
+        if (translation && translation !== key) {
+            element.setAttribute(attr, translation);
+            return true;
+        }
+        return false;
+    }
 
-        elements.forEach(element => {
-            const key = element.getAttribute('data-i18n') || element.getAttribute('data-translate');
-            const translation = i18next.t(key);
-
-            if (translation && translation !== key) {
-                // Handle different element types
-                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    if (element.placeholder) {
-                        element.placeholder = translation;
-                    } else {
-                        element.value = translation;
-                    }
-                } else {
-                    element.textContent = translation;
-                }
-                totalTranslated++;
+    const translation = i18next.t(raw);
+    if (translation && translation !== raw) {
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            if (element.hasAttribute('placeholder')) {
+                element.placeholder = translation;
+            } else {
+                element.value = translation;
             }
-        });
-    });
+        } else {
+            element.textContent = translation;
+        }
+        return true;
+    }
+    return false;
+}
 
-    console.log(`[i18n] Translated ${totalTranslated} elements`);
+function translatePage(root) {
+    const container = root || document;
+    const elements = container.querySelectorAll('[data-i18n], [data-translate]');
+    let totalTranslated = 0;
+    elements.forEach(el => { if (translateElement(el)) totalTranslated++; });
+    if (!root) console.log(`[i18n] Translated ${totalTranslated} elements`);
+}
+
+// Phase 7: MutationObserver — auto-translate dynamically added DOM nodes
+function startI18nObserver() {
+    if (window._i18nObserver) return;
+    window._i18nObserver = new MutationObserver(function(mutations) {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType !== 1) continue;
+                // Translate the node itself if it has data-i18n
+                if (node.hasAttribute && node.hasAttribute('data-i18n')) {
+                    translateElement(node);
+                }
+                // Translate any children with data-i18n
+                if (node.querySelectorAll) {
+                    const children = node.querySelectorAll('[data-i18n], [data-translate]');
+                    children.forEach(translateElement);
+                }
+            }
+        }
+    });
+    window._i18nObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -498,15 +534,7 @@ function createLanguageSelector() {
         return;
     }
 
-    // Only show selector on index and configuracion pages
-    const currentPath = window.location.pathname;
-    const isIndexPage = currentPath === '/' || currentPath === '/index.html' || currentPath.endsWith('/');
-    const isSettingsPage = currentPath.includes('configuracion.html');
-
-    if (!isIndexPage && !isSettingsPage) {
-        console.log('🌐 [i18n] Language selector not needed on this page');
-        return;
-    }
+    // Show selector on all pages (removed page restriction)
 
     const languages = {
         'en': { name: 'English', flag: '🇺🇸' },
@@ -551,19 +579,21 @@ function createLanguageSelector() {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                background: rgba(255, 255, 255, 0.95);
+                background: rgba(15, 23, 42, 0.9);
+                -webkit-backdrop-filter: blur(10px);
                 backdrop-filter: blur(10px);
-                border: 1px solid rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(0, 255, 255, 0.2);
                 border-radius: 12px;
                 padding: 8px 14px;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             }
 
             .i18n-btn:hover {
-                background: rgba(255, 255, 255, 1);
-                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+                background: rgba(15, 23, 42, 0.95);
+                border-color: rgba(0, 255, 255, 0.4);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
                 transform: translateY(-1px);
             }
 
@@ -575,7 +605,7 @@ function createLanguageSelector() {
             .i18n-code {
                 font-size: 14px;
                 font-weight: 600;
-                color: #1e293b;
+                color: #e2e8f0;
             }
 
             .i18n-chevron {
@@ -592,11 +622,12 @@ function createLanguageSelector() {
                 top: calc(100% + 8px);
                 right: 0;
                 min-width: 180px;
-                background: rgba(255, 255, 255, 0.98);
+                background: rgba(15, 23, 42, 0.97);
+                -webkit-backdrop-filter: blur(20px);
                 backdrop-filter: blur(20px);
-                border: 1px solid rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(0, 255, 255, 0.2);
                 border-radius: 12px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
                 opacity: 0;
                 visibility: hidden;
                 transform: translateY(-10px);
@@ -635,7 +666,7 @@ function createLanguageSelector() {
                 flex: 1;
                 font-size: 14px;
                 font-weight: 500;
-                color: #1e293b;
+                color: #e2e8f0;
             }
 
             .i18n-check {
@@ -720,16 +751,25 @@ function setupAuthEventListeners() {
 }
 
 /**
- * Initialize when DOM is ready
+ * Initialize — called by components-loader.js after i18next CDN is loaded
+ * Can also self-init if loaded standalone
  */
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setupAuthEventListeners();
-        initializeI18next();
-    });
-} else {
+window._initLaTandaI18n = function() {
+    if (typeof i18next === 'undefined') {
+        console.warn('[i18n] i18next not loaded yet — deferring init');
+        return;
+    }
     setupAuthEventListeners();
     initializeI18next();
+};
+
+// Self-init if loaded after i18next is already available
+if (typeof i18next !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window._initLaTandaI18n);
+    } else {
+        window._initLaTandaI18n();
+    }
 }
 
 /**
@@ -740,9 +780,20 @@ window.LaTandaI18n = {
     getCurrentLanguage: () => i18next?.language || I18N_CONFIG.DEFAULT_LANGUAGE,
     isReady: () => typeof i18next !== 'undefined' && i18next.isInitialized,
     translate: (key, options) => i18next?.t(key, options),
+    translatePage,
     getUserLanguagePreference,
     invalidateCache: invalidateLanguageCache,
     config: I18N_CONFIG
+};
+
+// Global t() shorthand for inline JS usage
+// Falls back to the key itself if i18next not loaded yet
+window.t = function(key, options) {
+    if (typeof i18next !== 'undefined' && i18next.isInitialized) {
+        var result = i18next.t(key, options);
+        return result !== key ? result : (options && options.defaultValue) || key;
+    }
+    return (options && options.defaultValue) || key;
 };
 
 console.log('[i18n] LaTandaI18n module loaded');

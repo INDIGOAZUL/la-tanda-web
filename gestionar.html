@@ -567,9 +567,27 @@
     // ╔══════════════════════════════════════════════════╗
     // ║  TAB: MIEMBROS                                   ║
     // ╚══════════════════════════════════════════════════╝
+    var pendingJoinCount = 0;
+
     function loadMiembros() {
+        // Fetch pending join requests count
+        fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members', { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    var members = Array.isArray(res.data) ? res.data : (res.data?.members || []);
+                    pendingJoinCount = members.filter(function(m) { return m.status === 'pending'; }).length;
+                    var badge = document.getElementById('solicitudesBadge');
+                    if (badge) {
+                        badge.textContent = pendingJoinCount;
+                        badge.style.display = pendingJoinCount > 0 ? 'inline-flex' : 'none';
+                    }
+                }
+            }).catch(function() {});
+
         var html = '<div class="gm-section"><div class="gm-section-title">Gestion de Miembros</div>';
         html += '<div class="gm-actions-grid">';
+        html += '<button class="gm-action-btn gm-action-warn" data-action="miembros-solicitudes"><i class="fas fa-user-clock"></i> Solicitudes de Ingreso <span id="solicitudesBadge" class="gm-badge-count" style="display:none;">0</span></button>';
         html += '<button class="gm-action-btn" data-action="miembros-lista"><i class="fas fa-users"></i> Lista de Miembros</button>';
         html += '<button class="gm-action-btn" data-action="miembros-turnos"><i class="fas fa-sort-numeric-down"></i> Gestionar Turnos</button>';
         html += '<button class="gm-action-btn" data-action="miembros-fairness"><i class="fas fa-chart-bar"></i> Equidad de Turnos</button>';
@@ -1611,6 +1629,112 @@
     }
 
     
+    // -- Solicitudes de Ingreso --
+    async function renderSolicitudes(container) {
+        container.innerHTML = '<div class="gm-subpanel"><div class="gm-subpanel-header"><h3>Solicitudes de Ingreso</h3><button class="gm-subpanel-close" data-action="close-subpanel"><i class="fas fa-times"></i></button></div><div class="gm-loading"><i class="fas fa-spinner fa-spin"></i></div></div>';
+
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members', { headers: authHeaders() }).then(function(r) { return r.json(); });
+            if (!res.success) throw new Error('');
+            var allMembers = Array.isArray(res.data) ? res.data : (res.data?.members || []);
+            var pending = allMembers.filter(function(m) { return m.status === 'pending'; });
+
+            var html = '<div class="gm-subpanel"><div class="gm-subpanel-header"><h3>Solicitudes de Ingreso (' + pending.length + ')</h3><button class="gm-subpanel-close" data-action="close-subpanel"><i class="fas fa-times"></i></button></div>';
+
+            if (pending.length === 0) {
+                html += '<div style="text-align:center;padding:32px 16px;color:var(--ds-text-muted);"><i class="fas fa-check-circle" style="font-size:2rem;color:var(--ds-green);display:block;margin-bottom:10px;"></i>No hay solicitudes pendientes</div>';
+            } else {
+                html += '<div style="font-size:0.78rem;color:var(--ds-text-muted);margin-bottom:12px;padding:8px;background:var(--ds-bg-surface);border-radius:8px;"><i class="fas fa-info-circle" style="color:var(--ds-cyan);"></i> Estas personas solicitaron unirse al grupo. Aprueba o rechaza cada solicitud.</div>';
+
+                for (var i = 0; i < pending.length; i++) {
+                    var m = pending[i];
+                    var initial = (m.name || 'U').charAt(0).toUpperCase();
+                    var avatarHtml = m.avatar_url
+                        ? '<img src="' + esc(m.avatar_url) + '" style="width:42px;height:42px;border-radius:50%;object-fit:cover;">'
+                        : '<div style="width:42px;height:42px;border-radius:50%;background:var(--ds-cyan-muted);color:var(--ds-cyan);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:1.1rem;">' + initial + '</div>';
+
+                    var joinDate = m.joined_at ? new Date(m.joined_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                    var timeAgo = '';
+                    if (m.joined_at) {
+                        var diffMs = Date.now() - new Date(m.joined_at).getTime();
+                        var diffH = Math.floor(diffMs / 3600000);
+                        if (diffH < 1) timeAgo = 'Hace menos de 1 hora';
+                        else if (diffH < 24) timeAgo = 'Hace ' + diffH + ' hora' + (diffH > 1 ? 's' : '');
+                        else { var diffD = Math.floor(diffH / 24); timeAgo = 'Hace ' + diffD + ' dia' + (diffD > 1 ? 's' : ''); }
+                    }
+
+                    html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--ds-border-subtle,rgba(255,255,255,0.06));">';
+                    html += avatarHtml;
+                    html += '<div style="flex:1;min-width:0;">';
+                    html += '<div style="font-weight:600;">' + esc(m.name || 'Usuario') + '</div>';
+                    html += '<div style="font-size:0.72rem;color:var(--ds-text-faint);">';
+                    if (m.email) html += '<i class="fas fa-envelope" style="font-size:0.6rem;"></i> ' + esc(m.email) + ' ';
+                    if (m.phone) html += '<i class="fas fa-phone" style="font-size:0.6rem;"></i> ' + esc(m.phone);
+                    html += '</div>';
+                    if (timeAgo) html += '<div style="font-size:0.68rem;color:var(--ds-text-muted);margin-top:2px;"><i class="fas fa-clock" style="font-size:0.58rem;"></i> ' + timeAgo + '</div>';
+                    html += '</div>';
+                    html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+                    html += '<button class="ds-btn ds-btn-primary" style="padding:6px 14px;font-size:0.82rem;border-radius:8px;" data-action="sol-aprobar" data-uid="' + esc(m.user_id) + '" data-name="' + esc(m.name || 'Usuario') + '"><i class="fas fa-check"></i> Aprobar</button>';
+                    html += '<button class="ds-btn" style="padding:6px 14px;font-size:0.82rem;border-radius:8px;background:var(--ds-red-muted);color:var(--ds-red);border:1px solid var(--ds-red);" data-action="sol-rechazar" data-uid="' + esc(m.user_id) + '" data-name="' + esc(m.name || 'Usuario') + '"><i class="fas fa-times"></i> Rechazar</button>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<div class="gm-subpanel"><div class="gm-subpanel-header"><h3>Solicitudes de Ingreso</h3><button class="gm-subpanel-close" data-action="close-subpanel"><i class="fas fa-times"></i></button></div><div style="padding:16px;color:var(--ds-red);text-align:center;">Error al cargar solicitudes</div></div>';
+        }
+    }
+
+    async function aprobarSolicitud(userId, userName) {
+        var ok = await showConfirm('Aprobar la solicitud de ' + userName + '?');
+        if (!ok) return;
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members/' + encodeURIComponent(userId) + '/approve', {
+                method: 'POST',
+                headers: jsonHeaders()
+            }).then(function(r) { return r.json(); });
+            if (res.success) {
+                showToast(userName + ' fue aprobado exitosamente', 'success');
+                renderSolicitudes(document.getElementById('miembrosSubPanel'));
+                // Refresh stats
+                pendingJoinCount = Math.max(0, pendingJoinCount - 1);
+                var badge = document.getElementById('solicitudesBadge');
+                if (badge) { badge.textContent = pendingJoinCount; badge.style.display = pendingJoinCount > 0 ? 'inline-flex' : 'none'; }
+            } else {
+                showToast(res.error || 'Error al aprobar', 'error');
+            }
+        } catch (e) {
+            showToast('Error de conexion', 'error');
+        }
+    }
+
+    async function rechazarSolicitud(userId, userName) {
+        // Show reject reason input
+        var reason = prompt('Razon del rechazo (opcional):');
+        if (reason === null) return; // cancelled
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members/' + encodeURIComponent(userId) + '/reject', {
+                method: 'POST',
+                headers: jsonHeaders(),
+                body: JSON.stringify({ reason: reason || null })
+            }).then(function(r) { return r.json(); });
+            if (res.success) {
+                showToast('Solicitud de ' + userName + ' rechazada', 'info');
+                renderSolicitudes(document.getElementById('miembrosSubPanel'));
+                pendingJoinCount = Math.max(0, pendingJoinCount - 1);
+                var badge = document.getElementById('solicitudesBadge');
+                if (badge) { badge.textContent = pendingJoinCount; badge.style.display = pendingJoinCount > 0 ? 'inline-flex' : 'none'; }
+            } else {
+                showToast(res.error || 'Error al rechazar', 'error');
+            }
+        } catch (e) {
+            showToast('Error de conexion', 'error');
+        }
+    }
+
     // -- Miembros Lista --
     async function renderMiembrosLista(container) {
         container.innerHTML = '<div class="gm-subpanel"><div class="gm-subpanel-header"><h3>Miembros</h3><button class="gm-subpanel-close" data-action="close-subpanel"><i class="fas fa-times"></i></button></div><div class="gm-loading"><i class="fas fa-spinner fa-spin"></i></div></div>';
@@ -1640,10 +1764,12 @@
 
             // Stats summary
             var activeCount = members.filter(function(m) { return m.status === 'active'; }).length;
+            var pendingCount = members.filter(function(m) { return m.status === 'pending'; }).length;
             var suspendedCount = members.filter(function(m) { return m.status === 'suspended'; }).length;
             var placeholderCount = members.filter(function(m) { return m.is_placeholder || m.status === 'placeholder'; }).length;
-            html += '<div style="display:flex;gap:12px;margin-bottom:12px;font-size:0.78rem;">';
+            html += '<div style="display:flex;gap:12px;margin-bottom:12px;font-size:0.78rem;flex-wrap:wrap;">';
             html += '<span style="color:var(--ds-green);"><i class="fas fa-check-circle"></i> ' + activeCount + ' activos</span>';
+            if (pendingCount > 0) html += '<span style="color:var(--ds-amber);"><i class="fas fa-user-clock"></i> ' + pendingCount + ' pendientes</span>';
             if (suspendedCount > 0) html += '<span style="color:var(--ds-red);"><i class="fas fa-ban"></i> ' + suspendedCount + ' suspendidos</span>';
             if (placeholderCount > 0) html += '<span style="color:var(--ds-purple,#a855f7);"><i class="fas fa-user-clock"></i> ' + placeholderCount + ' pre-registro</span>';
             html += '</div>';
@@ -1657,7 +1783,7 @@
                 var numPos = parseInt(m.num_positions) || 1;
                 var initial = (m.name || 'M').charAt(0).toUpperCase();
                 var roleBadge = m.role === 'creator' ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-cyan-muted);color:var(--ds-cyan);">Creador</span>' : m.role === 'coordinator' ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-purple-muted);color:var(--ds-purple,#a855f7);">Coordinador</span>' : '';
-                var statusBadge = m.status === 'suspended' ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-red-muted);color:var(--ds-red);">Suspendido</span>' : isPlaceholder ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-purple-muted);color:var(--ds-purple,#a855f7);">Pre-registro</span>' : '';
+                var statusBadge = m.status === 'pending' ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-amber-muted);color:var(--ds-amber);">Pendiente aprobacion</span>' : m.status === 'suspended' ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-red-muted);color:var(--ds-red);">Suspendido</span>' : isPlaceholder ? '<span style="font-size:0.6rem;padding:1px 5px;border-radius:6px;background:var(--ds-purple-muted);color:var(--ds-purple,#a855f7);">Pre-registro</span>' : '';
 
                 // Payment status from payment-status endpoint
                 var payStatus = sm.payment_status || '';
@@ -3015,8 +3141,8 @@
             // Rate
             html += '<div class="gm-form-group">';
             html += '<label>Tasa de interes anual (%)</label>';
-            html += '<input type="number" id="lcRate" class="ds-input" value="' + rate + '" min="0" max="300" step="1">';
-            html += '<div style="font-size:0.7rem;color:var(--ds-text-faint);margin-top:3px;">Interes que se acumula diariamente sobre el saldo pendiente del prestamo despues del periodo de gracia. Rango: 0% (sin interes) a 300%. <span style="color:var(--ds-cyan);">Actual: ' + rate + '%</span></div>';
+            html += '<input type="number" id="lcRate" class="ds-input" value="' + rate + '" min="0" max="20" step="0.5">';
+            html += '<div style="font-size:0.7rem;color:var(--ds-text-faint);margin-top:3px;">Interes que se acumula diariamente sobre el saldo pendiente del prestamo despues del periodo de gracia. Rango: 0% (sin interes) a 20%. <span style="color:var(--ds-cyan);">Actual: ' + rate + '%</span></div>';
             html += '</div>';
 
             // Grace days
@@ -3033,77 +3159,16 @@
             html += '<div style="font-size:0.7rem;color:var(--ds-text-faint);margin-top:3px;">Si un miembro acumula esta cantidad de moras consecutivas, se suspende automaticamente. Rango: 2 a 12 ciclos. <span style="color:var(--ds-cyan);">Actual: ' + maxMora + ' ciclos</span></div>';
             html += '</div>';
 
-            // Impact preview — didactic calculator
+            // Impact preview
+            html += '<div style="padding:10px;margin-top:8px;background:var(--ds-bg-surface);border-radius:8px;font-size:0.78rem;color:var(--ds-text-muted);">';
+            html += '<div style="font-weight:600;color:var(--ds-text-secondary);margin-bottom:4px;"><i class="fas fa-calculator"></i> Ejemplo de impacto</div>';
             var exDebt = parseFloat(groupData.contribution_amount) || 1000;
-            var monthlyInterest = exDebt * rate / 100 / 12;
-            var dailyInterest = exDebt * rate / 100 / 365;
-            var annualInterest = exDebt * rate / 100;
-
-            html += '<div style="padding:12px;margin-top:8px;background:var(--ds-bg-surface);border:1px solid var(--ds-border-subtle,rgba(255,255,255,0.06));border-radius:8px;">';
-            html += '<div style="font-weight:600;color:var(--ds-text-secondary);margin-bottom:8px;"><i class="fas fa-calculator"></i> Que significa ' + rate + '% anual?</div>';
-
-            // Main equivalency
-            html += '<div style="text-align:center;padding:10px;margin-bottom:10px;background:var(--ds-bg-elevated);border-radius:8px;">';
-            html += '<div style="font-size:0.75rem;color:var(--ds-text-faint);">Si un miembro debe 1 cuota de</div>';
-            html += '<div style="font-size:1.3rem;font-weight:700;color:var(--ds-cyan);">L. ' + fmt(exDebt) + '</div>';
-            html += '<div style="font-size:0.75rem;color:var(--ds-text-faint);margin-top:4px;">pagaria de interes:</div>';
+            var dailyInterest = (exDebt * rate / 100 / 365);
+            html += '<div>Deuda de L.' + fmt(exDebt) + ' a ' + rate + '% anual:</div>';
+            html += '<div>• Interes diario: L.' + dailyInterest.toFixed(2) + '</div>';
+            html += '<div>• Despues de 30 dias: L.' + (dailyInterest * 30).toFixed(2) + ' de interes</div>';
+            html += '<div>• Despues de 90 dias: L.' + (dailyInterest * 90).toFixed(2) + ' de interes</div>';
             html += '</div>';
-
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">';
-            html += '<div style="padding:8px;background:var(--ds-bg-elevated);border-radius:6px;"><div style="font-size:1rem;font-weight:700;color:var(--ds-amber);">L.' + dailyInterest.toFixed(2) + '</div><div style="font-size:0.68rem;color:var(--ds-text-faint);">por dia</div></div>';
-            html += '<div style="padding:8px;background:var(--ds-bg-elevated);border-radius:6px;"><div style="font-size:1rem;font-weight:700;color:var(--ds-amber);">L.' + monthlyInterest.toFixed(2) + '</div><div style="font-size:0.68rem;color:var(--ds-text-faint);">por mes</div></div>';
-            html += '<div style="padding:8px;background:var(--ds-bg-elevated);border-radius:6px;"><div style="font-size:1rem;font-weight:700;color:var(--ds-amber);">L.' + annualInterest.toFixed(2) + '</div><div style="font-size:0.68rem;color:var(--ds-text-faint);">por ano</div></div>';
-            html += '</div>';
-
-            // Timeline example
-            html += '<div style="margin-top:10px;font-size:0.75rem;color:var(--ds-text-muted);">';
-            html += '<div style="margin-bottom:2px;"><strong>Linea de tiempo:</strong></div>';
-            html += '<div>Dia 1-' + grace + ': Periodo de gracia (sin interes)</div>';
-            html += '<div>Dia ' + (grace + 1) + '+: Empieza a acumular L.' + dailyInterest.toFixed(2) + '/dia</div>';
-            html += '<div>Dia ' + (grace + 30) + ': Debe L.' + fmt(exDebt) + ' + L.' + (dailyInterest * 30).toFixed(2) + ' interes = <strong style="color:var(--ds-red);">L.' + fmt(exDebt + dailyInterest * 30) + '</strong></div>';
-            if (maxMora >= 2) html += '<div>Ciclo ' + maxMora + ' sin pagar: <strong style="color:var(--ds-red);">Suspension automatica</strong></div>';
-            html += '</div>';
-
-            // Reverse calculator: "How much rate do I need for X monthly interest?"
-            html += '<div style="margin-top:12px;padding:10px;border-top:1px solid var(--ds-border-subtle,rgba(255,255,255,0.06));">';
-            html += '<div style="font-weight:600;color:var(--ds-text-secondary);margin-bottom:6px;font-size:0.78rem;"><i class="fas fa-exchange-alt"></i> Calculadora inversa</div>';
-            html += '<div style="font-size:0.75rem;color:var(--ds-text-faint);margin-bottom:8px;">Cuanto interes mensual quieres generar sobre una deuda?</div>';
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;">';
-            html += '<div class="gm-form-group" style="margin:0;"><label style="font-size:0.7rem;">Deuda base (L.)</label><input type="number" id="lcCalcDebt" class="ds-input" value="' + exDebt + '" min="100" step="100" style="padding:5px 8px;"></div>';
-            html += '<div class="gm-form-group" style="margin:0;"><label style="font-size:0.7rem;">Interes mensual deseado (L.)</label><input type="number" id="lcCalcTarget" class="ds-input" value="200" min="1" step="10" style="padding:5px 8px;"></div>';
-            html += '</div>';
-            html += '<div id="lcCalcResult" style="margin-top:8px;padding:8px;background:var(--ds-bg-elevated);border-radius:6px;font-size:0.78rem;text-align:center;"></div>';
-            html += '</div>';
-            html += '</div>';
-
-            // Wire calculators after render
-            setTimeout(function() {
-                function updateReverseCalc() {
-                    var debtEl = document.getElementById('lcCalcDebt');
-                    var targetEl = document.getElementById('lcCalcTarget');
-                    var resultEl = document.getElementById('lcCalcResult');
-                    if (!debtEl || !targetEl || !resultEl) return;
-                    var debt = parseFloat(debtEl.value) || 0;
-                    var target = parseFloat(targetEl.value) || 0;
-                    if (debt <= 0 || target <= 0) { resultEl.innerHTML = '<span style="color:var(--ds-text-faint);">Ingresa valores validos</span>'; return; }
-                    var neededRate = (target / debt) * 12 * 100;
-                    var isOverLimit = neededRate > 300;
-                    if (isOverLimit) {
-                        var maxMonthly = debt * 300 / 100 / 12;
-                        resultEl.innerHTML = '<div style="color:var(--ds-amber);"><i class="fas fa-exclamation-triangle"></i> Necesitarias <strong>' + neededRate.toFixed(1) + '% anual</strong> — excede el limite de 300%</div>' +
-                            '<div style="color:var(--ds-text-muted);margin-top:4px;">Con el maximo (300%), generarias <strong style="color:var(--ds-cyan);">L.' + maxMonthly.toFixed(2) + '/mes</strong> sobre L.' + fmt(debt) + '</div>' +
-                            '<div style="color:var(--ds-text-faint);margin-top:2px;">Para L.' + fmt(target) + '/mes necesitas deuda minima de <strong style="color:var(--ds-green);">L.' + fmt(Math.ceil(target / (300/100/12))) + '</strong> a 20%</div>';
-                    } else {
-                        resultEl.innerHTML = '<div style="color:var(--ds-green);"><i class="fas fa-check-circle"></i> Tasa necesaria: <strong style="font-size:1.1rem;">' + neededRate.toFixed(1) + '% anual</strong></div>' +
-                            '<div style="color:var(--ds-text-muted);margin-top:2px;">= L.' + (target / 30).toFixed(2) + '/dia sobre L.' + fmt(debt) + '</div>';
-                    }
-                }
-                var d1 = document.getElementById('lcCalcDebt');
-                var d2 = document.getElementById('lcCalcTarget');
-                if (d1) d1.addEventListener('input', updateReverseCalc);
-                if (d2) d2.addEventListener('input', updateReverseCalc);
-                updateReverseCalc(); // initial calc
-            }, 100);
 
             html += '<div style="margin-top:14px;"><button class="ds-btn ds-btn-primary" data-action="lc-save" id="lcSaveBtn" style="width:100%;"><i class="fas fa-save"></i> Guardar Configuracion</button></div>';
             html += '</div>';
@@ -3117,7 +3182,7 @@
         var moraVal = parseInt(document.getElementById('lcMaxMora').value);
 
         // H3: Client-side validation matching API limits
-        if (isNaN(rateVal) || rateVal < 0 || rateVal > 300) { showToast('Tasa debe ser entre 0% y 300%', 'error'); return; }
+        if (isNaN(rateVal) || rateVal < 0 || rateVal > 20) { showToast('Tasa debe ser entre 0% y 20%', 'error'); return; }
         if (isNaN(graceVal) || graceVal < 0 || graceVal > 30) { showToast('Dias de gracia debe ser entre 0 y 30', 'error'); return; }
         if (isNaN(moraVal) || moraVal < 2 || moraVal > 12) { showToast('Ciclos maximos debe ser entre 2 y 12', 'error'); return; }
 
@@ -3314,6 +3379,9 @@
             case 'dist-execute': executeDistribution(); break;
 
             // Miembros tab
+            case 'miembros-solicitudes': renderSolicitudes(miembrosPanel); break;
+            case 'sol-aprobar': aprobarSolicitud(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); break;
+            case 'sol-rechazar': rechazarSolicitud(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); break;
             case 'miembros-lista': renderMiembrosLista(miembrosPanel); break;
             case 'print-members': printMembersList(); break;
             case 'ml-member-menu': showMemberMenu(btn.getAttribute('data-uid'), btn.getAttribute('data-name'), btn.getAttribute('data-role'), btn.getAttribute('data-status')); break;
