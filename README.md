@@ -1,5 +1,32 @@
 # La Tanda — Cooperativa de Ahorro Digital
 
+
+## Quick Start
+
+### Prerequisites
+- Node.js 16+
+- npm or yarn
+
+### Installation
+`ash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+``n
+### Environment Setup
+`ash
+# Copy environment variables
+cp .env.example .env
+
+# Edit .env with your configuration
+nano .env
+``n
 [![Live](https://img.shields.io/badge/Live-latanda.online-00FFFF)](https://latanda.online)
 [![Version](https://img.shields.io/badge/Version-4.12.0-blue)](https://latanda.online)
 [![API](https://img.shields.io/badge/API-220%2B%20endpoints-00FF80)](https://latanda.online/docs)
@@ -259,3 +286,4 @@ MIT — Ver [LICENSE](./LICENSE)
 Construido desde Roatan, Honduras. Inclusion financiera a traves de tecnologia y comunidad.
 
 *Ultima actualizacion: Marzo 3, 2026*
+
