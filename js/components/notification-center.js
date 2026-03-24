@@ -47,6 +47,12 @@ class NotificationCenter {
         this.createPanel();
         this.createToastContainer();
         this.createPreferencesModal();
+
+        // v4.25.7: Skip API calls if not authenticated
+        if (this.userId === "demo-user") {
+            this.loadFromLocalStorage();
+            return;
+        }
         this.attachEventListeners();
         this.loadNotificationsFromAPI();
         this.startPolling();
@@ -559,6 +565,7 @@ class NotificationCenter {
                     <div class="notification-content">
                         <h4 class="notification-title">${this.escapeHtml(notification.title)}</h4>
                         <p class="notification-message">${this.escapeHtml(notification.message)}</p>
+                        ${(function(ctx){ return ctx ? '<span class="notification-context">' + ctx + '</span>' : '';})(this.escapeHtml(this.getContextLine(notification)))}
                         <span class="notification-time">${this.getTimeAgo(notification.time)}</span>
                     </div>
                     ${!notification.read ? `<button class="notification-mark-read" data-id="${this.escapeHtml(String(notification.id))}" title="Marcar leido">✓</button>` : ""}
@@ -607,6 +614,41 @@ class NotificationCenter {
         if (seconds < 86400) return "Hace " + Math.floor(seconds / 3600) + " h";
         if (seconds < 604800) return "Hace " + Math.floor(seconds / 86400) + " d";
         return date.toLocaleDateString("es-HN");
+    }
+
+    // v4.25.7: Build context subtitle from notification data
+    getContextLine(notification) {
+        const d = notification.data || {};
+        const type = notification.originalType || notification.type || '';
+        const parts = [];
+
+        // Group name
+        if (d.group_name) parts.push(d.group_name);
+
+        // Cycle info
+        if (d.cycle_number) parts.push('Ciclo ' + d.cycle_number);
+
+        // Amount
+        if (d.amount && typeof d.amount === 'number') {
+            parts.push('L. ' + d.amount.toLocaleString('es-HN'));
+        } else if (d.amount_owed && typeof d.amount_owed === 'number') {
+            parts.push('Deuda: L. ' + d.amount_owed.toLocaleString('es-HN'));
+        }
+
+        // Days late
+        if (d.days_late && d.days_late > 0 && type.includes('late')) {
+            parts.push(d.days_late + ' dia' + (d.days_late !== 1 ? 's' : '') + ' de atraso');
+        }
+
+        // Turn info
+        if (d.turn) parts.push('Turno #' + d.turn + (d.total ? '/' + d.total : ''));
+
+        // Loan deduction
+        if (d.loan_deduction && d.loan_deduction > 0) {
+            parts.push('Descuento prestamo: L. ' + d.loan_deduction.toLocaleString('es-HN'));
+        }
+
+        return parts.length > 0 ? parts.join(' · ') : '';
     }
 
     // v4.16.12: Update unread counts per tab
@@ -727,6 +769,8 @@ class NotificationCenter {
     }
 
     async markAllAsRead() {
+        if (this._markingAllRead) return;
+        this._markingAllRead = true;
         const unread = this.notifications.filter(n => !n.read);
         if (unread.length === 0) return;
 
@@ -742,7 +786,9 @@ class NotificationCenter {
                 body: JSON.stringify({})
             });
         } catch (error) {
+        this._markingAllRead = false;
         }
+        this._markingAllRead = false;
     }
 
     async deleteNotification(notificationId) {
@@ -823,9 +869,14 @@ class NotificationCenter {
                 <div class="prefs-loading" style="color: #ef4444;">
                     <i class="fas fa-exclamation-circle"></i>
                     <p>Error al cargar preferencias</p>
-                    <button class="prefs-btn prefs-btn-secondary" onclick="window.notificationCenter.loadPreferences()">Reintentar</button>
+                    <button class="prefs-btn prefs-btn-secondary nc-retry-btn">Reintentar</button>
                 </div>
             `;
+            // v4.25.7: Wire retry button via addEventListener (no inline onclick)
+            setTimeout(() => {
+                const retryBtn = document.querySelector(".nc-retry-btn");
+                if (retryBtn) retryBtn.addEventListener("click", () => this.loadPreferences());
+            }, 0);
         }
     }
 
@@ -1027,7 +1078,7 @@ class NotificationCenter {
                 setTimeout(() => indicator.classList.remove("show"), 2000);
             }
 
-            this.showToast({ type: "success", message: "Preferencias guardadas correctamente" });
+            this.showToast({ type: "success", message: t("messages.prefs_saved", {defaultValue:"Preferencias guardadas correctamente"}) });
 
             // Handle push toggle side effects
             if (newPrefs.push_enabled) {
@@ -1040,7 +1091,7 @@ class NotificationCenter {
             setTimeout(() => this.closePreferences(), 1500);
 
         } catch (error) {
-            this.showToast({ type: "error", title: "Error", message: "No se pudieron guardar las preferencias" });
+            this.showToast({ type: "error", title: "Error", message: t("messages.prefs_save_error", {defaultValue:"No se pudieron guardar las preferencias"}) });
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;
@@ -1175,7 +1226,7 @@ class NotificationCenter {
             var permission = await Notification.requestPermission();
             if (permission === "granted") {
                 await this.subscribeToPush();
-                this.showToast({ type: "success", message: "Notificaciones activadas — te avisaremos de pagos y turnos" });
+                this.showToast({ type: "success", message: t("messages.push_enabled", {defaultValue:"Notificaciones activadas — te avisaremos de pagos y turnos"}) });
             }
         });
         document.getElementById("pushBannerDismiss").addEventListener("click", () => {
