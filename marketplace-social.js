@@ -2346,11 +2346,8 @@ class MarketplaceSocialSystem {
         }
         storeData.analyticsLevel = tierLimits.analytics_level;
 
-        switch (layout) {
-            case 'showcase': this._renderDashboardShowcase(container, provider, storeData, theme); break;
-            case 'compact':  this._renderDashboardCompact(container, provider, storeData, theme); break;
-            default:         this._renderDashboardClassicV2(container, provider, storeData, theme); break;
-        }
+        // All layouts now use unified tabbed dashboard
+        this._renderTabbedDashboard(container, provider, storeData, theme);
         // Fetch portfolio state once (M11 fix: was fetched 2-3 times)
         try {
             const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
@@ -2948,6 +2945,153 @@ class MarketplaceSocialSystem {
     }
 
     // ===================== CLASSIC V2 LAYOUT (Shopify-inspired) =====================
+
+    _renderTabbedDashboard(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const activeTab = this._activeStoreTab || sessionStorage.getItem('store_active_tab') || 'resumen';
+        const isActive = (tab) => tab === activeTab ? ' sd-tab-active' : '';
+        const isVisible = (tab) => tab === activeTab ? '' : ' style="display:none"';
+
+        // Cover is rendered in the header wrapper (background-image)
+
+        container.innerHTML = `<div class="store-dashboard sd-tabbed" data-theme="${esc(theme)}">
+            ${this._buildDashboardHeader(provider, esc)}
+            <div class="sd-tabs">
+                <button class="sd-tab${isActive('resumen')}" data-action="store-tab" data-tab="resumen"><i class="fas fa-chart-pie"></i> <span>Resumen</span></button>
+                <button class="sd-tab${isActive('publicaciones')}" data-action="store-tab" data-tab="publicaciones"><i class="fas fa-box"></i> <span>Publicaciones</span></button>
+                <button class="sd-tab${isActive('pedidos')}" data-action="store-tab" data-tab="pedidos"><i class="fas fa-clipboard-list"></i> <span>Pedidos</span></button>
+                <button class="sd-tab${isActive('config')}" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> <span>Config</span></button>
+            </div>
+            <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+
+            <div class="sd-tab-panel" id="sdTabResumen"${isVisible('resumen')}>
+                ${this._buildSetupBanner(provider, storeData)}
+                ${this._buildResumenSubtabs(provider, storeData, esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabPublicaciones"${isVisible('publicaciones')}>
+                ${this._buildQuickActionsToolbar(provider, esc)}
+                ${this._buildTabbedListings(storeData, provider, esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabPedidos"${isVisible('pedidos')}>
+                ${this._buildRecentReviews(storeData.reviews || [], esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabConfig"${isVisible('config')}>
+                <div class="sd-config-section">
+                    <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-image"></i> Portada</div></div>
+                    <div class="sd-cover-config">
+                        ${provider.cover_image
+                            ? `<span style="color:#94a3b8;font-size:0.82rem;">Tu portada se muestra arriba.</span> <button class="sd-form-btn sd-form-btn-primary" data-action="upload-cover" style="display:inline-flex;padding:6px 14px;font-size:0.78rem;"><i class="fas fa-camera"></i> Cambiar</button> <button class="sd-danger-btn" data-action="remove-cover" style="padding:6px 14px;font-size:0.78rem;"><i class="fas fa-trash"></i> Eliminar</button>`
+                            : `<button class="sd-form-btn sd-form-btn-primary" data-action="upload-cover"><i class="fas fa-image"></i> Subir Portada</button><span style="color:#64748b;font-size:0.78rem;margin-left:8px;">Recomendado: 1200x400px</span>`
+                        }
+                    </div>
+                </div>
+                <div class="sd-config-section">
+                    <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-store"></i> Informacion del Negocio</div></div>
+                    <div class="sd-inline-form" id="sdEditForm">
+                        <div class="sd-form-row">
+                            <label>Nombre</label>
+                            <input type="text" id="sdEditName" class="sd-form-input" value="${esc(provider.business_name || '')}" maxlength="255">
+                        </div>
+                        <div class="sd-form-row">
+                            <label>Descripcion</label>
+                            <textarea id="sdEditDesc" class="sd-form-input" rows="3" maxlength="2000">${esc(provider.description || '')}</textarea>
+                        </div>
+                        <div class="sd-form-grid">
+                            <div class="sd-form-row">
+                                <label>Telefono</label>
+                                <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20">
+                            </div>
+                            <div class="sd-form-row">
+                                <label>WhatsApp</label>
+                                <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20">
+                            </div>
+                        </div>
+                        <div class="sd-form-row">
+                            <label>Email de contacto</label>
+                            <input type="email" id="sdEditEmail" class="sd-form-input" value="${esc(provider.email || '')}" maxlength="255">
+                        </div>
+                        <div class="sd-form-grid">
+                            <div class="sd-form-row">
+                                <label>Ciudad</label>
+                                <input type="text" id="sdEditCity" class="sd-form-input" value="${esc(provider.city || '')}" maxlength="100">
+                            </div>
+                            <div class="sd-form-row">
+                                <label>Barrio / Zona</label>
+                                <input type="text" id="sdEditNeighborhood" class="sd-form-input" value="${esc(provider.neighborhood || '')}" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="sd-form-row">
+                            <label>Areas de servicio (separadas por coma)</label>
+                            <input type="text" id="sdEditAreas" class="sd-form-input" value="${esc((provider.service_areas || []).join(', '))}" placeholder="Tegucigalpa, SPS, Comayagua">
+                        </div>
+                        <div class="sd-form-row">
+                            <label>Links Sociales</label>
+                            <div class="sd-form-grid">
+                                <input type="url" id="sdEditWebsite" class="sd-form-input" value="${esc(provider.social_links?.website || '')}" placeholder="https://mi-sitio.com" maxlength="500">
+                                <input type="url" id="sdEditGithub" class="sd-form-input" value="${esc(provider.social_links?.github || '')}" placeholder="https://github.com/user" maxlength="500">
+                                <input type="url" id="sdEditLinkedin" class="sd-form-input" value="${esc(provider.social_links?.linkedin || '')}" placeholder="https://linkedin.com/in/user" maxlength="500">
+                            </div>
+                        </div>
+                        <div class="sd-form-actions">
+                            <button class="sd-form-btn sd-form-btn-primary" data-action="save-store-info"><i class="fas fa-save"></i> Guardar Cambios</button>
+                        </div>
+                    </div>
+                </div>
+                ${this._buildThemeBrowser(provider, esc)}
+                ${this.renderTierProgressCard()}
+                ${this._buildChainBalanceCard(esc)}
+                ${this._buildReferralDashboard(esc)}
+                <div class="sd-danger-zone">
+                    <div class="sd-section-header"><div class="sd-section-title" style="color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> Zona de Peligro</div></div>
+                    <p style="color:#94a3b8;font-size:0.82rem;margin-bottom:12px;">Eliminar tu tienda desactiva todos tus productos y servicios.</p>
+                    <button class="sd-danger-btn" data-action="delete-store">Eliminar mi Tienda</button>
+                </div>
+            </div>
+        </div>`;
+
+        // Cover upload handler
+        const coverInput = document.getElementById('coverFileInput');
+        if (coverInput) {
+            coverInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { this.showNotification('La imagen excede 5MB', 'error'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const resp = await fetch('/api/marketplace/providers/cover-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData });
+                    const result = await resp.json();
+                    if (result.success) { this.showNotification('Portada actualizada', 'success'); this.loadMyStore(); }
+                    else { this.showNotification(result.data?.error?.message || 'Error al subir portada', 'error'); }
+                } catch (err) { this.showNotification('Error de conexion', 'error'); }
+                coverInput.value = '';
+            });
+        }
+
+        // Sticky header — hide on scroll down, show on scroll up
+        const headerWrapper = container.querySelector('.sd-header-wrapper');
+        if (headerWrapper) {
+            headerWrapper.classList.add('sd-header-sticky');
+            let lastScrollY = 0;
+            window.addEventListener('scroll', function() {
+                const currentY = window.scrollY;
+                if (currentY > lastScrollY && currentY > 200) {
+                    headerWrapper.classList.add('sd-header-hidden');
+                } else {
+                    headerWrapper.classList.remove('sd-header-hidden');
+                }
+                lastScrollY = currentY;
+            }, { passive: true });
+        }
+
+        this._loadChainBalance();
+        this._loadReferralDashboard();
+    }
+
     _renderDashboardClassicV2(container, provider, storeData, theme) {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const header = this._buildDashboardHeader(provider, esc);
@@ -3101,9 +3245,9 @@ class MarketplaceSocialSystem {
 
         // Find next incomplete step
         const steps = [
-            { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: (provider.shop_type === 'products' || provider.shop_type === 'mixed') ? 'add-product' : 'add-service' },
-            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'edit-store' },
-            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'sd-share-store' },
+            { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: 'goto-publicaciones' },
+            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'goto-config' },
+            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'goto-config' },
             { key: 'create_portfolio', label: 'Crea tu portafolio/CV', action: 'open-portfolio-maker' }
         ];
         let nextStep = steps.find(s => !checklist[s.key]) || steps[0];
@@ -3129,39 +3273,26 @@ class MarketplaceSocialSystem {
             : esc(initial);
         const badges = this._buildBadgesHtml(provider);
         const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
-        const since = provider.created_at ? new Date(provider.created_at).toLocaleDateString('es-HN', { month: 'long', year: 'numeric' }) : '';
-        return `<div class="sd-header">
-            <div class="sd-header-avatar">${avatarHtml}</div>
-            <div class="sd-header-info">
-                <div class="sd-header-name">${esc(provider.business_name || 'Mi Tienda')}</div>
-                <div class="sd-header-badges">${badges}</div>
-                <div class="sd-header-meta">
-                    ${loc ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</span>` : ''}
-                    ${since ? `<span><i class="far fa-calendar-alt"></i> Desde ${esc(since)}</span>` : ''}
+        const since = provider.created_at ? (window.ltFormatDate ? ltFormatDate(provider.created_at, 'medium') : new Date(provider.created_at).toLocaleDateString('es-HN', { month: 'long', year: 'numeric' })) : '';
+        const hasCover = !!provider.cover_image;
+        const coverClass = hasCover ? ' sd-header-with-cover' : '';
+        const coverStyle = hasCover ? ` style="background-image:url('${esc(provider.cover_image)}')"` : '';
+        return `<div class="sd-header-wrapper${coverClass}"${coverStyle}>
+            <div class="sd-header">
+                <div class="sd-header-avatar">${avatarHtml}</div>
+                <div class="sd-header-info">
+                    <div class="sd-header-name">${esc(provider.business_name || 'Mi Tienda')}</div>
+                    <div class="sd-header-badges">${badges}</div>
+                    <div class="sd-header-meta">
+                        ${loc ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</span>` : ''}
+                        ${since ? `<span><i class="far fa-calendar-alt"></i> ${esc(since)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="sd-header-actions">
+                    <button class="sd-header-btn" data-action="store-tab" data-tab="config"><i class="fas fa-pen"></i> Editar</button>
+                    ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/negocio/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Tienda</a>` : ''}
                 </div>
             </div>
-            <div class="sd-header-actions">
-                <button class="sd-header-btn" data-action="edit-store"><i class="fas fa-pen"></i> Editar</button>
-                <button class="sd-header-btn sd-header-btn-accent" data-action="sd-scroll-themes"><i class="fas fa-palette"></i> Personalizar</button>
-                ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/negocio/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Vista previa</a>` : ''}
-            </div>
-        </div>
-        <div class="sd-cover-section">
-            ${provider.cover_image
-                ? `<div class="sd-cover-preview">
-                    <img src="${esc(provider.cover_image)}" alt="Portada">
-                    <div class="sd-cover-actions">
-                        <button class="sd-cover-btn" data-action="upload-cover"><i class="fas fa-camera"></i> Cambiar</button>
-                        <button class="sd-cover-btn sd-cover-btn-remove" data-action="remove-cover"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`
-                : `<div class="sd-cover-empty" data-action="upload-cover">
-                    <i class="fas fa-image" style="font-size:24px;color:rgba(255,255,255,0.2);margin-bottom:8px;"></i>
-                    <div style="color:#94a3b8;font-size:0.82rem;">Agrega una imagen de portada</div>
-                    <div style="color:#64748b;font-size:0.72rem;">Recomendado: 1200x400px. Se muestra en tu tienda publica.</div>
-                </div>`
-            }
-            <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
         </div>`;
     }
 
@@ -3183,6 +3314,106 @@ class MarketplaceSocialSystem {
         }
         btns += `<button class="sd-quick-btn" data-action="open-portfolio-maker"><i class="fas fa-file-alt"></i> Portafolio</button>`;
         return `<div class="sd-quick-actions">${btns}</div>`;
+    }
+
+
+    _buildResumenSubtabs(provider, storeData, esc) {
+        const a = storeData.analytics || {};
+        const hasAnalytics = storeData.analytics && storeData.analyticsLevel !== 'basic';
+        const hasFull = storeData.analyticsLevel === 'full';
+        const savedSub = (() => { try { return sessionStorage.getItem('resumen_subtab') || 'general'; } catch(e) { return 'general'; } })();
+        const isSubActive = (t) => t === savedSub ? ' sd-subtab-active' : '';
+        const isSubVisible = (t) => t === savedSub ? '' : ' style="display:none"';
+
+        // Build general panel content (stat cards)
+        const generalPanel = this._buildAnalyticsSummary(provider, storeData, esc);
+
+        // Build ventas panel content
+        let ventasPanel = '';
+        if (hasAnalytics) {
+            const rev30 = a.revenue_last_30d || [];
+            const totalRev = rev30.reduce((s, d) => s + (parseFloat(d.revenue) || 0), 0);
+            const totalOrders = parseInt(a.summary?.total_orders || 0);
+            const avgOrder = totalOrders > 0 ? totalRev / totalOrders : 0;
+            ventasPanel += `<div class="sd-analytics" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">L. ${window.ltFormatNumber ? ltFormatNumber(totalRev) : totalRev.toLocaleString('es-HN')}</div>
+                        <div class="sd-analytics-label">Ingresos 30d</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-actividad"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${totalOrders}</div>
+                        <div class="sd-analytics-label">Pedidos</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-rating"><i class="fas fa-receipt"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">L. ${window.ltFormatNumber ? ltFormatNumber(avgOrder) : avgOrder.toLocaleString('es-HN',{maximumFractionDigits:0})}</div>
+                        <div class="sd-analytics-label">Ticket promedio</div>
+                    </div>
+                </div>
+            </div>`;
+            ventasPanel += this._buildRevenueChart(a.revenue_last_30d || [], esc);
+        } else {
+            ventasPanel += '<div class="sd-empty-state" style="text-align:center;padding:40px 16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));"><i class="fas fa-chart-bar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.3;"></i><div style="font-size:0.95rem;margin-bottom:6px;">Ventas no disponibles</div><div style="font-size:0.8rem;">Mejora tu plan para acceder a analiticas de ventas.</div></div>';
+        }
+
+        // Build productos panel content
+        let productosPanel = '';
+        if (hasFull) {
+            const topProds = a.top_products || [];
+            const totalProds = (storeData.products?.length || 0);
+            const activeProds = storeData.products?.filter(p => p.status === 'active')?.length || totalProds;
+            productosPanel += `<div class="sd-analytics" style="grid-template-columns:repeat(2,1fr);margin-bottom:18px;">
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-box-open"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${totalProds}</div>
+                        <div class="sd-analytics-label">Total productos</div>
+                        <div class="sd-analytics-sub">${activeProds} activo${activeProds !== 1 ? 's' : ''}</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-fire"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${topProds.filter(p => parseInt(p.total_orders) > 0).length}</div>
+                        <div class="sd-analytics-label">Con ventas</div>
+                        <div class="sd-analytics-sub">de ${topProds.length} listados</div>
+                    </div>
+                </div>
+            </div>`;
+            productosPanel += this._buildTopProductsTable(a.top_products || [], esc);
+        } else {
+            productosPanel += '<div class="sd-empty-state" style="text-align:center;padding:40px 16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));"><i class="fas fa-trophy" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.3;"></i><div style="font-size:0.95rem;margin-bottom:6px;">Productos Top no disponible</div><div style="font-size:0.8rem;">Requiere plan completo para ver ranking de productos.</div></div>';
+        }
+
+        return `<div class="sd-subtabs-container">
+            <div class="sd-subtabs-nav">
+                <button class="sd-subtab${isSubActive('general')}" data-action="resumen-subtab" data-subtab="general">
+                    <i class="fas fa-chart-pie"></i> General
+                </button>
+                <button class="sd-subtab${isSubActive('ventas')}" data-action="resumen-subtab" data-subtab="ventas">
+                    <i class="fas fa-chart-bar"></i> Ventas
+                </button>
+                <button class="sd-subtab${isSubActive('productos')}" data-action="resumen-subtab" data-subtab="productos">
+                    <i class="fas fa-trophy"></i> Productos Top
+                </button>
+            </div>
+            <div class="sd-subtab-panel" data-panel="general"${isSubVisible('general')}>
+                ${generalPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="ventas"${isSubVisible('ventas')}>
+                ${ventasPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="productos"${isSubVisible('productos')}>
+                ${productosPanel}
+            </div>
+        </div>`;
     }
 
     _buildAnalyticsSummary(provider, storeData, esc) {
@@ -6475,7 +6706,7 @@ function setupMarketplaceDelegatedListeners() {
             case 'reschedule-booking': if (typeof rescheduleBooking === 'function') rescheduleBooking(id); break;
             case 'leave-review': if (typeof leaveReview === 'function') leaveReview(id); break;
             case 'rebook-service': if (typeof rebookService === 'function') rebookService(id); break;
-            case 'edit-store': window.marketplaceSystem?.openEditStoreModal(); break;
+            case 'edit-store': { window.marketplaceSystem._activeStoreTab = 'config'; try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {} window.marketplaceSystem.loadMyStore(); break; }
             case 'close-edit-store': document.getElementById('storeEditOverlay')?.remove(); break;
             case 'view-my-store': window.marketplaceSystem?.loadMyStore(); break;
             case 'select-shop-type': {
@@ -6719,7 +6950,105 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
-            case 'sd-scroll-themes': {
+            case 'resumen-subtab': {
+                const sub = btn.getAttribute('data-subtab');
+                try { sessionStorage.setItem('resumen_subtab', sub); } catch(e) {}
+                btn.closest('.sd-subtabs-nav').querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                btn.classList.add('sd-subtab-active');
+                btn.closest('.sd-subtabs-container').querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const targetPanel = btn.closest('.sd-subtabs-container').querySelector(`.sd-subtab-panel[data-panel="${sub}"]`);
+                if (targetPanel) targetPanel.style.display = '';
+                break;
+            }
+            case 'store-tab': {
+                const tab = btn.getAttribute('data-tab');
+                if (window.marketplaceSystem) window.marketplaceSystem._activeStoreTab = tab;
+                try { sessionStorage.setItem('store_active_tab', tab); } catch(e) {}
+                document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+                btn.classList.add('sd-tab-active');
+                document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+                var panelMap = { resumen: 'sdTabResumen', publicaciones: 'sdTabPublicaciones', pedidos: 'sdTabPedidos', config: 'sdTabConfig' };
+                var panel = document.getElementById(panelMap[tab]);
+                if (panel) panel.style.display = '';
+                break;
+            }
+            case 'goto-publicaciones': {
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'publicaciones'; }
+                try { sessionStorage.setItem('store_active_tab', 'publicaciones'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'goto-config': {
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'config'; }
+                try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'save-store-info': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+                const areas = getVal('sdEditAreas').split(',').map(s => s.trim()).filter(Boolean);
+                const links = {};
+                if (getVal('sdEditWebsite')) links.website = getVal('sdEditWebsite');
+                if (getVal('sdEditGithub')) links.github = getVal('sdEditGithub');
+                if (getVal('sdEditLinkedin')) links.linkedin = getVal('sdEditLinkedin');
+                const body = {
+                    business_name: getVal('sdEditName'), description: getVal('sdEditDesc'),
+                    phone: getVal('sdEditPhone') || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
+                    email: getVal('sdEditEmail') || undefined, city: getVal('sdEditCity') || undefined,
+                    neighborhood: getVal('sdEditNeighborhood') || undefined,
+                    service_areas: areas.length ? areas : undefined,
+                    social_links: Object.keys(links).length ? links : undefined
+                };
+                if (!body.business_name || !body.description) {
+                    ms.showNotification('Nombre y descripcion son requeridos', 'error'); break;
+                }
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify(body) }).then(res => {
+                    if (res.success) {
+                        ms.showNotification('Informacion actualizada', 'success');
+                        try { var cl = JSON.parse(localStorage.getItem('store_setup_checklist') || '{}'); cl.complete_contact = true; localStorage.setItem('store_setup_checklist', JSON.stringify(cl)); } catch(e) {}
+                        ms.loadMyStore();
+                    } else {
+                        ms.showNotification(res.data?.error?.message || 'Error al guardar', 'error');
+                        btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+                    }
+                }).catch(() => { ms.showNotification('Error de conexion', 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; });
+                break;
+            }
+            case 'upload-cover': {
+                document.getElementById('coverFileInput')?.click();
+                break;
+            }
+            case 'remove-cover': {
+                if (confirm('Eliminar imagen de portada?')) {
+                    window.marketplaceSystem?.apiRequest('/api/marketplace/providers/me', {
+                        method: 'PUT', body: JSON.stringify({ cover_image: null })
+                    }).then(() => window.marketplaceSystem?.loadMyStore()).catch(() => {});
+                }
+                break;
+            }
+            case 'delete-store': {
+                const storeName = window.marketplaceSystem?._currentProvider?.business_name || 'Mi Tienda';
+                const confirmed = prompt('Escribe "' + storeName + '" para confirmar:');
+                if (confirmed === storeName) {
+                    window.marketplaceSystem?.apiRequest('/api/marketplace/providers/me', { method: 'DELETE' }).then(res => {
+                        if (res.success) { window.marketplaceSystem.showNotification('Tienda eliminada', 'success'); window.marketplaceSystem._currentProvider = null; window.marketplaceSystem.loadMyStore(); }
+                        else { window.marketplaceSystem.showNotification('Error al eliminar', 'error'); }
+                    }).catch(() => window.marketplaceSystem?.showNotification('Error de conexion', 'error'));
+                } else if (confirmed !== null) {
+                    window.marketplaceSystem?.showNotification('El nombre no coincide', 'error');
+                }
+                break;
+            }
+            case 'sd-scroll-themes': { // Legacy — redirects to Config tab
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'config'; }
+                try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'sd-scroll-themes-OLD': {
                 const themeBrowser = document.getElementById('sdThemeBrowser');
                 if (themeBrowser) themeBrowser.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 break;
