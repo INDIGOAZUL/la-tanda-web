@@ -4,7 +4,7 @@
 
 class APIHandlersComplete {
     constructor() {
-        this.baseURL = 'https://api.latanda.online/api';
+        this.baseURL = 'https://latanda.online/api';
         this.mockData = this.initializeMockData();
         console.log('🔧 APIHandlersComplete initialized with real API');
     }

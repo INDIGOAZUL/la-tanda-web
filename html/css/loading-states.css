@@ -1,0 +1,309 @@
+/**
+ * La Tanda - Unified Loading States
+ * Version: 1.0.0
+ */
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Base Skeleton */
+.skeleton {
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.05) 25%,
+        rgba(255,255,255,0.1) 50%,
+        rgba(255,255,255,0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.skeleton-text.short { width: 60%; }
+.skeleton-text.medium { width: 80%; }
+.skeleton-text.full { width: 100%; }
+
+.skeleton-title {
+    height: 24px;
+    width: 50%;
+    margin-bottom: 16px;
+    border-radius: 6px;
+}
+
+.skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.skeleton-button {
+    height: 40px;
+    width: 120px;
+    border-radius: 8px;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.loading-spinner::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--tanda-cyan, #00FFFF);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner.small::before {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+}
+
+.loading-spinner.large::before {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+}
+
+/* Button Loading State */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-top: -8px;
+    margin-left: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.btn-loading .btn-text {
+    visibility: hidden;
+}
+
+/* Full Page Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-overlay .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(0, 255, 255, 0.2);
+    border-top-color: #00FFFF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-overlay .loading-text {
+    margin-top: 16px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+}
+
+/* Card Loading State */
+.card-loading {
+    position: relative;
+    min-height: 100px;
+}
+
+.card-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+.card-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 2px solid rgba(0, 255, 255, 0.2);
+    border-top-color: #00FFFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    z-index: 11;
+}
+
+/* Table Loading State */
+.table-loading tbody tr {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.table-loading td {
+    background: rgba(255,255,255,0.03);
+}
+
+/* Tab Content Loading */
+.tab-content-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.tab-content-loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 255, 255, 0.2);
+    border-top-color: #00FFFF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+.tab-content-loading .loading-message {
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+}
+
+/* Progress Bar */
+.progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar .progress {
+    height: 100%;
+    background: linear-gradient(90deg, #00FFFF, #7FFFD8);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.progress-bar.indeterminate .progress {
+    width: 30%;
+    animation: indeterminate 1.5s infinite ease-in-out;
+}
+
+@keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: rgba(255,255,255,0.2);
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    color: rgba(255,255,255,0.8);
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    max-width: 300px;
+}
+
+.empty-state .btn {
+    margin-top: 20px;
+}
+
+/* Skeleton Card Template */
+.skeleton-card-template {
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+}
+
+.skeleton-card-template .skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.skeleton-card-template .skeleton-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}

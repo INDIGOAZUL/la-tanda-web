@@ -1,0 +1,271 @@
+/**
+ * 📱 LA TANDA - PWA STYLES
+ * Installation prompts and offline indicators
+ * Version: 2.0.0 - Prominent Top Banner
+ */
+
+/* ==========================================
+   PWA INSTALL BANNER - TOP PROMINENT
+   ========================================== */
+
+.pwa-install-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    padding: 12px 16px;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    z-index: 99999;
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pwa-install-banner.pwa-install-visible {
+    transform: translateY(0);
+}
+
+.pwa-install-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pwa-install-icon {
+    font-size: 1.8em;
+    flex-shrink: 0;
+    animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.pwa-install-text {
+    flex: 1;
+    color: white;
+}
+
+.pwa-install-text strong {
+    display: block;
+    font-size: 1em;
+    margin-bottom: 2px;
+}
+
+.pwa-install-text p {
+    margin: 0;
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.pwa-install-button {
+    background: white;
+    color: #6366f1;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    font-size: 0.9em;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.pwa-install-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.pwa-install-button:active {
+    transform: scale(0.98);
+}
+
+.pwa-install-close {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.3em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.pwa-install-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================
+   FLOATING INSTALL BUTTON (Always Visible)
+   ========================================== */
+
+.pwa-floating-install {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    border: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.5em;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-install 2s ease-in-out infinite;
+    transition: transform 0.3s ease;
+}
+
+.pwa-floating-install:hover {
+    transform: scale(1.1);
+}
+
+.pwa-floating-install::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: inherit;
+    z-index: -1;
+    animation: ripple 1.5s ease-out infinite;
+}
+
+@keyframes pulse-install {
+    0%, 100% { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5); }
+    50% { box-shadow: 0 4px 30px rgba(99, 102, 241, 0.8); }
+}
+
+@keyframes ripple {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Tooltip on hover */
+.pwa-floating-install-tooltip {
+    position: absolute;
+    right: 70px;
+    background: #1e293b;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.pwa-floating-install:hover .pwa-floating-install-tooltip {
+    opacity: 1;
+}
+
+/* ==========================================
+   ONLINE/OFFLINE INDICATOR
+   ========================================== */
+
+.pwa-online-indicator {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    color: #f8fafc;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 9997;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pwa-online-indicator.offline {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.95), rgba(251, 191, 36, 0.95));
+    color: #0f172a;
+    display: flex;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(calc(100% + 20px)); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVENESS
+   ========================================== */
+
+@media (max-width: 768px) {
+    .pwa-install-content {
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    .pwa-install-icon {
+        font-size: 1.5em;
+    }
+
+    .pwa-install-text strong {
+        font-size: 0.9em;
+    }
+
+    .pwa-install-text p {
+        display: none;
+    }
+
+    .pwa-install-button {
+        padding: 8px 16px;
+        font-size: 0.85em;
+    }
+
+    .pwa-floating-install {
+        bottom: 70px;
+        right: 15px;
+        width: 55px;
+        height: 55px;
+        font-size: 1.3em;
+    }
+}
+
+@media (max-width: 400px) {
+    .pwa-install-banner {
+        padding: 10px 12px;
+    }
+    
+    .pwa-install-icon {
+        display: none;
+    }
+}
+
+/* ==========================================
+   STANDALONE MODE (When installed as PWA)
+   ========================================== */
+
+@media (display-mode: standalone) {
+    .pwa-install-banner,
+    .pwa-floating-install {
+        display: none !important;
+    }
+
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}

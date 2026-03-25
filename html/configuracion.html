@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script type="module" crossorigin src="/assets/js/polyfills--1Z-T_Bc.js"></script>
+
     <meta charset="UTF-8">
     <!-- Resource Optimization -->
     <!-- DNS Prefetch for external resources -->
@@ -16,8 +18,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>⚙️ Configuración | La Tanda Web3</title>
     <!-- Critical CSS: Font Awesome with async loading -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel=stylesheet">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel=stylesheet">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"></noscript>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Optimized Google Fonts loading -->
@@ -86,6 +88,7 @@
            🧭 NAVIGATION
            ================================ */
         .nav-header {
+            margin-top: 80px; /* Space below fixed global header */
             background: var(--bg-card);
             backdrop-filter: blur(24px);
             border: 1px solid var(--border-accent);
@@ -489,6 +492,7 @@
             }
             
             .nav-header {
+            margin-top: 80px; /* Space below fixed global header */
                 flex-direction: column;
                 gap: 16px;
                 text-align: center;
@@ -569,8 +573,27 @@
             color: var(--crypto-gold);
         }
     </style>
+  <script async type="module" crossorigin src="/assets/js/configuracion-6F3hq9O7.js"></script>
+  <script type="module">import.meta.url;import("_").catch(()=>1);(async function*(){})().next();if(location.protocol!="file:"){window.__vite_is_modern_browser=true}</script>
+  <script type="module">!function(){if(window.__vite_is_modern_browser)return;console.warn("vite: loading legacy chunks, syntax error above and the same error below should be ignored");var e=document.getElementById("vite-legacy-polyfill"),n=document.createElement("script");n.src=e.src,n.onload=function(){System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))},document.body.appendChild(n)}();</script>
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script>    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/header.css?v=24.7">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/configuracion.html">
+    <meta property="og:title" content="Configuracion | La Tanda">
+    <meta property="og:description" content="Ajusta tus preferencias y configuracion de cuenta.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Configuracion | La Tanda">
+    <meta name="twitter:description" content="Ajusta tus preferencias y configuracion de cuenta.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
 </head>
 <body>
+    <!-- Global Header Component -->
+    <div id="global-header"></div>
     <!-- Navigation Header -->
     <nav class="nav-header">
         <div class="nav-left">
@@ -582,13 +605,13 @@
             </h1>
         </div>
         <div class="nav-links">
-            <a href="mi-perfil.html" class="nav-link">
+            <a href="perfil.html" id="navProfileLink" class="nav-link">
                 <i class="fas fa-user"></i> Mi Perfil
             </a>
             <a href="seguridad.html" class="nav-link">
                 <i class="fas fa-shield-alt"></i> Seguridad
             </a>
-            <a href="tanda-wallet.html" class="nav-link">
+            <a href="my-wallet.html" class="nav-link">
                 <i class="fas fa-wallet"></i> Wallet
             </a>
         </div>
@@ -979,7 +1002,7 @@
                             <div class="config-description">URL base para servicios de La Tanda</div>
                         </div>
                         <div class="config-control">
-                            <input type="url" class="config-input" id="apiEndpoint" value="https://api.latanda.online" placeholder="https://api.latanda.online">
+                            <input type="url" class="config-input" id="apiEndpoint" value="https://latanda.online" placeholder="https://latanda.online">
                         </div>
                     </div>
                 </div>
@@ -1020,13 +1043,24 @@
     </div>
 
     <script>
-        // Configuration Manager
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // Auth headers helper (same pattern as mi-perfil.html)
+        window.getAuthHeaders = function() {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+            return token ? { 'Authorization': 'Bearer ' + token } : {};
+        };
+
+        // Configuration Manager with API Integration
         class ConfigurationManager {
             constructor() {
                 this.config = {
                     language: 'es',
-                    timezone: 'America/Mexico_City',
-                    currency: 'USD',
+                    timezone: 'America/Tegucigalpa',
+                    currency: 'HNL',
                     theme: 'cyber',
                     expertMode: false,
                     transactionConfirmation: true,
@@ -1050,156 +1084,332 @@
                     advanced: {
                         developerMode: false,
                         logLevel: 'info',
-                        apiEndpoint: 'https://api.latanda.online'
+                        apiEndpoint: 'https://latanda.online'
                     }
                 };
+                this.userId = null;
                 this.init();
             }
 
-            init() {
-                this.loadConfiguration();
+            async init() {
+                this.getUserId();
+                await this.loadConfiguration();
+                await this.loadNotificationPrefs();
                 this.setupEventListeners();
                 this.applyConfiguration();
-                console.log('⚙️ Configuration Manager initialized');
             }
 
-            loadConfiguration() {
+            getUserId() {
+                const storedUser = JSON.parse(
+                    localStorage.getItem('latanda_user') ||
+                    sessionStorage.getItem('latanda_user') || '{}'
+                );
+                this.userId = storedUser.id || storedUser.user_id;
+            }
+
+            // Load configuration from API with localStorage fallback
+            async loadConfiguration() {
+                // Always load localStorage first as base
+                this.loadFromLocalStorage();
+
+                if (!this.userId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/user/settings', {
+                        headers: window.getAuthHeaders()
+                    });
+                    const result = await response.json();
+
+                    if (result.success && result.settings) {
+                        // Merge API settings with defaults
+                        this.config = {
+                            ...this.config,
+                            ...result.settings,
+                            notifications: { ...this.config.notifications, ...(result.settings.notifications || {}) },
+                            blockchain: { ...this.config.blockchain, ...(result.settings.blockchain || {}) },
+                            advanced: { ...this.config.advanced, ...(result.settings.advanced || {}) }
+                        };
+                        // Update localStorage cache
+                        localStorage.setItem('latanda_configuration', JSON.stringify(this.config));
+                    }
+                } catch (err) {
+                }
+            }
+
+            // Load notification preferences from separate API
+            async loadNotificationPrefs() {
+                if (!this.userId) return;
+
+                try {
+                    const response = await fetch(`/api/notifications/preferences?user_id=${this.userId}`, {
+                        headers: window.getAuthHeaders()
+                    });
+                    const result = await response.json();
+
+                    if (result.success || result.payment_reminders !== undefined) {
+                        // Map API fields to config.notifications
+                        this.config.notifications.dailySummary = result.payment_reminders ?? this.config.notifications.dailySummary;
+                        this.config.notifications.transactionAlerts = result.group_updates ?? this.config.notifications.transactionAlerts;
+                        this.config.notifications.systemUpdates = result.member_activity ?? this.config.notifications.systemUpdates;
+                        this.config.notifications.pushEnabled = result.push_enabled ?? this.config.notifications.pushEnabled;
+                    }
+                } catch (err) {
+                }
+            }
+
+            loadFromLocalStorage() {
                 const savedConfig = localStorage.getItem('latanda_configuration');
                 if (savedConfig) {
-                    this.config = { ...this.config, ...JSON.parse(savedConfig) };
+                    const parsed = JSON.parse(savedConfig);
+                    this.config = {
+                        ...this.config,
+                        ...parsed,
+                        notifications: { ...this.config.notifications, ...(parsed.notifications || {}) },
+                        blockchain: { ...this.config.blockchain, ...(parsed.blockchain || {}) },
+                        advanced: { ...this.config.advanced, ...(parsed.advanced || {}) }
+                    };
                 }
-                console.log('Configuration loaded:', this.config);
             }
 
-            saveConfiguration() {
+            // Save configuration to API and localStorage
+            async saveConfiguration() {
+                // Always save to localStorage first (instant)
                 localStorage.setItem('latanda_configuration', JSON.stringify(this.config));
-                console.log('Configuration saved');
+
+                if (!this.userId) return;
+
+                try {
+                    const response = await fetch('/api/user/settings', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...window.getAuthHeaders()
+                        },
+                        body: JSON.stringify({ settings: this.config })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                    } else {
+                    }
+                } catch (err) {
+                }
+            }
+
+            // Save notification preferences to separate API
+            async saveNotificationPrefs() {
+                if (!this.userId) return;
+
+                try {
+                    await fetch('/api/notifications/preferences', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...window.getAuthHeaders()
+                        },
+                        body: JSON.stringify({
+                            user_id: this.userId,
+                            payment_reminders: this.config.notifications.dailySummary,
+                            group_updates: this.config.notifications.transactionAlerts,
+                            member_activity: this.config.notifications.systemUpdates,
+                            push_enabled: this.config.notifications.pushEnabled
+                        })
+                    });
+                } catch (err) {
+                }
             }
 
             applyConfiguration() {
                 // Apply language
-                document.getElementById('languageSelect').value = this.config.language;
-                
+                const langSelect = document.getElementById('languageSelect');
+                if (langSelect) langSelect.value = this.config.language;
+
                 // Apply timezone
-                document.getElementById('timezoneSelect').value = this.config.timezone;
-                
+                const tzSelect = document.getElementById('timezoneSelect');
+                if (tzSelect) tzSelect.value = this.config.timezone;
+
                 // Apply currency
-                document.getElementById('currencySelect').value = this.config.currency;
-                
+                const currSelect = document.getElementById('currencySelect');
+                if (currSelect) currSelect.value = this.config.currency;
+
+                // Apply density
+                const densitySelect = document.getElementById('densitySelect');
+                if (densitySelect) densitySelect.value = this.config.density;
+
                 // Apply theme
-                this.selectTheme(this.config.theme);
-                
+                this.applyTheme(this.config.theme);
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                const selectedTheme = document.querySelector(`[onclick="selectTheme('${this.config.theme}')"]`);
+                if (selectedTheme) selectedTheme.classList.add('active');
+
+                // Apply toggles
+                this.applyToggle('expertMode', this.config.expertMode);
+                this.applyToggle('transactionConfirmation', this.config.transactionConfirmation);
+                this.applyToggle('animations', this.config.animations);
+                this.applyToggle('glassmorphism', this.config.glassmorphism);
+                this.applyToggle('notifications.dailySummary', this.config.notifications.dailySummary);
+                this.applyToggle('notifications.transactionAlerts', this.config.notifications.transactionAlerts);
+                this.applyToggle('notifications.systemUpdates', this.config.notifications.systemUpdates);
+                this.applyToggle('advanced.developerMode', this.config.advanced.developerMode);
+
                 // Apply notification times
-                document.getElementById('notificationStart').value = this.config.notifications.startTime;
-                document.getElementById('notificationEnd').value = this.config.notifications.endTime;
-                
+                const notifStart = document.getElementById('notificationStart');
+                if (notifStart) notifStart.value = this.config.notifications.startTime;
+                const notifEnd = document.getElementById('notificationEnd');
+                if (notifEnd) notifEnd.value = this.config.notifications.endTime;
+
                 // Apply blockchain settings
-                document.getElementById('networkSelect').value = this.config.blockchain.network;
-                document.getElementById('rpcUrl').value = this.config.blockchain.rpcUrl;
-                document.getElementById('gasLimit').value = this.config.blockchain.gasLimit;
-                document.getElementById('gasPriceStrategy').value = this.config.blockchain.gasPriceStrategy;
-                
+                const netSelect = document.getElementById('networkSelect');
+                if (netSelect) netSelect.value = this.config.blockchain.network;
+                const rpcUrl = document.getElementById('rpcUrl');
+                if (rpcUrl) rpcUrl.value = this.config.blockchain.rpcUrl;
+                const gasLimit = document.getElementById('gasLimit');
+                if (gasLimit) gasLimit.value = this.config.blockchain.gasLimit;
+                const gasStrategy = document.getElementById('gasPriceStrategy');
+                if (gasStrategy) gasStrategy.value = this.config.blockchain.gasPriceStrategy;
+
                 // Apply advanced settings
-                document.getElementById('logLevel').value = this.config.advanced.logLevel;
-                document.getElementById('apiEndpoint').value = this.config.advanced.apiEndpoint;
-                
-                console.log('Configuration applied to UI');
+                const logLevel = document.getElementById('logLevel');
+                if (logLevel) logLevel.value = this.config.advanced.logLevel;
+                const apiEndpoint = document.getElementById('apiEndpoint');
+                if (apiEndpoint) apiEndpoint.value = this.config.advanced.apiEndpoint;
+
+            }
+
+            applyToggle(settingPath, value) {
+                const funcName = 'toggle' + settingPath.split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
+                const toggleElement = document.querySelector(`[onclick="${funcName}()"]`);
+                if (toggleElement) {
+                    if (value) {
+                        toggleElement.classList.add('active');
+                    } else {
+                        toggleElement.classList.remove('active');
+                    }
+                }
             }
 
             setupEventListeners() {
-                // Add change listeners for all form elements
                 const selects = document.querySelectorAll('.config-select');
                 const inputs = document.querySelectorAll('.config-input');
-                
+
                 selects.forEach(select => {
                     select.addEventListener('change', () => {
                         this.updateConfigFromUI();
                     });
                 });
-                
+
                 inputs.forEach(input => {
                     input.addEventListener('change', () => {
                         this.updateConfigFromUI();
                     });
                 });
-                
-                console.log('Configuration event listeners setup');
+
             }
 
-            updateConfigFromUI() {
+            async updateConfigFromUI() {
                 // Update configuration from UI elements
-                this.config.language = document.getElementById('languageSelect').value;
-                this.config.timezone = document.getElementById('timezoneSelect').value;
-                this.config.currency = document.getElementById('currencySelect').value;
-                this.config.density = document.getElementById('densitySelect').value;
-                
-                this.config.notifications.startTime = document.getElementById('notificationStart').value;
-                this.config.notifications.endTime = document.getElementById('notificationEnd').value;
-                
-                this.config.blockchain.network = document.getElementById('networkSelect').value;
-                this.config.blockchain.rpcUrl = document.getElementById('rpcUrl').value;
-                this.config.blockchain.gasLimit = parseInt(document.getElementById('gasLimit').value);
-                this.config.blockchain.gasPriceStrategy = document.getElementById('gasPriceStrategy').value;
-                
-                this.config.advanced.logLevel = document.getElementById('logLevel').value;
-                this.config.advanced.apiEndpoint = document.getElementById('apiEndpoint').value;
-                
-                this.saveConfiguration();
+                const langSelect = document.getElementById('languageSelect');
+                if (langSelect) this.config.language = langSelect.value;
+
+                const tzSelect = document.getElementById('timezoneSelect');
+                if (tzSelect) this.config.timezone = tzSelect.value;
+
+                const currSelect = document.getElementById('currencySelect');
+                if (currSelect) this.config.currency = currSelect.value;
+
+                const densitySelect = document.getElementById('densitySelect');
+                if (densitySelect) this.config.density = densitySelect.value;
+
+                const notifStart = document.getElementById('notificationStart');
+                if (notifStart) this.config.notifications.startTime = notifStart.value;
+
+                const notifEnd = document.getElementById('notificationEnd');
+                if (notifEnd) this.config.notifications.endTime = notifEnd.value;
+
+                const netSelect = document.getElementById('networkSelect');
+                if (netSelect) this.config.blockchain.network = netSelect.value;
+
+                const rpcUrl = document.getElementById('rpcUrl');
+                if (rpcUrl) this.config.blockchain.rpcUrl = rpcUrl.value;
+
+                const gasLimit = document.getElementById('gasLimit');
+                if (gasLimit) this.config.blockchain.gasLimit = parseInt(gasLimit.value) || 21000;
+
+                const gasStrategy = document.getElementById('gasPriceStrategy');
+                if (gasStrategy) this.config.blockchain.gasPriceStrategy = gasStrategy.value;
+
+                const logLevel = document.getElementById('logLevel');
+                if (logLevel) this.config.advanced.logLevel = logLevel.value;
+
+                const apiEndpoint = document.getElementById('apiEndpoint');
+                if (apiEndpoint) this.config.advanced.apiEndpoint = apiEndpoint.value;
+
+                await this.saveConfiguration();
             }
 
-            toggleSetting(settingPath, element) {
+            async toggleSetting(settingPath, element) {
                 const keys = settingPath.split('.');
                 let current = this.config;
-                
+
                 // Navigate to the setting
                 for (let i = 0; i < keys.length - 1; i++) {
                     current = current[keys[i]];
                 }
-                
+
                 // Toggle the setting
                 current[keys[keys.length - 1]] = !current[keys[keys.length - 1]];
-                
+
                 // Update UI
-                const toggle = element.querySelector('.toggle-switch') || element;
+                const toggle = element?.querySelector('.toggle-switch') || element;
                 const isActive = current[keys[keys.length - 1]];
-                
-                if (isActive) {
-                    toggle.classList.add('active');
-                } else {
-                    toggle.classList.remove('active');
+
+                if (toggle) {
+                    if (isActive) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
                 }
-                
-                this.saveConfiguration();
-                console.log(`${settingPath} toggled:`, current[keys[keys.length - 1]]);
+
+                // Save to appropriate API
+                if (settingPath.startsWith('notifications.') &&
+                    ['dailySummary', 'transactionAlerts', 'systemUpdates', 'pushEnabled'].some(f => settingPath.endsWith(f))) {
+                    await this.saveNotificationPrefs();
+                }
+
+                await this.saveConfiguration();
             }
 
             selectTheme(themeName) {
                 this.config.theme = themeName;
-                
-                // Update UI
+
                 document.querySelectorAll('.theme-option').forEach(option => {
                     option.classList.remove('active');
                 });
-                
-                // Add active class to selected theme
+
                 const selectedTheme = document.querySelector(`[onclick="selectTheme('${themeName}')"]`);
                 if (selectedTheme) {
                     selectedTheme.classList.add('active');
                 }
-                
-                // Apply theme (would involve CSS custom properties update)
+
                 this.applyTheme(themeName);
                 this.saveConfiguration();
-                console.log(`Theme changed to: ${themeName}`);
             }
 
             applyTheme(themeName) {
-                // Theme application logic would go here
                 const root = document.documentElement;
-                
+
+                // Reset to default first
+                root.style.setProperty('--tanda-cyan', '#00FFFF');
+                root.style.setProperty('--tanda-cyan-light', '#7FFFD8');
+
                 switch (themeName) {
                     case 'cyber':
-                        // Current theme - no changes needed
+                        // Default - already set
                         break;
                     case 'dark':
                         root.style.setProperty('--tanda-cyan', '#4f46e5');
@@ -1219,24 +1429,26 @@
             showNotification(message, type = 'info') {
                 const notification = document.createElement('div');
                 notification.style.cssText = `
-                    position: fixed; top: 20px; right: 20px; z-index: 1000;
+                    position: fixed; top: 20px; right: 20px; z-index: 1001;
                     background: var(--bg-card); backdrop-filter: blur(24px);
                     border: 1px solid var(--border-accent); border-radius: 12px;
                     padding: 16px 20px; color: var(--text-primary);
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                     animation: slideInRight 0.3s ease;
                 `;
-                
-                const iconClass = type === 'success' ? 'fa-check-circle' : 
+
+                const iconClass = type === 'success' ? 'fa-check-circle' :
                                 type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
-                
+                const iconColor = type === 'success' ? 'var(--success-color)' :
+                                 type === 'error' ? 'var(--error-color)' : 'var(--tanda-cyan)';
+
                 notification.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <i class="fas ${iconClass}" style="color: var(--tanda-cyan);"></i>
-                        <span>${message}</span>
+                        <i class="fas ${iconClass}" style="color: ${iconColor};"></i>
+                        <span>${escapeHtml(message)}</span>
                     </div>
                 `;
-                
+
                 document.body.appendChild(notification);
                 setTimeout(() => notification.remove(), 5000);
             }
@@ -1247,15 +1459,14 @@
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
-            
+
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            
+
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
-            
-            console.log(`Switched to tab: ${tabName}`);
+
         }
 
         function toggleExpertMode() {
@@ -1296,37 +1507,38 @@
 
         function enablePushNotifications() {
             if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
+                Notification.requestPermission().then(async permission => {
                     if (permission === 'granted') {
                         configManager.config.notifications.pushEnabled = true;
-                        configManager.saveConfiguration();
+                        await configManager.saveNotificationPrefs();
+                        await configManager.saveConfiguration();
                         configManager.showNotification('Notificaciones push activadas', 'success');
                     }
                 });
             } else {
-                alert('Tu navegador no soporta notificaciones push');
+                showWarning('Tu navegador no soporta notificaciones push');
             }
         }
 
         function testRPCConnection() {
             const rpcUrl = document.getElementById('rpcUrl').value;
-            configManager.showNotification(`Probando conexión a ${rpcUrl}...`, 'info');
-            
+            configManager.showNotification(`Probando conexion a ${rpcUrl}...`, 'info');
+
             // Simulate RPC test
             setTimeout(() => {
-                configManager.showNotification('Conexión RPC exitosa', 'success');
+                configManager.showNotification('Conexion RPC exitosa', 'success');
             }, 2000);
         }
 
         function clearLocalCache() {
-            if (confirm('¿Estás seguro de que quieres limpiar toda la caché local?')) {
+            if (confirm('Estas seguro de que quieres limpiar toda la cache local?')) {
                 localStorage.clear();
-                configManager.showNotification('Caché local eliminada', 'success');
+                configManager.showNotification('Cache local eliminada', 'success');
             }
         }
 
         function resetAllSettings() {
-            if (confirm('¿Estás seguro de que quieres resetear toda la configuración?')) {
+            if (confirm('Estas seguro de que quieres resetear toda la configuracion?')) {
                 localStorage.removeItem('latanda_configuration');
                 location.reload();
             }
@@ -1348,5 +1560,11 @@
         `;
         document.head.appendChild(style);
     </script>
+  <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
+  <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
+  <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/configuracion-legacy-CvD272dr.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+    <script src="js/components-loader.js?v=31.1"></script>
+    <script src="js/header.js"></script>
+    <script src="shared-components.js?v=7.20"></script>
 </body>
 </html>

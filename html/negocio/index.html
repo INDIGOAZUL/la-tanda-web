@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Portafolio — La Tanda</title>
+    <meta name="description" content="Portafolio profesional en La Tanda">
+    <link rel="icon" href="/icons/icon-192x192.png" type="image/png">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { padding-bottom: 60px; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+        /* Theme variables — default (dark/purple) */
+        :root {
+            --accent-primary: #8B5CF6;
+            --accent-secondary: #06B6D4;
+            --gradient: linear-gradient(135deg, #8B5CF6, #06B6D4);
+            --glow: rgba(139,92,246,0.3);
+            --border: rgba(139,92,246,0.3);
+            --bg: rgba(139,92,246,0.15);
+        }
+        body[data-theme="cyan"] {
+            --accent-primary: #06B6D4; --accent-secondary: #14B8A6;
+            --gradient: linear-gradient(135deg, #06B6D4, #14B8A6);
+            --glow: rgba(6,182,212,0.3); --border: rgba(6,182,212,0.3); --bg: rgba(6,182,212,0.15);
+        }
+        body[data-theme="gold"] {
+            --accent-primary: #F59E0B; --accent-secondary: #D97706;
+            --gradient: linear-gradient(135deg, #F59E0B, #D97706);
+            --glow: rgba(245,158,11,0.3); --border: rgba(245,158,11,0.3); --bg: rgba(245,158,11,0.15);
+        }
+        body[data-theme="green"] {
+            --accent-primary: #10B981; --accent-secondary: #059669;
+            --gradient: linear-gradient(135deg, #10B981, #059669);
+            --glow: rgba(16,185,129,0.3); --border: rgba(16,185,129,0.3); --bg: rgba(16,185,129,0.15);
+        }
+        body[data-theme="coral"] {
+            --accent-primary: #EF4444; --accent-secondary: #F97316;
+            --gradient: linear-gradient(135deg, #EF4444, #F97316);
+            --glow: rgba(239,68,68,0.3); --border: rgba(239,68,68,0.3); --bg: rgba(239,68,68,0.15);
+        }
+        body[data-theme="purple"] {
+            --accent-primary: #A855F7; --accent-secondary: #7C3AED;
+            --gradient: linear-gradient(135deg, #A855F7, #7C3AED);
+            --glow: rgba(168,85,247,0.3); --border: rgba(168,85,247,0.3); --bg: rgba(168,85,247,0.15);
+        }
+
+        /* Navigation dots */
+        .portfolio-nav {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 12px; z-index: 100;
+            background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 10px 20px; border-radius: 24px; border: 1px solid var(--border);
+        }
+        .portfolio-nav button {
+            width: 10px; height: 10px; border-radius: 50%; border: none; cursor: pointer;
+            background: rgba(255,255,255,0.3); transition: background 0.3s, transform 0.3s;
+        }
+        .portfolio-nav button.active {
+            background: var(--accent-primary); transform: scale(1.3); box-shadow: 0 0 8px var(--glow);
+        }
+        .portfolio-nav button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+        /* Slide labels */
+        .nav-label { display:none !important;
+            position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%);
+            font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px;
+            z-index: 100; transition: opacity 0.3s;
+        }
+
+        /* Horizontal scroll container */
+        .portfolio-slides {
+            display: block; overflow-x: visible;
+            scroll-behavior: smooth; height: 100vh; scrollbar-width: none;
+        }
+        .portfolio-slides::-webkit-scrollbar { display: none; }
+        .portfolio-slides > section {
+            min-width: unset; scroll-snap-align: unset; overflow-y: visible;
+            padding: 48px 24px 96px; display: flex; flex-direction: column; align-items: center;
+        }
+        .slide-inner { max-width: 640px; width: 100%; }
+
+        /* === Section: About === */
+        .about-avatar {
+            width: 128px; height: 128px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--accent-primary); box-shadow: 0 0 24px var(--glow);
+            display: block; margin: 0 auto 16px;
+        }
+        .about-avatar-placeholder {
+            width: 128px; height: 128px; border-radius: 50%;
+            background: var(--gradient); display: flex; align-items: center; justify-content: center;
+            font-size: 48px; font-weight: 700; color: #fff; margin: 0 auto 16px;
+            border: 3px solid var(--accent-primary); box-shadow: 0 0 24px var(--glow);
+        }
+        .about-name { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .about-handle { text-align: center; font-size: 14px; color: var(--accent-primary); margin-bottom: 16px; }
+        .about-badges { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .about-badge {
+            font-size: 12px; padding: 4px 12px; border-radius: 12px;
+            background: var(--bg); border: 1px solid var(--border); color: var(--accent-primary);
+        }
+        .about-stats {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
+        }
+        .about-stat {
+            text-align: center; padding: 12px 8px; border-radius: 12px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+        }
+        .about-stat-value { font-size: 22px; font-weight: 700; color: var(--accent-primary); }
+        .about-stat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .about-description {
+            font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.8);
+            margin-bottom: 16px; text-align: center;
+        }
+        .about-member-since { text-align: center; font-size: 13px; color: rgba(255,255,255,0.4); }
+
+        /* === Section: Services/Products === */
+        .section-title {
+            font-size: 20px; font-weight: 700; margin-bottom: 16px;
+            padding-bottom: 8px; border-bottom: 2px solid var(--border);
+        }
+        .items-grid { display: grid; gap: 16px; }
+        .item-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; overflow: hidden; transition: transform 0.2s, border-color 0.2s;
+        }
+        .item-card:hover { border-color: var(--border); }
+        .item-card-featured { border-color: var(--accent-primary); position: relative; }
+        .item-card-featured::after {
+            content: '\2605'; position: absolute; top: 8px; right: 8px;
+            background: var(--gradient); color: #fff; width: 28px; height: 28px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .item-card-img {
+            width: 100%; height: 180px; object-fit: cover; display: block;
+            background: rgba(255,255,255,0.03);
+        }
+        .item-card-img-placeholder {
+            width: 100%; height: 180px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.03); font-size: 48px;
+        }
+        .item-card-body { padding: 16px; }
+        .item-card-category { font-size: 11px; color: var(--accent-primary); opacity: 0.8; margin-bottom: 4px; }
+        .item-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .item-card-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 8px; line-height: 1.4; }
+        .item-card-price { font-size: 18px; font-weight: 700; color: var(--accent-primary); }
+        .item-card-type {
+            display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px;
+            background: var(--bg); color: var(--accent-primary); margin-left: 8px; vertical-align: middle;
+        }
+        .items-empty {
+            text-align: center; padding: 48px 16px; color: rgba(255,255,255,0.4); font-size: 14px;
+        }
+
+        /* === Section: Gallery === */
+        .gallery-grid {
+            columns: 2; column-gap: 12px;
+        }
+        .gallery-item {
+            break-inside: avoid; margin-bottom: 12px; border-radius: 12px;
+            overflow: hidden; cursor: pointer; position: relative;
+        }
+        .gallery-item img {
+            width: 100%; display: block; transition: transform 0.3s;
+        }
+        .gallery-item:hover img { transform: scale(1.03); }
+
+        /* Lightbox */
+        .lightbox {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 200; align-items: center; justify-content: center;
+        }
+        .lightbox.active { display: flex; }
+        .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+        .lightbox-close {
+            position: absolute; top: 16px; right: 16px; background: none; border: none;
+            color: #fff; font-size: 32px; cursor: pointer; z-index: 201; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lightbox-close:focus-visible { outline: 2px solid var(--accent-primary); }
+
+        /* === Section: Contact === */
+        .contact-grid { display: grid; gap: 12px; }
+        .contact-item {
+            display: flex; align-items: center; gap: 12px; padding: 16px;
+            background: rgba(255,255,255,0.05); border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); text-decoration: none; color: inherit;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        a.contact-item:hover { border-color: var(--border); background: var(--bg); }
+        .contact-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .contact-icon-wa { background: rgba(37,211,102,0.15); color: #25D366; }
+        .contact-icon-email { background: rgba(59,130,246,0.15); color: #3B82F6; }
+        .contact-icon-phone { background: rgba(139,92,246,0.15); color: #8B5CF6; }
+        .contact-icon-social { background: var(--bg); color: var(--accent-primary); }
+        .contact-icon-location { background: rgba(245,158,11,0.15); color: #F59E0B; }
+        .contact-label { font-size: 12px; color: rgba(255,255,255,0.4); }
+        .contact-value { font-size: 14px; font-weight: 500; }
+        .contact-areas { margin-top: 16px; }
+        .contact-areas-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: rgba(255,255,255,0.7); }
+        .contact-areas-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .contact-area-tag {
+            font-size: 12px; padding: 4px 12px; border-radius: 8px;
+            background: var(--bg); border: 1px solid var(--border); color: var(--accent-primary);
+        }
+
+        /* Not found */
+        .not-found {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; text-align: center; padding: 24px;
+        }
+        .not-found h1 { font-size: 64px; color: var(--accent-primary); margin-bottom: 8px; }
+        .not-found p { font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 24px; }
+        .not-found a {
+            color: var(--accent-primary); text-decoration: none; font-weight: 600;
+            padding: 12px 24px; border: 1px solid var(--border); border-radius: 12px;
+            transition: background 0.2s;
+        }
+        .not-found a:hover { background: var(--bg); }
+
+        /* Loading */
+        .loading {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; gap: 16px;
+        }
+        .loading-spinner {
+            width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* La Tanda branding */
+        .powered-by {
+            position: fixed; top: 16px; right: 16px; z-index: 100;
+            font-size: 11px; color: rgba(255,255,255,0.3);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .powered-by:hover { color: rgba(255,255,255,0.6); }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .about-stats { grid-template-columns: repeat(2, 1fr); }
+            .about-name { font-size: 22px; }
+            .about-avatar, .about-avatar-placeholder { width: 96px; height: 96px; }
+            .about-avatar-placeholder { font-size: 36px; }
+            .gallery-grid { columns: 2; }
+            .portfolio-slides > section { padding: 32px 16px 24px; }
+            .item-card-img, .item-card-img-placeholder { height: 140px; }
+        }
+        @media (min-width: 768px) {
+            .items-grid { grid-template-columns: repeat(2, 1fr); }
+            .gallery-grid { columns: 3; }
+        }
+
+        :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+        /* === CV Slides (v4.6.0) === */
+        .cv-subtitle { text-align: center; font-size: 15px; color: var(--accent-primary); margin-bottom: 16px; font-weight: 500; }
+        .cv-summary { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.75); margin-bottom: 20px; text-align: center; }
+        .cv-timeline-item { position: relative; padding-left: 20px; margin-bottom: 20px; border-left: 2px solid var(--border); }
+        .cv-timeline-item::before { content: ''; position: absolute; left: -5px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-primary); }
+        .cv-timeline-title { font-size: 15px; font-weight: 600; color: #fff; }
+        .cv-timeline-sub { font-size: 13px; color: var(--accent-primary); margin-top: 2px; }
+        .cv-timeline-dates { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .cv-timeline-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; line-height: 1.5; }
+        .cv-edu-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .cv-edu-degree { font-size: 15px; font-weight: 600; color: #fff; }
+        .cv-edu-field { font-size: 13px; color: var(--accent-primary); }
+        .cv-edu-inst { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .cv-skills-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+        .cv-skill-tag { font-size: 12px; padding: 6px 14px; border-radius: 20px; background: var(--bg); border: 1px solid var(--border); color: var(--accent-primary); display: flex; align-items: center; gap: 6px; }
+        .cv-skill-tag small { font-size: 10px; color: rgba(255,255,255,0.4); }
+        .cv-cert-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+        .cv-cert-name { font-size: 14px; font-weight: 600; color: #fff; }
+        .cv-cert-issuer { font-size: 12px; color: rgba(255,255,255,0.5); }
+        .cv-cert-link { font-size: 12px; color: var(--accent-primary); text-decoration: none; }
+        .cv-project-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .cv-project-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .cv-project-desc { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+        .cv-project-link { font-size: 12px; color: var(--accent-primary); text-decoration: none; margin-top: 6px; display: inline-block; }
+        .cv-lang-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cv-download-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gradient); color: #fff; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 600; margin-top: 16px; transition: opacity 0.2s; }
+        .cv-download-btn:hover { opacity: 0.9; }
+        .cv-share-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .cv-share-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: #ccc; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s, border-color 0.2s; }
+        .cv-share-btn:hover { background: var(--bg); border-color: var(--accent-primary); color: #fff; }
+
+        /* Download consent modal */
+        .cv-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 300; align-items: center; justify-content: center; }
+        .cv-modal-overlay.active { display: flex; }
+        .cv-modal { background: #1a1f2e; border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 440px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .cv-modal h3 { font-size: 18px; margin-bottom: 16px; color: #fff; }
+        .cv-modal-terms { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.7; margin-bottom: 16px; }
+        .cv-modal-terms li { margin-bottom: 8px; }
+        .cv-modal-check { display: flex; align-items: center; gap: 8px; color: #ccc; font-size: 13px; margin-bottom: 16px; cursor: pointer; }
+        .cv-modal-check input { accent-color: var(--accent-primary); width: 16px; height: 16px; }
+        .cv-modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+        .cv-modal-btns button { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; }
+        .cv-modal-cancel { background: rgba(255,255,255,0.08); color: #ccc; }
+        .cv-modal-download { background: var(--gradient); color: #fff; font-weight: 600; }
+        .cv-modal-download:disabled { opacity: 0.4; cursor: not-allowed; }
+    
+/* Negocio CTA modals */
+.negocio-modal-overlay { position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:16px; }
+.negocio-modal { background:#1e293b; border:1px solid rgba(0,255,255,0.2); border-radius:16px; max-width:480px; width:100%; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.negocio-modal-header { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; }
+.negocio-modal-header h3 { margin:0; color:#f8fafc; font-size:1.1rem; }
+.negocio-modal-close { background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer; padding:0 4px; }
+.negocio-modal-body { padding:20px; }
+.negocio-modal-img { width:100%; height:200px; object-fit:cover; border-radius:10px; margin-bottom:14px; }
+.negocio-modal-price { font-size:1.3rem; font-weight:700; color:#00ffff; margin:8px 0; }
+.negocio-modal-desc { font-size:0.85rem; color:#94a3b8; line-height:1.5; margin-bottom:16px; }
+.negocio-modal-meta { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.negocio-modal-tag { background:rgba(0,255,255,0.1); color:#67e8f9; padding:4px 10px; border-radius:20px; font-size:0.75rem; }
+.negocio-btn { display:block; width:100%; padding:12px; border:none; border-radius:10px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-top:8px; transition:opacity 0.2s; }
+.negocio-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.negocio-btn-primary { background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; }
+.negocio-btn-secondary { background:rgba(255,255,255,0.1); color:#e2e8f0; border:1px solid rgba(255,255,255,0.15); }
+.negocio-input { width:100%; padding:10px 14px; background:#0f172a; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#f8fafc; font-size:0.9rem; margin-bottom:10px; box-sizing:border-box; font-size:16px; }
+.negocio-input:focus { border-color:#00ffff; outline:none; }
+.negocio-contact-fab { position:fixed; bottom:24px; right:24px; z-index:9000; background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; border:none; border-radius:50px; padding:12px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,255,255,0.3); display:flex; align-items:center; gap:8px; }
+.negocio-contact-fab:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(0,255,255,0.4); }
+.negocio-toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:10001; padding:10px 20px; border-radius:10px; font-size:0.85rem; font-weight:600; color:#fff; animation:toastIn 0.3s ease; }
+.negocio-toast.success { background:#059669; }
+.negocio-toast.error { background:#dc2626; }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+@media (max-width:600px) { .negocio-contact-fab { bottom:16px; right:16px; padding:10px 16px; font-size:0.82rem; } }
+
+/* Phase C: Trust indicators */
+.trust-indicators { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; justify-content:center; }
+.trust-badge { display:inline-flex; align-items:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:4px 12px; font-size:0.72rem; color:#94a3b8; }
+.trust-verified { border-color:rgba(16,185,129,0.3); color:#6ee7b7; }
+.trust-fast { border-color:rgba(0,255,255,0.2); color:#67e8f9; }
+.trust-expert { border-color:rgba(251,191,36,0.2); color:#fde68a; }
+
+/* Sticky CTA bar */
+.negocio-sticky-bar { position:fixed; bottom:0; left:0; right:0; z-index:9000; background:rgba(15,23,42,0.97); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.08); padding:10px 16px; display:flex; gap:8px; justify-content:center; padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px)); }
+.nsb-btn { flex:1; max-width:160px; display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border:none; border-radius:10px; font-size:0.82rem; font-weight:600; cursor:pointer; text-decoration:none; transition:all 0.2s; }
+.nsb-primary { background:linear-gradient(135deg,#00ffff,#0088ff); color:#0f172a; }
+.nsb-whatsapp { background:#25d366; color:#fff; }
+.nsb-share { background:rgba(255,255,255,0.1); color:#e2e8f0; border:1px solid rgba(255,255,255,0.15); }
+.nsb-btn:hover { transform:translateY(-1px); }
+.negocio-contact-fab { display:none !important; }
+@media (max-width:480px) { .nsb-btn { font-size:0.75rem; padding:8px 10px; } }
+
+
+/* Cover/Hero banner */
+.negocio-cover { width:100%; max-height:280px; overflow:hidden; border-radius:0 0 16px 16px; margin-bottom:16px; }
+.negocio-cover img { width:100%; height:280px; object-fit:cover; display:block; }
+@media (max-width:600px) { .negocio-cover img { height:180px; } }
+
+</style>
+</head>
+<body>
+    <div class="loading" id="loadingState">
+        <div class="loading-spinner"></div>
+        <span style="color:rgba(255,255,255,0.4);font-size:13px">Cargando portafolio...</span>
+    </div>
+    <div id="portfolioContent" style="display:none"></div>
+    <div id="lightbox" class="lightbox">
+        <button class="lightbox-close" aria-label="Cerrar" data-action="close-lightbox">&times;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+    <!-- Download consent modal -->
+    <div id="cvDownloadModal" class="cv-modal-overlay">
+        <div class="cv-modal">
+            <h3>Descargar Portafolio Profesional</h3>
+            <div class="cv-modal-terms">Al descargar este documento, acepto:
+                <ul>
+                    <li>Este CV es para uso profesional unicamente (evaluacion de candidatos, procesos de seleccion)</li>
+                    <li>No redistribuire este documento sin autorizacion expresa del propietario</li>
+                    <li>No usare la informacion contenida para fines distintos a los profesionales</li>
+                </ul>
+            </div>
+            <label class="cv-modal-check"><input type="checkbox" id="cvAcceptTerms"> Acepto los terminos de uso</label>
+            <div class="cv-modal-btns">
+                <button class="cv-modal-cancel" data-action="close-cv-modal">Cancelar</button>
+                <button class="cv-modal-download" id="cvModalDownloadBtn" disabled data-action="confirm-cv-download">Descargar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        function esc(text) {
+            if (text == null) return '';
+            var d = document.createElement('div');
+            d.textContent = String(text);
+            return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        var handle = window.location.pathname.split('/negocio/')[1];
+        if (handle) handle = handle.replace(/\/+$/, '');
+        if (!handle || !/^[a-zA-Z0-9_-]+$/.test(handle)) {
+            showNotFound();
+            return;
+        }
+
+        fetch('/api/marketplace/portfolio/' + encodeURIComponent(handle))
+            .then(function(r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            })
+            .then(function(json) {
+                if (!json.success || !json.data) throw new Error('invalid');
+                render(json.data);
+            })
+            .catch(function() {
+                showNotFound();
+            });
+
+        function showNotFound() {
+            document.getElementById('loadingState').style.display = 'none';
+            var c = document.getElementById('portfolioContent');
+            c.style.display = '';
+            c.innerHTML = '<div class="not-found"><h1>404</h1><p>Portafolio no encontrado</p><a href="/">Ir a La Tanda</a></div>';
+        }
+
+        function render(data) {
+            var u = data.user;
+            var p = data.provider;
+            var services = data.services || [];
+            var products = data.products || [];
+            var reviews = data.reviews || [];
+            var cv = data.portfolio || null;
+            var hasCV = cv && (cv.professional_title || cv.summary || (cv.experience && cv.experience.length) || (cv.skills && cv.skills.length));
+
+            // Store for PDF generation
+            window._portfolioCV = cv;
+            window._portfolioUser = u;
+            window._portfolioProvider = p;
+            window._sellerId = u.user_id;
+            window._sellerName = p.business_name || u.full_name;
+            window._sellerHandle = u.handle;
+
+            // Set theme
+            document.body.setAttribute('data-theme', p.store_theme || 'dark');
+            // Set title
+            document.title = esc(p.business_name || u.full_name) + ' — La Tanda';
+
+            var allImages = [];
+            services.forEach(function(s) {
+                if (s.images && s.images.length) {
+                    s.images.forEach(function(img) {
+                        var url = typeof img === 'string' ? img : (img.url || img.thumbnail || '');
+                        if (url) allImages.push(url);
+                    });
+                }
+            });
+            products.forEach(function(pr) {
+                if (pr.images && pr.images.length) {
+                    pr.images.forEach(function(img) {
+                        var url = typeof img === 'string' ? img : (img.url || img.thumbnail || '');
+                        if (url) allImages.push(url);
+                    });
+                }
+            });
+
+            // Determine which items to show based on shop_type
+            var showServices = p.shop_type !== 'products';
+            var showProducts = p.shop_type !== 'services';
+
+            // Build slide labels based on CV presence
+            var dynamicLabels;
+            if (hasCV) {
+                dynamicLabels = ['Sobre mi', 'Experiencia', 'Habilidades', 'Servicios', 'Galeria', 'Contacto'];
+            } else {
+                dynamicLabels = ['Sobre mi', 'Servicios', 'Galeria', 'Contacto'];
+            }
+            slideLabels = dynamicLabels;
+
+            var html = '';
+
+            // Powered by
+            html += '<a href="/" class="powered-by">La Tanda</a>';
+
+            // Nav (dynamic based on CV presence)
+            html += '<nav class="portfolio-nav" role="navigation" aria-label="Secciones del portafolio">';
+            dynamicLabels.forEach(function(label, i) {
+                html += '<button data-slide="' + i + '"' + (i === 0 ? ' class="active"' : '') + '>' + esc(label) + '</button>';
+            });
+            html += '</nav>';
+            html += '<div class="nav-label" id="navLabel">Sobre mi</div>';
+
+            // Cover image hero banner
+            if (p.cover_image) {
+                html += '<div class="negocio-cover"><img src="' + esc(p.cover_image) + '" alt="' + esc(p.business_name || u.full_name) + '"></div>';
+            }
+
+            html += '<main class="portfolio-slides" id="slidesContainer">';
+
+            // === Slide 1: About ===
+            html += '<section id="slide-about"><div class="slide-inner">';
+            if (u.profile_image) {
+                html += '<img class="about-avatar" src="' + esc(u.profile_image) + '" alt="' + esc(u.full_name) + '">';
+            } else {
+                var initials = (u.full_name || '?').charAt(0).toUpperCase();
+                html += '<div class="about-avatar-placeholder">' + esc(initials) + '</div>';
+            }
+            html += '<div class="about-name">' + esc(p.business_name || u.full_name) + '</div>';
+            if (hasCV && cv.professional_title) {
+                html += '<div class="cv-subtitle">' + esc(cv.professional_title) + '</div>';
+            }
+            html += '<div class="about-handle">@' + esc(u.handle) + '</div>';
+            // Badges
+            html += '<div class="about-badges">';
+            if (p.is_verified) html += '<span class="about-badge">Verificado</span>';
+            var createdDate = new Date(p.created_at);
+            var earlyDate = new Date('2026-03-31');
+            if (createdDate < earlyDate) html += '<span class="about-badge">Early Seller</span>';
+            if (p.shop_type) html += '<span class="about-badge">' + esc(p.shop_type === 'services' ? 'Servicios' : p.shop_type === 'products' ? 'Productos' : p.shop_type) + '</span>';
+            html += '</div>';
+            // Stats
+            var rating = parseFloat(p.avg_rating) || 0;
+            html += '<div class="about-stats">';
+            html += '<div class="about-stat"><div class="about-stat-value">' + esc(rating.toFixed(1)) + '</div><div class="about-stat-label">Rating</div></div>';
+            html += '<div class="about-stat"><div class="about-stat-value">' + esc(p.completed_jobs || 0) + '</div><div class="about-stat-label">Trabajos</div></div>';
+            html += '<div class="about-stat"><div class="about-stat-value">' + esc(p.total_reviews || 0) + '</div><div class="about-stat-label">Resenas</div></div>';
+            html += '<div class="about-stat"><div class="about-stat-value">' + esc(parseFloat(p.response_rate || 0).toFixed(0)) + '%</div><div class="about-stat-label">Respuesta</div></div>';
+            html += '</div>';
+            // Trust indicators
+            var trustHtml = '<div class="trust-indicators">';
+            if (p.is_verified) trustHtml += '<span class="trust-badge trust-verified">\u2705 Vendedor Verificado</span>';
+            if (parseFloat(p.response_rate || 0) >= 90) trustHtml += '<span class="trust-badge trust-fast">\u26A1 Respuesta rapida</span>';
+            if (parseInt(p.completed_jobs || 0) >= 10) trustHtml += '<span class="trust-badge trust-expert">\u2B50 ' + (p.completed_jobs) + ' trabajos</span>';
+            trustHtml += '</div>';
+            html += trustHtml;
+            // Description / CV summary
+            if (hasCV && cv.summary) {
+                html += '<div class="cv-summary">' + esc(cv.summary) + '</div>';
+            } else if (p.description) {
+                html += '<div class="about-description">' + esc(p.description) + '</div>';
+            }
+            // Reviews
+            if (reviews.length > 0) {
+                html += '<div style="margin-top:16px">';
+                html += '<div class="section-title" style="font-size:16px">Resenas recientes</div>';
+                reviews.forEach(function(r) {
+                    html += '<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06)">';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+                    html += '<span style="font-weight:600;font-size:14px">' + esc(r.reviewer_name) + '</span>';
+                    var stars = '';
+                    for (var i = 0; i < 5; i++) stars += i < (r.overall_rating || 0) ? '\u2605' : '\u2606';
+                    html += '<span style="color:var(--accent-primary);font-size:13px">' + stars + '</span>';
+                    html += '</div>';
+                    if (r.comment) html += '<div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.4">' + esc(r.comment) + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            // Member since
+            var months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+            html += '<div class="about-member-since">Miembro desde ' + months[createdDate.getMonth()] + ' ' + createdDate.getFullYear() + '</div>';
+            // Download CV button (only if owner allows)
+            if (hasCV && cv.allow_downloads) {
+                html += '<div style="text-align:center"><button class="cv-download-btn" data-action="open-cv-modal">&#128196; Descargar CV</button></div>';
+            }
+            // Share buttons
+            var portfolioUrl = 'https://latanda.online/negocio/' + encodeURIComponent(u.handle);
+            html += '<div class="cv-share-row" style="justify-content:center">';
+            html += '<button class="cv-share-btn" data-action="copy-url" data-url="' + esc(portfolioUrl) + '">&#128203; Copiar URL</button>';
+            html += '<a class="cv-share-btn" href="https://wa.me/?text=' + encodeURIComponent((p.business_name || u.full_name) + ' - ' + portfolioUrl) + '" target="_blank" rel="noopener">&#128172; WhatsApp</a>';
+            html += '<a class="cv-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(portfolioUrl) + '" target="_blank" rel="noopener">&#128279; LinkedIn</a>';
+            html += '</div>';
+            html += '</div></section>';
+
+            // === CV Slide: Experience & Education (conditional) ===
+            if (hasCV) {
+                html += '<section id="slide-experience"><div class="slide-inner">';
+                // Experience
+                if (cv.experience && cv.experience.length) {
+                    html += '<div class="section-title">Experiencia Laboral</div>';
+                    cv.experience.forEach(function(e) {
+                        html += '<div class="cv-timeline-item">';
+                        html += '<div class="cv-timeline-title">' + esc(e.position) + '</div>';
+                        html += '<div class="cv-timeline-sub">' + esc(e.company) + '</div>';
+                        html += '<div class="cv-timeline-dates">' + esc(e.start_date || '') + ' - ' + (e.current ? 'Presente' : esc(e.end_date || '')) + '</div>';
+                        if (e.description) html += '<div class="cv-timeline-desc">' + esc(e.description) + '</div>';
+                        html += '</div>';
+                    });
+                }
+                // Education
+                if (cv.education && cv.education.length) {
+                    html += '<div class="section-title" style="margin-top:24px">Educacion</div>';
+                    cv.education.forEach(function(e) {
+                        html += '<div class="cv-edu-item">';
+                        html += '<div class="cv-edu-degree">' + esc(e.degree) + '</div>';
+                        if (e.field) html += '<div class="cv-edu-field">' + esc(e.field) + '</div>';
+                        html += '<div class="cv-edu-inst">' + esc(e.institution) + (e.start_year ? ' | ' + e.start_year + (e.end_year ? ' - ' + e.end_year : '') : '') + '</div>';
+                        html += '</div>';
+                    });
+                }
+                if ((!cv.experience || !cv.experience.length) && (!cv.education || !cv.education.length)) {
+                    html += '<div class="items-empty">Sin experiencia o educacion agregada</div>';
+                }
+                html += '</div></section>';
+
+                // === CV Slide: Skills & Projects ===
+                html += '<section id="slide-skills"><div class="slide-inner">';
+                // Skills
+                if (cv.skills && cv.skills.length) {
+                    html += '<div class="section-title">Habilidades</div>';
+                    html += '<div class="cv-skills-grid">';
+                    cv.skills.forEach(function(s) {
+                        html += '<span class="cv-skill-tag">' + esc(s.name) + ' <small>' + esc(s.level) + '</small></span>';
+                    });
+                    html += '</div>';
+                }
+                // Certifications
+                if (cv.certifications && cv.certifications.length) {
+                    html += '<div class="section-title">Certificaciones</div>';
+                    cv.certifications.forEach(function(c) {
+                        html += '<div class="cv-cert-item">';
+                        html += '<div class="cv-cert-name">' + esc(c.name) + '</div>';
+                        html += '<div class="cv-cert-issuer">' + esc(c.issuer) + (c.year ? ' (' + c.year + ')' : '') + '</div>';
+                        if (c.url) html += '<a class="cv-cert-link" href="' + esc(c.url) + '" target="_blank" rel="noopener">Ver certificado</a>';
+                        html += '</div>';
+                    });
+                }
+                // Projects
+                if (cv.projects && cv.projects.length) {
+                    html += '<div class="section-title" style="margin-top:24px">Proyectos</div>';
+                    cv.projects.forEach(function(pr) {
+                        html += '<div class="cv-project-card">';
+                        html += '<div class="cv-project-title">' + esc(pr.title) + '</div>';
+                        if (pr.description) html += '<div class="cv-project-desc">' + esc(pr.description) + '</div>';
+                        if (pr.url) html += '<a class="cv-project-link" href="' + esc(pr.url) + '" target="_blank" rel="noopener">Ver proyecto</a>';
+                        html += '</div>';
+                    });
+                }
+                // Languages
+                if (cv.languages && cv.languages.length) {
+                    html += '<div class="section-title" style="margin-top:24px">Idiomas</div>';
+                    html += '<div class="cv-lang-grid">';
+                    cv.languages.forEach(function(l) {
+                        html += '<span class="cv-skill-tag">' + esc(l.language) + ' <small>' + esc(l.level) + '</small></span>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div></section>';
+            }
+
+            // === Services / Products Slide ===
+            html += '<section id="slide-services"><div class="slide-inner">';
+            if (showServices && services.length > 0) {
+                html += '<div class="section-title">Servicios</div>';
+                html += '<div class="items-grid">';
+                services.forEach(function(s) {
+                    var imgUrl = '';
+                    if (s.images && s.images[0]) {
+                        imgUrl = typeof s.images[0] === 'string' ? s.images[0] : (s.images[0].url || s.images[0].thumbnail || '');
+                    }
+                    var cardClass = 'item-card' + (s.featured ? ' item-card-featured' : '');
+                    html += '<div class="' + cardClass + '" data-action="view-item" data-id="' + s.id + '" data-type="service" style="cursor:pointer">';
+                    if (imgUrl) {
+                        html += '<img class="item-card-img" src="' + esc(imgUrl) + '" alt="' + esc(s.title) + '" loading="lazy">';
+                    } else {
+                        html += '<div class="item-card-img-placeholder">&#128295;</div>';
+                    }
+                    html += '<div class="item-card-body">';
+                    if (s.category_name) html += '<div class="item-card-category">' + esc(s.category_icon || '') + ' ' + esc(s.category_name) + '</div>';
+                    html += '<div class="item-card-title">' + esc(s.title) + '</div>';
+                    if (s.short_description) html += '<div class="item-card-desc">' + esc(s.short_description) + '</div>';
+                    var priceText = s.price_type === 'fixed' ? ('L. ' + esc(s.price)) : esc(s.price_type === 'hourly' ? 'Por hora' : s.price_type === 'negotiable' ? 'Negociable' : s.price_type);
+                    html += '<div class="item-card-price">' + priceText + '<span class="item-card-type">Servicio</span></div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+            if (showProducts && products.length > 0) {
+                if (showServices && services.length > 0) html += '<div style="height:24px"></div>';
+                html += '<div class="section-title">Productos</div>';
+                html += '<div class="items-grid">';
+                products.forEach(function(pr) {
+                    var imgUrl = '';
+                    if (pr.images && pr.images[0]) {
+                        imgUrl = typeof pr.images[0] === 'string' ? pr.images[0] : (pr.images[0].url || pr.images[0].thumbnail || '');
+                    }
+                    var cardClass = 'item-card' + (pr.featured ? ' item-card-featured' : '');
+                    html += '<div class="' + cardClass + '" data-action="view-item" data-id="' + pr.id + '" data-type="product" style="cursor:pointer">';
+                    if (imgUrl) {
+                        html += '<img class="item-card-img" src="' + esc(imgUrl) + '" alt="' + esc(pr.title) + '" loading="lazy">';
+                    } else {
+                        html += '<div class="item-card-img-placeholder">&#128230;</div>';
+                    }
+                    html += '<div class="item-card-body">';
+                    if (pr.category_name) html += '<div class="item-card-category">' + esc(pr.category_icon || '') + ' ' + esc(pr.category_name) + '</div>';
+                    html += '<div class="item-card-title">' + esc(pr.title) + '</div>';
+                    var curr = pr.currency === 'LTD' ? 'LTD' : 'L.';
+                    html += '<div class="item-card-price">' + curr + ' ' + esc(pr.price) + '<span class="item-card-type">Producto</span></div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+            if ((!showServices || services.length === 0) && (!showProducts || products.length === 0)) {
+                html += '<div class="items-empty">Este vendedor aun no ha publicado servicios o productos.</div>';
+            }
+            html += '</div></section>';
+
+            // === Slide 3: Gallery ===
+            html += '<section id="slide-gallery"><div class="slide-inner">';
+            html += '<div class="section-title">Galeria</div>';
+            if (allImages.length > 0) {
+                html += '<div class="gallery-grid">';
+                allImages.forEach(function(url, i) {
+                    html += '<div class="gallery-item" data-action="open-lightbox" data-index="' + i + '">';
+                    html += '<img src="' + esc(url) + '" alt="Imagen ' + (i + 1) + '" loading="lazy">';
+                    html += '</div>';
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="items-empty">Sin imagenes en galeria</div>';
+            }
+            html += '</div></section>';
+
+            // === Slide 4: Contact ===
+            html += '<section id="slide-contact"><div class="slide-inner">';
+            html += '<div class="section-title">Contacto</div>';
+            html += '<div class="contact-grid">';
+            var providerPhone = p.social_links && p.social_links.whatsapp ? p.social_links.whatsapp : null;
+            // WhatsApp
+            if (p.social_links && p.social_links.whatsapp) {
+                html += '<a class="contact-item" href="https://wa.me/' + esc(p.social_links.whatsapp.replace(/[^0-9]/g, '')) + '" target="_blank" rel="noopener">';
+                html += '<div class="contact-icon contact-icon-wa">&#128172;</div>';
+                html += '<div><div class="contact-label">WhatsApp</div><div class="contact-value">' + esc(p.social_links.whatsapp) + '</div></div>';
+                html += '</a>';
+            }
+            // Email
+            var socialLinks = p.social_links || {};
+            if (socialLinks.email) {
+                html += '<a class="contact-item" href="mailto:' + esc(socialLinks.email) + '">';
+                html += '<div class="contact-icon contact-icon-email">&#9993;</div>';
+                html += '<div><div class="contact-label">Email</div><div class="contact-value">' + esc(socialLinks.email) + '</div></div>';
+                html += '</a>';
+            }
+            // Social links
+            var socialMap = { facebook: 'Facebook', instagram: 'Instagram', twitter: 'X / Twitter', linkedin: 'LinkedIn', github: 'GitHub', website: 'Sitio Web' };
+            Object.keys(socialMap).forEach(function(key) {
+                if (socialLinks[key]) {
+                    html += '<a class="contact-item" href="' + esc(socialLinks[key]) + '" target="_blank" rel="noopener">';
+                    html += '<div class="contact-icon contact-icon-social">&#127760;</div>';
+                    html += '<div><div class="contact-label">' + esc(socialMap[key]) + '</div><div class="contact-value">' + esc(socialLinks[key].replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')) + '</div></div>';
+                    html += '</a>';
+                }
+            });
+            // Location
+            if (p.city || p.neighborhood) {
+                html += '<div class="contact-item">';
+                html += '<div class="contact-icon contact-icon-location">&#128205;</div>';
+                html += '<div><div class="contact-label">Ubicacion</div><div class="contact-value">' + esc([p.neighborhood, p.city].filter(Boolean).join(', ')) + '</div></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            // Service areas
+            if (p.service_areas) {
+                var areas = Array.isArray(p.service_areas) ? p.service_areas : [];
+                if (areas.length > 0) {
+                    html += '<div class="contact-areas">';
+                    html += '<div class="contact-areas-title">Areas de servicio</div>';
+                    html += '<div class="contact-areas-list">';
+                    areas.forEach(function(a) { html += '<span class="contact-area-tag">' + esc(a) + '</span>'; });
+                    html += '</div></div>';
+                }
+            }
+            html += '</div></section>';
+
+            html += '</main>';
+
+            document.getElementById('loadingState').style.display = 'none';
+            var content = document.getElementById('portfolioContent');
+            content.style.display = '';
+            content.innerHTML = html;
+
+            // Setup navigation
+            setupNav();
+            // Add sticky contact FAB
+            var fab = document.createElement('div');
+            fab.innerHTML = '<button class="negocio-contact-fab" data-action="open-message" aria-label="Contactar vendedor"><i style="font-size:18px">💬</i> Contactar</button>';
+            document.body.appendChild(fab.firstChild);
+            // Phase C: Sticky CTA bar
+            var whatsappNum = (p.whatsapp || '').replace(/[^0-9]/g, '');
+            var stickyBar = document.createElement('div');
+            stickyBar.className = 'negocio-sticky-bar';
+            stickyBar.innerHTML = '<button data-action="open-message" class="nsb-btn nsb-primary">\u{1F4AC} Mensaje</button>' +
+                (whatsappNum ? '<a href="https://wa.me/' + whatsappNum + '" target="_blank" rel="noopener" class="nsb-btn nsb-whatsapp">\u{1F4F1} WhatsApp</a>' : '') +
+                '<button data-action="copy-url" data-url="' + portfolioUrl + '" class="nsb-btn nsb-share">\u{1F517} Compartir</button>';
+            document.body.appendChild(stickyBar);
+
+            // Store images for lightbox
+            window._galleryImages = allImages;
+        }
+
+        var slideLabels = ['Sobre mi', 'Servicios', 'Galeria', 'Contacto']; // overridden dynamically in render()
+
+        function setupNav() {
+            var slides = document.getElementById('slidesContainer');
+            var navBtns = document.querySelectorAll('.portfolio-nav button');
+            var navLabel = document.getElementById('navLabel');
+            if (!slides || !navBtns.length) return;
+
+            // Click navigation
+            navBtns.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(btn.getAttribute('data-slide'));
+                    var target = slides.children[idx];
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            // Intersection Observer for active dot
+            var sections = slides.querySelectorAll('section');
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                        var idx = Array.from(sections).indexOf(entry.target);
+                        navBtns.forEach(function(b, i) {
+                            b.classList.toggle('active', i === idx);
+                        });
+                        if (navLabel) navLabel.textContent = slideLabels[idx] || '';
+                    }
+                });
+            }, { rootMargin: '-80px 0px -60% 0px', threshold: 0.1 });
+            sections.forEach(function(s) { observer.observe(s); });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    var current = 0;
+                    navBtns.forEach(function(b, i) { if (b.classList.contains('active')) current = i; });
+                    var next = e.key === 'ArrowDown' ? Math.min(current + 1, sections.length - 1) : Math.max(current - 1, 0);
+                    if (next !== current) sections[next].scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                }
+            });
+
+            // Touch swipe removed — vertical scroll is natural
+        }
+
+        // Lightbox — delegated
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            var action = btn.getAttribute('data-action');
+            if (action === 'open-lightbox') {
+                var idx = parseInt(btn.getAttribute('data-index'));
+                var images = window._galleryImages || [];
+                if (images[idx]) {
+                    var lb = document.getElementById('lightbox');
+                    var img = document.getElementById('lightboxImg');
+                    img.src = images[idx];
+                    img.alt = 'Imagen ' + (idx + 1);
+                    lb.classList.add('active');
+                }
+            }
+            if (action === 'close-lightbox') {
+                document.getElementById('lightbox').classList.remove('active');
+                document.getElementById('lightboxImg').src = '';
+            }
+            if (action === 'open-cv-modal') {
+                var modal = document.getElementById('cvDownloadModal');
+                var chk = document.getElementById('cvAcceptTerms');
+                var dlBtn = document.getElementById('cvModalDownloadBtn');
+                if (chk) chk.checked = false;
+                if (dlBtn) dlBtn.disabled = true;
+                if (modal) modal.classList.add('active');
+            }
+            if (action === 'close-cv-modal') {
+                document.getElementById('cvDownloadModal').classList.remove('active');
+            }
+            if (action === 'confirm-cv-download') {
+                generateCVPDF();
+                document.getElementById('cvDownloadModal').classList.remove('active');
+            }
+            if (action === 'view-item') {
+                viewItem(btn.getAttribute('data-id'), btn.getAttribute('data-type'));
+            }
+            if (action === 'close-modal') {
+                _closeModals();
+                document.body.style.overflow = '';
+            }
+            if (action === 'buy-product') {
+                buyProduct(btn.getAttribute('data-id'));
+            }
+            if (action === 'open-booking') {
+                openBookingForm(btn.getAttribute('data-id'));
+            }
+            if (action === 'submit-booking') {
+                submitBooking(btn.getAttribute('data-id'));
+            }
+            if (action === 'open-message') {
+                openMessageModal();
+            }
+            if (action === 'send-message') {
+                sendMessage();
+            }
+            if (action === 'copy-url') {
+                var copyUrl = btn.getAttribute('data-url');
+                if (copyUrl && navigator.clipboard) {
+                    navigator.clipboard.writeText(copyUrl).then(function() {
+                        btn.textContent = 'Copiado!';
+                        setTimeout(function() { btn.innerHTML = '&#128203; Copiar URL'; }, 2000);
+                    });
+                }
+            }
+        });
+        // Close negocio modals on overlay click
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('negocio-modal-overlay')) {
+                _closeModals();
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close lightbox on backdrop click
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.getElementById('lightboxImg').src = '';
+            }
+        });
+        // Escape key closes lightbox / modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                _closeModals();
+                document.body.style.overflow = '';
+                var lb = document.getElementById('lightbox');
+                if (lb.classList.contains('active')) {
+                    lb.classList.remove('active');
+                    document.getElementById('lightboxImg').src = '';
+                }
+                var modal = document.getElementById('cvDownloadModal');
+                if (modal && modal.classList.contains('active')) {
+                    modal.classList.remove('active');
+                }
+            }
+        });
+
+
+
+        // ====== NEGOCIO CTA FUNCTIONS ======
+        function _authCheck() {
+            var token = null;
+            try { token = localStorage.getItem('auth_token') || localStorage.getItem('authToken'); } catch(e) {}
+            if (!token) {
+                var redirect = window.location.pathname;
+                window.location.href = '/auth-enhanced.html?redirect=' + encodeURIComponent(redirect);
+                return null;
+            }
+            return token;
+        }
+
+        function _showToast(msg, type) {
+            var existing = document.querySelector('.negocio-toast');
+            if (existing) existing.remove();
+            var el = document.createElement('div');
+            el.className = 'negocio-toast ' + (type || 'success');
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(function() { el.remove(); }, 3500);
+        }
+
+        function _closeModals() {
+            var m = document.getElementById('negocioModal');
+            if (m) m.remove();
+        }
+
+        function viewItem(id, type) {
+            var endpoint = type === 'service' ? '/api/marketplace/services/' : '/api/marketplace/products/';
+            fetch(endpoint + id).then(function(r) { return r.json(); }).then(function(json) {
+                if (!json.success) throw new Error('not found');
+                var d = json.data;
+                var imgUrl = '';
+                if (d.images && d.images[0]) {
+                    imgUrl = typeof d.images[0] === 'string' ? d.images[0] : (d.images[0].url || d.images[0].thumbnail || '');
+                }
+                var priceText = type === 'service'
+                    ? (d.price_type === 'fixed' ? 'L. ' + d.price : d.price_type === 'hourly' ? 'L. ' + d.price + '/hora' : d.price_type === 'negotiable' ? 'Negociable' : 'L. ' + d.price)
+                    : 'L. ' + parseFloat(d.price || 0).toLocaleString('es-HN', {minimumFractionDigits:2});
+
+                var stockInfo = type === 'product' ? '<div class="negocio-modal-tag">Stock: ' + (d.quantity || 0) + '</div>' : '';
+                if (type === 'service' && d.duration_minutes) stockInfo = '<div class="negocio-modal-tag">' + d.duration_minutes + ' min</div>';
+
+                var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                    '<div class="negocio-modal">' +
+                    '<div class="negocio-modal-header"><h3>' + esc(d.title) + '</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                    '<div class="negocio-modal-body">' +
+                    (imgUrl ? '<img class="negocio-modal-img" src="' + esc(imgUrl) + '" alt="' + esc(d.title) + '">' : '') +
+                    '<div class="negocio-modal-price">' + priceText + '</div>' +
+                    '<div class="negocio-modal-meta">' +
+                    (d.category_name ? '<div class="negocio-modal-tag">' + esc(d.category_name) + '</div>' : '') +
+                    stockInfo +
+                    '<div class="negocio-modal-tag">' + (type === 'service' ? 'Servicio' : 'Producto') + '</div>' +
+                    '</div>' +
+                    (d.description ? '<div class="negocio-modal-desc">' + esc(d.description) + '</div>' : '') +
+                    (type === 'product' ?
+                        '<button class="negocio-btn negocio-btn-primary" data-action="buy-product" data-id="' + d.id + '">Comprar Ahora</button>' :
+                        '<button class="negocio-btn negocio-btn-primary" data-action="open-booking" data-id="' + d.id + '">Reservar</button>') +
+                    '<button class="negocio-btn negocio-btn-secondary" data-action="open-message">Enviar Mensaje</button>' +
+                    '</div></div></div>';
+
+                _closeModals();
+                document.body.insertAdjacentHTML('beforeend', html);
+                document.body.style.overflow = 'hidden';
+            }).catch(function() {
+                _showToast('No se pudo cargar el detalle', 'error');
+            });
+        }
+
+        function buyProduct(id) {
+            var token = _authCheck();
+            if (!token) return;
+            var btn = document.querySelector('[data-action="buy-product"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+
+            fetch('/api/marketplace/products/' + id + '/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ quantity: 1, payment_method: 'wallet' })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Compra realizada exitosamente', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al comprar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Comprar Ahora'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Comprar Ahora'; }
+            });
+        }
+
+        function openBookingForm(serviceId) {
+            var token = _authCheck();
+            if (!token) return;
+            _closeModals();
+            var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+            var minDate = tomorrow.toISOString().split('T')[0];
+            var maxDate = new Date(); maxDate.setDate(maxDate.getDate() + 30);
+            var maxDateStr = maxDate.toISOString().split('T')[0];
+
+            var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                '<div class="negocio-modal">' +
+                '<div class="negocio-modal-header"><h3>Reservar Servicio</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                '<div class="negocio-modal-body">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Fecha</label>' +
+                '<input type="date" class="negocio-input" id="bookDate" min="' + minDate + '" max="' + maxDateStr + '">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Hora</label>' +
+                '<input type="time" class="negocio-input" id="bookTime" value="09:00">' +
+                '<label style="color:#94a3b8;font-size:0.82rem;display:block;margin-bottom:4px;">Notas (opcional)</label>' +
+                '<textarea class="negocio-input" id="bookNotes" rows="3" placeholder="Instrucciones, direccion, etc."></textarea>' +
+                '<button class="negocio-btn negocio-btn-primary" data-action="submit-booking" data-id="' + serviceId + '">Confirmar Reserva</button>' +
+                '<button class="negocio-btn negocio-btn-secondary" data-action="close-modal">Cancelar</button>' +
+                '</div></div></div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function submitBooking(serviceId) {
+            var token = _authCheck();
+            if (!token) return;
+            var date = document.getElementById('bookDate')?.value;
+            var time = document.getElementById('bookTime')?.value;
+            var notes = document.getElementById('bookNotes')?.value || '';
+            if (!date) { _showToast('Selecciona una fecha', 'error'); return; }
+
+            var btn = document.querySelector('[data-action="submit-booking"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Reservando...'; }
+
+            fetch('/api/marketplace/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ service_id: serviceId, scheduled_date: date, scheduled_time: time || '09:00', customer_notes: notes })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Reserva creada exitosamente', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al reservar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Reserva'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Confirmar Reserva'; }
+            });
+        }
+
+        function openMessageModal() {
+            var token = _authCheck();
+            if (!token) return;
+            _closeModals();
+            var sellerName = window._sellerName || 'Vendedor';
+
+            var html = '<div class="negocio-modal-overlay" id="negocioModal">' +
+                '<div class="negocio-modal">' +
+                '<div class="negocio-modal-header"><h3>Mensaje a ' + esc(sellerName) + '</h3><button class="negocio-modal-close" data-action="close-modal">&times;</button></div>' +
+                '<div class="negocio-modal-body">' +
+                '<textarea class="negocio-input" id="msgText" rows="4" placeholder="Escribe tu mensaje..." style="font-size:16px;"></textarea>' +
+                '<button class="negocio-btn negocio-btn-primary" data-action="send-message">Enviar Mensaje</button>' +
+                '<button class="negocio-btn negocio-btn-secondary" data-action="close-modal">Cancelar</button>' +
+                '</div></div></div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function sendMessage() {
+            var token = _authCheck();
+            if (!token) return;
+            var msg = document.getElementById('msgText')?.value?.trim();
+            if (!msg) { _showToast('Escribe un mensaje', 'error'); return; }
+
+            var btn = document.querySelector('[data-action="send-message"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+            fetch('/api/marketplace/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ recipient_id: window._sellerId, message: msg })
+            }).then(function(r) { return r.json(); }).then(function(json) {
+                if (json.success) {
+                    _closeModals();
+                    document.body.style.overflow = '';
+                    _showToast('Mensaje enviado', 'success');
+                } else {
+                    _showToast(json.data?.error?.message || 'Error al enviar', 'error');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Enviar Mensaje'; }
+                }
+            }).catch(function() {
+                _showToast('Error de conexion', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = 'Enviar Mensaje'; }
+            });
+        }
+
+        // Accept terms checkbox toggles download button
+        document.getElementById('cvAcceptTerms').addEventListener('change', function() {
+            document.getElementById('cvModalDownloadBtn').disabled = !this.checked;
+        });
+        // Close modal on backdrop click
+        document.getElementById('cvDownloadModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+
+        // PDF generation
+        async function generateCVPDF() {
+            if (typeof window.jspdf === 'undefined') return;
+            var cv = window._portfolioCV;
+            var u = window._portfolioUser;
+            var p = window._portfolioProvider;
+            if (!cv || !u) return;
+
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            var pageW = doc.internal.pageSize.getWidth();
+            var y = 20;
+            var name = u.full_name || p.business_name || 'Portafolio';
+
+            function checkPage(need) { if (y + need > 275) { doc.addPage(); y = 20; } }
+            function addSection(title) {
+                checkPage(15);
+                doc.setFontSize(13); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 180, 200);
+                doc.text(title, 15, y); y += 2;
+                doc.setDrawColor(0, 180, 200); doc.line(15, y, pageW - 15, y); y += 6;
+                doc.setTextColor(50, 50, 50); doc.setFont(undefined, 'normal'); doc.setFontSize(10);
+            }
+
+            // Header with avatar
+            var avatarDataUrl = null;
+            var avatarUrl = u.profile_image;
+            if (avatarUrl && (avatarUrl.startsWith('/uploads/') || avatarUrl.startsWith('https://'))) {
+                try {
+                    var fullUrl = avatarUrl.startsWith('/') ? location.origin + avatarUrl : avatarUrl;
+                    var resp = await fetch(fullUrl);
+                    var blob = await resp.blob();
+                    avatarDataUrl = await new Promise(function(resolve) {
+                        var reader = new FileReader();
+                        reader.onload = function() { resolve(reader.result); };
+                        reader.onerror = function() { resolve(null); };
+                        reader.readAsDataURL(blob);
+                    });
+                } catch(e) { /* no avatar in PDF */ }
+            }
+
+            var textX = 15;
+            if (avatarDataUrl) {
+                try { doc.addImage(avatarDataUrl, 'JPEG', 15, y - 5, 25, 25); textX = 45; } catch(e) { /* skip avatar */ }
+            }
+
+            doc.setFontSize(22); doc.setFont(undefined, 'bold'); doc.setTextColor(30, 30, 30);
+            doc.text(name, textX, y); y += 8;
+            if (cv.professional_title) { doc.setFontSize(12); doc.setFont(undefined, 'normal'); doc.setTextColor(100, 100, 100); doc.text(cv.professional_title, textX, y); y += 8; }
+            if (avatarDataUrl) y = Math.max(y, 45);
+            doc.setDrawColor(0, 180, 200); doc.setLineWidth(0.5); doc.line(15, y, pageW - 15, y); y += 8;
+
+            // Summary
+            if (cv.summary) { addSection('Resumen Profesional'); var lines = doc.splitTextToSize(cv.summary, pageW - 30); checkPage(lines.length * 5); doc.text(lines, 15, y); y += lines.length * 5 + 5; }
+
+            // Experience
+            if (cv.experience && cv.experience.length) {
+                addSection('Experiencia Laboral');
+                cv.experience.forEach(function(e) {
+                    checkPage(20);
+                    doc.setFont(undefined, 'bold'); doc.text(e.position + ' - ' + e.company, 15, y); y += 5;
+                    doc.setFont(undefined, 'normal'); doc.setTextColor(120, 120, 120);
+                    doc.text((e.start_date || '') + ' - ' + (e.current ? 'Presente' : (e.end_date || '')), 15, y); y += 5;
+                    if (e.description) { doc.setTextColor(50, 50, 50); var dl = doc.splitTextToSize(e.description, pageW - 30); checkPage(dl.length * 4.5); doc.text(dl, 15, y); y += dl.length * 4.5; }
+                    y += 3;
+                });
+            }
+
+            // Education
+            if (cv.education && cv.education.length) {
+                addSection('Educacion');
+                cv.education.forEach(function(e) {
+                    checkPage(12);
+                    doc.setFont(undefined, 'bold'); doc.text(e.degree + (e.field ? ' - ' + e.field : ''), 15, y); y += 5;
+                    doc.setFont(undefined, 'normal'); doc.text(e.institution + (e.start_year ? ' | ' + e.start_year + (e.end_year ? ' - ' + e.end_year : '') : ''), 15, y); y += 7;
+                });
+            }
+
+            // Skills
+            if (cv.skills && cv.skills.length) {
+                addSection('Habilidades');
+                var skillText = cv.skills.map(function(s) { return s.name + ' (' + s.level + ')'; }).join('  |  ');
+                var sl = doc.splitTextToSize(skillText, pageW - 30);
+                checkPage(sl.length * 5);
+                doc.text(sl, 15, y); y += sl.length * 5 + 3;
+            }
+
+            // Certifications
+            if (cv.certifications && cv.certifications.length) {
+                addSection('Certificaciones');
+                cv.certifications.forEach(function(c) {
+                    checkPage(8);
+                    doc.setFont(undefined, 'bold'); doc.text(c.name + ' - ' + c.issuer + (c.year ? ' (' + c.year + ')' : ''), 15, y); y += 6;
+                    doc.setFont(undefined, 'normal');
+                });
+            }
+
+            // Projects
+            if (cv.projects && cv.projects.length) {
+                addSection('Proyectos');
+                cv.projects.forEach(function(pr) {
+                    checkPage(15);
+                    doc.setFont(undefined, 'bold'); doc.text(pr.title, 15, y); y += 5;
+                    doc.setFont(undefined, 'normal');
+                    if (pr.description) { var pl = doc.splitTextToSize(pr.description, pageW - 30); checkPage(pl.length * 4.5); doc.text(pl, 15, y); y += pl.length * 4.5; }
+                    if (pr.url) { doc.setTextColor(0, 100, 200); doc.text(pr.url, 15, y); y += 5; doc.setTextColor(50, 50, 50); }
+                    y += 3;
+                });
+            }
+
+            // Languages
+            if (cv.languages && cv.languages.length) {
+                addSection('Idiomas');
+                var langText = cv.languages.map(function(l) { return l.language + ' (' + l.level + ')'; }).join('  |  ');
+                doc.text(langText, 15, y); y += 7;
+            }
+
+            // Footer
+            var footerY = 285;
+            doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+            doc.text('Documento para uso profesional unicamente. Prohibida su redistribucion sin autorizacion.', 15, footerY);
+            doc.text('Generado desde latanda.online/negocio/' + (u.handle || '') + ' - ' + new Date().toLocaleDateString('es-HN'), 15, footerY + 4);
+
+            doc.save('CV-' + name.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+        }
+    })();
+    </script>
+</body>
+</html>

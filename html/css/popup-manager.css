@@ -1,0 +1,567 @@
+/**
+ * La Tanda Unified Popup Manager Styles
+ * Version: 1.0.0
+ * Date: 2025-12-23
+ */
+
+/* Overlay */
+.latanda-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.latanda-popup-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.latanda-popup-overlay.closing {
+    opacity: 0;
+}
+
+/* Position variants */
+.latanda-popup-overlay.center {
+    align-items: center;
+    justify-content: center;
+}
+
+.latanda-popup-overlay.top {
+    align-items: flex-start;
+    padding-top: 80px;
+}
+
+.latanda-popup-overlay.bottom {
+    align-items: flex-end;
+    padding-bottom: 80px;
+}
+
+/* Main popup container */
+.latanda-popup {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+    min-width: 320px;
+    max-width: 500px;
+    width: 90%;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.latanda-popup-overlay.visible .latanda-popup {
+    transform: scale(1) translateY(0);
+}
+
+.latanda-popup-overlay.closing .latanda-popup {
+    transform: scale(0.9) translateY(20px);
+}
+
+/* Header */
+.latanda-popup-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    gap: 12px;
+}
+
+.latanda-popup-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.latanda-popup-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.latanda-popup-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.latanda-popup-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a1a2e;
+}
+
+/* Type-specific icon colors */
+.latanda-popup-error .latanda-popup-icon {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+}
+
+.latanda-popup-warning .latanda-popup-icon {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #d97706;
+}
+
+.latanda-popup-success .latanda-popup-icon {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #059669;
+}
+
+.latanda-popup-info .latanda-popup-icon {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #2563eb;
+}
+
+.latanda-popup-confirm .latanda-popup-icon {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    color: #4f46e5;
+}
+
+.latanda-popup-form .latanda-popup-icon {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    color: #7c3aed;
+}
+
+.latanda-popup-guide .latanda-popup-icon {
+    background: linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%);
+    color: #0891b2;
+}
+
+/* Type-specific header colors */
+.latanda-popup-error .latanda-popup-header {
+    background: linear-gradient(135deg, rgba(254, 226, 226, 0.5) 0%, rgba(254, 202, 202, 0.3) 100%);
+}
+
+.latanda-popup-warning .latanda-popup-header {
+    background: linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.3) 100%);
+}
+
+.latanda-popup-success .latanda-popup-header {
+    background: linear-gradient(135deg, rgba(209, 250, 229, 0.5) 0%, rgba(167, 243, 208, 0.3) 100%);
+}
+
+.latanda-popup-info .latanda-popup-header {
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(191, 219, 254, 0.3) 100%);
+}
+
+/* Body */
+.latanda-popup-body {
+    padding: 20px;
+}
+
+.latanda-popup-message {
+    font-size: 15px;
+    color: #334155;
+    margin: 0 0 12px 0;
+    line-height: 1.6;
+}
+
+.latanda-popup-details {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    font-family: monospace;
+}
+
+/* Footer */
+.latanda-popup-footer {
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Buttons */
+.latanda-popup-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.latanda-popup-btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.latanda-popup-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.4);
+}
+
+.latanda-popup-btn-secondary {
+    background: rgba(0, 0, 0, 0.05);
+    color: #475569;
+}
+
+.latanda-popup-btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.latanda-popup-btn-danger {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+}
+
+.latanda-popup-btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px -1px rgba(220, 38, 38, 0.4);
+}
+
+.latanda-popup-btn-default {
+    background: white;
+    color: #475569;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.latanda-popup-btn-default:hover {
+    background: #f8fafc;
+}
+
+/* Form styles */
+.latanda-popup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.latanda-popup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.latanda-popup-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.latanda-popup-field input,
+.latanda-popup-field textarea,
+.latanda-popup-field select {
+    padding: 10px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.latanda-popup-field input:focus,
+.latanda-popup-field textarea:focus,
+.latanda-popup-field select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.latanda-popup-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Guide styles */
+.latanda-popup-guide {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.latanda-popup-progress {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.latanda-popup-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.latanda-popup-step-info {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+}
+
+.latanda-popup-step-content {
+    font-size: 15px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+/* Loading styles */
+.latanda-popup-loading {
+    padding: 40px;
+    text-align: center;
+    min-width: 200px;
+}
+
+.latanda-popup-loading p {
+    margin: 16px 0 0 0;
+    color: #475569;
+    font-size: 14px;
+}
+
+.latanda-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(37, 99, 235, 0.2);
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Duplicate account styles */
+.latanda-duplicate-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.latanda-duplicate-account {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.latanda-duplicate-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.latanda-duplicate-email {
+    font-weight: 600;
+    color: #1a1a2e;
+    font-size: 14px;
+}
+
+.latanda-duplicate-date {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.latanda-duplicate-status {
+    font-size: 12px;
+    color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.latanda-duplicate-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.latanda-duplicate-actions .latanda-popup-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+/* Account data list */
+.latanda-account-data {
+    list-style: none;
+    padding: 12px;
+    margin: 12px 0;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+}
+
+.latanda-account-data li {
+    padding: 6px 0;
+    color: #334155;
+    font-size: 14px;
+}
+
+.latanda-account-data li:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Animations */
+.latanda-popup-overlay.fadeIn .latanda-popup {
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.latanda-popup-overlay.shake .latanda-popup {
+    animation: shake 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .latanda-popup {
+        min-width: 280px;
+        max-width: 95%;
+        margin: 10px;
+    }
+
+    .latanda-popup-header {
+        padding: 14px 16px;
+    }
+
+    .latanda-popup-title {
+        font-size: 16px;
+    }
+
+    .latanda-popup-body {
+        padding: 16px;
+    }
+
+    .latanda-popup-footer {
+        padding: 14px 16px;
+        flex-direction: column;
+    }
+
+    .latanda-popup-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .latanda-duplicate-account {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .latanda-duplicate-actions {
+        justify-content: stretch;
+    }
+
+    .latanda-duplicate-actions .latanda-popup-btn {
+        flex: 1;
+    }
+}
+
+/* Dark mode support (if platform adds it later) */
+@media (prefers-color-scheme: dark) {
+    .latanda-popup {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+    }
+
+    .latanda-popup-title {
+        color: #f1f5f9;
+    }
+
+    .latanda-popup-message {
+        color: #cbd5e1;
+    }
+
+    .latanda-popup-details {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+    }
+
+    .latanda-popup-close {
+        color: #94a3b8;
+    }
+
+    .latanda-popup-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+
+    .latanda-popup-header {
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .latanda-popup-footer {
+        border-top-color: rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .latanda-popup-btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #cbd5e1;
+    }
+
+    .latanda-popup-btn-default {
+        background: rgba(255, 255, 255, 0.05);
+        color: #cbd5e1;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .latanda-popup-field input,
+    .latanda-popup-field textarea,
+    .latanda-popup-field select {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #f1f5f9;
+    }
+
+    .latanda-duplicate-account {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .latanda-duplicate-email {
+        color: #f1f5f9;
+    }
+}
