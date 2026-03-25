@@ -6,7 +6,7 @@
 
 class LTDTokenEconomics {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.currentUser = this.getCurrentUser();
         
         // Token configuration

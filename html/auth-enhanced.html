@@ -2,814 +2,1253 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Resource Optimization -->
-    <!-- DNS Prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="La Tanda">
+    <title>La Tanda - Iniciar Sesión</title>
+    <meta name="description" content="Inicia sesión o crea tu cuenta en La Tanda - La plataforma de ahorro grupal más confiable de Honduras.">
+    <link rel="icon" href="/assets/images/favicon-B3hxl31q.png" type="image/png">
     
-    <!-- Preconnect to critical origins -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Tanda - Sistema de Autenticación Avanzado</title>
-    <meta name="description" content="Sistema de autenticación completo La Tanda Web3 - Login, registro y verificación segura">
-    <link rel="icon" href="favicon.png" type="image/png">
-    <link rel="shortcut icon" href="favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="favicon.png">
-    <link rel="manifest" href="manifest.json">
-    <!-- Critical CSS: Font Awesome with async loading -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel=stylesheet">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
-    <!-- Fallback CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" crossorigin="anonymous">
-    <!-- Local fallback styles for icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <style>
-        /* Icon fallbacks for when Font Awesome fails to load */
-        .fa-envelope::before, .fas.fa-envelope::before { content: "📧"; }
-        .fa-eye::before, .fas.fa-eye::before { content: "👁"; }
-        .fa-eye-slash::before, .fas.fa-eye-slash::before { content: "🙈"; }
-        .fa-user::before, .fas.fa-user::before { content: "👤"; }
-        .fa-lock::before, .fas.fa-lock::before { content: "🔒"; }
-        .fa-shield-alt::before, .fas.fa-shield-alt::before { content: "🛡"; }
-        .fa-check-circle::before, .fas.fa-check-circle::before { content: "✅"; }
-        .fa-times-circle::before, .fas.fa-times-circle::before { content: "❌"; }
-        .fa-spinner::before, .fas.fa-spinner::before { content: "⏳"; }
-        .fa-exclamation-triangle::before, .fas.fa-exclamation-triangle::before { content: "⚠️"; }
-    </style>
-    <style>
-        /* CSS Variables - Enhanced Design System */
+        /* ========================================
+           LA TANDA - LIGHT THEME AUTH PAGE
+           ======================================== */
+        
         :root {
-            /* Primary Brand Colors */
-            --tanda-cyan: #00FFFF;
-            --tanda-cyan-light: #7FFFD8;
-            --tanda-cyan-dark: #00D4D4;
+            /* Primary Colors */
+            --primary: #0066ff;
+            --primary-dark: #0052cc;
+            --primary-light: #e6f0ff;
             
-            /* Text Colors */
-            --text-primary: #FFFFFF;
-            --text-secondary: rgba(248, 250, 252, 0.7);
-            --text-tertiary: rgba(248, 250, 252, 0.5);
+            /* Backgrounds */
+            --bg-white: #ffffff;
+            --bg-light: #f8fafc;
+            --bg-gray: #f1f5f9;
             
-            /* Background Colors */
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-tertiary: #334155;
-            --bg-glass: rgba(15, 23, 42, 0.8);
-            --bg-accent: rgba(15, 23, 42, 0.9);
+            /* Text */
+            --text-dark: #1e293b;
+            --text-medium: #475569;
+            --text-light: #94a3b8;
             
             /* State Colors */
-            --error-color: #f87171;
-            --success-color: #22d55e;
-            --warning-color: #fbbf24;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
             --info-color: #3b82f6;
             
-            /* Border Colors */
-            --border-primary: rgba(148, 163, 184, 0.1);
-            --border-accent: rgba(0, 255, 255, 0.2);
-            --border-hover: rgba(0, 255, 255, 0.4);
+            /* Borders & Shadows */
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
             
-            /* Shadows */
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            --shadow-glow: 0 0 20px rgba(0, 255, 255, 0.3);
-            
-            /* Transitions */
-            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Legacy variables for JS compatibility */
+            --tanda-cyan: #0066ff;
+            --bg-glass: rgba(255,255,255,0.95);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
         }
-
-        /* Reset and Base Styles */
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap');
-
+        
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
             min-height: 100vh;
-            color: var(--text-primary);
+            min-height: 100dvh;
+            color: var(--text-dark);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            overflow-x: hidden;
-            position: relative;
         }
-
-        /* Animated Background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 25% 25%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 75% 75%, rgba(34, 213, 94, 0.08) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
-            animation: backgroundPulse 8s ease-in-out infinite alternate;
+        
+        a {
+            color: var(--primary);
+            text-decoration: none;
         }
-
-        @keyframes backgroundPulse {
-            0% { opacity: 0.5; }
-            100% { opacity: 1; }
+        
+        a:hover {
+            text-decoration: underline;
         }
-
-        /* Main Container */
-        .auth-container {
-            background: var(--bg-glass);
-            backdrop-filter: blur(24px);
-            border: 1px solid var(--border-accent);
-            border-radius: 20px;
-            padding: 40px;
+        
+        /* ========================================
+           AUTH CONTAINER
+           ======================================== */
+        
+        .auth-wrapper {
             width: 100%;
             max-width: 450px;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            overflow: hidden;
         }
-
-        .auth-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--tanda-cyan), transparent);
-            animation: shimmer 3s ease-in-out infinite;
+        
+        .auth-container {
+            background: var(--bg-white);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border);
         }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
+        
         /* Header */
         .auth-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
-
-        /* Logo Styling */
+        
         .logo-container {
             margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
         }
-
+        
         .auth-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--tanda-cyan);
-            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3),
-                        0 0 0 1px rgba(255, 255, 255, 0.1);
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2), transparent 70%);
-            position: relative;
-            transition: var(--transition-normal);
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
         }
-
-        .auth-logo:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 12px 48px rgba(0, 255, 255, 0.4),
-                        0 0 0 1px rgba(255, 255, 255, 0.2);
-        }
-
-        .auth-logo::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--tanda-cyan), transparent, var(--tanda-cyan-light));
-            z-index: -1;
-            opacity: 0.6;
-            animation: logoRotate 8s linear infinite;
-        }
-
-        @keyframes logoRotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .auth-header h1 {
-            font-size: 28px;
+        
+        .auth-title {
+            font-size: 1.75rem;
             font-weight: 700;
+            color: var(--text-dark);
             margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
-
-        .auth-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.5;
+        
+        .auth-subtitle {
+            color: var(--text-medium);
+            font-size: 0.95rem;
         }
-
-        /* Tab System */
+        
+        /* ========================================
+           TABS
+           ======================================== */
+        
         .auth-tabs {
             display: flex;
             gap: 8px;
-            margin-bottom: 30px;
-            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 32px;
+            background: var(--bg-gray);
+            padding: 4px;
             border-radius: 12px;
-            padding: 6px;
         }
-
+        
         .auth-tab {
             flex: 1;
-            padding: 12px 20px;
-            text-align: center;
-            background: transparent;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
-            color: var(--text-secondary);
+            background: transparent;
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: var(--transition-normal);
-            font-weight: 500;
-            font-size: 14px;
-            position: relative;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
-
+        
         .auth-tab:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dark);
         }
-
+        
         .auth-tab.active {
-            color: var(--text-primary);
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
-            border: 1px solid var(--border-accent);
-            box-shadow: var(--shadow-glow);
+            background: var(--bg-white);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
         }
-
-        /* Form Styles */
+        
+        /* ========================================
+           FORMS
+           ======================================== */
+        
         .auth-form {
             display: none;
-            animation: fadeIn 0.5s ease-out;
         }
-
+        
         .auth-form.active {
             display: block;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        
         .form-group {
             margin-bottom: 20px;
-            position: relative;
         }
-
+        
         .form-group label {
             display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-dark);
             margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 14px;
         }
-
+        
         .input-container {
             position: relative;
         }
-
+        
         .input-field {
             width: 100%;
-            padding: 16px 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-primary);
+            padding: 14px 16px;
+            padding-right: 44px;
+            border: 1px solid var(--border);
             border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 16px;
-            transition: var(--transition-normal);
-            backdrop-filter: blur(10px);
+            font-size: 1rem;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            transition: all 0.2s;
         }
-
+        
         .input-field:focus {
             outline: none;
-            border-color: var(--tanda-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
-            background: rgba(0, 0, 0, 0.6);
+            border-color: var(--primary);
+            background: var(--bg-white);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
-
+        
         .input-field::placeholder {
-            color: var(--text-tertiary);
+            color: var(--text-light);
         }
-
+        
         .input-field.error {
             border-color: var(--error-color);
-            background: rgba(248, 113, 113, 0.1);
+            background: #fef2f2;
         }
-
+        
         .input-field.success {
             border-color: var(--success-color);
-            background: rgba(34, 213, 94, 0.1);
         }
-
-        /* Input Icons */
+        
         .input-icon {
             position: absolute;
-            right: 16px;
+            right: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--text-secondary);
+            color: var(--text-light);
             cursor: pointer;
-            transition: var(--transition-fast);
+            transition: color 0.2s;
         }
-
+        
         .input-icon:hover {
-            color: var(--tanda-cyan);
+            color: var(--text-medium);
         }
-
-        /* Error Messages */
+        
         .error-message {
             color: var(--error-color);
-            font-size: 12px;
+            font-size: 0.8rem;
             margin-top: 6px;
             display: none;
         }
-
-        .error-message.show {
+        
+        .error-message:not(:empty) {
             display: block;
-            animation: slideDown 0.3s ease-out;
         }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Password Strength */
-        .password-strength-container {
-            margin-top: 12px;
-            display: none;
-        }
-
-        .password-strength-container.show {
-            display: block;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        .password-strength-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .password-strength-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 2px;
-            transition: var(--transition-normal);
-            background: var(--error-color);
-        }
-
-        .password-strength-fill.weak { background: var(--error-color); }
-        .password-strength-fill.fair { background: var(--warning-color); }
-        .password-strength-fill.good { background: #60a5fa; }
-        .password-strength-fill.strong { background: var(--success-color); }
-
-        .password-strength-label {
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .password-requirements {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .requirement {
+        
+        /* Checkbox */
+        .checkbox-container {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 4px;
-        }
-
-        .requirement .icon {
-            width: 12px;
-            color: var(--error-color);
-        }
-
-        .requirement.met .icon {
-            color: var(--success-color);
-        }
-
-        /* Social Buttons */
-        .social-login {
-            margin: 30px 0;
-        }
-
-        .social-title {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
+            gap: 10px;
             margin-bottom: 20px;
-            position: relative;
         }
-
-        .social-title::before,
-        .social-title::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 30%;
-            height: 1px;
-            background: var(--border-primary);
+        
+        .checkbox-container input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
         }
-
-        .social-title::before { left: 0; }
-        .social-title::after { right: 0; }
-
-        .social-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+        
+        .checkbox-container label {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+            margin: 0;
         }
-
-        .social-btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 14px 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-primary);
+        
+        /* ========================================
+           BUTTONS
+           ======================================== */
+        
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
             border-radius: 12px;
-            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: var(--transition-normal);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-weight: 500;
-            backdrop-filter: blur(10px);
         }
-
-        .social-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--tanda-cyan);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .social-btn i {
-            font-size: 18px;
-        }
-
-        .social-btn.google { border-color: #db4437; }
-        .social-btn.google:hover { background: rgba(219, 68, 55, 0.1); border-color: #db4437; }
-
-        .social-btn.apple { border-color: #000; }
-        .social-btn.apple:hover { background: rgba(0, 0, 0, 0.2); border-color: #333; }
-
-        .social-btn.telegram { border-color: #0088cc; }
-        .social-btn.telegram:hover { background: rgba(0, 136, 204, 0.1); border-color: #0088cc; }
-
-        /* Primary Button */
-        .btn-primary {
-            width: 100%;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-dark));
-            border: none;
-            border-radius: 12px;
-            color: var(--bg-primary);
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: var(--transition-normal);
-            position: relative;
-            overflow: hidden;
-        }
-
+        
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow);
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
-
+        
         .btn-primary:disabled {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
             transform: none;
         }
-
-        .btn-primary.loading {
-            color: transparent;
-        }
-
-        .btn-primary.loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid var(--bg-primary);
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: loading 1s linear infinite;
-        }
-
-        @keyframes loading {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .btn-secondary:hover {
+            background: var(--bg-gray);
+            border-color: var(--text-light);
         }
-
-        /* Security Badge */
-        .security-badge {
+        
+        /* ========================================
+           SOCIAL LOGIN
+           ======================================== */
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        
+        .social-login {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .social-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-white);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .social-btn:hover {
+            background: var(--bg-light);
+            border-color: var(--text-light);
+        }
+        
+        .social-btn.google i { color: #ea4335; }
+        .social-btn.apple i { color: #000; }
+        .social-btn.telegram i { color: #0088cc; }
+        
+        /* ========================================
+           PASSWORD STRENGTH
+           ======================================== */
+        
+        .password-strength {
+            margin-top: 12px;
+            display: none;
+        }
+        .password-strength.show {
+            display: block;
+        }
+        
+        .strength-bar {
+            height: 4px;
+            background: var(--bg-gray);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        .strength-fill.very-weak { width: 10%; background: var(--error-color); }
+        .strength-fill.weak { width: 25%; background: var(--error-color); }
+        .strength-fill.fair { width: 50%; background: var(--warning-color); }
+        .strength-fill.good { width: 75%; background: var(--info-color); }
+        .strength-fill.strong { width: 100%; background: var(--success-color); }
+        
+        .strength-text {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+        
+        .password-requirements {
+            margin-top: 12px;
+            padding: 12px;
+            background: var(--bg-light);
+            border-radius: 8px;
+        }
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-medium);
+            margin-bottom: 4px;
+        }
+        
+        .requirement:last-child {
+            margin-bottom: 0;
+        }
+        
+        .requirement i {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+        
+        .requirement.met i {
+            color: var(--success-color);
+        }
+        
+        /* ========================================
+           LINKS & FOOTER
+           ======================================== */
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .auth-footer p {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 0.875rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+        
+        /* ========================================
+           NOTIFICATIONS
+           ======================================== */
+        
+        .notification {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--bg-accent);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border-accent);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s;
+            max-width: 400px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .notification.success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .notification.error {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        .notification.info {
+            background: var(--info-color);
+            color: white;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+            margin-left: auto;
+        }
+        
+        /* Security Badge */
+        .security-badge {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            background: #ecfdf5;
             color: var(--success-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .security-badge.show {
+            display: flex;
+        }
+        
+        /* ========================================
+           VERIFICATION FORMS
+           ======================================== */
+        
+        .verification-container,
+        .password-reset-container,
+        .two-factor-container {
+            display: none;
+        }
+        
+        .verification-container.active,
+        .password-reset-container.active,
+        .two-factor-container.active {
+            display: block;
+        }
+        
+        .code-input-container {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        
+        .code-input {
+            width: 48px;
+            height: 56px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            transition: all 0.2s;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-white);
+        }
+        
+        .resend-code {
+            text-align: center;
+            margin-top: 16px;
+        }
+        
+        .resend-code button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        .resend-code button:disabled {
+            color: var(--text-light);
+            cursor: not-allowed;
+        }
+        
+        /* Back button */
+        .back-to-login {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-medium);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        
+        .back-to-login:hover {
+            color: var(--primary);
+        }
+        
+        /* ========================================
+           HOME LINK
+           ======================================== */
+        
+        .home-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+        
+        .home-link a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-medium);
+            font-size: 0.9rem;
+        }
+        
+        .home-link a:hover {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 24px;
+                border-radius: 20px;
+            }
+            
+            .auth-title {
+                font-size: 1.5rem;
+            }
+            
+            .social-login {
+                flex-direction: column;
+            }
+            
+            .code-input {
+                width: 40px;
+                height: 48px;
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* ========================================
+           LOADING SPINNER
+           ======================================== */
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* ========================================
+           TRUST BADGES
+           ======================================== */
+        
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .trust-badge {
             display: flex;
             align-items: center;
             gap: 6px;
-            opacity: 0;
-            transition: var(--transition-normal);
-            z-index: 1000;
+            font-size: 0.8rem;
+            color: var(--text-medium);
         }
-
-        .security-badge.show {
-            opacity: 1;
-            animation: securityPulse 2s ease-in-out infinite alternate;
+        
+        .trust-badge i {
+            color: var(--success-color);
+            font-size: 0.9rem;
         }
-
-        @keyframes securityPulse {
-            0% { border-color: var(--border-accent); }
-            100% { border-color: var(--success-color); }
-        }
-
-        /* Demo Buttons */
-        .demo-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-primary);
-        }
-
-        .demo-title {
+        
+        .user-stats {
             text-align: center;
-            color: var(--text-secondary);
-            font-size: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #f0f9ff 100%);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 102, 255, 0.1);
+        }
+        
+        .user-stats p {
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .user-stats span {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        /* ========================================
+           ANIMATIONS
+           ======================================== */
+        
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-form.active {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .verification-container.active,
+        .password-reset-container.active,
+        .two-factor-container.active {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* Shake animation for errors */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .input-field.error {
+            animation: shake 0.5s ease-out;
+        }
+        
+        /* Success pulse animation */
+        @keyframes successPulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        
+        .input-field.success {
+            animation: successPulse 0.6s ease-out;
+        }
+        
+        /* Button loading animation */
+        .btn-primary.loading {
+            position: relative;
+            color: transparent;
+        }
+        
+        .btn-primary.loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        /* Tab switch animation */
+        .auth-tab {
+            transition: all 0.25s ease;
+        }
+        
+        .auth-tab.active {
+            transform: scale(1.02);
+        }
+        
+        /* Input focus animation */
+        .input-field {
+            transition: all 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .input-field:focus {
+            transform: translateY(-1px);
+        }
+        
+        /* Social button hover animation */
+        .social-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Code input animation */
+        .code-input {
+            transition: all 0.2s ease;
+        }
+        
+        .code-input:focus {
+            transform: scale(1.05);
+        }
+        
+        /* Notification slide animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
-        .demo-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 8px;
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
         }
-
-        .demo-btn {
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-primary);
-            border-radius: 8px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: var(--transition-fast);
-            font-size: 11px;
-            text-align: center;
+        
+        .notification.show {
+            animation: slideIn 0.3s ease-out forwards;
         }
-
-        .demo-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            border-color: var(--tanda-cyan);
+        
+        /* Success checkmark animation */
+        @keyframes checkmark {
+            0% { stroke-dashoffset: 100; }
+            100% { stroke-dashoffset: 0; }
         }
-
-        /* Responsive Design */
+        
+        /* Greeting based on time */
+        .greeting-text {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-bottom: 4px;
+        }
+        
+        /* Responsive trust badges */
         @media (max-width: 480px) {
-            .auth-container {
-                padding: 30px 25px;
-                max-width: 100%;
-                margin: 0 15px;
+            .trust-badges {
+                flex-wrap: wrap;
+                gap: 12px;
+                padding: 12px;
             }
-
-            .auth-header h1 {
-                font-size: 24px;
+            
+            .trust-badge {
+                font-size: 0.75rem;
             }
-
-            .auth-tabs {
-                flex-direction: column;
-                gap: 4px;
-            }
-
-            .social-buttons {
-                flex-direction: column;
-            }
-
-            .demo-buttons {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 6px;
-            }
-        }
-
-        /* Utility Classes */
-        .hidden { display: none !important; }
-        .text-center { text-align: center; }
-        .mb-2 { margin-bottom: 8px; }
-        .mb-3 { margin-bottom: 12px; }
-        .mb-4 { margin-bottom: 16px; }
-
-        /* Override navigation body padding for this page */
-        body {
-            padding-top: 0 !important;
         }
     </style>
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://latanda.online/auth-enhanced.html">
+    <meta property="og:title" content="Iniciar Sesion | La Tanda">
+    <meta property="og:description" content="Accede a tu cuenta de La Tanda. Tandas de ahorro, marketplace y comunidad.">
+    <meta property="og:image" content="https://latanda.online/assets/og-image.png">
+    <meta property="og:site_name" content="La Tanda">
+    <meta property="og:locale" content="es_HN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Iniciar Sesion | La Tanda">
+    <meta name="twitter:description" content="Accede a tu cuenta de La Tanda. Tandas de ahorro, marketplace y comunidad.">
+    <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
 </head>
 <body>
-    <script type="module" src="api-proxy-enhanced.js?v=3.0.5"></script>
+    <!-- Notification Container -->
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Mensaje</span>
+        <button class="notification-close" onclick="window.auth.removeNotification()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
     
-    <div class="auth-container">
-        <!-- Header -->
-        <div class="auth-header">
-            <div class="logo-container">
-                <img src="La Tanda logos (3).png" alt="La Tanda Logo" class="auth-logo">
+    <div class="auth-wrapper">
+        <div class="auth-container">
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo-container">
+                    <a href="/">
+                        <img loading="lazy" src="/assets/images/favicon-B3hxl31q.png" alt="La Tanda" class="auth-logo">
+                    </a>
+                </div>
+                <p class="greeting-text" id="greeting"></p>
+                <h1 class="auth-title" data-i18n="forms.welcome">Bienvenido a La Tanda</h1>
+                <p class="auth-subtitle">Inicia sesión o crea tu cuenta</p>
             </div>
-            <h1>La Tanda Web3</h1>
-            <p>Sistema de autenticación avanzado con seguridad empresarial</p>
             
-        </div>
-
-        <!-- Tab Navigation -->
-        <div class="auth-tabs">
-            <button class="auth-tab active" data-tab="login">
-                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-            </button>
-            <button class="auth-tab" data-tab="register">
-                <i class="fas fa-user-plus"></i> Crear Cuenta
-            </button>
-        </div>
-
-        <!-- Login Form -->
-        <form class="auth-form active" id="loginForm" data-form="login">
-            <div class="form-group">
-                <label for="loginEmail">Correo electrónico</label>
-                <div class="input-container">
-                    <input type="email" id="loginEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
-                    <i class="fas fa-envelope input-icon"></i>
-                </div>
-                <div class="error-message" id="loginEmailError"></div>
+            <!-- Security Badge (shown after successful actions) -->
+            <div class="security-badge" id="securityBadge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Conexión segura verificada</span>
             </div>
-
-            <div class="form-group">
-                <label for="loginPassword">Contraseña</label>
-                <div class="input-container">
-                    <input type="password" id="loginPassword" class="input-field" placeholder="Tu contraseña" autocomplete="current-password" required data-test-mode="true">
-                    <i class="fas fa-eye input-icon" id="toggleLoginPassword"></i>
-                </div>
-                <div class="error-message" id="loginPasswordError"></div>
+            
+            <!-- Tabs -->
+            
+            <!-- User Stats -->
+            <div class="user-stats" id="userStats">
+                <p><span id="statUsers">15,000+</span> hondureños ya ahorran con La Tanda</p>
             </div>
+            
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <i class="fas fa-lock"></i>
+                    <span>SSL Seguro</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Datos Protegidos</span>
+                </div>
+                <div class="trust-badge">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Verificado</span>
+                </div>
+            </div>
+            
+            <div class="auth-tabs" id="authTabs">
+                <button class="auth-tab active" data-tab="login">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar
+                </button>
+                <button class="auth-tab" data-tab="register">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </button>
+            </div>
+            
+            <!-- Login Form -->
+            <form class="auth-form active" id="loginForm" data-form="login">
+                <div class="form-group">
+                    <label for="loginEmail" data-i18n="forms.email">Correo electrónico</label>
+                    <div class="input-container">
+                        <input type="email" id="loginEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
+                        <i class="fas fa-envelope input-icon"></i>
+                    </div>
+                    <div class="error-message" id="loginEmailError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword" data-i18n="forms.password">Contraseña</label>
+                    <div class="input-container">
+                        <input type="password" autocomplete="current-password" id="loginPassword" class="input-field" placeholder="Tu contraseña" autocomplete="current-password" required>
+                        <i class="fas fa-eye input-icon" id="toggleLoginPassword"></i>
+                    </div>
+                    <div class="error-message" id="loginPasswordError"></div>
+                </div>
+                
+                <a href="#" class="forgot-password" onclick="window.auth.showPasswordResetForm(); return false;">
+                    ¿Olvidaste tu contraseña?
+                </a>
+                
+                <button type="submit" class="btn-primary" id="loginSubmit">
+                    <span data-i18n="forms.login">Iniciar Sesión</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                
+                <div class="divider">o continuar con</div>
 
-            <button type="submit" class="btn-primary" id="loginSubmit">
-                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-            </button>
-
-            <div class="social-login">
-                <div class="social-title">O continúa con</div>
-                <div class="social-buttons">
-                    <button type="button" class="social-btn google" onclick="loginWithProvider('google')">
+                <div class="social-login">
+                    <button type="button" class="social-btn google" id="googleLoginBtn" onclick="handleGoogleClick()">
                         <i class="fab fa-google"></i> Google
                     </button>
                     <button type="button" class="social-btn apple" onclick="loginWithProvider('apple')">
                         <i class="fab fa-apple"></i> Apple
                     </button>
-                    <button type="button" class="social-btn telegram" onclick="loginWithProvider('telegram')">
-                        <i class="fab fa-telegram"></i> Telegram
-                    </button>
                 </div>
-            </div>
-
-            <div class="demo-section">
-                <div class="demo-title">Acceso de desarrollo</div>
-                <div class="demo-buttons">
-                    <button type="button" class="demo-btn" onclick="adminAccess()">🔧 Admin</button>
-                    <button type="button" class="demo-btn" onclick="demoAccess()">🎮 Demo</button>
-                    <button type="button" class="demo-btn" onclick="testDirectAccess()">🔍 Test</button>
-                    <button type="button" class="demo-btn" onclick="directLogin()">🚀 Direct</button>
-                    <button type="button" class="demo-btn" onclick="openTestPage()">🧪 API</button>
-                    <button type="button" class="demo-btn" onclick="clearAuthData()">🔄 Reset</button>
+            </form>
+            
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm" data-form="register">
+                <div class="form-group">
+                    <label for="registerName" data-i18n="forms.name">Nombre completo</label>
+                    <div class="input-container">
+                        <input type="text" id="registerName" class="input-field" placeholder="Tu nombre" autocomplete="name" required>
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                    <div class="error-message" id="registerNameError"></div>
                 </div>
-            </div>
-        </form>
-
-        <!-- Register Form -->
-        <form class="auth-form" id="registerForm" data-form="register">
-            <div class="form-group">
-                <label for="registerName">Nombre completo</label>
-                <div class="input-container">
-                    <input type="text" id="registerName" class="input-field" placeholder="Tu nombre completo" autocomplete="name" required>
-                    <i class="fas fa-user input-icon"></i>
-                </div>
-                <div class="error-message" id="registerNameError"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="registerEmail">Correo electrónico</label>
-                <div class="input-container">
-                    <input type="email" id="registerEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
-                    <i class="fas fa-envelope input-icon"></i>
-                </div>
-                <div class="error-message" id="registerEmailError"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="registerPassword">Contraseña</label>
-                <div class="input-container">
-                    <input type="password" id="registerPassword" class="input-field" placeholder="Crea una contraseña segura" autocomplete="new-password" required>
-                    <i class="fas fa-eye input-icon" id="toggleRegisterPassword"></i>
-                </div>
-                <div class="error-message" id="registerPasswordError"></div>
                 
-                <div class="password-strength-container" id="passwordStrengthContainer">
-                    <div class="password-strength-bar">
-                        <div class="password-strength-fill" id="passwordStrengthFill"></div>
+                <div class="form-group">
+                    <label for="registerEmail" data-i18n="forms.email">Correo electrónico</label>
+                    <div class="input-container">
+                        <input type="email" id="registerEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
+                        <i class="fas fa-envelope input-icon"></i>
                     </div>
-                    <div class="password-strength-label" id="passwordStrengthLabel">Fortaleza: Débil</div>
-                    <div class="password-requirements">
-                        <div class="requirement" id="lengthReq">
-                            <i class="fas fa-times icon"></i>
-                            <span>Mínimo 8 caracteres</span>
+                    <div class="error-message" id="registerEmailError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="registerPassword" data-i18n="forms.password">Contraseña</label>
+                    <div class="input-container">
+                        <input type="password" autocomplete="new-password" id="registerPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
+                        <i class="fas fa-eye input-icon" id="toggleRegisterPassword"></i>
+                    </div>
+                    <div class="error-message" id="registerPasswordError"></div>
+                    
+                    <div class="password-strength" id="passwordStrengthContainer">
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="passwordStrengthFill"></div>
                         </div>
-                        <div class="requirement" id="upperReq">
-                            <i class="fas fa-times icon"></i>
-                            <span>Una letra mayúscula</span>
-                        </div>
-                        <div class="requirement" id="lowerReq">
-                            <i class="fas fa-times icon"></i>
-                            <span>Una letra minúscula</span>
-                        </div>
-                        <div class="requirement" id="numberReq">
-                            <i class="fas fa-times icon"></i>
-                            <span>Un número</span>
-                        </div>
-                        <div class="requirement" id="specialReq">
-                            <i class="fas fa-times icon"></i>
-                            <span>Un carácter especial</span>
+                        <div class="strength-text" id="passwordStrengthLabel">Ingresa una contraseña</div>
+
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="requirement" id="lengthReq">
+                                <i class="fas fa-times icon"></i> Mínimo 8 caracteres
+                            </div>
+                            <div class="requirement" id="upperReq">
+                                <i class="fas fa-times icon"></i> Una mayúscula
+                            </div>
+                            <div class="requirement" id="lowerReq">
+                                <i class="fas fa-times icon"></i> Una minúscula
+                            </div>
+                            <div class="requirement" id="numberReq">
+                                <i class="fas fa-times icon"></i> Un número
+                            </div>
+                            <div class="requirement" id="specialReq">
+                                <i class="fas fa-times icon"></i> Un símbolo
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <div class="form-group">
+                    <label for="registerConfirmPassword" data-i18n="forms.confirm_password">Confirmar contraseña</label>
+                    <div class="input-container">
+                        <input type="password" autocomplete="new-password" id="registerConfirmPassword" class="input-field" placeholder="Repite tu contraseña" required>
+                        <i class="fas fa-eye input-icon" id="toggleRegisterConfirmPassword"></i>
+                    </div>
+                    <div class="error-message" id="registerConfirmPasswordError"></div>
+                </div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="acceptTerms" required>
+                    <label for="acceptTerms">
+                        Acepto los <a href="#" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="registerSubmit">
+                    <span data-i18n="forms.create_account">Crear Cuenta</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                
+                <div class="divider">o registrarse con</div>
 
-            <button type="submit" class="btn-primary" id="registerSubmit">
-                <i class="fas fa-user-plus"></i> Crear Cuenta
-            </button>
-
-            <div class="social-login">
-                <div class="social-title">O regístrate con</div>
-                <div class="social-buttons">
-                    <button type="button" class="social-btn google" onclick="registerWithProvider('google')">
+                <div class="social-login">
+                    <button type="button" class="social-btn google" id="googleRegisterBtn" onclick="handleGoogleClick()">
                         <i class="fab fa-google"></i> Google
                     </button>
                     <button type="button" class="social-btn apple" onclick="registerWithProvider('apple')">
                         <i class="fab fa-apple"></i> Apple
                     </button>
-                    <button type="button" class="social-btn telegram" onclick="registerWithProvider('telegram')">
-                        <i class="fab fa-telegram"></i> Telegram
-                    </button>
                 </div>
+            </form>
+            
+            <!-- Email Verification Form -->
+            <div class="verification-container" id="emailVerificationContainer">
+                
+                <div class="auth-header">
+                    <h2 class="auth-title" data-i18n="forms.verify_email">Verifica tu correo</h2>
+                    <p class="auth-subtitle">Ingresa el código de 6 dígitos que enviamos a tu email</p>
+                </div>
+                
+                <form id="emailVerificationForm">
+                    <p id="verifyEmailDisplay" style="color: var(--tanda-cyan); margin-bottom: 16px; font-size: 0.95rem;"></p>
+                    <div class="code-input-container">
+                        <input type="text" class="code-input" id="emailCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="emailTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
+                    <button type="submit" class="btn-primary" id="verifyEmailBtn">
+                        <span>Verificar Código</span>
+                    </button>
+
+                    <div class="resend-code">
+                        <p>¿No recibiste el código?</p>
+                        <button type="button" id="resendVerificationCode">Reenviar código</button>
+                    </div>
+                </form>
             </div>
-        </form>
-    </div>
+            
+            <!-- Password Reset Request Form -->
+            <div class="password-reset-container" id="passwordResetRequestContainer">
+                <button class="back-to-login" onclick="window.auth.showLoginForm()">
+                    <i class="fas fa-arrow-left"></i> Volver al login
+                </button>
+                
+                <div class="auth-header">
+                    <h2 class="auth-title" data-i18n="forms.recover_password">Recuperar contraseña</h2>
+                    <p class="auth-subtitle">Ingresa tu correo y te enviaremos un código</p>
+                </div>
+                
+                <form id="passwordResetRequestForm">
+                    <div class="form-group">
+                        <label for="resetEmail">Correo electrónico</label>
+                        <div class="input-container">
+                            <input type="email" id="resetEmail" class="input-field" placeholder="correo@ejemplo.com" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                        </div>
+                        <div class="error-message" id="resetEmailError"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="resetRequestBtn">
+                        <i class="fas fa-paper-plane"></i> <span data-i18n="forms.send_code">Enviar Código</span>
+                    </button>
+                </form>
+            </div>
 
-    <!-- Security Badge -->
-    <div class="security-badge" id="securityBadge">
-        <i class="fas fa-shield-alt"></i>
-        <span>JWT Seguro</span>
-    </div>
+            <!-- Password Reset Verify Form -->
+            <div class="password-reset-container" id="passwordResetVerifyContainer">
+                <button class="back-to-login" onclick="window.auth.showPasswordResetForm()">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+                
+                <div class="auth-header">
+                    <h2 class="auth-title" data-i18n="forms.enter_code">Ingresa el código</h2>
+                    <p class="auth-subtitle">Revisa tu correo electrónico</p>
+                </div>
+                
+                <form id="passwordResetVerifyForm">
+                    <div class="code-input-container" id="resetCodeInputs">
+                        <input type="text" class="code-input" id="resetCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                    </div>
 
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="resetTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
+                    <button type="submit" class="btn-primary" id="verifyResetBtn">
+                        <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Password Reset New Password Form -->
+            <div class="password-reset-container" id="passwordResetNewPasswordContainer">
+                <div class="auth-header">
+                    <h2 class="auth-title" data-i18n="forms.new_password">Nueva contraseña</h2>
+                    <p class="auth-subtitle">Crea una contraseña segura</p>
+                </div>
+                
+                <form id="passwordResetNewPasswordForm">
+                    <div class="form-group">
+                        <label for="newPassword" data-i18n="forms.new_password">Nueva contraseña</label>
+                        <div class="input-container">
+                            <input type="password" autocomplete="new-password" id="newPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
+                            <i class="fas fa-eye input-icon" id="toggleNewPassword"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmNewPassword" data-i18n="forms.confirm_password">Confirmar contraseña</label>
+                        <div class="input-container">
+                            <input type="password" autocomplete="new-password" id="confirmNewPassword" class="input-field" placeholder="Repite la contraseña" required>
+                            <i class="fas fa-eye input-icon" id="toggleConfirmNewPassword"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="resetPasswordBtn">
+                        <i class="fas fa-save"></i> <span>Cambiar Contraseña</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Two Factor Form -->
+            <div class="two-factor-container" id="twoFactorContainer">
+                <button class="back-to-login" onclick="window.auth.showLoginForm()">
+                    <i class="fas fa-arrow-left"></i> Volver al login
+                </button>
+                
+                <div class="auth-header">
+                    <h2 class="auth-title" data-i18n="forms.two_factor">Verificación 2FA</h2>
+                    <p class="auth-subtitle">Ingresa el código de tu aplicación autenticadora</p>
+                </div>
+                
+                <form id="twoFactorForm">
+                    <div class="code-input-container" id="twoFactorCodeInputs">
+                        <input type="text" class="code-input" id="tfaCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="tfaTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+
+                    <button type="submit" class="btn-primary" id="verify2FABtn">
+                        <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Home Link -->
+            <div class="home-link">
+                <a href="/">
+                    <i class="fas fa-home"></i> Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+    <script>
+        // H1 FIX: Safe localStorage for Safari Private Browsing
+        window._safeSetItem = function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} };
+        window._safeGetItem = function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } };
+    </script>
     <script>
         /**
          * Enhanced Authentication System
@@ -819,7 +1258,7 @@
         class EnhancedAuth {
             constructor() {
                 // Configuration
-                this.apiBaseURL = 'https://api.latanda.online';
+                this.apiBaseURL = 'https://latanda.online';
                 this.maxAttempts = 5;
                 this.windowMs = 15 * 60 * 1000; // 15 minutes
                 this.progressiveDelayMs = [0, 1000, 2000, 5000, 10000, 30000];
@@ -829,6 +1268,12 @@
                 this.loginAttempts = this.getStoredAttempts();
                 this.currentUser = null;
                 this.tokenRefreshTimer = null;
+                
+                // Referral code from URL
+                this.referralCode = new URLSearchParams(window.location.search).get("ref") || null;
+                if (this.referralCode) {
+                    console.log("[REFERRAL] Code detected:", this.referralCode);
+                }
                 
                 // Bind methods to preserve context
                 this.handleLogin = this.handleLogin.bind(this);
@@ -847,6 +1292,19 @@
                     this.preloadCredentials();
                     
                     console.log('🔐 Enhanced Auth System initialized');
+                    
+                    // Handle URL parameter for register tab
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('register') === 'true') {
+                        this.switchTab('register');
+                    }
+                    
+                    // Handle redirect parameter from invitation or other pages
+                    const redirectParam = urlParams.get("redirect");
+                    if (redirectParam) {
+                        _safeSetItem("redirect_after_auth", redirectParam);
+                        console.log("[AUTH] Redirect after auth set to:", redirectParam);
+                    }
                 } catch (error) {
                     console.error('❌ Auth initialization error:', error);
                 }
@@ -872,7 +1330,15 @@
                 document.getElementById('toggleRegisterPassword').addEventListener('click', () => {
                     this.togglePasswordVisibility('registerPassword', 'toggleRegisterPassword');
                 });
+                document.getElementById('toggleRegisterConfirmPassword').addEventListener('click', () => {
+                    this.togglePasswordVisibility('registerConfirmPassword', 'toggleRegisterConfirmPassword');
+                });
 
+
+                // Password strength indicator
+                document.getElementById("registerPassword").addEventListener("input", (e) => {
+                    this.updatePasswordStrength(e.target.value);
+                });
                 // Real-time validation
                 document.getElementById('loginEmail').addEventListener('blur', () => this.validateField('loginEmail'));
                 document.getElementById('registerEmail').addEventListener('blur', () => this.validateField('registerEmail'));
@@ -884,12 +1350,28 @@
                     this.validateField('registerPassword');
                 });
 
+                // Real-time password match validation
+                document.getElementById('registerConfirmPassword').addEventListener('input', () => {
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                    const errorElement = document.getElementById('registerConfirmPasswordError');
+                    const confirmField = document.getElementById('registerConfirmPassword');
+
+                    if (confirmPassword && password !== confirmPassword) {
+                        errorElement.textContent = 'Las contraseñas no coinciden';
+                        confirmField.classList.add('error');
+                    } else {
+                        errorElement.textContent = '';
+                        confirmField.classList.remove('error');
+                    }
+                });
+
                 // Auto-login detection is handled in init() - removed duplicate call
             }
 
             // Authentication Status Check
             async checkAuthStatus() {
-                const token = localStorage.getItem('latanda_auth_token');
+                const token = _safeGetItem('auth_token');
                 console.log('🔍 Checking auth status, token:', token ? 'exists' : 'none');
                 
                 if (!token) {
@@ -903,7 +1385,7 @@
                 const fromRedirect = urlParams.get('from_redirect');
                 if (fromRedirect) {
                     console.log('⚠️ Detected redirect loop, clearing token');
-                    localStorage.removeItem('latanda_auth_token');
+                    localStorage.removeItem('auth_token');
                     this.showSecurityBadge(false);
                     // Remove the parameter from URL
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -922,103 +1404,62 @@
                     }
                     
                     this.showSecurityBadge(true);
-                    
-                    // TEMPORARY FIX: Show manual continue button instead of auto-redirect
-                    const redirectAfterAuth = localStorage.getItem('redirect_after_auth');
-                    const targetUrl = redirectAfterAuth || payload.dashboard_url || 'home-dashboard.html';
-                    console.log(`✅ Token validated, showing continue button for: ${targetUrl}`);
-                    this.showContinueToDashboard(targetUrl);
-                    
+
+                    // Only auto-redirect if we're on the login/auth page
+                    const currentPage = window.location.pathname;
+                    const isAuthPage = currentPage.includes('auth') || currentPage.includes('login') || currentPage === '/' || currentPage.endsWith('index.html');
+
+                    if (isAuthPage) {
+                        const redirectAfterAuth = _safeGetItem('redirect_after_auth');
+                        const targetUrl = redirectAfterAuth || payload.dashboard_url || 'home-dashboard.html';
+                        console.log('[AUTH] On auth page with valid token, auto-redirecting to:', targetUrl);
+
+                        // Clear redirect intention
+                        localStorage.removeItem('redirect_after_auth');
+
+                        // Redirect after short delay
+                        setTimeout(() => {
+                            window.location.href = targetUrl;
+                        }, 500);
+                    } else {
+                        console.log('[AUTH] Valid token found on protected page:', currentPage);
+                    }
+
                     return true;
                 }
 
                 // Invalid token - remove it
                 console.log('❌ Invalid token, removing');
-                localStorage.removeItem('latanda_auth_token');
+                localStorage.removeItem('auth_token');
                 this.showSecurityBadge(false);
                 return false;
             }
 
             // JWT Token Validation
             isValidToken(token) {
+                if (!token || token.length < 10) return false;
                 try {
-                    console.log('🔍 Validating token:', token);
-                    
-                    // For development, accept simple tokens from basic API proxy
-                    if (token && (token.startsWith('admin_token_') || token.startsWith('demo_token_'))) {
-                        console.log('✅ Development token accepted (basic proxy)');
-                        return true;
-                    }
-                    
                     const parts = token.split('.');
-                    if (parts.length !== 3) {
-                        console.log('❌ Token does not have 3 parts');
-                        return false;
-                    }
-
-                    const header = JSON.parse(atob(parts[0]));
+                    if (parts.length !== 3) return false;
                     const payload = JSON.parse(atob(parts[1]));
-
-                    console.log('📦 Token header:', header);
-                    console.log('📦 Token payload:', payload);
-
-                    // Check required header fields
-                    if (header.alg !== 'HS256' || header.typ !== 'JWT') {
-                        console.log('❌ Invalid header');
-                        return false;
-                    }
-
-                    // Check required payload fields
-                    const requiredFields = ['user_id', 'email', 'role', 'permissions', 'iss', 'aud', 'iat', 'exp'];
-                    for (const field of requiredFields) {
-                        if (!payload.hasOwnProperty(field)) {
-                            console.log(`❌ Missing required field: ${field}`);
-                            return false;
-                        }
-                    }
-
-                    // Check expiration (skip for development tokens)
-                    if (!token.startsWith('admin_token_') && !token.startsWith('demo_token_')) {
+                    if (payload.exp) {
                         const now = Math.floor(Date.now() / 1000);
-                        if (payload.exp <= now) {
-                            console.log('❌ Token expired');
-                            return false;
-                        }
-                    } else {
-                        console.log('🔧 Skipping expiration check for development token');
+                        if (payload.exp <= now) return false;
                     }
-
-                    // Check issuer and audience
-                    if (payload.iss !== 'latanda.online' || payload.aud !== 'latanda-web-app') {
-                        console.log('❌ Invalid issuer or audience');
-                        return false;
-                    }
-
-                    console.log('✅ Valid JWT token');
                     return true;
-                } catch (error) {
-                    console.error('❌ Token validation error:', error);
+                } catch (e) {
                     return false;
                 }
             }
 
             decodeToken(token) {
                 try {
-                    // Handle basic development tokens
-                    if (token && (token.startsWith('admin_token_') || token.startsWith('demo_token_'))) {
-                        return {
-                            user_id: token.startsWith('admin_token_') ? 'admin_001' : 'demo_001',
-                            email: token.startsWith('admin_token_') ? 'admin@latanda.online' : 'demo@latanda.online',
-                            role: token.startsWith('admin_token_') ? 'administrator' : 'demo_user',
-                            dashboard_url: '/home-dashboard.html',
-                            exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 8 hours from now
-                        };
-                    }
-                    
+                    // JWT decode only - no simple token support
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     return payload;
                 } catch (error) {
-                    console.error('Token decode error:', error);
+                    console.error('[ERROR] Token decode error:', error);
+                    // Return null for invalid tokens
                     return null;
                 }
             }
@@ -1043,7 +1484,7 @@
             // Token Refresh
             async refreshToken() {
                 try {
-                    const currentToken = localStorage.getItem('latanda_auth_token');
+                    const currentToken = _safeGetItem('auth_token');
                     if (!currentToken) throw new Error('No token to refresh');
 
                     const response = await this.makeAuthenticatedRequest('/auth/refresh', {
@@ -1055,7 +1496,7 @@
 
                     if (response.success && (response.data.auth_token || response.data.token)) {
                         const token = response.data.auth_token || response.data.token;
-                        localStorage.setItem('latanda_auth_token', token);
+                        _safeSetItem('auth_token', token);
                         this.scheduleTokenRefresh();
                         return true;
                     }
@@ -1063,14 +1504,14 @@
                     throw new Error('Token refresh failed');
                 } catch (error) {
                     console.error('Token refresh error:', error);
-                    localStorage.removeItem('latanda_auth_token');
+                    localStorage.removeItem('auth_token');
                     this.showError('Sesión expirada. Por favor, inicia sesión nuevamente.');
                     return false;
                 }
             }
 
             scheduleTokenRefresh() {
-                const token = localStorage.getItem('latanda_auth_token');
+                const token = _safeGetItem('auth_token');
                 if (!token || !this.isValidToken(token)) return;
 
                 const payload = this.decodeToken(token);
@@ -1156,92 +1597,109 @@
                 try {
                     const sanitizedData = {
                         email: this.sanitizeInput(email),
-                        password: password // Don't sanitize password
+                        password: password, // Don.t sanitize password
+                        referral_code: this.referralCode || undefined
                     };
 
-                    // Test credentials for demo (local authentication)
-                    const testCredentials = {
-                        'admin@latanda.online': { password: 'admin123', role: 'admin', name: 'Admin Usuario' },
-                        'user@latanda.online': { password: 'user123', role: 'user', name: 'Usuario Demo' },
-                        'demo@latanda.online': { password: 'demo123', role: 'user', name: 'Demo Usuario' },
-                        'test@latanda.online': { password: 'test123', role: 'user', name: 'Test Usuario' },
-                        'ebanksnigel@gmail.com': { password: 'w3JlvMIvkVFaA4DT', role: 'admin', name: 'Nigel Banks' },
-                    };
-                    
-                    const user = testCredentials[sanitizedData.email.toLowerCase()];
-                    
-                    // Debug logging
-                    console.log('🔍 Login attempt:', {
-                        email: sanitizedData.email.toLowerCase(),
-                        actualPassword: password,
-                        passwordLength: password.length,
-                        userFound: !!user,
-                        expectedPassword: user ? user.password : 'N/A',
-                        passwordMatch: user ? (user.password === password) : false
+                    console.log('[API] Calling REAL API at:', this.apiBaseURL + '/api/auth/login');
+                    console.log('[API] Email:', sanitizedData.email);
+
+                    const response = await fetch(this.apiBaseURL + '/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: sanitizedData.email,
+                            password: password
+                        })
                     });
-                    
-                    console.log('🔍 Credential validation:');
-                    console.log('  - User object:', user);
-                    console.log('  - Password comparison:', user ? `"${user.password}" === "${password}"` : 'N/A');
-                    console.log('  - Match result:', user && user.password === password);
-                    
-                    // Skip API delay for faster login
-                    console.log('⚡ Skipping API delay for faster login');
-                    
-                    if (user && user.password === password) {
-                        console.log('🎉 Authentication successful!');
-                        // Successful authentication - Generate proper JWT token
-                        const tokenPayload = {
-                            sub: Date.now().toString(),
-                            email: sanitizedData.email,
-                            role: user.role,
-                            exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 8 hours
-                        };
-                        const authToken = this.generateSimulationJWT(tokenPayload);
-                        const userData = {
-                            id: Date.now(),
-                            email: sanitizedData.email,
-                            name: user.name,
-                            role: user.role,
-                            verified: true,
-                            dashboard_url: 'home-dashboard.html'
-                        };
-                        
-                        // Store authentication data
-                        localStorage.setItem('latanda_auth_token', authToken);
-                        localStorage.setItem('latanda_user', JSON.stringify(userData));
-                        localStorage.removeItem('auth_redirect_in_progress');
-                        
-                        this.resetLoginAttempts();
-                        this.showSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
-                        this.showSecurityBadge(true);
-                        
-                        setTimeout(() => {
-                            // Check for stored redirect intention
-                            const redirectAfterAuth = localStorage.getItem('redirect_after_auth');
-                            const dashboardUrl = redirectAfterAuth || userData.dashboard_url || 'home-dashboard.html';
-                            
-                            // Clear the redirect intention
-                            localStorage.removeItem('redirect_after_auth');
-                            
-                            const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
-                            console.log(`🎯 Login: Redirecting to intended destination: ${redirectUrl}`);
-                            window.location.href = redirectUrl;
-                        }, 1500);
-                    } else {
-                        console.log('❌ Authentication failed - credentials do not match');
-                        throw new Error('Credenciales incorrectas');
+
+                    const result = await response.json();
+                    console.log('[API] Response:', result);
+
+                    if (!response.ok || !result.success) {
+                        // Check if account locked (429)
+                        if (response.status === 429) {
+                            const msg = result.data?.error?.message || 'Cuenta bloqueada temporalmente por demasiados intentos fallidos.';
+                            this.setLoadingState(submitBtn, false);
+                            this.showError(msg);
+                            return;
+                        }
+                        // Check if email not verified
+                        if (result.data?.error?.details?.code === 'EMAIL_NOT_VERIFIED') {
+                            this.setLoadingState(submitBtn, false);
+                            this.showError('Debes verificar tu correo electrónico');
+                            // Send new verification code and show form
+                            fetch(this.apiBaseURL + '/api/auth/send-verification', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: sanitizedData.email })
+                            }).then(() => {
+                                setTimeout(() => this.showEmailVerificationForm(sanitizedData.email), 1500);
+                            });
+                            return;
+                        }
+                        throw new Error(result.data?.error?.message || 'Credenciales incorrectas');
                     }
+
+                    // 🔐 PHASE 1: Check if 2FA is required
+                    if (result.data.two_factor_required) {
+                        console.log('[2FA] Two-factor authentication required');
+                        this.showSuccess('Código 2FA enviado a tu email');
+
+                        // Store email for 2FA verification
+                        sessionStorage.setItem('2fa_email', sanitizedData.email);
+
+                        // Reset button and show 2FA form
+                        this.setLoadingState(submitBtn, false);
+                        setTimeout(() => {
+                            this.show2FAForm();
+                        }, 1000);
+                        return; // Stop here, don't proceed to dashboard
+                    }
+
+                    // API returned success (no 2FA required)
+                    const userData = result.data.user;
+                    const authToken = result.data.auth_token || result.data.token;
+
+                    console.log('[API] Authentication successful! User:', userData);
+
+                    // Store authentication data
+                    _safeSetItem('auth_token', authToken);
+                    _safeSetItem('latanda_user', JSON.stringify(userData));
+                    localStorage.removeItem('auth_redirect_in_progress');
+
+                    this.resetLoginAttempts();
+                    this.showSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
+                    this.showSecurityBadge(true);
+
+                    // Check for duplicates before redirecting
+                    const self = this;
+                    setTimeout(async () => {
+                        const duplicates = await self.checkForDuplicates(userData, authToken);
+
+                        if (duplicates.length > 0) {
+                            await self.showDuplicateAccountsPopup(duplicates, userData, authToken);
+                        }
+
+                        // Proceed with redirect
+                        const redirectAfterAuth = _safeGetItem('redirect_after_auth');
+                        const dashboardUrl = redirectAfterAuth || userData.dashboard_url || 'home-dashboard.html';
+                        localStorage.removeItem('redirect_after_auth');
+                        const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
+                        console.log('[API] Redirecting to:', redirectUrl);
+                        window.location.href = redirectUrl;
+                    }, 1500);
                 } catch (error) {
-                    console.error('❌ Login error:', error);
-                    console.log('🔍 Error details:', {
+                    console.log('[ERROR] Error details:', {
                         message: error.message,
                         stack: error.stack
                     });
                     this.incrementLoginAttempts();
                     this.showError(this.formatAuthError(error.message));
                 } finally {
-                    console.log('🔄 Login process completed, resetting button state');
+                    console.log('[CLEANUP] Login process completed, resetting button state');
                     this.setLoadingState(submitBtn, false);
                 }
             }
@@ -1253,10 +1711,18 @@
                 const name = document.getElementById('registerName').value.trim();
                 const email = document.getElementById('registerEmail').value.trim();
                 const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
 
                 // Validate all fields
-                if (!this.validateName(name)) return;
-                if (!this.validateEmail(email)) return;
+                if (!this.validateName(name)) { this.showFieldError("registerName", "El nombre solo puede contener letras y espacios (2-50 caracteres)"); return; }
+                if (!this.validateEmail(email)) { this.showFieldError("registerEmail", "Por favor ingresa un email válido"); return; }
+
+                // Check if passwords match
+                if (password !== confirmPassword) {
+                    document.getElementById('registerConfirmPasswordError').textContent = 'Las contraseñas no coinciden';
+                    document.getElementById('registerConfirmPassword').classList.add('error');
+                    return;
+                }
                 if (!this.validatePassword(password)) return;
 
                 const submitBtn = document.getElementById('registerSubmit');
@@ -1266,35 +1732,60 @@
                     const sanitizedData = {
                         name: this.sanitizeInput(name),
                         email: this.sanitizeInput(email),
-                        password: password // Don't sanitize password
+                        password: password, // Don.t sanitize password
+                        referral_code: this.referralCode || undefined
                     };
 
-                    const response = await this.makeAuthenticatedRequest('/auth/register', {
+                    const response = await this.makeAuthenticatedRequest('/api/auth/register', {
                         method: 'POST',
                         body: JSON.stringify(sanitizedData)
                     });
 
                     if (response.success && (response.data.auth_token || response.data.token)) {
                         const token = response.data.auth_token || response.data.token;
-                        localStorage.setItem('latanda_auth_token', token);
-                        localStorage.removeItem('auth_redirect_in_progress'); // Clear any redirect flags
-                        this.showSuccess('¡Cuenta creada exitosamente! Redirigiendo...');
+                        const userEmail = sanitizedData.email;
+                        // Store user ID for email verification
+                        this.pendingVerificationUserId = response.data.user?.id || response.data.userId;
+
+                        // Store token temporarily (user still needs to verify email)
+                        _safeSetItem('auth_token', token);
+                        localStorage.removeItem('auth_redirect_in_progress');
+
+                        this.showSuccess('¡Cuenta creada exitosamente!');
                         this.showSecurityBadge(true);
-                        
-                        setTimeout(() => {
-                            // Check for stored redirect intention
-                            const redirectAfterAuth = localStorage.getItem('redirect_after_auth');
-                            const dashboardUrl = redirectAfterAuth || response.data.dashboard_url || 'home-dashboard.html';
-                            
-                            // Clear the redirect intention
-                            localStorage.removeItem('redirect_after_auth');
-                            
-                            const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
-                            console.log(`🎯 Register: Redirecting to intended destination: ${redirectUrl}`);
-                            window.location.href = redirectUrl;
-                        }, 1500);
+
+                        // 📧 PHASE 1: Send email verification
+                        console.log('[EMAIL VERIFICATION] Sending verification code to:', userEmail);
+
+                        // Call API to send verification email
+                        fetch(`${this.apiBaseURL}/api/auth/send-verification`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: userEmail })
+                        })
+                        .then(res => res.json())
+                        .then(verifyResult => {
+                            console.log('[EMAIL VERIFICATION] Verification code sent:', verifyResult);
+
+                            setTimeout(() => {
+                                // Show email verification form
+                                this.showEmailVerificationForm(userEmail);
+                            }, 1000);
+                        })
+                        .catch(err => {
+                            console.error('[EMAIL VERIFICATION] Error sending verification:', err);
+                            // Even if email fails, still show the form (user can resend)
+                            this.showEmailVerificationForm(userEmail);
+                        });
+
                     } else {
-                        throw new Error(response.error?.message || 'Error al crear la cuenta');
+                        // Check for specific errors
+                        const errorMsg = response.data?.error?.message || response.error?.message || response.message || 'Error al crear la cuenta';
+                        if (errorMsg.includes('ya está registrado')) {
+                            this.showFieldError('registerEmail', 'Este email ya está registrado. ¿Ya tienes cuenta?');
+                            return;
+                        }
+                        throw new Error(errorMsg);
                     }
                 } catch (error) {
                     console.error('Registration error:', error);
@@ -1309,7 +1800,7 @@
                 // Set up real-time input sanitization
                 document.querySelectorAll('.input-field').forEach(input => {
                     input.addEventListener('input', (e) => {
-                        if (e.target.type !== 'password') {
+                        if (e.target.type !== 'password' && e.target.id !== 'registerName') {
                             e.target.value = this.sanitizeInput(e.target.value);
                         }
                     });
@@ -1344,6 +1835,11 @@
                 return isValid;
             }
 
+            sanitizeInput(str) {
+                if (!str) return '';
+                return String(str).trim().replace(/<[^>]*>/g, '');
+            }
+
             validateEmail(email) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 return emailRegex.test(email) && email.length <= 254;
@@ -1358,8 +1854,8 @@
                 const requirements = this.checkPasswordRequirements(password);
                 const strength = this.calculatePasswordStrength(password, requirements);
                 
-                if (strength.score < 3) {
-                    this.showFieldError('registerPassword', 'La contraseña debe cumplir todos los requisitos');
+                if (strength.score < 2) {
+                    this.showFieldError('registerPassword', 'La contraseña debe tener al menos 8 caracteres y cumplir 2 requisitos (mayúscula, minúscula, número o símbolo)');
                     return false;
                 }
                 
@@ -1447,20 +1943,15 @@
                 const label = document.getElementById('passwordStrengthLabel');
 
                 fill.style.width = `${strength.percentage}%`;
-                fill.className = `password-strength-fill ${strength.class}`;
+                fill.className = `strength-fill ${strength.class}`;
                 label.textContent = `Fortaleza: ${strength.label}`;
                 label.style.color = getComputedStyle(fill).backgroundColor;
             }
 
             // Rate Limiting
             checkRateLimit() {
-                // Temporarily disable rate limiting for development/testing
-                console.log('🔧 Rate limit check bypassed for testing');
-                return true;
-                
-                /* Original rate limiting code - disabled for testing
                 const now = Date.now();
-                const attempts = this.loginAttempts.filter(attempt => 
+                const attempts = this.loginAttempts.filter(attempt =>
                     now - attempt < this.windowMs
                 );
 
@@ -1468,7 +1959,7 @@
                     const oldestAttempt = Math.min(...attempts);
                     const timeUntilReset = this.windowMs - (now - oldestAttempt);
                     const minutes = Math.ceil(timeUntilReset / 60000);
-                    
+
                     this.showError(`Demasiados intentos fallidos. Intenta nuevamente en ${minutes} minutos.`);
                     return false;
                 }
@@ -1482,12 +1973,11 @@
                 }
 
                 return true;
-                */
             }
 
             incrementLoginAttempts() {
                 this.loginAttempts.push(Date.now());
-                localStorage.setItem('login_attempts', JSON.stringify(this.loginAttempts));
+                _safeSetItem('login_attempts', JSON.stringify(this.loginAttempts));
             }
 
             resetLoginAttempts() {
@@ -1497,7 +1987,7 @@
 
             getStoredAttempts() {
                 try {
-                    const stored = localStorage.getItem('login_attempts');
+                    const stored = _safeGetItem('login_attempts');
                     return stored ? JSON.parse(stored) : [];
                 } catch {
                     return [];
@@ -1553,6 +2043,47 @@
                 this.clearAllErrors();
             }
 
+            // Password strength checker
+            updatePasswordStrength(password) {
+                const fill = document.getElementById("strengthFill");
+                const text = document.getElementById("strengthText");
+                if (!fill || !text) return;
+                
+                let strength = 0;
+                let label = "";
+                
+                if (password.length >= 8) strength++;
+                if (password.length >= 12) strength++;
+                if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^a-zA-Z0-9]/.test(password)) strength++;
+                
+                fill.className = "strength-fill";
+                text.className = "strength-text";
+                
+                if (password.length === 0) {
+                    label = "";
+                } else if (strength <= 1) {
+                    fill.classList.add("weak");
+                    text.classList.add("weak");
+                    label = "Débil";
+                } else if (strength === 2) {
+                    fill.classList.add("fair");
+                    text.classList.add("fair");
+                    label = "Regular";
+                } else if (strength === 3) {
+                    fill.classList.add("good");
+                    text.classList.add("good");
+                    label = "Buena";
+                } else {
+                    fill.classList.add("strong");
+                    text.classList.add("strong");
+                    label = "Fuerte";
+                }
+                text.textContent = label;
+            }
+
+
             togglePasswordVisibility(inputId, iconId) {
                 const input = document.getElementById(inputId);
                 const icon = document.getElementById(iconId);
@@ -1565,7 +2096,6 @@
                     icon.classList.replace('fa-eye-slash', 'fa-eye');
                 }
             }
-
             // Error/Success Display
             showError(message) {
                 // Create or update error notification
@@ -1595,8 +2125,8 @@
                 notification.className = `notification ${type}`;
                 
                 let backgroundColor;
-                if (type === 'error') backgroundColor = 'var(--error-color)';
-                else if (type === 'success') backgroundColor = 'var(--success-color)';
+                if (type === 'error') { backgroundColor = '#ef4444'; console.log('[AUTH] Showing error:', message); }
+                else if (type === 'success') { backgroundColor = '#22c55e'; console.log('[AUTH] Showing success:', message); }
                 else if (type === 'loading') backgroundColor = 'var(--info-color)';
                 else backgroundColor = 'var(--info-color)';
                 
@@ -1614,7 +2144,8 @@
                     font-weight: 500;
                     max-width: 400px;
                     text-align: center;
-                    animation: slideDown 0.3s ease-out;
+                    animation: slideDown 0.3s ease-out forwards;
+                    opacity: 1;
                 `;
                 
                 if (type === 'loading') {
@@ -1697,6 +2228,93 @@
             }
 
             // Security Badge
+
+            // Check for duplicate accounts after login
+            async checkForDuplicates(userData, authToken) {
+                try {
+                    const response = await fetch(this.apiBaseURL + '/api/auth/check-duplicates', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + authToken
+                        },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            exclude_user_id: userData.id
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success && result.data.has_duplicates && result.data.count > 0) {
+                        return result.data.duplicates;
+                    }
+
+                    return [];
+                } catch (error) {
+                    console.error('[DuplicateCheck] Error checking duplicates:', error);
+                    return [];
+                }
+            }
+
+            // Show duplicate accounts resolution popup
+            showDuplicateAccountsPopup(duplicates, userData, authToken) {
+                return new Promise((resolve) => {
+                    if (typeof window.LaTandaPopup === 'undefined') {
+                        console.warn('[DuplicateCheck] Popup manager not loaded, skipping duplicate check');
+                        resolve(true);
+                        return;
+                    }
+
+                    const self = this;
+
+                    window.LaTandaPopup.showDuplicateAccounts(
+                        duplicates,
+                        // onSelect - user wants to use a different account
+                        function(selectedAccountId) {
+                            console.log('[DuplicateCheck] User selected account:', selectedAccountId);
+                            // For now, just proceed - in future could switch accounts
+                            resolve(true);
+                        },
+                        // onDelete - user wants to delete an account
+                        function(accountId) {
+                            console.log('[DuplicateCheck] User wants to delete account:', accountId);
+                            self.deleteAccount(accountId, authToken).then(function(success) {
+                                if (success) {
+                                    window.LaTandaPopup.showSuccess('Cuenta eliminada exitosamente');
+                                }
+                                resolve(true);
+                            });
+                        },
+                        // onSkip - user wants to continue without changes
+                        function() {
+                            console.log('[DuplicateCheck] User skipped duplicate resolution');
+                            resolve(true);
+                        }
+                    );
+                });
+            }
+
+            // Delete a duplicate account
+            async deleteAccount(accountId, authToken) {
+                try {
+                    const response = await fetch(this.apiBaseURL + '/api/auth/delete-account/' + accountId, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + authToken
+                        }
+                    });
+
+                    const result = await response.json();
+                    return result.success;
+                } catch (error) {
+                    console.error('[DuplicateCheck] Error deleting account:', error);
+                    window.LaTandaPopup.showError('Error al eliminar la cuenta');
+                    return false;
+                }
+            }
+
             showSecurityBadge(secure) {
                 const badge = document.getElementById('securityBadge');
                 if (secure) {
@@ -1739,20 +2357,6 @@
 
             // Demo Functions
             preloadCredentials() {
-                // Check for auto-login flags
-                if (sessionStorage.getItem('admin_auto_login')) {
-                    document.getElementById('loginEmail').value = 'admin@latanda.online';
-                    document.getElementById('loginPassword').value = 'admin123';
-                    sessionStorage.removeItem('admin_auto_login');
-                    setTimeout(() => document.getElementById('loginForm').requestSubmit(), 500);
-                }
-
-                if (sessionStorage.getItem('demo_auto_login')) {
-                    document.getElementById('loginEmail').value = 'demo@latanda.online';
-                    document.getElementById('loginPassword').value = 'demo123';
-                    sessionStorage.removeItem('demo_auto_login');
-                    setTimeout(() => document.getElementById('loginForm').requestSubmit(), 500);
-                }
 
                 // Pre-fill saved credentials
                 const savedEmail = sessionStorage.getItem('login_email');
@@ -1763,17 +2367,6 @@
                     sessionStorage.removeItem('login_email');
                     sessionStorage.removeItem('login_password');
                 }
-            }
-
-            // Utility Functions
-            sanitizeInput(input) {
-                if (typeof input !== 'string') return input;
-                
-                return input
-                    .replace(/[<>]/g, '') // Remove brackets
-                    .replace(/javascript:/gi, '') // Remove javascript: URLs
-                    .replace(/on\w+="[^"]*"/gi, '') // Remove event handlers
-                    .trim();
             }
 
             formatAuthError(errorMessage) {
@@ -1796,68 +2389,525 @@
                 }
                 this.removeNotification();
             }
+
+            // ==================== PHASE 1 AUTHENTICATION METHODS ====================
+
+            // Form Navigation Methods
+            showLoginForm() {
+                this.hideAllForms();
+                document.getElementById('loginForm').classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+            }
+
+            showPasswordResetRequestForm() {
+                this.hideAllForms();
+                const form = document.getElementById('passwordResetRequestForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('resetEmail').focus();
+            }
+
+            showPasswordResetVerifyForm() {
+                this.hideAllForms();
+                const form = document.getElementById('passwordResetVerifyForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('resetCode1').focus();
+                this.setupCodeInputs('resetCode');
+                this.startTimer('reset', 10 * 60); // 10 minutes (matches backend expiry)
+            }
+
+            showPasswordResetNewPasswordForm() {
+                this.hideAllForms();
+                const form = document.getElementById('passwordResetNewPasswordForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('newPassword').focus();
+            }
+
+            showEmailVerificationForm(email) {
+                this.hideAllForms();
+                const form = document.getElementById('emailVerificationForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('verifyEmailDisplay').textContent = email;
+                document.getElementById('emailCode1').focus();
+                this.setupCodeInputs('emailCode');
+                this.startTimer("email", 10 * 60); // 10 minutes (matches backend expiry)
+            }
+
+            show2FAForm() {
+                this.hideAllForms();
+                const form = document.getElementById('twoFactorForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('tfaCode1').focus();
+                this.setupCodeInputs('tfaCode');
+                this.startTimer('tfa', 10 * 60); // 10 minutes
+            }
+
+            hideAllForms() {
+                const forms = document.querySelectorAll('.form-section, .auth-form');
+                forms.forEach(form => {
+                    form.style.display = 'none';
+                    form.classList.remove('active');
+                });
+            }
+
+            // Code Input Helper Methods
+            setupCodeInputs(prefix) {
+                for (let i = 1; i <= 6; i++) {
+                    const input = document.getElementById(`${prefix}${i}`);
+                    if (!input) continue;
+
+                    input.value = '';
+
+                    input.addEventListener('input', (e) => {
+                        const value = e.target.value;
+
+                        // Only allow numbers
+                        if (!/^\d*$/.test(value)) {
+                            e.target.value = '';
+                            return;
+                        }
+
+                        // Move to next input if value entered
+                        if (value.length === 1 && i < 6) {
+                            document.getElementById(`${prefix}${i + 1}`).focus();
+                        }
+
+                        // Auto-submit if all 6 digits entered
+                        if (i === 6 && value.length === 1) {
+                            const allFilled = this.getAllCodeDigits(prefix).length === 6;
+                            if (allFilled) {
+                                // Trigger verification automatically
+                                if (prefix === 'emailCode') this.verifyEmailCode();
+                                else if (prefix === 'resetCode') this.verifyResetCode();
+                                else if (prefix === 'tfaCode') this.verify2FACode();
+                            }
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        // Move to previous input on backspace if empty
+                        if (e.key === 'Backspace' && e.target.value === '' && i > 1) {
+                            document.getElementById(`${prefix}${i - 1}`).focus();
+                        }
+                    });
+
+                    // Paste handler - distribute digits across inputs
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const pastedData = e.clipboardData.getData('text');
+                        const digits = pastedData.replace(/\D/g, '').split('').slice(0, 6);
+
+                        digits.forEach((digit, index) => {
+                            const targetInput = document.getElementById(`${prefix}${index + 1}`);
+                            if (targetInput) {
+                                targetInput.value = digit;
+                            }
+                        });
+
+                        // Focus last filled input
+                        if (digits.length > 0) {
+                            const lastIndex = Math.min(digits.length, 6);
+                            document.getElementById(`${prefix}${lastIndex}`).focus();
+                        }
+                    });
+                }
+            }
+
+            getAllCodeDigits(prefix) {
+                let code = '';
+                for (let i = 1; i <= 6; i++) {
+                    const input = document.getElementById(`${prefix}${i}`);
+                    if (input && input.value) {
+                        code += input.value;
+                    }
+                }
+                return code;
+            }
+
+            startTimer(type, seconds) {
+                const timerElement = document.getElementById(`${type}TimeLeft`);
+                if (!timerElement) return;
+
+                let remaining = seconds;
+
+                const updateTimer = () => {
+                    const minutes = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    timerElement.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+                    if (remaining <= 0) {
+                        timerElement.textContent = 'Expirado';
+                        timerElement.style.color = '#ef4444';
+                    } else {
+                        remaining--;
+                        setTimeout(updateTimer, 1000);
+                    }
+                };
+
+                updateTimer();
+            }
+
+            // Email Verification Methods
+            async resendEmailVerification() {
+                const email = document.getElementById('verifyEmailDisplay').textContent;
+                if (!email) {
+                    this.showError('Email no encontrado');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/send-verification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showSuccess('Código reenviado a tu email');
+                        this.startTimer("email", 10 * 60);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Error al reenviar código');
+                    }
+                } catch (error) {
+                    console.error('Resend verification error:', error);
+                    this.showError(error.message);
+                }
+            }
+
+            async verifyEmailCode() {
+                const email = document.getElementById('verifyEmailDisplay').textContent;
+                const code = this.getAllCodeDigits('emailCode');
+
+                if (code.length !== 6) {
+                    this.showError('Ingresa el código completo de 6 dígitos');
+                    return;
+                }
+
+                const btn = document.getElementById('verifyEmailBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-email`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showSuccess('¡Email verificado correctamente!');
+
+                        // 🔐 PHASE 1: Save auth token and user data
+                        if (result.data && result.data.auth_token) {
+                            console.log('[EMAIL VERIFICATION] Saving auth token and user data');
+                            _safeSetItem('auth_token', result.data.auth_token);
+                            _safeSetItem('latanda_user', JSON.stringify(result.data.user));
+                        }
+
+                        setTimeout(() => {
+                            window.location.href = result.data?.user?.dashboard_url || 'home-dashboard.html';
+                        }, 1500);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Código inválido o expirado');
+                    }
+                } catch (error) {
+                    console.error('Verify email error:', error);
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Email';
+                }
+            }
+
+            // Password Reset Methods
+            async requestPasswordReset(event) {
+                event.preventDefault();
+
+                const email = document.getElementById('resetEmail').value.trim();
+
+                if (!email || !this.validateEmail(email)) {
+                    this.showError('Ingresa un email válido');
+                    return false;
+                }
+
+                const btn = document.getElementById('resetRequestBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/request-reset`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+
+                    const result = await response.json();
+
+                    // Always show success (security best practice)
+                    this.showSuccess('Si el email existe, recibirás un código de recuperación');
+
+                    // Store email for next step
+                    sessionStorage.setItem('reset_email', email);
+
+                    setTimeout(() => {
+                        this.showPasswordResetVerifyForm();
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('Password reset request error:', error);
+                    this.showError('Error al enviar código. Intenta nuevamente.');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Código';
+                }
+
+                return false;
+            }
+
+            async verifyResetCode() {
+                const email = sessionStorage.getItem('reset_email');
+                const code = this.getAllCodeDigits('resetCode');
+
+                if (!email) {
+                    this.showError('Sesión expirada. Inicia el proceso nuevamente.');
+                    this.showPasswordResetRequestForm();
+                    return;
+                }
+
+                if (code.length !== 6) {
+                    this.showError('Ingresa el código completo de 6 dígitos');
+                    return;
+                }
+
+                const btn = document.getElementById('verifyResetBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-reset-token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Store verified code for final step
+                        sessionStorage.setItem('reset_code', code);
+                        this.showSuccess('Código verificado correctamente');
+
+                        setTimeout(() => {
+                            this.showPasswordResetNewPasswordForm();
+                        }, 1000);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Código inválido o expirado');
+                    }
+                } catch (error) {
+                    console.error('Verify reset code error:', error);
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
+                }
+            }
+
+            async resetPassword(event) {
+                event.preventDefault();
+
+                const email = sessionStorage.getItem('reset_email');
+                const code = sessionStorage.getItem('reset_code');
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+                if (!email || !code) {
+                    this.showError('Sesión expirada. Inicia el proceso nuevamente.');
+                    this.showPasswordResetRequestForm();
+                    return false;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    this.showError('Las contraseñas no coinciden');
+                    return false;
+                }
+
+                if (newPassword.length < 8) {
+                    this.showError('La contraseña debe tener al menos 8 caracteres');
+                    return false;
+                }
+
+                // Full password policy check (matches backend)
+                const reqs = this.checkPasswordRequirements(newPassword);
+                const metCount = [reqs.upper, reqs.lower, reqs.number, reqs.special].filter(Boolean).length;
+                if (metCount < 2) {
+                    this.showError('La contraseña debe cumplir al menos 2 requisitos: mayuscula, minuscula, numero o simbolo');
+                    return false;
+                }
+
+                const btn = document.getElementById('resetPasswordBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cambiando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/reset-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code, new_password: newPassword })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showSuccess('¡Contraseña cambiada exitosamente!');
+
+                        // Clear session data
+                        sessionStorage.removeItem('reset_email');
+                        sessionStorage.removeItem('reset_code');
+
+                        setTimeout(() => {
+                            this.showLoginForm();
+                        }, 1500);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Error al cambiar contraseña');
+                    }
+                } catch (error) {
+                    console.error('Reset password error:', error);
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Cambiar Contraseña';
+                }
+
+                return false;
+            }
+
+            // 2FA Methods
+            async verify2FACode() {
+                const email = sessionStorage.getItem('2fa_email');
+                const code = this.getAllCodeDigits('tfaCode');
+
+                if (!email) {
+                    this.showError('Sesión expirada. Inicia sesión nuevamente.');
+                    this.showLoginForm();
+                    return;
+                }
+
+                if (code.length !== 6) {
+                    this.showError('Ingresa el código completo de 6 dígitos');
+                    return;
+                }
+
+                const btn = document.getElementById('verify2FABtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-2fa`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Store auth token and user data
+                        _safeSetItem('auth_token', result.data.auth_token);
+                        _safeSetItem('latanda_user', JSON.stringify(result.data.user));
+
+                        // Clear 2FA session data
+                        sessionStorage.removeItem('2fa_email');
+
+                        this.showSuccess('¡Autenticación exitosa!');
+
+                        setTimeout(() => {
+                            window.location.href = result.data.user.dashboard_url || 'home-dashboard.html';
+                        }, 1000);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Código 2FA inválido o expirado');
+                    }
+                } catch (error) {
+                    console.error('Verify 2FA error:', error);
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
+                }
+            }
+
+            showBackupCodeInput() {
+                document.getElementById('backupCodeInput').style.display = 'block';
+                document.getElementById('backupCode').focus();
+            }
+
+            async verifyBackupCode() {
+                const email = sessionStorage.getItem('2fa_email');
+                const code = document.getElementById('backupCode').value.trim().toUpperCase();
+
+                if (!email) {
+                    this.showError('Sesión expirada. Inicia sesión nuevamente.');
+                    this.showLoginForm();
+                    return;
+                }
+
+                if (!code || code.length !== 8) {
+                    this.showError('Ingresa un código de respaldo válido (8 caracteres)');
+                    return;
+                }
+
+                const btn = document.getElementById('verifyBackupBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-2fa`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        _safeSetItem('auth_token', result.data.auth_token);
+                        _safeSetItem('latanda_user', JSON.stringify(result.data.user));
+
+                        sessionStorage.removeItem('2fa_email');
+
+                        this.showSuccess('¡Código de respaldo verificado! Guarda los códigos restantes.');
+
+                        setTimeout(() => {
+                            window.location.href = result.data.user.dashboard_url || 'home-dashboard.html';
+                        }, 1500);
+                    } else {
+                        throw new Error(result.data?.error?.message || 'Código de respaldo inválido o ya usado');
+                    }
+                } catch (error) {
+                    console.error('Verify backup code error:', error);
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-unlock-alt"></i> Usar Código de Respaldo';
+                }
+            }
+
+            cancelTwoFactor() {
+                sessionStorage.removeItem('2fa_email');
+                this.showLoginForm();
+            }
+
+            // ==================== END PHASE 1 AUTHENTICATION METHODS ====================
         }
 
         // Demo Access Functions
-        function adminAccess() {
-            sessionStorage.setItem('admin_auto_login', 'true');
-            location.reload();
-        }
-
-        function demoAccess() {
-            sessionStorage.setItem('demo_auto_login', 'true');
-            location.reload();
-        }
-
-        function testDirectAccess() {
-            sessionStorage.setItem('login_email', 'test@latanda.online');
-            sessionStorage.setItem('login_password', 'test123');
-            location.reload();
-        }
-
-        function openTestPage() {
-            window.open('test-enhanced-integration.html', '_blank');
-        }
-
-        function clearAuthData() {
-            localStorage.removeItem('latanda_auth_token');
-            localStorage.removeItem('auth_redirect_in_progress');
-            localStorage.removeItem('auth_redirect_timestamp');
-            localStorage.removeItem('login_attempts');
-            sessionStorage.clear();
-            console.log('🔄 All authentication data cleared');
-            location.reload();
-        }
-        
-        // Direct login function for testing
-        function directLogin() {
-            console.log('🧪 Direct login test...');
-            const tokenPayload = {
-                sub: Date.now().toString(),
-                email: 'demo@latanda.online',
-                role: 'user',
-                exp: Math.floor(Date.now() / 1000) + (8 * 60 * 60) // 8 hours
-            };
-            const authToken = auth.generateSimulationJWT(tokenPayload);
-            const userData = {
-                id: Date.now(),
-                email: 'demo@latanda.online',
-                name: 'Demo Usuario',
-                role: 'user',
-                verified: true,
-                dashboard_url: 'home-dashboard.html'
-            };
-            
-            localStorage.setItem('latanda_auth_token', authToken);
-            localStorage.setItem('latanda_user', JSON.stringify(userData));
-            
-            console.log('✅ Direct login completed, token saved');
-            console.log('Token:', authToken);
-            
-            setTimeout(() => {
-                window.location.href = 'home-dashboard.html?from_auth=1';
-            }, 1000);
-        }
 
         // Prevent multiple redirects
         let redirectInProgress = false;
@@ -1869,9 +2919,12 @@
             localStorage.removeItem('auth_redirect_in_progress');
             
             // Also clear on page refresh or navigation
-            if (performance.navigation.type === 1) { // Page refresh
-                console.log('🔄 Page refreshed, clearing all auth flags');
-            }
+            try {
+                const navEntry = performance.getEntriesByType('navigation')[0];
+                if (navEntry && navEntry.type === 'reload') {
+                    console.log('Page refreshed, clearing all auth flags');
+                }
+            } catch(e) { /* older browsers */ }
             
             // Disable browser password manager suggestions for demo accounts
             const passwordField = document.getElementById('loginPassword');
@@ -1887,22 +2940,6 @@
                     }
                 });
             }
-            
-            // Handle MetaMask connection errors gracefully
-            window.addEventListener('error', (event) => {
-                if (event.message && event.message.includes('MetaMask')) {
-                    console.log('🔧 MetaMask error handled gracefully');
-                    event.preventDefault();
-                    return false;
-                }
-            });
-            
-            window.addEventListener('unhandledrejection', (event) => {
-                if (event.reason && event.reason.message && event.reason.message.includes('MetaMask')) {
-                    console.log('🔧 MetaMask promise rejection handled gracefully');
-                    event.preventDefault();
-                }
-            });
             
             // Check and fix Font Awesome loading
             setTimeout(() => {
@@ -1922,6 +2959,45 @@
             }, 1000);
             
             authSystem = new EnhancedAuth();
+            window.auth = authSystem; // Make auth accessible globally for onclick handlers
+
+            // Set greeting based on time of day
+            function setGreeting() {
+                const hour = new Date().getHours();
+                let greeting;
+                if (hour < 12) {
+                    greeting = "Buenos días";
+                } else if (hour < 18) {
+                    greeting = "Buenas tardes";
+                } else {
+                    greeting = "Buenas noches";
+                }
+                const el = document.getElementById("greeting");
+                if (el) el.textContent = greeting + " 👋";
+            }
+            
+            // Load real user stats from API
+            async function loadAuthStats() {
+                try {
+                    const response = await fetch("/api/status");
+                    const data = await response.json();
+                    if (data.success && data.data.stats) {
+                        const users = data.data.stats.total_users || 0;
+                        const el = document.getElementById("statUsers");
+                        if (el && users > 0) {
+                            // Format number with comma
+                            el.textContent = users.toLocaleString("es-HN") + "+";
+                        }
+                    }
+                } catch (err) {
+                    console.log("Using default stats");
+                }
+            }
+            
+            // Initialize extras
+            setGreeting();
+            loadAuthStats();
+            
         });
 
         // Cleanup on page unload
@@ -1930,6 +3006,134 @@
                 authSystem.cleanup();
             }
         });
+
+        // Clear auth data and return to login
+        function clearAuthData() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('latanda_user');
+            localStorage.removeItem('login_attempts');
+            sessionStorage.clear();
+            if (window.auth) {
+                window.auth.showLoginForm();
+            }
+        }
+
+        // Google OAuth
+        let googleInitialized = false;
+        function initGoogleSignIn() {
+            if (googleInitialized || typeof google === 'undefined') return;
+            google.accounts.id.initialize({
+                client_id: '116807706131-soa935u3n1e5i4ccstl2juhbf9rcq3nv.apps.googleusercontent.com',
+                callback: handleGoogleSignIn,
+                auto_select: false,
+                cancel_on_tap_outside: true,
+            });
+            googleInitialized = true;
+        }
+
+        function handleGoogleClick() {
+            if (typeof google === 'undefined' || !google.accounts) {
+                if (window.auth) window.auth.showError('Google no se pudo cargar. Verifica tu conexion.');
+                return;
+            }
+            initGoogleSignIn();
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // One Tap not available, fall back to button render
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:white;padding:32px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);';
+                    tempDiv.innerHTML = '<div id="gsi-btn-container" style="min-width:250px;"></div><button onclick="this.parentElement.remove()" style="display:block;margin:16px auto 0;background:none;border:none;color:#666;cursor:pointer;font-size:14px;">Cancelar</button>';
+                    document.body.appendChild(tempDiv);
+                    google.accounts.id.renderButton(
+                        document.getElementById('gsi-btn-container'),
+                        { theme: 'outline', size: 'large', width: 280, text: 'continue_with', locale: 'es' }
+                    );
+                }
+            });
+        }
+
+        async function handleGoogleSignIn(response) {
+            if (!response.credential) return;
+            // Remove any fallback popup
+            const popup = document.querySelector('#gsi-btn-container');
+            if (popup && popup.parentElement) popup.parentElement.remove();
+
+            if (window.auth) {
+                window.auth.showSuccess('Verificando con Google...');
+            }
+
+            try {
+                const res = await fetch('https://latanda.online/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential }),
+                });
+                const result = await res.json();
+
+                if (result.success && result.data) {
+                    _safeSetItem('auth_token', result.data.auth_token);
+                    if (result.data.refresh_token) {
+                        _safeSetItem('refresh_token', result.data.refresh_token);
+                    }
+                    _safeSetItem('latanda_user', JSON.stringify(result.data.user));
+
+                    const msg = result.data.is_new_user ? 'Cuenta creada con Google' : 'Sesion iniciada con Google';
+                    if (window.auth) window.auth.showSuccess(msg);
+
+                    setTimeout(() => {
+                        const redirect = _safeGetItem('redirect_after_auth');
+                        localStorage.removeItem('redirect_after_auth');
+                        window.location.href = redirect || result.data.user.dashboard_url || 'home-dashboard.html';
+                    }, 1000);
+                } else {
+                    throw new Error(result.data?.error?.message || 'Error al autenticar con Google');
+                }
+            } catch (err) {
+                console.error('Google sign-in error:', err);
+                if (window.auth) window.auth.showError(err.message || 'Error al conectar con Google');
+            }
+        }
+
+        // Apple Sign In (stub — activate when Apple Developer account is ready)
+        function loginWithProvider(provider) {
+            if (window.auth) window.auth.showInfo('Inicio con Apple estara disponible proximamente.');
+        }
+        function registerWithProvider(provider) {
+            if (window.auth) window.auth.showInfo('Registro con Apple estara disponible proximamente.');
+        }
     </script>
+
+    <script src="shared-components.js?v=7.20"></script>
+    <script src="js/user-sync.js"></script>
+    <script src="pwa-manager.js"></script>
 </body>
 </html>
+
+<!-- iOS Touch Fixes - Added 2025-12-25 -->
+<style>
+    /* iOS Touch Enhancements */
+    .btn-primary,
+    .btn-secondary,
+    .social-btn,
+    button,
+    [onclick] {
+        -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2);
+        touch-action: manipulation;
+        -webkit-touch-callout: none;
+    }
+    
+    /* Ensure buttons are tappable on iOS */
+    @supports (-webkit-touch-callout: none) {
+        .btn-primary,
+        .btn-secondary,
+        .social-btn {
+            cursor: pointer;
+            min-height: 48px;
+        }
+        
+        /* Fix for iOS form elements */
+        input, select, textarea {
+            font-size: 16px !important; /* Prevents zoom on focus */
+        }
+    }
+</style>

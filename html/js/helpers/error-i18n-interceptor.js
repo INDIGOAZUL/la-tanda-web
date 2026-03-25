@@ -1,0 +1,1 @@
+!function(){"use strict";window._errorI18nPatched||(window._errorI18nPatched=!0,window._translateApiError=function(r){if(!r||!r.data||!r.data.error)return r;var e=r.data.error;if(e.error_code&&"function"==typeof window.t){var o=window.t("errors."+e.error_code,{defaultValue:""});o&&o!=="errors."+e.error_code&&(e.message=o)}return r})}();

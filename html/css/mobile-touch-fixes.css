@@ -1,0 +1,300 @@
+/* ============================================
+   MOBILE TOUCH & POSITIONING FIXES
+   November 1, 2025
+   ============================================ */
+
+/* Improve touch responsiveness on all interactive elements */
+* {
+    -webkit-tap-highlight-color: rgba(0, 255, 255, 0.1);
+    -webkit-touch-callout: none;
+}
+
+/* Make all buttons and clickable elements touch-friendly */
+button,
+.action-btn,
+.header-action-btn,
+.network-switcher,
+.network-option,
+.wallet-action-btn,
+[role="button"],
+.clickable {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 255, 255, 0.2);
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Ensure dropdowns are touch-friendly */
+.network-dropdown,
+.wallet-dropdown {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 768px) {
+
+    /* ===== WALLET DROPDOWN FIXES ===== */
+    .wallet-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        right: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding: 16px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        transform: translateY(100%) !important;
+        z-index: 10000 !important;
+    }
+
+    .wallet-dropdown.active {
+        transform: translateY(0) !important;
+    }
+
+    /* Prevent wallet content overflow */
+    .wallet-content,
+    .wallet-balance,
+    .wallet-transactions,
+    .transactions-list,
+    .transaction-item {
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+
+    .wallet-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .wallet-action-btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 120px;
+    }
+
+    /* ===== NETWORK DROPDOWN FIXES ===== */
+    .network-dropdown {
+        position: fixed !important;
+        top: auto !important;
+        right: 8px !important;
+        left: 8px !important;
+        bottom: auto !important;
+        width: auto !important;
+        max-width: calc(100vw - 16px) !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Position network dropdown below the switcher button */
+    .network-switcher {
+        position: relative;
+    }
+
+    /* Ensure network options are touch-friendly */
+    .network-option {
+        min-height: 48px;
+        padding: 12px 16px;
+        touch-action: manipulation;
+    }
+
+    /* ===== HEADER FIXES ===== */
+    .header-right {
+        gap: 8px;
+    }
+
+    .wallet-address,
+    .wallet-balance {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+    }
+
+    /* ===== BUTTON TOUCH TARGETS ===== */
+    .action-btn,
+    .header-action-btn,
+    button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    /* ===== PREVENT HORIZONTAL SCROLL ===== */
+    body,
+    html {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+
+    .container,
+    .main-content,
+    .page-container {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ===== FIX MODALS ON MOBILE ===== */
+    .modal-content {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 20px auto !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+
+    /* ===== IMPROVE SCROLL PERFORMANCE ===== */
+    .wallet-dropdown,
+    .network-dropdown,
+    .modal-content,
+    .transaction-list {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+    .wallet-address {
+        max-width: 90px !important;
+    }
+
+    .wallet-balance {
+        max-width: 100px !important;
+    }
+
+    .network-dropdown {
+        right: 4px !important;
+        left: 4px !important;
+    }
+
+    .wallet-action-btn {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+}
+
+/* Landscape phones and small tablets */
+@media (max-width: 768px) and (orientation: landscape) {
+    .wallet-dropdown,
+    .network-dropdown {
+        max-height: 70vh !important;
+    }
+}
+
+/* ===== TOUCH FEEDBACK ===== */
+@media (hover: none) {
+    /* Only apply active states on touch devices */
+    button:active,
+    .action-btn:active,
+    .network-option:active,
+    .wallet-action-btn:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    .network-switcher:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   MOBILE AVATAR & HEADER FIXES
+   December 16, 2025
+   ============================================ */
+
+@media (max-width: 768px) {
+
+    /* ===== FIX 1: Dashboard sections margin for fixed header ===== */
+    .dashboard-sections {
+        margin-top: 80px !important;
+        padding-top: 10px !important;
+    }
+
+    /* ===== FIX 2: Welcome avatar not cut off ===== */
+    .welcome-section {
+        margin-top: 0 !important;
+    }
+
+    .welcome-avatar {
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== FIX 3: Profile avatar - prevent full screen on tap ===== */
+    .profile-avatar {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+    }
+
+    .profile-avatar img,
+    .profile-avatar[style*="background-image"] {
+        -webkit-touch-callout: none !important;
+        pointer-events: none !important;
+    }
+
+    /* Prevent image zoom/preview on long press */
+    .profile-avatar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2;
+    }
+
+    /* ===== FIX 4: Avatar in header also protected ===== */
+    .lt-user-avatar,
+    .user-avatar,
+    [class*="avatar"] img {
+        -webkit-touch-callout: none !important;
+        pointer-events: none !important;
+    }
+
+    /* ===== FIX 5: Ensure avatars with background-image don't trigger preview ===== */
+    [style*="background-image"][class*="avatar"] {
+        -webkit-touch-callout: none !important;
+    }
+}
+
+/* ===== Additional mobile-specific avatar fixes ===== */
+@media (max-width: 480px) {
+    .dashboard-sections {
+        margin-top: 75px !important;
+    }
+
+    .welcome-greeting {
+        padding-top: 5px;
+    }
+
+    .profile-avatar {
+        width: 100px !important;
+        height: 100px !important;
+    }
+}
