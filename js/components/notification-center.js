@@ -20,6 +20,16 @@ class NotificationCenter {
         this.loadedAll = false;
         this.timeRefreshInterval = null;
         this._apiLoaded = false;
+        this.pushPromptStorageKey = "push_prompt_state_" + this.userId;
+        this.pushActivityThresholdMs = 30000;
+        this.pushCooldownMs = 7 * 24 * 60 * 60 * 1000;
+        this.pushActivity = {
+            accumulatedMs: 0,
+            lastEventAt: 0,
+            timerStartedAt: 0,
+            bannerShown: false,
+            listenersAttached: false
+        };
 
         this.initFirebase();
         this.init();
@@ -56,7 +66,7 @@ class NotificationCenter {
         this.attachEventListeners();
         this.loadNotificationsFromAPI();
         this.startPolling();
-        this.initPushSubscription();
+        this.initPushSubscription().catch(() => {});
 
         // v4.16.12: Refresh time labels every 60s (M6)
         this.timeRefreshInterval = setInterval(() => {
@@ -847,11 +857,13 @@ class NotificationCenter {
         }
     }
 
-    async loadPreferences() {
+    async loadPreferences(options = {}) {
+        const silent = options && options.silent === true;
         const body = document.getElementById("prefsModalBody");
-        if (!body) return;
-
-        body.innerHTML = `<div class="prefs-loading"><i class="fas fa-spinner fa-spin"></i> Cargando preferencias...</div>`;
+        if (!silent) {
+            if (!body) return;
+            body.innerHTML = `<div class="prefs-loading"><i class="fas fa-spinner fa-spin"></i> Cargando preferencias...</div>`;
+        }
 
         try {
             const response = await fetch(this.apiBase + "/api/notifications/preferences", {
@@ -863,21 +875,117 @@ class NotificationCenter {
 
             const result = await response.json();
             this.preferences = result.data || result;
-            this.renderPreferencesForm();
+            if (!silent) this.renderPreferencesForm();
+            return this.preferences;
         } catch (error) {
-            body.innerHTML = `
-                <div class="prefs-loading" style="color: #ef4444;">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <p>Error al cargar preferencias</p>
-                    <button class="prefs-btn prefs-btn-secondary nc-retry-btn">Reintentar</button>
-                </div>
-            `;
-            // v4.25.7: Wire retry button via addEventListener (no inline onclick)
-            setTimeout(() => {
-                const retryBtn = document.querySelector(".nc-retry-btn");
-                if (retryBtn) retryBtn.addEventListener("click", () => this.loadPreferences());
-            }, 0);
+            if (!silent && body) {
+                body.innerHTML = `
+                    <div class="prefs-loading" style="color: #ef4444;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error al cargar preferencias</p>
+                        <button class="prefs-btn prefs-btn-secondary nc-retry-btn">Reintentar</button>
+                    </div>
+                `;
+                // v4.25.7: Wire retry button via addEventListener (no inline onclick)
+                setTimeout(() => {
+                    const retryBtn = document.querySelector(".nc-retry-btn");
+                    if (retryBtn) retryBtn.addEventListener("click", () => this.loadPreferences());
+                }, 0);
+            }
+            throw error;
         }
+    }
+
+    getPushPromptState() {
+        try {
+            const raw = localStorage.getItem(this.pushPromptStorageKey);
+            if (!raw) return { promptCount: 0, lastPromptedAt: 0, lastDismissedAt: 0, lastDeniedAt: 0 };
+            const parsed = JSON.parse(raw);
+            return Object.assign({ promptCount: 0, lastPromptedAt: 0, lastDismissedAt: 0, lastDeniedAt: 0 }, parsed || {});
+        } catch (e) {
+            return { promptCount: 0, lastPromptedAt: 0, lastDismissedAt: 0, lastDeniedAt: 0 };
+        }
+    }
+
+    savePushPromptState(patch) {
+        const next = Object.assign({}, this.getPushPromptState(), patch || {});
+        try { localStorage.setItem(this.pushPromptStorageKey, JSON.stringify(next)); } catch (e) {}
+        return next;
+    }
+
+    isPushPromptCoolingDown() {
+        const state = this.getPushPromptState();
+        const lastBlockedAt = Math.max(state.lastDismissedAt || 0, state.lastDeniedAt || 0);
+        return lastBlockedAt > 0 && (Date.now() - lastBlockedAt) < this.pushCooldownMs;
+    }
+
+    isPushPreferenceEnabled() {
+        if (!this.preferences) return true;
+        return this.preferences.push_enabled !== false;
+    }
+
+    ensurePushActivityTracking() {
+        if (this.pushActivity.listenersAttached) return;
+        this.pushActivity.listenersAttached = true;
+
+        const recordActivity = () => {
+            if (this.pushActivity.bannerShown) return;
+            if (document.visibilityState === "hidden") return;
+            const now = Date.now();
+            if (!this.pushActivity.lastEventAt) {
+                this.pushActivity.lastEventAt = now;
+                this.pushActivity.timerStartedAt = now;
+                this.maybeShowPushBanner();
+                return;
+            }
+            const delta = now - this.pushActivity.lastEventAt;
+            this.pushActivity.lastEventAt = now;
+            if (delta > 0 && delta < 15000) {
+                this.pushActivity.accumulatedMs += delta;
+            }
+            this.maybeShowPushBanner();
+        };
+
+        ["click", "scroll", "touchstart"].forEach((eventName) => {
+            window.addEventListener(eventName, recordActivity, { passive: true });
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                this.pushActivity.lastEventAt = Date.now();
+                this.pushActivity.timerStartedAt = this.pushActivity.lastEventAt;
+            } else {
+                this.pushActivity.lastEventAt = 0;
+                this.pushActivity.timerStartedAt = 0;
+            }
+        });
+    }
+
+    async maybeShowPushBanner() {
+        if (this.pushActivity.bannerShown) return false;
+        if (!("Notification" in window) || !("PushManager" in window)) return false;
+        if (Notification.permission !== "default") return false;
+        if (document.visibilityState === "hidden") return false;
+        if (this.isPushPromptCoolingDown()) return false;
+
+        const state = this.getPushPromptState();
+        if (state.promptCount >= 3) return false;
+
+        if (!this.preferences) {
+            try {
+                await this.loadPreferences({ silent: true });
+            } catch (e) {
+                return false;
+            }
+        }
+
+        if (!this.isPushPreferenceEnabled()) return false;
+        if (this.pushActivity.accumulatedMs < this.pushActivityThresholdMs) return false;
+
+        this.pushActivity.bannerShown = true;
+        this.savePushPromptState({ promptCount: state.promptCount + 1, lastPromptedAt: Date.now() });
+        this.showPushBanner();
+        return true;
     }
 
     renderPreferencesForm() {
@@ -1141,9 +1249,20 @@ class NotificationCenter {
 
     // ===== WEB PUSH SUBSCRIPTION =====
 
-    initPushSubscription() {
+    async initPushSubscription() {
         if (!("Notification" in window) || !("PushManager" in window)) return;
-        if (Notification.permission === "denied") return;
+
+        try {
+            await this.loadPreferences({ silent: true });
+        } catch (e) {
+            return;
+        }
+
+        if (!this.isPushPreferenceEnabled()) return;
+        if (Notification.permission === "denied") {
+            this.savePushPromptState({ lastDeniedAt: Date.now() });
+            return;
+        }
 
         // If already granted, silently subscribe
         if (Notification.permission === "granted") {
@@ -1151,21 +1270,8 @@ class NotificationCenter {
             return;
         }
 
-        // Smart push permission timing — max 3 prompts with progressive delay
-        const promptCount = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
-        if (promptCount >= 3) return;
-
-        const dismissed = localStorage.getItem("push_banner_dismissed");
-        if (dismissed) {
-            const elapsed = Date.now() - parseInt(dismissed, 10);
-            // 1st dismiss → wait 1 day, 2nd → wait 7 days
-            const waitMs = promptCount <= 1 ? 86400000 : 604800000;
-            if (elapsed < waitMs) return;
-        }
-
-        // Delay: 30s on first visit, 15s on subsequent
-        const delay = promptCount === 0 ? 30000 : 15000;
-        setTimeout(() => this.showPushBanner(), delay);
+        this.ensurePushActivityTracking();
+        this.maybeShowPushBanner();
     }
 
     showPushBanner() {
@@ -1224,16 +1330,20 @@ class NotificationCenter {
         document.getElementById("pushBannerAccept").addEventListener("click", async () => {
             banner.remove();
             var permission = await Notification.requestPermission();
+            this.pushActivity.bannerShown = false;
             if (permission === "granted") {
                 await this.subscribeToPush();
                 this.showToast({ type: "success", message: t("messages.push_enabled", {defaultValue:"Notificaciones activadas — te avisaremos de pagos y turnos"}) });
+                return;
+            }
+            if (permission === "denied") {
+                this.savePushPromptState({ lastDeniedAt: Date.now() });
             }
         });
         document.getElementById("pushBannerDismiss").addEventListener("click", () => {
             banner.remove();
-            const count = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
-            localStorage.setItem("push_prompt_count", String(count + 1));
-            localStorage.setItem("push_banner_dismissed", String(Date.now()));
+            this.pushActivity.bannerShown = false;
+            this.savePushPromptState({ lastDismissedAt: Date.now() });
         });
     }
 
