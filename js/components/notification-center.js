@@ -1,7 +1,7 @@
 // ===== NOTIFICATION CENTER v2.9 - Intelligence Layer =====
 // Updated: 2026-03-04
 // Features: API sync, type-based colors, toast system, preferences modal
-// Phase 2: Dual push (VAPID + FCM), smart push permission timing
+// Phase 2: Dual push (VAPID + FCM), activity-gated push permission timing
 
 class NotificationCenter {
     constructor() {
@@ -834,14 +834,86 @@ class NotificationCenter {
             if (elapsed < waitMs) return;
         }
 
-        // Delay: 30s on first visit, 15s on subsequent
-        const delay = promptCount === 0 ? 30000 : 15000;
-        setTimeout(() => this.showPushBanner(), delay);
+        // Activity-gated push permission timing
+        // Show banner only after 30+ seconds of real user activity (idle >5s resets)
+        this._startActivityGatedPushPrompt(promptCount);
+    }
+
+    /**
+     * Activity-gated push permission prompt
+     * Tracks user activity (click, scroll, touchstart) and shows the push banner
+     * only after 30+ seconds of active engagement. Idle time > 5s resets the counter.
+     * @param {number} promptCount - Number of times user has already been prompted
+     */
+    _startActivityGatedPushPrompt(promptCount) {
+        let activityMs = 0;
+        let lastActivityMs = Date.now();
+        const REQUIRED_ACTIVE_MS = 30000; // 30 seconds
+        const IDLE_TIMEOUT_MS = 5000;
+        let timerHandle = null;
+
+        const IDLE_EVENTS = ['click', 'scroll', 'touchstart', 'keypress', 'mousemove'];
+        let idleTimer = null;
+
+        const resetIdleTimer = () => {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                // User idle > IDLE_TIMEOUT_MS — reset accumulated activity
+                activityMs = 0;
+            }, IDLE_TIMEOUT_MS);
+        };
+
+        const onActivity = () => {
+            const now = Date.now();
+            const delta = now - lastActivityMs;
+            lastActivityMs = now;
+
+            // Only accumulate time if within idle threshold
+            if (delta <= IDLE_TIMEOUT_MS) {
+                activityMs += delta;
+            } else {
+                // Long gap — reset (treat as new session)
+                activityMs = 0;
+            }
+            resetIdleTimer();
+
+            if (activityMs >= REQUIRED_ACTIVE_MS) {
+                cleanup();
+                this.showPushBanner();
+            }
+        };
+
+        const cleanup = () => {
+            IDLE_EVENTS.forEach(evt => document.removeEventListener(evt, onActivity));
+            if (idleTimer) clearTimeout(idleTimer);
+            if (timerHandle) clearInterval(timerHandle);
+        };
+
+        // Attach activity listeners (passive where possible for scroll performance)
+        IDLE_EVENTS.forEach(evt => {
+            const opts = evt === 'scroll' || evt === 'mousemove' ? { passive: true } : false;
+            document.addEventListener(evt, onActivity, opts);
+        });
+
+        // Safety fallback: show banner after 5 minutes even without 30s activity
+        // (prevents banner never showing if user is completely passive)
+        timerHandle = setInterval(() => {
+            // Check if we should give up and show anyway after 5 min
+            const startTime = lastActivityMs - (activityMs || 0);
+            if (Date.now() - startTime > 300000 && activityMs < REQUIRED_ACTIVE_MS) {
+                cleanup();
+                this.showPushBanner();
+            }
+        }, 30000);
+
+        resetIdleTimer();
     }
 
     showPushBanner() {
         if (document.getElementById("pushBanner")) return;
         if (Notification.permission !== "default") return;
+        // Respect user's push_enabled preference — don't prompt if disabled
+        if (this.preferences && this.preferences.push_enabled === false) return;
 
         // Inject CSS if not already present
         if (!document.getElementById("pushBannerStyles")) {
