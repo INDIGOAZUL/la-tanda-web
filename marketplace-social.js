@@ -1750,37 +1750,24 @@ class MarketplaceSocialSystem {
         this._expCategory = null;
         this._expSearchQuery = null;
         this._expTabsSetup = false;
-        this._setupExpTabs();
+        this._expCurrentPanel = 'inicio';
+        this._setupExpSubtabs();
         this._setupAutocomplete();
-        this._loadExpCategoryPills('exp-tiendas');
-        this.loadExplorarFeed('exp-tiendas', false);
+        this._buildExplorarInicio();
     }
 
-    _setupExpTabs() {
+    _setupExpSubtabs() {
         if (this._expTabsSetup) return;
         this._expTabsSetup = true;
-        const tabsContainer = document.querySelector('.exp-tabs');
-        if (!tabsContainer) return;
-        tabsContainer.addEventListener('click', (e) => {
-            const tab = e.target.closest('.exp-tab');
-            if (!tab || tab.classList.contains('active')) return;
-            tabsContainer.querySelectorAll('.exp-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            const tabId = tab.dataset.expTab;
-            this._expTab = tabId;
-            this._expOffset = 0;
-            this._expCategory = null;
-            this._expSearchQuery = null;
-            this._loadExpCategoryPills(tabId);
-            this.loadExplorarFeed(tabId, false);
-        });
 
-        const pillsContainer = document.getElementById('expCategoryPills');
-        if (pillsContainer) {
-            pillsContainer.addEventListener('click', (e) => {
+        // Category pills — per-panel containers
+        const setupPills = (containerId, tab) => {
+            const c = document.getElementById(containerId);
+            if (!c) return;
+            c.addEventListener('click', (e) => {
                 const pill = e.target.closest('.exp-pill');
                 if (!pill || pill.classList.contains('active')) return;
-                pillsContainer.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
+                c.querySelectorAll('.exp-pill').forEach(p => p.classList.remove('active'));
                 pill.classList.add('active');
                 this._expCategory = pill.dataset.value || null;
                 this._expOffset = 0;
@@ -1789,32 +1776,282 @@ class MarketplaceSocialSystem {
                 this._expMaxPrice = null;
                 this.loadExplorarFeed(this._expTab, false);
             });
+        };
+        setupPills('expCategoryPills', 'exp-tiendas');
+        setupPills('expCategoryPillsProd', 'exp-productos');
+        setupPills('expCategoryPillsSvc', 'exp-servicios');
+    }
+
+
+    async _loadDynamicCategoryPills(containerId, type) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        try {
+            const resp = await this.apiRequest('/api/marketplace/categories/' + type);
+            const cats = resp.data?.categories || resp.categories || [];
+            let html = '<button class="exp-pill active" data-value="">Todos</button>';
+            cats.forEach(c => {
+                html += '<button class="exp-pill" data-value="' + this.escapeHtml(String(c.category_id)) + '">' + this.escapeHtml(c.icon || '') + ' ' + this.escapeHtml(c.name_es || '') + ' <span style="font-size:10px;opacity:0.5;">(' + c.count + ')</span></button>';
+            });
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
         }
     }
 
-    _loadExpCategoryPills(tab) {
-        const container = document.getElementById('expCategoryPills');
+    async _loadDynamicCityPills(containerId) {
+        const container = document.getElementById(containerId);
         if (!container) return;
-        if (tab === 'exp-tiendas') {
-            const cities = ['Todos', 'Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Comayagua', 'Choluteca'];
-            container.innerHTML = cities.map((c, i) =>
-                '<button class="exp-pill' + (i === 0 ? ' active' : '') + '" data-value="' + (i === 0 ? '' : this.escapeHtml(c)) + '">' + this.escapeHtml(c) + '</button>'
-            ).join('');
-        } else {
-            const cats = this.categoriesData || [];
+        try {
+            const resp = await this.apiRequest('/api/marketplace/providers/cities');
+            const cities = resp.data?.cities || resp.cities || [];
             let html = '<button class="exp-pill active" data-value="">Todos</button>';
-            cats.forEach(c => {
-                html += '<button class="exp-pill" data-value="' + this.escapeHtml(String(c.category_id)) + '">' + this.escapeHtml(c.icon || '') + ' ' + this.escapeHtml(c.name_es || c.name || '') + '</button>';
+            cities.forEach(c => {
+                html += '<button class="exp-pill" data-value="' + this.escapeHtml(c.city) + '">' + this.escapeHtml(c.city) + ' <span style="font-size:10px;opacity:0.5;">(' + c.count + ')</span></button>';
             });
             container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
+        }
+    }
+
+    _loadExpCategoryPills(tab, containerId) {
+        const container = document.getElementById(containerId || 'expCategoryPills');
+        if (!container) return;
+        if (tab === 'exp-tiendas') {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">Cargando...</span>';
+            this._loadDynamicCityPills(containerId || 'expCategoryPills');
+            return;
+        } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">...</span>';
+            this._loadDynamicCategoryPills(containerId || 'expCategoryPillsProd', 'products');
+        } else if (tab === 'exp-servicios') {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">...</span>';
+            this._loadDynamicCategoryPills(containerId || 'expCategoryPillsSvc', 'services');
+        } else {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
+        }
+    }
+
+    _buildExplorarInicio() {
+        const container = document.getElementById('expInicioContent');
+        if (!container) return;
+        const esc = (v) => this.escapeHtml(String(v || ''));
+
+        let html = '';
+
+        // Inner tabs: Categorias | Tiendas Destacadas | Productos Populares
+        html += `<div class="exp-inner-tabs">
+            <button class="exp-inner-tab exp-inner-active" data-action="exp-inner-tab" data-inner="categorias"><i class="fas fa-th-large"></i> Categorias</button>
+            <button class="exp-inner-tab" data-action="exp-inner-tab" data-inner="tiendas-dest"><i class="fas fa-star"></i> Tiendas</button>
+            <button class="exp-inner-tab" data-action="exp-inner-tab" data-inner="productos-pop"><i class="fas fa-fire"></i> Productos</button>
+        </div>`;
+
+        // Panel: Categorias
+        const cats = this.categoriesData || [];
+        let catGrid = '';
+        if (cats.length > 0) {
+            catGrid = cats.slice(0, 8).map(c =>
+                '<div class="exp-cat-item" data-action="exp-cat-filter" data-cat-id="' + esc(String(c.category_id)) + '" data-cat-name="' + esc(c.name_es || c.name || '') + '">' +
+                '<div class="exp-cat-icon">' + esc(c.icon || '') + '</div>' +
+                '<div class="exp-cat-name">' + esc(c.name_es || c.name || '') + '</div>' +
+                '</div>'
+            ).join('');
+        } else {
+            catGrid = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Cargando categorias...</div>';
+        }
+        html += '<div class="exp-inner-panel" data-inner-panel="categorias"><div class="exp-cat-grid">' + catGrid + '</div></div>';
+
+        // Panel: Tiendas Destacadas
+        html += `<div class="exp-inner-panel" data-inner-panel="tiendas-dest" style="display:none">
+            <div id="expFeaturedStores" class="exp-inicio-scroll">
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+            </div>
+            <div style="text-align:right;margin-top:8px;"><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="tiendas">Ver todas las tiendas &rarr;</button></div>
+        </div>`;
+
+        // Panel: Productos Populares
+        html += `<div class="exp-inner-panel" data-inner-panel="productos-pop" style="display:none">
+            <div id="expPopularProducts" class="exp-inicio-scroll">
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+            </div>
+            <div style="text-align:right;margin-top:8px;"><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="productos">Ver todos los productos &rarr;</button></div>
+        </div>`;
+
+        // Quick actions — below inner tabs
+        html += `<div style="margin-top:20px;">
+            <div class="exp-inicio-header" style="margin-bottom:10px;"><div class="exp-inicio-title"><i class="fas fa-bolt"></i> Acciones rapidas</div></div>
+            <div class="exp-quick-actions">
+                <div class="exp-quick-card" data-action="exp-subtab" data-subtab="productos">
+                    <div class="exp-quick-icon" style="background:rgba(139,92,246,0.15);color:var(--ds-purple,#8B5CF6);"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="exp-quick-label">Comprar</div>
+                    <div class="exp-quick-sub">Productos y ofertas</div>
+                </div>
+                <div class="exp-quick-card" data-action="exp-sell-product">
+                    <div class="exp-quick-icon" style="background:rgba(16,185,129,0.15);color:var(--ds-green,#10B981);"><i class="fas fa-tag"></i></div>
+                    <div class="exp-quick-label">Vender</div>
+                    <div class="exp-quick-sub">Publica tu producto</div>
+                </div>
+                <div class="exp-quick-card" data-action="exp-subtab" data-subtab="servicios">
+                    <div class="exp-quick-icon" style="background:rgba(59,130,246,0.15);color:var(--ds-blue,#3B82F6);"><i class="fas fa-wrench"></i></div>
+                    <div class="exp-quick-label">Servicios</div>
+                    <div class="exp-quick-sub">Encuentra profesionales</div>
+                </div>
+            </div>
+        </div>`;
+
+        container.innerHTML = html;
+
+        // Load async data for tiendas + productos panels
+        this._loadInicioStores();
+        this._loadInicioProducts();
+    }
+
+    _openCategoryDetail(catId, catName) {
+        const container = document.getElementById('expInicioContent');
+        if (!container) return;
+        const esc = (v) => this.escapeHtml(String(v || ''));
+        const catIcon = (this.categoriesData || []).find(c => String(c.category_id) === String(catId))?.icon || '';
+
+        let html = '';
+
+        // Back button + category title
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">';
+        html += '<button data-action="exp-cat-back" style="background:none;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;color:var(--ds-text-secondary,rgba(255,255,255,0.6));cursor:pointer;font-size:14px;display:flex;align-items:center;gap:6px;font-family:inherit;transition:border-color 0.2s;"><i class="fas fa-arrow-left"></i></button>';
+        html += '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:var(--ds-text-primary,#fff);display:flex;align-items:center;gap:8px;">' + esc(catIcon) + ' ' + esc(catName) + '</div></div>';
+        html += '</div>';
+
+        // Inner tabs: Productos | Servicios
+        html += '<div class="exp-inner-tabs">';
+        html += '<button class="exp-cat-inner-tab exp-inner-tab exp-inner-active" data-action="exp-cat-inner" data-cat-inner="cat-productos"><i class="fas fa-box"></i> Productos</button>';
+        html += '<button class="exp-cat-inner-tab exp-inner-tab" data-action="exp-cat-inner" data-cat-inner="cat-servicios"><i class="fas fa-wrench"></i> Servicios</button>';
+        html += '</div>';
+
+        // Products panel
+        html += '<div class="exp-cat-detail-panel" data-cat-detail="cat-productos">';
+        html += '<div id="expCatProducts" class="exp-feed"><div class="exp-skeleton"></div><div class="exp-skeleton"></div><div class="exp-skeleton"></div></div>';
+        html += '<div id="expCatProductsMore" class="exp-load-more" style="display:none;"><button data-action="exp-cat-load-more" data-cat-type="productos" class="exp-load-more-btn">Cargar mas</button></div>';
+        html += '</div>';
+
+        // Services panel
+        html += '<div class="exp-cat-detail-panel" data-cat-detail="cat-servicios" style="display:none">';
+        html += '<div id="expCatServices" class="exp-feed"><div class="exp-skeleton"></div><div class="exp-skeleton"></div><div class="exp-skeleton"></div></div>';
+        html += '<div id="expCatServicesMore" class="exp-load-more" style="display:none;"><button data-action="exp-cat-load-more" data-cat-type="servicios" class="exp-load-more-btn">Cargar mas</button></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Store state for pagination
+        this._catDetailId = catId;
+        this._catDetailName = catName;
+        this._catProdOffset = 0;
+        this._catSvcOffset = 0;
+
+        // Load both feeds
+        this._loadCategoryFeed('productos', false);
+        this._loadCategoryFeed('servicios', false);
+    }
+
+    async _loadCategoryFeed(type, append) {
+        const catId = this._catDetailId;
+        if (!catId) return;
+        const limit = 10;
+        const isProd = type === 'productos';
+        const containerId = isProd ? 'expCatProducts' : 'expCatServices';
+        const moreId = isProd ? 'expCatProductsMore' : 'expCatServicesMore';
+        const offset = isProd ? this._catProdOffset : this._catSvcOffset;
+
+        const container = document.getElementById(containerId);
+        const moreEl = document.getElementById(moreId);
+        if (!container) return;
+
+        if (!append) {
+            container.innerHTML = '<div class="exp-skeleton"></div><div class="exp-skeleton"></div>';
+        }
+
+        let url = isProd
+            ? '/api/marketplace/products?limit=' + limit + '&offset=' + offset + '&category=' + encodeURIComponent(catId)
+            : '/api/marketplace/services?limit=' + limit + '&offset=' + offset + '&category=' + encodeURIComponent(catId);
+
+        try {
+            const resp = await this.apiRequest(url);
+            const d = resp.data || resp;
+            const items = isProd ? (d.products || []) : (d.services || []);
+
+            if (items.length === 0 && !append) {
+                const emptyLabel = isProd ? 'productos' : 'servicios';
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">' + (isProd ? '📦' : '🔧') + '</div><div class="exp-empty-text">Sin ' + emptyLabel + ' en esta categoria</div></div>';
+                if (moreEl) moreEl.style.display = 'none';
+                return;
+            }
+
+            const tab = isProd ? 'exp-productos' : 'exp-servicios';
+            const html = items.map(item => this._renderExpCard(item, tab)).join('');
+
+            if (append) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+
+            if (isProd) this._catProdOffset += items.length;
+            else this._catSvcOffset += items.length;
+
+            if (moreEl) moreEl.style.display = items.length >= limit ? '' : 'none';
+        } catch (err) {
+            if (!append) {
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">⚠️</div><div class="exp-empty-text">Error al cargar</div></div>';
+            }
+            if (moreEl) moreEl.style.display = 'none';
+        }
+    }
+
+    async _loadInicioStores() {
+        const container = document.getElementById('expFeaturedStores');
+        if (!container) return;
+        try {
+            const resp = await this.apiRequest('/api/marketplace/providers?limit=6&offset=0');
+            const providers = resp.data?.providers || resp.providers || [];
+            if (providers.length === 0) {
+                container.innerHTML = '<div style="padding:16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Sin tiendas disponibles aun.</div>';
+                return;
+            }
+            container.innerHTML = providers.map(item => this._renderExpCard(item, 'exp-tiendas')).join('');
+        } catch (e) {
+            container.innerHTML = '<div style="padding:16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Error al cargar tiendas.</div>';
+        }
+    }
+
+    async _loadInicioProducts() {
+        const container = document.getElementById('expPopularProducts');
+        if (!container) return;
+        try {
+            const resp = await this.apiRequest('/api/marketplace/products?limit=6&offset=0');
+            const products = resp.data?.products || resp.products || [];
+            if (products.length === 0) {
+                container.innerHTML = '<div style="padding:16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Sin productos disponibles aun.</div>';
+                return;
+            }
+            container.innerHTML = products.map(item => this._renderExpCard(item, 'exp-productos')).join('');
+        } catch (e) {
+            container.innerHTML = '<div style="padding:16px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Error al cargar productos.</div>';
         }
     }
 
     async loadExplorarFeed(tab, append) {
         if (this._expLoading) return;
         this._expLoading = true;
-        const container = document.getElementById('expFeedContainer');
-        const loadMoreEl = document.getElementById('expLoadMore');
+        // Route to correct per-panel container
+        let containerId = 'expFeedContainer';
+        let loadMoreId = 'expLoadMore';
+        if (tab === 'exp-productos' || tab === 'exp-recientes') { containerId = 'expFeedContainerProd'; loadMoreId = 'expLoadMoreProd'; }
+        else if (tab === 'exp-servicios') { containerId = 'expFeedContainerSvc'; loadMoreId = 'expLoadMoreSvc'; }
+        const container = document.getElementById(containerId);
+        const loadMoreEl = document.getElementById(loadMoreId);
         if (!container) { this._expLoading = false; return; }
         const limit = 10;
 
@@ -1828,6 +2065,7 @@ class MarketplaceSocialSystem {
         if (tab === 'exp-tiendas') {
             url = '/api/marketplace/providers?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&city=' + encodeURIComponent(cat);
+            if (this._expShopType) url += '&shop_type=' + encodeURIComponent(this._expShopType);
         } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
             url = '/api/marketplace/products?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
@@ -1874,61 +2112,190 @@ class MarketplaceSocialSystem {
         this._expLoading = false;
     }
 
+    _imgUrl(path) {
+        if (!path) return path;
+        // Cache bust for images that may have been 404 cached by browser
+        return path + (path.includes('?') ? '&' : '?') + 'v=' + (window._imgCacheBust || '1');
+    }
+
     _renderExpCard(item, tab) {
         const esc = (v) => this.escapeHtml(String(v || ''));
         if (tab === 'exp-tiendas') {
-            const avatar = item.profile_image || item.avatar_url;
+            const avatar = item.logo_image || item.profile_image || item.avatar_url;
             const initial = (item.business_name || 'T').charAt(0).toUpperCase();
             const avatarHtml = avatar
                 ? '<img src="' + esc(avatar) + '" alt="" loading="lazy">'
-                : '<span class="exp-card-initial">' + esc(initial) + '</span>';
-            const verified = item.is_verified ? ' <span class="exp-verified" title="Verificado">✓</span>' : '';
-            const rating = item.avg_rating ? ('<span>⭐ ' + Number(item.avg_rating).toFixed(1) + '</span>') : '';
-            const reviews = item.total_reviews ? ('<span>(' + esc(item.total_reviews) + ')</span>') : '';
-            const city = item.city ? ('<span>📍 ' + esc(item.city) + '</span>') : '';
-            const shopType = item.shop_type === 'services' ? 'Servicios' : item.shop_type === 'products' ? 'Productos' : 'Tienda';
-            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '">' +
-                '<div class="exp-card-avatar">' + avatarHtml + '</div>' +
-                '<div class="exp-card-body">' +
-                    '<div class="exp-card-title">' + esc(item.business_name) + verified + '</div>' +
-                    '<div class="exp-card-meta">' + rating + reviews + city + '</div>' +
-                    '<div class="exp-card-badge">' + esc(shopType) + '</div>' +
+                : '<span class="tc-avatar-initial">' + esc(initial) + '</span>';
+            const verified = item.is_verified ? '<span class="tc-badge-verified"><i class="fas fa-check-circle"></i> Verificado</span>' : '';
+            const rating = Number(item.avg_rating || 0).toFixed(1);
+            const reviews = parseInt(item.total_reviews || 0);
+            const jobs = parseInt(item.completed_jobs || 0);
+            const responseRate = parseInt(item.response_rate || 0);
+            const city = item.city || '';
+            const shopTypeMap = { services: 'Servicios', products: 'Productos', mixed: 'Mixta' };
+            const shopTypeIcon = { services: 'fa-wrench', products: 'fa-box', mixed: 'fa-store' };
+            const shopLabel = shopTypeMap[item.shop_type] || 'Tienda';
+            const shopIcon = shopTypeIcon[item.shop_type] || 'fa-store';
+            const theme = item.store_theme || 'dark';
+            const themeGradients = {
+                dark: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+                cyan: 'linear-gradient(135deg, #0c4a6e, #155e75)',
+                gold: 'linear-gradient(135deg, #451a03, #78350f)',
+                green: 'linear-gradient(135deg, #052e16, #14532d)',
+                coral: 'linear-gradient(135deg, #450a0a, #7f1d1d)',
+                purple: 'linear-gradient(135deg, #3b0764, #581c87)'
+            };
+            const coverBg = item.cover_image
+                ? 'background-image:url(' + esc(item.cover_image) + ');background-size:cover;background-position:center;'
+                : 'background:' + (themeGradients[theme] || themeGradients.dark) + ';';
+            const desc = item.description ? esc(item.description.length > 60 ? item.description.substring(0, 60) + '...' : item.description) : '';
+
+            return '<div class="tc-card" data-handle="' + esc(item.handle) + '">' +
+                '<div class="tc-cover" style="' + coverBg + '">' +
+                    '<div class="tc-cover-overlay"></div>' +
+                    (verified ? '<div class="tc-cover-badge">' + verified + '</div>' : '') +
+                    '<div class="tc-cover-type"><i class="fas ' + shopIcon + '"></i> ' + esc(shopLabel) + '</div>' +
                 '</div>' +
-                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
+                '<div class="tc-body">' +
+                    '<div class="tc-avatar">' + avatarHtml + '</div>' +
+                    '<div class="tc-info">' +
+                        '<div class="tc-name">' + esc(item.business_name) + '</div>' +
+                        (city ? '<div class="tc-location"><i class="fas fa-map-marker-alt"></i> ' + esc(city) + '</div>' : '') +
+                        (desc ? '<div class="tc-desc">' + desc + '</div>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div class="tc-stats">' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + (rating === '0.0' ? '--' : rating) + '</div><div class="tc-stat-label"><i class="fas fa-star" style="color:var(--ds-amber,#F59E0B);"></i> Rating</div></div>' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + jobs + '</div><div class="tc-stat-label"><i class="fas fa-briefcase"></i> Trabajos</div></div>' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + (responseRate > 0 ? responseRate + '%' : '--') + '</div><div class="tc-stat-label"><i class="fas fa-bolt"></i> Respuesta</div></div>' +
+                '</div>' +
+                '<div class="tc-actions">' +
+                    '<button class="tc-action-primary" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '"><i class="fas fa-eye"></i> Ver tienda</button>' +
+                    '<button class="tc-action-icon" data-action="exp-share-tienda" data-handle="' + esc(item.handle) + '" data-name="' + esc(item.business_name) + '" title="Compartir"><i class="fas fa-share-alt"></i></button>' +
+                '</div>' +
             '</div>';
         }
+
         if (tab === 'exp-servicios') {
-            const img = (Array.isArray(item.images) && item.images.length > 0)
-                ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
-                : '<span class="exp-card-icon">🛠️</span>';
-            const priceLabel = item.price_type === 'fixed' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN'))))) : item.price_type === 'range' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + '/hora') : 'Consultar');
-            const rating = item.avg_rating ? ('⭐ ' + Number(item.avg_rating).toFixed(1)) : '';
-            const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
-                '<div class="exp-card-avatar">' + img + '</div>' +
-                '<div class="exp-card-body">' +
-                    '<div class="exp-card-title">' + esc(item.title) + '</div>' +
-                    '<div class="exp-card-sub"><span class="exp-card-price">' + priceLabel + '</span>' + (rating ? ' · ' + rating : '') + '</div>' +
-                    catPill +
+            const sValidImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+            let sImgHtml = '';
+            if (sValidImgs.length > 1) {
+                const scId = 'scarousel_' + item.service_id;
+                const sSlides = sValidImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
+                const sDots = sValidImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
+                sImgHtml = '<div class="sd-carousel" id="' + scId + '" data-current="0" data-total="' + sValidImgs.length + '">' +
+                    '<div class="sd-carousel-track">' + sSlides + '</div>' +
+                    '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + scId + '"><i class="fas fa-chevron-left"></i></button>' +
+                    '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + scId + '"><i class="fas fa-chevron-right"></i></button>' +
+                    '<div class="sd-carousel-dots">' + sDots + '</div>' +
+                    '<div class="sd-carousel-counter">1/' + sValidImgs.length + '</div>' +
+                '</div>';
+            } else if (sValidImgs.length === 1) {
+                sImgHtml = '<img src="' + esc(this._imgUrl(sValidImgs[0])) + '" alt="" loading="lazy">';
+            } else {
+                sImgHtml = '<div class="sc-img-placeholder"><i class="fas ' + (item.category_icon ? 'fa-tag' : 'fa-wrench') + '"></i></div>';
+            }
+            const price = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(price) : price.toLocaleString('es-HN');
+            const priceMax = Number(item.price_max || 0);
+            const fmtMax = window.ltFormatNumber ? ltFormatNumber(priceMax) : priceMax.toLocaleString('es-HN');
+            const priceLabel = item.price_type === 'fixed' ? 'L. ' + fmt
+                : item.price_type === 'range' ? 'L. ' + fmt + ' - ' + fmtMax
+                : item.price_type === 'hourly' ? 'L. ' + fmt + '/hora'
+                : 'Consultar';
+            const priceTag = item.price_type === 'hourly' ? 'por hora' : (item.price_type === 'range' ? 'rango' : '');
+            const rating = Number(item.avg_rating || 0).toFixed(1);
+            const reviews = parseInt(item.total_reviews || 0);
+            const bookings = parseInt(item.booking_count || 0);
+            const duration = item.duration_hours ? Number(item.duration_hours) : null;
+            const durationLabel = duration ? (duration < 1 ? Math.round(duration * 60) + ' min' : duration + 'h') : '';
+            const isFeatured = item.is_featured;
+            const provName = item.provider_name || '';
+            const provVerified = item.provider_verified;
+            const provImg = item.provider_image;
+            const city = item.city || '';
+            const catLabel = item.category_name ? (esc(item.category_icon || '') + ' ' + esc(item.category_name)) : '';
+
+            const scHasCarousel = sValidImgs.length > 1;
+            return '<div class="sc-card" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
+                (scHasCarousel ? sImgHtml : '<div class="sc-img">' + sImgHtml) +
+                    (isFeatured ? '<div class="sc-featured"><i class="fas fa-star"></i> Destacado</div>' : '') +
+                    (catLabel ? '<div class="sc-cat-badge">' + catLabel + '</div>' : '') +
+                (scHasCarousel ? '' : '</div>') +
+                '<div class="sc-body">' +
+                    '<div class="sc-price-row">' +
+                        '<div class="sc-price">' + priceLabel + '</div>' +
+                        (priceTag ? '<span class="sc-price-tag">' + esc(priceTag) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="sc-title">' + esc(item.title) + '</div>' +
+                    '<div class="sc-stats-row">' +
+                        '<span class="sc-stat"><i class="fas fa-star" style="color:var(--ds-amber,#F59E0B);"></i> ' + (rating === '0.0' ? '--' : rating) + (reviews > 0 ? ' (' + reviews + ')' : '') + '</span>' +
+                        (bookings > 0 ? '<span class="sc-stat"><i class="fas fa-calendar-check"></i> ' + bookings + ' reservas</span>' : '') +
+                        (durationLabel ? '<span class="sc-stat"><i class="far fa-clock"></i> ' + esc(durationLabel) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="sc-provider">' +
+                        (provImg ? '<img src="' + esc(provImg) + '" alt="" class="sc-provider-avatar">' : '<span class="sc-provider-dot"></span>') +
+                        '<span>' + esc(provName) + '</span>' +
+                        (provVerified ? '<i class="fas fa-check-circle" style="color:var(--ds-green,#10B981);font-size:11px;" title="Verificado"></i>' : '') +
+                        (city ? '<span class="sc-city"><i class="fas fa-map-marker-alt"></i> ' + esc(city) + '</span>' : '') +
+                    '</div>' +
                 '</div>' +
-                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
             '</div>';
         }
         // Products (exp-productos, exp-recientes)
-        const pImg = (Array.isArray(item.images) && item.images.length > 0)
-            ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
-            : '<span class="exp-card-icon">📦</span>';
-        const condMap = { new: 'Nuevo', used: 'Usado', refurbished: 'Reacondicionado' };
+        const pValidImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+        const pImgSrc = pValidImgs.length > 0 ? pValidImgs[0] : null;
+        let pImgHtml = '';
+        if (pValidImgs.length > 1) {
+            const pcId = 'pcarousel_' + item.id;
+            const pSlides = pValidImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
+            const pDots = pValidImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
+            pImgHtml = '<div class="sd-carousel" id="' + pcId + '" data-current="0" data-total="' + pValidImgs.length + '">' +
+                '<div class="sd-carousel-track">' + pSlides + '</div>' +
+                '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + pcId + '"><i class="fas fa-chevron-left"></i></button>' +
+                '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + pcId + '"><i class="fas fa-chevron-right"></i></button>' +
+                '<div class="sd-carousel-dots">' + pDots + '</div>' +
+                '<div class="sd-carousel-counter">1/' + pValidImgs.length + '</div>' +
+            '</div>';
+        } else if (pImgSrc) {
+            pImgHtml = '<img src="' + esc(this._imgUrl(pImgSrc)) + '" alt="" loading="lazy">';
+        } else {
+            pImgHtml = '<div class="pc-img-placeholder"><i class="fas fa-box"></i></div>';
+        }
+        const condMap = { new: 'Nuevo', used: 'Usado', like_new: 'Como nuevo', good: 'Bueno', refurbished: 'Reacondicionado' };
         const cond = condMap[item.condition] || '';
-        const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-        return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
-            '<div class="exp-card-avatar">' + pImg + '</div>' +
-            '<div class="exp-card-body">' +
-                '<div class="exp-card-title">' + esc(item.title) + '</div>' +
-                '<div class="exp-card-sub"><span class="exp-card-price">L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')) + '</span>' + (cond ? ' · ' + esc(cond) : '') + '</div>' +
-                catPill +
+        const condClass = item.condition === 'new' ? 'pc-cond-new' : (item.condition === 'used' ? 'pc-cond-used' : 'pc-cond-other');
+        const price = Number(item.price || 0);
+        const fmt = window.ltFormatNumber ? ltFormatNumber(price) : price.toLocaleString('es-HN');
+        const qty = parseInt(item.quantity || 0);
+        const isFeatured = item.is_featured;
+        const hasShipping = item.shipping_available;
+        const catLabel = item.category_name ? (esc(item.category_icon || '') + ' ' + esc(item.category_name)) : '';
+        const sellerName = item.seller_name || '';
+        const sellerAvatar = item.seller_avatar;
+        const imgCount = Array.isArray(item.images) ? item.images.length : 0;
+
+        const pcHasCarousel = pValidImgs.length > 1;
+        return '<div class="pc-card" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
+            (pcHasCarousel ? pImgHtml : '<div class="pc-img">' + pImgHtml) +
+                (isFeatured ? '<div class="pc-featured"><i class="fas fa-star"></i></div>' : '') +
+                (pcHasCarousel ? '' : (imgCount > 1 ? '<div class="pc-img-count"><i class="fas fa-images"></i> ' + imgCount + '</div>' : '')) +
+                (cond ? '<div class="pc-condition ' + condClass + '">' + esc(cond) + '</div>' : '') +
+            (pcHasCarousel ? '' : '</div>') +
+            '<div class="pc-body">' +
+                '<div class="pc-price">L. ' + fmt + '</div>' +
+                '<div class="pc-title">' + esc(item.title) + '</div>' +
+                '<div class="pc-meta">' +
+                    (catLabel ? '<span class="pc-cat">' + catLabel + '</span>' : '') +
+                    (hasShipping ? '<span class="pc-ship"><i class="fas fa-truck"></i> Envio</span>' : '') +
+                    (qty > 0 && qty <= 3 ? '<span class="pc-low-stock"><i class="fas fa-exclamation-circle"></i> Poco stock</span>' : '') +
+                    (qty === 0 ? '<span class="pc-sold-out">Agotado</span>' : '') +
+                '</div>' +
+                (sellerName ? '<div class="pc-seller">' +
+                    (sellerAvatar ? '<img src="' + esc(sellerAvatar) + '" alt="" class="pc-seller-avatar">' : '<span class="pc-seller-dot"></span>') +
+                    '<span>' + esc(sellerName) + '</span>' +
+                '</div>' : '') +
             '</div>' +
-            '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
         '</div>';
     }
     
@@ -2259,7 +2626,18 @@ class MarketplaceSocialSystem {
             }
         } catch (e) { /* ok */ }
 
-        return { services, products, reviews, orders, showServices, showProducts };
+        // Fetch seller bookings (service reservations)
+        let bookings = [];
+        if (showServices) {
+            try {
+                const bkRes = await this.apiRequest('/api/marketplace/bookings?role=provider&limit=50');
+                if (bkRes.success) {
+                    bookings = bkRes.data?.bookings || bkRes.bookings || [];
+                }
+            } catch (e) { /* ok — may fail for new providers */ }
+        }
+
+        return { services, products, reviews, orders, bookings, showServices, showProducts };
     }
 
     _buildStoreItemCards(items, type) {
@@ -2346,11 +2724,8 @@ class MarketplaceSocialSystem {
         }
         storeData.analyticsLevel = tierLimits.analytics_level;
 
-        switch (layout) {
-            case 'showcase': this._renderDashboardShowcase(container, provider, storeData, theme); break;
-            case 'compact':  this._renderDashboardCompact(container, provider, storeData, theme); break;
-            default:         this._renderDashboardClassicV2(container, provider, storeData, theme); break;
-        }
+        // All layouts now use unified tabbed dashboard
+        this._renderTabbedDashboard(container, provider, storeData, theme);
         // Fetch portfolio state once (M11 fix: was fetched 2-3 times)
         try {
             const cvRes = await this.apiRequest('/api/marketplace/portfolio/cv/me');
@@ -2366,7 +2741,7 @@ class MarketplaceSocialSystem {
                 if (dashboard) {
                     const banner = document.createElement('div');
                     banner.className = 'store-portfolio-banner';
-                    banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/negocio/${esc(handle)}" target="_blank">latanda.online/negocio/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/negocio/${esc(handle)}">Copiar</button>`;
+                    banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/tienda/${esc(handle)}" target="_blank">latanda.online/tienda/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/tienda/${esc(handle)}">Copiar</button>`;
                     dashboard.insertBefore(banner, dashboard.firstChild);
                 }
             }
@@ -2941,13 +3316,109 @@ class MarketplaceSocialSystem {
         const footerY = 285;
         doc.setFontSize(8); doc.setTextColor(150, 150, 150);
         doc.text('Documento para uso profesional unicamente. Prohibida su redistribucion sin autorizacion.', 15, footerY);
-        if (handle) doc.text(`Generado desde latanda.online/negocio/${handle} - ${new Date().toLocaleDateString('es-HN')}`, 15, footerY + 4);
+        if (handle) doc.text(`Generado desde latanda.online/tienda/${handle} - ${new Date().toLocaleDateString('es-HN')}`, 15, footerY + 4);
 
         doc.save(`CV-${name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
         this.showNotification('CV descargado', 'success');
     }
 
     // ===================== CLASSIC V2 LAYOUT (Shopify-inspired) =====================
+
+    _renderTabbedDashboard(container, provider, storeData, theme) {
+        const esc = (v) => this.escapeHtml(String(v ?? ''));
+        const activeTab = this._activeStoreTab || sessionStorage.getItem('store_active_tab') || 'resumen';
+        const isActive = (tab) => tab === activeTab ? ' sd-tab-active' : '';
+        const isVisible = (tab) => tab === activeTab ? '' : ' style="display:none"';
+
+        // Cover is rendered in the header wrapper (background-image)
+
+        container.innerHTML = `<div class="store-dashboard sd-tabbed" data-theme="${esc(theme)}">
+            ${this._buildDashboardHeader(provider, esc)}
+            <div class="sd-tabs">
+                <button class="sd-tab${isActive('resumen')}" data-action="store-tab" data-tab="resumen"><i class="fas fa-chart-pie"></i> <span>Resumen</span></button>
+                <button class="sd-tab${isActive('publicaciones')}" data-action="store-tab" data-tab="publicaciones"><i class="fas fa-box"></i> <span>Publicaciones</span></button>
+                <button class="sd-tab${isActive('pedidos')}" data-action="store-tab" data-tab="pedidos"><i class="fas fa-clipboard-list"></i> <span>Pedidos</span></button>
+                <button class="sd-tab${isActive('config')}" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> <span>Config</span></button>
+            </div>
+            <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <input type="file" id="logoFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+
+            <div class="sd-tab-panel" id="sdTabResumen"${isVisible('resumen')}>
+                ${this._buildResumenSubtabs(provider, storeData, esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabPublicaciones"${isVisible('publicaciones')}>
+                ${this._buildPublicacionesSubtabs(storeData, provider, esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabPedidos"${isVisible('pedidos')}>
+                ${this._buildPedidosSubtabs(storeData, provider, esc)}
+            </div>
+
+            <div class="sd-tab-panel" id="sdTabConfig"${isVisible('config')}>
+                ${this._buildConfigSubtabs(provider, storeData, esc)}
+            </div>
+        </div>`;
+
+        // Cover upload handler
+        const logoInput = document.getElementById('logoFileInput');
+        if (logoInput) {
+            logoInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 3 * 1024 * 1024) { this.showNotification('La imagen excede 3MB', 'error'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const resp = await fetch('/api/marketplace/providers/logo-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData });
+                    const result = await resp.json();
+                    if (result.success) { this.showNotification('Logo actualizado', 'success'); this.loadMyStore(); }
+                    else { this.showNotification(result.data?.error?.message || 'Error al subir logo', 'error'); }
+                } catch (err) { this.showNotification('Error de conexion', 'error'); }
+                logoInput.value = '';
+            });
+        }
+
+        const coverInput = document.getElementById('coverFileInput');
+        if (coverInput) {
+            coverInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { this.showNotification('La imagen excede 5MB', 'error'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const resp = await fetch('/api/marketplace/providers/cover-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData });
+                    const result = await resp.json();
+                    if (result.success) { this.showNotification('Portada actualizada', 'success'); this.loadMyStore(); }
+                    else { this.showNotification(result.data?.error?.message || 'Error al subir portada', 'error'); }
+                } catch (err) { this.showNotification('Error de conexion', 'error'); }
+                coverInput.value = '';
+            });
+        }
+
+        // Sticky header — hide on scroll down, show on scroll up
+        const headerWrapper = container.querySelector('.sd-header-wrapper');
+        if (headerWrapper) {
+            headerWrapper.classList.add('sd-header-sticky');
+            let lastScrollY = 0;
+            window.addEventListener('scroll', function() {
+                const currentY = window.scrollY;
+                if (currentY > lastScrollY && currentY > 200) {
+                    headerWrapper.classList.add('sd-header-hidden');
+                } else {
+                    headerWrapper.classList.remove('sd-header-hidden');
+                }
+                lastScrollY = currentY;
+            }, { passive: true });
+        }
+
+        this._loadChainBalance();
+        this._loadReferralDashboard();
+    }
+
     _renderDashboardClassicV2(container, provider, storeData, theme) {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const header = this._buildDashboardHeader(provider, esc);
@@ -3095,15 +3566,15 @@ class MarketplaceSocialSystem {
                     <strong>Tu tienda esta completa</strong>
                     <span>Comparte tu link para atraer clientes:</span>
                 </div>
-                <button class="sd-setup-action" data-action="sd-share-store" data-url="https://latanda.online/negocio/${this.escapeHtml(handle)}">Compartir \u2192</button>
+                <button class="sd-setup-action" data-action="sd-share-store" data-url="https://latanda.online/tienda/${this.escapeHtml(handle)}">Compartir \u2192</button>
             </div>`;
         }
 
         // Find next incomplete step
         const steps = [
-            { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: (provider.shop_type === 'products' || provider.shop_type === 'mixed') ? 'add-product' : 'add-service' },
-            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'edit-store' },
-            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'sd-share-store' },
+            { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: 'goto-publicaciones' },
+            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'goto-config' },
+            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'goto-config' },
             { key: 'create_portfolio', label: 'Crea tu portafolio/CV', action: 'open-portfolio-maker' }
         ];
         let nextStep = steps.find(s => !checklist[s.key]) || steps[0];
@@ -3124,44 +3595,31 @@ class MarketplaceSocialSystem {
 
     _buildDashboardHeader(provider, esc) {
         const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
-        const avatarHtml = provider.profile_image
-            ? `<img src="${esc(provider.profile_image)}" alt="">`
+        const avatarHtml = (provider.logo_image || provider.profile_image)
+            ? `<img src="${esc(provider.logo_image || provider.profile_image)}" alt="">`
             : esc(initial);
         const badges = this._buildBadgesHtml(provider);
         const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
-        const since = provider.created_at ? new Date(provider.created_at).toLocaleDateString('es-HN', { month: 'long', year: 'numeric' }) : '';
-        return `<div class="sd-header">
-            <div class="sd-header-avatar">${avatarHtml}</div>
-            <div class="sd-header-info">
-                <div class="sd-header-name">${esc(provider.business_name || 'Mi Tienda')}</div>
-                <div class="sd-header-badges">${badges}</div>
-                <div class="sd-header-meta">
-                    ${loc ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</span>` : ''}
-                    ${since ? `<span><i class="far fa-calendar-alt"></i> Desde ${esc(since)}</span>` : ''}
+        const since = provider.created_at ? (window.ltFormatDate ? ltFormatDate(provider.created_at, 'medium') : new Date(provider.created_at).toLocaleDateString('es-HN', { month: 'long', year: 'numeric' })) : '';
+        const hasCover = !!provider.cover_image;
+        const coverClass = hasCover ? ' sd-header-with-cover' : '';
+        const coverStyle = hasCover ? ` style="background-image:url('${esc(provider.cover_image)}')"` : '';
+        return `<div class="sd-header-wrapper${coverClass}"${coverStyle}>
+            <div class="sd-header">
+                <div class="sd-header-avatar">${avatarHtml}</div>
+                <div class="sd-header-info">
+                    <div class="sd-header-name">${esc(provider.business_name || 'Mi Tienda')}</div>
+                    <div class="sd-header-badges">${badges}</div>
+                    <div class="sd-header-meta">
+                        ${loc ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(loc)}</span>` : ''}
+                        ${since ? `<span><i class="far fa-calendar-alt"></i> ${esc(since)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="sd-header-actions">
+                    <button class="sd-header-btn" data-action="store-tab" data-tab="config"><i class="fas fa-pen"></i> Editar</button>
+                    ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/tienda/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Tienda</a>` : ''}
                 </div>
             </div>
-            <div class="sd-header-actions">
-                <button class="sd-header-btn" data-action="edit-store"><i class="fas fa-pen"></i> Editar</button>
-                <button class="sd-header-btn sd-header-btn-accent" data-action="sd-scroll-themes"><i class="fas fa-palette"></i> Personalizar</button>
-                ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/negocio/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Vista previa</a>` : ''}
-            </div>
-        </div>
-        <div class="sd-cover-section">
-            ${provider.cover_image
-                ? `<div class="sd-cover-preview">
-                    <img src="${esc(provider.cover_image)}" alt="Portada">
-                    <div class="sd-cover-actions">
-                        <button class="sd-cover-btn" data-action="upload-cover"><i class="fas fa-camera"></i> Cambiar</button>
-                        <button class="sd-cover-btn sd-cover-btn-remove" data-action="remove-cover"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`
-                : `<div class="sd-cover-empty" data-action="upload-cover">
-                    <i class="fas fa-image" style="font-size:24px;color:rgba(255,255,255,0.2);margin-bottom:8px;"></i>
-                    <div style="color:#94a3b8;font-size:0.82rem;">Agrega una imagen de portada</div>
-                    <div style="color:#64748b;font-size:0.72rem;">Recomendado: 1200x400px. Se muestra en tu tienda publica.</div>
-                </div>`
-            }
-            <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
         </div>`;
     }
 
@@ -3176,13 +3634,137 @@ class MarketplaceSocialSystem {
             btns += `<button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product"><i class="fas fa-plus"></i> Producto</button>`;
         }
         if (handle) {
-            btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/negocio/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
+            btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/tienda/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
         }
         if (handle) {
-            btns += `<a class="sd-quick-btn" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-eye"></i> Ver Tienda</a>`;
+            btns += `<a class="sd-quick-btn" href="/tienda/${esc(handle)}" target="_blank"><i class="fas fa-eye"></i> Ver Tienda</a>`;
         }
         btns += `<button class="sd-quick-btn" data-action="open-portfolio-maker"><i class="fas fa-file-alt"></i> Portafolio</button>`;
         return `<div class="sd-quick-actions">${btns}</div>`;
+    }
+
+
+    _buildResumenSubtabs(provider, storeData, esc) {
+        const a = storeData.analytics || {};
+        const hasAnalytics = storeData.analytics && storeData.analyticsLevel !== 'basic';
+        const hasFull = storeData.analyticsLevel === 'full';
+        const savedSub = (() => { try { return sessionStorage.getItem('resumen_subtab') || 'general'; } catch(e) { return 'general'; } })();
+        const isSubActive = (t) => t === savedSub ? ' sd-subtab-active' : '';
+        const isSubVisible = (t) => t === savedSub ? '' : ' style="display:none"';
+        const fmt = (n) => window.ltFormatNumber ? ltFormatNumber(n) : Number(n).toLocaleString('es-HN', {maximumFractionDigits: 0});
+
+        // ---- GENERAL panel ----
+        const setupBanner = this._buildSetupBanner(provider, storeData);
+        const generalPanel = setupBanner + this._buildAnalyticsSummary(provider, storeData, esc);
+
+        // ---- VENTAS panel ----
+        let ventasPanel = '';
+        if (hasAnalytics) {
+            const rev30 = a.revenue_last_30d || [];
+            const totalRev = rev30.reduce((s, d) => s + (parseFloat(d.revenue) || 0), 0);
+            const totalOrders = parseInt(a.summary?.total_orders || 0);
+            const avgOrder = totalOrders > 0 ? totalRev / totalOrders : 0;
+            const pendingOrders = parseInt(a.summary?.pending_orders || 0);
+            ventasPanel += `<div class="sd-analytics sd-analytics-3col">
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-coins"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">L. ${fmt(totalRev)}</div>
+                        <div class="sd-analytics-label">Ingresos 30d</div>
+                        <div class="sd-analytics-sub">${totalRev > 0 ? 'Ultimos 30 dias' : 'Sin ingresos aun'}</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-actividad"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${esc(String(totalOrders))}</div>
+                        <div class="sd-analytics-label">Pedidos</div>
+                        <div class="sd-analytics-sub">${pendingOrders > 0 ? '<span style="color:var(--ds-amber,#F59E0B);">' + pendingOrders + ' pendiente' + (pendingOrders !== 1 ? 's' : '') + '</span>' : 'Todo al dia'}</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-rating"><i class="fas fa-receipt"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">L. ${fmt(avgOrder)}</div>
+                        <div class="sd-analytics-label">Ticket promedio</div>
+                        <div class="sd-analytics-sub">${totalOrders > 0 ? 'Por pedido' : '--'}</div>
+                    </div>
+                </div>
+            </div>`;
+            ventasPanel += `<div class="sd-section-header" style="margin-top:8px;"><div class="sd-section-title"><i class="fas fa-chart-bar"></i> Ingresos diarios</div></div>`;
+            ventasPanel += this._buildRevenueChart(rev30, esc);
+        } else {
+            ventasPanel += `<div class="sd-empty-state-card">
+                <div class="sd-empty-icon"><i class="fas fa-chart-bar"></i></div>
+                <div class="sd-empty-title">Analiticas de ventas</div>
+                <div class="sd-empty-desc">Disponible con plan Emprendedor o superior. Incluye ingresos diarios, pedidos y ticket promedio.</div>
+                <button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-arrow-up"></i> Ver planes</button>
+            </div>`;
+        }
+
+        // ---- PRODUCTOS panel ----
+        let productosPanel = '';
+        if (hasFull) {
+            const topProds = a.top_products || [];
+            const totalProds = (storeData.products?.length || 0);
+            const activeProds = storeData.products?.filter(p => p.status === 'active')?.length || totalProds;
+            const withSales = topProds.filter(p => parseInt(p.total_orders) > 0).length;
+            productosPanel += `<div class="sd-analytics" style="grid-template-columns:repeat(2,1fr);margin-bottom:18px;">
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-box-open"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${esc(String(totalProds))}</div>
+                        <div class="sd-analytics-label">Total productos</div>
+                        <div class="sd-analytics-sub">${activeProds} activo${activeProds !== 1 ? 's' : ''}</div>
+                    </div>
+                </div>
+                <div class="sd-analytics-card">
+                    <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-fire"></i></div>
+                    <div class="sd-analytics-body">
+                        <div class="sd-analytics-value">${esc(String(withSales))}</div>
+                        <div class="sd-analytics-label">Con ventas</div>
+                        <div class="sd-analytics-sub">${totalProds > 0 ? Math.round((withSales/totalProds)*100) + '% conversion' : 'Sin productos'}</div>
+                    </div>
+                </div>
+            </div>`;
+            productosPanel += `<div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-trophy"></i> Ranking de ventas</div></div>`;
+            productosPanel += `<div class="sd-table-scroll">`;
+            productosPanel += this._buildTopProductsTable(topProds, esc);
+            productosPanel += `</div>`;
+        } else {
+            productosPanel += `<div class="sd-empty-state-card">
+                <div class="sd-empty-icon"><i class="fas fa-trophy"></i></div>
+                <div class="sd-empty-title">Ranking de productos</div>
+                <div class="sd-empty-desc">Disponible con plan Profesional. Ve cuales productos generan mas ingresos y pedidos.</div>
+                <button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-arrow-up"></i> Ver planes</button>
+            </div>`;
+        }
+
+        // Subtitle badges for sub-tabs
+        const ventasBadge = hasAnalytics && parseInt(a.summary?.pending_orders || 0) > 0 ? ` <span class="sd-subtab-badge">${a.summary.pending_orders}</span>` : '';
+
+        return `<div class="sd-subtabs-container">
+            <div class="sd-subtabs-nav">
+                <button class="sd-subtab${isSubActive('general')}" data-action="resumen-subtab" data-subtab="general">
+                    <i class="fas fa-chart-pie"></i> <span>General</span>
+                </button>
+                <button class="sd-subtab${isSubActive('ventas')}" data-action="resumen-subtab" data-subtab="ventas">
+                    <i class="fas fa-chart-bar"></i> <span>Ventas</span>${ventasBadge}
+                </button>
+                <button class="sd-subtab${isSubActive('productos')}" data-action="resumen-subtab" data-subtab="productos">
+                    <i class="fas fa-trophy"></i> <span>Productos</span>
+                </button>
+            </div>
+            <div class="sd-subtab-panel" data-panel="general"${isSubVisible('general')}>
+                ${generalPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="ventas"${isSubVisible('ventas')}>
+                ${ventasPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="productos"${isSubVisible('productos')}>
+                ${productosPanel}
+            </div>
+        </div>`;
     }
 
     _buildAnalyticsSummary(provider, storeData, esc) {
@@ -3194,7 +3776,7 @@ class MarketplaceSocialSystem {
         const totalItems = (storeData.services?.length || 0) + (storeData.products?.length || 0);
 
         return `<div class="sd-analytics">
-            <div class="sd-analytics-card">
+            <div class="sd-analytics-card sd-clickable" data-action="resumen-subtab" data-subtab="ventas" title="Ver ventas">
                 <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-briefcase"></i></div>
                 <div class="sd-analytics-body">
                     <div class="sd-analytics-value">${esc(String(jobs))}</div>
@@ -3207,10 +3789,10 @@ class MarketplaceSocialSystem {
                 <div class="sd-analytics-body">
                     <div class="sd-analytics-value">${rating === '0.0' ? '--' : esc(rating)}</div>
                     <div class="sd-analytics-label">Rating promedio</div>
-                    <div class="sd-analytics-sub">${reviews > 0 ? esc(String(reviews)) + ' resena' + (reviews !== 1 ? 's' : '') : 'Sin resenas aun'}</div>
+                    <div class="sd-analytics-sub">${reviews > 0 ? esc(String(reviews)) + ' resena' + (reviews !== 1 ? 's' : '') : '<span style="opacity:0.7;">Completa pedidos para recibir resenas</span>'}</div>
                 </div>
             </div>
-            <div class="sd-analytics-card">
+            <div class="sd-analytics-card sd-clickable" data-action="store-tab" data-tab="publicaciones" title="Ver publicaciones">
                 <div class="sd-analytics-icon sd-icon-actividad"><i class="fas fa-chart-line"></i></div>
                 <div class="sd-analytics-body">
                     <div class="sd-analytics-value">${esc(String(totalItems))}</div>
@@ -3218,7 +3800,7 @@ class MarketplaceSocialSystem {
                     <div class="sd-analytics-sub">${storeData.showServices ? esc(String(storeData.services?.length || 0)) + ' servicio' + ((storeData.services?.length || 0) !== 1 ? 's' : '') : ''}${storeData.showServices && storeData.showProducts ? ' · ' : ''}${storeData.showProducts ? esc(String(storeData.products?.length || 0)) + ' producto' + ((storeData.products?.length || 0) !== 1 ? 's' : '') : ''}</div>
                 </div>
             </div>
-            <div class="sd-analytics-card">
+            <div class="sd-analytics-card sd-clickable" data-action="store-tab" data-tab="pedidos" title="Ver pedidos">
                 <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-bolt"></i></div>
                 <div class="sd-analytics-body">
                     <div class="sd-analytics-value">${esc(String(responseRate))}%</div>
@@ -3252,8 +3834,91 @@ class MarketplaceSocialSystem {
                     <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(reviews))}</div><div class="sd-preview-stat-label">Resenas</div></div>
                 </div>
                 <div class="sd-preview-footer">
-                    <a class="sd-preview-link" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
+                    <a class="sd-preview-link" href="/tienda/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
                 </div>
+            </div>
+        </div>`;
+    }
+
+
+    _buildPublicacionesSubtabs(storeData, provider, esc) {
+        const { services, products, orders, showServices, showProducts } = storeData;
+        const shopType = provider.shop_type || 'services';
+        const sCount = services?.length || 0;
+        const pCount = products?.length || 0;
+        const oCount = orders?.length || 0;
+        const pendingOrders = (orders || []).filter(o => o.status === 'pending' || o.status === 'paid').length;
+
+        // Determine default sub-tab
+        const savedPubSub = (() => { try { return sessionStorage.getItem('pub_subtab') || (showServices ? 'servicios' : 'productos'); } catch(e) { return 'servicios'; } })();
+        const isActive = (t) => t === savedPubSub ? ' sd-subtab-active' : '';
+        const isVisible = (t) => t === savedPubSub ? '' : ' style="display:none"';
+
+        // ---- SERVICIOS panel ----
+        let serviciosPanel = '';
+        if (showServices) {
+            serviciosPanel += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                <div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${sCount} servicio${sCount !== 1 ? 's' : ''} publicado${sCount !== 1 ? 's' : ''}</div>
+                <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-service" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Servicio</button>
+            </div>`;
+            if (sCount > 0) {
+                serviciosPanel += services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('');
+            } else {
+                serviciosPanel += this._buildEmptyListingState('services', esc);
+            }
+        } else {
+            serviciosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-wrench"></i></div><div class="sd-empty-title">Tienda de productos</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Productos. Para ofrecer servicios, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
+        }
+
+        // ---- PRODUCTOS panel ----
+        let productosPanel = '';
+        if (showProducts) {
+            productosPanel += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                <div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${pCount} producto${pCount !== 1 ? 's' : ''} publicado${pCount !== 1 ? 's' : ''}</div>
+                <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Producto</button>
+            </div>`;
+            if (pCount > 0) {
+                productosPanel += products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('');
+            } else {
+                productosPanel += this._buildEmptyListingState('products', esc);
+            }
+        } else {
+            productosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-box"></i></div><div class="sd-empty-title">Tienda de servicios</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Servicios. Para vender productos, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
+        }
+
+        // ---- PEDIDOS panel ----
+        let pedidosPanel = this._buildOrdersTab(orders || [], esc);
+
+        // Badges
+        const sBadge = sCount > 0 ? ` <span class="sd-subtab-badge" style="background:var(--ds-blue,#3B82F6);color:#fff;">${sCount}</span>` : '';
+        const pBadge = pCount > 0 ? ` <span class="sd-subtab-badge" style="background:var(--ds-green,#10B981);color:#fff;">${pCount}</span>` : '';
+        const oBadge = pendingOrders > 0 ? ` <span class="sd-subtab-badge">${pendingOrders}</span>` : (oCount > 0 ? ` <span class="sd-subtab-badge" style="background:rgba(255,255,255,0.15);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${oCount}</span>` : '');
+
+        // Build nav — hide tabs for shop types that don't apply
+        let tabs = '';
+        if (showServices) {
+            tabs += `<button class="sd-subtab${isActive('servicios')}" data-action="pub-subtab" data-subtab="servicios">
+                <i class="fas fa-wrench"></i> <span>Servicios</span>${sBadge}
+            </button>`;
+        }
+        if (showProducts) {
+            tabs += `<button class="sd-subtab${isActive('productos')}" data-action="pub-subtab" data-subtab="productos">
+                <i class="fas fa-box"></i> <span>Productos</span>${pBadge}
+            </button>`;
+        }
+        tabs += `<button class="sd-subtab${isActive('pedidos')}" data-action="pub-subtab" data-subtab="pedidos">
+            <i class="fas fa-shopping-bag"></i> <span>Pedidos</span>${oBadge}
+        </button>`;
+
+        // For single-type stores, auto-select the available type
+        const adjustedSaved = savedPubSub === 'servicios' && !showServices ? 'productos' : (savedPubSub === 'productos' && !showProducts ? 'servicios' : savedPubSub);
+
+        return `<div class="sd-subtabs-container">
+            <div class="sd-subtabs-nav">${tabs}</div>
+            ${showServices ? `<div class="sd-subtab-panel" data-panel="servicios"${isVisible('servicios')}>${serviciosPanel}</div>` : ''}
+            ${showProducts ? `<div class="sd-subtab-panel" data-panel="productos"${isVisible('productos')}>${productosPanel}</div>` : ''}
+            <div class="sd-subtab-panel" data-panel="pedidos"${isVisible('pedidos')}>
+                ${pedidosPanel}
             </div>
         </div>`;
     }
@@ -3301,9 +3966,28 @@ class MarketplaceSocialSystem {
     }
 
     _buildEnhancedItemCard(item, type, esc) {
-        const imgSrc = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
-        const imgHtml = imgSrc ? `<img src="${esc(imgSrc)}" alt="">` : `<span>${type === 'services' ? '\u{1f527}' : '\u{1f4e6}'}</span>`;
         const itemId = type === 'services' ? item.service_id : item.id;
+        const rawImg = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
+        const imgSrc = rawImg && (rawImg.startsWith('/') || rawImg.startsWith('http')) ? rawImg : null;
+        const validImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+
+        let imgHtml = '';
+        if (validImgs.length > 1) {
+            const cId = 'carousel_' + (type === 'services' ? 's' : 'p') + '_' + itemId;
+            const slides = validImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
+            const dots = validImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
+            imgHtml = '<div class="sd-carousel" id="' + cId + '" data-current="0" data-total="' + validImgs.length + '">' +
+                '<div class="sd-carousel-track">' + slides + '</div>' +
+                '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + cId + '"><i class="fas fa-chevron-left"></i></button>' +
+                '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + cId + '"><i class="fas fa-chevron-right"></i></button>' +
+                '<div class="sd-carousel-dots">' + dots + '</div>' +
+                '<div class="sd-carousel-counter">1/' + validImgs.length + '</div>' +
+            '</div>';
+        } else if (imgSrc) {
+            imgHtml = '<img src="' + esc(this._imgUrl(imgSrc)) + '" alt="" loading="lazy">';
+        } else {
+            imgHtml = '<div class="sd-item-img-placeholder"><i class="fas ' + (type === 'services' ? 'fa-wrench' : 'fa-box') + '"></i></div>';
+        }
         const featuredClass = item.featured ? ' featured-active' : '';
 
         let priceHtml = '';
@@ -3329,8 +4013,9 @@ class MarketplaceSocialSystem {
             metaHtml = `${esc(String(qty))} en stock`;
         }
 
-        return `<div class="sd-item-card">
-            <div class="sd-item-image">${imgHtml}</div>
+        const hasCarousel = validImgs.length > 1;
+        return `<div class="sd-item-card${hasCarousel ? ' sd-item-card-visual' : ''}">
+            ${hasCarousel ? '<div class="sd-item-carousel-wrap">' + imgHtml + '</div>' : '<div class="sd-item-image">' + imgHtml + '</div>'}
             <div class="sd-item-body">
                 <div class="sd-item-title">${esc(item.title)}</div>
                 <div class="sd-item-price">${priceHtml}</div>
@@ -3358,6 +4043,138 @@ class MarketplaceSocialSystem {
         </div>`;
     }
 
+
+    _buildPedidosSubtabs(storeData, provider, esc) {
+        const { orders, bookings, reviews, showServices, showProducts } = storeData;
+        const oCount = orders?.length || 0;
+        const bCount = bookings?.length || 0;
+        const rCount = reviews?.length || 0;
+        const pendingOrders = (orders || []).filter(o => o.status === 'pending' || o.status === 'paid').length;
+        const pendingBookings = (bookings || []).filter(b => b.status === 'pending' || b.status === 'confirmed').length;
+        const pendingTotal = pendingOrders + pendingBookings;
+
+        const savedSub = (() => { try { return sessionStorage.getItem('ped_subtab') || (showServices ? 'reservas' : 'ordenes'); } catch(e) { return 'reservas'; } })();
+        const isActive = (t) => t === savedSub ? ' sd-subtab-active' : '';
+        const isVisible = (t) => t === savedSub ? '' : ' style="display:none"';
+
+        // ---- RESERVAS panel ----
+        let reservasPanel = '';
+        if (showServices) {
+            reservasPanel = this._buildBookingsPanel(bookings || [], esc);
+        } else {
+            reservasPanel = '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-calendar-check"></i></div><div class="sd-empty-title">Sin servicios activos</div><div class="sd-empty-desc">Las reservas aparecen cuando ofreces servicios. Configura tu tienda como tipo Servicios o Mixta.</div></div>';
+        }
+
+        // ---- ORDENES panel ----
+        let ordenesPanel = '';
+        if (showProducts) {
+            ordenesPanel = this._buildOrdersTab(orders || [], esc);
+        } else {
+            ordenesPanel = '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-shopping-bag"></i></div><div class="sd-empty-title">Sin productos activos</div><div class="sd-empty-desc">Los pedidos aparecen cuando vendes productos. Configura tu tienda como tipo Productos o Mixta.</div></div>';
+        }
+
+        // ---- RESENAS panel ----
+        let resenasPanel = this._buildReviewsSummary(reviews || [], provider, esc);
+
+        // Badges
+        const bBadge = pendingBookings > 0 ? ` <span class="sd-subtab-badge">${pendingBookings}</span>` : (bCount > 0 ? ` <span class="sd-subtab-badge" style="background:rgba(255,255,255,0.15);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${bCount}</span>` : '');
+        const oBadge = pendingOrders > 0 ? ` <span class="sd-subtab-badge">${pendingOrders}</span>` : (oCount > 0 ? ` <span class="sd-subtab-badge" style="background:rgba(255,255,255,0.15);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${oCount}</span>` : '');
+        const rBadge = rCount > 0 ? ` <span class="sd-subtab-badge" style="background:rgba(245,158,11,0.2);color:var(--ds-amber,#F59E0B);">${rCount}</span>` : '';
+
+        let tabs = '';
+        if (showServices) {
+            tabs += `<button class="sd-subtab${isActive('reservas')}" data-action="ped-subtab" data-subtab="reservas"><i class="fas fa-calendar-check"></i> <span>Reservas</span>${bBadge}</button>`;
+        }
+        if (showProducts) {
+            tabs += `<button class="sd-subtab${isActive('ordenes')}" data-action="ped-subtab" data-subtab="ordenes"><i class="fas fa-shopping-bag"></i> <span>Ordenes</span>${oBadge}</button>`;
+        }
+        tabs += `<button class="sd-subtab${isActive('resenas')}" data-action="ped-subtab" data-subtab="resenas"><i class="fas fa-star"></i> <span>Resenas</span>${rBadge}</button>`;
+
+        return `<div class="sd-subtabs-container">
+            <div class="sd-subtabs-nav">${tabs}</div>
+            ${showServices ? `<div class="sd-subtab-panel" data-panel="reservas"${isVisible('reservas')}>${reservasPanel}</div>` : ''}
+            ${showProducts ? `<div class="sd-subtab-panel" data-panel="ordenes"${isVisible('ordenes')}>${ordenesPanel}</div>` : ''}
+            <div class="sd-subtab-panel" data-panel="resenas"${isVisible('resenas')}>${resenasPanel}</div>
+        </div>`;
+    }
+
+    _buildBookingsPanel(bookings, esc) {
+        const statusLabels = { pending: 'Pendiente', confirmed: 'Confirmada', in_progress: 'En Progreso', completed: 'Completada', cancelled: 'Cancelada', no_show: 'No Asistio' };
+        const statusColors = { pending: 'var(--ds-amber,#f59e0b)', confirmed: 'var(--ds-cyan,#06b6d4)', in_progress: 'var(--ds-blue,#3b82f6)', completed: 'var(--ds-green,#10b981)', cancelled: 'var(--ds-red,#ef4444)', no_show: 'var(--ds-text-muted,#94a3b8)' };
+
+        if (!bookings || bookings.length === 0) {
+            return '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-calendar-check"></i></div><div class="sd-empty-title">Sin reservas aun</div><div class="sd-empty-desc">Cuando alguien reserve tu servicio, aparecera aqui. Comparte tu tienda para recibir reservas.</div></div>';
+        }
+
+        const pending = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed');
+        const completed = bookings.filter(b => b.status === 'completed');
+        const cancelled = bookings.filter(b => b.status === 'cancelled' || b.status === 'no_show');
+
+        let html = `<div class="sd-analytics" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+            <div class="sd-analytics-card"><div class="sd-analytics-icon" style="background:rgba(245,158,11,0.15);color:var(--ds-amber,#F59E0B);"><i class="fas fa-clock"></i></div><div class="sd-analytics-body"><div class="sd-analytics-value">${pending.length}</div><div class="sd-analytics-label">Activas</div></div></div>
+            <div class="sd-analytics-card"><div class="sd-analytics-icon" style="background:rgba(16,185,129,0.15);color:var(--ds-green,#10B981);"><i class="fas fa-check"></i></div><div class="sd-analytics-body"><div class="sd-analytics-value">${completed.length}</div><div class="sd-analytics-label">Completadas</div></div></div>
+            <div class="sd-analytics-card"><div class="sd-analytics-icon" style="background:rgba(239,68,68,0.15);color:var(--ds-red,#EF4444);"><i class="fas fa-times"></i></div><div class="sd-analytics-body"><div class="sd-analytics-value">${cancelled.length}</div><div class="sd-analytics-label">Canceladas</div></div></div>
+        </div>`;
+
+        const cards = bookings.slice(0, 20).map(b => {
+            const dateStr = b.scheduled_date ? new Date(b.scheduled_date + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            const timeStr = b.scheduled_time ? b.scheduled_time.substring(0, 5) : '';
+            const color = statusColors[b.status] || statusColors.pending;
+            const label = statusLabels[b.status] || esc(b.status);
+            const price = parseFloat(b.quoted_price || 0);
+            let actionsHtml = '';
+            if (b.status === 'pending') {
+                actionsHtml = `<div class="sd-order-actions"><button class="sd-order-btn" style="background:var(--ds-green,#10B981);color:#fff;" data-action="update-booking-status" data-booking-id="${esc(String(b.booking_id))}" data-new-status="confirmed">Confirmar</button><button class="sd-order-btn" style="background:var(--ds-red,#EF4444);color:#fff;margin-left:6px;" data-action="update-booking-status" data-booking-id="${esc(String(b.booking_id))}" data-new-status="cancelled">Rechazar</button></div>`;
+            } else if (b.status === 'confirmed') {
+                actionsHtml = `<div class="sd-order-actions"><button class="sd-order-btn" style="background:var(--ds-blue,#3B82F6);color:#fff;" data-action="update-booking-status" data-booking-id="${esc(String(b.booking_id))}" data-new-status="completed">Completar</button></div>`;
+            }
+            return `<div class="sd-order-card" style="border-left-color:${color};">
+                <div class="sd-order-info" style="flex:1;">
+                    <div class="sd-order-product">${esc(b.service_title || 'Servicio')}</div>
+                    <div class="sd-order-buyer"><i class="fas fa-user"></i> ${esc(b.customer_name || b.user_name || 'Cliente')}</div>
+                    <div class="sd-order-date"><i class="far fa-calendar"></i> ${esc(dateStr)}${timeStr ? ' · ' + esc(timeStr) : ''}</div>
+                </div>
+                <div class="sd-order-right">
+                    <div class="sd-order-total">L. ${window.ltFormatNumber ? ltFormatNumber(price) : price.toLocaleString('es-HN')}</div>
+                    <span class="sd-order-status" style="background:${color}20;color:${color};">${label}</span>
+                </div>
+                ${actionsHtml}
+            </div>`;
+        }).join('');
+
+        return html + `<div class="sd-orders-list">${cards}</div>`;
+    }
+
+    _buildReviewsSummary(reviews, provider, esc) {
+        const rating = Number(provider.avg_rating || 0);
+        const totalReviews = parseInt(provider.total_reviews || reviews.length || 0);
+
+        // Rating summary card
+        let html = `<div style="display:flex;align-items:center;gap:20px;padding:20px;background:var(--ds-bg-elevated,rgba(255,255,255,0.04));border-radius:14px;margin-bottom:20px;flex-wrap:wrap;">
+            <div style="text-align:center;min-width:80px;">
+                <div style="font-size:36px;font-weight:700;color:var(--ds-text-primary,#fff);line-height:1;">${rating > 0 ? rating.toFixed(1) : '--'}</div>
+                <div style="color:var(--ds-amber,#F59E0B);font-size:16px;margin:4px 0;">${'\u2605'.repeat(Math.round(rating))}${'\u2606'.repeat(5 - Math.round(rating))}</div>
+                <div style="font-size:12px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));">${totalReviews} resena${totalReviews !== 1 ? 's' : ''}</div>
+            </div>
+            <div style="flex:1;min-width:150px;">
+                ${[5,4,3,2,1].map(star => {
+                    const count = reviews.filter(r => Math.round(Number(r.rating || 0)) === star).length;
+                    const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+                    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><span style="font-size:12px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));min-width:14px;">' + star + '</span><div style="flex:1;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:var(--ds-amber,#F59E0B);border-radius:3px;transition:width 0.3s;"></div></div><span style="font-size:11px;color:var(--ds-text-muted,rgba(255,255,255,0.35));min-width:24px;text-align:right;">' + count + '</span></div>';
+                }).join('')}
+            </div>
+        </div>`;
+
+        // Reviews list
+        if (!reviews || reviews.length === 0) {
+            html += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-star"></i></div><div class="sd-empty-title">Sin resenas aun</div><div class="sd-empty-desc">Completa pedidos y reservas para que tus clientes dejen resenas. Las buenas resenas atraen mas clientes.</div></div>';
+        } else {
+            html += this._buildRecentReviews(reviews, esc);
+        }
+
+        return html;
+    }
+
     _buildRecentReviews(reviews, esc) {
         if (!reviews || reviews.length === 0) return '';
         const cards = reviews.slice(0, 3).map(r => {
@@ -3380,6 +4197,199 @@ class MarketplaceSocialSystem {
         return `<div class="sd-reviews">
             <div class="sd-reviews-header"><i class="fas fa-comment-dots"></i> Resenas recientes</div>
             ${cards}
+        </div>`;
+    }
+
+
+    _buildConfigSubtabs(provider, storeData, esc) {
+        const savedSub = (() => { try { return sessionStorage.getItem('cfg_subtab') || 'negocio'; } catch(e) { return 'negocio'; } })();
+        const isActive = (t) => t === savedSub ? ' sd-subtab-active' : '';
+        const isVisible = (t) => t === savedSub ? '' : ' style="display:none"';
+
+        // ---- NEGOCIO panel ----
+        let negocioPanel = `<div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-image"></i> Portada</div></div>
+            <div class="sd-cover-config">
+                ${provider.cover_image
+                    ? '<span style="color:#94a3b8;font-size:0.82rem;">Tu portada se muestra arriba.</span> <button class="sd-form-btn sd-form-btn-primary" data-action="upload-cover" style="display:inline-flex;padding:6px 14px;font-size:0.78rem;"><i class="fas fa-camera"></i> Cambiar</button> <button class="sd-danger-btn" data-action="remove-cover" style="padding:6px 14px;font-size:0.78rem;"><i class="fas fa-trash"></i> Eliminar</button>'
+                    : '<button class="sd-form-btn sd-form-btn-primary" data-action="upload-cover"><i class="fas fa-image"></i> Subir Portada</button><span style="color:#64748b;font-size:0.78rem;margin-left:8px;">Recomendado: 1200x400px</span>'
+                }
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-store-alt"></i> Logo de Tienda</div></div>
+            <div class="sd-logo-config">
+                <div class="sd-logo-preview">
+                    ${provider.logo_image
+                        ? '<img src="' + esc(provider.logo_image) + '" alt="Logo" class="sd-logo-img">'
+                        : '<div class="sd-logo-placeholder"><i class="fas fa-store"></i></div>'
+                    }
+                </div>
+                <div class="sd-logo-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="upload-logo" style="padding:8px 16px;font-size:0.82rem;"><i class="fas fa-camera"></i> ${provider.logo_image ? 'Cambiar Logo' : 'Subir Logo'}</button>
+                    ${provider.logo_image ? '<button class="sd-danger-btn" data-action="remove-logo" style="padding:8px 16px;font-size:0.82rem;"><i class="fas fa-trash"></i> Eliminar</button>' : ''}
+                    <div style="font-size:0.75rem;color:var(--ds-text-muted,rgba(255,255,255,0.35));margin-top:6px;">Recomendado: 256x256px. Se muestra en cards y perfil de tu tienda.</div>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-store"></i> Informacion del Negocio</div></div>
+            <div class="sd-inline-form" id="sdEditForm">
+                <div class="sd-form-row">
+                    <label>Nombre</label>
+                    <input type="text" id="sdEditName" class="sd-form-input" value="${esc(provider.business_name || '')}" maxlength="255">
+                </div>
+                <div class="sd-form-row">
+                    <label>Descripcion</label>
+                    <textarea id="sdEditDesc" class="sd-form-input" rows="3" maxlength="2000">${esc(provider.description || '')}</textarea>
+                </div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row">
+                        <label>Telefono</label>
+                        <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20">
+                    </div>
+                    <div class="sd-form-row">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20">
+                    </div>
+                </div>
+                <div class="sd-form-row">
+                    <label>Email de contacto</label>
+                    <input type="email" id="sdEditEmail" class="sd-form-input" value="${esc(provider.email || '')}" maxlength="255">
+                </div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row">
+                        <label>Ciudad</label>
+                        <input type="text" id="sdEditCity" class="sd-form-input" value="${esc(provider.city || '')}" maxlength="100">
+                    </div>
+                    <div class="sd-form-row">
+                        <label>Barrio / Zona</label>
+                        <input type="text" id="sdEditNeighborhood" class="sd-form-input" value="${esc(provider.neighborhood || '')}" maxlength="100">
+                    </div>
+                </div>
+                <div class="sd-form-row">
+                    <label>Areas de servicio (separadas por coma)</label>
+                    <input type="text" id="sdEditAreas" class="sd-form-input" value="${esc((provider.service_areas || []).join(', '))}" placeholder="Tegucigalpa, SPS, Comayagua">
+                </div>
+                <div class="sd-form-row">
+                    <label>Links Sociales</label>
+                    <div class="sd-form-grid">
+                        <input type="url" id="sdEditWebsite" class="sd-form-input" value="${esc(provider.social_links?.website || '')}" placeholder="https://mi-sitio.com" maxlength="500">
+                        <input type="url" id="sdEditGithub" class="sd-form-input" value="${esc(provider.social_links?.github || '')}" placeholder="https://github.com/user" maxlength="500">
+                        <input type="url" id="sdEditLinkedin" class="sd-form-input" value="${esc(provider.social_links?.linkedin || '')}" placeholder="https://linkedin.com/in/user" maxlength="500">
+                    </div>
+                </div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-store-info"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="far fa-clock"></i> Horario de Atencion</div></div>
+            <div class="sd-inline-form" id="sdHoursForm">
+                ${(() => {
+                    const days = [['monday','Lunes'],['tuesday','Martes'],['wednesday','Miercoles'],['thursday','Jueves'],['friday','Viernes'],['saturday','Sabado'],['sunday','Domingo']];
+                    const hours = provider.business_hours || {};
+                    return days.map(([key, label]) => {
+                        const h = hours[key];
+                        const isOpen = h && h.open;
+                        return '<div class="sd-form-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                            '<label style="min-width:80px;font-size:13px;">' + label + '</label>' +
+                            '<input type="time" class="sd-form-input sd-hours-open" data-day="' + key + '" value="' + (isOpen ? h.open : '09:00') + '" style="max-width:110px;">' +
+                            '<span style="color:rgba(255,255,255,0.3);">-</span>' +
+                            '<input type="time" class="sd-form-input sd-hours-close" data-day="' + key + '" value="' + (isOpen ? h.close : '17:00') + '" style="max-width:110px;">' +
+                            '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:rgba(255,255,255,0.5);"><input type="checkbox" class="sd-hours-active" data-day="' + key + '"' + (isOpen ? ' checked' : '') + '> Abierto</label>' +
+                        '</div>';
+                    }).join('');
+                })()}
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-hours"><i class="fas fa-save"></i> Guardar Horario</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-credit-card"></i> Metodos de Pago</div></div>
+            <div class="sd-inline-form">
+                ${(() => {
+                    const methods = [['wallet_ltd','LTD Wallet','fa-coins'],['bank_transfer','Transferencia Bancaria','fa-university'],['crypto','Criptomonedas','fa-bitcoin'],['cash','Efectivo','fa-money-bill'],['mobile_money','Tigo/Claro Money','fa-mobile-alt'],['paypal','PayPal','fa-paypal'],['card','Tarjeta','fa-credit-card']];
+                    const current = provider.payment_methods || [];
+                    return '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + methods.map(([id, label, icon]) => {
+                        const checked = current.includes(id);
+                        return '<label class="sd-pay-check' + (checked ? ' sd-pay-active' : '') + '" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,' + (checked ? '0.2' : '0.08') + ');background:rgba(255,255,255,' + (checked ? '0.06' : '0.02') + ');cursor:pointer;font-size:13px;color:rgba(255,255,255,' + (checked ? '0.8' : '0.5') + ');transition:all 0.2s;"><input type="checkbox" class="sd-pay-method" value="' + id + '"' + (checked ? ' checked' : '') + ' style="display:none;"><i class="fas ' + icon + '" style="color:var(--store-accent-primary,#8B5CF6);"></i> ' + label + '</label>';
+                    }).join('') + '</div>';
+                })()}
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-payments"><i class="fas fa-save"></i> Guardar Metodos</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-shield-alt"></i> Politicas</div></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-row"><label>Garantia</label><input type="text" id="sdPolWarranty" class="sd-form-input" value="${esc(provider.policies?.warranty || '')}" placeholder="Ej: 30 dias de soporte incluidos" maxlength="300"></div>
+                <div class="sd-form-row"><label>Reembolso</label><input type="text" id="sdPolRefund" class="sd-form-input" value="${esc(provider.policies?.refund || '')}" placeholder="Ej: Reembolso completo si no se inicia" maxlength="300"></div>
+                <div class="sd-form-row"><label>Entrega</label><input type="text" id="sdPolDelivery" class="sd-form-input" value="${esc(provider.policies?.delivery || '')}" placeholder="Ej: Entrega iterativa con demos semanales" maxlength="300"></div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-policies"><i class="fas fa-save"></i> Guardar Politicas</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-question-circle"></i> Preguntas Frecuentes</div></div>
+            <div class="sd-inline-form" id="sdFaqForm">
+                ${(() => {
+                    const faqs = provider.faq || [];
+                    let html = '';
+                    faqs.forEach((item, i) => {
+                        html += '<div class="sd-faq-row" style="margin-bottom:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">' +
+                            '<input type="text" class="sd-form-input sd-faq-q" value="' + esc(item.q || '') + '" placeholder="Pregunta" style="margin-bottom:6px;">' +
+                            '<textarea class="sd-form-input sd-faq-a" rows="2" placeholder="Respuesta">' + esc(item.a || '') + '</textarea>' +
+                            '<button data-action="remove-faq" data-index="' + i + '" style="background:none;border:none;color:#ef4444;font-size:12px;cursor:pointer;margin-top:4px;"><i class="fas fa-trash"></i> Eliminar</button>' +
+                        '</div>';
+                    });
+                    return html;
+                })()}
+                <button data-action="add-faq" style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.15);border-radius:10px;padding:10px;width:100%;color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;margin-bottom:12px;font-family:inherit;"><i class="fas fa-plus"></i> Agregar pregunta</button>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-faq"><i class="fas fa-save"></i> Guardar FAQ</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-danger-zone" style="margin-top:24px;">
+            <div class="sd-section-header"><div class="sd-section-title" style="color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> Zona de Peligro</div></div>
+            <p style="color:#94a3b8;font-size:0.82rem;margin-bottom:12px;">Eliminar tu tienda desactiva todos tus productos y servicios.</p>
+            <button class="sd-danger-btn" data-action="delete-store">Eliminar mi Tienda</button>
+        </div>`;
+
+        // ---- APARIENCIA panel ----
+        const aparienciaPanel = this._buildThemeBrowser(provider, esc);
+
+        // ---- PLAN panel ----
+        const planPanel = `${this.renderTierProgressCard()}
+            ${this._buildChainBalanceCard(esc)}
+            ${this._buildReferralDashboard(esc)}`;
+
+        return `<div class="sd-subtabs-container">
+            <div class="sd-subtabs-nav">
+                <button class="sd-subtab${isActive('negocio')}" data-action="cfg-subtab" data-subtab="negocio">
+                    <i class="fas fa-store"></i> <span>Negocio</span>
+                </button>
+                <button class="sd-subtab${isActive('apariencia')}" data-action="cfg-subtab" data-subtab="apariencia">
+                    <i class="fas fa-palette"></i> <span>Apariencia</span>
+                </button>
+                <button class="sd-subtab${isActive('plan')}" data-action="cfg-subtab" data-subtab="plan">
+                    <i class="fas fa-crown"></i> <span>Plan</span>
+                </button>
+            </div>
+            <div class="sd-subtab-panel" data-panel="negocio"${isVisible('negocio')}>
+                ${negocioPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="apariencia"${isVisible('apariencia')}>
+                ${aparienciaPanel}
+            </div>
+            <div class="sd-subtab-panel" data-panel="plan"${isVisible('plan')}>
+                ${planPanel}
+            </div>
         </div>`;
     }
 
@@ -4662,7 +5672,7 @@ class MarketplaceSocialSystem {
             if (data.success && data.data?.categories?.length) {
                 select.innerHTML = '<option value="">Seleccionar...</option>' +
                     data.data.categories
-                        .filter(c => c.is_active)
+                        .filter(c => c.is_active !== false)
                         .sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99))
                         .map(c => '<option value="' + this.escapeHtml(c.category_id) + '">' +
                             this.escapeHtml((c.icon || '') + ' ' + (c.name_es || c.name)) + '</option>')
@@ -5624,7 +6634,7 @@ async function viewProduct(productId) {
         let imgs = p.images || [];
         if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch { imgs = []; } }
         if (!Array.isArray(imgs)) imgs = [];
-        const mainImg = imgs.length > 0 ? (typeof imgs[0] === 'object' ? imgs[0].url : imgs[0]) : null;
+        const validProdImgs = imgs.map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http'))); const mainImg = validProdImgs.length > 0 ? validProdImgs[0] : null;
 
         const condMap = { new: 'Nuevo', used: 'Usado', like_new: 'Como nuevo', refurbished: 'Reacondicionado', good: 'Bueno', acceptable: 'Aceptable' };
         const condLabel = condMap[p.condition] || '';
@@ -5858,7 +6868,21 @@ async function viewService(serviceId) {
         overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
         overlay.innerHTML = '<div style="background:#1a1f2e;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">' +
             '<div style="position:relative;">' +
-                (mainImg ? '<img src="' + esc(mainImg) + '" style="width:100%;height:220px;object-fit:cover;border-radius:16px 16px 0 0;">' : '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">🛠️</div>') +
+                (function() {
+                    var validImgs = imgs.map(function(i) { return typeof i === 'object' ? i.url : i; }).filter(function(u) { return u && (u.startsWith('/') || u.startsWith('http')); });
+                    if (validImgs.length > 1) {
+                        return '<div style="position:relative;overflow:hidden;border-radius:16px 16px 0 0;" id="vsCarousel" data-current="0" data-total="' + validImgs.length + '">' +
+                            '<div style="display:flex;transition:transform 0.3s;" class="vs-track">' + validImgs.map(function(u) { return '<img src="' + esc(u) + '" style="min-width:100%;height:260px;object-fit:cover;">'; }).join('') + '</div>' +
+                            '<button onclick="var c=document.getElementById(\'vsCarousel\');var t=parseInt(c.dataset.total);var cur=(parseInt(c.dataset.current)-1+t)%t;c.dataset.current=cur;c.querySelector(\'.vs-track\').style.transform=\'translateX(-\'+cur*100+\'%)\';c.querySelector(\'.vs-counter\').textContent=(cur+1)+\'/\'+t;" style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">‹</button>' +
+                            '<button onclick="var c=document.getElementById(\'vsCarousel\');var t=parseInt(c.dataset.total);var cur=(parseInt(c.dataset.current)+1)%t;c.dataset.current=cur;c.querySelector(\'.vs-track\').style.transform=\'translateX(-\'+cur*100+\'%)\';c.querySelector(\'.vs-counter\').textContent=(cur+1)+\'/\'+t;" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">›</button>' +
+                            '<span class="vs-counter" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:#fff;padding:2px 8px;border-radius:6px;font-size:12px;">1/' + validImgs.length + '</span>' +
+                        '</div>';
+                    } else if (mainImg) {
+                        return '<img src="' + esc(mainImg) + '" style="width:100%;height:260px;object-fit:cover;border-radius:16px 16px 0 0;">';
+                    } else {
+                        return '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">🛠️</div>';
+                    }
+                })() +
                 '<button onclick="document.getElementById(\'vsOverlay\').remove()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>' +
             '</div>' +
             '<div style="padding:16px;">' +
@@ -5875,7 +6899,14 @@ async function viewService(serviceId) {
                     '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + provName.charAt(0) + '</div>' +
                     '<div style="color:#fff;font-size:14px;font-weight:600;">' + provName + '</div>' +
                 '</div>' +
-                '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="document.getElementById(\'vsOverlay\').remove(); bookService(' + parseInt(serviceId) + ')">Reservar</button>' +
+                (function() {
+                    var ctaLabel, ctaIcon, ctaOnclick;
+                    if (s.price_type === 'fixed') { ctaLabel = '🤝 Contratar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); bookService(" + parseInt(serviceId) + ")"; }
+                    else if (s.price_type === 'hourly' || s.price_type === 'quote' || s.price_type === 'negotiable') { ctaLabel = '📋 Solicitar Cotizacion'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
+                    else if (s.price_type === 'free') { ctaLabel = '📅 Agendar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); bookService(" + parseInt(serviceId) + ")"; }
+                    else { ctaLabel = '✉️ Contactar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
+                    return '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="' + ctaOnclick + '">' + ctaLabel + '</button>';
+                })() +
             '</div>' +
         '</div>';
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -6435,9 +7466,31 @@ document.head.appendChild(style);
 
 // v4.4.0: Delegated click handler for marketplace actions (moved out of CSS template)
 function setupMarketplaceDelegatedListeners() {
+    // Change events for select elements
+    document.addEventListener('change', (e) => {
+        const sel = e.target.closest('select[data-action]');
+        if (!sel) return;
+        if (sel.dataset.action === 'filter-orders') {
+            const filterVal = sel.value || 'all';
+            const ordersList = sel.closest('.sd-subtab-panel, .sd-tab-panel')?.querySelector('#sdOrdersList');
+            if (ordersList) {
+                ordersList.querySelectorAll('.sd-order-card').forEach(card => {
+                    card.style.display = (filterVal === 'all' || card.dataset.orderStatus === filterVal) ? '' : 'none';
+                });
+            }
+        }
+    });
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-action]');
-        if (!btn) return;
+        if (!btn) {
+            // Check if click is on a tc-card but not on an action button
+            const tcCard = e.target.closest('.tc-card');
+            if (tcCard && !e.target.closest('.tc-action-primary, .tc-action-icon')) {
+                const h = tcCard.dataset.handle;
+                if (h) window.location.href = '/tienda/' + encodeURIComponent(h);
+            }
+            return;
+        }
         const action = btn.dataset.action;
         const id = btn.dataset.id;
         switch (action) {
@@ -6475,7 +7528,7 @@ function setupMarketplaceDelegatedListeners() {
             case 'reschedule-booking': if (typeof rescheduleBooking === 'function') rescheduleBooking(id); break;
             case 'leave-review': if (typeof leaveReview === 'function') leaveReview(id); break;
             case 'rebook-service': if (typeof rebookService === 'function') rebookService(id); break;
-            case 'edit-store': window.marketplaceSystem?.openEditStoreModal(); break;
+            case 'edit-store': { window.marketplaceSystem._activeStoreTab = 'config'; try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {} window.marketplaceSystem.loadMyStore(); break; }
             case 'close-edit-store': document.getElementById('storeEditOverlay')?.remove(); break;
             case 'view-my-store': window.marketplaceSystem?.loadMyStore(); break;
             case 'select-shop-type': {
@@ -6653,7 +7706,14 @@ function setupMarketplaceDelegatedListeners() {
                 break;
             }
             case 'filter-orders': {
-                // Handled by change event below
+                const filterVal = btn.value || 'all';
+                const ordersList = btn.closest('.sd-subtab-panel, .sd-listings-content, .sd-tab-panel')?.querySelector('#sdOrdersList');
+                if (ordersList) {
+                    ordersList.querySelectorAll('.sd-order-card').forEach(card => {
+                        const status = card.dataset.orderStatus;
+                        card.style.display = (filterVal === 'all' || status === filterVal) ? '' : 'none';
+                    });
+                }
                 break;
             }
             case 'submit-service': {
@@ -6719,7 +7779,338 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
-            case 'sd-scroll-themes': {
+            case 'goto-pub-pedidos': {
+                // Navigate to Publicaciones > Pedidos
+                if (window.marketplaceSystem) window.marketplaceSystem._activeStoreTab = 'publicaciones';
+                try { sessionStorage.setItem('store_active_tab', 'publicaciones'); sessionStorage.setItem('pub_subtab', 'pedidos'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'exp-subtab': {
+                const expSub = btn.getAttribute('data-subtab');
+                const subtabsNav = document.querySelector('#explorarSubtabs .sd-subtabs-nav');
+                if (subtabsNav) {
+                    subtabsNav.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                    const target = subtabsNav.querySelector('[data-subtab="' + expSub + '"]');
+                    if (target) target.classList.add('sd-subtab-active');
+                }
+                document.querySelectorAll('#explorarSubtabs > .sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const expPanel = document.querySelector('#explorarSubtabs .sd-subtab-panel[data-panel="' + expSub + '"]');
+                if (expPanel) expPanel.style.display = '';
+
+                const ms = window.marketplaceSystem;
+                if (ms && expSub !== 'inicio') {
+                    const tabMap = { tiendas: 'exp-tiendas', productos: 'exp-productos', servicios: 'exp-servicios' };
+                    ms._expTab = tabMap[expSub] || 'exp-tiendas';
+                    ms._expOffset = 0;
+                    ms._expCategory = null;
+                    ms._expSearchQuery = null;
+                    if (expSub === 'tiendas') ms._expShopType = null;
+                    // Load pills for the panel
+                    const pillsMap = { tiendas: 'expCategoryPills', productos: 'expCategoryPillsProd', servicios: 'expCategoryPillsSvc' };
+                    ms._loadExpCategoryPills(ms._expTab, pillsMap[expSub]);
+                    ms.loadExplorarFeed(ms._expTab, false);
+                }
+                break;
+            }
+            case 'carousel-prev':
+            case 'carousel-next': {
+                const carouselId = btn.dataset.carousel;
+                const carousel = document.getElementById(carouselId);
+                if (!carousel) break;
+                const total = parseInt(carousel.dataset.total);
+                let current = parseInt(carousel.dataset.current);
+                current = action === 'carousel-next' ? (current + 1) % total : (current - 1 + total) % total;
+                carousel.dataset.current = current;
+                carousel.querySelector('.sd-carousel-track').style.transform = 'translateX(-' + (current * 100) + '%)';
+                carousel.querySelectorAll('.sd-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+                const counter = carousel.querySelector('.sd-carousel-counter');
+                if (counter) counter.textContent = (current + 1) + '/' + total;
+                e.stopPropagation();
+                break;
+            }
+            case 'exp-inner-tab': {
+                const innerTarget = btn.dataset.inner;
+                const innerNav = btn.closest('.exp-inner-tabs');
+                if (innerNav) {
+                    innerNav.querySelectorAll('.exp-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                    btn.classList.add('exp-inner-active');
+                }
+                const inicioContent = document.getElementById('expInicioContent');
+                if (inicioContent) {
+                    inicioContent.querySelectorAll('.exp-inner-panel').forEach(p => p.style.display = 'none');
+                    const targetPanel = inicioContent.querySelector('.exp-inner-panel[data-inner-panel="' + innerTarget + '"]');
+                    if (targetPanel) targetPanel.style.display = '';
+                }
+                break;
+            }
+            case 'exp-cat-filter': {
+                const catId = btn.dataset.catId;
+                const catName = btn.dataset.catName;
+                const ms2 = window.marketplaceSystem;
+                if (ms2 && catId) {
+                    ms2._openCategoryDetail(catId, catName);
+                }
+                break;
+            }
+            case 'exp-cat-back': {
+                // Return to Inicio from category detail
+                const ms2b = window.marketplaceSystem;
+                if (ms2b) ms2b._buildExplorarInicio();
+                break;
+            }
+            case 'exp-cat-inner': {
+                const catInner = btn.dataset.catInner;
+                const catContainer = document.getElementById('expInicioContent');
+                if (!catContainer) break;
+                catContainer.querySelectorAll('.exp-cat-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                btn.classList.add('exp-inner-active');
+                catContainer.querySelectorAll('.exp-cat-detail-panel').forEach(p => p.style.display = 'none');
+                const targetP = catContainer.querySelector('.exp-cat-detail-panel[data-cat-detail="' + catInner + '"]');
+                if (targetP) targetP.style.display = '';
+                break;
+            }
+            case 'cfg-subtab': {
+                const cfgSub = btn.getAttribute('data-subtab');
+                try { sessionStorage.setItem('cfg_subtab', cfgSub); } catch(e) {}
+                btn.closest('.sd-subtabs-nav').querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                btn.classList.add('sd-subtab-active');
+                btn.closest('.sd-subtabs-container').querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const cfgPanel = btn.closest('.sd-subtabs-container').querySelector(`.sd-subtab-panel[data-panel="${cfgSub}"]`);
+                if (cfgPanel) cfgPanel.style.display = '';
+                // Re-trigger chain balance and referral load when switching to Plan
+                if (cfgSub === 'plan' && window.marketplaceSystem) {
+                    window.marketplaceSystem._loadChainBalance();
+                    window.marketplaceSystem._loadReferralDashboard();
+                }
+                break;
+            }
+            case 'ped-subtab': {
+                const pedSub = btn.getAttribute('data-subtab');
+                try { sessionStorage.setItem('ped_subtab', pedSub); } catch(e) {}
+                btn.closest('.sd-subtabs-nav').querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                btn.classList.add('sd-subtab-active');
+                btn.closest('.sd-subtabs-container').querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const pedPanel = btn.closest('.sd-subtabs-container').querySelector(`.sd-subtab-panel[data-panel="${pedSub}"]`);
+                if (pedPanel) pedPanel.style.display = '';
+                break;
+            }
+            case 'update-booking-status': {
+                const bkId = btn.dataset.bookingId;
+                const bkStatus = btn.dataset.newStatus;
+                if (bkId && bkStatus && window.marketplaceSystem) {
+                    btn.disabled = true;
+                    btn.textContent = '...';
+                    try {
+                        const bkRes = await window.marketplaceSystem.apiRequest('/api/marketplace/bookings/' + bkId + '/status', {
+                            method: 'PUT',
+                            body: JSON.stringify({ status: bkStatus })
+                        });
+                        if (bkRes.success) {
+                            window.marketplaceSystem.showNotification('Reserva actualizada', 'success');
+                            window.marketplaceSystem.loadMyStore();
+                        } else {
+                            window.marketplaceSystem.showNotification(bkRes.data?.error?.message || 'Error', 'error');
+                            btn.disabled = false;
+                            btn.textContent = bkStatus === 'confirmed' ? 'Confirmar' : bkStatus === 'completed' ? 'Completar' : 'Rechazar';
+                        }
+                    } catch (err) {
+                        window.marketplaceSystem.showNotification('Error de conexion', 'error');
+                        btn.disabled = false;
+                    }
+                }
+                break;
+            }
+            case 'pub-subtab': {
+                const pubSub = btn.getAttribute('data-subtab');
+                try { sessionStorage.setItem('pub_subtab', pubSub); } catch(e) {}
+                btn.closest('.sd-subtabs-nav').querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                btn.classList.add('sd-subtab-active');
+                btn.closest('.sd-subtabs-container').querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const pubPanel = btn.closest('.sd-subtabs-container').querySelector(`.sd-subtab-panel[data-panel="${pubSub}"]`);
+                if (pubPanel) pubPanel.style.display = '';
+                break;
+            }
+            case 'resumen-subtab': {
+                const sub = btn.getAttribute('data-subtab');
+                try { sessionStorage.setItem('resumen_subtab', sub); } catch(e) {}
+                btn.closest('.sd-subtabs-nav').querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+                btn.classList.add('sd-subtab-active');
+                btn.closest('.sd-subtabs-container').querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+                const targetPanel = btn.closest('.sd-subtabs-container').querySelector(`.sd-subtab-panel[data-panel="${sub}"]`);
+                if (targetPanel) targetPanel.style.display = '';
+                break;
+            }
+            case 'store-tab': {
+                const tab = btn.getAttribute('data-tab');
+                if (window.marketplaceSystem) window.marketplaceSystem._activeStoreTab = tab;
+                try { sessionStorage.setItem('store_active_tab', tab); } catch(e) {}
+                document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+                btn.classList.add('sd-tab-active');
+                document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+                var panelMap = { resumen: 'sdTabResumen', publicaciones: 'sdTabPublicaciones', pedidos: 'sdTabPedidos', config: 'sdTabConfig' };
+                var panel = document.getElementById(panelMap[tab]);
+                if (panel) panel.style.display = '';
+                break;
+            }
+            case 'goto-publicaciones': {
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'publicaciones'; }
+                try { sessionStorage.setItem('store_active_tab', 'publicaciones'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'goto-config': {
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'config'; }
+                try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'save-store-info': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+                const areas = getVal('sdEditAreas').split(',').map(s => s.trim()).filter(Boolean);
+                const links = {};
+                if (getVal('sdEditWebsite')) links.website = getVal('sdEditWebsite');
+                if (getVal('sdEditGithub')) links.github = getVal('sdEditGithub');
+                if (getVal('sdEditLinkedin')) links.linkedin = getVal('sdEditLinkedin');
+                const body = {
+                    business_name: getVal('sdEditName'), description: getVal('sdEditDesc'),
+                    phone: getVal('sdEditPhone') || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
+                    email: getVal('sdEditEmail') || undefined, city: getVal('sdEditCity') || undefined,
+                    neighborhood: getVal('sdEditNeighborhood') || undefined,
+                    service_areas: areas.length ? areas : undefined,
+                    social_links: Object.keys(links).length ? links : undefined
+                };
+                if (!body.business_name || !body.description) {
+                    ms.showNotification('Nombre y descripcion son requeridos', 'error'); break;
+                }
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify(body) }).then(res => {
+                    if (res.success) {
+                        ms.showNotification('Informacion actualizada', 'success');
+                        try { var cl = JSON.parse(localStorage.getItem('store_setup_checklist') || '{}'); cl.complete_contact = true; localStorage.setItem('store_setup_checklist', JSON.stringify(cl)); } catch(e) {}
+                        ms.loadMyStore();
+                    } else {
+                        ms.showNotification(res.data?.error?.message || 'Error al guardar', 'error');
+                        btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+                    }
+                }).catch(() => { ms.showNotification('Error de conexion', 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; });
+                break;
+            }
+            case 'upload-cover': {
+                document.getElementById('coverFileInput')?.click();
+                break;
+            }
+            case 'remove-cover': {
+                if (confirm('Eliminar imagen de portada?')) {
+                    window.marketplaceSystem?.apiRequest('/api/marketplace/providers/me', {
+                        method: 'PUT', body: JSON.stringify({ cover_image: null })
+                    }).then(() => window.marketplaceSystem?.loadMyStore()).catch(() => {});
+                }
+                break;
+            }
+            case 'save-hours': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const hours = {};
+                document.querySelectorAll('.sd-hours-active').forEach(cb => {
+                    const day = cb.dataset.day;
+                    if (cb.checked) {
+                        const open = document.querySelector('.sd-hours-open[data-day="' + day + '"]')?.value || '09:00';
+                        const close = document.querySelector('.sd-hours-close[data-day="' + day + '"]')?.value || '17:00';
+                        hours[day] = { open, close };
+                    } else {
+                        hours[day] = null;
+                    }
+                });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ business_hours: hours }) });
+                    if (res.success) ms.showNotification('Horario guardado', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-payments': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const methods = [];
+                document.querySelectorAll('.sd-pay-method:checked').forEach(cb => methods.push(cb.value));
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ payment_methods: methods }) });
+                    if (res.success) { ms.showNotification('Metodos guardados', 'success'); ms.loadMyStore(); }
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-policies': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const policies = {
+                    warranty: document.getElementById('sdPolWarranty')?.value?.trim() || '',
+                    refund: document.getElementById('sdPolRefund')?.value?.trim() || '',
+                    delivery: document.getElementById('sdPolDelivery')?.value?.trim() || ''
+                };
+                // Remove empty keys
+                Object.keys(policies).forEach(k => { if (!policies[k]) delete policies[k]; });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ policies }) });
+                    if (res.success) ms.showNotification('Politicas guardadas', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-faq': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const faqItems = [];
+                document.querySelectorAll('.sd-faq-row').forEach(row => {
+                    const q = row.querySelector('.sd-faq-q')?.value?.trim();
+                    const a = row.querySelector('.sd-faq-a')?.value?.trim();
+                    if (q && a) faqItems.push({ q, a });
+                });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ faq: faqItems }) });
+                    if (res.success) ms.showNotification('FAQ guardado', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'add-faq': {
+                const faqForm = document.getElementById('sdFaqForm');
+                if (!faqForm) break;
+                const addBtn = faqForm.querySelector('[data-action="add-faq"]');
+                const newRow = document.createElement('div');
+                newRow.className = 'sd-faq-row';
+                newRow.style.cssText = 'margin-bottom:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);';
+                newRow.innerHTML = '<input type="text" class="sd-form-input sd-faq-q" value="" placeholder="Pregunta" style="margin-bottom:6px;"><textarea class="sd-form-input sd-faq-a" rows="2" placeholder="Respuesta"></textarea><button data-action="remove-faq" style="background:none;border:none;color:#ef4444;font-size:12px;cursor:pointer;margin-top:4px;"><i class="fas fa-trash"></i> Eliminar</button>';
+                faqForm.insertBefore(newRow, addBtn);
+                break;
+            }
+            case 'remove-faq': {
+                btn.closest('.sd-faq-row')?.remove();
+                break;
+            }
+            case 'delete-store': {
+                const storeName = window.marketplaceSystem?._currentProvider?.business_name || 'Mi Tienda';
+                const confirmed = prompt('Escribe "' + storeName + '" para confirmar:');
+                if (confirmed === storeName) {
+                    window.marketplaceSystem?.apiRequest('/api/marketplace/providers/me', { method: 'DELETE' }).then(res => {
+                        if (res.success) { window.marketplaceSystem.showNotification('Tienda eliminada', 'success'); window.marketplaceSystem._currentProvider = null; window.marketplaceSystem.loadMyStore(); }
+                        else { window.marketplaceSystem.showNotification('Error al eliminar', 'error'); }
+                    }).catch(() => window.marketplaceSystem?.showNotification('Error de conexion', 'error'));
+                } else if (confirmed !== null) {
+                    window.marketplaceSystem?.showNotification('El nombre no coincide', 'error');
+                }
+                break;
+            }
+            case 'sd-scroll-themes': { // Legacy — redirects to Config tab
+                if (window.marketplaceSystem) { window.marketplaceSystem._activeStoreTab = 'config'; }
+                try { sessionStorage.setItem('store_active_tab', 'config'); } catch(e) {}
+                if (window.marketplaceSystem) window.marketplaceSystem.loadMyStore();
+                break;
+            }
+            case 'sd-scroll-themes-OLD': {
                 const themeBrowser = document.getElementById('sdThemeBrowser');
                 if (themeBrowser) themeBrowser.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 break;
@@ -6812,6 +8203,38 @@ function setupMarketplaceDelegatedListeners() {
                     .catch(() => { msM.showNotification('Error al reordenar', 'error'); btn.disabled = false; });
                 break;
             }
+            case 'exp-tienda-type': {
+                const shopType = btn.dataset.shopType || '';
+                const ms2t = window.marketplaceSystem;
+                if (ms2t) {
+                    ms2t._expShopType = shopType || null;
+                    ms2t._expOffset = 0;
+                    // Update inner tab active state
+                    const typeTabs = document.getElementById('tiendasTypeTabs');
+                    if (typeTabs) {
+                        typeTabs.querySelectorAll('.exp-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                        btn.classList.add('exp-inner-active');
+                    }
+                    ms2t.loadExplorarFeed('exp-tiendas', false);
+                }
+                break;
+            }
+            case 'exp-cat-load-more': {
+                const catType = btn.dataset.catType;
+                const msC = window.marketplaceSystem;
+                if (msC && catType) msC._loadCategoryFeed(catType, true);
+                break;
+            }
+            case 'exp-load-more-prod': {
+                const msEP = window.marketplaceSystem;
+                if (msEP) msEP.loadExplorarFeed('exp-productos', true);
+                break;
+            }
+            case 'exp-load-more-svc': {
+                const msES = window.marketplaceSystem;
+                if (msES) msES.loadExplorarFeed('exp-servicios', true);
+                break;
+            }
             case 'exp-load-more': {
                 const msE = window.marketplaceSystem;
                 if (msE) msE.loadExplorarFeed(msE._expTab, true);
@@ -6826,9 +8249,42 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
+            case 'upload-logo': {
+                const logoInput = document.getElementById('logoFileInput');
+                if (logoInput) logoInput.click();
+                break;
+            }
+            case 'remove-logo': {
+                const msRL = window.marketplaceSystem;
+                if (!msRL) break;
+                if (!confirm('Eliminar el logo de tu tienda?')) break;
+                try {
+                    const res = await msRL.apiRequest('/api/marketplace/providers/me', {
+                        method: 'PUT',
+                        body: JSON.stringify({ logo_image: null })
+                    });
+                    if (res.success) { msRL.showNotification('Logo eliminado', 'success'); msRL.loadMyStore(); }
+                    else { msRL.showNotification('Error al eliminar logo', 'error'); }
+                } catch (err) { msRL.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'exp-share-tienda': {
+                const shareHandle = btn.dataset.handle;
+                const shareName = btn.dataset.name || 'Tienda';
+                const shareUrl = 'https://latanda.online/tienda/' + encodeURIComponent(shareHandle);
+                if (navigator.share) {
+                    navigator.share({ title: shareName + ' en La Tanda', url: shareUrl }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        window.marketplaceSystem?.showNotification('Link copiado', 'success');
+                    }).catch(() => {});
+                }
+                e.stopPropagation();
+                break;
+            }
             case 'exp-view-tienda': {
-                const handle = btn.dataset.handle;
-                if (handle) window.location.href = '/negocio/' + encodeURIComponent(handle);
+                const handle = btn.dataset.handle || btn.closest('.tc-card')?.dataset?.handle;
+                if (handle) window.location.href = '/tienda/' + encodeURIComponent(handle);
                 break;
             }
             case 'exp-view-producto': {
@@ -7022,3 +8478,6 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MarketplaceSocialSystem;
 }
+// Build version stamp — check console to verify deploys
+window._imgCacheBust = Date.now();
+console.log('%c[La Tanda] marketplace v4.25.10-imgfix loaded', 'color: #8B5CF6; font-weight: bold;');

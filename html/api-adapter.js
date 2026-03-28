@@ -6,7 +6,7 @@
 
 class LaTandaAPIAdapter {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.originalFetch = window.fetch.bind(window);
         this.setupFetchInterceptor();
         
@@ -27,6 +27,7 @@ class LaTandaAPIAdapter {
             'POST /api/registration/groups/accept-member': 'POST /api/registration/groups/accept-member',
             
             // Wallet endpoints
+            'GET /api/wallet/balance': 'GET /api/wallet/balance',
             'GET /api/wallet/{id}': 'POST /api/payments/history',
             'GET /api/wallet/{id}/transactions': 'POST /api/payments/history',
             'POST /api/wallet/transactions': 'POST /api/payments/process',
@@ -48,7 +49,7 @@ class LaTandaAPIAdapter {
         
         window.fetch = async function(url, options = {}) {
             // Solo interceptar llamadas a nuestra API
-            if (typeof url === 'string' && url.includes('api.latanda.online')) {
+            if (typeof url === 'string' && url.includes('latanda.online')) {
                 return await self.interceptAPICall(url, options);
             }
             
@@ -66,8 +67,12 @@ class LaTandaAPIAdapter {
             // Buscar mapeo directo
             let newPath = this.findMapping(mappingKey, originalPath);
             
-            if (newPath !== originalPath) {
-                const newUrl = `${this.API_BASE}${newPath}`;
+            // Preservar query string
+            const queryString = originalPath.includes("?") ? originalPath.substring(originalPath.indexOf("?")) : "";
+            const originalPathWithoutQuery = originalPath.split("?")[0];
+            
+            if (newPath !== originalPathWithoutQuery) {
+                const newUrl = `${this.API_BASE}${newPath}${queryString}`;
                 console.log(`🔄 API Redirect: ${originalPath} → ${newPath}`);
                 
                 // Actualizar opciones si es necesario
@@ -88,7 +93,13 @@ class LaTandaAPIAdapter {
     }
     
     findMapping(mappingKey, originalPath) {
+        // Remover query string para comparación
+        const pathWithoutQuery = originalPath.split("?")[0];
+        const keyWithoutQuery = mappingKey.split("?")[0];
         // Buscar mapeo exacto
+        if (this.endpointMapping[keyWithoutQuery]) {
+            return this.endpointMapping[keyWithoutQuery].split(" ")[1];
+        }
         if (this.endpointMapping[mappingKey]) {
             return this.endpointMapping[mappingKey].split(' ')[1];
         }
@@ -103,7 +114,7 @@ class LaTandaAPIAdapter {
             }
         }
         
-        return originalPath;
+        return pathWithoutQuery;
     }
     
     pathMatches(actualPath, patternPath) {
@@ -265,12 +276,7 @@ const apiAdapter = new LaTandaAPIAdapter();
 window.laTandaAPIAdapter = apiAdapter;
 
 // Test endpoints when loaded
-setTimeout(async () => {
-    if (window.location.hostname !== 'localhost') {
-        console.log('🧪 Testing real endpoints...');
-        const results = await apiAdapter.testRealEndpoints();
-        console.table(results);
-    }
-}, 2000);
+// Auto-test disabled (was causing 401s that trigger session expired redirect)
+// To test manually: await window.laTandaAPIAdapter.testRealEndpoints()
 
 console.log('🔄 La Tanda API Adapter loaded - all fetch calls will be intercepted and corrected');

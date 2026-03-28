@@ -6,7 +6,7 @@
 
 class LaTandaGroupsSystemComplete {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.currentUser = null;
         this.isInitialized = false;
         
@@ -609,9 +609,69 @@ class LaTandaGroupsSystemComplete {
                     memberSatisfaction: 0
                 }
             };
-            
             // Agregar grupo al sistema
             this.groups.push(newGroup);
+            
+            // 🔥 SAVE TO BACKEND API
+            try {
+                // Using working endpoint: /api/registration/groups/create
+                const apiUrl = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3002/api/registration/groups/create'
+                    : '/api/registration/groups/create';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', ...(window.getAuthHeaders ? window.getAuthHeaders() : {})
+                    },
+                    body: JSON.stringify({
+                        id: newGroup.id,
+                        name: newGroup.name,
+                        description: newGroup.description,
+                        category: newGroup.type,
+                        location: newGroup.location,
+                        coordinator_id: this.currentUser.id,
+                        creatorName: this.currentUser.name,
+                        max_members: newGroup.maxParticipants,
+                        contribution_amount: newGroup.baseContribution,
+                        frequency: newGroup.paymentFrequency,
+                        startDate: newGroup.startDate ? new Date(newGroup.startDate).toISOString() : new Date().toISOString(),
+                        status: 'recruiting',
+                        privacy: 'public',
+                        autoAssignPositions: true,
+                        requireApproval: false,
+                        latePaymentPenalty: newGroup.penaltyAmount || 0,
+                        grace_period: newGroup.gracePeriod || 3,
+                        start_date: newGroup.startDate ? new Date(newGroup.startDate).toISOString().split("T")[0] : null,
+                        rules: newGroup.rules || [],
+                        commissionRate: groupData.commissionRate !== undefined ? groupData.commissionRate : null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('❌ Failed to save group to backend:', errorData);
+                    throw new Error(errorData.error || 'Failed to save group to backend');
+                }
+
+                const savedGroup = await response.json();
+                console.log('✅ Group saved to backend database:', savedGroup);
+                
+                // Update local group with backend response if needed
+                if (savedGroup.data && savedGroup.data.id) {
+                    newGroup.id = savedGroup.data.id;
+                }
+            } catch (apiError) {
+                console.error('❌ API Error saving group:', apiError);
+                // Remove from local groups array since backend save failed
+                const index = this.groups.indexOf(newGroup);
+                if (index > -1) {
+                    this.groups.splice(index, 1);
+                }
+                throw new Error('Failed to create group: ' + apiError.message);
+            }
+            
+            // Also save to localStorage for offline access
             this.saveGroupsData();
             
             // Crear primera tanda del grupo
@@ -1490,19 +1550,47 @@ class LaTandaGroupsSystemComplete {
     }
     
     loadUserData() {
-        const saved = localStorage.getItem('latanda_user_complete');
-        if (saved) {
-            return JSON.parse(saved);
+        // PRIORITY 1: Check standard auth key (per FULL-STACK-ARCHITECTURE.md)
+        const authUser = localStorage.getItem("latanda_user");
+        if (authUser) {
+            try {
+                const parsed = JSON.parse(authUser);
+                if (parsed.id && !parsed.id.startsWith("demo") && !parsed.id.startsWith("user_0")) {
+                    console.log("[GroupsComplete] Using authenticated user:", parsed.name);
+                    return {
+                        id: parsed.id || parsed.user_id,
+                        name: parsed.name || parsed.full_name || "Usuario",
+                        email: parsed.email || "",
+                        phone: parsed.phone || "",
+                        trustScore: parsed.trust_score || 85,
+                        kycStatus: parsed.kyc_status || "pending",
+                        joinDate: parsed.registration_date || Date.now()
+                    };
+                }
+            } catch(e) {}
         }
         
+        // PRIORITY 2: Check legacy key
+        const saved = localStorage.getItem("latanda_user_complete");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.id && !parsed.id.startsWith("demo") && !parsed.id.startsWith("user_0")) {
+                    return parsed;
+                }
+            } catch(e) {}
+        }
+        
+        // PRIORITY 3: No valid user - return placeholder
+        console.warn("[GroupsComplete] No authenticated user found");
         return {
-            id: 'user_demo',
-            name: 'Usuario Demo',
-            email: 'demo@latanda.online',
-            phone: '+504 9999-0000',
-            trustScore: 94,
-            kycStatus: 'verified',
-            joinDate: Date.now() - (365 * 24 * 60 * 60 * 1000) // 1 año atrás
+            id: "pending_auth",
+            name: "Cargando...",
+            email: "",
+            phone: "",
+            trustScore: 0,
+            kycStatus: "pending",
+            joinDate: Date.now()
         };
     }
     
@@ -1663,7 +1751,7 @@ class LaTandaGroupsSystemComplete {
                 description: 'Grupo familiar para ahorros y emergencias',
                 type: 'family',
                 location: 'Tegucigalpa, Francisco Morazán',
-                creator: 'user_demo',
+                creator: (JSON.parse(localStorage.getItem("latanda_user") || "{}").id || "current_user"),
                 createdAt: twoMonthsAgo,
                 
                 baseContribution: 1500,
@@ -1682,8 +1770,8 @@ class LaTandaGroupsSystemComplete {
                 status: 'active',
                 members: [
                     {
-                        userId: 'user_demo',
-                        name: 'Usuario Demo',
+                        userId: (JSON.parse(localStorage.getItem("latanda_user") || "{}").id || "current_user"),
+                        name: (JSON.parse(localStorage.getItem("latanda_user") || "{}").name || "Usuario"),
                         role: 'admin',
                         joinedAt: twoMonthsAgo,
                         trustScore: 94,
@@ -1718,7 +1806,7 @@ class LaTandaGroupsSystemComplete {
                 type: 'system',
                 title: '🎉 Bienvenido a La Tanda',
                 message: 'Tu sistema de tandas está listo para usar',
-                userId: 'user_demo',
+                userId: (JSON.parse(localStorage.getItem("latanda_user") || "{}").id || "current_user"),
                 createdAt: now - (24 * 60 * 60 * 1000),
                 read: false,
                 priority: 'medium'
