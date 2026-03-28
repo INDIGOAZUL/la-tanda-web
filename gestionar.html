@@ -1671,11 +1671,42 @@
                     if (m.email) html += '<i class="fas fa-envelope" style="font-size:0.6rem;"></i> ' + esc(m.email) + ' ';
                     if (m.phone) html += '<i class="fas fa-phone" style="font-size:0.6rem;"></i> ' + esc(m.phone);
                     html += '</div>';
-                    if (timeAgo) html += '<div style="font-size:0.68rem;color:var(--ds-text-muted);margin-top:2px;"><i class="fas fa-clock" style="font-size:0.58rem;"></i> ' + timeAgo + '</div>';
+                    // Verification badge + registration date + time ago
+                    var vLevel = m.verification_level || 'basic';
+                    var vColor = vLevel === 'full' || vLevel === 'verified' ? 'var(--ds-green)' : vLevel === 'intermediate' ? 'var(--ds-yellow)' : 'var(--ds-text-muted)';
+                    var vLabel = vLevel === 'full' || vLevel === 'verified' ? 'Verificado' : vLevel === 'intermediate' ? 'Parcial' : 'Basico';
+                    var vIcon = vLevel === 'full' || vLevel === 'verified' ? 'fa-check-circle' : vLevel === 'intermediate' ? 'fa-exclamation-circle' : 'fa-user';
+                    html += '<div style="font-size:0.68rem;margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
+                    html += '<span style="color:' + vColor + ';"><i class="fas ' + vIcon + '" style="font-size:0.58rem;"></i> ' + vLabel + '</span>';
+                    if (m.registration_date) {
+                        var regDate = new Date(m.registration_date).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' });
+                        html += '<span style="color:var(--ds-text-muted);"><i class="fas fa-calendar" style="font-size:0.55rem;"></i> Registro: ' + regDate + '</span>';
+                    }
+                    if (timeAgo) html += '<span style="color:var(--ds-text-muted);"><i class="fas fa-clock" style="font-size:0.55rem;"></i> ' + timeAgo + '</span>';
                     html += '</div>';
-                    html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+                    // KYC status badge
+                    var kycStatus = m.kyc_status || 'none';
+                    var kycHtml = '';
+                    if (kycStatus === 'approved' || kycStatus === 'verified') {
+                        kycHtml = '<div style="font-size:0.72rem;margin-top:6px;padding:6px 10px;background:rgba(34,197,94,0.1);border-radius:6px;border:1px solid rgba(34,197,94,0.3);color:var(--ds-green);"><i class="fas fa-id-card" style="margin-right:4px;"></i>Identidad verificada' + (m.kyc_document_type ? ' (' + esc(m.kyc_document_type) + ')' : '') + '</div>';
+                    } else if (kycStatus === 'pending' || kycStatus === 'under_review' || kycStatus === 'pending_manual_review') {
+                        kycHtml = '<div style="font-size:0.72rem;margin-top:6px;padding:6px 10px;background:rgba(245,158,11,0.1);border-radius:6px;border:1px solid rgba(245,158,11,0.3);color:var(--ds-yellow);"><i class="fas fa-hourglass-half" style="margin-right:4px;"></i>Verificacion en revision</div>';
+                    } else if (kycStatus === 'face_mismatch') {
+                        kycHtml = '<div style="font-size:0.72rem;margin-top:6px;padding:6px 10px;background:rgba(239,68,68,0.1);border-radius:6px;border:1px solid rgba(239,68,68,0.3);color:var(--ds-red);"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Discrepancia facial detectada</div>';
+                    }
+                    html += kycHtml;
+                    // Join message (stored in notes — filter out system tags like [ID solicitado])
+                    var displayMsg = (m.join_message || '').replace(/\[ID solicitado [^\]]*\]/g, '').trim();
+                    if (displayMsg) {
+                        html += '<div style="font-size:0.72rem;color:var(--ds-text-secondary);margin-top:6px;padding:6px 10px;background:var(--ds-bg-surface);border-radius:6px;border-left:3px solid var(--ds-cyan);"><i class="fas fa-comment" style="font-size:0.58rem;color:var(--ds-cyan);margin-right:4px;"></i>' + esc(displayMsg) + '</div>';
+                    }
+                    html += '</div>';
+                    html += '<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">';
                     html += '<button class="ds-btn ds-btn-primary" style="padding:6px 14px;font-size:0.82rem;border-radius:8px;" data-action="sol-aprobar" data-uid="' + esc(m.user_id) + '" data-name="' + esc(m.name || 'Usuario') + '"><i class="fas fa-check"></i> Aprobar</button>';
                     html += '<button class="ds-btn" style="padding:6px 14px;font-size:0.82rem;border-radius:8px;background:var(--ds-red-muted);color:var(--ds-red);border:1px solid var(--ds-red);" data-action="sol-rechazar" data-uid="' + esc(m.user_id) + '" data-name="' + esc(m.name || 'Usuario') + '"><i class="fas fa-times"></i> Rechazar</button>';
+                    if (kycStatus === 'none') {
+                        html += '<button class="ds-btn" style="padding:6px 14px;font-size:0.82rem;border-radius:8px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);" data-action="sol-request-id" data-uid="' + esc(m.user_id) + '" data-name="' + esc(m.name || 'Usuario') + '"><i class="fas fa-id-card"></i> Solicitar ID</button>';
+                    }
                     html += '</div>';
                     html += '</div>';
                 }
@@ -1729,6 +1760,31 @@
                 if (badge) { badge.textContent = pendingJoinCount; badge.style.display = pendingJoinCount > 0 ? 'inline-flex' : 'none'; }
             } else {
                 showToast(res.error || 'Error al rechazar', 'error');
+            }
+        } catch (e) {
+            showToast('Error de conexion', 'error');
+        }
+    }
+
+    async function solicitarId(userId, userName) {
+        // Prompt for optional message
+        var msg = prompt('Mensaje para ' + userName + ' (opcional, max 300 caracteres):');
+        if (msg === null) return; // cancelled
+        msg = (msg || '').substring(0, 300);
+
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members/' + encodeURIComponent(userId) + '/request-id', {
+                method: 'POST',
+                headers: jsonHeaders(),
+                body: JSON.stringify({ message: msg || undefined })
+            }).then(function(r) { return r.json(); });
+            if (res.success) {
+                showToast('Solicitud de verificacion enviada a ' + userName, 'success');
+                // Refresh solicitudes panel
+                var subpanel = document.querySelector('.gm-subpanel');
+                if (subpanel && subpanel.parentElement) renderSolicitudes(subpanel.parentElement);
+            } else {
+                showToast(res.error || 'Error al enviar solicitud', 'error');
             }
         } catch (e) {
             showToast('Error de conexion', 'error');
@@ -3382,6 +3438,7 @@
             case 'miembros-solicitudes': renderSolicitudes(miembrosPanel); break;
             case 'sol-aprobar': aprobarSolicitud(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); break;
             case 'sol-rechazar': rechazarSolicitud(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); break;
+                    case 'sol-request-id': solicitarId(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); break;
             case 'miembros-lista': renderMiembrosLista(miembrosPanel); break;
             case 'print-members': printMembersList(); break;
             case 'ml-member-menu': showMemberMenu(btn.getAttribute('data-uid'), btn.getAttribute('data-name'), btn.getAttribute('data-role'), btn.getAttribute('data-status')); break;

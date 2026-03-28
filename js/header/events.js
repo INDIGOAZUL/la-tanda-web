@@ -164,16 +164,45 @@ const HeaderEvents = {
             '<div class="pd-item" data-href="groups-advanced-system.html"><i class="fas fa-users"></i>Mis Grupos</div>' +
             '<div class="pd-item" data-href="mi-perfil.html?tab=settings"><i class="fas fa-cog"></i>Configuracion</div>' +
             '<div class="pd-divider"></div>' +
+            '<div class="pd-item" data-action="change-lang"><i class="fas fa-globe"></i><span>Idioma</span><span class="pd-lang-current" style="margin-left:auto;font-size:0.75rem;color:#64748b;" id="pdCurrentLang"></span></div>' +
+            '<div class="pd-divider"></div>' +
             '<div class="pd-item pd-logout"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</div>';
 
         document.body.appendChild(dd);
         this._positionDropdown(dd);
+
+        // Set current language label
+        var curLang = (localStorage.getItem('i18nextLng') || 'es').substring(0, 2);
+        var langFlags = { es: '🇭🇳', en: '🇺🇸', pt: '🇧🇷' };
+        var langNames = { es: 'Español', en: 'English', pt: 'Português' };
+        var pdLangEl = document.getElementById('pdCurrentLang');
+        if (pdLangEl) pdLangEl.textContent = langFlags[curLang] + ' ' + (langNames[curLang] || curLang);
 
         // Single click handler for all items
         dd.addEventListener('click', function(e) {
             var item = e.target.closest('.pd-item');
             if (!item) return;
             e.stopPropagation();
+
+            // Language change
+            if (item.getAttribute('data-action') === 'change-lang') {
+                e.stopPropagation();
+                // Cycle through languages: es → en → pt → es
+                var langs = ['es', 'en', 'pt'];
+                var flags = { es: '🇭🇳', en: '🇺🇸', pt: '🇧🇷' };
+                var names = { es: 'Español', en: 'English', pt: 'Português' };
+                var current = (localStorage.getItem('i18nextLng') || 'es').substring(0, 2);
+                var idx = langs.indexOf(current);
+                var next = langs[(idx + 1) % langs.length];
+                if (window.i18next && window.i18next.changeLanguage) {
+                    window.i18next.changeLanguage(next);
+                }
+                localStorage.setItem('i18nextLng', next);
+                var label = document.getElementById('pdCurrentLang');
+                if (label) label.textContent = flags[next] + ' ' + names[next];
+                if (typeof showNotification === 'function') showNotification('Idioma: ' + names[next], 'success');
+                return;
+            }
 
             if (item.classList.contains('pd-logout')) {
                 var doLogout = function() {
