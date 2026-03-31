@@ -496,7 +496,7 @@
             h += '<div class="gm-bar" style="height:8px;"><div class="gm-bar-fill" style="width:' + paidPct + '%;background:' + rateColor(paidPct) + ';"></div></div>';
             h += '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:0.78rem;">';
             if (cntPaidCycle > 0) h += '<span style="color:var(--ds-green);"><i class="fas fa-check-circle"></i> ' + cntPaidCycle + ' pagaron</span>';
-            if (cntGrace > 0) h += '<span style="color:var(--ds-blue,#3b82f6);"><i class="fas fa-hourglass-half"></i> ' + cntGrace + ' en gracia</span>';
+            if (cntGrace > 0) h += '<span style="color:var(--ds-green);"><i class="fas fa-check-circle"></i> ' + cntGrace + ' al dia</span>';
             if (cntPending > 0) h += '<span style="color:var(--ds-amber);"><i class="fas fa-clock"></i> ' + cntPending + ' pendientes</span>';
             if (cntMora > 0) h += '<span style="color:var(--ds-red);"><i class="fas fa-exclamation-circle"></i> ' + cntMora + ' en mora</span>';
             if (cntLate > 0) h += '<span style="color:var(--ds-red);"><i class="fas fa-exclamation-triangle"></i> ' + cntLate + ' atrasados</span>';
@@ -524,7 +524,7 @@
             if (cntPaidCycle < members.length) {
                 h += '<div style="margin-top:6px;"><div class="gm-section-title" style="margin-bottom:6px;">Estado por Miembro</div>';
                 var statusIcons = { 'paid': '<i class="fas fa-check-circle" style="color:var(--ds-green);"></i>', 'up_to_date': '<i class="fas fa-hourglass-half" style="color:var(--ds-blue,#3b82f6);"></i>', 'mora': '<i class="fas fa-exclamation-circle" style="color:var(--ds-red);"></i>', 'late': '<i class="fas fa-exclamation-triangle" style="color:var(--ds-red);"></i>', 'pending': '<i class="fas fa-clock" style="color:var(--ds-amber);"></i>', 'suspended': '<i class="fas fa-ban" style="color:var(--ds-text-muted);"></i>' };
-                var statusTexts = { 'paid': 'Pago', 'up_to_date': 'En gracia', 'mora': 'En mora', 'late': 'Atrasado', 'pending': 'Pendiente', 'suspended': 'Suspendido' };
+                var statusTexts = { 'paid': 'Pago', 'up_to_date': 'Al dia', 'mora': 'En mora', 'late': 'Atrasado', 'pending': 'Pendiente', 'suspended': 'Suspendido' };
                 for (var mi = 0; mi < sortedMembers.length; mi++) {
                     var sm = sortedMembers[mi];
                     var icon = statusIcons[sm.payment_status] || statusIcons['pending'];
@@ -760,7 +760,7 @@
 
     function cpStatusPill(status) {
         var map = {
-            'paid': { l: 'Pagado', c: 'var(--ds-green)' }, 'up_to_date': { l: 'En gracia', c: 'var(--ds-blue,#3b82f6)' },
+            'paid': { l: 'Pagado', c: 'var(--ds-green)' }, 'up_to_date': { l: 'Al dia', c: 'var(--ds-green)' },
             'pending': { l: 'Pendiente', c: 'var(--ds-amber)' }, 'mora': { l: 'En Mora', c: 'var(--ds-red)' },
             'late': { l: 'Atrasado', c: 'var(--ds-red)' }, 'suspended': { l: 'Suspendido', c: 'var(--ds-text-muted)' }
         };
@@ -833,6 +833,17 @@
             // Loan actions
             if (hasLoan) {
                 html += '<button class="ds-btn ds-btn-sm" style="background:var(--ds-red);color:#fff;border:none;" data-action="cp-loan-pay" data-uid="' + esc(m.user_id) + '" data-loan-id="' + esc(m.active_loan.id) + '" data-owed="' + (m.active_loan.total_owed || 0) + '"><i class="fas fa-hand-holding-usd"></i> Abonar Prestamo (L.' + fmt(m.active_loan.total_owed) + ')</button>';
+            }
+            // Merge button for placeholder members
+            if (m.is_placeholder) {
+                html += '<div style="margin-top:6px;padding:8px;border-radius:8px;background:var(--ds-purple-muted);border:1px solid rgba(168,85,247,0.2);">';
+                html += '<div style="font-size:0.72rem;color:var(--ds-purple);margin-bottom:6px;"><i class="fas fa-link"></i> Este miembro es un pre-registro. Si ya creo su cuenta, fusionalo:</div>';
+                html += '<div style="display:flex;gap:6px;align-items:center;">';
+                html += '<input type="text" id="merge-search-' + esc(m.user_id) + '" class="ds-input ds-input-sm" placeholder="Buscar por nombre o email..." style="flex:1;font-size:0.75rem;">';
+                html += '<button class="ds-btn ds-btn-sm" style="background:var(--ds-purple);color:#fff;border:none;flex-shrink:0;" data-action="gm-search-merge" data-ph-id="' + esc(m.user_id) + '"><i class="fas fa-search"></i></button>';
+                html += '</div>';
+                html += '<div id="merge-results-' + esc(m.user_id) + '" style="margin-top:6px;"></div>';
+                html += '</div>';
             }
             html += '</div>';
 
@@ -3136,10 +3147,12 @@
         var html = '<div class="gm-subpanel"><div class="gm-subpanel-header"><h3>Agregar Miembro Manual</h3><button class="gm-subpanel-close" data-action="close-subpanel"><i class="fas fa-times"></i></button></div>';
         html += '<div style="font-size:0.78rem;color:var(--ds-text-muted);margin-bottom:12px;">Agrega un miembro que aun no tiene cuenta. Se creara como pre-registro y se fusionara automaticamente cuando se registre.</div>';
         html += '<div class="gm-form-group"><label>Nombre *</label><input type="text" id="paName" class="ds-input" placeholder="Nombre completo"></div>';
+        html += '<div class="gm-form-group"><label>Email (opcional)</label><input type="email" id="paEmail" class="ds-input" placeholder="correo@ejemplo.com"></div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
         html += '<div class="gm-form-group"><label>Telefono (opcional)</label><input type="tel" id="paPhone" class="ds-input" placeholder="+504..."></div>';
         html += '<div class="gm-form-group"><label>Posiciones</label><select id="paPositions" class="ds-select"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>';
         html += '</div>';
+        html += '<div style="font-size:0.7rem;color:var(--ds-text-muted);margin-top:4px;"><i class="fas fa-info-circle"></i> Email o telefono permite fusion automatica cuando el miembro se registre.</div>';
         html += '<div style="margin-top:12px;"><button class="ds-btn ds-btn-primary" data-action="pa-submit" style="width:100%;"><i class="fas fa-user-plus"></i> Agregar</button></div>';
         html += '</div>';
         container.innerHTML = html;
@@ -3147,13 +3160,14 @@
 
     async function submitPreAdd() {
         var name = document.getElementById('paName').value.trim();
+        var email = document.getElementById('paEmail').value.trim();
         var phone = document.getElementById('paPhone').value.trim();
         var positions = parseInt(document.getElementById('paPositions').value) || 1;
         if (!name) { showToast('Nombre requerido', 'error'); return; }
         try {
             var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members/pre-add', {
                 method: 'POST', headers: jsonHeaders(),
-                body: JSON.stringify({ name: name, phone: phone || undefined, num_positions: positions })
+                body: JSON.stringify({ name: name, email: email || undefined, phone: phone || undefined, num_positions: positions })
             });
             var data = await res.json();
             if (!data.success) throw new Error(data.data?.error?.message || 'Error');
@@ -3161,6 +3175,7 @@
             showToast(isDirect ? name + ' agregado directamente (ya tiene cuenta)' : name + ' pre-agregado exitosamente', 'success');
             // Reset form
             document.getElementById('paName').value = '';
+            document.getElementById('paEmail').value = '';
             document.getElementById('paPhone').value = '';
             document.getElementById('paPositions').value = '1';
         } catch(e) { showToast(e.message, 'error'); }
@@ -3525,6 +3540,67 @@
             // Pre-add
             case 'pa-submit': submitPreAdd(); break;
 
+            // Placeholder merge - search
+            case 'gm-search-merge':
+                (function() {
+                    var phId = btn.getAttribute('data-ph-id');
+                    var searchInput = document.getElementById('merge-search-' + phId);
+                    var query = searchInput ? searchInput.value.trim() : '';
+                    if (query.length < 2) { showToast('Escribe al menos 2 caracteres', 'error'); return; }
+                    var resultsDiv = document.getElementById('merge-results-' + phId);
+                    resultsDiv.innerHTML = '<div style="font-size:0.72rem;color:var(--ds-text-muted);"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+                    fetch(API_BASE + '/api/users/search-to-invite?q=' + encodeURIComponent(query) + '&limit=5', { headers: authHeaders() })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var users = (data.data && data.data.users) || data.data || [];
+                            if (!Array.isArray(users) || users.length === 0) {
+                                resultsDiv.innerHTML = '<div style="font-size:0.72rem;color:var(--ds-text-muted);">No se encontraron usuarios con ese nombre/email.</div>';
+                                return;
+                            }
+                            var rHtml = '';
+                            for (var i = 0; i < users.length; i++) {
+                                var u = users[i];
+                                rHtml += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--ds-border-subtle,rgba(255,255,255,0.04));">';
+                                rHtml += '<div><div style="font-size:0.78rem;font-weight:500;">' + esc(u.name || 'Usuario') + '</div>';
+                                rHtml += '<div style="font-size:0.68rem;color:var(--ds-text-faint);">' + esc(u.email || '') + '</div></div>';
+                                rHtml += '<button class="ds-btn ds-btn-sm" style="background:var(--ds-purple);color:#fff;border:none;" data-action="gm-exec-merge" data-ph-id="' + esc(phId) + '" data-real-id="' + esc(u.user_id || u.id) + '" data-real-name="' + esc(u.name || '') + '"><i class="fas fa-link"></i> Fusionar</button>';
+                                rHtml += '</div>';
+                            }
+                            resultsDiv.innerHTML = rHtml;
+                        })
+                        .catch(function() { resultsDiv.innerHTML = '<div style="font-size:0.72rem;color:var(--ds-red);">Error de conexion</div>'; });
+                })();
+                break;
+
+            // Placeholder merge - execute
+            case 'gm-exec-merge':
+                (function() {
+                    var phId = btn.getAttribute('data-ph-id');
+                    var realId = btn.getAttribute('data-real-id');
+                    var realName = btn.getAttribute('data-real-name');
+                    if (!phId || !realId) return;
+                    if (!confirm('Fusionar este pre-registro con la cuenta de ' + realName + '? Las contribuciones seran transferidas.')) return;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/members/merge-placeholder', {
+                        method: 'POST', headers: jsonHeaders(),
+                        body: JSON.stringify({ placeholder_id: phId, real_user_id: realId })
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            showToast(data.data.message || 'Fusionado exitosamente', 'success');
+                            // Refresh members list
+                            setTimeout(function() { var miembrosPanel = document.getElementById('miembrosSubPanel') || document.getElementById('cobrosSubPanel'); if (miembrosPanel) switchToTab('cobros'); }, 500);
+                        } else {
+                            showToast(data.data?.error?.message || data.error || 'Error al fusionar', 'error');
+                            btn.disabled = false; btn.innerHTML = '<i class="fas fa-link"></i> Fusionar';
+                        }
+                    })
+                    .catch(function() { showToast('Error de conexion', 'error'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-link"></i> Fusionar'; });
+                })();
+                break;
+
             // Loan config
             case 'lc-save': saveLoanConfig(); break;
         }
@@ -3545,5 +3621,14 @@
 
 })();
 </script>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
+        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(10,14,23,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.08);padding:4px 0;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1.1rem}.mobile-nav-item:hover{color:#00FFFF}}</style>
 </body>
 </html>

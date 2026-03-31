@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="marketplace.page_title">Marketplace & Sistema Social - La Tanda</title>
+    <title>Marketplace & Sistema Social - La Tanda</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <link rel="stylesheet" href="css/loading-states.css?v=22.2">
     <style>
+        /* Safety overrides — prevent header elements from overflowing */
+        .lt-brand-logo { width: 32px !important; height: 32px !important; border-radius: 8px; object-fit: contain; }
+        .lt-brand { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+        #global-header, .lt-header-container { overflow: hidden !important; max-width: 100vw; }
+        .lt-header-avatar, #headerAvatar { width: 28px !important; height: 28px !important; border-radius: 50% !important; object-fit: cover !important; display: block; }
+        .lt-profile-btn { overflow: hidden !important; max-width: 40px; max-height: 40px; }
+        .lt-header-btn img { max-width: 32px; max-height: 32px; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         :root {
             /* Aliased to design-tokens.css (--ds-*) for unified theming */
@@ -167,9 +174,10 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #0a0f1c 100%);
+            background: #0f172a !important;
+            background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0a0f1c 100%) !important;
             min-height: 100vh;
-            color: var(--text-primary);
+            color: #f8fafc;
             overflow-x: hidden;
             font-weight: 400;
             line-height: 1.6;
@@ -4066,8 +4074,12 @@
 <meta name="app-version" content="4.25.10-carousel">
 </head>
 <body>
+    <div id="global-header"></div>
+    <div id="global-sidebar"></div>
+    <style>.mp-header[style*="display:none"]~*,.mia-container,.inv-container{padding-top:56px!important}@media(max-width:768px){.mp-header[style*="display:none"]~*,.mia-container,.inv-container{padding-top:50px!important}}</style>
+
     <!-- NEW MARKETPLACE HEADER -->
-    <header class="mp-header">
+    <header class="mp-header" style="display:none">
         <div class="mp-header-left">
             <a href="home-dashboard.html" class="mp-logo-link">
                 <img loading="lazy" src="La Tanda logos (3).png" alt="La Tanda" class="mp-logo-img">
@@ -4079,7 +4091,7 @@
         </div>
         <div class="mp-header-center">
             <div class="mp-search-inline" id="mpSearchInline">
-                <input type="text" id="mpSearchInputDesktop" placeholder="Buscar productos, servicios, tiendas..." data-i18n="[placeholder]marketplace.search_placeholder" onkeyup="if(event.key==='Enter') window.ms?.searchProducts()">
+                <input type="text" id="mpSearchInputDesktop" placeholder="Buscar productos, servicios, tiendas..." onkeyup="if(event.key==='Enter') window.ms?.searchProducts()">
             </div>
         </div>
         <div class="mp-header-right">
@@ -4093,13 +4105,13 @@
     <!-- SEARCH BAR (hidden by default) -->
     <div class="mp-search-bar" id="mpSearchBar">
         <div class="mp-search-container">
-            <input type="text" id="mpSearchInput" placeholder="Buscar productos, servicios..." data-i18n="[placeholder]marketplace.search_placeholder_short" onkeyup="if(event.key==='Enter') window.ms.searchProducts()">
-            <button onclick="window.ms.searchProducts()" data-i18n="buttons.search">Buscar</button>
+            <input type="text" id="mpSearchInput" placeholder="Buscar productos, servicios..." onkeyup="if(event.key==='Enter') window.ms.searchProducts()">
+            <button onclick="window.ms.searchProducts()">Buscar</button>
             <button class="mp-search-close" onclick="toggleMarketplaceSearch()">✕</button>
         </div>
         <div class="mp-quick-filters">
             <select id="categoryFilter" onchange="window.ms.searchProducts()">
-                <option value="" data-i18n="marketplace.category">Categoría</option>
+                <option value="">Categoría</option>
                 <option value="electronics">📱 Electrónicos</option>
                 <option value="clothing">👕 Ropa</option>
                 <option value="home">🏠 Hogar</option>
@@ -4195,8 +4207,8 @@
                 <button class="mc-disputes-btn" data-action="mc-open-disputes"><i class="fas fa-exclamation-triangle"></i> Disputas</button>
             </div>
             <div class="mc-tabs">
-                <button class="mc-tab active" data-action="mc-switch-tab" data-mc-tab="products" data-i18n="marketplace.products">Productos</button>
-                <button class="mc-tab" data-action="mc-switch-tab" data-mc-tab="services" data-i18n="marketplace.services">Servicios</button>
+                <button class="mc-tab active" data-action="mc-switch-tab" data-mc-tab="products">Productos</button>
+                <button class="mc-tab" data-action="mc-switch-tab" data-mc-tab="services">Servicios</button>
             </div>
             <div class="mc-filters">
                 <select class="mc-filter" id="mcStatusFilter" data-action="mc-filter-status">
@@ -4266,7 +4278,7 @@
                         <!-- Message Input -->
                         <div class="chat-input-area">
                             <input type="text" class="chat-input" id="messageInput" 
-                                   placeholder="Escribe un mensaje..." data-i18n="[placeholder]marketplace.write_message" 
+                                   placeholder="Escribe un mensaje..." 
                                    onkeyup="if(event.key==='Enter') window.ms.sendChatMessage()">
                             <button class="btn btn-primary send-btn" onclick="window.ms.sendChatMessage()">
                                 Enviar
@@ -4284,7 +4296,7 @@
     <nav class="mp-bottom-nav">
         <button class="mp-bottom-tab active" data-section="marketplace" onclick="mpNavigate('marketplace')">
             <i class="fas fa-search"></i>
-            <span data-i18n="nav.explore">Explorar</span>
+            <span>Explorar</span>
         </button>
         <button class="mp-bottom-tab" data-section="my-store" onclick="mpNavigate('my-store')">
             <i class="fas fa-store"></i>
@@ -4309,7 +4321,7 @@
     <nav class="mp-side-rail">
         <button class="mp-rail-item active" data-section="marketplace" onclick="mpNavigate('marketplace')" title="Explorar">
             <i class="fas fa-search"></i>
-            <span class="mp-rail-label" data-i18n="nav.explore">Explorar</span>
+            <span class="mp-rail-label">Explorar</span>
         </button>
         <button class="mp-rail-item" data-section="my-store" onclick="mpNavigate('my-store')" title="Mi Tienda">
             <i class="fas fa-store"></i>
@@ -4419,7 +4431,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-    <script src="marketplace-social.js?v=1774669152"></script>
+    <script src="marketplace-social.js?v=1774913086"></script>
     <script src="pwa-manager.js"></script>
     <script>
 // ==========================================
@@ -4778,5 +4790,14 @@ document.addEventListener("DOMContentLoaded", function() {
     .chain-refresh-btn { background: none; border: 1px solid var(--ds-cyan-border, rgba(6,182,212,0.3)); border-radius: 6px; color: #06B6D4; padding: 4px 8px; cursor: pointer; margin-top: 6px; font-size: 12px; }
     .chain-refresh-btn:hover { background: var(--ds-cyan-muted, rgba(6,182,212,0.1)); }
     </style>
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item active"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
+        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.1);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1rem}.mobile-nav-item.active,.mobile-nav-item:hover{color:#00FFFF}}</style>
+    <script src="js/components-loader.js?v=32.6"></script>
 </body>
 </html>
