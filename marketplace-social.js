@@ -2592,23 +2592,20 @@ class MarketplaceSocialSystem {
         let products = [];
         let reviews = [];
 
-        if (showServices) {
-            try {
-                const providerDetail = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}`);
-                if (providerDetail.success && providerDetail.data?.provider?.services) {
-                    services = providerDetail.data.provider.services;
-                }
-            } catch (e) { /* ok */ }
-        }
+        // Always fetch both — orphan items need to be visible for deletion
+        try {
+            const providerDetail = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}`);
+            if (providerDetail.success && providerDetail.data?.provider?.services) {
+                services = providerDetail.data.provider.services;
+            }
+        } catch (e) { /* ok */ }
 
-        if (showProducts) {
-            try {
-                const prodRes = await this.apiRequest(`/api/marketplace/products?sellerId=${provider.user_id}&limit=20`);
-                if (prodRes.success && prodRes.data?.products) {
-                    products = prodRes.data.products;
-                }
-            } catch (e) { /* ok */ }
-        }
+        try {
+            const prodRes = await this.apiRequest(`/api/marketplace/products?sellerId=${provider.user_id}&limit=20`);
+            if (prodRes.success && prodRes.data?.products) {
+                products = prodRes.data.products;
+            }
+        } catch (e) { /* ok */ }
 
         try {
             const revRes = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}/reviews?limit=5`);
@@ -3866,6 +3863,10 @@ class MarketplaceSocialSystem {
             } else {
                 serviciosPanel += this._buildEmptyListingState('services', esc);
             }
+        } else if (sCount > 0) {
+            // Shop type doesn't match but items exist — show with delete option
+            serviciosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + sCount + ' servicio' + (sCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
+            serviciosPanel += services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('');
         } else {
             serviciosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-wrench"></i></div><div class="sd-empty-title">Tienda de productos</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Productos. Para ofrecer servicios, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3882,6 +3883,10 @@ class MarketplaceSocialSystem {
             } else {
                 productosPanel += this._buildEmptyListingState('products', esc);
             }
+        } else if (pCount > 0) {
+            // Shop type doesn't match but items exist — show with delete option
+            productosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + pCount + ' producto' + (pCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
+            productosPanel += products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('');
         } else {
             productosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-box"></i></div><div class="sd-empty-title">Tienda de servicios</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Servicios. Para vender productos, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3896,12 +3901,12 @@ class MarketplaceSocialSystem {
 
         // Build nav — hide tabs for shop types that don't apply
         let tabs = '';
-        if (showServices) {
+        if (showServices || sCount > 0) {
             tabs += `<button class="sd-subtab${isActive('servicios')}" data-action="pub-subtab" data-subtab="servicios">
                 <i class="fas fa-wrench"></i> <span>Servicios</span>${sBadge}
             </button>`;
         }
-        if (showProducts) {
+        if (showProducts || pCount > 0) {
             tabs += `<button class="sd-subtab${isActive('productos')}" data-action="pub-subtab" data-subtab="productos">
                 <i class="fas fa-box"></i> <span>Productos</span>${pBadge}
             </button>`;
@@ -3915,8 +3920,8 @@ class MarketplaceSocialSystem {
 
         return `<div class="sd-subtabs-container">
             <div class="sd-subtabs-nav">${tabs}</div>
-            ${showServices ? `<div class="sd-subtab-panel" data-panel="servicios"${isVisible('servicios')}>${serviciosPanel}</div>` : ''}
-            ${showProducts ? `<div class="sd-subtab-panel" data-panel="productos"${isVisible('productos')}>${productosPanel}</div>` : ''}
+            ${(showServices || sCount > 0) ? `<div class="sd-subtab-panel" data-panel="servicios"${isVisible('servicios')}>${serviciosPanel}</div>` : ''}
+            ${(showProducts || pCount > 0) ? `<div class="sd-subtab-panel" data-panel="productos"${isVisible('productos')}>${productosPanel}</div>` : ''}
             <div class="sd-subtab-panel" data-panel="pedidos"${isVisible('pedidos')}>
                 ${pedidosPanel}
             </div>
@@ -4243,19 +4248,25 @@ class MarketplaceSocialSystem {
                     <label>Descripcion</label>
                     <textarea id="sdEditDesc" class="sd-form-input" rows="3" maxlength="2000">${esc(provider.description || '')}</textarea>
                 </div>
+                <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin:12px 0 8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-store" style="color:var(--store-accent-primary,#8B5CF6);"></i> Contacto del Negocio (publico)</div>
                 <div class="sd-form-grid">
                     <div class="sd-form-row">
-                        <label>Telefono</label>
-                        <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20">
+                        <label>Telefono del negocio</label>
+                        <input type="tel" id="sdEditBusinessPhone" class="sd-form-input" value="${esc(provider.business_phone || '')}" maxlength="20" placeholder="+504 0000-0000">
                     </div>
                     <div class="sd-form-row">
                         <label>WhatsApp</label>
-                        <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20">
+                        <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20" placeholder="+504 0000-0000">
                     </div>
                 </div>
                 <div class="sd-form-row">
                     <label>Email de contacto</label>
                     <input type="email" id="sdEditEmail" class="sd-form-input" value="${esc(provider.email || '')}" maxlength="255">
+                </div>
+                <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-user-lock" style="color:rgba(255,255,255,0.3);"></i> Telefono Personal (privado, opcional)</div>
+                <div class="sd-form-row">
+                    <label>Telefono personal</label>
+                    <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20" placeholder="No visible publicamente" style="border-style:dashed;">
                 </div>
                 <div class="sd-form-grid">
                     <div class="sd-form-row">
@@ -7969,6 +7980,7 @@ function setupMarketplaceDelegatedListeners() {
                 const ms = window.marketplaceSystem;
                 if (!ms) break;
                 const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+                const business_phone = getVal('sdEditBusinessPhone');
                 const areas = getVal('sdEditAreas').split(',').map(s => s.trim()).filter(Boolean);
                 const links = {};
                 if (getVal('sdEditWebsite')) links.website = getVal('sdEditWebsite');
@@ -7976,7 +7988,8 @@ function setupMarketplaceDelegatedListeners() {
                 if (getVal('sdEditLinkedin')) links.linkedin = getVal('sdEditLinkedin');
                 const body = {
                     business_name: getVal('sdEditName'), description: getVal('sdEditDesc'),
-                    phone: getVal('sdEditPhone') || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
+                    phone: getVal('sdEditPhone') || undefined,
+                    business_phone: business_phone || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
                     email: getVal('sdEditEmail') || undefined, city: getVal('sdEditCity') || undefined,
                     neighborhood: getVal('sdEditNeighborhood') || undefined,
                     service_areas: areas.length ? areas : undefined,

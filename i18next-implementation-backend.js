@@ -15,7 +15,7 @@
 const I18N_CONFIG = {
     API_BASE_URL: 'https://latanda.online',
     ENDPOINTS: {
-        USER_PROFILE: '/api/users/me',
+        USER_PROFILE: '/api/user/profile',
         USER_PREFERENCES: '/api/users/preferences'
     },
     STORAGE_KEYS: {
@@ -213,6 +213,8 @@ function invalidateLanguageCache() {
  * Priority: Cache → Backend → localStorage → navigator → default
  */
 async function getUserLanguagePreference() {
+    // v3.0: Platform is Honduras-only — always Spanish
+    return 'es';
     console.log('[i18n] Detecting user language preference...');
 
     // 1. Check cache first (fastest)
@@ -246,26 +248,7 @@ async function getUserLanguagePreference() {
         return storedLang;
     }
 
-    // 4. Fallback to browser language
-    const browserLang = navigator.language || navigator.userLanguage;
-    if (browserLang) {
-        // Extract base language code (e.g., 'es' from 'es-MX')
-        const baseLang = browserLang.split('-')[0];
-        if (I18N_CONFIG.SUPPORTED_LANGUAGES.includes(baseLang)) {
-            console.log(`[i18n] Using browser language: ${baseLang}`);
-
-            // Cache for subsequent calls
-            languageCache = {
-                value: baseLang,
-                timestamp: Date.now(),
-                isAuthenticated: false
-            };
-
-            return baseLang;
-        }
-    }
-
-    // 5. Final fallback to default
+    // 4. Final fallback to platform default (Honduras = es)
     console.log(`[i18n] Using default language: ${I18N_CONFIG.DEFAULT_LANGUAGE}`);
     return I18N_CONFIG.DEFAULT_LANGUAGE;
 }

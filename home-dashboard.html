@@ -9,7 +9,7 @@
     <link rel="preload" href="/js/hub/social-feed.js?v=13.9" as="script">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0f172a">
-    <title data-i18n="dashboard.page_title">La Tanda - Web3 DeFi Ecosystem</title>
+    <title>La Tanda - Web3 DeFi Ecosystem</title>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -1033,7 +1033,7 @@
     <!-- Notification Center Component -->
     <link rel="stylesheet" href="css/components/notification-center.css">
     <!-- Wallet Dropdown Component -->
-    <link rel="stylesheet" href="css/components/wallet-dropdown.css">
+    <!-- wallet-dropdown.css removed — header v2.0 -->
     <!-- Mobile Touch & Positioning Fixes -->
     <link rel="stylesheet" href="css/mobile-touch-fixes.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="css/mobile-notification-fix.css" media="print" onload="this.media='all'">
@@ -1045,7 +1045,7 @@
     <link rel="stylesheet" href="css/transaction-modal.css" media="print" onload="this.media='all'">
     <!-- Global Header Component -->
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=24.7">
+    <link rel="stylesheet" href="css/header.css?v=26.0">
     <link rel="stylesheet" href="css/onboarding.css?v=1.0" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
     <link rel="stylesheet" href="css/hub/mia-assistant.css?v=6911">
@@ -1053,7 +1053,7 @@
     <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
     <link rel="stylesheet" href="css/hub/comments-modal.css?v=2.0">
     <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
-    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7803">
     <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558148">
     <link rel="stylesheet" href="css/dashboard-polish.css?v=1.0">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
@@ -1083,15 +1083,15 @@
             <nav class="nav-menu">
                 <a href="/home-dashboard.html" class="nav-menu-item active">
                     <i class="fas fa-home"></i>
-                    <span data-i18n="nav.dashboard">Inicio</span>
+                    <span>Inicio</span>
                 </a>
                 <a href="/explorar.html" class="nav-menu-item">
                     <i class="fas fa-hashtag"></i>
-                    <span data-i18n="nav.explore">Explorar</span>
+                    <span>Explorar</span>
                 </a>
                 <a href="/trabajo.html" class="nav-menu-item">
                     <i class="fas fa-briefcase"></i>
-                    <span data-i18n="nav.work">Trabajo</span>
+                    <span>Trabajo</span>
                 </a>
                 <a href="/creator-hub.html" class="nav-menu-item">
                     <i class="fas fa-palette"></i>
@@ -1107,7 +1107,11 @@
                 </a>
                 <a href="/mineria.html" class="nav-menu-item">
                     <i class="fas fa-hammer"></i>
-                    <span data-i18n="nav.mining">Minería</span>
+                    <span>Minería</span>
+                </a>
+                <a href="/recompensas.html" class="nav-menu-item">
+                    <i class="fas fa-gift"></i>
+                    <span>Recompensas</span>
                 </a>
                 <div class="nav-more-container" style="position: relative;">
                 <div class="nav-menu-item nav-more-btn" id="navMoreBtn" data-action="toggle-more-menu" role="button" aria-expanded="false" aria-controls="moreMenuDropdown" aria-label="Más opciones">
@@ -1118,17 +1122,17 @@
                 <div class="more-menu-dropdown" id="moreMenuDropdown" role="menu">
                     <a href="perfil.html" class="more-menu-item" id="navProfileLink">
                         <i class="fas fa-user"></i>
-                        <span data-i18n="nav.profile">Perfil</span>
+                        <span>Perfil</span>
                     </a>
                     <!-- Listas, Comunidades, Negocios, Anuncios — removed (no backend) -->
                     <div class="more-menu-divider"></div>
                     <a href="configuracion.html" class="more-menu-item">
                         <i class="fas fa-cog"></i>
-                        <span data-i18n="nav.settings">Configuración</span>
+                        <span>Configuración</span>
                     </a>
                     <a href="#" class="more-menu-item" data-action="logout">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span data-i18n="nav.logout">Cerrar Sesión</span>
+                        <span>Cerrar Sesión</span>
                     </a>
                 </div>
                 </div>
@@ -1172,9 +1176,14 @@
                     <div class="welcome-avatar" id="userAvatar" style="width:40px;height:40px;border-radius:50%;background:rgba(0,255,255,0.15);display:flex;align-items:center;justify-content:center;">
                         <i class="fas fa-user" style="color:#00FFFF;"></i>
                     </div>
-                    <div>
+                    <div style="flex:1">
                         <h1 id="welcomeTitle" class="main-feed-title">Hola, Usuario!</h1>
                     </div>
+                    <a href="recompensas.html" class="lt-rewards-pill" id="rewardsPill" title="Mis Recompensas">
+                        <i class="fas fa-coins lt-rp-icon"></i>
+                        <span class="lt-rp-text" id="rewardsPillText">...</span>
+                        <span class="lt-rp-badge" id="rewardsPillBadge" style="display:none"></span>
+                    </a>
                 </div>
             </div>
 
@@ -1209,25 +1218,25 @@
                 </div>
                 <!-- VIDA SOCIAL: Streak Widget -->
                 <div class="sidebar-widget" id="vidaStreakWidget" style="display:none">
-                    <h3 class="sidebar-widget-title"><i class="fas fa-fire" style="color:#f59e0b"></i> <span data-i18n="home_dashboard.my_streak">Mi Racha</span></h3>
+                    <h3 class="sidebar-widget-title"><i class="fas fa-fire" style="color:#f59e0b"></i> <span>Mi Racha</span></h3>
                     <div id="vidaStreakContent"></div>
                 </div>
 
                 <!-- VIDA SOCIAL: Weekly Challenges Widget -->
                 <div class="sidebar-widget" id="vidaChallengesWidget" style="display:none">
-                    <h3 class="sidebar-widget-title"><i class="fas fa-bullseye" style="color:#ec4899"></i> <span data-i18n="home_dashboard.weekly_challenges">Desafios Semanales</span></h3>
+                    <h3 class="sidebar-widget-title"><i class="fas fa-bullseye" style="color:#ec4899"></i> <span>Desafios Semanales</span></h3>
                     <div id="vidaChallengesContent"></div>
                 </div>
 
                 <!-- VIDA SOCIAL: Leaderboard Widget -->
                 <div class="sidebar-widget" id="vidaLeaderWidget" style="display:none">
-                    <h3 class="sidebar-widget-title"><i class="fas fa-medal" style="color:#fbbf24"></i> <span data-i18n="home_dashboard.leaderboard">Tabla de Lideres</span></h3>
+                    <h3 class="sidebar-widget-title"><i class="fas fa-medal" style="color:#fbbf24"></i> <span>Tabla de Lideres</span></h3>
                     <div id="vidaLeaderContent"></div>
                 </div>
 
                 <!-- Who to Follow Widget -->
                 <div class="sidebar-widget">
-                    <h3 class="sidebar-widget-title" data-i18n="home_dashboard.who_to_follow">A quien seguir</h3>
+                    <h3 class="sidebar-widget-title">A quien seguir</h3>
                     <div id="whoToFollowList">
                         <!-- Populated by sidebar-widgets.js -->
                     </div>
@@ -1235,7 +1244,7 @@
 
                 <!-- Trending Widget -->
                 <div class="sidebar-widget">
-                    <h3 class="sidebar-widget-title" data-i18n="home_dashboard.trending">Tendencias</h3>
+                    <h3 class="sidebar-widget-title">Tendencias</h3>
                     <div id="trendingList">
                         <!-- Populated by sidebar-widgets.js -->
                     </div>
@@ -1299,7 +1308,7 @@
         <nav class="mobile-drawer-nav">
             <a href="perfil.html" class="mobile-drawer-item" id="drawerProfileLink">
                 <i class="fas fa-user"></i>
-                <span data-i18n="nav.profile">Perfil</span>
+                <span>Perfil</span>
             </a>
             <a href="my-wallet.html" class="mobile-drawer-item">
                 <i class="fas fa-wallet"></i>
@@ -1311,7 +1320,7 @@
             </a>
             <a href="/marketplace-social.html" class="mobile-drawer-item">
                 <i class="fas fa-store"></i>
-                <span data-i18n="nav.marketplace">Mercado</span>
+                <span>Mercado</span>
             </a>
             <a href="/mensajes.html" class="mobile-drawer-item">
                 <i class="fas fa-envelope"></i>
@@ -1390,7 +1399,7 @@
         <div class="mobile-drawer-footer">
             <button class="mobile-drawer-logout" data-action="drawer-logout">
                 <i class="fas fa-sign-out-alt"></i>
-                <span data-i18n="nav.logout">Cerrar Sesion</span>
+                <span>Cerrar Sesion</span>
             </button>
         </div>
     </aside>
@@ -1406,11 +1415,11 @@
         </button>
         <a href="/home-dashboard.html" class="mobile-nav-item active">
             <i class="fas fa-home"></i>
-            <span data-i18n="nav.dashboard">Inicio</span>
+            <span>Inicio</span>
         </a>
         <a href="/marketplace-social.html" class="mobile-nav-item">
             <i class="fas fa-store"></i>
-            <span data-i18n="nav.marketplace">Mercado</span>
+            <span>Mercado</span>
         </a>
         <button class="mobile-nav-item" data-action="toggle-right-drawer" aria-label="Abrir widgets">
             <i class="fas fa-th-large"></i>
@@ -1453,14 +1462,14 @@
     <!-- 🔌 Real Data API Connector -->
     <script defer src="js/dashboard-api-connector.js"></script>
     <!-- 📊 Real Data Patch -->
-    <script defer src="js/dashboard-real-data-patch.js"></script>
+    <!-- dashboard-real-data-patch.js removed — header v2.0 -->
     <script defer src="js/dashboard-sections-loader.js?v=20.0"></script>
     <!-- 🧹 Header/Footer Cleanup -->
     <script defer src="js/header-footer-cleanup.js"></script>
     <!-- Loading States Component -->
     <script defer src="js/components/loading-states.js"></script>
     <!-- Global Header Scripts -->
-    <script defer src="js/components-loader.js?v=31.3"></script>
+    <script defer src="js/components-loader.js?v=32.6"></script>
     <!-- Hub Inteligente Modules -->
     <script defer src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script defer src="js/hub/contextual-alerts.js?v=1.03"></script>
@@ -1528,6 +1537,49 @@
     .rw-stat-lbl { font-size:0.65rem; color:#64748b; margin-top:2px }
     .rw-pending { margin-top:8px; padding:8px 10px; background:rgba(34,197,94,0.1); border-radius:8px; font-size:0.75rem; color:#22c55e; text-align:center; cursor:pointer }
     .rw-pending:hover { background:rgba(34,197,94,0.15) }
+    
+    /* Smart Rewards Pill */
+    .lt-rewards-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 5px 12px; background: linear-gradient(135deg, rgba(0,255,255,0.08), rgba(139,92,246,0.08));
+        border: 1px solid rgba(0,255,255,0.15); border-radius: 20px;
+        text-decoration: none; color: #e2e8f0; font-size: 0.78rem; font-weight: 600;
+        transition: all 0.25s; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .lt-rewards-pill:hover {
+        background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(139,92,246,0.12));
+        border-color: rgba(0,255,255,0.3); transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,255,255,0.15);
+    }
+    .lt-rp-icon { color: #00FFFF; font-size: 0.8rem }
+    .lt-rp-text { max-width: 180px; overflow: hidden; text-overflow: ellipsis }
+    .lt-rp-badge {
+        position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px;
+        padding: 0 4px; border-radius: 8px; background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white; font-size: 0.55rem; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        animation: rp-pulse 2s ease-in-out infinite;
+    }
+    @keyframes rp-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)} 50%{box-shadow:0 0 0 4px rgba(34,197,94,0)} }
+    .lt-rewards-pill.rp-mine .lt-rp-icon { color: #00FFFF }
+    .lt-rewards-pill.rp-claim .lt-rp-icon { color: #22c55e }
+    .lt-rewards-pill.rp-streak .lt-rp-icon { color: #f59e0b }
+    @media (max-width: 640px) {
+        .lt-rewards-pill { padding: 4px 8px; font-size: 0.7rem; gap: 5px }
+        .lt-rp-text { max-width: 100px }
+    }
+
+    
+
+    
+    /* Auto-hide on scroll */
+    .lt-header { transition: transform 0.3s ease !important; }
+    .lt-header.header-hidden { transform: translateY(-100%) !important; }
+    .mobile-bottom-nav { transition: transform 0.3s ease !important; }
+    .mobile-bottom-nav.nav-hidden { transform: translateY(100%) !important; }
+    .mobile-fab { transition: transform 0.3s ease, opacity 0.3s ease !important; }
+    .mobile-fab.fab-hidden { transform: translateY(calc(100% + 20px)) !important; opacity: 0 !important; }
+
     </style>
 
     <script defer src="js/hub/contextual-widgets.js?v=1773561600"></script>
@@ -1710,15 +1762,51 @@
             } catch(e) { /* non-blocking */ }
         }
 
+        // Smart Rewards Pill loader
+        async function loadRewardsPill() {
+            var pill = document.getElementById('rewardsPill');
+            var textEl = document.getElementById('rewardsPillText');
+            var badgeEl = document.getElementById('rewardsPillBadge');
+            if (!pill || !textEl || !getToken()) return;
+            try {
+                var res = await authFetch('/api/rewards/summary');
+                var r = await res.json();
+                if (!r.success) return;
+                var d = r.data;
+                var pendingCount = 0;
+                var msgs = [];
+                if (d.mining.can_claim) { msgs.push({icon:'fa-hammer',text:'Minar ahora',cls:'rp-mine'}); pendingCount++; }
+                if (d.streak.claimable_ltd > 0) { msgs.push({icon:'fa-fire',text:'Racha: +' + d.streak.claimable_ltd + ' LTD',cls:'rp-claim'}); pendingCount += d.streak.claimable.length; }
+                if (d.onboarding.pending > 0 && d.onboarding.completed < d.onboarding.total) { msgs.push({icon:'fa-rocket',text:d.onboarding.completed + '/' + d.onboarding.total + ' onboarding',cls:'rp-claim'}); pendingCount++; }
+                msgs.push({icon:'fa-coins',text:d.balance.toFixed(1) + ' LTD',cls:'rp-idle'});
+                var msg = msgs[0];
+                pill.className = 'lt-rewards-pill ' + msg.cls;
+                textEl.innerHTML = msg.text;
+                pill.querySelector('.lt-rp-icon').className = 'fas ' + msg.icon + ' lt-rp-icon';
+                if (pendingCount > 0) { badgeEl.textContent = pendingCount; badgeEl.style.display = ''; }
+                if (msgs.length > 1) {
+                    var idx = 0;
+                    setInterval(function() {
+                        idx = (idx + 1) % msgs.length;
+                        var m = msgs[idx];
+                        pill.className = 'lt-rewards-pill ' + m.cls;
+                        textEl.innerHTML = m.text;
+                        pill.querySelector('.lt-rp-icon').className = 'fas ' + m.icon + ' lt-rp-icon';
+                    }, 5000);
+                }
+
+            } catch(e) { textEl.textContent = 'Recompensas'; }
+        }
+
         // Global claim handlers
         window._claimStreak = function(days, btn) { claimReward('streak', { milestone: days }, btn); };
         window._claimChallenge = function(id, btn) { claimReward('challenge', { challenge_id: id }, btn); };
 
         // Load after DOM ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() { setTimeout(function() { loadRewardsWidget(); loadVidaWidgets(); }, 1500); });
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(function() { loadRewardsPill(); loadRewardsWidget(); loadVidaWidgets(); }, 1500); });
         } else {
-            setTimeout(function() { loadRewardsWidget(); loadVidaWidgets(); }, 1500);
+            setTimeout(function() { loadRewardsPill(); loadRewardsWidget(); loadVidaWidgets(); }, 1500);
         }
     })();
     </script>
@@ -1986,5 +2074,56 @@ document.addEventListener('error', function(e) {
     }
 }, true);
 </script>
+
+    <!-- Auto-hide scroll handler (waits for header to load) -->
+    <script>
+    (function() {
+        var lastY = 0, threshold = 6, ticking = false;
+
+        function initScrollHide() {
+            var header = document.getElementById('mainHeader');
+            var bottomNav = document.getElementById('mobileBottomNav');
+            var fab = document.getElementById('mobileFab');
+
+            if (!header) {
+                // Header not loaded yet — retry
+                setTimeout(initScrollHide, 500);
+                return;
+            }
+
+            window.addEventListener('scroll', function() {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(function() {
+                    var y = window.scrollY || window.pageYOffset || 0;
+                    if (y < 60) {
+                        header.classList.remove('header-hidden');
+                        if (bottomNav) bottomNav.classList.remove('nav-hidden');
+                        if (fab) fab.classList.remove('fab-hidden');
+                    } else if (y > lastY + threshold) {
+                        header.classList.add('header-hidden');
+                        if (bottomNav) bottomNav.classList.add('nav-hidden');
+                        if (fab) fab.classList.add('fab-hidden');
+                    } else if (y < lastY - threshold) {
+                        header.classList.remove('header-hidden');
+                        if (bottomNav) bottomNav.classList.remove('nav-hidden');
+                        if (fab) fab.classList.remove('fab-hidden');
+                    }
+                    lastY = y;
+                    ticking = false;
+                });
+            }, { passive: true });
+        }
+
+        // Wait for header to be loaded by components-loader
+        if (document.getElementById('mainHeader')) {
+            initScrollHide();
+        } else {
+            document.addEventListener('headerLoaded', initScrollHide);
+            // Fallback: retry after delay
+            setTimeout(initScrollHide, 2000);
+        }
+    })();
+    </script>
 </body>
 </html>

@@ -1,255 +1,198 @@
 /**
- * LA TANDA - Header Events Manager
- * Event delegation and keyboard shortcuts
- * @version 1.2 - Profile dropdown fix (body-mounted, programmatic nav)
+ * LA TANDA - Header Events v2.0
+ * Click delegation, scroll auto-hide, search, keyboard shortcuts
  */
-
 const HeaderEvents = {
-    boundHandler: null,
+    lastScrollY: 0,
+    scrollThreshold: 5,
+    headerHidden: false,
 
     init() {
-        const mainHeader = document.getElementById("mainHeader");
-        if (!mainHeader) return;
+        const header = document.getElementById("mainHeader");
+        if (!header) return;
 
-        this.boundHandler = (e) => this.handleClick(e);
-        mainHeader.addEventListener("click", this.boundHandler);
-
+        // Click delegation
+        header.addEventListener("click", (e) => this.handleClick(e));
+        document.addEventListener("click", (e) => this.handleOutsideClick(e));
         document.addEventListener("keydown", (e) => this.handleKeyboard(e));
 
-        // Close dropdowns when clicking outside
-        document.addEventListener("click", (e) => {
-            if (!e.target.closest("#mainHeader") && !e.target.closest("#profileDropdown")) {
-                window.HeaderDropdown && window.HeaderDropdown.closeAll();
-                var pd = document.getElementById('profileDropdown');
-                if (pd) pd.classList.remove('active');
-            }
-        });
+        // Scroll auto-hide
+        window.addEventListener("scroll", () => this.handleScroll(), { passive: true });
+
+        // Search bar
+        this.initSearch();
+        // Mobile search modal
+        this.initMobileSearch();
     },
 
     handleClick(e) {
-        if (e.target.closest("#walletArea")) {
-            e.stopPropagation();
-            window.HeaderDropdown && window.HeaderDropdown.toggle();
-            return;
-        }
-        if (e.target.closest("#walletDropdownClose")) {
-            e.stopPropagation();
-            window.HeaderDropdown && window.HeaderDropdown.close();
-            return;
-        }
-        if (e.target.closest("#menuToggle")) {
-            e.stopPropagation();
-            this.toggleSidebar();
-            return;
-        }
-        if (e.target.closest("#balanceToggle")) {
-            e.stopPropagation();
-            this.toggleBalance();
-            return;
-        }
-        if (e.target.closest("#notificationsBtn")) {
-            e.stopPropagation();
-            this.openNotifications();
-            return;
-        }
-        if (e.target.closest("#searchBtn")) {
-            e.stopPropagation();
-            this.openSearch();
-            return;
-        }
-        if (e.target.closest("#profileBtn")) {
-            e.stopPropagation();
-            this.toggleProfileDropdown();
-            return;
+        if (e.target.closest("#menuToggle")) { e.stopPropagation(); this.toggleSidebar(); return; }
+        if (e.target.closest("#balanceBtn")) { e.stopPropagation(); this.toggleBalance(); return; }
+        if (e.target.closest("#notificationsBtn")) { e.stopPropagation(); this.openNotifications(); return; }
+        if (e.target.closest("#mobileSearchBtn")) { e.stopPropagation(); this.openMobileSearch(); return; }
+        if (e.target.closest("#profileBtn")) { e.stopPropagation(); this.toggleProfileDropdown(); return; }
+    },
+
+    handleOutsideClick(e) {
+        if (!e.target.closest("#mainHeader") && !e.target.closest("#profileDropdown")) {
+            // Close balance dropdown
+            var bm = document.getElementById("balanceMini");
+            var dd = document.getElementById("balanceDropdown");
+            if (bm) bm.classList.remove("open");
+            if (dd) dd.style.display = "none";
+            // Close profile dropdown
+            var pd = document.getElementById("profileDropdown");
+            if (pd) pd.classList.remove("active");
         }
     },
 
     handleKeyboard(e) {
         if (e.key === "Escape") {
-            window.HeaderDropdown && window.HeaderDropdown.close();
-            var pd = document.getElementById('profileDropdown');
-            if (pd) pd.classList.remove('active');
+            var bm = document.getElementById("balanceMini");
+            if (bm) bm.classList.remove("open");
+            var pd = document.getElementById("profileDropdown");
+            if (pd) pd.classList.remove("active");
+            var sm = document.getElementById("searchModal");
+            if (sm) sm.classList.remove("active");
         }
         if ((e.ctrlKey || e.metaKey) && e.key === "k") {
             e.preventDefault();
-            this.openSearch();
+            if (window.innerWidth <= 768) this.openMobileSearch();
+            else { var input = document.getElementById("headerSearchInput"); if (input) input.focus(); }
         }
     },
 
+    // Scroll auto-hide: delegated to page-level handler
+    handleScroll() {},
+
+    // ---- Sidebar ----
     toggleSidebar() {
         if (window.SidebarUI) {
             SidebarUI.toggle();
             document.body.classList.toggle("sidebar-open", SidebarUI.isOpen);
         } else {
-            const sidebar = document.querySelector(".sidebar");
-            if (sidebar) {
-                sidebar.classList.toggle("active");
-                document.body.classList.toggle("sidebar-open");
+            var sidebar = document.querySelector(".sidebar");
+            if (sidebar) { sidebar.classList.toggle("active"); document.body.classList.toggle("sidebar-open"); }
+        }
+    },
+
+    // ---- Balance dropdown ----
+    toggleBalance() {
+        var bm = document.getElementById("balanceMini");
+        var dd = document.getElementById("balanceDropdown");
+        if (bm && dd) {
+            var isOpen = bm.classList.contains("open");
+            if (isOpen) {
+                bm.classList.remove("open");
+                dd.style.display = "none";
+            } else {
+                bm.classList.add("open");
+                dd.style.display = "block";
+                if (window.HeaderSync) window.HeaderSync.syncBalance();
             }
         }
     },
 
-    toggleBalance() {
-        const hidden = localStorage.getItem("balanceHidden") === "true";
-        const newState = !hidden;
-        localStorage.setItem("balanceHidden", newState);
-        window.HeaderUI && window.HeaderUI.toggleBalanceVisibility(newState);
-    },
-
+    // ---- Notifications ----
     openNotifications() {
         if (window.notificationCenter && window.notificationCenter.toggle) {
             window.notificationCenter.toggle();
         } else if (typeof window.toggleNotificationCenter === "function") {
             window.toggleNotificationCenter();
-        } else {
-            window.location.href = "notificaciones.html";
         }
     },
 
-    openSearch() {
-        if (typeof window.laTandaComponents !== "undefined" && typeof window.laTandaComponents.toggleSearch === "function") {
-            window.laTandaComponents.toggleSearch();
-        } else if (typeof window.openSearchModal === "function") {
-            window.openSearchModal();
-        } else {
-            var query = prompt("Buscar en La Tanda:");
+    // ---- Search ----
+    initSearch() {
+        var input = document.getElementById("headerSearchInput");
+        if (!input) return;
+        input.addEventListener("keydown", function(e) {
+            if (e.key === "Enter" && input.value.trim()) {
+                window.location.href = "explorar.html?q=" + encodeURIComponent(input.value.trim());
+            }
+        });
+        // Restore last query
+        try {
+            var lastQ = sessionStorage.getItem("headerSearchQuery");
+            if (lastQ) input.value = lastQ;
+        } catch(e) {}
+        input.addEventListener("input", function() {
+            try { sessionStorage.setItem("headerSearchQuery", input.value); } catch(e) {}
+        });
+    },
+
+    initMobileSearch() {
+        var closeBtn = document.getElementById("searchModalClose");
+        var modal = document.getElementById("searchModal");
+        var input = document.getElementById("searchModalInput");
+        if (!closeBtn || !modal) return;
+        closeBtn.addEventListener("click", function() { modal.classList.remove("active"); });
+        if (input) {
+            input.addEventListener("keydown", function(e) {
+                if (e.key === "Enter" && input.value.trim()) {
+                    window.location.href = "explorar.html?q=" + encodeURIComponent(input.value.trim());
+                }
+            });
         }
     },
 
+    openMobileSearch() {
+        var modal = document.getElementById("searchModal");
+        var input = document.getElementById("searchModalInput");
+        if (modal) { modal.classList.add("active"); if (input) setTimeout(function() { input.focus(); }, 100); }
+    },
+
+    // ---- Profile dropdown ----
     toggleProfileDropdown() {
-        var dd = document.getElementById('profileDropdown');
-        if (dd) {
-            dd.classList.toggle('active');
-            if (dd.classList.contains('active')) this._positionDropdown(dd);
-            return;
-        }
+        var dd = document.getElementById("profileDropdown");
+        if (dd) { dd.classList.toggle("active"); if (dd.classList.contains("active")) this._positionDropdown(dd); return; }
         this._createProfileDropdown();
     },
 
     _createProfileDropdown() {
-        var userStr = localStorage.getItem('latanda_user');
+        var userStr = localStorage.getItem("latanda_user");
         var user = userStr ? JSON.parse(userStr) : {};
-        var name = user.name || 'Usuario';
-        var email = user.email || '';
-        var avatarUrl = user.avatar_url || '';
+        var name = user.name || "Usuario";
+        var email = user.email || "";
+        var avatarUrl = user.avatar_url || "";
+        var esc = function(s) { if (!s) return ""; var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
+        var initials = name.split(" ").map(function(n){ return n[0]||""; }).join("").toUpperCase().substring(0,2);
+        var avatarHtml = avatarUrl ? '<img src="'+esc(avatarUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<span style="color:#00FFFF;font-weight:600;font-size:0.9rem">'+esc(initials)+'</span>';
 
-        var esc = function(s) {
-            if (!s) return '';
-            var d = document.createElement('div');
-            d.textContent = s;
-            return d.innerHTML;
-        };
-
-        var initials = name.split(' ').map(function(n){ return n[0] || ''; }).join('').toUpperCase().substring(0,2);
-        var avatarHtml = avatarUrl
-            ? '<img src="' + esc(avatarUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-            : '<span style="color:#00FFFF;font-weight:600;font-size:1rem;">' + esc(initials) + '</span>';
-
-        var dd = document.createElement('div');
-        dd.id = 'profileDropdown';
-        dd.className = 'profile-dropdown active';
-
-        // Build menu items as divs with data-href (not <a> inside <button>)
-        dd.innerHTML =
-            '<div class="pd-header">' +
-                '<div class="pd-avatar">' + avatarHtml + '</div>' +
-                '<div class="pd-info">' +
-                    '<div class="pd-name">' + esc(name) + '</div>' +
-                    (email ? '<div class="pd-email">' + esc(email) + '</div>' : '') +
-                '</div>' +
-            '</div>' +
-            '<div class="pd-divider"></div>' +
-            '<div class="pd-item" data-href="mi-perfil.html"><i class="fas fa-user"></i>Mi Perfil</div>' +
-            '<div class="pd-item" data-href="my-wallet.html"><i class="fas fa-wallet"></i>Wallet</div>' +
-            '<div class="pd-item" data-href="groups-advanced-system.html"><i class="fas fa-users"></i>Mis Grupos</div>' +
-            '<div class="pd-item" data-href="mi-perfil.html?tab=settings"><i class="fas fa-cog"></i>Configuracion</div>' +
-            '<div class="pd-divider"></div>' +
-            '<div class="pd-item" data-action="change-lang"><i class="fas fa-globe"></i><span>Idioma</span><span class="pd-lang-current" style="margin-left:auto;font-size:0.75rem;color:#64748b;" id="pdCurrentLang"></span></div>' +
-            '<div class="pd-divider"></div>' +
-            '<div class="pd-item pd-logout"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</div>';
+        var dd = document.createElement("div");
+        dd.id = "profileDropdown";
+        dd.className = "profile-dropdown active";
+        dd.innerHTML = '<div class="pd-header"><div class="pd-avatar">'+avatarHtml+'</div><div><div class="pd-name">'+esc(name)+'</div>'+(email?'<div class="pd-email">'+esc(email)+'</div>':'')+'</div></div><div class="pd-divider"></div><div class="pd-item" data-href="mi-perfil.html"><i class="fas fa-user"></i>Mi Perfil</div><div class="pd-item" data-href="my-wallet.html"><i class="fas fa-wallet"></i>Wallet</div><div class="pd-item" data-href="recompensas.html"><i class="fas fa-gift"></i>Recompensas</div><div class="pd-item" data-href="configuracion.html"><i class="fas fa-cog"></i>Configuracion</div><div class="pd-divider"></div><div class="pd-item pd-logout"><i class="fas fa-sign-out-alt"></i>Cerrar Sesion</div>';
 
         document.body.appendChild(dd);
         this._positionDropdown(dd);
 
-        // Set current language label
-        var curLang = (localStorage.getItem('i18nextLng') || 'es').substring(0, 2);
-        var langFlags = { es: '🇭🇳', en: '🇺🇸', pt: '🇧🇷' };
-        var langNames = { es: 'Español', en: 'English', pt: 'Português' };
-        var pdLangEl = document.getElementById('pdCurrentLang');
-        if (pdLangEl) pdLangEl.textContent = langFlags[curLang] + ' ' + (langNames[curLang] || curLang);
-
-        // Single click handler for all items
-        dd.addEventListener('click', function(e) {
-            var item = e.target.closest('.pd-item');
+        dd.addEventListener("click", function(e) {
+            var item = e.target.closest(".pd-item");
             if (!item) return;
-            e.stopPropagation();
-
-            // Language change
-            if (item.getAttribute('data-action') === 'change-lang') {
-                e.stopPropagation();
-                // Cycle through languages: es → en → pt → es
-                var langs = ['es', 'en', 'pt'];
-                var flags = { es: '🇭🇳', en: '🇺🇸', pt: '🇧🇷' };
-                var names = { es: 'Español', en: 'English', pt: 'Português' };
-                var current = (localStorage.getItem('i18nextLng') || 'es').substring(0, 2);
-                var idx = langs.indexOf(current);
-                var next = langs[(idx + 1) % langs.length];
-                if (window.i18next && window.i18next.changeLanguage) {
-                    window.i18next.changeLanguage(next);
-                }
-                localStorage.setItem('i18nextLng', next);
-                var label = document.getElementById('pdCurrentLang');
-                if (label) label.textContent = flags[next] + ' ' + names[next];
-                if (typeof showNotification === 'function') showNotification('Idioma: ' + names[next], 'success');
+            if (item.classList.contains("pd-logout")) {
+                localStorage.removeItem("auth_token"); localStorage.removeItem("latanda_user"); sessionStorage.clear();
+                window.location.href = "auth-enhanced.html";
                 return;
             }
-
-            if (item.classList.contains('pd-logout')) {
-                var doLogout = function() {
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('latanda_auth_token');
-                    localStorage.removeItem('latanda_user');
-                    localStorage.removeItem('latanda_ltd');
-                    sessionStorage.clear();
-                    window.location.href = 'auth-enhanced.html';
-                };
-                if (typeof window.showConfirm === 'function') {
-                    dd.classList.remove('active');
-                    window.showConfirm('Estas seguro que deseas cerrar sesion?', doLogout);
-                } else {
-                    doLogout();
-                }
-                return;
-            }
-
-            var href = item.getAttribute('data-href');
+            var href = item.getAttribute("data-href");
             if (href) window.location.href = href;
         });
     },
 
     _positionDropdown(dd) {
-        var btn = document.getElementById('profileBtn');
+        var btn = document.getElementById("profileBtn");
         if (!btn) return;
         var rect = btn.getBoundingClientRect();
-        dd.style.position = 'fixed';
-        dd.style.top = (rect.bottom + 4) + 'px';
-        if (window.innerWidth <= 480) {
-            dd.style.right = '8px';
-            dd.style.left = '8px';
-            dd.style.width = 'auto';
-        } else {
-            dd.style.right = (window.innerWidth - rect.right) + 'px';
-            dd.style.left = '';
-            dd.style.width = '260px';
-        }
+        dd.style.position = "fixed";
+        dd.style.top = (rect.bottom + 4) + "px";
+        if (window.innerWidth <= 480) { dd.style.right = "8px"; dd.style.left = "8px"; dd.style.width = "auto"; }
+        else { dd.style.right = (window.innerWidth - rect.right) + "px"; dd.style.left = ""; dd.style.width = "240px"; }
     },
 
     destroy() {
-        const mainHeader = document.getElementById("mainHeader");
-        if (mainHeader && this.boundHandler) {
-            mainHeader.removeEventListener("click", this.boundHandler);
-        }
+        var header = document.getElementById("mainHeader");
+        if (header) header.removeEventListener("click", this.handleClick);
     }
 };
-
 window.HeaderEvents = HeaderEvents;

@@ -166,6 +166,8 @@
             color: var(--text-dark);
         }
         
+        @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+        .shake { animation: shake 0.4s ease; }
         .auth-tab.active {
             background: var(--bg-white);
             color: var(--primary);
@@ -919,7 +921,7 @@
                     </a>
                 </div>
                 <p class="greeting-text" id="greeting"></p>
-                <h1 class="auth-title" data-i18n="forms.welcome">Bienvenido a La Tanda</h1>
+                <h1 class="auth-title">Bienvenido a La Tanda</h1>
                 <p class="auth-subtitle">Inicia sesión o crea tu cuenta</p>
             </div>
             
@@ -964,7 +966,7 @@
             <!-- Login Form -->
             <form class="auth-form active" id="loginForm" data-form="login">
                 <div class="form-group">
-                    <label for="loginEmail" data-i18n="forms.email">Correo electrónico</label>
+                    <label for="loginEmail">Correo electrónico</label>
                     <div class="input-container">
                         <input type="email" id="loginEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
                         <i class="fas fa-envelope input-icon"></i>
@@ -973,7 +975,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="loginPassword" data-i18n="forms.password">Contraseña</label>
+                    <label for="loginPassword">Contraseña</label>
                     <div class="input-container">
                         <input type="password" autocomplete="current-password" id="loginPassword" class="input-field" placeholder="Tu contraseña" autocomplete="current-password" required>
                         <i class="fas fa-eye input-icon" id="toggleLoginPassword"></i>
@@ -984,9 +986,12 @@
                 <a href="#" class="forgot-password" onclick="window.auth.showPasswordResetForm(); return false;">
                     ¿Olvidaste tu contraseña?
                 </a>
+                <div style="text-align:center;margin-top:8px;">
+                    <a href="#" style="color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;" onclick="var em=document.getElementById('loginEmail').value.trim(); if(!em||!window.auth.validateEmail(em)){window.auth.showError('Ingresa tu email primero');document.getElementById('loginEmail').focus();return false;} window.auth.showInfo('Enviando codigo...'); fetch('/api/auth/send-verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(){window.auth.showEmailVerificationForm(em)}).catch(function(){window.auth.showEmailVerificationForm(em)}); return false;">¿Ya te registraste pero no verificaste tu email?</a>
+                </div>
                 
                 <button type="submit" class="btn-primary" id="loginSubmit">
-                    <span data-i18n="forms.login">Iniciar Sesión</span>
+                    <span>Iniciar Sesión</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
                 
@@ -1005,7 +1010,7 @@
             <!-- Register Form -->
             <form class="auth-form" id="registerForm" data-form="register">
                 <div class="form-group">
-                    <label for="registerName" data-i18n="forms.name">Nombre completo</label>
+                    <label for="registerName">Nombre completo</label>
                     <div class="input-container">
                         <input type="text" id="registerName" class="input-field" placeholder="Tu nombre" autocomplete="name" required>
                         <i class="fas fa-user input-icon"></i>
@@ -1014,16 +1019,24 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="registerEmail" data-i18n="forms.email">Correo electrónico</label>
+                    <label for="registerEmail">Correo electrónico</label>
                     <div class="input-container">
                         <input type="email" id="registerEmail" class="input-field" placeholder="correo@ejemplo.com" autocomplete="email" required>
                         <i class="fas fa-envelope input-icon"></i>
                     </div>
                     <div class="error-message" id="registerEmailError"></div>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="registerPassword" data-i18n="forms.password">Contraseña</label>
+                    <label for="registerPhone">Telefono <span style="color:var(--text-muted);font-weight:400;font-size:0.85em">(opcional)</span></label>
+                    <div class="input-container">
+                        <input type="tel" id="registerPhone" class="input-field" placeholder="+504 9999-1234" autocomplete="tel" inputmode="tel">
+                        <i class="fas fa-phone input-icon"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
                     <div class="input-container">
                         <input type="password" autocomplete="new-password" id="registerPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
                         <i class="fas fa-eye input-icon" id="toggleRegisterPassword"></i>
@@ -1057,7 +1070,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="registerConfirmPassword" data-i18n="forms.confirm_password">Confirmar contraseña</label>
+                    <label for="registerConfirmPassword">Confirmar contraseña</label>
                     <div class="input-container">
                         <input type="password" autocomplete="new-password" id="registerConfirmPassword" class="input-field" placeholder="Repite tu contraseña" required>
                         <i class="fas fa-eye input-icon" id="toggleRegisterConfirmPassword"></i>
@@ -1073,7 +1086,7 @@
                 </div>
                 
                 <button type="submit" class="btn-primary" id="registerSubmit">
-                    <span data-i18n="forms.create_account">Crear Cuenta</span>
+                    <span>Crear Cuenta</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
                 
@@ -1093,7 +1106,7 @@
             <div class="verification-container" id="emailVerificationContainer">
                 
                 <div class="auth-header">
-                    <h2 class="auth-title" data-i18n="forms.verify_email">Verifica tu correo</h2>
+                    <h2 class="auth-title">Verifica tu correo</h2>
                     <p class="auth-subtitle">Ingresa el código de 6 dígitos que enviamos a tu email</p>
                 </div>
                 
@@ -1128,7 +1141,7 @@
                 </button>
                 
                 <div class="auth-header">
-                    <h2 class="auth-title" data-i18n="forms.recover_password">Recuperar contraseña</h2>
+                    <h2 class="auth-title">Recuperar contraseña</h2>
                     <p class="auth-subtitle">Ingresa tu correo y te enviaremos un código</p>
                 </div>
                 
@@ -1143,7 +1156,7 @@
                     </div>
                     
                     <button type="submit" class="btn-primary" id="resetRequestBtn">
-                        <i class="fas fa-paper-plane"></i> <span data-i18n="forms.send_code">Enviar Código</span>
+                        <i class="fas fa-paper-plane"></i> <span>Enviar Código</span>
                     </button>
                 </form>
             </div>
@@ -1155,7 +1168,7 @@
                 </button>
                 
                 <div class="auth-header">
-                    <h2 class="auth-title" data-i18n="forms.enter_code">Ingresa el código</h2>
+                    <h2 class="auth-title">Ingresa el código</h2>
                     <p class="auth-subtitle">Revisa tu correo electrónico</p>
                 </div>
                 
@@ -1180,13 +1193,13 @@
             <!-- Password Reset New Password Form -->
             <div class="password-reset-container" id="passwordResetNewPasswordContainer">
                 <div class="auth-header">
-                    <h2 class="auth-title" data-i18n="forms.new_password">Nueva contraseña</h2>
+                    <h2 class="auth-title">Nueva contraseña</h2>
                     <p class="auth-subtitle">Crea una contraseña segura</p>
                 </div>
                 
                 <form id="passwordResetNewPasswordForm">
                     <div class="form-group">
-                        <label for="newPassword" data-i18n="forms.new_password">Nueva contraseña</label>
+                        <label for="newPassword">Nueva contraseña</label>
                         <div class="input-container">
                             <input type="password" autocomplete="new-password" id="newPassword" class="input-field" placeholder="Mínimo 8 caracteres" required>
                             <i class="fas fa-eye input-icon" id="toggleNewPassword"></i>
@@ -1194,7 +1207,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="confirmNewPassword" data-i18n="forms.confirm_password">Confirmar contraseña</label>
+                        <label for="confirmNewPassword">Confirmar contraseña</label>
                         <div class="input-container">
                             <input type="password" autocomplete="new-password" id="confirmNewPassword" class="input-field" placeholder="Repite la contraseña" required>
                             <i class="fas fa-eye input-icon" id="toggleConfirmNewPassword"></i>
@@ -1214,7 +1227,7 @@
                 </button>
                 
                 <div class="auth-header">
-                    <h2 class="auth-title" data-i18n="forms.two_factor">Verificación 2FA</h2>
+                    <h2 class="auth-title">Verificación 2FA</h2>
                     <p class="auth-subtitle">Ingresa el código de tu aplicación autenticadora</p>
                 </div>
                 
@@ -1322,6 +1335,22 @@
                 // Form submissions
                 document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
                 document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
+
+                // Auto-recover pending verification
+                const pendingEmail = sessionStorage.getItem('pending_verification_email');
+                if (pendingEmail) {
+                    console.log('[AUTH] Recovering pending verification for:', pendingEmail);
+                    this.showInfo('Verificación pendiente. Enviando nuevo código...');
+                    fetch(this.apiBaseURL + '/api/auth/send-verification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: pendingEmail })
+                    }).then(r => r.json()).then(() => {
+                        this.showEmailVerificationForm(pendingEmail);
+                    }).catch(() => {
+                        this.showEmailVerificationForm(pendingEmail);
+                    });
+                }
 
                 // Password visibility toggles
                 document.getElementById('toggleLoginPassword').addEventListener('click', () => {
@@ -1567,7 +1596,6 @@
 
             // Login Handler
             async handleLogin(event) {
-                console.log('🔐 Login handler called');
                 event.preventDefault();
                 
                 if (!this.checkRateLimit()) {
@@ -1578,7 +1606,6 @@
                 const email = document.getElementById('loginEmail').value.trim();
                 const password = document.getElementById('loginPassword').value;
                 
-                console.log('📝 Login data:', { email, passwordLength: password.length });
 
                 // Validate inputs
                 if (!this.validateEmail(email)) {
@@ -1601,8 +1628,6 @@
                         referral_code: this.referralCode || undefined
                     };
 
-                    console.log('[API] Calling REAL API at:', this.apiBaseURL + '/api/auth/login');
-                    console.log('[API] Email:', sanitizedData.email);
 
                     const response = await fetch(this.apiBaseURL + '/api/auth/login', {
                         method: 'POST',
@@ -1616,7 +1641,6 @@
                     });
 
                     const result = await response.json();
-                    console.log('[API] Response:', result);
 
                     if (!response.ok || !result.success) {
                         // Check if account locked (429)
@@ -1629,18 +1653,33 @@
                         // Check if email not verified
                         if (result.data?.error?.details?.code === 'EMAIL_NOT_VERIFIED') {
                             this.setLoadingState(submitBtn, false);
-                            this.showError('Debes verificar tu correo electrónico');
-                            // Send new verification code and show form
+                            this.showInfo('Tu cuenta necesita verificación. Enviando código...');
+                            sessionStorage.setItem('pending_verification_email', sanitizedData.email);
                             fetch(this.apiBaseURL + '/api/auth/send-verification', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ email: sanitizedData.email })
-                            }).then(() => {
-                                setTimeout(() => this.showEmailVerificationForm(sanitizedData.email), 1500);
+                            }).then(r => r.json()).then(res => {
+                                this.showEmailVerificationForm(sanitizedData.email);
+                            }).catch(() => {
+                                this.showEmailVerificationForm(sanitizedData.email);
                             });
                             return;
                         }
-                        throw new Error(result.data?.error?.message || 'Credenciales incorrectas');
+                        // Check if it's likely "user not found" (401 without special code)
+                        const errMsg = result.data?.error?.message || 'Credenciales incorrectas';
+                        const loginEmail = sanitizedData.email;
+                        if (response.status === 401 && !result.data?.error?.details?.code) {
+                            // Could be wrong password OR user not found — show helpful message
+                            this.showErrorWithCTA(
+                                'Email o contraseña incorrectos.',
+                                '¿No tienes cuenta?',
+                                'Crear Cuenta',
+                                () => { this.switchToRegister(loginEmail); }
+                            );
+                            return;
+                        }
+                        throw new Error(errMsg);
                     }
 
                     // 🔐 PHASE 1: Check if 2FA is required
@@ -1663,7 +1702,6 @@
                     const userData = result.data.user;
                     const authToken = result.data.auth_token || result.data.token;
 
-                    console.log('[API] Authentication successful! User:', userData);
 
                     // Store authentication data
                     _safeSetItem('auth_token', authToken);
@@ -1688,7 +1726,6 @@
                         const dashboardUrl = redirectAfterAuth || userData.dashboard_url || 'home-dashboard.html';
                         localStorage.removeItem('redirect_after_auth');
                         const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
-                        console.log('[API] Redirecting to:', redirectUrl);
                         window.location.href = redirectUrl;
                     }, 1500);
                 } catch (error) {
@@ -1699,7 +1736,6 @@
                     this.incrementLoginAttempts();
                     this.showError(this.formatAuthError(error.message));
                 } finally {
-                    console.log('[CLEANUP] Login process completed, resetting button state');
                     this.setLoadingState(submitBtn, false);
                 }
             }
@@ -1729,19 +1765,25 @@
                 this.setLoadingState(submitBtn, true);
 
                 try {
+                    const phoneEl = document.getElementById('registerPhone');
+                    const phone = phoneEl ? phoneEl.value.trim() : '';
+
                     const sanitizedData = {
                         name: this.sanitizeInput(name),
                         email: this.sanitizeInput(email),
+                        phone: phone ? this.sanitizeInput(phone) : undefined,
                         password: password, // Don.t sanitize password
                         referral_code: this.referralCode || undefined
                     };
 
-                    const response = await this.makeAuthenticatedRequest('/api/auth/register', {
+                    const regResp = await fetch(this.apiBaseURL + '/api/auth/register', {
                         method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(sanitizedData)
                     });
+                    const response = await regResp.json();
 
-                    if (response.success && (response.data.auth_token || response.data.token)) {
+                    if (response.success && (response.data?.auth_token || response.data?.token)) {
                         const token = response.data.auth_token || response.data.token;
                         const userEmail = sanitizedData.email;
                         // Store user ID for email verification
@@ -1781,8 +1823,14 @@
                     } else {
                         // Check for specific errors
                         const errorMsg = response.data?.error?.message || response.error?.message || response.message || 'Error al crear la cuenta';
-                        if (errorMsg.includes('ya está registrado')) {
-                            this.showFieldError('registerEmail', 'Este email ya está registrado. ¿Ya tienes cuenta?');
+                        if (errorMsg.includes('ya está registrado') || errorMsg.includes('No se pudo completar el registro')) {
+                            const regEmail = email;
+                            this.showErrorWithCTA(
+                                'Este email ya tiene una cuenta.',
+                                '¿Quieres iniciar sesión?',
+                                'Ir a Login',
+                                () => { this.switchToLogin(regEmail); }
+                            );
                             return;
                         }
                         throw new Error(errorMsg);
@@ -2027,6 +2075,15 @@
 
             // UI Management
             switchTab(tabName) {
+                // Pre-fill email between forms
+                const loginEmail = document.getElementById('loginEmail')?.value?.trim();
+                const registerEmail = document.getElementById('registerEmail')?.value?.trim();
+                if (tabName === 'register' && loginEmail) {
+                    setTimeout(() => { const el = document.getElementById('registerEmail'); if (el && !el.value) el.value = loginEmail; }, 100);
+                }
+                if (tabName === 'login' && registerEmail) {
+                    setTimeout(() => { const el = document.getElementById('loginEmail'); if (el && !el.value) el.value = registerEmail; }, 100);
+                }
                 // Update tab buttons
                 document.querySelectorAll('.auth-tab').forEach(tab => {
                     tab.classList.remove('active');
@@ -2097,7 +2154,54 @@
                 }
             }
             // Error/Success Display
-            showError(message) {
+            showInfo(message) {
+                this.removeNotification();
+                const el = document.createElement('div');
+                el.className = 'auth-notification info';
+                el.id = 'authNotification';
+                el.innerHTML = '<i class="fas fa-info-circle"></i> ' + message;
+                el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:14px 24px;border-radius:12px;font-size:0.9rem;font-weight:500;background:rgba(0,100,150,0.9);color:#e0f7ff;border:1px solid rgba(0,255,255,0.4);backdrop-filter:blur(8px);max-width:90%;text-align:center;animation:slideDown 0.3s ease;';
+                document.body.appendChild(el);
+                setTimeout(() => { el.remove(); }, 6000);
+            }
+
+            showErrorWithCTA(message, ctaQuestion, ctaLabel, ctaAction) {
+                this.removeNotification();
+                const id = 'ctaBtn_' + Date.now();
+                const el = document.createElement('div');
+                el.className = 'auth-notification error-cta';
+                el.id = 'authNotification';
+                el.innerHTML = '<div><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>' + message + '</div>' +
+                    '<div style="margin-top:10px;">' + (ctaQuestion ? ctaQuestion + ' ' : '') +
+                    '<button id="' + id + '" style="background:#00FFFF;color:#000;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem;">' + ctaLabel + '</button></div>';
+                el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;padding:18px 28px;border-radius:14px;font-size:0.9rem;background:rgba(15,23,42,0.97);color:#f8fafc;border:1px solid rgba(0,255,255,0.2);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);width:90%;max-width:400px;text-align:center;animation:slideDown 0.3s ease;box-shadow:0 12px 40px rgba(0,0,0,0.5);';
+                document.body.appendChild(el);
+                setTimeout(() => { var ctaEl = document.getElementById(id); if (ctaEl) ctaEl.addEventListener('click', function() { el.remove(); ctaAction(); }); }, 50);
+            }
+
+            switchToRegister(email) {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="register"]')?.classList.add('active');
+                this.hideAllForms();
+                const form = document.getElementById('registerForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                if (email) document.getElementById('registerEmail').value = email;
+                this.removeNotification();
+            }
+
+            switchToLogin(email) {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-tab="login"]')?.classList.add('active');
+                this.hideAllForms();
+                const form = document.getElementById('loginForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                if (email) document.getElementById('loginEmail').value = email;
+                this.removeNotification();
+            }
+
+                        showError(message) {
                 // Create or update error notification
                 this.removeNotification();
                 const notification = this.createNotification(message, 'error');
@@ -2427,13 +2531,16 @@
 
             showEmailVerificationForm(email) {
                 this.hideAllForms();
+                const container = document.getElementById('emailVerificationContainer');
+                if (container) { container.style.display = 'block'; container.classList.add('active'); }
                 const form = document.getElementById('emailVerificationForm');
-                form.style.display = 'block';
-                form.classList.add('active');
+                if (form) { form.style.display = 'block'; form.classList.add('active'); }
                 document.getElementById('verifyEmailDisplay').textContent = email;
-                document.getElementById('emailCode1').focus();
+                document.getElementById('emailCode1')?.focus();
                 this.setupCodeInputs('emailCode');
-                this.startTimer("email", 10 * 60); // 10 minutes (matches backend expiry)
+                this.startTimer("email", 10 * 60);
+                // Save for recovery if page closed
+                sessionStorage.setItem('pending_verification_email', email);
             }
 
             show2FAForm() {
@@ -2498,26 +2605,76 @@
                     // Paste handler - distribute digits across inputs
                     input.addEventListener('paste', (e) => {
                         e.preventDefault();
-                        const pastedData = e.clipboardData.getData('text');
-                        const digits = pastedData.replace(/\D/g, '').split('').slice(0, 6);
+                        const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+                        const digits = pastedData.replace(/[^0-9]/g, '').split('').slice(0, 6);
 
                         digits.forEach((digit, index) => {
-                            const targetInput = document.getElementById(`${prefix}${index + 1}`);
+                            const targetInput = document.getElementById(prefix + (index + 1));
                             if (targetInput) {
                                 targetInput.value = digit;
+                                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
                             }
                         });
 
                         // Focus last filled input
                         if (digits.length > 0) {
                             const lastIndex = Math.min(digits.length, 6);
-                            document.getElementById(`${prefix}${lastIndex}`).focus();
+                            const lastInput = document.getElementById(prefix + lastIndex);
+                            if (lastInput) lastInput.focus();
+                        }
+
+                        // Auto-submit if all 6 digits pasted
+                        if (digits.length === 6) {
+                            setTimeout(() => {
+                                if (prefix === 'emailCode') this.verifyEmailCode();
+                                else if (prefix === 'resetCode') this.verifyResetCode();
+                                else if (prefix === 'tfaCode') this.verify2FACode();
+                            }, 200);
                         }
                     });
                 }
             }
 
-            getAllCodeDigits(prefix) {
+            onTimerExpired(prefix) {
+                if (prefix === 'email' || prefix === 'emailCode') {
+                    // Disable code inputs
+                    for (let i = 1; i <= 6; i++) {
+                        const inp = document.getElementById('emailCode' + i);
+                        if (inp) { inp.disabled = true; inp.style.opacity = '0.4'; }
+                    }
+                    const btn = document.getElementById('verifyEmailBtn');
+                    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-clock"></i> Código expirado'; }
+                    this.showErrorWithCTA(
+                        'Tu código ha expirado.',
+                        '',
+                        'Reenviar nuevo código',
+                        () => {
+                            const email = document.getElementById('verifyEmailDisplay')?.textContent;
+                            if (email) {
+                                this.showInfo('Enviando nuevo código...');
+                                fetch(this.apiBaseURL + '/api/auth/send-verification', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ email })
+                                }).then(r => r.json()).then(() => {
+                                    // Re-enable inputs
+                                    for (let i = 1; i <= 6; i++) {
+                                        const inp = document.getElementById('emailCode' + i);
+                                        if (inp) { inp.disabled = false; inp.style.opacity = '1'; inp.value = ''; }
+                                    }
+                                    const btn2 = document.getElementById('verifyEmailBtn');
+                                    if (btn2) { btn2.disabled = false; btn2.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Email'; }
+                                    this.startTimer('email', 10 * 60);
+                                    this.showSuccess('Nuevo código enviado');
+                                    document.getElementById('emailCode1')?.focus();
+                                });
+                            }
+                        }
+                    );
+                }
+            }
+
+                        getAllCodeDigits(prefix) {
                 let code = '';
                 for (let i = 1; i <= 6; i++) {
                     const input = document.getElementById(`${prefix}${i}`);
@@ -2603,6 +2760,7 @@
                     const result = await response.json();
 
                     if (result.success) {
+                        sessionStorage.removeItem('pending_verification_email');
                         this.showSuccess('¡Email verificado correctamente!');
 
                         // 🔐 PHASE 1: Save auth token and user data
@@ -2616,7 +2774,48 @@
                             window.location.href = result.data?.user?.dashboard_url || 'home-dashboard.html';
                         }, 1500);
                     } else {
-                        throw new Error(result.data?.error?.message || 'Código inválido o expirado');
+                        const errMsg = result.data?.error?.message || 'Codigo invalido o expirado';
+                        // Shake animation on code inputs
+                        document.querySelectorAll('.code-input').forEach(function(inp) {
+                            inp.style.borderColor = '#ef4444';
+                            inp.classList.add('shake');
+                            setTimeout(function() { inp.classList.remove('shake'); inp.style.borderColor = ''; }, 600);
+                        });
+                        // Check for specific errors
+                        if (result.data?.error?.code === 429 || errMsg.includes('Demasiados intentos')) {
+                            this.showErrorWithCTA(errMsg, '', 'Solicitar nuevo codigo', () => {
+                                const email = document.getElementById('verifyEmailDisplay')?.textContent;
+                                if (email) {
+                                    fetch(this.apiBaseURL + '/api/auth/send-verification', {
+                                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ email: email })
+                                    }).then(() => {
+                                        for (var i = 1; i <= 6; i++) { var inp = document.getElementById('emailCode' + i); if (inp) { inp.value = ''; inp.disabled = false; inp.style.opacity = '1'; } }
+                                        this.startTimer('email', 10 * 60);
+                                        this.showSuccess('Nuevo codigo enviado');
+                                        document.getElementById('emailCode1')?.focus();
+                                    });
+                                }
+                            });
+                        } else if (errMsg.includes('expirado')) {
+                            this.showErrorWithCTA('Tu codigo ha expirado.', '', 'Reenviar nuevo codigo', () => {
+                                const email = document.getElementById('verifyEmailDisplay')?.textContent;
+                                if (email) {
+                                    fetch(this.apiBaseURL + '/api/auth/send-verification', {
+                                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ email: email })
+                                    }).then(() => {
+                                        for (var i = 1; i <= 6; i++) { var inp = document.getElementById('emailCode' + i); if (inp) { inp.value = ''; } }
+                                        this.startTimer('email', 10 * 60);
+                                        this.showSuccess('Nuevo codigo enviado');
+                                        document.getElementById('emailCode1')?.focus();
+                                    });
+                                }
+                            });
+                        } else {
+                            this.showError(errMsg);
+                        }
+                        return;
                     }
                 } catch (error) {
                     console.error('Verify email error:', error);
