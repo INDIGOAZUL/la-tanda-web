@@ -6,7 +6,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="dashboard.page_title">La Tanda - Web3 DeFi Ecosystem</title>
+    <title>La Tanda - Web3 DeFi Ecosystem</title>
     <meta name="description" content="Dashboard principal La Tanda Web3 Ecosystem">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <!-- Web3 Crypto Fonts -->
@@ -1839,15 +1839,15 @@
     <link rel="stylesheet" href="css/transaction-modal.css">
     <!-- Global Header Component -->
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=24.7">
+    <link rel="stylesheet" href="css/header.css?v=26.0">
     <link rel="stylesheet" href="css/onboarding.css?v=1.0">
     <link rel="stylesheet" href="css/hub/hub-sections.css?v=1.0">
     <link rel="stylesheet" href="css/hub/mia-assistant.css?v=1.0">
     <link rel="stylesheet" href="css/hub/social-feed.css?v=14.3">
     <link rel="stylesheet" href="css/hub/comments-modal.css?v=1.0">
     <link rel="stylesheet" href="css/hub/user-mini-profile.css?v=2.1">
-    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800">
-    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7803">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1775200000">
     <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558148">
     <link rel="stylesheet" href="css/dashboard-polish.css?v=1.0">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
@@ -2235,7 +2235,7 @@
                 <i class="fas fa-store"></i>
                 <span>Mercado</span>
             </a>
-            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Mensajes proximamente')">
+            <a href="/mensajes.html" class="mobile-drawer-item">
                 <i class="fas fa-envelope"></i>
                 <span>Mensajes</span>
             </a>
@@ -2243,7 +2243,7 @@
             <div class="mobile-drawer-divider"></div>
             <div class="mobile-drawer-section-label">Herramientas</div>
 
-            <a href="#" class="mobile-drawer-item mia-trigger" onclick="MobileDrawer.close(); window.MiaAssistant && window.MiaAssistant.open && window.MiaAssistant.open() || window.LaTandaPopup && window.LaTandaPopup.showInfo('MIA Assistant disponible pronto')">
+            <a href="#" class="mobile-drawer-item mia-trigger" data-action="drawer-mia">
                 <i class="fas fa-robot" style="color:#00FFFF;"></i>
                 <span>MIA Assistant</span>
             </a>
@@ -2258,11 +2258,11 @@
 
             <div class="mobile-drawer-divider"></div>
 
-            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Configuracion proximamente')">
+            <a href="/mi-perfil.html" class="mobile-drawer-item">
                 <i class="fas fa-cog"></i>
                 <span>Configuracion</span>
             </a>
-            <a href="#" class="mobile-drawer-item" onclick="MobileDrawer.close(); window.LaTandaPopup && window.LaTandaPopup.showInfo('Ayuda proximamente')">
+            <a href="/help-center.html" class="mobile-drawer-item">
                 <i class="fas fa-question-circle"></i>
                 <span>Ayuda</span>
             </a>
@@ -2424,7 +2424,7 @@ document.addEventListener("DOMContentLoaded", () => {    const isHidden = localS
     <!-- Loading States Component -->
     <script src="js/components/loading-states.js"></script>
     <!-- Global Header Scripts -->
-    <script src="js/components-loader.js?v=31.1"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <!-- Hub Inteligente Modules -->
     <script src="js/hub/hub-api-connector.js?v=1.02"></script>
     <script src="js/hub/contextual-alerts.js?v=1.03"></script>
@@ -2799,5 +2799,331 @@ document.addEventListener('error', function(e) {
     }
 }, true);
 </script>
+<script>
+(function() {
+    'use strict';
+    var token = null;
+    var currentUserId = null;
+    var currentChat = null; // { otherUserId, productId, otherName }
+    var allConversations = [];
+    var pollTimer = null;
+    var currentTab = 'todos';
+
+    function getToken() {
+        if (token) return token;
+        try { token = localStorage.getItem('auth_token') || localStorage.getItem('authToken'); } catch(e) {}
+        return token;
+    }
+
+    function apiRequest(url, opts) {
+        var t = getToken();
+        if (!t) { window.location.href = '/auth-enhanced.html?redirect=/mensajes.html'; return Promise.reject('no auth'); }
+        var headers = { 'Authorization': 'Bearer ' + t };
+        if (opts && opts.body) headers['Content-Type'] = 'application/json';
+        return fetch(url, Object.assign({ headers: headers }, opts || {})).then(function(r) { return r.json(); });
+    }
+
+    function esc(text) { if (!text) return ''; var d = document.createElement('div'); d.textContent = String(text); return d.innerHTML; }
+
+    function timeAgo(dateStr) {
+        var d = new Date(dateStr);
+        var now = new Date();
+        var diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return 'ahora';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd';
+        return d.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+    }
+
+    // === CONVERSATIONS LIST ===
+    function loadConversations() {
+        var container = document.getElementById('conversationsContainer');
+        var emptyState = document.getElementById('emptyState');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);"><i class="fas fa-spinner fa-spin" style="font-size:24px;"></i></div>';
+
+        console.log('[mensajes] Loading conversations, token:', getToken() ? 'YES (' + getToken().substring(0,15) + '...)' : 'NONE');
+        apiRequest('/api/marketplace/messages/conversations').then(function(res) {
+            console.log('[mensajes] API response:', JSON.stringify(res).substring(0, 200));
+            var convos = (res.data && res.data.conversations) || res.conversations || [];
+            allConversations = convos;
+
+            // Get current user ID from token
+            try {
+                var payload = JSON.parse(atob(token.split('.')[1]));
+                currentUserId = payload.userId || payload.user_id || payload.sub;
+            } catch(e) {}
+
+            renderConversations(convos);
+            loadUnreadCount();
+        }).catch(function() {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Error al cargar conversaciones</div>';
+        });
+    }
+
+    function renderConversations(convos) {
+        var container = document.getElementById('conversationsContainer');
+        var emptyState = document.getElementById('emptyState');
+
+        // Filter by tab
+        var filtered = convos;
+        if (currentTab === 'no-leidos') {
+            filtered = convos.filter(function(c) { return c.has_unread; });
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = '';
+            if (emptyState) emptyState.style.display = '';
+            return;
+        }
+        if (emptyState) emptyState.style.display = 'none';
+
+        var html = '';
+        filtered.forEach(function(conv) {
+            var initial = (conv.other_user_name || '?').charAt(0).toUpperCase();
+            var unreadDot = conv.has_unread ? '<div style="width:10px;height:10px;border-radius:50%;background:#00FFFF;flex-shrink:0;"></div>' : '';
+            var productTag = conv.product_title ? '<div style="font-size:11px;color:#8B5CF6;margin-top:2px;"><i class="fas fa-box" style="font-size:9px;"></i> ' + esc(conv.product_title) + '</div>' : '';
+            var msgPreview = (conv.message || '').length > 50 ? conv.message.substring(0, 50) + '...' : (conv.message || '');
+
+            html += '<div class="msg-conv-card" data-user="' + esc(conv.other_user_id) + '" data-product="' + (conv.product_id || '') + '" data-name="' + esc(conv.other_user_name || 'Usuario') + '">';
+            html += '<div class="msg-conv-avatar">' + esc(initial) + '</div>';
+            html += '<div class="msg-conv-body">';
+            html += '<div class="msg-conv-top"><span class="msg-conv-name">' + esc(conv.other_user_name || 'Usuario') + '</span><span class="msg-conv-time">' + timeAgo(conv.created_at) + '</span></div>';
+            html += '<div class="msg-conv-preview">' + esc(msgPreview) + '</div>';
+            html += productTag;
+            html += '</div>';
+            html += unreadDot;
+            html += '</div>';
+        });
+        container.innerHTML = html;
+    }
+
+    function loadUnreadCount() {
+        apiRequest('/api/marketplace/messages/unread').then(function(res) {
+            var count = (res.data && res.data.unread_count) || 0;
+            var badge = document.getElementById('unreadBadge');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? '' : 'none';
+            }
+        }).catch(function() {});
+    }
+
+    // === CHAT VIEW ===
+    function openChat(otherUserId, productId, otherName) {
+        currentChat = { otherUserId: otherUserId, productId: productId || null, otherName: otherName || 'Usuario' };
+        var container = document.getElementById('conversationsContainer');
+        var emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.style.display = 'none';
+
+        // Hide header elements, show chat
+        var initial = (otherName || '?').charAt(0).toUpperCase();
+        var chatHtml = '<div id="chatView" style="display:flex;flex-direction:column;height:100%;">';
+        chatHtml += '<div class="msg-chat-header"><button id="chatBack" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;"><i class="fas fa-arrow-left"></i></button>';
+        chatHtml += '<div class="msg-conv-avatar" style="width:36px;height:36px;font-size:14px;">' + esc(initial) + '</div>';
+        chatHtml += '<div style="flex:1;"><div style="color:#fff;font-size:14px;font-weight:600;">' + esc(otherName) + '</div></div></div>';
+        chatHtml += '<div id="chatMessages" class="msg-chat-messages"></div>';
+        chatHtml += '<div class="msg-chat-input"><textarea id="chatInput" placeholder="Escribe un mensaje..." rows="1" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;padding:10px 14px;font-size:14px;font-family:inherit;resize:none;outline:none;max-height:100px;"></textarea>';
+        chatHtml += '<button id="chatSend" style="width:40px;height:40px;border-radius:50%;background:#00FFFF;color:#000;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"><i class="fas fa-paper-plane"></i></button></div>';
+        chatHtml += '</div>';
+
+        container.innerHTML = chatHtml;
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+
+        // Load messages
+        loadMessages();
+
+        // Mark as read
+        apiRequest('/api/marketplace/messages/read', { method: 'PUT', body: JSON.stringify({ other_user_id: otherUserId, product_id: productId }) }).catch(function() {});
+
+        // Start polling
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(loadMessages, 15000);
+
+        // Back button
+        document.getElementById('chatBack').addEventListener('click', closeChat);
+
+        // Send button
+        document.getElementById('chatSend').addEventListener('click', sendChatMessage);
+
+        // Enter to send (shift+enter for newline)
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+        });
+    }
+
+    function loadMessages() {
+        if (!currentChat) return;
+        var url = '/api/marketplace/messages/' + encodeURIComponent(currentChat.otherUserId);
+        if (currentChat.productId) url += '?product_id=' + currentChat.productId;
+
+        apiRequest(url).then(function(res) {
+            var msgs = (res.data && res.data.messages) || res.messages || [];
+            renderMessages(msgs);
+        }).catch(function() {});
+    }
+
+    function renderMessages(messages) {
+        var container = document.getElementById('chatMessages');
+        if (!container) return;
+        var wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+
+        var html = '';
+        messages.forEach(function(msg) {
+            var isMine = msg.sender_id === currentUserId;
+            var time = new Date(msg.created_at).toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+            html += '<div class="msg-bubble ' + (isMine ? 'msg-mine' : 'msg-theirs') + '">';
+            html += '<div class="msg-text">' + esc(msg.message) + '</div>';
+            html += '<div class="msg-time">' + time + '</div>';
+            html += '</div>';
+        });
+        container.innerHTML = html;
+
+        if (wasAtBottom || container.scrollTop === 0) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    function sendChatMessage() {
+        var input = document.getElementById('chatInput');
+        if (!input || !currentChat) return;
+        var msg = input.value.trim();
+        if (!msg) return;
+
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Optimistic UI
+        var container = document.getElementById('chatMessages');
+        if (container) {
+            var time = new Date().toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit' });
+            container.insertAdjacentHTML('beforeend', '<div class="msg-bubble msg-mine"><div class="msg-text">' + esc(msg) + '</div><div class="msg-time">' + time + '</div></div>');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        apiRequest('/api/marketplace/messages', {
+            method: 'POST',
+            body: JSON.stringify({ recipient_id: currentChat.otherUserId, message: msg, product_id: currentChat.productId })
+        }).then(function(res) {
+            if (!res.success) { console.warn('Message send failed'); }
+        }).catch(function() { console.warn('Message send error'); });
+    }
+
+    function closeChat() {
+        currentChat = null;
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        var container = document.getElementById('conversationsContainer');
+        if (container) { container.style.display = ''; container.style.flexDirection = ''; }
+        loadConversations();
+    }
+
+    // === SEARCH ===
+    function setupSearch() {
+        var input = document.getElementById('mensajesSearch');
+        if (!input) return;
+        var timer = null;
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            var q = input.value.trim().toLowerCase();
+            timer = setTimeout(function() {
+                if (!q) { renderConversations(allConversations); return; }
+                var filtered = allConversations.filter(function(c) {
+                    return (c.other_user_name || '').toLowerCase().indexOf(q) >= 0 || (c.message || '').toLowerCase().indexOf(q) >= 0;
+                });
+                renderConversations(filtered);
+            }, 250);
+        });
+    }
+
+    // === TABS ===
+    function setupTabs() {
+        document.querySelectorAll('.mensajes-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                currentTab = tab.getAttribute('data-tab');
+                document.querySelectorAll('.mensajes-tab').forEach(function(t) {
+                    t.style.borderColor = 'rgba(255,255,255,0.1)';
+                    t.style.background = 'transparent';
+                    t.style.color = '#888';
+                });
+                tab.style.borderColor = 'rgba(0,255,255,0.3)';
+                tab.style.background = 'rgba(0,255,255,0.15)';
+                tab.style.color = '#00FFFF';
+
+                if (currentTab === 'grupos') {
+                    document.getElementById('conversationsContainer').innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);"><i class="fas fa-users" style="font-size:24px;margin-bottom:8px;display:block;"></i>Grupos proximamente</div>';
+                } else {
+                    renderConversations(allConversations);
+                }
+            });
+        });
+    }
+
+    // === DEEP LINK ===
+    function handleDeepLink() {
+        var params = new URLSearchParams(window.location.search);
+        var chatUser = params.get('chat');
+        var productId = params.get('product');
+        if (chatUser) {
+            // Need to find name — fetch from conversations or use generic
+            setTimeout(function() {
+                var conv = allConversations.find(function(c) { return c.other_user_id === chatUser; });
+                var name = conv ? conv.other_user_name : 'Usuario';
+                openChat(chatUser, productId || null, name);
+            }, 500);
+        }
+    }
+
+    // === CLICK DELEGATION ===
+    document.addEventListener('click', function(e) {
+        var card = e.target.closest('.msg-conv-card');
+        if (card) {
+            openChat(card.dataset.user, card.dataset.product || null, card.dataset.name);
+        }
+    });
+
+    // === INIT ===
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!getToken()) return;
+        setupTabs();
+        setupSearch();
+        loadConversations();
+        setTimeout(handleDeepLink, 600);
+
+        // New message button
+        var btnNew = document.getElementById('btnNewMessage');
+        if (btnNew) {
+            btnNew.addEventListener('click', function() {
+                var userId = prompt('User ID del destinatario:');
+                if (userId) openChat(userId, null, 'Usuario');
+            });
+        }
+    });
+})();
+</script>
+
+<style>
+/* Messaging styles */
+.msg-conv-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.msg-conv-card:hover { background: rgba(255,255,255,0.05); }
+.msg-conv-avatar { width: 44px; height: 44px; min-width: 44px; border-radius: 50%; background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(139,92,246,0.2)); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #00FFFF; }
+.msg-conv-body { flex: 1; min-width: 0; }
+.msg-conv-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.msg-conv-name { font-size: 14px; font-weight: 600; color: #fff; }
+.msg-conv-time { font-size: 11px; color: rgba(255,255,255,0.35); }
+.msg-conv-preview { font-size: 13px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Chat */
+.msg-chat-header { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+.msg-chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 6px; }
+.msg-chat-input { display: flex; gap: 8px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; align-items: flex-end; }
+.msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; }
+.msg-mine { align-self: flex-end; background: rgba(0,255,255,0.15); color: #e2e8f0; border-bottom-right-radius: 4px; }
+.msg-theirs { align-self: flex-start; background: rgba(255,255,255,0.08); color: #e2e8f0; border-bottom-left-radius: 4px; }
+.msg-text { word-wrap: break-word; }
+.msg-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; text-align: right; }
+</style>
+
 </body>
 </html>

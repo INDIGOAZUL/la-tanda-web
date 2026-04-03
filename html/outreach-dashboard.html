@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script src="js/admin-guard.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Tanda — Outreach Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/design-tokens.css">
+<link rel="stylesheet" href="css/components.css">
+<style>
+body { margin:0; background:var(--ds-bg-base); color:var(--ds-text-primary); font-family:var(--ds-font-sans); }
+.container { max-width:1200px; margin:0 auto; padding:20px; }
+.header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.header h1 { font-size:1.5rem; font-weight:700; display:flex; align-items:center; gap:10px; }
+.header h1 i { color:var(--ds-cyan); }
+.tabs { display:flex; gap:4px; background:var(--ds-bg-surface); border-radius:var(--ds-radius-lg); padding:4px; margin-bottom:24px; flex-wrap:wrap; }
+.tab { padding:10px 20px; border-radius:var(--ds-radius-md); cursor:pointer; font-size:0.875rem; font-weight:500; color:var(--ds-text-muted); border:none; background:none; transition:all 0.2s; }
+.tab:hover { color:var(--ds-text-primary); background:var(--ds-bg-surface-hover); }
+.tab.active { color:var(--ds-cyan); background:rgba(0,255,255,0.08); }
+.section { display:none; }
+.section.active { display:block; }
+
+/* Stats row */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
+.stat-card { background:var(--ds-bg-surface); border:1px solid var(--ds-border-subtle); border-radius:var(--ds-radius-lg); padding:16px; text-align:center; }
+.stat-value { font-size:1.75rem; font-weight:700; color:var(--ds-cyan); }
+.stat-label { font-size:0.75rem; color:var(--ds-text-muted); margin-top:4px; text-transform:uppercase; letter-spacing:0.05em; }
+
+/* Pipeline */
+.pipeline { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+.pipeline-col { background:var(--ds-bg-surface); border-radius:var(--ds-radius-lg); padding:12px; min-height:200px; }
+.pipeline-col-header { font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+.pipeline-col-header .count { background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:var(--ds-radius-pill); font-size:0.7rem; }
+.pipe-card { background:var(--ds-bg-elevated); border:1px solid var(--ds-border-subtle); border-radius:var(--ds-radius-md); padding:12px; margin-bottom:8px; cursor:pointer; transition:border-color 0.2s; }
+.pipe-card:hover { border-color:var(--ds-cyan); }
+.pipe-card .name { font-weight:600; font-size:0.875rem; }
+.pipe-card .company { font-size:0.75rem; color:var(--ds-text-muted); }
+.pipe-card .meta { display:flex; gap:8px; margin-top:8px; font-size:0.7rem; color:var(--ds-text-faint); }
+.pipe-card .meta span { display:flex; align-items:center; gap:3px; }
+
+/* Tier badges */
+.tier-1 { color:#22c55e; }
+.tier-2 { color:#f59e0b; }
+.tier-3 { color:#8b5cf6; }
+.tier-badge { display:inline-block; padding:1px 6px; border-radius:var(--ds-radius-pill); font-size:0.65rem; font-weight:600; }
+.tier-badge.t1 { background:rgba(34,197,94,0.15); color:#22c55e; }
+.tier-badge.t2 { background:rgba(245,158,11,0.15); color:#f59e0b; }
+.tier-badge.t3 { background:rgba(139,92,246,0.15); color:#8b5cf6; }
+
+/* Table */
+.data-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+.data-table th { text-align:left; padding:10px 12px; background:rgba(0,255,255,0.05); color:var(--ds-cyan); font-weight:600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--ds-border-subtle); }
+.data-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.data-table tr:hover td { background:var(--ds-bg-surface-hover); }
+.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.status-dot.active { background:#22c55e; }
+.status-dot.pending { background:#f59e0b; }
+.status-dot.replied { background:#00FFFF; }
+.status-dot.converted { background:#8b5cf6; }
+.status-dot.declined { background:#ef4444; }
+.status-dot.paused { background:#64748b; }
+
+/* Buttons */
+.btn { padding:8px 16px; border-radius:var(--ds-radius-md); border:none; cursor:pointer; font-size:0.8rem; font-weight:500; transition:all 0.2s; }
+.btn-primary { background:linear-gradient(135deg,#00FFFF,#0ea5e9); color:#0f172a; }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,255,255,0.3); }
+.btn-sm { padding:5px 10px; font-size:0.75rem; }
+.btn-ghost { background:none; color:var(--ds-text-muted); border:1px solid var(--ds-border-subtle); }
+.btn-ghost:hover { border-color:var(--ds-cyan); color:var(--ds-cyan); }
+.btn-danger { background:rgba(239,68,68,0.15); color:#ef4444; }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:400; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:linear-gradient(135deg,#111827,#0f172a); border:1px solid rgba(0,255,255,0.1); border-radius:var(--ds-radius-xl); padding:28px; max-width:560px; width:90%; max-height:85vh; overflow-y:auto; }
+.modal h2 { font-size:1.1rem; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.modal h2 i { color:var(--ds-cyan); }
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-size:0.8rem; color:var(--ds-text-muted); margin-bottom:4px; }
+.form-input, .form-select, .form-textarea { width:100%; padding:10px 12px; background:rgba(255,255,255,0.05); border:1px solid var(--ds-border-subtle); border-radius:var(--ds-radius-md); color:var(--ds-text-primary); font-size:0.85rem; font-family:inherit; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline:none; border-color:var(--ds-cyan); }
+.form-textarea { min-height:100px; resize:vertical; }
+.form-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+
+/* Filters */
+.filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.filters select { padding:6px 10px; background:var(--ds-bg-surface); border:1px solid var(--ds-border-subtle); border-radius:var(--ds-radius-md); color:var(--ds-text-primary); font-size:0.8rem; }
+
+/* Sequence builder */
+.step-row { display:grid; grid-template-columns:60px 1fr 1fr auto; gap:8px; align-items:start; margin-bottom:12px; padding:12px; background:var(--ds-bg-surface); border-radius:var(--ds-radius-md); border:1px solid var(--ds-border-subtle); }
+.step-num { font-size:1.5rem; font-weight:700; color:var(--ds-cyan); text-align:center; padding-top:6px; }
+
+/* Activity feed */
+.activity-item { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.8rem; }
+.activity-icon { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0; }
+.activity-icon.sent { background:rgba(34,197,94,0.15); color:#22c55e; }
+.activity-icon.opened { background:rgba(0,255,255,0.15); color:#00FFFF; }
+.activity-icon.clicked { background:rgba(139,92,246,0.15); color:#8b5cf6; }
+.activity-icon.status { background:rgba(245,158,11,0.15); color:#f59e0b; }
+.activity-time { color:var(--ds-text-faint); font-size:0.7rem; }
+
+/* Toast */
+.toast { position:fixed; top:20px; right:20px; padding:14px 20px; border-radius:var(--ds-radius-md); z-index:500; transform:translateX(120%); transition:transform 0.3s; font-size:0.85rem; }
+.toast.show { transform:translateX(0); }
+.toast.success { background:#22c55e; color:#fff; }
+.toast.error { background:#ef4444; color:#fff; }
+
+/* Table scroll wrapper */
+.table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+@media (max-width:768px) {
+    .pipeline { grid-template-columns:1fr; }
+    .stats-row { grid-template-columns:repeat(2,1fr); }
+    .step-row { grid-template-columns:1fr; }
+    .data-table { min-width:600px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-paper-plane"></i> Outreach Dashboard</h1>
+        <div>
+            <button class="btn btn-primary" onclick="showAddContactModal()"><i class="fas fa-plus"></i> Agregar Contacto</button>
+            <button class="btn btn-ghost" onclick="showImportModal()"><i class="fas fa-file-import"></i> Importar</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="pipeline" onclick="switchTab('pipeline')"><i class="fas fa-columns"></i> Pipeline</button>
+        <button class="tab" data-tab="contacts" onclick="switchTab('contacts')"><i class="fas fa-address-book"></i> Contactos</button>
+        <button class="tab" data-tab="sequences" onclick="switchTab('sequences')"><i class="fas fa-stream"></i> Secuencias</button>
+        <button class="tab" data-tab="stats" onclick="switchTab('stats')"><i class="fas fa-chart-bar"></i> Estadisticas</button>
+    </div>
+
+    <!-- PIPELINE -->
+    <div id="tab-pipeline" class="section active">
+        <div class="stats-row" id="statsRow"></div>
+        <div class="pipeline" id="pipelineGrid"></div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div id="tab-contacts" class="section">
+        <div class="filters">
+            <select id="filterTier" onchange="loadContacts()"><option value="">Todos los Tiers</option><option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option></select>
+            <select id="filterType" onchange="loadContacts()"><option value="">Todos los Tipos</option><option value="vc">VC</option><option value="angel">Angel</option><option value="grant">Grant</option><option value="accelerator">Aceleradora</option><option value="impact">Impact</option></select>
+            <select id="filterStatus" onchange="loadContacts()"><option value="">Todos los Estados</option><option value="pending">Pendiente</option><option value="active">Activo</option><option value="replied">Respondido</option><option value="converted">Convertido</option><option value="declined">Declinado</option><option value="paused">Pausado</option></select>
+        </div>
+        <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr><th>Nombre</th><th>Empresa</th><th>Tipo</th><th>Tier</th><th>Estado</th><th>Enviados</th><th>Abiertos</th><th>Acciones</th></tr></thead>
+            <tbody id="contactsTable"></tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- SEQUENCES -->
+    <div id="tab-sequences" class="section">
+        <div style="margin-bottom:16px;">
+            <button class="btn btn-primary" onclick="showAddSequenceModal()"><i class="fas fa-plus"></i> Nueva Secuencia</button>
+        </div>
+        <div id="sequencesList"></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="tab-stats" class="section">
+        <div class="stats-row" id="statsDetailed"></div>
+        <h3 style="margin:20px 0 12px;font-size:1rem;">Por Tier</h3>
+        <table class="data-table">
+            <thead><tr><th>Tier</th><th>Contactos</th><th>Enviados</th><th>Abiertos</th><th>Clicks</th><th>Tasa Apertura</th></tr></thead>
+            <tbody id="tierStats"></tbody>
+        </table>
+        <h3 style="margin:20px 0 12px;font-size:1rem;">Actividad Reciente</h3>
+        <div id="activityFeed"></div>
+    </div>
+</div>
+
+<!-- ADD CONTACT MODAL -->
+<div class="modal-overlay" id="addContactModal">
+<div class="modal">
+    <h2><i class="fas fa-user-plus"></i> Agregar Contacto</h2>
+    <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" id="cName"></div>
+    <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="cEmail" type="email"></div>
+    <div class="form-group"><label class="form-label">Empresa</label><input class="form-input" id="cCompany"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+        <select class="form-select" id="cType"><option value="vc">VC</option><option value="angel">Angel</option><option value="grant">Grant</option><option value="accelerator">Aceleradora</option><option value="impact">Impact</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Tier</label>
+        <select class="form-select" id="cTier"><option value="1">Tier 1</option><option value="2" selected>Tier 2</option><option value="3">Tier 3</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="cNotes"></textarea></div>
+    <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addContactModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveContact()">Guardar</button>
+    </div>
+</div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+<div class="modal">
+    <h2><i class="fas fa-file-import"></i> Importar Contactos</h2>
+    <div class="form-group"><label class="form-label">JSON Array de contactos</label>
+        <textarea class="form-textarea" id="importJson" style="min-height:200px;font-family:var(--ds-font-mono);font-size:0.8rem;" placeholder='[{"name":"...","email":"...","company":"...","contact_type":"vc","tier":1}]'></textarea>
+    </div>
+    <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('importModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="importContacts()">Importar</button>
+    </div>
+</div>
+</div>
+
+<!-- SEQUENCE MODAL -->
+<div class="modal-overlay" id="seqModal">
+<div class="modal" style="max-width:700px;">
+    <h2><i class="fas fa-stream"></i> <span id="seqModalTitle">Nueva Secuencia</span></h2>
+    <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" id="seqName"></div>
+    <div class="form-group"><label class="form-label">Descripcion</label><input class="form-input" id="seqDesc"></div>
+    <div id="stepsContainer"></div>
+    <button class="btn btn-ghost" onclick="addStepRow()" style="margin:8px 0;"><i class="fas fa-plus"></i> Agregar Paso</button>
+    <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('seqModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveSequence()">Guardar</button>
+    </div>
+</div>
+</div>
+
+<!-- START SEQUENCE MODAL -->
+<div class="modal-overlay" id="startSeqModal">
+<div class="modal">
+    <h2><i class="fas fa-play"></i> Iniciar Secuencia</h2>
+    <div class="form-group"><label class="form-label">Secuencia</label>
+        <select class="form-select" id="startSeqSelect"></select>
+    </div>
+    <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('startSeqModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="startSequence()">Iniciar</button>
+    </div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/outreach';
+const adminToken = localStorage.getItem('admin_token');
+const headers = { 'Content-Type': 'application/json', 'x-admin-token': adminToken };
+
+let allContacts = [];
+let allSequences = [];
+let editingSeqId = null;
+let startingContactId = null;
+
+async function api(path, method, body) {
+    const opts = { method, headers };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+    return data.data;
+}
+
+function toast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast ' + type + ' show';
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'pipeline') loadPipeline();
+    if (name === 'contacts') loadContacts();
+    if (name === 'sequences') loadSequences();
+    if (name === 'stats') loadStats();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function tierBadge(tier) {
+    return '<span class="tier-badge t' + tier + '">T' + tier + '</span>';
+}
+
+function statusHtml(status) {
+    return '<span class="status-dot ' + status + '"></span>' + status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function timeAgo(dateStr) {
+    if (!dateStr) return '-';
+    const ms = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(ms / 60000);
+    if (mins < 60) return mins + 'm';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h';
+    return Math.floor(hrs / 24) + 'd';
+}
+
+// ===== PIPELINE =====
+async function loadPipeline() {
+    try {
+        const [contactsData, statsData] = await Promise.all([api('/contacts', 'GET'), api('/stats', 'GET')]);
+        allContacts = contactsData.contacts;
+        const t = statsData.totals;
+
+        document.getElementById('statsRow').innerHTML = `
+            <div class="stat-card"><div class="stat-value">${t.total_contacts}</div><div class="stat-label">Contactos</div></div>
+            <div class="stat-card"><div class="stat-value">${t.total_sent}</div><div class="stat-label">Enviados</div></div>
+            <div class="stat-card"><div class="stat-value">${t.total_opened}</div><div class="stat-label">Abiertos</div></div>
+            <div class="stat-card"><div class="stat-value">${t.total_clicked}</div><div class="stat-label">Clicks</div></div>
+            <div class="stat-card"><div class="stat-value">${t.replied}</div><div class="stat-label">Respondidos</div></div>
+            <div class="stat-card"><div class="stat-value">${t.total_sent > 0 ? Math.round(t.total_opened / t.total_sent * 100) : 0}%</div><div class="stat-label">Tasa Apertura</div></div>
+        `;
+
+        const statuses = ['pending', 'active', 'replied', 'converted', 'paused', 'declined'];
+        const labels = { pending: 'Pendiente', active: 'Activo', replied: 'Respondido', converted: 'Convertido', paused: 'Pausado', declined: 'Declinado' };
+
+        let html = '';
+        for (const status of statuses) {
+            const items = allContacts.filter(c => c.status === status);
+            html += '<div class="pipeline-col"><div class="pipeline-col-header"><span>' + labels[status] + '</span><span class="count">' + items.length + '</span></div>';
+            for (const c of items) {
+                html += '<div class="pipe-card" onclick="showContactActions(' + c.id + ')">';
+                html += '<div class="name">' + esc(c.name) + ' ' + tierBadge(c.tier) + '</div>';
+                html += '<div class="company">' + esc(c.company || '') + '</div>';
+                html += '<div class="meta"><span><i class="fas fa-envelope"></i> ' + (c.emails_sent || 0) + '</span>';
+                html += '<span><i class="fas fa-eye"></i> ' + (c.emails_opened || 0) + '</span>';
+                html += '<span><i class="fas fa-mouse-pointer"></i> ' + (c.emails_clicked || 0) + '</span></div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+        document.getElementById('pipelineGrid').innerHTML = html;
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ===== CONTACTS =====
+async function loadContacts() {
+    try {
+        const tier = document.getElementById('filterTier').value;
+        const type = document.getElementById('filterType').value;
+        const status = document.getElementById('filterStatus').value;
+        let params = '?';
+        if (tier) params += 'tier=' + tier + '&';
+        if (type) params += 'type=' + type + '&';
+        if (status) params += 'status=' + status + '&';
+        const data = await api('/contacts' + params, 'GET');
+        allContacts = data.contacts;
+
+        let html = '';
+        for (const c of allContacts) {
+            html += '<tr>';
+            html += '<td><strong>' + esc(c.name) + '</strong></td>';
+            html += '<td>' + esc(c.company || '-') + '</td>';
+            html += '<td>' + esc(c.contact_type) + '</td>';
+            html += '<td>' + tierBadge(c.tier) + '</td>';
+            html += '<td>' + statusHtml(c.status) + '</td>';
+            html += '<td>' + (c.emails_sent || 0) + '</td>';
+            html += '<td>' + (c.emails_opened || 0) + '</td>';
+            html += '<td>';
+            if (c.status === 'pending') html += '<button class="btn btn-sm btn-primary" onclick="showStartSeq(' + c.id + ')"><i class="fas fa-play"></i></button> ';
+            if (c.status === 'active') html += '<button class="btn btn-sm btn-ghost" onclick="pauseContact(' + c.id + ')"><i class="fas fa-pause"></i></button> ';
+            if (c.status === 'paused') html += '<button class="btn btn-sm btn-primary" onclick="resumeContact(' + c.id + ')"><i class="fas fa-play"></i></button> ';
+            if (c.status === 'active' || c.status === 'paused') html += '<button class="btn btn-sm btn-ghost" onclick="markReplied(' + c.id + ')" title="Marcar respondido"><i class="fas fa-reply"></i></button> ';
+            html += '<button class="btn btn-sm btn-danger" onclick="deleteContact(' + c.id + ')" title="Eliminar"><i class="fas fa-trash"></i></button>';
+            html += '</td></tr>';
+        }
+        document.getElementById('contactsTable').innerHTML = html || '<tr><td colspan="8" style="text-align:center;color:var(--ds-text-muted);padding:40px;">No hay contactos</td></tr>';
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// ===== SEQUENCES =====
+async function loadSequences() {
+    try {
+        const data = await api('/sequences', 'GET');
+        allSequences = data.sequences;
+        let html = '';
+        for (const s of allSequences) {
+            const steps = Array.isArray(s.steps) ? s.steps : JSON.parse(s.steps || '[]');
+            html += '<div class="ds-card" style="margin-bottom:12px;padding:16px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div><strong>' + esc(s.name) + '</strong> <span style="color:var(--ds-text-faint);font-size:0.8rem;">(' + steps.length + ' pasos, ' + (s.contact_count || 0) + ' contactos)</span></div>';
+            html += '<div><button class="btn btn-sm btn-ghost" onclick="editSequence(' + s.id + ')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-danger" onclick="deleteSequence(' + s.id + ')"><i class="fas fa-trash"></i></button></div>';
+            html += '</div>';
+            if (s.description) html += '<div style="color:var(--ds-text-muted);font-size:0.8rem;margin-top:4px;">' + esc(s.description) + '</div>';
+            html += '<div style="margin-top:8px;">';
+            for (const step of steps) {
+                html += '<span class="ds-badge ds-badge-cyan" style="margin:2px;">' + 'Paso ' + step.step + ': +' + (step.delay_days || 0) + 'd' + (step.use_ai ? ' 🤖' : '') + '</span>';
+            }
+            html += '</div></div>';
+        }
+        document.getElementById('sequencesList').innerHTML = html || '<p style="color:var(--ds-text-muted);text-align:center;padding:40px;">No hay secuencias. Crea una para empezar.</p>';
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// ===== STATS =====
+async function loadStats() {
+    try {
+        const data = await api('/stats', 'GET');
+        const t = data.totals;
+        const openRate = t.total_sent > 0 ? Math.round(t.total_opened / t.total_sent * 100) : 0;
+        const clickRate = t.total_sent > 0 ? Math.round(t.total_clicked / t.total_sent * 100) : 0;
+        const replyRate = t.total_contacts > 0 ? Math.round(t.replied / t.total_contacts * 100) : 0;
+
+        document.getElementById('statsDetailed').innerHTML = `
+            <div class="stat-card"><div class="stat-value">${t.total_contacts}</div><div class="stat-label">Total Contactos</div></div>
+            <div class="stat-card"><div class="stat-value">${t.total_sent}</div><div class="stat-label">Emails Enviados</div></div>
+            <div class="stat-card"><div class="stat-value">${openRate}%</div><div class="stat-label">Tasa Apertura</div></div>
+            <div class="stat-card"><div class="stat-value">${clickRate}%</div><div class="stat-label">Tasa Click</div></div>
+            <div class="stat-card"><div class="stat-value">${replyRate}%</div><div class="stat-label">Tasa Respuesta</div></div>
+            <div class="stat-card"><div class="stat-value">${t.converted}</div><div class="stat-label">Convertidos</div></div>
+        `;
+
+        let tierHtml = '';
+        for (const row of data.byTier) {
+            const or = row.emails_sent > 0 ? Math.round(row.opened / row.emails_sent * 100) + '%' : '-';
+            tierHtml += '<tr><td>' + tierBadge(row.tier) + '</td><td>' + row.contacts + '</td><td>' + row.emails_sent + '</td><td>' + row.opened + '</td><td>' + row.clicked + '</td><td>' + or + '</td></tr>';
+        }
+        document.getElementById('tierStats').innerHTML = tierHtml || '<tr><td colspan="6" style="text-align:center;color:var(--ds-text-muted);">Sin datos</td></tr>';
+
+        const iconMap = { email_sent: 'sent', email_opened: 'opened', link_clicked: 'clicked' };
+        const iconClass = { sent: 'fa-paper-plane', opened: 'fa-eye', clicked: 'fa-mouse-pointer', status: 'fa-exchange-alt' };
+        let actHtml = '';
+        for (const a of data.recentActivity) {
+            const type = iconMap[a.activity_type] || 'status';
+            actHtml += '<div class="activity-item"><div class="activity-icon ' + type + '"><i class="fas ' + (iconClass[type] || 'fa-circle') + '"></i></div>';
+            actHtml += '<div><strong>' + esc(a.contact_name || '?') + '</strong> (' + esc(a.contact_company || '') + ') — ' + a.activity_type.replace(/_/g, ' ');
+            actHtml += '<div class="activity-time">' + timeAgo(a.created_at) + '</div></div></div>';
+        }
+        document.getElementById('activityFeed').innerHTML = actHtml || '<p style="color:var(--ds-text-muted);">Sin actividad</p>';
+    } catch (e) { toast('Error: ' + e.message, 'error'); }
+}
+
+// ===== ACTIONS =====
+function showAddContactModal() {
+    ['cName','cEmail','cCompany','cNotes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cType').value = 'vc';
+    document.getElementById('cTier').value = '2';
+    document.getElementById('addContactModal').classList.add('show');
+}
+function showImportModal() { document.getElementById('importJson').value = ''; document.getElementById('importModal').classList.add('show'); }
+
+async function saveContact() {
+    try {
+        await api('/contacts', 'POST', {
+            name: document.getElementById('cName').value,
+            email: document.getElementById('cEmail').value,
+            company: document.getElementById('cCompany').value,
+            contact_type: document.getElementById('cType').value,
+            tier: parseInt(document.getElementById('cTier').value),
+            notes: document.getElementById('cNotes').value
+        });
+        closeModal('addContactModal');
+        toast('Contacto creado', 'success');
+        loadPipeline(); loadContacts();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function importContacts() {
+    try {
+        const contacts = JSON.parse(document.getElementById('importJson').value);
+        if (!Array.isArray(contacts) || contacts.length === 0) { toast('JSON debe ser un array con contactos', 'error'); return; }
+        if (!confirm('Importar ' + contacts.length + ' contactos?')) return;
+        const data = await api('/contacts/import', 'POST', { contacts });
+        closeModal('importModal');
+        toast('Importados: ' + data.imported + ', Omitidos: ' + data.skipped, 'success');
+        loadPipeline(); loadContacts();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteContact(id) {
+    const contact = allContacts.find(c => c.id === id);
+    if (contact && contact.tier === 1) {
+        if (!confirm('ATENCION: Este es un contacto Tier 1. Realmente eliminar a ' + (contact.name || '') + '?')) return;
+    } else {
+        if (!confirm('Eliminar este contacto?')) return;
+    }
+    try { await api('/contacts/' + id, 'DELETE'); toast('Eliminado', 'success'); loadPipeline(); loadContacts(); }
+    catch (e) { toast(e.message, 'error'); }
+}
+
+async function pauseContact(id) {
+    try { await api('/contacts/' + id + '/pause', 'POST'); toast('Pausado', 'success'); loadContacts(); }
+    catch (e) { toast(e.message, 'error'); }
+}
+
+async function resumeContact(id) {
+    try { await api('/contacts/' + id + '/resume', 'POST'); toast('Reanudado', 'success'); loadContacts(); }
+    catch (e) { toast(e.message, 'error'); }
+}
+
+async function markReplied(id) {
+    try { await api('/contacts/' + id + '/reply', 'POST'); toast('Marcado como respondido', 'success'); loadContacts(); loadPipeline(); }
+    catch (e) { toast(e.message, 'error'); }
+}
+
+async function showStartSeq(contactId) {
+    startingContactId = contactId;
+    const data = await api('/sequences', 'GET');
+    let html = '';
+    for (const s of data.sequences) { html += '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }
+    document.getElementById('startSeqSelect').innerHTML = html || '<option>No hay secuencias</option>';
+    document.getElementById('startSeqModal').classList.add('show');
+}
+
+async function startSequence() {
+    const btn = document.querySelector('#startSeqModal .btn-primary');
+    if (btn.disabled) return;
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+    try {
+        const seqId = parseInt(document.getElementById('startSeqSelect').value);
+        await api('/contacts/' + startingContactId + '/start', 'POST', { sequence_id: seqId });
+        closeModal('startSeqModal');
+        toast('Secuencia iniciada — primer email enviado', 'success');
+        loadPipeline(); loadContacts();
+    } catch (e) { toast(e.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = 'Iniciar'; }
+}
+
+function showContactActions(id) {
+    // Simple: switch to contacts tab with focus
+    switchTab('contacts');
+}
+
+// ===== SEQUENCE BUILDER =====
+let stepCount = 0;
+function showAddSequenceModal() {
+    editingSeqId = null;
+    document.getElementById('seqModalTitle').textContent = 'Nueva Secuencia';
+    document.getElementById('seqName').value = '';
+    document.getElementById('seqDesc').value = '';
+    document.getElementById('stepsContainer').innerHTML = '';
+    stepCount = 0;
+    addStepRow(); addStepRow(); addStepRow();
+    document.getElementById('seqModal').classList.add('show');
+}
+
+async function editSequence(id) {
+    editingSeqId = id;
+    const data = await api('/sequences/' + id, 'GET');
+    const s = data.sequence;
+    document.getElementById('seqModalTitle').textContent = 'Editar Secuencia';
+    document.getElementById('seqName').value = s.name;
+    document.getElementById('seqDesc').value = s.description || '';
+    document.getElementById('stepsContainer').innerHTML = '';
+    stepCount = 0;
+    const steps = Array.isArray(s.steps) ? s.steps : JSON.parse(s.steps || '[]');
+    for (const step of steps) addStepRow(step);
+    if (steps.length === 0) addStepRow();
+    document.getElementById('seqModal').classList.add('show');
+}
+
+function addStepRow(data) {
+    stepCount++;
+    const n = stepCount;
+    const html = `<div class="step-row" id="step-${n}">
+        <div class="step-num">${n}</div>
+        <div>
+            <div class="form-group"><label class="form-label">Dias de espera</label><input class="form-input" id="stepDelay${n}" type="number" value="${data ? data.delay_days : (n === 1 ? 0 : 5)}" min="0"></div>
+            <div class="form-group"><label class="form-label">Asunto</label><input class="form-input" id="stepSubject${n}" value="${data ? esc(data.subject) : ''}"></div>
+        </div>
+        <div>
+            <div class="form-group"><label class="form-label">Template (HTML)</label><textarea class="form-textarea" id="stepTemplate${n}" style="min-height:80px;">${data ? esc(data.template) : ''}</textarea></div>
+            <label style="font-size:0.8rem;color:var(--ds-text-muted);cursor:pointer;"><input type="checkbox" id="stepAI${n}" ${data && data.use_ai ? 'checked' : ''}> 🤖 Personalizar con AI</label>
+        </div>
+        <div><button class="btn btn-sm btn-danger" onclick="document.getElementById('step-${n}').remove()" title="Eliminar"><i class="fas fa-times"></i></button></div>
+    </div>`;
+    document.getElementById('stepsContainer').insertAdjacentHTML('beforeend', html);
+}
+
+async function saveSequence() {
+    const seqName = document.getElementById('seqName').value.trim();
+    if (!seqName) { toast('Nombre de secuencia requerido', 'error'); return; }
+
+    const steps = [];
+    document.querySelectorAll('#stepsContainer .step-row').forEach((row, i) => {
+        const n = row.id.replace('step-', '');
+        steps.push({
+            step: i + 1,
+            delay_days: parseInt(document.getElementById('stepDelay' + n).value) || 0,
+            subject: document.getElementById('stepSubject' + n).value.trim(),
+            template: document.getElementById('stepTemplate' + n).value.trim(),
+            use_ai: document.getElementById('stepAI' + n).checked
+        });
+    });
+
+    if (steps.length === 0) { toast('Se requiere al menos un paso', 'error'); return; }
+    if (steps.some(s => !s.subject || !s.template)) { toast('Todos los pasos requieren asunto y template', 'error'); return; }
+    if (steps.some(s => s.delay_days < 0)) { toast('Los dias de espera no pueden ser negativos', 'error'); return; }
+
+    const body = { name: seqName, description: document.getElementById('seqDesc').value, steps };
+    try {
+        if (editingSeqId) await api('/sequences/' + editingSeqId, 'PUT', body);
+        else await api('/sequences', 'POST', body);
+        closeModal('seqModal');
+        toast('Secuencia guardada', 'success');
+        loadSequences();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteSequence(id) {
+    if (!confirm('Eliminar esta secuencia?')) return;
+    try { await api('/sequences/' + id, 'DELETE'); toast('Eliminada', 'success'); loadSequences(); }
+    catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== INIT =====
+loadPipeline();
+</script>
+</body>
+</html>

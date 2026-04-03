@@ -12,7 +12,7 @@ if (typeof window !== 'undefined' && !window.APIHandlersComplete) {
 
 class ConsolidatedAPIProxy {
     constructor() {
-        this.API_BASE = 'https://api.latanda.online';
+        this.API_BASE = 'https://latanda.online';
         this.version = "4.0.0";
         this.isProduction = true;
         
@@ -349,28 +349,38 @@ class ConsolidatedAPIProxy {
     }
 
     handleUserEndpoints(endpoint, method, options) {
-        const userId = endpoint.split('/users/')[1]?.split('/')[0];
+        const userId = endpoint.split("/users/")[1]?.split("/")[0];
         
-        if (method === 'GET' && userId) {
-            return {
-                user: {
-                    id: userId,
-                    name: 'Usuario Demo',
-                    email: 'demo@latanda.online',
-                    status: 'active',
-                    verified: true,
-                    stats: {
-                        totalGroups: 3,
-                        activeTandas: 2,
-                        trustScore: 95
-                    }
+        if (method === "GET" && userId) {
+            // Get real user from localStorage (per FULL-STACK-ARCHITECTURE.md)
+            const storedUser = localStorage.getItem("latanda_user");
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    return {
+                        user: {
+                            id: user.id || user.user_id || userId,
+                            name: user.name || user.full_name || "Usuario",
+                            email: user.email || "",
+                            status: user.status || "active",
+                            verified: user.kyc_status === "verified",
+                            stats: {
+                                totalGroups: user.total_groups || 0,
+                                activeTandas: user.active_tandas || 0,
+                                trustScore: user.trust_score || 85
+                            }
+                        }
+                    };
+                } catch(e) {
+                    console.warn("[API Proxy] Error parsing user data:", e);
                 }
-            };
+            }
+            // No stored user - return minimal response
+            return { user: { id: userId, name: "Cargando...", status: "pending" } };
         }
         
-        return { message: 'User endpoint simulated' };
+        return { message: "User endpoint simulated" };
     }
-
     handleWalletEndpoints(endpoint, method, options) {
         return {
             balance: {
@@ -398,7 +408,7 @@ class ConsolidatedAPIProxy {
     handleSharingEndpoints(endpoint, method, options) {
         return {
             shareUrl: `https://latanda.online/share/${Date.now()}`,
-            qrCode: `https://api.latanda.online/qr/${Date.now()}`,
+            qrCode: `https://latanda.online/qr/${Date.now()}`,
             socialLinks: {
                 facebook: 'https://facebook.com/sharer/...',
                 twitter: 'https://twitter.com/intent/tweet?...',

@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="pages.mineria_title">Minería LTD - La Tanda</title>
+    <title>Minería LTD - La Tanda</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard-layout.css?v=7800.0">
-    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/dashboard-layout.css?v=7803.0">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1775200000">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1.6">
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=24.7">
+    <link rel="stylesheet" href="css/header.css?v=26.0">
     <link rel="stylesheet" href="shared-components.css?v=1760032177">
     <style>
         :root {
@@ -88,6 +88,22 @@
         .tier-icon.gold {
             background: linear-gradient(135deg, var(--accent-gold), #b8860b);
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+        
+        .tier-icon.platinum {
+            background: linear-gradient(135deg, #E5E4E2, #B0B0B0);
+            box-shadow: 0 0 30px rgba(229, 228, 226, 0.5);
+        }
+        
+        .tier-icon.diamond {
+            background: linear-gradient(135deg, #B9F2FF, #4DD0E1);
+            box-shadow: 0 0 40px rgba(185, 242, 255, 0.6);
+            animation: diamond-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes diamond-glow {
+            from { box-shadow: 0 0 30px rgba(185, 242, 255, 0.4); }
+            to { box-shadow: 0 0 50px rgba(185, 242, 255, 0.7); }
         }
         
         .tier-name {
@@ -374,6 +390,14 @@
                         <span><i class="fas fa-medal" style="color: #ffd700"></i> Oro</span>
                         <span>5.0 LTD/día + hasta 7.0 bonus racha</span>
                     </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-gem" style="color: #E5E4E2"></i> Platino</span>
+                        <span>8.0 LTD/día + hasta 10.0 bonus racha</span>
+                    </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-gem" style="color: #B9F2FF"></i> Diamante</span>
+                        <span>12.0 LTD/día + hasta 15.0 bonus racha</span>
+                    </div>
                 </div>
             </div>
         </main>
@@ -408,7 +432,7 @@
     <div id="latanda-footer" class="auto-footer"></div>
     
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=31.1"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <script src="js/edge-swipe.js?v=1.5"></script>
     <script>
                 async function loadMiningData() {
@@ -450,7 +474,9 @@
                         const descriptions = {
                             bronze: "Nivel inicial de minero",
                             silver: "Minero experimentado",
-                            gold: "Minero experto"
+                            gold: "Minero experto",
+                            platinum: "Minero elite",
+                            diamond: "Leyenda de la mina"
                         };
                         tierDesc.textContent = descriptions[tierName] || "Nivel de minero";
                     }
@@ -463,8 +489,7 @@
                     // Update tier icon color
                     if (tierIcon) {
                         tierIcon.className = "tier-icon";
-                        if (tierName === "silver") tierIcon.classList.add("silver");
-                        if (tierName === "gold") tierIcon.classList.add("gold");
+                        if (["silver","gold","platinum","diamond"].includes(tierName)) tierIcon.classList.add(tierName);
                     }
                     
                     // Update progress bar
@@ -556,5 +581,13 @@
             if (window.EdgeSwipe) EdgeSwipe.init();
         });
     </script>
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
+        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.1);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1rem}.mobile-nav-item.active,.mobile-nav-item:hover{color:#00FFFF}}</style>
 </body>
 </html>

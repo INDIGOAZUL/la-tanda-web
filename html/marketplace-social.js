@@ -27,6 +27,8 @@ class MarketplaceSocialSystem {
         this.currentUser = this.getCurrentUser();
         this.authToken = this.getAuthToken();
         this.isGuest = !this.currentUser || this.currentUser.id === 'guest';
+        // Exchange rates (HNL base) — update these as needed
+        this.exchangeRates = { HNL: 1, USD: 25.50, LTD: 5.10 }; // 1 LTD = 0.20 USD = 5.10 HNL
 
         // System state
         this.products = [];
@@ -170,7 +172,7 @@ class MarketplaceSocialSystem {
         if (serviceCategoryFilter && this.categoriesData) {
             serviceCategoryFilter.innerHTML = '<option value="">Todas las Categorías</option>';
             this.categoriesData.forEach(cat => {
-                if (cat.is_active) {
+                if (cat.is_active !== false) {
                     serviceCategoryFilter.innerHTML += `
                         <option value="${this.escapeHtml(String(cat.category_id))}">${this.escapeHtml(cat.icon || '')} ${this.escapeHtml(cat.name_es || '')}</option>
                     `;
@@ -575,10 +577,30 @@ class MarketplaceSocialSystem {
     }
 
     formatPrice(price, currency, suffix) {
-        const sym = currency === 'USD' ? '$' : 'L.';
-        const formatted = currency === 'USD' ? price.toLocaleString('en-US') : price.toLocaleString();
-        return suffix ? `${sym}${formatted}${suffix}` : `${sym}${formatted}`;
+        if (currency === 'LTD') {
+            const fmt = Number(price) % 1 === 0 ? Number(price).toLocaleString('es-HN', {maximumFractionDigits:0}) : Number(price).toLocaleString('es-HN', {minimumFractionDigits:2});
+            return suffix ? fmt + ' LTD' + suffix : fmt + ' LTD';
+        }
+        const sym = currency === 'USD' ? '$ ' : 'L. ';
+        const formatted = currency === 'USD' ? Number(price).toLocaleString('en-US') : Number(price).toLocaleString('es-HN');
+        return suffix ? sym + formatted + suffix : sym + formatted;
     }
+    // Convert price to HNL equivalent for display
+    priceInHNL(price, currency) {
+        const rate = this.exchangeRates?.[currency] || 1;
+        return Number(price || 0) * rate;
+    }
+
+    // Format with equivalence hint
+    formatPriceWithHint(price, currency) {
+        const main = this.formatPrice(price, currency);
+        if (currency === 'HNL' || !currency) return main;
+        const hnl = this.priceInHNL(price, currency);
+        const fmtHnl = window.ltFormatNumber ? ltFormatNumber(hnl) : hnl.toLocaleString('es-HN', {maximumFractionDigits:0});
+        return main + ' <span class="sd-price-hint">&asymp; L. ' + fmtHnl + '</span>';
+    }
+
+
 
     createServiceCard(service) {
         const categoryLabel = this.serviceCategories[service.category] || service.category;
@@ -1783,21 +1805,53 @@ class MarketplaceSocialSystem {
     }
 
 
+    async _loadDynamicCategoryPills(containerId, type) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        try {
+            const resp = await this.apiRequest('/api/marketplace/categories/' + type);
+            const cats = resp.data?.categories || resp.categories || [];
+            let html = '<button class="exp-pill active" data-value="">Todos</button>';
+            cats.forEach(c => {
+                html += '<button class="exp-pill" data-value="' + this.escapeHtml(String(c.category_id)) + '">' + this.escapeHtml(c.icon || '') + ' ' + this.escapeHtml(c.name_es || '') + ' <span style="font-size:10px;opacity:0.5;">(' + c.count + ')</span></button>';
+            });
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
+        }
+    }
+
+    async _loadDynamicCityPills(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        try {
+            const resp = await this.apiRequest('/api/marketplace/providers/cities');
+            const cities = resp.data?.cities || resp.cities || [];
+            let html = '<button class="exp-pill active" data-value="">Todos</button>';
+            cities.forEach(c => {
+                html += '<button class="exp-pill" data-value="' + this.escapeHtml(c.city) + '">' + this.escapeHtml(c.city) + ' <span style="font-size:10px;opacity:0.5;">(' + c.count + ')</span></button>';
+            });
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
+        }
+    }
+
     _loadExpCategoryPills(tab, containerId) {
         const container = document.getElementById(containerId || 'expCategoryPills');
         if (!container) return;
         if (tab === 'exp-tiendas') {
-            const cities = ['Todos', 'Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Comayagua', 'Choluteca'];
-            container.innerHTML = cities.map((c, i) =>
-                '<button class="exp-pill' + (i === 0 ? ' active' : '') + '" data-value="' + (i === 0 ? '' : this.escapeHtml(c)) + '">' + this.escapeHtml(c) + '</button>'
-            ).join('');
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">Cargando...</span>';
+            this._loadDynamicCityPills(containerId || 'expCategoryPills');
+            return;
+        } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">...</span>';
+            this._loadDynamicCategoryPills(containerId || 'expCategoryPillsProd', 'products');
+        } else if (tab === 'exp-servicios') {
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button><span class="exp-pill" style="opacity:0.4;cursor:default;">...</span>';
+            this._loadDynamicCategoryPills(containerId || 'expCategoryPillsSvc', 'services');
         } else {
-            const cats = this.categoriesData || [];
-            let html = '<button class="exp-pill active" data-value="">Todos</button>';
-            cats.forEach(c => {
-                html += '<button class="exp-pill" data-value="' + this.escapeHtml(String(c.category_id)) + '">' + this.escapeHtml(c.icon || '') + ' ' + this.escapeHtml(c.name_es || c.name || '') + '</button>';
-            });
-            container.innerHTML = html;
+            container.innerHTML = '<button class="exp-pill active" data-value="">Todos</button>';
         }
     }
 
@@ -1806,54 +1860,176 @@ class MarketplaceSocialSystem {
         if (!container) return;
         const esc = (v) => this.escapeHtml(String(v || ''));
 
-        // Hero
-        let html = `<div class="exp-hero">
-            <div class="exp-hero-title">Marketplace La Tanda</div>
-            <div class="exp-hero-desc">Compra, vende y ofrece servicios en tu comunidad. Descubre tiendas verificadas, productos y profesionales cerca de ti.</div>
+        let html = '';
+
+        // Inner tabs: Categorias | Tiendas Destacadas | Productos Populares
+        html += `<div class="exp-inner-tabs">
+            <button class="exp-inner-tab exp-inner-active" data-action="exp-inner-tab" data-inner="categorias"><i class="fas fa-th-large"></i> Categorias</button>
+            <button class="exp-inner-tab" data-action="exp-inner-tab" data-inner="tiendas-dest"><i class="fas fa-star"></i> Tiendas</button>
+            <button class="exp-inner-tab" data-action="exp-inner-tab" data-inner="productos-pop"><i class="fas fa-fire"></i> Productos</button>
         </div>`;
 
-        // Quick actions
-        html += `<div class="exp-quick-actions">
-            <div class="exp-quick-card" data-action="exp-subtab" data-subtab="productos">
-                <div class="exp-quick-icon" style="background:rgba(139,92,246,0.15);color:var(--ds-purple,#8B5CF6);"><i class="fas fa-shopping-cart"></i></div>
-                <div class="exp-quick-label">Comprar</div>
-                <div class="exp-quick-sub">Productos y ofertas</div>
-            </div>
-            <div class="exp-quick-card" data-action="exp-sell-product">
-                <div class="exp-quick-icon" style="background:rgba(16,185,129,0.15);color:var(--ds-green,#10B981);"><i class="fas fa-tag"></i></div>
-                <div class="exp-quick-label">Vender</div>
-                <div class="exp-quick-sub">Publica tu producto</div>
-            </div>
-            <div class="exp-quick-card" data-action="exp-subtab" data-subtab="servicios">
-                <div class="exp-quick-icon" style="background:rgba(59,130,246,0.15);color:var(--ds-blue,#3B82F6);"><i class="fas fa-wrench"></i></div>
-                <div class="exp-quick-label">Servicios</div>
-                <div class="exp-quick-sub">Encuentra profesionales</div>
-            </div>
-        </div>`;
-
-        // Categories grid
+        // Panel: Categorias
         const cats = this.categoriesData || [];
+        let catGrid = '';
         if (cats.length > 0) {
-            const catItems = cats.slice(0, 8).map(c =>
+            catGrid = cats.slice(0, 8).map(c =>
                 '<div class="exp-cat-item" data-action="exp-cat-filter" data-cat-id="' + esc(String(c.category_id)) + '" data-cat-name="' + esc(c.name_es || c.name || '') + '">' +
                 '<div class="exp-cat-icon">' + esc(c.icon || '') + '</div>' +
                 '<div class="exp-cat-name">' + esc(c.name_es || c.name || '') + '</div>' +
                 '</div>'
             ).join('');
-            html += '<div class="exp-inicio-section"><div class="exp-inicio-header"><div class="exp-inicio-title"><i class="fas fa-th-large"></i> Categorias</div></div><div class="exp-cat-grid">' + catItems + '</div></div>';
+        } else {
+            catGrid = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;">Cargando categorias...</div>';
         }
+        html += '<div class="exp-inner-panel" data-inner-panel="categorias"><div class="exp-cat-grid">' + catGrid + '</div></div>';
 
-        // Featured stores placeholder — load async
-        html += '<div class="exp-inicio-section"><div class="exp-inicio-header"><div class="exp-inicio-title"><i class="fas fa-star"></i> Tiendas Destacadas</div><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="tiendas">Ver todas</button></div><div id="expFeaturedStores" class="exp-inicio-scroll"><div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div><div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div></div></div>';
+        // Panel: Tiendas Destacadas
+        html += `<div class="exp-inner-panel" data-inner-panel="tiendas-dest" style="display:none">
+            <div id="expFeaturedStores" class="exp-inicio-scroll">
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+            </div>
+            <div style="text-align:right;margin-top:8px;"><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="tiendas">Ver todas las tiendas &rarr;</button></div>
+        </div>`;
 
-        // Popular products placeholder — load async
-        html += '<div class="exp-inicio-section"><div class="exp-inicio-header"><div class="exp-inicio-title"><i class="fas fa-fire"></i> Productos Populares</div><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="productos">Ver todos</button></div><div id="expPopularProducts" class="exp-inicio-scroll"><div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div><div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div></div></div>';
+        // Panel: Productos Populares
+        html += `<div class="exp-inner-panel" data-inner-panel="productos-pop" style="display:none">
+            <div id="expPopularProducts" class="exp-inicio-scroll">
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+                <div class="exp-skeleton" style="min-width:260px;height:80px;border-radius:12px;"></div>
+            </div>
+            <div style="text-align:right;margin-top:8px;"><button class="exp-inicio-link" data-action="exp-subtab" data-subtab="productos">Ver todos los productos &rarr;</button></div>
+        </div>`;
+
+        // Quick actions — below inner tabs
+        html += `<div style="margin-top:20px;">
+            <div class="exp-inicio-header" style="margin-bottom:10px;"><div class="exp-inicio-title"><i class="fas fa-bolt"></i> Acciones rapidas</div></div>
+            <div class="exp-quick-actions">
+                <div class="exp-quick-card" data-action="exp-subtab" data-subtab="productos">
+                    <div class="exp-quick-icon" style="background:rgba(139,92,246,0.15);color:var(--ds-purple,#8B5CF6);"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="exp-quick-label">Comprar</div>
+                    <div class="exp-quick-sub">Productos y ofertas</div>
+                </div>
+                <div class="exp-quick-card" data-action="exp-sell-product">
+                    <div class="exp-quick-icon" style="background:rgba(16,185,129,0.15);color:var(--ds-green,#10B981);"><i class="fas fa-tag"></i></div>
+                    <div class="exp-quick-label">Vender</div>
+                    <div class="exp-quick-sub">Publica tu producto</div>
+                </div>
+                <div class="exp-quick-card" data-action="exp-subtab" data-subtab="servicios">
+                    <div class="exp-quick-icon" style="background:rgba(59,130,246,0.15);color:var(--ds-blue,#3B82F6);"><i class="fas fa-wrench"></i></div>
+                    <div class="exp-quick-label">Servicios</div>
+                    <div class="exp-quick-sub">Encuentra profesionales</div>
+                </div>
+            </div>
+        </div>`;
 
         container.innerHTML = html;
 
-        // Load featured stores async
+        // Load async data for tiendas + productos panels
         this._loadInicioStores();
         this._loadInicioProducts();
+    }
+
+    _openCategoryDetail(catId, catName) {
+        const container = document.getElementById('expInicioContent');
+        if (!container) return;
+        const esc = (v) => this.escapeHtml(String(v || ''));
+        const catIcon = (this.categoriesData || []).find(c => String(c.category_id) === String(catId))?.icon || '';
+
+        let html = '';
+
+        // Back button + category title
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">';
+        html += '<button data-action="exp-cat-back" style="background:none;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;color:var(--ds-text-secondary,rgba(255,255,255,0.6));cursor:pointer;font-size:14px;display:flex;align-items:center;gap:6px;font-family:inherit;transition:border-color 0.2s;"><i class="fas fa-arrow-left"></i></button>';
+        html += '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:var(--ds-text-primary,#fff);display:flex;align-items:center;gap:8px;">' + esc(catIcon) + ' ' + esc(catName) + '</div></div>';
+        html += '</div>';
+
+        // Inner tabs: Productos | Servicios
+        html += '<div class="exp-inner-tabs">';
+        html += '<button class="exp-cat-inner-tab exp-inner-tab exp-inner-active" data-action="exp-cat-inner" data-cat-inner="cat-productos"><i class="fas fa-box"></i> Productos</button>';
+        html += '<button class="exp-cat-inner-tab exp-inner-tab" data-action="exp-cat-inner" data-cat-inner="cat-servicios"><i class="fas fa-wrench"></i> Servicios</button>';
+        html += '</div>';
+
+        // Products panel
+        html += '<div class="exp-cat-detail-panel" data-cat-detail="cat-productos">';
+        html += '<div id="expCatProducts" class="exp-feed"><div class="exp-skeleton"></div><div class="exp-skeleton"></div><div class="exp-skeleton"></div></div>';
+        html += '<div id="expCatProductsMore" class="exp-load-more" style="display:none;"><button data-action="exp-cat-load-more" data-cat-type="productos" class="exp-load-more-btn">Cargar mas</button></div>';
+        html += '</div>';
+
+        // Services panel
+        html += '<div class="exp-cat-detail-panel" data-cat-detail="cat-servicios" style="display:none">';
+        html += '<div id="expCatServices" class="exp-feed"><div class="exp-skeleton"></div><div class="exp-skeleton"></div><div class="exp-skeleton"></div></div>';
+        html += '<div id="expCatServicesMore" class="exp-load-more" style="display:none;"><button data-action="exp-cat-load-more" data-cat-type="servicios" class="exp-load-more-btn">Cargar mas</button></div>';
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Store state for pagination
+        this._catDetailId = catId;
+        this._catDetailName = catName;
+        this._catProdOffset = 0;
+        this._catSvcOffset = 0;
+
+        // Load both feeds
+        this._loadCategoryFeed('productos', false);
+        this._loadCategoryFeed('servicios', false);
+    }
+
+    async _loadCategoryFeed(type, append) {
+        const catId = this._catDetailId;
+        if (!catId) return;
+        const limit = 10;
+        const isProd = type === 'productos';
+        const containerId = isProd ? 'expCatProducts' : 'expCatServices';
+        const moreId = isProd ? 'expCatProductsMore' : 'expCatServicesMore';
+        const offset = isProd ? this._catProdOffset : this._catSvcOffset;
+
+        const container = document.getElementById(containerId);
+        const moreEl = document.getElementById(moreId);
+        if (!container) return;
+
+        if (!append) {
+            container.innerHTML = '<div class="exp-skeleton"></div><div class="exp-skeleton"></div>';
+        }
+
+        let url = isProd
+            ? '/api/marketplace/products?limit=' + limit + '&offset=' + offset + '&category=' + encodeURIComponent(catId)
+            : '/api/marketplace/services?limit=' + limit + '&offset=' + offset + '&category=' + encodeURIComponent(catId);
+
+        try {
+            const resp = await this.apiRequest(url);
+            const d = resp.data || resp;
+            const items = isProd ? (d.products || []) : (d.services || []);
+
+            if (items.length === 0 && !append) {
+                const emptyLabel = isProd ? 'productos' : 'servicios';
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">' + (isProd ? '📦' : '🔧') + '</div><div class="exp-empty-text">Sin ' + emptyLabel + ' en esta categoria</div></div>';
+                if (moreEl) moreEl.style.display = 'none';
+                return;
+            }
+
+            const tab = isProd ? 'exp-productos' : 'exp-servicios';
+            const html = items.map(item => this._renderExpCard(item, tab)).join('');
+
+            if (append) {
+                container.insertAdjacentHTML('beforeend', html);
+            } else {
+                container.innerHTML = html;
+            }
+
+            if (isProd) this._catProdOffset += items.length;
+            else this._catSvcOffset += items.length;
+
+            if (moreEl) moreEl.style.display = items.length >= limit ? '' : 'none';
+        } catch (err) {
+            if (!append) {
+                container.innerHTML = '<div class="exp-empty"><div class="exp-empty-icon">⚠️</div><div class="exp-empty-text">Error al cargar</div></div>';
+            }
+            if (moreEl) moreEl.style.display = 'none';
+        }
     }
 
     async _loadInicioStores() {
@@ -1911,6 +2087,7 @@ class MarketplaceSocialSystem {
         if (tab === 'exp-tiendas') {
             url = '/api/marketplace/providers?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&city=' + encodeURIComponent(cat);
+            if (this._expShopType) url += '&shop_type=' + encodeURIComponent(this._expShopType);
         } else if (tab === 'exp-productos' || tab === 'exp-recientes') {
             url = '/api/marketplace/products?limit=' + limit + '&offset=' + this._expOffset;
             if (cat) url += '&category=' + encodeURIComponent(cat);
@@ -1957,61 +2134,190 @@ class MarketplaceSocialSystem {
         this._expLoading = false;
     }
 
+    _imgUrl(path) {
+        if (!path) return path;
+        // Cache bust for images that may have been 404 cached by browser
+        return path + (path.includes('?') ? '&' : '?') + 'v=' + (window._imgCacheBust || '1');
+    }
+
     _renderExpCard(item, tab) {
         const esc = (v) => this.escapeHtml(String(v || ''));
         if (tab === 'exp-tiendas') {
-            const avatar = item.profile_image || item.avatar_url;
+            const avatar = item.logo_image || item.profile_image || item.avatar_url;
             const initial = (item.business_name || 'T').charAt(0).toUpperCase();
             const avatarHtml = avatar
                 ? '<img src="' + esc(avatar) + '" alt="" loading="lazy">'
-                : '<span class="exp-card-initial">' + esc(initial) + '</span>';
-            const verified = item.is_verified ? ' <span class="exp-verified" title="Verificado">✓</span>' : '';
-            const rating = item.avg_rating ? ('<span>⭐ ' + Number(item.avg_rating).toFixed(1) + '</span>') : '';
-            const reviews = item.total_reviews ? ('<span>(' + esc(item.total_reviews) + ')</span>') : '';
-            const city = item.city ? ('<span>📍 ' + esc(item.city) + '</span>') : '';
-            const shopType = item.shop_type === 'services' ? 'Servicios' : item.shop_type === 'products' ? 'Productos' : 'Tienda';
-            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '">' +
-                '<div class="exp-card-avatar">' + avatarHtml + '</div>' +
-                '<div class="exp-card-body">' +
-                    '<div class="exp-card-title">' + esc(item.business_name) + verified + '</div>' +
-                    '<div class="exp-card-meta">' + rating + reviews + city + '</div>' +
-                    '<div class="exp-card-badge">' + esc(shopType) + '</div>' +
+                : '<span class="tc-avatar-initial">' + esc(initial) + '</span>';
+            const verified = item.is_verified ? '<span class="tc-badge-verified"><i class="fas fa-check-circle"></i> Verificado</span>' : '';
+            const rating = Number(item.avg_rating || 0).toFixed(1);
+            const reviews = parseInt(item.total_reviews || 0);
+            const jobs = parseInt(item.completed_jobs || 0);
+            const responseRate = parseInt(item.response_rate || 0);
+            const city = item.city || '';
+            const shopTypeMap = { services: 'Servicios', products: 'Productos', mixed: 'Mixta' };
+            const shopTypeIcon = { services: 'fa-wrench', products: 'fa-box', mixed: 'fa-store' };
+            const shopLabel = shopTypeMap[item.shop_type] || 'Tienda';
+            const shopIcon = shopTypeIcon[item.shop_type] || 'fa-store';
+            const theme = item.store_theme || 'dark';
+            const themeGradients = {
+                dark: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+                cyan: 'linear-gradient(135deg, #0c4a6e, #155e75)',
+                gold: 'linear-gradient(135deg, #451a03, #78350f)',
+                green: 'linear-gradient(135deg, #052e16, #14532d)',
+                coral: 'linear-gradient(135deg, #450a0a, #7f1d1d)',
+                purple: 'linear-gradient(135deg, #3b0764, #581c87)'
+            };
+            const coverBg = item.cover_image
+                ? 'background-image:url(' + esc(item.cover_image) + ');background-size:cover;background-position:center;'
+                : 'background:' + (themeGradients[theme] || themeGradients.dark) + ';';
+            const desc = item.description ? esc(item.description.length > 60 ? item.description.substring(0, 60) + '...' : item.description) : '';
+
+            return '<div class="tc-card" data-handle="' + esc(item.handle) + '">' +
+                '<div class="tc-cover" style="' + coverBg + '">' +
+                    '<div class="tc-cover-overlay"></div>' +
+                    (verified ? '<div class="tc-cover-badge">' + verified + '</div>' : '') +
+                    '<div class="tc-cover-type"><i class="fas ' + shopIcon + '"></i> ' + esc(shopLabel) + '</div>' +
                 '</div>' +
-                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
+                '<div class="tc-body">' +
+                    '<div class="tc-avatar">' + avatarHtml + '</div>' +
+                    '<div class="tc-info">' +
+                        '<div class="tc-name">' + esc(item.business_name) + '</div>' +
+                        (city ? '<div class="tc-location"><i class="fas fa-map-marker-alt"></i> ' + esc(city) + '</div>' : '') +
+                        (desc ? '<div class="tc-desc">' + desc + '</div>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<div class="tc-stats">' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + (rating === '0.0' ? '--' : rating) + '</div><div class="tc-stat-label"><i class="fas fa-star" style="color:var(--ds-amber,#F59E0B);"></i> Rating</div></div>' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + jobs + '</div><div class="tc-stat-label"><i class="fas fa-briefcase"></i> Trabajos</div></div>' +
+                    '<div class="tc-stat"><div class="tc-stat-value">' + (responseRate > 0 ? responseRate + '%' : '--') + '</div><div class="tc-stat-label"><i class="fas fa-bolt"></i> Respuesta</div></div>' +
+                '</div>' +
+                '<div class="tc-actions">' +
+                    '<button class="tc-action-primary" data-action="exp-view-tienda" data-handle="' + esc(item.handle) + '"><i class="fas fa-eye"></i> Ver tienda</button>' +
+                    '<button class="tc-action-icon" data-action="exp-share-tienda" data-handle="' + esc(item.handle) + '" data-name="' + esc(item.business_name) + '" title="Compartir"><i class="fas fa-share-alt"></i></button>' +
+                '</div>' +
             '</div>';
         }
+
         if (tab === 'exp-servicios') {
-            const img = (Array.isArray(item.images) && item.images.length > 0)
-                ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
-                : '<span class="exp-card-icon">🛠️</span>';
-            const priceLabel = item.price_type === 'fixed' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN'))))) : item.price_type === 'range' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + ' - ' + Number(item.price_max || 0).toLocaleString('es-HN')) : (item.price_type === 'hourly' ? ((window.ltFormatCurrency ? ltFormatCurrency(Number(item.price || 0)) : (window.ltFormatCurrency ? ltFormatCurrency(item.price || 0) : 'L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')))) + '/hora') : 'Consultar');
-            const rating = item.avg_rating ? ('⭐ ' + Number(item.avg_rating).toFixed(1)) : '';
-            const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-            return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
-                '<div class="exp-card-avatar">' + img + '</div>' +
-                '<div class="exp-card-body">' +
-                    '<div class="exp-card-title">' + esc(item.title) + '</div>' +
-                    '<div class="exp-card-sub"><span class="exp-card-price">' + priceLabel + '</span>' + (rating ? ' · ' + rating : '') + '</div>' +
-                    catPill +
+            const sValidImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+            let sImgHtml = '';
+            if (sValidImgs.length > 1) {
+                const scId = 'scarousel_' + item.service_id;
+                const sSlides = sValidImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
+                const sDots = sValidImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
+                sImgHtml = '<div class="sd-carousel" id="' + scId + '" data-current="0" data-total="' + sValidImgs.length + '">' +
+                    '<div class="sd-carousel-track">' + sSlides + '</div>' +
+                    '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + scId + '"><i class="fas fa-chevron-left"></i></button>' +
+                    '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + scId + '"><i class="fas fa-chevron-right"></i></button>' +
+                    '<div class="sd-carousel-dots">' + sDots + '</div>' +
+                    '<div class="sd-carousel-counter">1/' + sValidImgs.length + '</div>' +
+                '</div>';
+            } else if (sValidImgs.length === 1) {
+                sImgHtml = '<img src="' + esc(this._imgUrl(sValidImgs[0])) + '" alt="" loading="lazy">';
+            } else {
+                sImgHtml = '<div class="sc-img-placeholder"><i class="fas ' + (item.category_icon ? 'fa-tag' : 'fa-wrench') + '"></i></div>';
+            }
+            const price = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(price) : price.toLocaleString('es-HN');
+            const priceMax = Number(item.price_max || 0);
+            const fmtMax = window.ltFormatNumber ? ltFormatNumber(priceMax) : priceMax.toLocaleString('es-HN');
+            const priceLabel = item.price_type === 'fixed' ? 'L. ' + fmt
+                : item.price_type === 'range' ? 'L. ' + fmt + ' - ' + fmtMax
+                : item.price_type === 'hourly' ? 'L. ' + fmt + '/hora'
+                : 'Consultar';
+            const priceTag = item.price_type === 'hourly' ? 'por hora' : (item.price_type === 'range' ? 'rango' : '');
+            const rating = Number(item.avg_rating || 0).toFixed(1);
+            const reviews = parseInt(item.total_reviews || 0);
+            const bookings = parseInt(item.booking_count || 0);
+            const duration = item.duration_hours ? Number(item.duration_hours) : null;
+            const durationLabel = duration ? (duration < 1 ? Math.round(duration * 60) + ' min' : duration + 'h') : '';
+            const isFeatured = item.is_featured;
+            const provName = item.provider_name || '';
+            const provVerified = item.provider_verified;
+            const provImg = item.provider_image;
+            const city = item.city || '';
+            const catLabel = item.category_name ? (esc(item.category_icon || '') + ' ' + esc(item.category_name)) : '';
+
+            const scHasCarousel = sValidImgs.length > 1;
+            return '<div class="sc-card" data-action="exp-view-servicio" data-id="' + esc(item.service_id) + '">' +
+                (scHasCarousel ? sImgHtml : '<div class="sc-img">' + sImgHtml) +
+                    (isFeatured ? '<div class="sc-featured"><i class="fas fa-star"></i> Destacado</div>' : '') +
+                    (catLabel ? '<div class="sc-cat-badge">' + catLabel + '</div>' : '') +
+                (scHasCarousel ? '' : '</div>') +
+                '<div class="sc-body">' +
+                    '<div class="sc-price-row">' +
+                        '<div class="sc-price">' + priceLabel + (item.currency && item.currency !== 'HNL' ? ' <span class="sd-price-hint">&asymp; L. ' + (window.ltFormatNumber ? ltFormatNumber(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1)) : Math.round(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1))) + '</span>' : '') + '</div>' +
+                        (priceTag ? '<span class="sc-price-tag">' + esc(priceTag) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="sc-title">' + esc(item.title) + '</div>' +
+                    '<div class="sc-stats-row">' +
+                        '<span class="sc-stat"><i class="fas fa-star" style="color:var(--ds-amber,#F59E0B);"></i> ' + (rating === '0.0' ? '--' : rating) + (reviews > 0 ? ' (' + reviews + ')' : '') + '</span>' +
+                        (bookings > 0 ? '<span class="sc-stat"><i class="fas fa-calendar-check"></i> ' + bookings + ' reservas</span>' : '') +
+                        (durationLabel ? '<span class="sc-stat"><i class="far fa-clock"></i> ' + esc(durationLabel) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="sc-provider">' +
+                        (provImg ? '<img src="' + esc(provImg) + '" alt="" class="sc-provider-avatar">' : '<span class="sc-provider-dot"></span>') +
+                        '<span>' + esc(provName) + '</span>' +
+                        (provVerified ? '<i class="fas fa-check-circle" style="color:var(--ds-green,#10B981);font-size:11px;" title="Verificado"></i>' : '') +
+                        (city ? '<span class="sc-city"><i class="fas fa-map-marker-alt"></i> ' + esc(city) + '</span>' : '') +
+                    '</div>' +
                 '</div>' +
-                '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
             '</div>';
         }
         // Products (exp-productos, exp-recientes)
-        const pImg = (Array.isArray(item.images) && item.images.length > 0)
-            ? '<img src="' + esc(typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) + '" alt="" loading="lazy">'
-            : '<span class="exp-card-icon">📦</span>';
-        const condMap = { new: 'Nuevo', used: 'Usado', refurbished: 'Reacondicionado' };
+        const pValidImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+        const pImgSrc = pValidImgs.length > 0 ? pValidImgs[0] : null;
+        let pImgHtml = '';
+        if (pValidImgs.length > 1) {
+            const pcId = 'pcarousel_' + item.id;
+            const pSlides = pValidImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
+            const pDots = pValidImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
+            pImgHtml = '<div class="sd-carousel" id="' + pcId + '" data-current="0" data-total="' + pValidImgs.length + '">' +
+                '<div class="sd-carousel-track">' + pSlides + '</div>' +
+                '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + pcId + '"><i class="fas fa-chevron-left"></i></button>' +
+                '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + pcId + '"><i class="fas fa-chevron-right"></i></button>' +
+                '<div class="sd-carousel-dots">' + pDots + '</div>' +
+                '<div class="sd-carousel-counter">1/' + pValidImgs.length + '</div>' +
+            '</div>';
+        } else if (pImgSrc) {
+            pImgHtml = '<img src="' + esc(this._imgUrl(pImgSrc)) + '" alt="" loading="lazy">';
+        } else {
+            pImgHtml = '<div class="pc-img-placeholder"><i class="fas fa-box"></i></div>';
+        }
+        const condMap = { new: 'Nuevo', used: 'Usado', like_new: 'Como nuevo', good: 'Bueno', refurbished: 'Reacondicionado' };
         const cond = condMap[item.condition] || '';
-        const catPill = item.category_name ? ('<div class="exp-card-badge">' + esc(item.category_icon || '') + ' ' + esc(item.category_name) + '</div>') : '';
-        return '<div class="exp-card ds-card ds-card-static" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
-            '<div class="exp-card-avatar">' + pImg + '</div>' +
-            '<div class="exp-card-body">' +
-                '<div class="exp-card-title">' + esc(item.title) + '</div>' +
-                '<div class="exp-card-sub"><span class="exp-card-price">L. ' + (window.ltFormatNumber ? ltFormatNumber(item.price) : Number(item.price || 0).toLocaleString('es-HN')) + '</span>' + (cond ? ' · ' + esc(cond) : '') + '</div>' +
-                catPill +
+        const condClass = item.condition === 'new' ? 'pc-cond-new' : (item.condition === 'used' ? 'pc-cond-used' : 'pc-cond-other');
+        const price = Number(item.price || 0);
+        const fmt = window.ltFormatNumber ? ltFormatNumber(price) : price.toLocaleString('es-HN');
+        const qty = parseInt(item.quantity || 0);
+        const isFeatured = item.is_featured;
+        const hasShipping = item.shipping_available;
+        const catLabel = item.category_name ? (esc(item.category_icon || '') + ' ' + esc(item.category_name)) : '';
+        const sellerName = item.seller_name || '';
+        const sellerAvatar = item.seller_avatar;
+        const imgCount = Array.isArray(item.images) ? item.images.length : 0;
+
+        const pcHasCarousel = pValidImgs.length > 1;
+        return '<div class="pc-card" data-action="exp-view-producto" data-id="' + esc(item.id) + '">' +
+            (pcHasCarousel ? pImgHtml : '<div class="pc-img">' + pImgHtml) +
+                (isFeatured ? '<div class="pc-featured"><i class="fas fa-star"></i></div>' : '') +
+                (pcHasCarousel ? '' : (imgCount > 1 ? '<div class="pc-img-count"><i class="fas fa-images"></i> ' + imgCount + '</div>' : '')) +
+                (cond ? '<div class="pc-condition ' + condClass + '">' + esc(cond) + '</div>' : '') +
+            (pcHasCarousel ? '' : '</div>') +
+            '<div class="pc-body">' +
+                '<div class="pc-price">' + (item.currency === 'LTD' ? fmt + ' <span style="font-size:11px;opacity:0.7;">LTD</span>' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) + (item.currency && item.currency !== 'HNL' ? '<div class="sd-price-hint">&asymp; L. ' + (window.ltFormatNumber ? ltFormatNumber(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1)) : Math.round(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1))) + '</div>' : '') + '</div>' +
+                '<div class="pc-title">' + esc(item.title) + '</div>' +
+                '<div class="pc-meta">' +
+                    (catLabel ? '<span class="pc-cat">' + catLabel + '</span>' : '') +
+                    (hasShipping ? '<span class="pc-ship"><i class="fas fa-truck"></i> Envio</span>' : '') +
+                    (qty > 0 && qty <= 3 ? '<span class="pc-low-stock"><i class="fas fa-exclamation-circle"></i> Poco stock</span>' : '') +
+                    (qty === 0 ? '<span class="pc-sold-out">Agotado</span>' : '') +
+                '</div>' +
+                (sellerName ? '<div class="pc-seller">' +
+                    (sellerAvatar ? '<img src="' + esc(sellerAvatar) + '" alt="" class="pc-seller-avatar">' : '<span class="pc-seller-dot"></span>') +
+                    '<span>' + esc(sellerName) + '</span>' +
+                '</div>' : '') +
             '</div>' +
-            '<div class="exp-card-action"><span class="exp-arrow">→</span></div>' +
         '</div>';
     }
     
@@ -2308,23 +2614,20 @@ class MarketplaceSocialSystem {
         let products = [];
         let reviews = [];
 
-        if (showServices) {
-            try {
-                const providerDetail = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}`);
-                if (providerDetail.success && providerDetail.data?.provider?.services) {
-                    services = providerDetail.data.provider.services;
-                }
-            } catch (e) { /* ok */ }
-        }
+        // Always fetch both — orphan items need to be visible for deletion
+        try {
+            const providerDetail = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}`);
+            if (providerDetail.success && providerDetail.data?.provider?.services) {
+                services = providerDetail.data.provider.services;
+            }
+        } catch (e) { /* ok */ }
 
-        if (showProducts) {
-            try {
-                const prodRes = await this.apiRequest(`/api/marketplace/products?sellerId=${provider.user_id}&limit=20`);
-                if (prodRes.success && prodRes.data?.products) {
-                    products = prodRes.data.products;
-                }
-            } catch (e) { /* ok */ }
-        }
+        try {
+            const prodRes = await this.apiRequest(`/api/marketplace/products?sellerId=${provider.user_id}&limit=20`);
+            if (prodRes.success && prodRes.data?.products) {
+                products = prodRes.data.products;
+            }
+        } catch (e) { /* ok */ }
 
         try {
             const revRes = await this.apiRequest(`/api/marketplace/providers/${provider.provider_id}/reviews?limit=5`);
@@ -2347,10 +2650,10 @@ class MarketplaceSocialSystem {
         if (showServices) {
             try {
                 const bkRes = await this.apiRequest('/api/marketplace/bookings?role=provider&limit=50');
-                if (bkRes.success && bkRes.data?.bookings) {
-                    bookings = bkRes.data.bookings;
+                if (bkRes.success) {
+                    bookings = bkRes.data?.bookings || bkRes.bookings || [];
                 }
-            } catch (e) { /* ok */ }
+            } catch (e) { /* ok — may fail for new providers */ }
         }
 
         return { services, products, reviews, orders, bookings, showServices, showProducts };
@@ -2457,7 +2760,7 @@ class MarketplaceSocialSystem {
                 if (dashboard) {
                     const banner = document.createElement('div');
                     banner.className = 'store-portfolio-banner';
-                    banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/negocio/${esc(handle)}" target="_blank">latanda.online/negocio/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/negocio/${esc(handle)}">Copiar</button>`;
+                    banner.innerHTML = `<span>Tu portafolio publico:</span> <a href="/tienda/${esc(handle)}" target="_blank">latanda.online/tienda/${esc(handle)}</a> <button data-action="copy-portfolio-url" data-url="https://latanda.online/tienda/${esc(handle)}">Copiar</button>`;
                     dashboard.insertBefore(banner, dashboard.firstChild);
                 }
             }
@@ -3032,7 +3335,7 @@ class MarketplaceSocialSystem {
         const footerY = 285;
         doc.setFontSize(8); doc.setTextColor(150, 150, 150);
         doc.text('Documento para uso profesional unicamente. Prohibida su redistribucion sin autorizacion.', 15, footerY);
-        if (handle) doc.text(`Generado desde latanda.online/negocio/${handle} - ${new Date().toLocaleDateString('es-HN')}`, 15, footerY + 4);
+        if (handle) doc.text(`Generado desde latanda.online/tienda/${handle} - ${new Date().toLocaleDateString('es-HN')}`, 15, footerY + 4);
 
         doc.save(`CV-${name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
         this.showNotification('CV descargado', 'success');
@@ -3057,6 +3360,7 @@ class MarketplaceSocialSystem {
                 <button class="sd-tab${isActive('config')}" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> <span>Config</span></button>
             </div>
             <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <input type="file" id="logoFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
 
             <div class="sd-tab-panel" id="sdTabResumen"${isVisible('resumen')}>
                 ${this._buildResumenSubtabs(provider, storeData, esc)}
@@ -3076,6 +3380,25 @@ class MarketplaceSocialSystem {
         </div>`;
 
         // Cover upload handler
+        const logoInput = document.getElementById('logoFileInput');
+        if (logoInput) {
+            logoInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 3 * 1024 * 1024) { this.showNotification('La imagen excede 3MB', 'error'); return; }
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                    const resp = await fetch('/api/marketplace/providers/logo-image', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: formData });
+                    const result = await resp.json();
+                    if (result.success) { this.showNotification('Logo actualizado', 'success'); this.loadMyStore(); }
+                    else { this.showNotification(result.data?.error?.message || 'Error al subir logo', 'error'); }
+                } catch (err) { this.showNotification('Error de conexion', 'error'); }
+                logoInput.value = '';
+            });
+        }
+
         const coverInput = document.getElementById('coverFileInput');
         if (coverInput) {
             coverInput.addEventListener('change', async (e) => {
@@ -3229,25 +3552,20 @@ class MarketplaceSocialSystem {
         // Check setup completion
         let checklist = null;
         try { checklist = JSON.parse(localStorage.getItem('store_setup_checklist')); } catch(e) {}
-        if (!checklist) {
-            // Infer checklist from data
-            const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
-            const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
-            checklist = {
-                add_listing: hasListings,
-                complete_contact: hasContact,
-                share_store: false,
-                create_portfolio: false
-            };
-            try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
-        }
-
-        // Auto-update based on current data
+        // Always infer from real data (localStorage is just for share_store flag)
         const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
         const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
-        if (hasListings) checklist.add_listing = true;
-        if (hasContact) checklist.complete_contact = true;
+        const hasPortfolio = !!(this._currentPortfolio || provider.portfolio);
+        const prevChecklist = checklist || {};
+        checklist = {
+            add_listing: hasListings,
+            complete_contact: hasContact,
+            share_store: prevChecklist.share_store || false,
+            create_portfolio: hasPortfolio
+        };
         try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
+
+        // Checklist already inferred above
 
         const done = Object.values(checklist).filter(Boolean).length;
         const total = Object.keys(checklist).length;
@@ -3262,16 +3580,16 @@ class MarketplaceSocialSystem {
                     <strong>Tu tienda esta completa</strong>
                     <span>Comparte tu link para atraer clientes:</span>
                 </div>
-                <button class="sd-setup-action" data-action="sd-share-store" data-url="https://latanda.online/negocio/${this.escapeHtml(handle)}">Compartir \u2192</button>
+                <button class="sd-setup-action" data-action="sd-share-store" data-url="https://latanda.online/tienda/${this.escapeHtml(handle)}">Compartir \u2192</button>
             </div>`;
         }
 
         // Find next incomplete step
         const steps = [
             { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: 'goto-publicaciones' },
-            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'goto-config' },
-            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'goto-config' },
-            { key: 'create_portfolio', label: 'Crea tu portafolio/CV', action: 'open-portfolio-maker' }
+            { key: 'complete_contact', label: 'Completa tu informacion de contacto', action: 'goto-config' },
+            { key: 'share_store', label: 'Comparte tu tienda', action: 'sd-share-store' },
+            { key: 'create_portfolio', label: 'Crea tu portafolio profesional', action: 'open-portfolio-maker' }
         ];
         let nextStep = steps.find(s => !checklist[s.key]) || steps[0];
         const pct = Math.round((done / total) * 100);
@@ -3291,8 +3609,8 @@ class MarketplaceSocialSystem {
 
     _buildDashboardHeader(provider, esc) {
         const initial = (provider.business_name || provider.user_name || 'T').charAt(0).toUpperCase();
-        const avatarHtml = provider.profile_image
-            ? `<img src="${esc(provider.profile_image)}" alt="">`
+        const avatarHtml = (provider.logo_image || provider.profile_image)
+            ? `<img src="${esc(provider.logo_image || provider.profile_image)}" alt="">`
             : esc(initial);
         const badges = this._buildBadgesHtml(provider);
         const loc = [provider.city, provider.neighborhood].filter(Boolean).join(', ');
@@ -3313,7 +3631,7 @@ class MarketplaceSocialSystem {
                 </div>
                 <div class="sd-header-actions">
                     <button class="sd-header-btn" data-action="store-tab" data-tab="config"><i class="fas fa-pen"></i> Editar</button>
-                    ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/negocio/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Tienda</a>` : ''}
+                    ${provider.handle ? `<a class="sd-header-btn sd-header-btn-view" href="/tienda/${esc(provider.handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Tienda</a>` : ''}
                 </div>
             </div>
         </div>`;
@@ -3330,10 +3648,10 @@ class MarketplaceSocialSystem {
             btns += `<button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product"><i class="fas fa-plus"></i> Producto</button>`;
         }
         if (handle) {
-            btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/negocio/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
+            btns += `<button class="sd-quick-btn" data-action="sd-share-store" data-url="https://latanda.online/tienda/${esc(handle)}"><i class="fas fa-share-alt"></i> Compartir</button>`;
         }
         if (handle) {
-            btns += `<a class="sd-quick-btn" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-eye"></i> Ver Tienda</a>`;
+            btns += `<a class="sd-quick-btn" href="/tienda/${esc(handle)}" target="_blank"><i class="fas fa-eye"></i> Ver Tienda</a>`;
         }
         btns += `<button class="sd-quick-btn" data-action="open-portfolio-maker"><i class="fas fa-file-alt"></i> Portafolio</button>`;
         return `<div class="sd-quick-actions">${btns}</div>`;
@@ -3530,7 +3848,7 @@ class MarketplaceSocialSystem {
                     <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(reviews))}</div><div class="sd-preview-stat-label">Resenas</div></div>
                 </div>
                 <div class="sd-preview-footer">
-                    <a class="sd-preview-link" href="/negocio/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
+                    <a class="sd-preview-link" href="/tienda/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
                 </div>
             </div>
         </div>`;
@@ -3558,10 +3876,14 @@ class MarketplaceSocialSystem {
                 <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-service" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Servicio</button>
             </div>`;
             if (sCount > 0) {
-                serviciosPanel += services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('');
+                serviciosPanel += '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>';
             } else {
                 serviciosPanel += this._buildEmptyListingState('services', esc);
             }
+        } else if (sCount > 0) {
+            // Shop type doesn't match but items exist — show with delete option
+            serviciosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + sCount + ' servicio' + (sCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
+            serviciosPanel += '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>';
         } else {
             serviciosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-wrench"></i></div><div class="sd-empty-title">Tienda de productos</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Productos. Para ofrecer servicios, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3574,10 +3896,14 @@ class MarketplaceSocialSystem {
                 <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Producto</button>
             </div>`;
             if (pCount > 0) {
-                productosPanel += products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('');
+                productosPanel += '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>';
             } else {
                 productosPanel += this._buildEmptyListingState('products', esc);
             }
+        } else if (pCount > 0) {
+            // Shop type doesn't match but items exist — show with delete option
+            productosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + pCount + ' producto' + (pCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
+            productosPanel += '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>';
         } else {
             productosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-box"></i></div><div class="sd-empty-title">Tienda de servicios</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Servicios. Para vender productos, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3592,12 +3918,12 @@ class MarketplaceSocialSystem {
 
         // Build nav — hide tabs for shop types that don't apply
         let tabs = '';
-        if (showServices) {
+        if (showServices || sCount > 0) {
             tabs += `<button class="sd-subtab${isActive('servicios')}" data-action="pub-subtab" data-subtab="servicios">
                 <i class="fas fa-wrench"></i> <span>Servicios</span>${sBadge}
             </button>`;
         }
-        if (showProducts) {
+        if (showProducts || pCount > 0) {
             tabs += `<button class="sd-subtab${isActive('productos')}" data-action="pub-subtab" data-subtab="productos">
                 <i class="fas fa-box"></i> <span>Productos</span>${pBadge}
             </button>`;
@@ -3611,8 +3937,8 @@ class MarketplaceSocialSystem {
 
         return `<div class="sd-subtabs-container">
             <div class="sd-subtabs-nav">${tabs}</div>
-            ${showServices ? `<div class="sd-subtab-panel" data-panel="servicios"${isVisible('servicios')}>${serviciosPanel}</div>` : ''}
-            ${showProducts ? `<div class="sd-subtab-panel" data-panel="productos"${isVisible('productos')}>${productosPanel}</div>` : ''}
+            ${(showServices || sCount > 0) ? `<div class="sd-subtab-panel" data-panel="servicios"${isVisible('servicios')}>${serviciosPanel}</div>` : ''}
+            ${(showProducts || pCount > 0) ? `<div class="sd-subtab-panel" data-panel="productos"${isVisible('productos')}>${productosPanel}</div>` : ''}
             <div class="sd-subtab-panel" data-panel="pedidos"${isVisible('pedidos')}>
                 ${pedidosPanel}
             </div>
@@ -3637,14 +3963,14 @@ class MarketplaceSocialSystem {
             tabs += `<button class="sd-listings-tab${firstTab === 'services' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="services">
                 <i class="fas fa-wrench"></i> Servicios <span class="sd-listings-count">${esc(String(sCount))}</span>
             </button>`;
-            const sCards = sCount > 0 ? services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') : this._buildEmptyListingState('services', esc);
+            const sCards = sCount > 0 ? '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>' : this._buildEmptyListingState('services', esc);
             contents += `<div class="sd-listings-content${firstTab === 'services' ? ' active' : ''}" data-tab="services">${sCards}</div>`;
         }
         if (showProducts) {
             tabs += `<button class="sd-listings-tab${firstTab === 'products' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="products">
                 <i class="fas fa-box"></i> Productos <span class="sd-listings-count">${esc(String(pCount))}</span>
             </button>`;
-            const pCards = pCount > 0 ? products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') : this._buildEmptyListingState('products', esc);
+            const pCards = pCount > 0 ? '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>' : this._buildEmptyListingState('products', esc);
             contents += `<div class="sd-listings-content${firstTab === 'products' ? ' active' : ''}" data-tab="products">${pCards}</div>`;
         }
 
@@ -3662,49 +3988,53 @@ class MarketplaceSocialSystem {
     }
 
     _buildEnhancedItemCard(item, type, esc) {
-        const imgSrc = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
-        const imgHtml = imgSrc ? `<img src="${esc(imgSrc)}" alt="">` : `<span>${type === 'services' ? '\u{1f527}' : '\u{1f4e6}'}</span>`;
         const itemId = type === 'services' ? item.service_id : item.id;
-        const featuredClass = item.featured ? ' featured-active' : '';
+        const validImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
+        const thumbSrc = validImgs.length > 0 ? this._imgUrl(validImgs[0]) : null;
+        const imgCount = validImgs.length;
+        const featuredClass = item.featured ? ' sd-gc-featured' : '';
 
         let priceHtml = '';
-        let statusHtml = '';
         let metaHtml = '';
-        let stockHtml = '';
+        let statusHtml = '';
 
         if (type === 'services') {
-            priceHtml = item.price_type === 'fixed' ? `L. ${esc(String(item.price))}` : esc(item.price_type || 'Consultar');
-            metaHtml = `${esc(String(item.booking_count || 0))} reservas`;
-            statusHtml = `<span class="sd-item-status active">Activo</span>`;
+            const p = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(p) : p.toLocaleString('es-HN');
+            priceHtml = item.price_type === 'fixed' ? (item.currency === 'LTD' ? fmt + ' LTD' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) : (item.price_type === 'hourly' ? (item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) + '/hr' : esc(item.price_type || 'Consultar'));
+            const bk = parseInt(item.booking_count || 0);
+            const rt = Number(item.avg_rating || 0).toFixed(1);
+            metaHtml = (bk > 0 ? bk + ' reservas' : '0 reservas') + (rt !== '0.0' ? ' · ⭐ ' + rt : '');
+            statusHtml = '<span class="sd-gc-status sd-gc-active">Activo</span>';
         } else {
-            priceHtml = `L. ${esc(String(item.price))}`;
+            const p = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(p) : p.toLocaleString('es-HN');
+            priceHtml = item.currency === 'LTD' ? fmt + ' LTD' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt;
             const qty = parseInt(item.quantity || 0);
-            stockHtml = `<input type="number" class="sd-inline-stock" data-product-id="${esc(String(itemId))}" value="${qty}" min="0" max="10000" title="Stock">`;
-            if (qty === 0) {
-                statusHtml = `<span class="sd-item-status soldout">Agotado</span>`;
-            } else if (qty <= 3) {
-                statusHtml = `<span class="sd-item-status sd-stock-low">Poco stock</span>`;
-            } else {
-                statusHtml = `<span class="sd-item-status active">${esc(String(qty))} disp.</span>`;
-            }
-            metaHtml = `${esc(String(qty))} en stock`;
+            metaHtml = qty + ' en stock';
+            if (qty === 0) statusHtml = '<span class="sd-gc-status sd-gc-soldout">Agotado</span>';
+            else if (qty <= 3) statusHtml = '<span class="sd-gc-status sd-gc-low">Poco stock</span>';
+            else statusHtml = '<span class="sd-gc-status sd-gc-active">' + qty + ' disp.</span>';
         }
 
-        return `<div class="sd-item-card">
-            <div class="sd-item-image">${imgHtml}</div>
-            <div class="sd-item-body">
-                <div class="sd-item-title">${esc(item.title)}</div>
-                <div class="sd-item-price">${priceHtml}</div>
-                <div class="sd-item-meta">${metaHtml}</div>
-                ${stockHtml}
+        const catLabel = item.category_name ? esc(item.category_icon || '') + ' ' + esc(item.category_name) : '';
+
+        return `<div class="sd-gc${featuredClass}" data-item-id="${esc(String(itemId))}" data-item-type="${esc(type)}">
+            <div class="sd-gc-thumb">
+                ${thumbSrc ? '<img src="' + esc(thumbSrc) + '" alt="" loading="lazy">' : '<div class="sd-gc-thumb-placeholder"><i class="fas ' + (type === 'services' ? 'fa-wrench' : 'fa-box') + '"></i></div>'}
+                ${imgCount > 1 ? '<span class="sd-gc-img-count"><i class="fas fa-images"></i> ' + imgCount + '</span>' : ''}
+                ${statusHtml}
             </div>
-            ${statusHtml}
-            <div class="sd-item-actions">
-                <button class="sd-item-action" data-action="edit-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Editar"><i class="fas fa-pen"></i></button>
-                <button class="sd-item-action sd-item-action-danger" data-action="delete-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Eliminar"><i class="fas fa-trash"></i></button>
-                <button class="sd-item-action${featuredClass}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar"><i class="fas fa-star"></i></button>
-                <button class="sd-item-action boost-btn" data-action="boost-item" data-type="${type === 'services' ? 'service' : 'product'}" data-id="${esc(String(itemId))}" title="Impulsar"><i class="fas fa-rocket"></i></button>
-                <button class="sd-item-action" data-action="move-item-up" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-order="${esc(String(item.display_order || 0))}" title="Subir"><i class="fas fa-arrow-up"></i></button>
+            <div class="sd-gc-body">
+                <div class="sd-gc-title">${esc(item.title)}</div>
+                <div class="sd-gc-price">${priceHtml}</div>
+                <div class="sd-gc-meta">${catLabel ? catLabel + ' · ' : ''}${metaHtml}</div>
+            </div>
+            <div class="sd-gc-actions">
+                <button class="sd-gc-action" data-action="preview-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Preview"><i class="fas fa-eye"></i></button>
+                <button class="sd-gc-action" data-action="edit-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Editar"><i class="fas fa-pen"></i></button>
+                <button class="sd-gc-action sd-gc-action-danger" data-action="delete-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                <button class="sd-gc-action${item.featured ? ' sd-gc-action-star' : ''}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar"><i class="fas fa-star"></i></button>
             </div>
         </div>`;
     }
@@ -3893,6 +4223,22 @@ class MarketplaceSocialSystem {
             </div>
         </div>
         <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-store-alt"></i> Logo de Tienda</div></div>
+            <div class="sd-logo-config">
+                <div class="sd-logo-preview">
+                    ${provider.logo_image
+                        ? '<img src="' + esc(provider.logo_image) + '" alt="Logo" class="sd-logo-img">'
+                        : '<div class="sd-logo-placeholder"><i class="fas fa-store"></i></div>'
+                    }
+                </div>
+                <div class="sd-logo-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="upload-logo" style="padding:8px 16px;font-size:0.82rem;"><i class="fas fa-camera"></i> ${provider.logo_image ? 'Cambiar Logo' : 'Subir Logo'}</button>
+                    ${provider.logo_image ? '<button class="sd-danger-btn" data-action="remove-logo" style="padding:8px 16px;font-size:0.82rem;"><i class="fas fa-trash"></i> Eliminar</button>' : ''}
+                    <div style="font-size:0.75rem;color:var(--ds-text-muted,rgba(255,255,255,0.35));margin-top:6px;">Recomendado: 256x256px. Se muestra en cards y perfil de tu tienda.</div>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
             <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-store"></i> Informacion del Negocio</div></div>
             <div class="sd-inline-form" id="sdEditForm">
                 <div class="sd-form-row">
@@ -3903,19 +4249,25 @@ class MarketplaceSocialSystem {
                     <label>Descripcion</label>
                     <textarea id="sdEditDesc" class="sd-form-input" rows="3" maxlength="2000">${esc(provider.description || '')}</textarea>
                 </div>
+                <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin:12px 0 8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-store" style="color:var(--store-accent-primary,#8B5CF6);"></i> Contacto del Negocio (publico)</div>
                 <div class="sd-form-grid">
                     <div class="sd-form-row">
-                        <label>Telefono</label>
-                        <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20">
+                        <label>Telefono del negocio</label>
+                        <input type="tel" id="sdEditBusinessPhone" class="sd-form-input" value="${esc(provider.business_phone || '')}" maxlength="20" placeholder="+504 0000-0000">
                     </div>
                     <div class="sd-form-row">
                         <label>WhatsApp</label>
-                        <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20">
+                        <input type="tel" id="sdEditWhatsapp" class="sd-form-input" value="${esc(provider.whatsapp || '')}" maxlength="20" placeholder="+504 0000-0000">
                     </div>
                 </div>
                 <div class="sd-form-row">
                     <label>Email de contacto</label>
                     <input type="email" id="sdEditEmail" class="sd-form-input" value="${esc(provider.email || '')}" maxlength="255">
+                </div>
+                <div style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);margin:16px 0 8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-user-lock" style="color:rgba(255,255,255,0.3);"></i> Telefono Personal (privado, opcional)</div>
+                <div class="sd-form-row">
+                    <label>Telefono personal</label>
+                    <input type="tel" id="sdEditPhone" class="sd-form-input" value="${esc(provider.phone || '')}" maxlength="20" placeholder="No visible publicamente" style="border-style:dashed;">
                 </div>
                 <div class="sd-form-grid">
                     <div class="sd-form-row">
@@ -3941,6 +4293,77 @@ class MarketplaceSocialSystem {
                 </div>
                 <div class="sd-form-actions">
                     <button class="sd-form-btn sd-form-btn-primary" data-action="save-store-info"><i class="fas fa-save"></i> Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="far fa-clock"></i> Horario de Atencion</div></div>
+            <div class="sd-inline-form" id="sdHoursForm">
+                ${(() => {
+                    const days = [['monday','Lunes'],['tuesday','Martes'],['wednesday','Miercoles'],['thursday','Jueves'],['friday','Viernes'],['saturday','Sabado'],['sunday','Domingo']];
+                    const hours = provider.business_hours || {};
+                    return days.map(([key, label]) => {
+                        const h = hours[key];
+                        const isOpen = h && h.open;
+                        return '<div class="sd-form-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                            '<label style="min-width:80px;font-size:13px;">' + label + '</label>' +
+                            '<input type="time" class="sd-form-input sd-hours-open" data-day="' + key + '" value="' + (isOpen ? h.open : '09:00') + '" style="max-width:110px;">' +
+                            '<span style="color:rgba(255,255,255,0.3);">-</span>' +
+                            '<input type="time" class="sd-form-input sd-hours-close" data-day="' + key + '" value="' + (isOpen ? h.close : '17:00') + '" style="max-width:110px;">' +
+                            '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:rgba(255,255,255,0.5);"><input type="checkbox" class="sd-hours-active" data-day="' + key + '"' + (isOpen ? ' checked' : '') + '> Abierto</label>' +
+                        '</div>';
+                    }).join('');
+                })()}
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-hours"><i class="fas fa-save"></i> Guardar Horario</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-credit-card"></i> Metodos de Pago</div></div>
+            <div class="sd-inline-form">
+                ${(() => {
+                    const methods = [['wallet_ltd','LTD Wallet','fa-coins'],['bank_transfer','Transferencia Bancaria','fa-university'],['crypto','Criptomonedas','fa-bitcoin'],['cash','Efectivo','fa-money-bill'],['mobile_money','Tigo/Claro Money','fa-mobile-alt'],['paypal','PayPal','fa-paypal'],['card','Tarjeta','fa-credit-card']];
+                    const current = provider.payment_methods || [];
+                    return '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + methods.map(([id, label, icon]) => {
+                        const checked = current.includes(id);
+                        return '<label class="sd-pay-check' + (checked ? ' sd-pay-active' : '') + '" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,' + (checked ? '0.2' : '0.08') + ');background:rgba(255,255,255,' + (checked ? '0.06' : '0.02') + ');cursor:pointer;font-size:13px;color:rgba(255,255,255,' + (checked ? '0.8' : '0.5') + ');transition:all 0.2s;"><input type="checkbox" class="sd-pay-method" value="' + id + '"' + (checked ? ' checked' : '') + ' style="display:none;"><i class="fas ' + icon + '" style="color:var(--store-accent-primary,#8B5CF6);"></i> ' + label + '</label>';
+                    }).join('') + '</div>';
+                })()}
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-payments"><i class="fas fa-save"></i> Guardar Metodos</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-shield-alt"></i> Politicas</div></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-row"><label>Garantia</label><input type="text" id="sdPolWarranty" class="sd-form-input" value="${esc(provider.policies?.warranty || '')}" placeholder="Ej: 30 dias de soporte incluidos" maxlength="300"></div>
+                <div class="sd-form-row"><label>Reembolso</label><input type="text" id="sdPolRefund" class="sd-form-input" value="${esc(provider.policies?.refund || '')}" placeholder="Ej: Reembolso completo si no se inicia" maxlength="300"></div>
+                <div class="sd-form-row"><label>Entrega</label><input type="text" id="sdPolDelivery" class="sd-form-input" value="${esc(provider.policies?.delivery || '')}" placeholder="Ej: Entrega iterativa con demos semanales" maxlength="300"></div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-policies"><i class="fas fa-save"></i> Guardar Politicas</button>
+                </div>
+            </div>
+        </div>
+        <div class="sd-config-section">
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-question-circle"></i> Preguntas Frecuentes</div></div>
+            <div class="sd-inline-form" id="sdFaqForm">
+                ${(() => {
+                    const faqs = provider.faq || [];
+                    let html = '';
+                    faqs.forEach((item, i) => {
+                        html += '<div class="sd-faq-row" style="margin-bottom:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">' +
+                            '<input type="text" class="sd-form-input sd-faq-q" value="' + esc(item.q || '') + '" placeholder="Pregunta" style="margin-bottom:6px;">' +
+                            '<textarea class="sd-form-input sd-faq-a" rows="2" placeholder="Respuesta">' + esc(item.a || '') + '</textarea>' +
+                            '<button data-action="remove-faq" data-index="' + i + '" style="background:none;border:none;color:#ef4444;font-size:12px;cursor:pointer;margin-top:4px;"><i class="fas fa-trash"></i> Eliminar</button>' +
+                        '</div>';
+                    });
+                    return html;
+                })()}
+                <button data-action="add-faq" style="background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.15);border-radius:10px;padding:10px;width:100%;color:rgba(255,255,255,0.5);cursor:pointer;font-size:13px;margin-bottom:12px;font-family:inherit;"><i class="fas fa-plus"></i> Agregar pregunta</button>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="save-faq"><i class="fas fa-save"></i> Guardar FAQ</button>
                 </div>
             </div>
         </div>
@@ -4255,7 +4678,7 @@ class MarketplaceSocialSystem {
         const currentTheme = provider.store_theme || 'dark';
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'storeEditOverlay';
         const editTypeIcon = (provider.shop_type || 'services') === 'products' ? '📦' : (provider.shop_type || 'services') === 'mixed' ? '🏬' : '🔧';
         const editTypeLabel = (provider.shop_type || 'services') === 'products' ? 'Productos' : (provider.shop_type || 'services') === 'mixed' ? 'Mixta' : 'Servicios';
@@ -4496,7 +4919,7 @@ class MarketplaceSocialSystem {
     }
 
     async handleCreateProduct() {
-        const overlay = document.getElementById('productCreateOverlay');
+        const overlay = document.getElementById('productCreateOverlay') || document.getElementById('inlineProductForm');
         if (!overlay) return;
         const submitBtn = overlay.querySelector('[data-action="submit-product"]');
         if (!submitBtn) return;
@@ -4512,7 +4935,7 @@ class MarketplaceSocialSystem {
                 category_id: getVal('cpCategory'),
                 condition: getVal('cpCondition'),
                 price: parseFloat(getVal('cpPrice')) || 0,
-                currency: getVal('cpCurrency') || 'HNL',
+                currency: (document.getElementById('cpCurrencyVal')?.value || getVal('cpCurrency') || 'HNL'),
                 quantity: parseInt(getVal('cpQuantity')) || 1,
                 location: getVal('cpLocation') || 'Honduras',
                 description: getVal('cpDescription'),
@@ -5261,7 +5684,7 @@ class MarketplaceSocialSystem {
             if (data.success && data.data?.categories?.length) {
                 select.innerHTML = '<option value="">Seleccionar...</option>' +
                     data.data.categories
-                        .filter(c => c.is_active)
+                        .filter(c => c.is_active !== false)
                         .sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99))
                         .map(c => '<option value="' + this.escapeHtml(c.category_id) + '">' +
                             this.escapeHtml((c.icon || '') + ' ' + (c.name_es || c.name)) + '</option>')
@@ -5303,13 +5726,153 @@ class MarketplaceSocialSystem {
     // Create Service Modal
     // =============================================
 
+    _showInlineServiceForm() {
+        if (document.getElementById('inlineServiceForm')) return;
+        if (!this._images) this._images = {};
+        this._images.service = [];
+
+        // Ensure Publicaciones > Servicios is active
+        this._activeStoreTab = 'publicaciones';
+        try { sessionStorage.setItem('store_active_tab', 'publicaciones'); sessionStorage.setItem('pub_subtab', 'servicios'); } catch(e) {}
+        document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+        document.querySelector('.sd-tab[data-tab="publicaciones"]')?.classList.add('sd-tab-active');
+        document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('sdTabPublicaciones')?.style.removeProperty('display');
+        const pubContainer = document.querySelector('#sdTabPublicaciones .sd-subtabs-container');
+        if (pubContainer) {
+            pubContainer.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+            pubContainer.querySelector('[data-subtab="servicios"]')?.classList.add('sd-subtab-active');
+            pubContainer.querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+            pubContainer.querySelector('.sd-subtab-panel[data-panel="servicios"]')?.style.removeProperty('display');
+        }
+
+        const panel = document.querySelector('#myStoreContent .sd-subtab-panel[data-panel="servicios"]');
+        if (!panel) { this.openCreateServiceModal(); return; }
+
+        const form = document.createElement('div');
+        form.id = 'inlineServiceForm';
+        form.className = 'sd-config-section';
+        form.style.cssText = 'animation:sdSubFadeIn 0.25s ease;border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:16px;margin-bottom:16px;background:rgba(139,92,246,0.04);';
+        form.innerHTML = `
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-plus-circle" style="color:var(--ds-green,#10B981);"></i> Nuevo Servicio</div><button data-action="close-create-service" style="background:none;border:none;color:var(--ds-text-secondary,rgba(255,255,255,0.5));font-size:18px;cursor:pointer;padding:4px 8px;">&times;</button></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-row"><label>Categoria *</label><select id="csCategory" class="sd-form-input"></select></div>
+                <div class="sd-form-row"><label>Titulo *</label><input type="text" id="csTitle" class="sd-form-input" maxlength="200" placeholder="Ej: Reparacion de computadoras a domicilio"></div>
+                <div class="sd-form-row"><label>Descripcion corta</label><input type="text" id="csShortDesc" class="sd-form-input" maxlength="160" placeholder="Resumen en una linea"></div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Tipo de Precio *</label><select id="csPriceType" class="sd-form-input"><option value="fixed">Precio Fijo</option><option value="hourly">Por Hora</option><option value="quote">Negociable</option><option value="free">Gratis</option></select></div>
+                    <div class="sd-form-row" id="csCurrencyGroup"><label>Moneda</label><div class="sd-currency-pills" id="csCurrencyPills"><button type="button" class="sd-curr-pill sd-curr-active" data-currency="HNL" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='HNL'"><span class="sd-curr-sym">L.</span> HNL</button><button type="button" class="sd-curr-pill" data-currency="USD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='USD'"><span class="sd-curr-sym">$</span> USD</button><button type="button" class="sd-curr-pill" data-currency="LTD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='LTD'"><span class="sd-curr-sym">&#x1FA99;</span> LTD</button></div><input type="hidden" id="csCurrencyVal" value="HNL"></div>
+                </div>
+                <div class="sd-form-grid" id="csPriceRow">
+                    <div class="sd-form-row"><label>Precio *</label><input type="number" id="csPrice" class="sd-form-input" min="0" max="1000000" step="0.01" placeholder="0.00"></div>
+                    <div class="sd-form-row"><label>Precio Max (opcional)</label><input type="number" id="csPriceMax" class="sd-form-input" min="0" max="1000000" step="0.01"></div>
+                    <div class="sd-form-row"><label>Duracion (hrs)</label><input type="number" id="csDuration" class="sd-form-input" min="0.5" max="720" step="0.5" value="1"></div>
+                </div>
+                <div class="sd-form-row"><label>Descripcion completa *</label><textarea id="csDescription" class="sd-form-input" rows="3" maxlength="2000" placeholder="Que incluye, experiencia, garantias..."></textarea></div>
+                <div class="sd-form-row"><label>Imagenes (max 5)</label>
+                    <div class="store-image-dropzone" id="serviceDropzone" style="border-radius:10px;padding:16px;"><input type="file" id="serviceFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none"><div style="text-align:center;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;"><i class="fas fa-camera" style="font-size:20px;margin-bottom:6px;display:block;"></i>Haz clic o arrastra imagenes</div></div>
+                    <div class="store-image-previews" id="serviceImagePreviews"></div>
+                </div>
+                <div class="sd-form-row"><label>Etiquetas (separadas por coma)</label><input type="text" id="csTags" class="sd-form-input" placeholder="rapido, profesional, garantizado"></div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn" data-action="close-create-service" style="background:rgba(255,255,255,0.06);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">Cancelar</button>
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="submit-service"><i class="fas fa-check"></i> Publicar Servicio</button>
+                </div>
+            </div>`;
+        panel.insertBefore(form, panel.firstChild);
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this._loadCategories('csCategory');
+        this._setupDropzone('serviceDropzone', 'serviceFileInput', 'service');
+        const ptSel = form.querySelector('#csPriceType');
+        if (ptSel) {
+            ptSel.addEventListener('change', () => {
+                const hide = (ptSel.value === 'quote' || ptSel.value === 'free');
+                const pr = document.getElementById('csPriceRow');
+                const cg = document.getElementById('csCurrencyGroup');
+                if (pr) pr.style.display = hide ? 'none' : '';
+                if (cg) cg.style.display = hide ? 'none' : '';
+            });
+        }
+    }
+
+    _showInlineProductForm() {
+        if (document.getElementById('inlineProductForm')) return;
+        if (!this._images) this._images = {};
+        this._images.product = [];
+
+        this._activeStoreTab = 'publicaciones';
+        try { sessionStorage.setItem('store_active_tab', 'publicaciones'); sessionStorage.setItem('pub_subtab', 'productos'); } catch(e) {}
+        document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+        document.querySelector('.sd-tab[data-tab="publicaciones"]')?.classList.add('sd-tab-active');
+        document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('sdTabPublicaciones')?.style.removeProperty('display');
+        const pubContainer = document.querySelector('#sdTabPublicaciones .sd-subtabs-container');
+        if (pubContainer) {
+            pubContainer.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+            pubContainer.querySelector('[data-subtab="productos"]')?.classList.add('sd-subtab-active');
+            pubContainer.querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+            pubContainer.querySelector('.sd-subtab-panel[data-panel="productos"]')?.style.removeProperty('display');
+        }
+
+        const panel = document.querySelector('#myStoreContent .sd-subtab-panel[data-panel="productos"]');
+        if (!panel) { this.openCreateProductModal(); return; }
+
+        const form = document.createElement('div');
+        form.id = 'inlineProductForm';
+        form.className = 'sd-config-section';
+        form.style.cssText = 'animation:sdSubFadeIn 0.25s ease;border:1px solid rgba(0,255,255,0.2);border-radius:14px;padding:16px;margin-bottom:16px;background:rgba(0,255,255,0.03);';
+        form.innerHTML = `
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-plus-circle" style="color:var(--ds-cyan,#06B6D4);"></i> Nuevo Producto</div><button data-action="close-create-product" style="background:none;border:none;color:var(--ds-text-secondary,rgba(255,255,255,0.5));font-size:18px;cursor:pointer;padding:4px 8px;">&times;</button></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Categoria *</label><select id="cpCategory" class="sd-form-input"></select></div>
+                    <div class="sd-form-row"><label>Condicion *</label><select id="cpCondition" class="sd-form-input"><option value="new">Nuevo</option><option value="like_new">Como Nuevo</option><option value="used">Usado</option><option value="refurbished">Regular</option></select></div>
+                </div>
+                <div class="sd-form-row"><label>Nombre del Producto *</label><input type="text" id="cpTitle" class="sd-form-input" maxlength="200" placeholder="Ej: iPhone 14 Pro Max 256GB"></div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Precio *</label><input type="number" id="cpPrice" class="sd-form-input" min="0" max="1000000" step="0.01" placeholder="0.00"></div>
+                    <div class="sd-form-row"><label>Moneda</label><div class="sd-currency-pills" id="cpCurrencyPills"><button type="button" class="sd-curr-pill sd-curr-active" data-currency="HNL" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='HNL'"><span class="sd-curr-sym">L.</span> HNL</button><button type="button" class="sd-curr-pill" data-currency="USD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='USD'"><span class="sd-curr-sym">$</span> USD</button><button type="button" class="sd-curr-pill" data-currency="LTD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='LTD'"><span class="sd-curr-sym">&#x1FA99;</span> LTD</button></div><input type="hidden" id="cpCurrencyVal" value="HNL"></div>
+                    <div class="sd-form-row"><label>Cantidad *</label><input type="number" id="cpQuantity" class="sd-form-input" min="1" max="10000" value="1"></div>
+                </div>
+                <div class="sd-form-row"><label>Ubicacion</label><input type="text" id="cpLocation" class="sd-form-input" placeholder="Ej: Tegucigalpa"></div>
+                <div class="sd-form-row"><label>Descripcion *</label><textarea id="cpDescription" class="sd-form-input" rows="3" maxlength="2000" placeholder="Caracteristicas, estado, que incluye..."></textarea></div>
+                <div class="sd-form-row"><label>Imagenes (max 5)</label>
+                    <div class="store-image-dropzone" id="productDropzone" style="border-radius:10px;padding:16px;"><input type="file" id="productFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none"><div style="text-align:center;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;"><i class="fas fa-camera" style="font-size:20px;margin-bottom:6px;display:block;"></i>Haz clic o arrastra imagenes</div></div>
+                    <div class="store-image-previews" id="productImagePreviews"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <input type="checkbox" id="cpShipping" style="width:18px;height:18px;">
+                    <label for="cpShipping" style="margin:0;font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.6));">Ofrezco envio a domicilio</label>
+                </div>
+                <div id="cpShippingPriceGroup" style="display:none;margin-bottom:12px;">
+                    <label style="font-size:12px;color:var(--ds-text-muted,rgba(255,255,255,0.4));">Costo de envio</label>
+                    <input type="number" id="cpShippingPrice" class="sd-form-input" min="0" step="0.01" placeholder="0.00" style="max-width:150px;">
+                </div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn" data-action="close-create-product" style="background:rgba(255,255,255,0.06);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">Cancelar</button>
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="submit-product"><i class="fas fa-check"></i> Publicar Producto</button>
+                </div>
+            </div>`;
+        panel.insertBefore(form, panel.firstChild);
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this._loadCategories('cpCategory');
+        this._setupDropzone('productDropzone', 'productFileInput', 'product');
+        const shipCb = form.querySelector('#cpShipping');
+        if (shipCb) {
+            shipCb.addEventListener('change', () => {
+                const g = document.getElementById('cpShippingPriceGroup');
+                if (g) g.style.display = shipCb.checked ? '' : 'none';
+            });
+        }
+    }
+
     openCreateServiceModal() {
         document.getElementById('serviceCreateOverlay')?.remove();
         if (!this._images) this._images = {};
         this._images.service = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'serviceCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -5411,7 +5974,7 @@ class MarketplaceSocialSystem {
     }
 
     async handleCreateService() {
-        const overlay = document.getElementById('serviceCreateOverlay');
+        const overlay = document.getElementById('serviceCreateOverlay') || document.getElementById('inlineServiceForm');
         if (!overlay) return;
         const submitBtn = overlay.querySelector('[data-action="submit-service"]');
         if (!submitBtn) return;
@@ -5431,7 +5994,7 @@ class MarketplaceSocialSystem {
                 price_type: priceType,
                 price: (priceType === 'quote' || priceType === 'free') ? null : (parseFloat(getVal('csPrice')) || null),
                 price_max: parseFloat(getVal('csPriceMax')) || null,
-                currency: getVal('csCurrency') || 'HNL',
+                currency: (document.getElementById('csCurrencyVal')?.value || getVal('csCurrency') || 'HNL'),
                 duration_hours: parseFloat(getVal('csDuration')) || 1,
                 short_description: getVal('csShortDesc'),
                 description: getVal('csDescription'),
@@ -5504,7 +6067,7 @@ class MarketplaceSocialSystem {
         this._images.product = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'productCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -5631,7 +6194,7 @@ class MarketplaceSocialSystem {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const overlay = document.createElement('div');
         overlay.id = 'productEditOverlay';
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Producto</h3><button data-action="close-edit-product" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editProductForm">
@@ -5748,7 +6311,7 @@ class MarketplaceSocialSystem {
         document.getElementById('serviceEditOverlay')?.remove();
         const overlay = document.createElement('div');
         overlay.id = 'serviceEditOverlay';
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Servicio</h3><button data-action="close-edit-service" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editServiceForm">
@@ -6223,7 +6786,7 @@ async function viewProduct(productId) {
         let imgs = p.images || [];
         if (typeof imgs === 'string') { try { imgs = JSON.parse(imgs); } catch { imgs = []; } }
         if (!Array.isArray(imgs)) imgs = [];
-        const mainImg = imgs.length > 0 ? (typeof imgs[0] === 'object' ? imgs[0].url : imgs[0]) : null;
+        const validProdImgs = imgs.map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http'))); const mainImg = validProdImgs.length > 0 ? validProdImgs[0] : null;
 
         const condMap = { new: 'Nuevo', used: 'Usado', like_new: 'Como nuevo', refurbished: 'Reacondicionado', good: 'Bueno', acceptable: 'Aceptable' };
         const condLabel = condMap[p.condition] || '';
@@ -6457,7 +7020,21 @@ async function viewService(serviceId) {
         overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:16px;';
         overlay.innerHTML = '<div style="background:#1a1f2e;border-radius:16px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);">' +
             '<div style="position:relative;">' +
-                (mainImg ? '<img src="' + esc(mainImg) + '" style="width:100%;height:220px;object-fit:cover;border-radius:16px 16px 0 0;">' : '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">🛠️</div>') +
+                (function() {
+                    var validImgs = imgs.map(function(i) { return typeof i === 'object' ? i.url : i; }).filter(function(u) { return u && (u.startsWith('/') || u.startsWith('http')); });
+                    if (validImgs.length > 1) {
+                        return '<div style="position:relative;overflow:hidden;border-radius:16px 16px 0 0;" id="vsCarousel" data-current="0" data-total="' + validImgs.length + '">' +
+                            '<div style="display:flex;transition:transform 0.3s;" class="vs-track">' + validImgs.map(function(u) { return '<img src="' + esc(u) + '" style="min-width:100%;height:260px;object-fit:cover;">'; }).join('') + '</div>' +
+                            '<button onclick="var c=document.getElementById(\'vsCarousel\');var t=parseInt(c.dataset.total);var cur=(parseInt(c.dataset.current)-1+t)%t;c.dataset.current=cur;c.querySelector(\'.vs-track\').style.transform=\'translateX(-\'+cur*100+\'%)\';c.querySelector(\'.vs-counter\').textContent=(cur+1)+\'/\'+t;" style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">‹</button>' +
+                            '<button onclick="var c=document.getElementById(\'vsCarousel\');var t=parseInt(c.dataset.total);var cur=(parseInt(c.dataset.current)+1)%t;c.dataset.current=cur;c.querySelector(\'.vs-track\').style.transform=\'translateX(-\'+cur*100+\'%)\';c.querySelector(\'.vs-counter\').textContent=(cur+1)+\'/\'+t;" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">›</button>' +
+                            '<span class="vs-counter" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:#fff;padding:2px 8px;border-radius:6px;font-size:12px;">1/' + validImgs.length + '</span>' +
+                        '</div>';
+                    } else if (mainImg) {
+                        return '<img src="' + esc(mainImg) + '" style="width:100%;height:260px;object-fit:cover;border-radius:16px 16px 0 0;">';
+                    } else {
+                        return '<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(255,255,255,0.05);border-radius:16px 16px 0 0;">🛠️</div>';
+                    }
+                })() +
                 '<button onclick="document.getElementById(\'vsOverlay\').remove()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.6);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;">✕</button>' +
             '</div>' +
             '<div style="padding:16px;">' +
@@ -6474,7 +7051,14 @@ async function viewService(serviceId) {
                     '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + provName.charAt(0) + '</div>' +
                     '<div style="color:#fff;font-size:14px;font-weight:600;">' + provName + '</div>' +
                 '</div>' +
-                '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="document.getElementById(\'vsOverlay\').remove(); bookService(' + parseInt(serviceId) + ')">Reservar</button>' +
+                (function() {
+                    var ctaLabel, ctaIcon, ctaOnclick;
+                    if (s.price_type === 'fixed') { ctaLabel = '🤝 Contratar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); bookService(" + parseInt(serviceId) + ")"; }
+                    else if (s.price_type === 'hourly' || s.price_type === 'quote' || s.price_type === 'negotiable') { ctaLabel = '📋 Solicitar Cotizacion'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
+                    else if (s.price_type === 'free') { ctaLabel = '📅 Agendar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); bookService(" + parseInt(serviceId) + ")"; }
+                    else { ctaLabel = '✉️ Contactar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
+                    return '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="' + ctaOnclick + '">' + ctaLabel + '</button>';
+                })() +
             '</div>' +
         '</div>';
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -7050,7 +7634,15 @@ function setupMarketplaceDelegatedListeners() {
     });
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-action]');
-        if (!btn) return;
+        if (!btn) {
+            // Check if click is on a tc-card but not on an action button
+            const tcCard = e.target.closest('.tc-card');
+            if (tcCard && !e.target.closest('.tc-action-primary, .tc-action-icon')) {
+                const h = tcCard.dataset.handle;
+                if (h) window.location.href = '/tienda/' + encodeURIComponent(h);
+            }
+            return;
+        }
         const action = btn.dataset.action;
         const id = btn.dataset.id;
         switch (action) {
@@ -7163,7 +7755,7 @@ function setupMarketplaceDelegatedListeners() {
                     ms3.showNotification('Tu tienda es de tipo Productos. No puedes crear servicios.', 'error');
                 } else if (ms3) {
                     if (!ms3.checkTierGate('create_listing')) break;
-                    ms3.openCreateServiceModal();
+                    ms3._showInlineServiceForm();
                 }
                 break;
             }
@@ -7171,19 +7763,33 @@ function setupMarketplaceDelegatedListeners() {
                 const ms4 = window.marketplaceSystem;
                 if (ms4?.isGuest) { ms4.showLoginPrompt('publicar productos'); break; }
                 if (ms4?._currentProvider?.shop_type === 'services') {
-                    // Removed: unhelpful message for service-only stores
+                    ms4.showNotification('Tu tienda es de tipo Servicios. Cambia el tipo en Config.', 'error');
                 } else if (ms4) {
                     if (!ms4.checkTierGate('create_listing')) break;
-                    ms4.openCreateProductModal();
+                    ms4._showInlineProductForm();
                 }
                 break;
             }
             case 'close-create-service': {
                 document.getElementById('serviceCreateOverlay')?.remove();
+                document.getElementById('inlineServiceForm')?.remove();
                 break;
             }
             case 'close-create-product': {
                 document.getElementById('productCreateOverlay')?.remove();
+                document.getElementById('inlineProductForm')?.remove();
+                break;
+            }
+            case 'preview-item': {
+                const msPreview = window.marketplaceSystem;
+                if (!msPreview) break;
+                const previewType = btn.dataset.type;
+                const previewId = btn.dataset.id;
+                if (previewType === 'products' || previewType === 'product') {
+                    if (typeof viewProduct === 'function') viewProduct(previewId);
+                } else {
+                    if (typeof viewService === 'function') viewService(previewId);
+                }
                 break;
             }
             case 'edit-item': {
@@ -7327,7 +7933,10 @@ function setupMarketplaceDelegatedListeners() {
                 break;
             }
             case 'sd-share-store': {
-                const shareUrl = btn.dataset.url;
+                let shareUrl = btn.dataset.url;
+                if (!shareUrl && window.marketplaceSystem?._currentProvider?.handle) {
+                    shareUrl = 'https://latanda.online/tienda/' + encodeURIComponent(window.marketplaceSystem._currentProvider.handle);
+                }
                 if (shareUrl && navigator.share) {
                     navigator.share({ title: 'Mi Tienda en La Tanda', url: shareUrl }).catch(() => {});
                 } else if (shareUrl && navigator.clipboard) {
@@ -7337,6 +7946,9 @@ function setupMarketplaceDelegatedListeners() {
                         window.marketplaceSystem?.showNotification(t('messages.copy_failed',{defaultValue:'No se pudo copiar'}), 'error');
                     });
                 }
+                
+                // Update setup checklist
+                try { var cl = JSON.parse(localStorage.getItem('store_setup_checklist') || '{}'); cl.share_store = true; localStorage.setItem('store_setup_checklist', JSON.stringify(cl)); } catch(e) {}
                 break;
             }
             case 'goto-pub-pedidos': {
@@ -7365,6 +7977,7 @@ function setupMarketplaceDelegatedListeners() {
                     ms._expOffset = 0;
                     ms._expCategory = null;
                     ms._expSearchQuery = null;
+                    if (expSub === 'tiendas') ms._expShopType = null;
                     // Load pills for the panel
                     const pillsMap = { tiendas: 'expCategoryPills', productos: 'expCategoryPillsProd', servicios: 'expCategoryPillsSvc' };
                     ms._loadExpCategoryPills(ms._expTab, pillsMap[expSub]);
@@ -7372,35 +7985,62 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
+            case 'carousel-prev':
+            case 'carousel-next': {
+                const carouselId = btn.dataset.carousel;
+                const carousel = document.getElementById(carouselId);
+                if (!carousel) break;
+                const total = parseInt(carousel.dataset.total);
+                let current = parseInt(carousel.dataset.current);
+                current = action === 'carousel-next' ? (current + 1) % total : (current - 1 + total) % total;
+                carousel.dataset.current = current;
+                carousel.querySelector('.sd-carousel-track').style.transform = 'translateX(-' + (current * 100) + '%)';
+                carousel.querySelectorAll('.sd-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+                carousel.classList.add('sd-carousel-transitioning'); setTimeout(() => carousel.classList.remove('sd-carousel-transitioning'), 600);
+                const counter = carousel.querySelector('.sd-carousel-counter');
+                if (counter) counter.textContent = (current + 1) + '/' + total;
+                e.stopPropagation();
+                break;
+            }
+            case 'exp-inner-tab': {
+                const innerTarget = btn.dataset.inner;
+                const innerNav = btn.closest('.exp-inner-tabs');
+                if (innerNav) {
+                    innerNav.querySelectorAll('.exp-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                    btn.classList.add('exp-inner-active');
+                }
+                const inicioContent = document.getElementById('expInicioContent');
+                if (inicioContent) {
+                    inicioContent.querySelectorAll('.exp-inner-panel').forEach(p => p.style.display = 'none');
+                    const targetPanel = inicioContent.querySelector('.exp-inner-panel[data-inner-panel="' + innerTarget + '"]');
+                    if (targetPanel) targetPanel.style.display = '';
+                }
+                break;
+            }
             case 'exp-cat-filter': {
-                // Category click from Inicio grid — switch to productos with that category
                 const catId = btn.dataset.catId;
+                const catName = btn.dataset.catName;
                 const ms2 = window.marketplaceSystem;
                 if (ms2 && catId) {
-                    ms2._expCategory = catId;
-                    ms2._expOffset = 0;
-                    ms2._expTab = 'exp-productos';
-                    // Switch to productos sub-tab
-                    const subtabsNav = document.querySelector('#explorarSubtabs .sd-subtabs-nav');
-                    if (subtabsNav) {
-                        subtabsNav.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
-                        const prodBtn = subtabsNav.querySelector('[data-subtab="productos"]');
-                        if (prodBtn) prodBtn.classList.add('sd-subtab-active');
-                    }
-                    document.querySelectorAll('#explorarSubtabs > .sd-subtab-panel').forEach(p => p.style.display = 'none');
-                    const prodPanel = document.querySelector('#explorarSubtabs .sd-subtab-panel[data-panel="productos"]');
-                    if (prodPanel) prodPanel.style.display = '';
-                    ms2._loadExpCategoryPills('exp-productos', 'expCategoryPillsProd');
-                    // Set the category pill active after loading
-                    setTimeout(() => {
-                        const pills = document.querySelectorAll('#expCategoryPillsProd .exp-pill');
-                        pills.forEach(p => {
-                            p.classList.remove('active');
-                            if (p.dataset.value === catId) p.classList.add('active');
-                        });
-                    }, 100);
-                    ms2.loadExplorarFeed('exp-productos', false);
+                    ms2._openCategoryDetail(catId, catName);
                 }
+                break;
+            }
+            case 'exp-cat-back': {
+                // Return to Inicio from category detail
+                const ms2b = window.marketplaceSystem;
+                if (ms2b) ms2b._buildExplorarInicio();
+                break;
+            }
+            case 'exp-cat-inner': {
+                const catInner = btn.dataset.catInner;
+                const catContainer = document.getElementById('expInicioContent');
+                if (!catContainer) break;
+                catContainer.querySelectorAll('.exp-cat-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                btn.classList.add('exp-inner-active');
+                catContainer.querySelectorAll('.exp-cat-detail-panel').forEach(p => p.style.display = 'none');
+                const targetP = catContainer.querySelector('.exp-cat-detail-panel[data-cat-detail="' + catInner + '"]');
+                if (targetP) targetP.style.display = '';
                 break;
             }
             case 'cfg-subtab': {
@@ -7502,6 +8142,7 @@ function setupMarketplaceDelegatedListeners() {
                 const ms = window.marketplaceSystem;
                 if (!ms) break;
                 const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+                const business_phone = getVal('sdEditBusinessPhone');
                 const areas = getVal('sdEditAreas').split(',').map(s => s.trim()).filter(Boolean);
                 const links = {};
                 if (getVal('sdEditWebsite')) links.website = getVal('sdEditWebsite');
@@ -7509,7 +8150,8 @@ function setupMarketplaceDelegatedListeners() {
                 if (getVal('sdEditLinkedin')) links.linkedin = getVal('sdEditLinkedin');
                 const body = {
                     business_name: getVal('sdEditName'), description: getVal('sdEditDesc'),
-                    phone: getVal('sdEditPhone') || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
+                    phone: getVal('sdEditPhone') || undefined,
+                    business_phone: business_phone || undefined, whatsapp: getVal('sdEditWhatsapp') || undefined,
                     email: getVal('sdEditEmail') || undefined, city: getVal('sdEditCity') || undefined,
                     neighborhood: getVal('sdEditNeighborhood') || undefined,
                     service_areas: areas.length ? areas : undefined,
@@ -7541,6 +8183,87 @@ function setupMarketplaceDelegatedListeners() {
                         method: 'PUT', body: JSON.stringify({ cover_image: null })
                     }).then(() => window.marketplaceSystem?.loadMyStore()).catch(() => {});
                 }
+                break;
+            }
+            case 'save-hours': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const hours = {};
+                document.querySelectorAll('.sd-hours-active').forEach(cb => {
+                    const day = cb.dataset.day;
+                    if (cb.checked) {
+                        const open = document.querySelector('.sd-hours-open[data-day="' + day + '"]')?.value || '09:00';
+                        const close = document.querySelector('.sd-hours-close[data-day="' + day + '"]')?.value || '17:00';
+                        hours[day] = { open, close };
+                    } else {
+                        hours[day] = null;
+                    }
+                });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ business_hours: hours }) });
+                    if (res.success) ms.showNotification('Horario guardado', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-payments': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const methods = [];
+                document.querySelectorAll('.sd-pay-method:checked').forEach(cb => methods.push(cb.value));
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ payment_methods: methods }) });
+                    if (res.success) { ms.showNotification('Metodos guardados', 'success'); ms.loadMyStore(); }
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-policies': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const policies = {
+                    warranty: document.getElementById('sdPolWarranty')?.value?.trim() || '',
+                    refund: document.getElementById('sdPolRefund')?.value?.trim() || '',
+                    delivery: document.getElementById('sdPolDelivery')?.value?.trim() || ''
+                };
+                // Remove empty keys
+                Object.keys(policies).forEach(k => { if (!policies[k]) delete policies[k]; });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ policies }) });
+                    if (res.success) ms.showNotification('Politicas guardadas', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'save-faq': {
+                const ms = window.marketplaceSystem;
+                if (!ms) break;
+                const faqItems = [];
+                document.querySelectorAll('.sd-faq-row').forEach(row => {
+                    const q = row.querySelector('.sd-faq-q')?.value?.trim();
+                    const a = row.querySelector('.sd-faq-a')?.value?.trim();
+                    if (q && a) faqItems.push({ q, a });
+                });
+                try {
+                    const res = await ms.apiRequest('/api/marketplace/providers/me', { method: 'PUT', body: JSON.stringify({ faq: faqItems }) });
+                    if (res.success) ms.showNotification('FAQ guardado', 'success');
+                    else ms.showNotification('Error al guardar', 'error');
+                } catch (e) { ms.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'add-faq': {
+                const faqForm = document.getElementById('sdFaqForm');
+                if (!faqForm) break;
+                const addBtn = faqForm.querySelector('[data-action="add-faq"]');
+                const newRow = document.createElement('div');
+                newRow.className = 'sd-faq-row';
+                newRow.style.cssText = 'margin-bottom:12px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);';
+                newRow.innerHTML = '<input type="text" class="sd-form-input sd-faq-q" value="" placeholder="Pregunta" style="margin-bottom:6px;"><textarea class="sd-form-input sd-faq-a" rows="2" placeholder="Respuesta"></textarea><button data-action="remove-faq" style="background:none;border:none;color:#ef4444;font-size:12px;cursor:pointer;margin-top:4px;"><i class="fas fa-trash"></i> Eliminar</button>';
+                faqForm.insertBefore(newRow, addBtn);
+                break;
+            }
+            case 'remove-faq': {
+                btn.closest('.sd-faq-row')?.remove();
                 break;
             }
             case 'delete-store': {
@@ -7655,6 +8378,28 @@ function setupMarketplaceDelegatedListeners() {
                     .catch(() => { msM.showNotification('Error al reordenar', 'error'); btn.disabled = false; });
                 break;
             }
+            case 'exp-tienda-type': {
+                const shopType = btn.dataset.shopType || '';
+                const ms2t = window.marketplaceSystem;
+                if (ms2t) {
+                    ms2t._expShopType = shopType || null;
+                    ms2t._expOffset = 0;
+                    // Update inner tab active state
+                    const typeTabs = document.getElementById('tiendasTypeTabs');
+                    if (typeTabs) {
+                        typeTabs.querySelectorAll('.exp-inner-tab').forEach(t => t.classList.remove('exp-inner-active'));
+                        btn.classList.add('exp-inner-active');
+                    }
+                    ms2t.loadExplorarFeed('exp-tiendas', false);
+                }
+                break;
+            }
+            case 'exp-cat-load-more': {
+                const catType = btn.dataset.catType;
+                const msC = window.marketplaceSystem;
+                if (msC && catType) msC._loadCategoryFeed(catType, true);
+                break;
+            }
             case 'exp-load-more-prod': {
                 const msEP = window.marketplaceSystem;
                 if (msEP) msEP.loadExplorarFeed('exp-productos', true);
@@ -7679,9 +8424,42 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
+            case 'upload-logo': {
+                const logoInput = document.getElementById('logoFileInput');
+                if (logoInput) logoInput.click();
+                break;
+            }
+            case 'remove-logo': {
+                const msRL = window.marketplaceSystem;
+                if (!msRL) break;
+                if (!confirm('Eliminar el logo de tu tienda?')) break;
+                try {
+                    const res = await msRL.apiRequest('/api/marketplace/providers/me', {
+                        method: 'PUT',
+                        body: JSON.stringify({ logo_image: null })
+                    });
+                    if (res.success) { msRL.showNotification('Logo eliminado', 'success'); msRL.loadMyStore(); }
+                    else { msRL.showNotification('Error al eliminar logo', 'error'); }
+                } catch (err) { msRL.showNotification('Error de conexion', 'error'); }
+                break;
+            }
+            case 'exp-share-tienda': {
+                const shareHandle = btn.dataset.handle;
+                const shareName = btn.dataset.name || 'Tienda';
+                const shareUrl = 'https://latanda.online/tienda/' + encodeURIComponent(shareHandle);
+                if (navigator.share) {
+                    navigator.share({ title: shareName + ' en La Tanda', url: shareUrl }).catch(() => {});
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        window.marketplaceSystem?.showNotification('Link copiado', 'success');
+                    }).catch(() => {});
+                }
+                e.stopPropagation();
+                break;
+            }
             case 'exp-view-tienda': {
-                const handle = btn.dataset.handle;
-                if (handle) window.location.href = '/negocio/' + encodeURIComponent(handle);
+                const handle = btn.dataset.handle || btn.closest('.tc-card')?.dataset?.handle;
+                if (handle) window.location.href = '/tienda/' + encodeURIComponent(handle);
                 break;
             }
             case 'exp-view-producto': {
@@ -7876,4 +8654,5 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = MarketplaceSocialSystem;
 }
 // Build version stamp — check console to verify deploys
-console.log('%c[La Tanda] marketplace v4.25.10-exp-t0 loaded', 'color: #8B5CF6; font-weight: bold;');
+window._imgCacheBust = Date.now();
+console.log('%c[La Tanda] marketplace v4.25.10-imgfix loaded', 'color: #8B5CF6; font-weight: bold;');

@@ -713,1222 +713,475 @@
         <!-- Header -->
         <div class="header">
             <h1><span class="highlight">LTD Token</span> Economics</h1>
-            <p>200,000,000 LTD — el token nativo del ecosistema La Tanda. Staking, burn deflacionario, gobernanza y recompensas para participantes de la red.</p>
+            <p>200,000,000 LTD &mdash; supply fijo, 0% inflaci&oacute;n. Token nativo del ecosistema La Tanda para staking, gobernanza y recompensas.</p>
         </div>
 
-        <!-- Simulation Disclaimer -->
-        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px;">
-            <i class="fas fa-flask" style="color: #f59e0b; font-size: 1.2rem; margin-top: 2px; flex-shrink: 0;"></i>
+        <!-- Testnet Badge -->
+        <div style="background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(0,255,255,0.03)); border: 1px solid rgba(0,255,255,0.2); border-radius: 12px; padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#00FFFF;animation:pulse 2s infinite;flex-shrink:0;"></span>
             <div>
-                <strong style="color: #f59e0b; font-size: 0.9rem;">Preview — Datos de simulacion</strong>
-                <p style="color: rgba(248,250,252,0.6); font-size: 0.82rem; margin-top: 4px; line-height: 1.5;">Los balances, recompensas de staking, gobernanza y burns mostrados son una vista previa del modelo economico de LTD. Los datos reales se conectaran a La Tanda Chain cuando los modulos nativos esten activos en mainnet.</p>
+                <strong style="color: #00FFFF; font-size: 0.85rem;">Testnet Activa &mdash; latanda-testnet-1</strong>
+                <p style="color: rgba(248,250,252,0.5); font-size: 0.78rem; margin-top: 2px;">10+ validadores activos. Datos en vivo desde La Tanda Chain. Mainnet target: Q1-Q2 2027.</p>
             </div>
         </div>
 
         <!-- Navigation Tabs -->
         <div class="nav-tabs">
             <div class="nav-tab active" data-tab="overview">📊 Resumen</div>
-            <div class="nav-tab" data-tab="wallet">💰 Wallet LTD</div>
-            <div class="nav-tab" data-tab="earn">⛏️ Minar/Ganar</div>
-            <div class="nav-tab" data-tab="stake">🏦 Staking</div>
-            <div class="nav-tab" data-tab="burn">🔥 Token Burn</div>
+            <div class="nav-tab" data-tab="wallet">💰 Wallet</div>
+            <div class="nav-tab" data-tab="earn">⛏️ Ganar LTD</div>
+            <div class="nav-tab" data-tab="stake">🔗 Staking</div>
             <div class="nav-tab" data-tab="governance">🗳️ Gobernanza</div>
         </div>
 
-        <!-- Overview Section -->
+        <!-- ============ TAB 1: OVERVIEW ============ -->
         <div id="overview" class="content-section active">
-            <!-- Token Economics Flow -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Mecánica del Token LTD</h2>
-                        <p class="card-subtitle">Flujo automático de distribución y burn</p>
-                    </div>
-                </div>
-                
-                <div class="token-flow">
-                    <div class="flow-step">
-                        <div class="flow-icon">👥</div>
-                        <div class="flow-title">Participación</div>
-                        <div class="flow-amount">+50 LTD</div>
-                        <div class="flow-description">Inicial para primeros participantes</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="flow-icon">🏆</div>
-                        <div class="flow-title">Recompensas</div>
-                        <div class="flow-amount">+25 LTD</div>
-                        <div class="flow-description">Se reduce conforme crece la comunidad</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="flow-icon">🔥</div>
-                        <div class="flow-title">Burn Automático</div>
-                        <div class="flow-amount">-0.5 LTD</div>
-                        <div class="flow-description">0.1% de cada transacción</div>
-                    </div>
-                    <div class="flow-step">
-                        <div class="flow-icon">📈</div>
-                        <div class="flow-title">Valor</div>
-                        <div class="flow-amount">↗️</div>
-                        <div class="flow-description">Deflacionario</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Token Statistics -->
+            <!-- Token Stats -->
             <div class="grid grid-4">
                 <div class="token-stat">
                     <div class="token-icon">🪙</div>
-                    <div class="token-value" id="totalSupply">200,000,000</div>
+                    <div class="token-value">200M</div>
                     <div class="token-label">Suministro Total</div>
-                    <div class="token-change" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">Cap fijo</div>
-                </div>
-                <div class="token-stat">
-                    <div class="token-icon">🔄</div>
-                    <div class="token-value" id="circulating">10,000,000</div>
-                    <div class="token-label">Circulante Inicial (TGE)</div>
-                    <div class="token-change positive">5% del total</div>
-                </div>
-                <div class="token-stat">
-                    <div class="token-icon">🔒</div>
-                    <div class="token-value" id="locked">190,000,000</div>
-                    <div class="token-label">En Vesting / Reserva</div>
-                    <div class="token-change" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">95% bloqueado</div>
+                    <div class="token-change" style="background:rgba(99,102,241,0.2);color:#818cf8;border:1px solid rgba(99,102,241,0.3);">Supply fijo</div>
                 </div>
                 <div class="token-stat">
                     <div class="token-icon">💎</div>
-                    <div class="token-value" id="staked">2,500,000</div>
-                    <div class="token-label">En Staking</div>
-                    <div class="token-change positive">25% del circulante</div>
+                    <div class="token-value">$0.02</div>
+                    <div class="token-label">Seed Price</div>
+                    <div class="token-change positive">Pre-TGE</div>
+                </div>
+                <div class="token-stat">
+                    <div class="token-icon">📊</div>
+                    <div class="token-value">$5M</div>
+                    <div class="token-label">FDV</div>
+                    <div class="token-change" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">Seed Round</div>
+                </div>
+                <div class="token-stat">
+                    <div class="token-icon">🔒</div>
+                    <div class="token-value" id="teStaked">—</div>
+                    <div class="token-label">En Staking (Chain)</div>
+                    <div class="token-change positive" id="teStakedPct">Cargando...</div>
                 </div>
             </div>
 
-            <!-- Market Information -->
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Información del Mercado</h2>
-                            <p class="card-subtitle">Métricas en tiempo real</p>
-                        </div>
+            <!-- Token Flow -->
+            <div class="card">
+                <div class="card-header"><div><h2 class="card-title">Flujo del Token LTD</h2><p class="card-subtitle">Como se distribuye y circula</p></div></div>
+                <div class="token-flow">
+                    <div class="flow-step">
+                        <div class="flow-icon">⛏️</div>
+                        <div class="flow-title">Mineria</div>
+                        <div class="flow-amount">1-12 LTD/dia</div>
+                        <div class="flow-description">5 tiers: Bronze a Diamante</div>
                     </div>
-                    
-                    <div class="grid grid-3">
-                        <div style="text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #10B981;">$0.0847</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Precio Estimado</div>
-                            <div style="font-size: 12px; color: #10B981; margin-top: 5px;">Pre-TGE</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #10B981;">$847K</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Market Cap (Circ.)</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 5px;">10M x $0.0847</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #10B981;">$16.9M</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">FDV (Total)</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 5px;">200M x $0.0847</div>
-                        </div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🔗</div>
+                        <div class="flow-title">Staking</div>
+                        <div class="flow-amount">Delegacion</div>
+                        <div class="flow-description">Validadores reciben block rewards</div>
                     </div>
-                    
-                    <div class="chart-placeholder" style="margin-top: 20px;">
-                        📈 Gráfico de precio LTD/USD
+                    <div class="flow-step">
+                        <div class="flow-icon">🗳️</div>
+                        <div class="flow-title">Gobernanza</div>
+                        <div class="flow-amount">Votar</div>
+                        <div class="flow-description">On-chain via Keplr wallet</div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🏪</div>
+                        <div class="flow-title">Comercio</div>
+                        <div class="flow-amount">Fees</div>
+                        <div class="flow-description">Marketplace + tandas</div>
                     </div>
                 </div>
-                
+            </div>
+
+            <!-- Distribution + Investment -->
+            <div class="grid grid-2">
                 <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Distribución de Tokens</h2>
-                            <p class="card-subtitle">Asignación por categoría</p>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Comunidad y Miner&iacute;a (35%)</span>
-                            <span style="color: #10B981; font-weight: 600;">70,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Emisi&oacute;n en 5 a&ntilde;os v&iacute;a participaci&oacute;n</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 35%;"></div>
-                        </div>
-                    </div>
+                    <div class="card-header"><div><h2 class="card-title">Distribucion de Tokens</h2><p class="card-subtitle">200,000,000 LTD — 10 pools</p></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Comunidad y Mineria (30%)</span><span style="color:#10B981;font-weight:600;">60M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:30%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Staking y Validadores (20%)</span><span style="color:#10B981;font-weight:600;">40M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:20%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Fondo de Desarrollo (12%)</span><span style="color:#10B981;font-weight:600;">24M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:12%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Equipo y Fundadores (12%)</span><span style="color:#10B981;font-weight:600;">24M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:12%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Marketing y Alianzas (6%)</span><span style="color:#10B981;font-weight:600;">12M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:6%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#818cf8;font-weight:500;">Seed Round (5%)</span><span style="color:#818cf8;font-weight:600;">10M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:5%;background:linear-gradient(90deg,#6366f1,#818cf8);"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:#a78bfa;font-weight:500;">Strategic / Private (5%)</span><span style="color:#a78bfa;font-weight:600;">10M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:5%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Liquidez Inicial — TGE (5%)</span><span style="color:#10B981;font-weight:600;">10M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:5%;"></div></div></div>
+                    <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Bug Bounties y Grants (3%)</span><span style="color:#10B981;font-weight:600;">6M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:3%;"></div></div></div>
+                    <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Fondo de Seguro (2%)</span><span style="color:#10B981;font-weight:600;">4M LTD</span></div><div class="progress-bar"><div class="progress-fill" style="width:2%;"></div></div></div>
+                </div>
 
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Staking y Validadores (20%)</span>
-                            <span style="color: #10B981; font-weight: 600;">40,000,000 LTD</span>
+                <div class="card">
+                    <div class="card-header"><div><h2 class="card-title">Ronda de Inversion</h2><p class="card-subtitle">Seed + Strategic — $500K</p></div></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                        <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:16px;text-align:center;">
+                            <div style="font-size:0.7rem;color:#818cf8;text-transform:uppercase;margin-bottom:4px;">Seed</div>
+                            <div style="font-size:1.4rem;font-weight:700;color:#f8fafc;">$0.02</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">10M LTD (5%)</div>
+                            <div style="font-size:0.7rem;color:#818cf8;margin-top:4px;">6mo cliff, 18mo vest</div>
                         </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Distribuci&oacute;n programada desde treasury pre-acu&ntilde;ado</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 20%;"></div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Fondo de Desarrollo (15%)</span>
-                            <span style="color: #10B981; font-weight: 600;">30,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">6 meses cliff, 3 a&ntilde;os linear</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 15%;"></div>
+                        <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:16px;text-align:center;">
+                            <div style="font-size:0.7rem;color:#a78bfa;text-transform:uppercase;margin-bottom:4px;">Strategic</div>
+                            <div style="font-size:1.4rem;font-weight:700;color:#f8fafc;">$0.03</div>
+                            <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">10M LTD (5%)</div>
+                            <div style="font-size:0.7rem;color:#a78bfa;margin-top:4px;">3mo cliff, 12mo vest</div>
                         </div>
                     </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Equipo y Fundadores (12%)</span>
-                            <span style="color: #10B981; font-weight: 600;">24,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">1 a&ntilde;o cliff, 2 a&ntilde;os linear</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 12%;"></div>
-                        </div>
+                    <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border-primary);border-radius:10px;padding:14px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--text-secondary);font-size:0.85rem;">FDV</span><span style="font-weight:600;">$5,000,000</span></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--text-secondary);font-size:0.85rem;">Dilucion Total</span><span style="font-weight:600;">10%</span></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:var(--text-secondary);font-size:0.85rem;">Circulante en TGE</span><span style="font-weight:600;">10M LTD (5%)</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-secondary);font-size:0.85rem;">Inflacion</span><span style="font-weight:600;color:#00FFFF;">0% (supply fijo)</span></div>
                     </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Marketing y Alianzas (8%)</span>
-                            <span style="color: #10B981; font-weight: 600;">16,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Liberaci&oacute;n trimestral por hitos</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 8%;"></div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Liquidez Inicial — TGE (5%)</span>
-                            <span style="color: #10B981; font-weight: 600;">10,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Disponible en TGE para exchanges y pools AMM</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 5%;"></div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Bug Bounties y Grants (3%)</span>
-                            <span style="color: #10B981; font-weight: 600;">6,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">V&iacute;a propuestas de gobernanza</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 3%;"></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span>Fondo de Seguro (2%)</span>
-                            <span style="color: #10B981; font-weight: 600;">4,000,000 LTD</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px;">Solo v&iacute;a voto de emergencia</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 2%;"></div>
-                        </div>
-                    </div>
+                    <a href="/invest.html" style="display:block;text-align:center;margin-top:16px;padding:12px;background:linear-gradient(135deg,rgba(0,255,255,0.15),rgba(0,255,255,0.05));border:1px solid rgba(0,255,255,0.3);border-radius:10px;color:#00FFFF;text-decoration:none;font-weight:500;font-size:0.85rem;">📄 Ver Investor Deck Completo</a>
                 </div>
             </div>
         </div>
 
-        <!-- Wallet Section -->
+        <!-- ============ TAB 2: WALLET ============ -->
         <div id="wallet" class="content-section">
             <div class="grid grid-2">
                 <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Mi Wallet LTD</h2>
-                            <p class="card-subtitle">Balance y transacciones</p>
+                    <div class="card-header"><div><h2 class="card-title">Mi Wallet LTD</h2><p class="card-subtitle">Balance en la plataforma</p></div></div>
+                    <div id="teWalletContent">
+                        <div style="text-align:center;padding:40px 20px;">
+                            <div style="font-size:3rem;margin-bottom:12px;">💰</div>
+                            <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:16px;">Inicia sesion para ver tu balance de LTD</div>
+                            <a href="/auth-enhanced.html" class="btn btn-primary">Iniciar Sesion</a>
                         </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="font-size: 48px; font-weight: 700; color: #10B981; margin-bottom: 10px;" id="userBalance">12,847</div>
-                        <div style="color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">LTD Tokens</div>
-                        <div style="font-size: 18px; color: #10B981; font-weight: 600;" id="balanceUSD">≈ $1,087.86 USD</div>
-                    </div>
-                    
-                    <div class="grid grid-3" style="margin-bottom: 30px;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 20px; font-weight: 700; color: #10B981;">8,347</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Disponible</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 20px; font-weight: 700; color: #F59E0B;">3,500</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">En Staking</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 20px; font-weight: 700; color: #6366F1;">1,000</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Bloqueado</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 15px;">
-                        <button class="btn btn-primary" style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled title="Disponible cuando los modulos nativos esten activos en mainnet">
-                            <span>📤</span> Enviar
-                        </button>
-                        <button class="btn btn-secondary" style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled title="Disponible cuando los modulos nativos esten activos en mainnet">
-                            <span>📥</span> Recibir
-                        </button>
                     </div>
                 </div>
-                
                 <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Transacciones Recientes</h2>
-                            <p class="card-subtitle">Historial de movimientos</p>
+                    <div class="card-header"><div><h2 class="card-title">Movimientos Recientes</h2><p class="card-subtitle">Historial de LTD</p></div></div>
+                    <div id="teTransactions">
+                        <div style="text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:0.85rem;">
+                            Inicia sesion para ver tu historial
                         </div>
                     </div>
-                    
-                    <div id="recentTransactions">
-                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: #10B981;">🎁</span>
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600;">Recompensa de Tanda</div>
-                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Hace 2 horas</div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #10B981; font-weight: 600;">+150 LTD</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Confirmado</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(245, 158, 11, 0.2); display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: #F59E0B;">🏦</span>
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600;">Staking Depositado</div>
-                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Hace 1 día</div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #F59E0B; font-weight: 600;">-500 LTD</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Confirmado</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: #EF4444;">🔥</span>
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600;">Token Burn</div>
-                                    <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Hace 2 días</div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #EF4444; font-weight: 600;">-20 LTD</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Automático</div>
-                            </div>
-                        </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:24px;">
+                <div class="card-header"><div><h2 class="card-title">On-Chain vs Plataforma</h2><p class="card-subtitle">Dos tipos de balance LTD</p></div></div>
+                <div class="grid grid-2" style="gap:16px;">
+                    <div style="background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.15);border-radius:12px;padding:16px;">
+                        <div style="font-weight:600;color:#00FFFF;margin-bottom:8px;"><i class="fas fa-database" style="margin-right:6px;"></i>Plataforma (PostgreSQL)</div>
+                        <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">Tokens ganados por mineria, recompensas, y actividad en la plataforma. Almacenados en tu cuenta de La Tanda.</div>
+                    </div>
+                    <div style="background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.15);border-radius:12px;padding:16px;">
+                        <div style="font-weight:600;color:#a78bfa;margin-bottom:8px;"><i class="fas fa-link" style="margin-right:6px;"></i>On-Chain (La Tanda Chain)</div>
+                        <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;">Tokens en la blockchain. Se usan para staking, gobernanza, y fees de transaccion. Accesibles via Keplr wallet.</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Earn Section -->
+        <!-- ============ TAB 3: EARN ============ -->
         <div id="earn" class="content-section">
             <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Formas de Ganar LTD</h2>
-                        <p class="card-subtitle">Múltiples mecanismos de recompensas</p>
-                    </div>
-                </div>
-                
+                <div class="card-header"><div><h2 class="card-title">Formas de Ganar LTD</h2><p class="card-subtitle">Multiples mecanismos de recompensas</p></div></div>
                 <div class="grid grid-3">
+                    <div class="token-action">
+                        <div class="action-icon">⛏️</div>
+                        <div class="action-title">Mineria Diaria</div>
+                        <div class="action-description">Reclama LTD diariamente segun tu tier. La recompensa aumenta con tu actividad y racha consecutiva.</div>
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:16px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:#cd7f32;font-weight:500;">🥉 Bronze (0-49 pts)</span><span style="font-weight:600;">1.0 LTD/dia</span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:#c0c0c0;font-weight:500;">🥈 Silver (50-149 pts)</span><span style="font-weight:600;">3.0 LTD/dia</span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:#ffd700;font-weight:500;">🥇 Gold (150-299 pts)</span><span style="font-weight:600;">5.0 LTD/dia</span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:#e5e4e2;font-weight:500;">💎 Platinum (300-499 pts)</span><span style="font-weight:600;">8.0 LTD/dia</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:#b9f2ff;font-weight:500;">👑 Diamond (500+ pts)</span><span style="font-weight:600;">12.0 LTD/dia</span></div>
+                        </div>
+                        <a href="/mineria.html" class="btn btn-primary" style="width:100%;justify-content:center;">⛏️ Ir a Mineria</a>
+                    </div>
                     <div class="token-action">
                         <div class="action-icon">👥</div>
                         <div class="action-title">Participar en Tandas</div>
-                        <div class="action-description">Gana 50-150 LTD por cada tanda completada. Las recompensas iniciales son mayores y se reducen conforme crece la comunidad.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 5px;">
-                                <span style="font-size: 14px;">Progreso actual</span>
-                                <span style="font-size: 14px; color: #10B981;">3/5 tandas</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 60%;"></div>
-                            </div>
+                        <div class="action-description">Gana LTD por completar ciclos de ahorro en tus grupos. Recompensas por pagos puntuales y rachas de cumplimiento.</div>
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:16px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--text-secondary);">Por ciclo completado</span><span style="font-weight:600;">+LTD variable</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-secondary);">Streak bonus</span><span style="font-weight:600;">Multiplicador</span></div>
                         </div>
-                        <a href="groups-advanced-system.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">Ver Tandas Disponibles</a>
+                        <a href="/groups-advanced-system.html" class="btn btn-secondary" style="width:100%;justify-content:center;">👥 Mis Tandas</a>
                     </div>
-                    
                     <div class="token-action">
-                        <div class="action-icon">🎯</div>
-                        <div class="action-title">Referencias</div>
-                        <div class="action-description">Invita usuarios y gana 2 LTD por cada referencia exitosa. Bonus de 1 LTD mensual por cada usuario activo que hayas referido.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 5px;">
-                                <span style="font-size: 14px;">Referencias activas</span>
-                                <span style="font-size: 14px; color: #10B981;">8 usuarios</span>
-                            </div>
-                            <div style="font-size: 18px; color: #10B981; font-weight: 600;">+8 LTD/mes</div>
+                        <div class="action-icon">🎁</div>
+                        <div class="action-title">Referidos y Logros</div>
+                        <div class="action-description">Invita amigos y completa desafios para ganar LTD adicional. Cada referido que se registra te da tokens.</div>
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:16px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--text-secondary);">Por referido</span><span style="font-weight:600;">+LTD</span></div>
+                            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text-secondary);">Logros</span><span style="font-weight:600;">Badges + LTD</span></div>
                         </div>
-                        <a href="home-dashboard.html" class="btn btn-primary" style="width: 100%; text-decoration: none;">Invitar Amigos</a>
-                    </div>
-                    
-                    <div class="token-action">
-                        <div class="action-icon">🏆</div>
-                        <div class="action-title">Logros y Metas</div>
-                        <div class="action-description">Completa desafíos específicos y obtén recompensas moderadas. Máximo 3 logros por mes para evitar farming excesivo. Rango: 5-25 LTD por logro.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 5px;">
-                                <span style="font-size: 14px;">Logros este mes</span>
-                                <span style="font-size: 14px; color: #10B981;">2/5 completados</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 40%;"></div>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%;">Ver Desafíos</button>
-                    </div>
-                    
-                    <div class="token-action">
-                        <div class="action-icon">🎪</div>
-                        <div class="action-title">Eventos Especiales</div>
-                        <div class="action-description">Participa en eventos comunitarios y promociones especiales con recompensas exclusivas.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="color: #94a3b8; font-weight: 600; font-size: 14px;">Pr&oacute;ximamente</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Los eventos especiales se anunciar&aacute;n en la plataforma</div>
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>Pr&oacute;ximamente</button>
-                    </div>
-                    
-                    <div class="token-action">
-                        <div class="action-icon">📱</div>
-                        <div class="action-title">Uso de App</div>
-                        <div class="action-description">Gana 2 LTD por check-in cada 48 horas. Fomenta el uso constante sin saturar la economía del token.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="color: #10B981; font-weight: 600; font-size: 14px;">✅ Check-in disponible</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Próximo en 36 horas</div>
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%;">Reclamar 2 LTD</button>
-                    </div>
-                    
-                    <div class="token-action">
-                        <div class="action-icon">🗳️</div>
-                        <div class="action-title">Gobernanza</div>
-                        <div class="action-description">Participa en votaciones con restricciones lógicas. Solo usuarios con +1000 LTD en staking pueden votar. Recompensas limitadas.</div>
-                        <div style="margin-bottom: 15px;">
-                            <div style="color: #6366F1; font-weight: 600; font-size: 14px;">📊 Votación activa</div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Recompensa: 1-5 LTD (restringida)</div>
-                        </div>
-                        <button class="btn btn-primary" style="width: 100%;">Votar Ahora</button>
+                        <a href="/recompensas.html" class="btn btn-secondary" style="width:100%;justify-content:center;">🎁 Recompensas</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Staking Section -->
+        <!-- ============ TAB 4: STAKING ============ -->
         <div id="stake" class="content-section">
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Staking de LTD</h2>
-                            <p class="card-subtitle">Genera recompensas pasivas</p>
-                        </div>
+            <div class="card">
+                <div class="card-header"><div><h2 class="card-title">Staking en La Tanda Chain</h2><p class="card-subtitle">Datos en vivo de la blockchain</p></div></div>
+                <div class="grid grid-3" style="margin-bottom:24px;">
+                    <div style="text-align:center;background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;">
+                        <div style="font-size:1.6rem;font-weight:700;color:#10B981;" id="teValidatorCount">—</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Validadores Activos</div>
                     </div>
-                    
-                    <form id="stakingForm" style="margin-bottom: 30px;">
-                        <div class="form-group">
-                            <label>Cantidad a Stakear</label>
-                            <input type="number" id="stakeAmount" placeholder="Ingresa cantidad de LTD" min="100" max="8347">
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-top: 5px;">
-                                Disponible: <span style="color: #10B981; font-weight: 600;">8,347 LTD</span>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Período de Staking</label>
-                            <select id="stakePeriod">
-                                <option value="30">30 días - 10% APY</option>
-                                <option value="90">90 días - 15% APY</option>
-                                <option value="180">180 días - 22% APY</option>
-                                <option value="365">365 días - 30% APY</option>
-                            </select>
-                        </div>
-                        
-                        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 10px;">
-                                <span>Recompensa estimada:</span>
-                                <span id="estimatedReward" style="color: #10B981; font-weight: 600;">0 LTD</span>
-                            </div>
-                            <div style="display: flex; justify-content: between;">
-                                <span>Total al finalizar:</span>
-                                <span id="totalAfterStaking" style="color: #10B981; font-weight: 600;">0 LTD</span>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            <span>🏦</span> Comenzar Staking
-                        </button>
-                    </form>
+                    <div style="text-align:center;background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;">
+                        <div style="font-size:1.6rem;font-weight:700;color:#10B981;" id="teTotalBonded">—</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Total en Staking</div>
+                    </div>
+                    <div style="text-align:center;background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;">
+                        <div style="font-size:1.6rem;font-weight:700;color:#00FFFF;" id="teInflation">—</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Inflacion Anual</div>
+                    </div>
                 </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Mis Posiciones de Staking</h2>
-                            <p class="card-subtitle">Staking activo y recompensas</p>
-                        </div>
+                <h3 style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:12px;"><i class="fas fa-shield-halved" style="color:#00FFFF;margin-right:6px;"></i>Validadores</h3>
+                <div id="teValidatorList" style="font-size:0.85rem;color:var(--text-secondary);">Cargando validadores...</div>
+                <div style="margin-top:20px;text-align:center;">
+                    <a href="/governance.html" class="btn btn-primary">🗳️ Delegar via Keplr</a>
+                    <a href="/chain/" class="btn btn-secondary" style="margin-left:8px;">🔗 Chain Explorer</a>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><div><h2 class="card-title">Como funciona el Staking</h2><p class="card-subtitle">Delegated Proof of Stake (DPoS)</p></div></div>
+                <div class="grid grid-3" style="gap:16px;">
+                    <div style="background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:12px;padding:14px;">
+                        <div style="font-weight:600;margin-bottom:6px;">1. Obtener LTD</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Gana LTD por mineria, tandas, o recibelo de la plataforma.</div>
                     </div>
-                    
-                    <div id="stakingPositions">
-                        <div class="staking-pool">
-                            <div class="pool-header">
-                                <div class="pool-title">Pool de 90 días</div>
-                                <div class="pool-apy">15% APY</div>
-                            </div>
-                            <div class="pool-stats">
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">2,500</div>
-                                    <div class="pool-stat-label">LTD Stakeado</div>
-                                </div>
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">67</div>
-                                    <div class="pool-stat-label">Días Restantes</div>
-                                </div>
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">185</div>
-                                    <div class="pool-stat-label">Recompensa</div>
-                                </div>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 26%;"></div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1;" disabled>
-                                    🔒 Bloqueado
-                                </button>
-                                <button class="btn btn-primary" style="flex: 1;">
-                                    📊 Ver Detalles
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="staking-pool" style="margin-top: 20px;">
-                            <div class="pool-header">
-                                <div class="pool-title">Pool de 180 días</div>
-                                <div class="pool-apy">22% APY</div>
-                            </div>
-                            <div class="pool-stats">
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">1,000</div>
-                                    <div class="pool-stat-label">LTD Stakeado</div>
-                                </div>
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">124</div>
-                                    <div class="pool-stat-label">Días Restantes</div>
-                                </div>
-                                <div class="pool-stat">
-                                    <div class="pool-stat-value">98</div>
-                                    <div class="pool-stat-label">Recompensa</div>
-                                </div>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 31%;"></div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1;" disabled>
-                                    🔒 Bloqueado
-                                </button>
-                                <button class="btn btn-primary" style="flex: 1;">
-                                    📊 Ver Detalles
-                                </button>
-                            </div>
-                        </div>
+                    <div style="background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:12px;padding:14px;">
+                        <div style="font-weight:600;margin-bottom:6px;">2. Delegar</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Conecta Keplr wallet y delega tus LTD a un validador de confianza.</div>
+                    </div>
+                    <div style="background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.1);border-radius:12px;padding:14px;">
+                        <div style="font-weight:600;margin-bottom:6px;">3. Ganar</div>
+                        <div style="font-size:0.78rem;color:var(--text-secondary);">Recibe block rewards y participa en gobernanza con tu poder de voto.</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Burn Section -->
-        <div id="burn" class="content-section">
-            <div class="grid grid-2">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Mecanismo de Token Burn</h2>
-                            <p class="card-subtitle">Reducción automática del suministro</p>
-                        </div>
-                    </div>
-                    
-                    <div class="burn-visual">
-                        <div class="burn-flame">🔥</div>
-                        <div class="burn-amount">156,790</div>
-                        <div class="burn-description">Tokens quemados permanentemente</div>
-                        <div style="font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px;">de 200,000,000 suministro total</div>
-                    </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <h3 style="margin-bottom: 20px;">Triggers de Burn Automático</h3>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>🏦 Transacciones de Tanda (0.1%)</span>
-                                <span style="color: #EF4444; font-weight: 600;">-771 LTD</span>
-                            </div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Este mes</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>💰 Comisiones (0.05%)</span>
-                                <span style="color: #EF4444; font-weight: 600;">-436 LTD</span>
-                            </div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Este mes</div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>🎯 Penalizaciones (0.2%)</span>
-                                <span style="color: #EF4444; font-weight: 600;">-108 LTD</span>
-                            </div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Este mes</div>
-                        </div>
-                        
-                        <div style="padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="display: flex; justify-content: between; align-items: center;">
-                                <span style="font-weight: 700;">Total Quemado (Mes)</span>
-                                <span style="color: #EF4444; font-weight: 700; font-size: 18px;">-1,315 LTD</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h2 class="card-title">Burn Manual Voluntario</h2>
-                            <p class="card-subtitle">Contribuye a la deflación del token</p>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <div style="font-size: 18px; color: rgba(255, 255, 255, 0.7); margin-bottom: 15px;">
-                            Al quemar tokens voluntariamente, ayudas a:
-                        </div>
-                        <ul style="text-align: left; color: rgba(255, 255, 255, 0.7); margin-bottom: 20px;">
-                            <li style="margin-bottom: 10px;">🔥 Reducir el suministro circulante</li>
-                            <li style="margin-bottom: 10px;">📈 Incrementar el valor del token</li>
-                            <li style="margin-bottom: 10px;">🏆 Obtener badges especiales</li>
-                            <li style="margin-bottom: 10px;">⭐ Aumentar tu reputación</li>
-                        </ul>
-                    </div>
-                    
-                    <form id="burnForm">
-                        <div class="form-group">
-                            <label>Cantidad a Quemar</label>
-                            <input type="number" id="burnAmount" placeholder="Ingresa cantidad de LTD" min="10" max="8347">
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-top: 5px;">
-                                Mínimo: 10 LTD | Disponible: <span style="color: #10B981; font-weight: 600;">8,347 LTD</span>
-                            </div>
-                        </div>
-                        
-                        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                            <div style="color: #EF4444; font-weight: 600; margin-bottom: 10px;">⚠️ Advertencia</div>
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">
-                                Los tokens quemados no se pueden recuperar. Esta acción es permanente e irreversible.
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="burnConfirmation" required>
-                                <span style="font-size: 14px;">Entiendo que esta acción es irreversible</span>
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-danger" style="width: 100%;" disabled>
-                            <span>🔥</span> Quemar Tokens
-                        </button>
-                    </form>
-                    
-                    <div style="margin-top: 30px; text-align: center;">
-                        <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">
-                            Has quemado un total de:
-                        </div>
-                        <div style="font-size: 24px; font-weight: 700; color: #EF4444;">1,250 LTD</div>
-                        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">
-                            🏆 Burn Master Badge desbloqueado
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Governance Section -->
+        <!-- ============ TAB 5: GOVERNANCE ============ -->
         <div id="governance" class="content-section">
             <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Gobernanza Descentralizada</h2>
-                        <p class="card-subtitle">Vota en decisiones importantes • Requiere +1000 LTD en staking • Recompensas limitadas 1-5 LTD</p>
-                    </div>
-                </div>
-                
-                <div class="grid grid-2">
-                    <div>
-                        <h3 style="margin-bottom: 20px;">Tu Poder de Voto</h3>
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <div style="font-size: 48px; font-weight: 700; color: #6366F1; margin-bottom: 10px;">12,847</div>
-                            <div style="color: rgba(255, 255, 255, 0.7); margin-bottom: 5px;">Poder de Voto</div>
-                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6);">Basado en tu balance + staking</div>
-                        </div>
-                        
-                        <div class="grid grid-3" style="margin-bottom: 30px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 20px; font-weight: 700; color: #6366F1;">8,347</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Balance</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 20px; font-weight: 700; color: #6366F1;">3,500</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Staking</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 20px; font-weight: 700; color: #6366F1;">1.5x</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Multiplicador</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h3 style="margin-bottom: 20px;">Estadísticas de Participación</h3>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>Votaciones Participadas</span>
-                                <span style="color: #6366F1; font-weight: 600;">8/12</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 67%; background: linear-gradient(135deg, #6366F1, #8B5CF6);"></div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>Recompensas de Gobernanza</span>
-                                <span style="color: #10B981; font-weight: 600;">+45 LTD</span>
-                            </div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">Ganadas este trimestre (restringidas)</div>
-                        </div>
-                        
-                        <div>
-                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                                <span>Nivel de Participación</span>
-                                <span style="color: #F59E0B; font-weight: 600;">Activo</span>
-                            </div>
-                            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">🔒 Requiere +1000 LTD en staking para votar</div>
-                        </div>
-                    </div>
+                <div class="card-header"><div><h2 class="card-title">Gobernanza On-Chain</h2><p class="card-subtitle">Propuestas reales de La Tanda Chain</p></div></div>
+                <div id="teProposals" style="font-size:0.85rem;color:var(--text-secondary);">Cargando propuestas...</div>
+                <div style="margin-top:20px;text-align:center;">
+                    <a href="/governance.html" class="btn btn-primary">🗳️ Votar con Keplr</a>
                 </div>
             </div>
-            
-            <!-- Active Proposals -->
             <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Propuestas Activas</h2>
-                        <p class="card-subtitle">Vota en las decisiones importantes</p>
-                    </div>
-                </div>
-                
-                <div id="activeProposals">
-                    <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 15px;">
-                            <div>
-                                <h3 style="color: #6366F1; margin-bottom: 10px;">Propuesta #23</h3>
-                                <h4 style="margin-bottom: 10px;">Implementar sistema de recompensas dinámicas</h4>
-                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">
-                                    Propuesta para implementar un sistema donde las recompensas se ajusten automáticamente según el crecimiento de la comunidad, favoreciendo a los primeros adoptantes.
-                                </p>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #10B981; font-weight: 600;">67% A favor</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">3 días restantes</div>
-                            </div>
+                <div class="card-header"><div><h2 class="card-title">Poder de Voto</h2><p class="card-subtitle">Tu participacion en la gobernanza</p></div></div>
+                <div style="text-align:center;padding:20px;">
+                    <div style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:12px;">Conecta tu wallet Keplr en la pagina de Gobernanza para votar en propuestas y delegar tu poder.</div>
+                    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px 20px;text-align:center;">
+                            <div style="font-size:1.2rem;font-weight:700;color:#10B981;" id="teGovProposalCount">—</div>
+                            <div style="font-size:0.72rem;color:var(--text-secondary);">Propuestas</div>
                         </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 5px;">
-                                <span style="font-size: 14px;">A favor (67%)</span>
-                                <span style="font-size: 14px;">En contra (33%)</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div style="height: 100%; background: linear-gradient(to right, #10B981 67%, #EF4444 67%); border-radius: 6px;"></div>
-                            </div>
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px 20px;text-align:center;">
+                            <div style="font-size:1.2rem;font-weight:700;color:#10B981;" id="teGovPassed">—</div>
+                            <div style="font-size:0.72rem;color:var(--text-secondary);">Aprobadas</div>
                         </div>
-                        
-                        <div style="display: flex; gap: 15px;">
-                            <button class="btn btn-primary" style="flex: 1;" onclick="window.LaTandaTokenomics && window.LaTandaTokenomics.handleGovernance()">
-                                <span>👍</span> Votar A Favor (+3 LTD)
-                            </button>
-                            <button class="btn btn-secondary" style="flex: 1;" onclick="window.LaTandaTokenomics && window.LaTandaTokenomics.handleGovernance()">
-                                <span>👎</span> Votar En Contra (+1 LTD)
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 25px;">
-                        <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 15px;">
-                            <div>
-                                <h3 style="color: #F59E0B; margin-bottom: 10px;">Propuesta #24</h3>
-                                <h4 style="margin-bottom: 10px;">Reducir tasa de burn a 0.1%</h4>
-                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">
-                                    Propuesta para reducir el burn automático al 0.1% para mantener un balance entre deflación y utilidad del token en el ecosistema.
-                                </p>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="color: #EF4444; font-weight: 600;">45% A favor</div>
-                                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">5 días restantes</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <div style="display: flex; justify-content: between; margin-bottom: 5px;">
-                                <span style="font-size: 14px;">A favor (45%)</span>
-                                <span style="font-size: 14px;">En contra (55%)</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div style="height: 100%; background: linear-gradient(to right, #10B981 45%, #EF4444 45%); border-radius: 6px;"></div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 15px;">
-                            <button class="btn btn-primary" style="flex: 1;" onclick="window.LaTandaTokenomics && window.LaTandaTokenomics.handleGovernance()">
-                                <span>👍</span> Votar A Favor (+2 LTD)
-                            </button>
-                            <button class="btn btn-secondary" style="flex: 1;" onclick="window.LaTandaTokenomics && window.LaTandaTokenomics.handleGovernance()">
-                                <span>👎</span> Votar En Contra (+1 LTD)
-                            </button>
+                        <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px 20px;text-align:center;">
+                            <div style="font-size:1.2rem;font-weight:700;color:#f59e0b;" id="teGovActive">—</div>
+                            <div style="font-size:0.72rem;color:var(--text-secondary);">En Votacion</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- Enhanced API Proxy -->
     
     <script>
         // ================================
-        // 🪙 ADVANCED LTD TOKENOMICS SYSTEM
+        // LTD TOKENOMICS — REAL DATA ENGINE
         // ================================
-        
-        class LaTandaTokenomicsEngine {
-            constructor() {
-                this.tokenomicsData = {
-                    totalSupply: 200000000, // 200M LTD total cap
-                    circulatingSupply: 10000000, // 10M LTD initial circulating at TGE (5%)
-                    lockedSupply: 190000000, // 190M in vesting/reserve
-                    burnRate: 0.001, // 0.1% per transaction
-                    stakingAPY: 20, // matches UI mid-tier (10-30%)
-                    governanceThreshold: 1000,
-                    dailyMintLimit: 10000,
-                    rewardMultipliers: {
-                        early: 2.0,
-                        whale: 1.5,
-                        active: 1.3,
-                        regular: 1.0
-                    }
-                };
-                
-                this.userStats = {
-                    totalEarned: 0,
-                    stakingBalance: 0,
-                    governanceVotes: 0,
-                    achievementsCompleted: 0,
-                    checkInStreak: 0,
-                    lastCheckIn: null
-                };
-                
-                this.init();
-            }
 
-            init() {
-                this.loadUserData();
-                this.loadEcosystemData();
-                this.updateTokenomicsDisplay();
-                this.setupEventListeners();
-                this.startRealtimeUpdates();
-            }
+        const CHAIN_REST = '/chain/api';
+        const CHAIN_RPC = '/chain/rpc';
 
-            // Load user tokenomics data
-            loadUserData() {
-                const savedData = JSON.parse(localStorage.getItem('latanda_tokenomics') || '{}');
-                this.userStats = { ...this.userStats, ...savedData };
+        function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+        function fmtLTD(ultd) { return (Number(ultd) / 1000000).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
 
-                // Load from ecosystem if available
-                if (window.LaTandaWallet) {
-                    const walletStatus = window.LaTandaWallet.getWalletStatus();
-                    this.userStats.stakingBalance = walletStatus.lockedFunds || 0;
+        // Tab switching
+        document.querySelectorAll('.nav-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+                document.querySelectorAll('.content-section').forEach(function(s) { s.classList.remove('active'); });
+                tab.classList.add('active');
+                var target = document.getElementById(tab.getAttribute('data-tab'));
+                if (target) target.classList.add('active');
+            });
+        });
+
+        // Fetch chain data
+        async function loadChainData() {
+            try {
+                var [poolRes, valsRes, inflRes] = await Promise.all([
+                    fetch(CHAIN_REST + '/cosmos/staking/v1beta1/pool').then(function(r) { return r.json(); }),
+                    fetch(CHAIN_REST + '/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED').then(function(r) { return r.json(); }),
+                    fetch(CHAIN_REST + '/cosmos/mint/v1beta1/inflation').then(function(r) { return r.json(); }).catch(function() { return { inflation: '0' }; })
+                ]);
+
+                var bonded = Number(poolRes.pool.bonded_tokens);
+                var bondedLTD = fmtLTD(bonded);
+                var bondedPct = ((bonded / 200000000000000) * 100).toFixed(2);
+                var validators = valsRes.validators || [];
+                var inflation = (parseFloat(inflRes.inflation) * 100).toFixed(1);
+
+                // Overview stats
+                var el = document.getElementById('teStaked');
+                if (el) el.textContent = bondedLTD + ' LTD';
+                var elPct = document.getElementById('teStakedPct');
+                if (elPct) elPct.textContent = bondedPct + '% del supply';
+
+                // Staking tab
+                var elVC = document.getElementById('teValidatorCount');
+                if (elVC) elVC.textContent = validators.length;
+                var elTB = document.getElementById('teTotalBonded');
+                if (elTB) elTB.textContent = bondedLTD + ' LTD';
+                var elInf = document.getElementById('teInflation');
+                if (elInf) elInf.textContent = inflation + '%';
+
+                // Validator list
+                var sorted = validators.sort(function(a, b) { return Number(b.tokens) - Number(a.tokens); });
+                var listEl = document.getElementById('teValidatorList');
+                if (listEl) {
+                    listEl.innerHTML = sorted.map(function(v, i) {
+                        var tokens = fmtLTD(v.tokens);
+                        var pct = bonded > 0 ? ((Number(v.tokens) / bonded) * 100).toFixed(1) : '0';
+                        var comm = (parseFloat(v.commission.commission_rates.rate) * 100).toFixed(0);
+                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-primary);">' +
+                            '<div style="display:flex;align-items:center;gap:10px;">' +
+                            '<span style="color:var(--text-secondary);font-size:0.75rem;width:20px;">' + (i + 1) + '</span>' +
+                            '<div><div style="font-weight:500;">' + esc(v.description.moniker) + '</div>' +
+                            '<div style="font-size:0.72rem;color:var(--text-secondary);">' + tokens + ' LTD (' + pct + '%)</div></div></div>' +
+                            '<div style="font-size:0.78rem;color:var(--text-secondary);">' + comm + '% com.</div></div>';
+                    }).join('');
                 }
-            }
-
-            // Load data from ecosystem
-            loadEcosystemData() {
-                if (window.LaTandaEcosystem) {
-                    const ecosystemData = window.LaTandaEcosystem.getEcosystemStatus();
-                    
-                    // Update tokenomics based on ecosystem activity
-                    this.tokenomicsData.currentPrice = ecosystemData.ltdPrice || 0.0847;
-                    this.tokenomicsData.marketCap = this.tokenomicsData.currentPrice * this.tokenomicsData.circulatingSupply;
-                    this.tokenomicsData.fdv = this.tokenomicsData.currentPrice * this.tokenomicsData.totalSupply;
-                    this.tokenomicsData.tvl = ecosystemData.tvl || 847200;
-                    
-                    console.log('🔄 Ecosystem data loaded into tokenomics');
-                }
-            }
-
-            // Update tokenomics display
-            updateTokenomicsDisplay() {
-                // Update main metrics
-                this.updateElement('current-price', `$${this.tokenomicsData.currentPrice?.toFixed(4) || '0.8470'}`);
-                this.updateElement('market-cap', `$${(this.tokenomicsData.marketCap / 1000000)?.toFixed(2) || '21.18'}M`);
-                this.updateElement('circulating-supply', `${(this.tokenomicsData.circulatingSupply / 1000000)?.toFixed(1) || '10.0'}M LTD`);
-                this.updateElement('total-supply', `${(this.tokenomicsData.totalSupply / 1000000)?.toFixed(0) || '200'}M LTD`);
-                this.updateElement('staking-apy', `${this.tokenomicsData.stakingAPY}%`);
-                this.updateElement('tvl-amount', `$${(this.tokenomicsData.tvl / 1000)?.toFixed(1) || '847.2'}K`);
-                
-                // Update user stats
-                this.updateElement('user-total-earned', `${this.userStats.totalEarned.toLocaleString()} LTD`);
-                this.updateElement('user-staking-balance', `${this.userStats.stakingBalance.toLocaleString()} LTD`);
-                this.updateElement('governance-votes', this.userStats.governanceVotes.toString());
-                this.updateElement('achievements-completed', this.userStats.achievementsCompleted.toString());
-                this.updateElement('check-in-streak', this.userStats.checkInStreak.toString());
-                
-                // Update reward eligibility
-                this.updateRewardEligibility();
-                
-                // Update progress bars
-                this.updateProgressBars();
-            }
-
-            // Update specific element
-            updateElement(id, value) {
-                const element = document.getElementById(id) || document.querySelector(`.${id}`);
-                if (element) {
-                    element.textContent = value;
-                    
-                    // Add update animation
-                    element.style.transform = 'scale(1.05)';
-                    element.style.color = 'var(--token-green)';
-                    setTimeout(() => {
-                        element.style.transform = 'scale(1)';
-                        element.style.color = '';
-                    }, 300);
-                }
-            }
-
-            // Update reward eligibility
-            updateRewardEligibility() {
-                // Check-in eligibility
-                const lastCheckIn = new Date(this.userStats.lastCheckIn || 0);
-                const now = new Date();
-                const hoursSinceCheckIn = (now - lastCheckIn) / (1000 * 60 * 60);
-                
-                const checkInButtons = document.querySelectorAll('.checkin-btn, [onclick*="checkin"], [onclick*="Reclamar"]');
-                checkInButtons.forEach(button => {
-                    if (hoursSinceCheckIn >= 48) {
-                        button.textContent = '✅ Reclamar 2 LTD';
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                    } else {
-                        const hoursRemaining = Math.ceil(48 - hoursSinceCheckIn);
-                        button.textContent = `⏰ Disponible en ${hoursRemaining}h`;
-                        button.disabled = true;
-                        button.style.opacity = '0.6';
-                    }
-                });
-
-                // Governance eligibility
-                const governanceButtons = document.querySelectorAll('.governance-btn, [onclick*="governance"], [onclick*="Votar"]');
-                governanceButtons.forEach(button => {
-                    if (this.userStats.stakingBalance >= this.tokenomicsData.governanceThreshold) {
-                        button.textContent = '🗳️ Votar Ahora';
-                        button.disabled = false;
-                        button.style.opacity = '1';
-                    } else {
-                        const needed = this.tokenomicsData.governanceThreshold - this.userStats.stakingBalance;
-                        button.textContent = `🔒 Necesitas ${needed.toLocaleString()} LTD más`;
-                        button.disabled = true;
-                        button.style.opacity = '0.6';
-                    }
-                });
-            }
-
-            // Update progress bars
-            updateProgressBars() {
-                // Staking progress
-                const stakingProgress = Math.min((this.userStats.stakingBalance / 10000) * 100, 100);
-                this.updateProgressBar('staking-progress', stakingProgress);
-                
-                // Achievement progress
-                const achievementProgress = Math.min((this.userStats.achievementsCompleted / 20) * 100, 100);
-                this.updateProgressBar('achievement-progress', achievementProgress);
-                
-                // Check-in streak progress
-                const streakProgress = Math.min((this.userStats.checkInStreak / 30) * 100, 100);
-                this.updateProgressBar('streak-progress', streakProgress);
-            }
-
-            // Update progress bar
-            updateProgressBar(id, percentage) {
-                const progressBars = document.querySelectorAll(`#${id} .progress-fill, .${id} .progress-fill, .progress-fill`);
-                progressBars.forEach(progressBar => {
-                    if (progressBar) {
-                        progressBar.style.width = `${percentage}%`;
-                        progressBar.style.transition = 'width 0.5s ease';
-                    }
-                });
-            }
-
-            // Setup event listeners
-            setupEventListeners() {
-                document.addEventListener('click', (e) => {
-                    if (e.target.textContent.includes('Reclamar') || e.target.classList.contains('checkin-btn')) {
-                        this.handleCheckIn();
-                    }
-                    
-                    if (e.target.textContent.includes('Stake') || e.target.classList.contains('stake-btn')) {
-                        this.handleStaking();
-                    }
-                    
-                    if (e.target.textContent.includes('Votar') || e.target.classList.contains('governance-btn')) {
-                        this.handleGovernance();
-                    }
-                    
-                    if (e.target.textContent.includes('Ver Desafíos') || e.target.classList.contains('achievement-btn')) {
-                        this.handleAchievement();
-                    }
-                });
-            }
-
-            // Handle check-in
-            handleCheckIn() {
-                const lastCheckIn = new Date(this.userStats.lastCheckIn || 0);
-                const now = new Date();
-                const hoursSinceCheckIn = (now - lastCheckIn) / (1000 * 60 * 60);
-                
-                if (hoursSinceCheckIn >= 48) {
-                    // Process check-in
-                    this.userStats.lastCheckIn = now.toISOString();
-                    this.userStats.checkInStreak += 1;
-                    this.userStats.totalEarned += 2;
-                    
-                    // Bonus for streaks
-                    if (this.userStats.checkInStreak % 7 === 0) {
-                        const bonus = 5;
-                        this.userStats.totalEarned += bonus;
-                        this.showNotification(`🎉 ¡Streak bonus! +${bonus} LTD adicionales`, 'success');
-                    }
-                    
-                    // Save data
-                    this.saveUserData();
-                    
-                    // Update wallet balance if available
-                    if (window.LaTandaWallet) {
-                        window.LaTandaWallet.walletData.balance += 2;
-                        window.LaTandaWallet.updateWalletDisplay();
-                    }
-                    
-                    this.showNotification('✅ +2 LTD reclamados! Regresa en 48 horas', 'success');
-                    this.updateTokenomicsDisplay();
-                } else {
-                    const hoursRemaining = Math.ceil(48 - hoursSinceCheckIn);
-                    this.showNotification(`⏰ Check-in disponible en ${hoursRemaining} horas`, 'info');
-                }
-            }
-
-            // Handle staking
-            handleStaking() {
-                if (window.LaTandaWallet && window.LaTandaWallet.walletData.isConnected) {
-                    const balance = window.LaTandaWallet.walletData.balance;
-                    if (balance > 100) {
-                        const stakeAmount = Math.min(balance * 0.1, 1000); // Stake up to 10% or 1000 LTD
-                        
-                        this.userStats.stakingBalance += stakeAmount;
-                        window.LaTandaWallet.walletData.balance -= stakeAmount;
-                        window.LaTandaWallet.walletData.lockedFunds += stakeAmount;
-                        
-                        this.saveUserData();
-                        window.LaTandaWallet.updateWalletDisplay();
-                        
-                        this.showNotification(`🔒 ${stakeAmount.toFixed(2)} LTD staked successfully!`, 'success');
-                        this.updateTokenomicsDisplay();
-                    } else {
-                        this.showNotification('❌ Saldo insuficiente para staking', 'error');
-                    }
-                } else {
-                    this.showNotification('💼 Conecta tu wallet para hacer staking', 'info');
-                }
-            }
-
-            // Handle governance
-            handleGovernance() {
-                if (this.userStats.stakingBalance >= this.tokenomicsData.governanceThreshold) {
-                    this.userStats.governanceVotes += 1;
-                    const reward = (crypto.getRandomValues(new Uint8Array(1))[0] % 5) + 1; // 1-5 LTD
-                    this.userStats.totalEarned += reward;
-                    
-                    this.saveUserData();
-                    
-                    if (window.LaTandaWallet) {
-                        window.LaTandaWallet.walletData.balance += reward;
-                        window.LaTandaWallet.updateWalletDisplay();
-                    }
-                    
-                    this.showNotification(`🗳️ Voto registrado! +${reward} LTD reward`, 'success');
-                    this.updateTokenomicsDisplay();
-                } else {
-                    const needed = this.tokenomicsData.governanceThreshold - this.userStats.stakingBalance;
-                    this.showNotification(`❌ Necesitas ${needed.toLocaleString()} LTD más en staking para votar`, 'error');
-                }
-            }
-
-            // Handle achievement
-            handleAchievement() {
-                // Simulate completing an achievement
-                if (crypto.getRandomValues(new Uint8Array(1))[0] > 77) { // ~70% chance
-                    this.userStats.achievementsCompleted += 1;
-                    const reward = (crypto.getRandomValues(new Uint8Array(1))[0] % 21) + 5; // 5-25 LTD
-                    this.userStats.totalEarned += reward;
-                    
-                    this.saveUserData();
-                    
-                    if (window.LaTandaWallet) {
-                        window.LaTandaWallet.walletData.balance += reward;
-                        window.LaTandaWallet.updateWalletDisplay();
-                    }
-                    
-                    this.showNotification(`🏆 ¡Achievement desbloqueado! +${reward} LTD`, 'success');
-                    this.updateTokenomicsDisplay();
-                } else {
-                    this.showNotification('⏳ Sigue participando para desbloquear achievements', 'info');
-                }
-            }
-
-            // Start real-time updates
-            startRealtimeUpdates() {
-                // Update tokenomics every 30 seconds
-                setInterval(() => {
-                    this.loadEcosystemData();
-                    this.updateTokenomicsDisplay();
-                }, 30000);
-                
-                // Simulate staking rewards every minute
-                setInterval(() => {
-                    if (this.userStats.stakingBalance > 0) {
-                        const minuteReward = (this.userStats.stakingBalance * (this.tokenomicsData.stakingAPY / 100)) / (365 * 24 * 60);
-                        this.userStats.totalEarned += minuteReward;
-                        
-                        if (window.LaTandaWallet) {
-                            window.LaTandaWallet.walletData.balance += minuteReward;
-                        }
-                        
-                        this.saveUserData();
-                        
-                        if (minuteReward > 1) {
-                            this.showNotification(`💰 +${minuteReward.toFixed(4)} LTD staking reward`, 'success');
-                        }
-                    }
-                }, 60000);
-            }
-
-            // Save user data
-            saveUserData() {
-                localStorage.setItem('latanda_tokenomics', JSON.stringify(this.userStats));
-            }
-
-            // Show notifications
-            showNotification(message, type = 'info') {
-                const notification = document.createElement('div');
-                notification.className = `tokenomics-notification ${type}`;
-                notification.innerHTML = `
-                    <div class="notification-content">
-                        <span>${message}</span>
-                        <button onclick="this.parentElement.parentElement.remove()">×</button>
-                    </div>
-                `;
-                
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: var(--bg-secondary);
-                    border: 1px solid var(--token-green);
-                    border-radius: 12px;
-                    padding: 16px;
-                    color: var(--text-primary);
-                    z-index: 10000;
-                    animation: slideIn 0.3s ease;
-                    min-width: 300px;
-                    backdrop-filter: blur(10px);
-                `;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.remove();
-                    }
-                }, 5000);
-            }
-
-            // Get tokenomics status
-            getTokenomicsStatus() {
-                return {
-                    userLevel: this.getUserLevel(),
-                    totalValue: this.userStats.totalEarned * this.tokenomicsData.currentPrice,
-                    stakingYield: this.userStats.stakingBalance * (this.tokenomicsData.stakingAPY / 100),
-                    ...this.tokenomicsData,
-                    ...this.userStats
-                };
-            }
-
-            // Get user level based on activity
-            getUserLevel() {
-                const totalActivity = this.userStats.totalEarned + this.userStats.stakingBalance + (this.userStats.governanceVotes * 10);
-                
-                if (totalActivity > 50000) return 'Diamond 💎';
-                if (totalActivity > 25000) return 'Platinum 🏆';
-                if (totalActivity > 10000) return 'Gold 🥇';
-                if (totalActivity > 5000) return 'Silver 🥈';
-                if (totalActivity > 1000) return 'Bronze 🥉';
-                return 'Starter 🌱';
+            } catch (e) {
+                console.error('Chain data load failed:', e);
             }
         }
 
-        // Initialize tokenomics system
-        let laTandaTokenomics;
-        
+        // Fetch governance proposals
+        async function loadProposals() {
+            try {
+                var res = await fetch(CHAIN_REST + '/cosmos/gov/v1/proposals').then(function(r) { return r.json(); });
+                var proposals = res.proposals || [];
+                var passed = proposals.filter(function(p) { return p.status === 'PROPOSAL_STATUS_PASSED'; }).length;
+                var active = proposals.filter(function(p) { return p.status === 'PROPOSAL_STATUS_VOTING_PERIOD'; }).length;
+
+                var elCount = document.getElementById('teGovProposalCount');
+                if (elCount) elCount.textContent = proposals.length;
+                var elPassed = document.getElementById('teGovPassed');
+                if (elPassed) elPassed.textContent = passed;
+                var elActive = document.getElementById('teGovActive');
+                if (elActive) elActive.textContent = active;
+
+                var listEl = document.getElementById('teProposals');
+                if (listEl && proposals.length > 0) {
+                    listEl.innerHTML = proposals.sort(function(a, b) { return Number(b.id) - Number(a.id); }).map(function(p) {
+                        var statusMap = {
+                            'PROPOSAL_STATUS_PASSED': { label: 'Aprobada', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+                            'PROPOSAL_STATUS_VOTING_PERIOD': { label: 'En Votacion', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                            'PROPOSAL_STATUS_REJECTED': { label: 'Rechazada', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+                            'PROPOSAL_STATUS_DEPOSIT_PERIOD': { label: 'Deposito', color: '#818cf8', bg: 'rgba(99,102,241,0.1)' }
+                        };
+                        var s = statusMap[p.status] || { label: p.status, color: '#94a3b8', bg: 'rgba(148,163,184,0.1)' };
+                        return '<div style="background:' + s.bg + ';border:1px solid ' + s.color + '33;border-radius:12px;padding:14px;margin-bottom:10px;">' +
+                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                            '<span style="font-weight:600;">' + esc(p.title || 'Propuesta #' + p.id) + '</span>' +
+                            '<span style="font-size:0.72rem;padding:3px 10px;border-radius:20px;background:' + s.color + '22;color:' + s.color + ';font-weight:500;">' + s.label + '</span></div>' +
+                            '<div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.5;">' + esc((p.summary || '').substring(0, 150)) + '</div></div>';
+                    }).join('');
+                } else if (listEl) {
+                    listEl.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;">Sin propuestas</div>';
+                }
+            } catch (e) {
+                console.error('Proposals load failed:', e);
+            }
+        }
+
+        // Fetch user wallet (if logged in)
+        async function loadWallet() {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!token) return;
+
+            try {
+                var res = await fetch('/api/wallet/balance', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+                if (!res.success) return;
+                var data = res.data || {};
+                var ltd = parseFloat(data.crypto_balances?.LTD || data.ltd_balance || 0);
+                var mined = parseFloat(data.testnet_ltd_mined || 0);
+
+                var walletEl = document.getElementById('teWalletContent');
+                if (walletEl) {
+                    walletEl.innerHTML = '<div style="text-align:center;margin-bottom:24px;">' +
+                        '<div style="font-size:2.5rem;font-weight:700;color:#10B981;">' + ltd.toFixed(2) + '</div>' +
+                        '<div style="color:var(--text-secondary);margin-bottom:4px;">LTD en Plataforma</div>' +
+                        (mined > 0 ? '<div style="font-size:0.82rem;color:#00FFFF;">⛏️ ' + mined.toFixed(2) + ' LTD minados</div>' : '') +
+                    '</div>' +
+                    '<div style="display:flex;gap:12px;">' +
+                        '<button class="btn btn-primary" style="flex:1;opacity:0.5;cursor:not-allowed;" disabled title="Disponible en mainnet">📤 Enviar</button>' +
+                        '<button class="btn btn-secondary" style="flex:1;opacity:0.5;cursor:not-allowed;" disabled title="Disponible en mainnet">📥 Recibir</button>' +
+                    '</div>';
+                }
+
+                // Load mining history
+                var miningRes = await fetch('/api/mining/status', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                var txEl = document.getElementById('teTransactions');
+                if (txEl && miningRes && miningRes.success) {
+                    var ms = miningRes.data || {};
+                    txEl.innerHTML = '<div style="padding:8px 0;border-bottom:1px solid var(--border-primary);display:flex;justify-content:space-between;">' +
+                        '<span style="color:var(--text-secondary);">Tier actual</span><span style="font-weight:600;">' + esc(ms.current_tier || 'Bronze') + '</span></div>' +
+                        '<div style="padding:8px 0;border-bottom:1px solid var(--border-primary);display:flex;justify-content:space-between;">' +
+                        '<span style="color:var(--text-secondary);">Total minado</span><span style="font-weight:600;color:#10B981;">' + (ms.testnet_ltd_mined || 0).toFixed(2) + ' LTD</span></div>' +
+                        '<div style="padding:8px 0;border-bottom:1px solid var(--border-primary);display:flex;justify-content:space-between;">' +
+                        '<span style="color:var(--text-secondary);">Racha</span><span style="font-weight:600;">' + (ms.mining_streak || 0) + ' dias</span></div>' +
+                        '<div style="padding:8px 0;display:flex;justify-content:space-between;">' +
+                        '<span style="color:var(--text-secondary);">Claims totales</span><span style="font-weight:600;">' + (ms.total_claims || 0) + '</span></div>';
+                }
+            } catch (e) {
+                console.error('Wallet load failed:', e);
+            }
+        }
+
+        // Init
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                laTandaTokenomics = new LaTandaTokenomicsEngine();
-                window.LaTandaTokenomics = laTandaTokenomics;
-                
-                console.log('🪙 La Tanda Tokenomics Engine initialized');
-            }, 1500);
+            loadChainData();
+            loadProposals();
+            loadWallet();
         });
+
+        // Legacy compatibility (minimal stub for components-loader)
+        class LaTandaTokenomicsEngine {
+            constructor() { this.tokenomicsData = { totalSupply: 200000000, circulatingSupply: 10000000 }; }
+            init() {}
+            updateElement() {}
+        }
+        // STUB END — remove old engine below
+
+        let laTandaTokenomics = new LaTandaTokenomicsEngine();
+        window.LaTandaTokenomics = laTandaTokenomics;
     </script>
     
   <script nomodule>!function(){var e=document,t=e.createElement("script");if(!("noModule"in t)&&"onbeforeload"in t){var n=!1;e.addEventListener("beforeload",(function(e){if(e.target===t)n=!0;else if(!e.target.hasAttribute("nomodule")||!n)return;e.preventDefault()}),!0),t.type="module",t.src=".",e.head.appendChild(t),t.remove()}}();</script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
   <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/ltdTokenEconomics-legacy-W8PPo8jH.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
-    <script src="js/components-loader.js?v=31.1"></script>
-    <script src="js/header.js"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
+    
     <script src="shared-components.js?v=7.20"></script>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
+        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(10,14,23,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.08);padding:4px 0;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1.1rem}.mobile-nav-item:hover{color:#00FFFF}}</style>
 </body>
 </html>
