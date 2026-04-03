@@ -1,188 +1,123 @@
 /**
- * LA TANDA - Header Sync Manager
- * Real-time data synchronization with polling
- * @version 1.3 - Added JWT authentication
+ * LA TANDA - Header Sync v2.0
+ * LTD balance + rewards pill data sync
  */
-
 const HeaderSync = {
     intervals: {},
     isVisible: true,
-    lastSync: null,
     pausedAt: null,
 
-    // Sync configuration
-    config: {
-        balanceInterval: 30000,    // 30 seconds
-        notifInterval: 60000,      // 60 seconds
-        pauseThreshold: 30000      // Refresh all if hidden > 30s
-    },
+    getToken() { return localStorage.getItem("auth_token") || localStorage.getItem("authToken") || null; },
+    getHeaders() { var t = this.getToken(); return t ? { "Authorization": "Bearer " + t } : {}; },
 
-    /**
-     * Get auth token for API calls
-     */
-    getAuthToken() {
-        return localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token") || null;
-    },
-
-    /**
-     * Get headers with JWT
-     */
-    getAuthHeaders() {
-        const token = this.getAuthToken();
-        return token ? { "Authorization": "Bearer " + token } : {};
-    },
-
-    /**
-     * Get user ID - uses centralized LaTandaUser system
-     */
-    getUserId() {
-        // Try LaTandaUser first (centralized system)
-        if (window.LaTandaUser && window.LaTandaUser.getId) {
-            const id = window.LaTandaUser.getId();
-            if (id) return id;
-        }
-
-        // Try latanda_user JSON
-        try {
-            const userData = localStorage.getItem("latanda_user");
-            if (userData) {
-                const user = JSON.parse(userData);
-                if (user.id) return user.id;
-            }
-        } catch (e) {}
-
-        // Fallback to direct user_id
-        return localStorage.getItem("user_id") || null;
-    },
-
-    /**
-     * Start automatic synchronization
-     */
     start() {
-        // Visibility change handler
-        document.addEventListener("visibilitychange", () => {
-            this.handleVisibilityChange();
-        });
-
-        // Start intervals
-        this.intervals.balance = setInterval(() => {
-            if (this.isVisible) this.syncBalance();
-        }, this.config.balanceInterval);
-
-        this.intervals.notifications = setInterval(() => {
-            if (this.isVisible) this.syncNotifications();
-        }, this.config.notifInterval);
-
-        // Initial sync
+        document.addEventListener("visibilitychange", () => this.handleVisibility());
+        this.intervals.balance = setInterval(() => { if (this.isVisible) this.syncBalance(); }, 60000);
+        this.intervals.pill = setInterval(() => { if (this.isVisible) this.syncPill(); }, 120000);
+        this.intervals.notif = setInterval(() => { if (this.isVisible) this.syncNotifications(); }, 60000);
         this.syncAll();
     },
 
-    /**
-     * Stop all synchronization
-     */
-    stop() {
-        Object.values(this.intervals).forEach(clearInterval);
-        this.intervals = {};
+    stop() { Object.values(this.intervals).forEach(clearInterval); this.intervals = {}; },
+
+    handleVisibility() {
+        if (document.hidden) { this.isVisible = false; this.pausedAt = Date.now(); }
+        else { this.isVisible = true; if (this.pausedAt && Date.now() - this.pausedAt > 30000) this.syncAll(); this.pausedAt = null; }
     },
 
-    /**
-     * Handle visibility changes
-     */
-    handleVisibilityChange() {
-        if (document.hidden) {
-            this.isVisible = false;
-            this.pausedAt = Date.now();
-        } else {
-            this.isVisible = true;
-            if (this.pausedAt && Date.now() - this.pausedAt > this.config.pauseThreshold) {
-                this.syncAll();
-            }
-            this.pausedAt = null;
-        }
-    },
-
-    /**
-     * Sync all header data
-     */
     async syncAll() {
-        await Promise.all([
-            this.syncBalance(),
-            this.syncNotifications()
-        ]);
-        this.lastSync = Date.now();
-        window.LaTandaEvents && window.LaTandaEvents.emit("header:synced", { time: this.lastSync });
+        await Promise.all([this.syncBalance(), this.syncPill(), this.syncNotifications()]);
     },
 
-    /**
-     * Sync wallet balance
-     */
     async syncBalance() {
-        const userId = this.getUserId();
-        if (!userId) {
-            return null;
-        }
-
-        // Check cache first
-        const cached = window.LaTandaCache && window.LaTandaCache.get("balance");
-        if (cached) return cached;
-
+        var token = this.getToken();
+        if (!token) return;
         try {
-            const api = window.LaTandaAPI || { baseURL: "https://latanda.online" };
-            const url = (api.baseURL || "https://latanda.online") + "/api/wallet/balance?user_id=" + userId;
-
-            const response = await fetch(url, { headers: this.getAuthHeaders() });
-            const data = await response.json();
-
+            // Use JWT auth only — no user_id in URL
+            var res = await fetch("/api/wallet/balance", { headers: this.getHeaders() });
+            var data = await res.json();
             if (data.success) {
-                const balance = {
-                    amount: parseFloat(data.data?.balance || data.data?.confirmed_balance || data.balance || 0),
-                    pending: parseFloat(data.data?.pending_deposits || data.pending || 0),
-                    currency: "HNL"
-                };
-
-                // Cache the result
-                window.LaTandaCache && window.LaTandaCache.set("balance", balance);
-
-                // Update UI
-                window.HeaderUI && window.HeaderUI.updateBalance(balance);
-
-                // Emit event
-                window.LaTandaEvents && window.LaTandaEvents.emit("balance:updated", balance);
-
-                return balance;
+                var ltd = parseFloat(data.data?.ltd_balance || data.data?.balances?.ltd_tokens || data.data?.crypto_balances?.LTD || 0);
+                // Update header balance display
+                var headerEl = document.getElementById("headerLtdBalance");
+                var dropdownEl = document.getElementById("dropdownLtdBalance");
+                if (headerEl) headerEl.textContent = ltd.toFixed(1) + " LTD";
+                if (dropdownEl) dropdownEl.textContent = ltd.toFixed(1);
+                // Cache
+                try { localStorage.setItem("_ltd_balance", ltd); } catch(e) {}
             }
-        } catch (err) {
-            // error handled silently
+        } catch(e) {
+            // Use cached balance as fallback
+            try {
+                var cached = parseFloat(localStorage.getItem("_ltd_balance")) || 0;
+                var el = document.getElementById("headerLtdBalance");
+                if (el && el.textContent === "0 LTD") el.textContent = cached.toFixed(1) + " LTD";
+            } catch(e2) {}
         }
-
-        return null;
     },
 
-    /**
-     * Sync notifications count
-     * v4.16.12: Delegates to NotificationCenter (single source of truth)
-     */
-    async syncNotifications() {
-        // NotificationCenter handles its own polling + badge updates
-        // Just read its current count to keep header badge in sync
+    async syncPill() {
+        var token = this.getToken();
+        if (!token) return;
+        try {
+            var res = await fetch("/api/rewards/summary", { headers: this.getHeaders() });
+            var r = await res.json();
+            if (!r.success) return;
+            var d = r.data;
+            var pendingCount = 0;
+            var msgs = [];
+
+            if (d.mining.can_claim) { msgs.push({ icon: "fa-hammer", text: "Minar ahora", cls: "rp-mine" }); pendingCount++; }
+            if (d.streak.claimable_ltd > 0) { msgs.push({ icon: "fa-fire", text: "Racha: +" + d.streak.claimable_ltd + " LTD", cls: "rp-claim" }); pendingCount += d.streak.claimable.length; }
+            if (d.onboarding.pending > 0 && d.onboarding.completed < d.onboarding.total) { msgs.push({ icon: "fa-rocket", text: d.onboarding.completed + "/" + d.onboarding.total + " onboarding", cls: "rp-claim" }); pendingCount++; }
+            msgs.push({ icon: "fa-coins", text: d.balance.toFixed(1) + " LTD", cls: "rp-idle" });
+
+            // Update mobile pill
+            this._updatePill("rewardsPillMobile", "rewardsPillMobileText", "rewardsPillMobileBadge", msgs, pendingCount);
+            // Update home-dashboard pill if exists
+            this._updatePill("rewardsPill", "rewardsPillText", "rewardsPillBadge", msgs, pendingCount);
+        } catch(e) {}
+    },
+
+    _updatePill(pillId, textId, badgeId, msgs, pendingCount) {
+        var pill = document.getElementById(pillId);
+        var textEl = document.getElementById(textId);
+        var badgeEl = document.getElementById(badgeId);
+        if (!pill || !textEl) return;
+
+        var msg = msgs[0];
+        pill.className = "lt-rewards-pill lt-mobile-pill " + msg.cls;
+        textEl.textContent = msg.text;
+        var icon = pill.querySelector(".lt-rp-icon");
+        if (icon) icon.className = "fas " + msg.icon + " lt-rp-icon";
+        if (badgeEl) { if (pendingCount > 0) { badgeEl.textContent = pendingCount; badgeEl.style.display = ""; } else { badgeEl.style.display = "none"; } }
+
+        // Rotate if multiple
+        if (msgs.length > 1 && !pill._rotating) {
+            pill._rotating = true;
+            var idx = 0;
+            setInterval(function() {
+                idx = (idx + 1) % msgs.length;
+                var m = msgs[idx];
+                pill.className = "lt-rewards-pill lt-mobile-pill " + m.cls;
+                textEl.textContent = m.text;
+                if (icon) icon.className = "fas " + m.icon + " lt-rp-icon";
+            }, 5000);
+        }
+    },
+
+    syncNotifications() {
         if (window.notificationCenter) {
-            const count = window.notificationCenter.unreadCount || 0;
-            window.HeaderUI && window.HeaderUI.updateNotifCount(count);
-            return { count: count };
+            var count = window.notificationCenter.unreadCount || 0;
+            var badge = document.getElementById("notifBadge");
+            if (badge) { badge.textContent = count > 0 ? (count > 99 ? "99+" : count) : ""; }
         }
-        return null;
     },
 
-    /**
-     * Force refresh a specific type
-     */
     forceRefresh(type) {
-        window.LaTandaCache && window.LaTandaCache.delete(type);
-
         if (type === "balance") return this.syncBalance();
-        if (type === "notifications") return this.syncNotifications();
-        if (type === "all") return this.syncAll();
+        if (type === "pill") return this.syncPill();
+        return this.syncAll();
     }
 };
-
 window.HeaderSync = HeaderSync;

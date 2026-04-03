@@ -460,6 +460,7 @@ class CreateGroupFormHandler {
                 this.formData.name = document.getElementById('group-name').value.trim();
                 this.formData.description = document.getElementById('group-description').value.trim();
                 this.formData.type = document.getElementById('group-type').value;
+                this.formData.distributionMode = (document.getElementById('distribution-mode') || {}).value || 'rotation';
                 this.formData.location = document.getElementById('location').value.trim();
                 this.formData.virtualMeetings = document.querySelector('input[name="virtual-meetings"]:checked').value;
                 var publicCb = document.getElementById('group-is-public');
@@ -663,6 +664,7 @@ class CreateGroupFormHandler {
                     start_date: fd.startDate || null,
                     latePaymentPenalty: parseFloat(fd.penaltyAmount) || 0,
                     commissionRate: fd.commissionRate !== undefined ? fd.commissionRate : null,
+                    distribution_mode: fd.distributionMode || 'rotation',
                     is_public: fd.isPublic === true
                 })
             });

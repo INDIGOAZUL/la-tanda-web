@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link rel="manifest" href="/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="pages.lottery_predictor_title">Predictor de Lotería - La Tanda</title>
+    <title>Predictor de Lotería - La Tanda</title>
     <link rel="stylesheet" href="css/main.css?v=8.0">
     <style>
         :root {
@@ -1131,7 +1131,7 @@
                 <button class="draw-option" data-time="9pm">9 PM</button>
             </div>
 
-            <div class="algo-selector" id="algoSelectorDiv" style="display: none; style="margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div class="algo-selector" id="algoSelectorDiv" style="display: none; margin-top: 15px; align-items: center; justify-content: center; gap: 10px;">
                 <span style="color: var(--ds-text-secondary, #8892b0); font-size: 0.85rem;">Algoritmo:</span>
                 <label class="algo-switch">
                     <input type="checkbox" id="useMLToggle" onchange="toggleAlgorithm(this.checked)">
@@ -1350,7 +1350,7 @@
 
     <div id="footer-placeholder"></div>
 
-    <script src="js/components-loader.js?v=31.1"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <script>
         let selectedTime = "any";
         let useML = false;
@@ -1527,7 +1527,9 @@
                     setTimeout(() => {
                         reels.forEach((reel, i) => {
                             reel.classList.remove("spinning");
-                            const num = data.data.prediction.numbers[0].value || data.data.prediction.numbers[0].number; const sign = data.data.prediction.numbers[0].sign || "";
+                            const nums = data.data?.prediction?.numbers || [];
+                            const n = nums[i] || nums[0] || {};
+                            const num = n.value || n.number || "??"; const sign = n.sign || "";
                             reel.querySelector(".reel-number").textContent = String(num).padStart(2, '0'); reel.querySelector(".reel-sign").textContent = sign;
                         });
 
@@ -1766,7 +1768,7 @@
                     await new Promise(function(r) { setTimeout(r, 500 + i * 300); });
                     reels[i].classList.remove("spinning");
 
-                    if (data.success && data.data.prediction.numbers[i]) {
+                    if (data.success && data.data?.prediction?.numbers?.[i]) {
                         const n = data.data.prediction.numbers[i];
                         reels[i].querySelector(".reel-number").textContent = String(n.value || n.number).padStart(2, "0"); reels[i].querySelector(".reel-sign").textContent = n.sign || "";
                         reels[i].classList.remove("hot", "cold");
@@ -1882,7 +1884,7 @@
 
         function getNextDrawTime() {
             const now = new Date();
-            const hour = now.getHours();
+            const hour = (now.getUTCHours() - 6 + 24) % 24; // Honduras UTC-6
             if (hour < 11) return '11:00 AM';
             if (hour < 15) return '3:00 PM';
             if (hour < 21) return '9:00 PM';
@@ -2426,5 +2428,14 @@
         });
     </script>
     <script src="pwa-manager.js"></script>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
+        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
+        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+    </nav>
+    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(10,14,23,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.08);padding:4px 0;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1.1rem}.mobile-nav-item:hover{color:#00FFFF}}</style>
 </body>
 </html>

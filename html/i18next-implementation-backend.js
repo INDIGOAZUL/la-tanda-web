@@ -15,7 +15,7 @@
 const I18N_CONFIG = {
     API_BASE_URL: 'https://latanda.online',
     ENDPOINTS: {
-        USER_PROFILE: '/api/users/me',
+        USER_PROFILE: '/api/user/profile',
         USER_PREFERENCES: '/api/users/preferences'
     },
     STORAGE_KEYS: {
@@ -213,6 +213,8 @@ function invalidateLanguageCache() {
  * Priority: Cache → Backend → localStorage → navigator → default
  */
 async function getUserLanguagePreference() {
+    // v3.0: Platform is Honduras-only — always Spanish
+    return 'es';
     console.log('[i18n] Detecting user language preference...');
 
     // 1. Check cache first (fastest)
@@ -246,26 +248,7 @@ async function getUserLanguagePreference() {
         return storedLang;
     }
 
-    // 4. Fallback to browser language
-    const browserLang = navigator.language || navigator.userLanguage;
-    if (browserLang) {
-        // Extract base language code (e.g., 'es' from 'es-MX')
-        const baseLang = browserLang.split('-')[0];
-        if (I18N_CONFIG.SUPPORTED_LANGUAGES.includes(baseLang)) {
-            console.log(`[i18n] Using browser language: ${baseLang}`);
-
-            // Cache for subsequent calls
-            languageCache = {
-                value: baseLang,
-                timestamp: Date.now(),
-                isAuthenticated: false
-            };
-
-            return baseLang;
-        }
-    }
-
-    // 5. Final fallback to default
+    // 4. Final fallback to platform default (Honduras = es)
     console.log(`[i18n] Using default language: ${I18N_CONFIG.DEFAULT_LANGUAGE}`);
     return I18N_CONFIG.DEFAULT_LANGUAGE;
 }
@@ -442,7 +425,7 @@ async function initializeI18next() {
         startI18nObserver();
 
         // Create language selector
-        createLanguageSelector();
+        // createLanguageSelector(); // Disabled: language selector now in profile dropdown
 
         // Dispatch ready event
         document.dispatchEvent(new CustomEvent('i18n:ready', {
@@ -568,26 +551,22 @@ function createLanguageSelector() {
 
         <style>
             .i18n-selector {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
+                position: relative;
+                z-index: 100;
                 font-family: 'Inter', system-ui, sans-serif;
             }
 
             .i18n-btn {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                background: rgba(15, 23, 42, 0.9);
-                -webkit-backdrop-filter: blur(10px);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(0, 255, 255, 0.2);
-                border-radius: 12px;
-                padding: 8px 14px;
+                gap: 4px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                padding: 6px 10px;
                 cursor: pointer;
                 transition: all 0.2s ease;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                box-shadow: none;
             }
 
             .i18n-btn:hover {
@@ -598,14 +577,14 @@ function createLanguageSelector() {
             }
 
             .i18n-flag {
-                font-size: 20px;
+                font-size: 16px;
                 line-height: 1;
             }
 
             .i18n-code {
-                font-size: 14px;
+                font-size: 12px;
                 font-weight: 600;
-                color: #e2e8f0;
+                color: #94a3b8;
             }
 
             .i18n-chevron {
@@ -685,7 +664,13 @@ function createLanguageSelector() {
     `;
 
     // Insert into page
-    document.body.insertAdjacentHTML('beforeend', selectorHTML);
+    // Insert into header-right if available, otherwise body
+    const headerRight = document.querySelector('.lt-header-right');
+    if (headerRight) {
+        headerRight.insertAdjacentHTML('afterbegin', selectorHTML);
+    } else {
+        document.body.insertAdjacentHTML('beforeend', selectorHTML);
+    };
 
     // Setup event listeners
     const btn = document.getElementById('i18n-toggle');
