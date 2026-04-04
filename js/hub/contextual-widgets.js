@@ -84,6 +84,7 @@ const ContextualWidgets = {
         if (path.includes('mineria')) return 'mineria';
         if (path.includes('lottery') || path.includes('predictor')) return 'loteria';
         if (path.includes('marketplace')) return 'mercado';
+        if (path.includes('groups-advanced') || path.includes('tandas')) return 'grupos';
         if (path.includes('mia')) return 'mia';
         return 'inicio';
     },
@@ -109,7 +110,8 @@ const ContextualWidgets = {
             mineria: this.renderMineriaWidgets(),
             loteria: this.renderLoteriaWidgets(),
             mercado: this.renderMercadoWidgets(),
-            mia: this.renderMiaWidgets()
+            mia: this.renderMiaWidgets(),
+            grupos: ''
         };
 
         return widgetTemplates[page] || widgetTemplates.inicio;

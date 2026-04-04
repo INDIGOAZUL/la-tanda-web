@@ -27,6 +27,8 @@ class MarketplaceSocialSystem {
         this.currentUser = this.getCurrentUser();
         this.authToken = this.getAuthToken();
         this.isGuest = !this.currentUser || this.currentUser.id === 'guest';
+        // Exchange rates (HNL base) — update these as needed
+        this.exchangeRates = { HNL: 1, USD: 25.50, LTD: 5.10 }; // 1 LTD = 0.20 USD = 5.10 HNL
 
         // System state
         this.products = [];
@@ -170,7 +172,7 @@ class MarketplaceSocialSystem {
         if (serviceCategoryFilter && this.categoriesData) {
             serviceCategoryFilter.innerHTML = '<option value="">Todas las Categorías</option>';
             this.categoriesData.forEach(cat => {
-                if (cat.is_active) {
+                if (cat.is_active !== false) {
                     serviceCategoryFilter.innerHTML += `
                         <option value="${this.escapeHtml(String(cat.category_id))}">${this.escapeHtml(cat.icon || '')} ${this.escapeHtml(cat.name_es || '')}</option>
                     `;
@@ -575,10 +577,30 @@ class MarketplaceSocialSystem {
     }
 
     formatPrice(price, currency, suffix) {
-        const sym = currency === 'USD' ? '$' : 'L.';
-        const formatted = currency === 'USD' ? price.toLocaleString('en-US') : price.toLocaleString();
-        return suffix ? `${sym}${formatted}${suffix}` : `${sym}${formatted}`;
+        if (currency === 'LTD') {
+            const fmt = Number(price) % 1 === 0 ? Number(price).toLocaleString('es-HN', {maximumFractionDigits:0}) : Number(price).toLocaleString('es-HN', {minimumFractionDigits:2});
+            return suffix ? fmt + ' LTD' + suffix : fmt + ' LTD';
+        }
+        const sym = currency === 'USD' ? '$ ' : 'L. ';
+        const formatted = currency === 'USD' ? Number(price).toLocaleString('en-US') : Number(price).toLocaleString('es-HN');
+        return suffix ? sym + formatted + suffix : sym + formatted;
     }
+    // Convert price to HNL equivalent for display
+    priceInHNL(price, currency) {
+        const rate = this.exchangeRates?.[currency] || 1;
+        return Number(price || 0) * rate;
+    }
+
+    // Format with equivalence hint
+    formatPriceWithHint(price, currency) {
+        const main = this.formatPrice(price, currency);
+        if (currency === 'HNL' || !currency) return main;
+        const hnl = this.priceInHNL(price, currency);
+        const fmtHnl = window.ltFormatNumber ? ltFormatNumber(hnl) : hnl.toLocaleString('es-HN', {maximumFractionDigits:0});
+        return main + ' <span class="sd-price-hint">&asymp; L. ' + fmtHnl + '</span>';
+    }
+
+
 
     createServiceCard(service) {
         const categoryLabel = this.serviceCategories[service.category] || service.category;
@@ -2224,7 +2246,7 @@ class MarketplaceSocialSystem {
                 (scHasCarousel ? '' : '</div>') +
                 '<div class="sc-body">' +
                     '<div class="sc-price-row">' +
-                        '<div class="sc-price">' + priceLabel + '</div>' +
+                        '<div class="sc-price">' + priceLabel + (item.currency && item.currency !== 'HNL' ? ' <span class="sd-price-hint">&asymp; L. ' + (window.ltFormatNumber ? ltFormatNumber(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1)) : Math.round(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1))) + '</span>' : '') + '</div>' +
                         (priceTag ? '<span class="sc-price-tag">' + esc(priceTag) + '</span>' : '') +
                     '</div>' +
                     '<div class="sc-title">' + esc(item.title) + '</div>' +
@@ -2283,7 +2305,7 @@ class MarketplaceSocialSystem {
                 (cond ? '<div class="pc-condition ' + condClass + '">' + esc(cond) + '</div>' : '') +
             (pcHasCarousel ? '' : '</div>') +
             '<div class="pc-body">' +
-                '<div class="pc-price">L. ' + fmt + '</div>' +
+                '<div class="pc-price">' + (item.currency === 'LTD' ? fmt + ' <span style="font-size:11px;opacity:0.7;">LTD</span>' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) + (item.currency && item.currency !== 'HNL' ? '<div class="sd-price-hint">&asymp; L. ' + (window.ltFormatNumber ? ltFormatNumber(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1)) : Math.round(Number(item.price||0) * (window.marketplaceSystem?.exchangeRates?.[item.currency]||1))) + '</div>' : '') + '</div>' +
                 '<div class="pc-title">' + esc(item.title) + '</div>' +
                 '<div class="pc-meta">' +
                     (catLabel ? '<span class="pc-cat">' + catLabel + '</span>' : '') +
@@ -3530,25 +3552,20 @@ class MarketplaceSocialSystem {
         // Check setup completion
         let checklist = null;
         try { checklist = JSON.parse(localStorage.getItem('store_setup_checklist')); } catch(e) {}
-        if (!checklist) {
-            // Infer checklist from data
-            const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
-            const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
-            checklist = {
-                add_listing: hasListings,
-                complete_contact: hasContact,
-                share_store: false,
-                create_portfolio: false
-            };
-            try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
-        }
-
-        // Auto-update based on current data
+        // Always infer from real data (localStorage is just for share_store flag)
         const hasListings = (storeData.services?.length || 0) + (storeData.products?.length || 0) > 0;
         const hasContact = !!(provider.whatsapp || provider.email || provider.phone);
-        if (hasListings) checklist.add_listing = true;
-        if (hasContact) checklist.complete_contact = true;
+        const hasPortfolio = !!(this._currentPortfolio || provider.portfolio);
+        const prevChecklist = checklist || {};
+        checklist = {
+            add_listing: hasListings,
+            complete_contact: hasContact,
+            share_store: prevChecklist.share_store || false,
+            create_portfolio: hasPortfolio
+        };
         try { localStorage.setItem('store_setup_checklist', JSON.stringify(checklist)); } catch(e) {}
+
+        // Checklist already inferred above
 
         const done = Object.values(checklist).filter(Boolean).length;
         const total = Object.keys(checklist).length;
@@ -3570,9 +3587,9 @@ class MarketplaceSocialSystem {
         // Find next incomplete step
         const steps = [
             { key: 'add_listing', label: 'Agrega tu primer producto o servicio', action: 'goto-publicaciones' },
-            { key: 'complete_contact', label: 'Completa tu perfil de contacto', action: 'goto-config' },
-            { key: 'share_store', label: 'Comparte tu tienda con un amigo', action: 'goto-config' },
-            { key: 'create_portfolio', label: 'Crea tu portafolio/CV', action: 'open-portfolio-maker' }
+            { key: 'complete_contact', label: 'Completa tu informacion de contacto', action: 'goto-config' },
+            { key: 'share_store', label: 'Comparte tu tienda', action: 'sd-share-store' },
+            { key: 'create_portfolio', label: 'Crea tu portafolio profesional', action: 'open-portfolio-maker' }
         ];
         let nextStep = steps.find(s => !checklist[s.key]) || steps[0];
         const pct = Math.round((done / total) * 100);
@@ -3859,14 +3876,14 @@ class MarketplaceSocialSystem {
                 <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-service" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Servicio</button>
             </div>`;
             if (sCount > 0) {
-                serviciosPanel += services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('');
+                serviciosPanel += '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>';
             } else {
                 serviciosPanel += this._buildEmptyListingState('services', esc);
             }
         } else if (sCount > 0) {
             // Shop type doesn't match but items exist — show with delete option
             serviciosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + sCount + ' servicio' + (sCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
-            serviciosPanel += services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('');
+            serviciosPanel += '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>';
         } else {
             serviciosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-wrench"></i></div><div class="sd-empty-title">Tienda de productos</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Productos. Para ofrecer servicios, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3879,14 +3896,14 @@ class MarketplaceSocialSystem {
                 <button class="sd-quick-btn sd-quick-btn-primary" data-action="add-product" style="padding:8px 16px;font-size:13px;"><i class="fas fa-plus"></i> Nuevo Producto</button>
             </div>`;
             if (pCount > 0) {
-                productosPanel += products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('');
+                productosPanel += '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>';
             } else {
                 productosPanel += this._buildEmptyListingState('products', esc);
             }
         } else if (pCount > 0) {
             // Shop type doesn't match but items exist — show with delete option
             productosPanel += '<div style="font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.5));margin-bottom:14px;">' + pCount + ' producto' + (pCount !== 1 ? 's' : '') + ' (tipo de tienda: ' + esc(shopType) + ')</div>';
-            productosPanel += products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('');
+            productosPanel += '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>';
         } else {
             productosPanel += '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-box"></i></div><div class="sd-empty-title">Tienda de servicios</div><div class="sd-empty-desc">Tu tienda esta configurada como tipo Servicios. Para vender productos, cambia el tipo en Config.</div><button class="sd-empty-cta" data-action="store-tab" data-tab="config"><i class="fas fa-cog"></i> Ir a Config</button></div>';
         }
@@ -3946,14 +3963,14 @@ class MarketplaceSocialSystem {
             tabs += `<button class="sd-listings-tab${firstTab === 'services' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="services">
                 <i class="fas fa-wrench"></i> Servicios <span class="sd-listings-count">${esc(String(sCount))}</span>
             </button>`;
-            const sCards = sCount > 0 ? services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') : this._buildEmptyListingState('services', esc);
+            const sCards = sCount > 0 ? '<div class="sd-gc-grid">' + services.map(s => this._buildEnhancedItemCard(s, 'services', esc)).join('') + '</div>' : this._buildEmptyListingState('services', esc);
             contents += `<div class="sd-listings-content${firstTab === 'services' ? ' active' : ''}" data-tab="services">${sCards}</div>`;
         }
         if (showProducts) {
             tabs += `<button class="sd-listings-tab${firstTab === 'products' ? ' active' : ''}" data-action="sd-switch-tab" data-tab="products">
                 <i class="fas fa-box"></i> Productos <span class="sd-listings-count">${esc(String(pCount))}</span>
             </button>`;
-            const pCards = pCount > 0 ? products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') : this._buildEmptyListingState('products', esc);
+            const pCards = pCount > 0 ? '<div class="sd-gc-grid">' + products.map(p => this._buildEnhancedItemCard(p, 'products', esc)).join('') + '</div>' : this._buildEmptyListingState('products', esc);
             contents += `<div class="sd-listings-content${firstTab === 'products' ? ' active' : ''}" data-tab="products">${pCards}</div>`;
         }
 
@@ -3972,68 +3989,52 @@ class MarketplaceSocialSystem {
 
     _buildEnhancedItemCard(item, type, esc) {
         const itemId = type === 'services' ? item.service_id : item.id;
-        const rawImg = item.images && item.images[0] ? (typeof item.images[0] === 'object' ? item.images[0].url : item.images[0]) : null;
-        const imgSrc = rawImg && (rawImg.startsWith('/') || rawImg.startsWith('http')) ? rawImg : null;
         const validImgs = (item.images || []).map(i => typeof i === 'object' ? i.url : i).filter(u => u && (u.startsWith('/') || u.startsWith('http')));
-
-        let imgHtml = '';
-        if (validImgs.length > 1) {
-            const cId = 'carousel_' + (type === 'services' ? 's' : 'p') + '_' + itemId;
-            const slides = validImgs.map(u => '<div class="sd-carousel-slide"><img src="' + esc(this._imgUrl(u)) + '" alt="" loading="lazy"></div>').join('');
-            const dots = validImgs.map((_, i) => '<button class="sd-carousel-dot' + (i === 0 ? ' active' : '') + '" data-slide="' + i + '"></button>').join('');
-            imgHtml = '<div class="sd-carousel" id="' + cId + '" data-current="0" data-total="' + validImgs.length + '">' +
-                '<div class="sd-carousel-track">' + slides + '</div>' +
-                '<button class="sd-carousel-btn sd-carousel-prev" data-action="carousel-prev" data-carousel="' + cId + '"><i class="fas fa-chevron-left"></i></button>' +
-                '<button class="sd-carousel-btn sd-carousel-next" data-action="carousel-next" data-carousel="' + cId + '"><i class="fas fa-chevron-right"></i></button>' +
-                '<div class="sd-carousel-dots">' + dots + '</div>' +
-                '<div class="sd-carousel-counter">1/' + validImgs.length + '</div>' +
-            '</div>';
-        } else if (imgSrc) {
-            imgHtml = '<img src="' + esc(this._imgUrl(imgSrc)) + '" alt="" loading="lazy">';
-        } else {
-            imgHtml = '<div class="sd-item-img-placeholder"><i class="fas ' + (type === 'services' ? 'fa-wrench' : 'fa-box') + '"></i></div>';
-        }
-        const featuredClass = item.featured ? ' featured-active' : '';
+        const thumbSrc = validImgs.length > 0 ? this._imgUrl(validImgs[0]) : null;
+        const imgCount = validImgs.length;
+        const featuredClass = item.featured ? ' sd-gc-featured' : '';
 
         let priceHtml = '';
-        let statusHtml = '';
         let metaHtml = '';
-        let stockHtml = '';
+        let statusHtml = '';
 
         if (type === 'services') {
-            priceHtml = item.price_type === 'fixed' ? `L. ${esc(String(item.price))}` : esc(item.price_type || 'Consultar');
-            metaHtml = `${esc(String(item.booking_count || 0))} reservas`;
-            statusHtml = `<span class="sd-item-status active">Activo</span>`;
+            const p = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(p) : p.toLocaleString('es-HN');
+            priceHtml = item.price_type === 'fixed' ? (item.currency === 'LTD' ? fmt + ' LTD' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) : (item.price_type === 'hourly' ? (item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt) + '/hr' : esc(item.price_type || 'Consultar'));
+            const bk = parseInt(item.booking_count || 0);
+            const rt = Number(item.avg_rating || 0).toFixed(1);
+            metaHtml = (bk > 0 ? bk + ' reservas' : '0 reservas') + (rt !== '0.0' ? ' · ⭐ ' + rt : '');
+            statusHtml = '<span class="sd-gc-status sd-gc-active">Activo</span>';
         } else {
-            priceHtml = `L. ${esc(String(item.price))}`;
+            const p = Number(item.price || 0);
+            const fmt = window.ltFormatNumber ? ltFormatNumber(p) : p.toLocaleString('es-HN');
+            priceHtml = item.currency === 'LTD' ? fmt + ' LTD' : item.currency === 'USD' ? '$ ' + fmt : 'L. ' + fmt;
             const qty = parseInt(item.quantity || 0);
-            stockHtml = `<input type="number" class="sd-inline-stock" data-product-id="${esc(String(itemId))}" value="${qty}" min="0" max="10000" title="Stock">`;
-            if (qty === 0) {
-                statusHtml = `<span class="sd-item-status soldout">Agotado</span>`;
-            } else if (qty <= 3) {
-                statusHtml = `<span class="sd-item-status sd-stock-low">Poco stock</span>`;
-            } else {
-                statusHtml = `<span class="sd-item-status active">${esc(String(qty))} disp.</span>`;
-            }
-            metaHtml = `${esc(String(qty))} en stock`;
+            metaHtml = qty + ' en stock';
+            if (qty === 0) statusHtml = '<span class="sd-gc-status sd-gc-soldout">Agotado</span>';
+            else if (qty <= 3) statusHtml = '<span class="sd-gc-status sd-gc-low">Poco stock</span>';
+            else statusHtml = '<span class="sd-gc-status sd-gc-active">' + qty + ' disp.</span>';
         }
 
-        const hasCarousel = validImgs.length > 1;
-        return `<div class="sd-item-card${hasCarousel ? ' sd-item-card-visual' : ''}">
-            ${hasCarousel ? '<div class="sd-item-carousel-wrap">' + imgHtml + '</div>' : '<div class="sd-item-image">' + imgHtml + '</div>'}
-            <div class="sd-item-body">
-                <div class="sd-item-title">${esc(item.title)}</div>
-                <div class="sd-item-price">${priceHtml}</div>
-                <div class="sd-item-meta">${metaHtml}</div>
-                ${stockHtml}
+        const catLabel = item.category_name ? esc(item.category_icon || '') + ' ' + esc(item.category_name) : '';
+
+        return `<div class="sd-gc${featuredClass}" data-item-id="${esc(String(itemId))}" data-item-type="${esc(type)}">
+            <div class="sd-gc-thumb">
+                ${thumbSrc ? '<img src="' + esc(thumbSrc) + '" alt="" loading="lazy">' : '<div class="sd-gc-thumb-placeholder"><i class="fas ' + (type === 'services' ? 'fa-wrench' : 'fa-box') + '"></i></div>'}
+                ${imgCount > 1 ? '<span class="sd-gc-img-count"><i class="fas fa-images"></i> ' + imgCount + '</span>' : ''}
+                ${statusHtml}
             </div>
-            ${statusHtml}
-            <div class="sd-item-actions">
-                <button class="sd-item-action" data-action="edit-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Editar"><i class="fas fa-pen"></i></button>
-                <button class="sd-item-action sd-item-action-danger" data-action="delete-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Eliminar"><i class="fas fa-trash"></i></button>
-                <button class="sd-item-action${featuredClass}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar"><i class="fas fa-star"></i></button>
-                <button class="sd-item-action boost-btn" data-action="boost-item" data-type="${type === 'services' ? 'service' : 'product'}" data-id="${esc(String(itemId))}" title="Impulsar"><i class="fas fa-rocket"></i></button>
-                <button class="sd-item-action" data-action="move-item-up" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-order="${esc(String(item.display_order || 0))}" title="Subir"><i class="fas fa-arrow-up"></i></button>
+            <div class="sd-gc-body">
+                <div class="sd-gc-title">${esc(item.title)}</div>
+                <div class="sd-gc-price">${priceHtml}</div>
+                <div class="sd-gc-meta">${catLabel ? catLabel + ' · ' : ''}${metaHtml}</div>
+            </div>
+            <div class="sd-gc-actions">
+                <button class="sd-gc-action" data-action="preview-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Preview"><i class="fas fa-eye"></i></button>
+                <button class="sd-gc-action" data-action="edit-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Editar"><i class="fas fa-pen"></i></button>
+                <button class="sd-gc-action sd-gc-action-danger" data-action="delete-item" data-type="${esc(type)}" data-id="${esc(String(itemId))}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                <button class="sd-gc-action${item.featured ? ' sd-gc-action-star' : ''}" data-action="toggle-featured" data-type="${esc(type)}" data-id="${esc(String(itemId))}" data-featured="${item.featured ? 'true' : 'false'}" title="Destacar"><i class="fas fa-star"></i></button>
             </div>
         </div>`;
     }
@@ -4677,7 +4678,7 @@ class MarketplaceSocialSystem {
         const currentTheme = provider.store_theme || 'dark';
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'storeEditOverlay';
         const editTypeIcon = (provider.shop_type || 'services') === 'products' ? '📦' : (provider.shop_type || 'services') === 'mixed' ? '🏬' : '🔧';
         const editTypeLabel = (provider.shop_type || 'services') === 'products' ? 'Productos' : (provider.shop_type || 'services') === 'mixed' ? 'Mixta' : 'Servicios';
@@ -4918,7 +4919,7 @@ class MarketplaceSocialSystem {
     }
 
     async handleCreateProduct() {
-        const overlay = document.getElementById('productCreateOverlay');
+        const overlay = document.getElementById('productCreateOverlay') || document.getElementById('inlineProductForm');
         if (!overlay) return;
         const submitBtn = overlay.querySelector('[data-action="submit-product"]');
         if (!submitBtn) return;
@@ -4934,7 +4935,7 @@ class MarketplaceSocialSystem {
                 category_id: getVal('cpCategory'),
                 condition: getVal('cpCondition'),
                 price: parseFloat(getVal('cpPrice')) || 0,
-                currency: getVal('cpCurrency') || 'HNL',
+                currency: (document.getElementById('cpCurrencyVal')?.value || getVal('cpCurrency') || 'HNL'),
                 quantity: parseInt(getVal('cpQuantity')) || 1,
                 location: getVal('cpLocation') || 'Honduras',
                 description: getVal('cpDescription'),
@@ -5725,13 +5726,153 @@ class MarketplaceSocialSystem {
     // Create Service Modal
     // =============================================
 
+    _showInlineServiceForm() {
+        if (document.getElementById('inlineServiceForm')) return;
+        if (!this._images) this._images = {};
+        this._images.service = [];
+
+        // Ensure Publicaciones > Servicios is active
+        this._activeStoreTab = 'publicaciones';
+        try { sessionStorage.setItem('store_active_tab', 'publicaciones'); sessionStorage.setItem('pub_subtab', 'servicios'); } catch(e) {}
+        document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+        document.querySelector('.sd-tab[data-tab="publicaciones"]')?.classList.add('sd-tab-active');
+        document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('sdTabPublicaciones')?.style.removeProperty('display');
+        const pubContainer = document.querySelector('#sdTabPublicaciones .sd-subtabs-container');
+        if (pubContainer) {
+            pubContainer.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+            pubContainer.querySelector('[data-subtab="servicios"]')?.classList.add('sd-subtab-active');
+            pubContainer.querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+            pubContainer.querySelector('.sd-subtab-panel[data-panel="servicios"]')?.style.removeProperty('display');
+        }
+
+        const panel = document.querySelector('#myStoreContent .sd-subtab-panel[data-panel="servicios"]');
+        if (!panel) { this.openCreateServiceModal(); return; }
+
+        const form = document.createElement('div');
+        form.id = 'inlineServiceForm';
+        form.className = 'sd-config-section';
+        form.style.cssText = 'animation:sdSubFadeIn 0.25s ease;border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:16px;margin-bottom:16px;background:rgba(139,92,246,0.04);';
+        form.innerHTML = `
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-plus-circle" style="color:var(--ds-green,#10B981);"></i> Nuevo Servicio</div><button data-action="close-create-service" style="background:none;border:none;color:var(--ds-text-secondary,rgba(255,255,255,0.5));font-size:18px;cursor:pointer;padding:4px 8px;">&times;</button></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-row"><label>Categoria *</label><select id="csCategory" class="sd-form-input"></select></div>
+                <div class="sd-form-row"><label>Titulo *</label><input type="text" id="csTitle" class="sd-form-input" maxlength="200" placeholder="Ej: Reparacion de computadoras a domicilio"></div>
+                <div class="sd-form-row"><label>Descripcion corta</label><input type="text" id="csShortDesc" class="sd-form-input" maxlength="160" placeholder="Resumen en una linea"></div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Tipo de Precio *</label><select id="csPriceType" class="sd-form-input"><option value="fixed">Precio Fijo</option><option value="hourly">Por Hora</option><option value="quote">Negociable</option><option value="free">Gratis</option></select></div>
+                    <div class="sd-form-row" id="csCurrencyGroup"><label>Moneda</label><div class="sd-currency-pills" id="csCurrencyPills"><button type="button" class="sd-curr-pill sd-curr-active" data-currency="HNL" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='HNL'"><span class="sd-curr-sym">L.</span> HNL</button><button type="button" class="sd-curr-pill" data-currency="USD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='USD'"><span class="sd-curr-sym">$</span> USD</button><button type="button" class="sd-curr-pill" data-currency="LTD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('csCurrencyVal').value='LTD'"><span class="sd-curr-sym">&#x1FA99;</span> LTD</button></div><input type="hidden" id="csCurrencyVal" value="HNL"></div>
+                </div>
+                <div class="sd-form-grid" id="csPriceRow">
+                    <div class="sd-form-row"><label>Precio *</label><input type="number" id="csPrice" class="sd-form-input" min="0" max="1000000" step="0.01" placeholder="0.00"></div>
+                    <div class="sd-form-row"><label>Precio Max (opcional)</label><input type="number" id="csPriceMax" class="sd-form-input" min="0" max="1000000" step="0.01"></div>
+                    <div class="sd-form-row"><label>Duracion (hrs)</label><input type="number" id="csDuration" class="sd-form-input" min="0.5" max="720" step="0.5" value="1"></div>
+                </div>
+                <div class="sd-form-row"><label>Descripcion completa *</label><textarea id="csDescription" class="sd-form-input" rows="3" maxlength="2000" placeholder="Que incluye, experiencia, garantias..."></textarea></div>
+                <div class="sd-form-row"><label>Imagenes (max 5)</label>
+                    <div class="store-image-dropzone" id="serviceDropzone" style="border-radius:10px;padding:16px;"><input type="file" id="serviceFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none"><div style="text-align:center;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;"><i class="fas fa-camera" style="font-size:20px;margin-bottom:6px;display:block;"></i>Haz clic o arrastra imagenes</div></div>
+                    <div class="store-image-previews" id="serviceImagePreviews"></div>
+                </div>
+                <div class="sd-form-row"><label>Etiquetas (separadas por coma)</label><input type="text" id="csTags" class="sd-form-input" placeholder="rapido, profesional, garantizado"></div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn" data-action="close-create-service" style="background:rgba(255,255,255,0.06);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">Cancelar</button>
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="submit-service"><i class="fas fa-check"></i> Publicar Servicio</button>
+                </div>
+            </div>`;
+        panel.insertBefore(form, panel.firstChild);
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this._loadCategories('csCategory');
+        this._setupDropzone('serviceDropzone', 'serviceFileInput', 'service');
+        const ptSel = form.querySelector('#csPriceType');
+        if (ptSel) {
+            ptSel.addEventListener('change', () => {
+                const hide = (ptSel.value === 'quote' || ptSel.value === 'free');
+                const pr = document.getElementById('csPriceRow');
+                const cg = document.getElementById('csCurrencyGroup');
+                if (pr) pr.style.display = hide ? 'none' : '';
+                if (cg) cg.style.display = hide ? 'none' : '';
+            });
+        }
+    }
+
+    _showInlineProductForm() {
+        if (document.getElementById('inlineProductForm')) return;
+        if (!this._images) this._images = {};
+        this._images.product = [];
+
+        this._activeStoreTab = 'publicaciones';
+        try { sessionStorage.setItem('store_active_tab', 'publicaciones'); sessionStorage.setItem('pub_subtab', 'productos'); } catch(e) {}
+        document.querySelectorAll('.sd-tab').forEach(t => t.classList.remove('sd-tab-active'));
+        document.querySelector('.sd-tab[data-tab="publicaciones"]')?.classList.add('sd-tab-active');
+        document.querySelectorAll('.sd-tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('sdTabPublicaciones')?.style.removeProperty('display');
+        const pubContainer = document.querySelector('#sdTabPublicaciones .sd-subtabs-container');
+        if (pubContainer) {
+            pubContainer.querySelectorAll('.sd-subtab').forEach(t => t.classList.remove('sd-subtab-active'));
+            pubContainer.querySelector('[data-subtab="productos"]')?.classList.add('sd-subtab-active');
+            pubContainer.querySelectorAll('.sd-subtab-panel').forEach(p => p.style.display = 'none');
+            pubContainer.querySelector('.sd-subtab-panel[data-panel="productos"]')?.style.removeProperty('display');
+        }
+
+        const panel = document.querySelector('#myStoreContent .sd-subtab-panel[data-panel="productos"]');
+        if (!panel) { this.openCreateProductModal(); return; }
+
+        const form = document.createElement('div');
+        form.id = 'inlineProductForm';
+        form.className = 'sd-config-section';
+        form.style.cssText = 'animation:sdSubFadeIn 0.25s ease;border:1px solid rgba(0,255,255,0.2);border-radius:14px;padding:16px;margin-bottom:16px;background:rgba(0,255,255,0.03);';
+        form.innerHTML = `
+            <div class="sd-section-header"><div class="sd-section-title"><i class="fas fa-plus-circle" style="color:var(--ds-cyan,#06B6D4);"></i> Nuevo Producto</div><button data-action="close-create-product" style="background:none;border:none;color:var(--ds-text-secondary,rgba(255,255,255,0.5));font-size:18px;cursor:pointer;padding:4px 8px;">&times;</button></div>
+            <div class="sd-inline-form">
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Categoria *</label><select id="cpCategory" class="sd-form-input"></select></div>
+                    <div class="sd-form-row"><label>Condicion *</label><select id="cpCondition" class="sd-form-input"><option value="new">Nuevo</option><option value="like_new">Como Nuevo</option><option value="used">Usado</option><option value="refurbished">Regular</option></select></div>
+                </div>
+                <div class="sd-form-row"><label>Nombre del Producto *</label><input type="text" id="cpTitle" class="sd-form-input" maxlength="200" placeholder="Ej: iPhone 14 Pro Max 256GB"></div>
+                <div class="sd-form-grid">
+                    <div class="sd-form-row"><label>Precio *</label><input type="number" id="cpPrice" class="sd-form-input" min="0" max="1000000" step="0.01" placeholder="0.00"></div>
+                    <div class="sd-form-row"><label>Moneda</label><div class="sd-currency-pills" id="cpCurrencyPills"><button type="button" class="sd-curr-pill sd-curr-active" data-currency="HNL" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='HNL'"><span class="sd-curr-sym">L.</span> HNL</button><button type="button" class="sd-curr-pill" data-currency="USD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='USD'"><span class="sd-curr-sym">$</span> USD</button><button type="button" class="sd-curr-pill" data-currency="LTD" onclick="this.parentElement.querySelectorAll('.sd-curr-pill').forEach(p=>p.classList.remove('sd-curr-active'));this.classList.add('sd-curr-active');document.getElementById('cpCurrencyVal').value='LTD'"><span class="sd-curr-sym">&#x1FA99;</span> LTD</button></div><input type="hidden" id="cpCurrencyVal" value="HNL"></div>
+                    <div class="sd-form-row"><label>Cantidad *</label><input type="number" id="cpQuantity" class="sd-form-input" min="1" max="10000" value="1"></div>
+                </div>
+                <div class="sd-form-row"><label>Ubicacion</label><input type="text" id="cpLocation" class="sd-form-input" placeholder="Ej: Tegucigalpa"></div>
+                <div class="sd-form-row"><label>Descripcion *</label><textarea id="cpDescription" class="sd-form-input" rows="3" maxlength="2000" placeholder="Caracteristicas, estado, que incluye..."></textarea></div>
+                <div class="sd-form-row"><label>Imagenes (max 5)</label>
+                    <div class="store-image-dropzone" id="productDropzone" style="border-radius:10px;padding:16px;"><input type="file" id="productFileInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none"><div style="text-align:center;color:var(--ds-text-muted,rgba(255,255,255,0.35));font-size:13px;"><i class="fas fa-camera" style="font-size:20px;margin-bottom:6px;display:block;"></i>Haz clic o arrastra imagenes</div></div>
+                    <div class="store-image-previews" id="productImagePreviews"></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <input type="checkbox" id="cpShipping" style="width:18px;height:18px;">
+                    <label for="cpShipping" style="margin:0;font-size:13px;color:var(--ds-text-secondary,rgba(255,255,255,0.6));">Ofrezco envio a domicilio</label>
+                </div>
+                <div id="cpShippingPriceGroup" style="display:none;margin-bottom:12px;">
+                    <label style="font-size:12px;color:var(--ds-text-muted,rgba(255,255,255,0.4));">Costo de envio</label>
+                    <input type="number" id="cpShippingPrice" class="sd-form-input" min="0" step="0.01" placeholder="0.00" style="max-width:150px;">
+                </div>
+                <div class="sd-form-actions">
+                    <button class="sd-form-btn" data-action="close-create-product" style="background:rgba(255,255,255,0.06);color:var(--ds-text-secondary,rgba(255,255,255,0.5));">Cancelar</button>
+                    <button class="sd-form-btn sd-form-btn-primary" data-action="submit-product"><i class="fas fa-check"></i> Publicar Producto</button>
+                </div>
+            </div>`;
+        panel.insertBefore(form, panel.firstChild);
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        this._loadCategories('cpCategory');
+        this._setupDropzone('productDropzone', 'productFileInput', 'product');
+        const shipCb = form.querySelector('#cpShipping');
+        if (shipCb) {
+            shipCb.addEventListener('change', () => {
+                const g = document.getElementById('cpShippingPriceGroup');
+                if (g) g.style.display = shipCb.checked ? '' : 'none';
+            });
+        }
+    }
+
     openCreateServiceModal() {
         document.getElementById('serviceCreateOverlay')?.remove();
         if (!this._images) this._images = {};
         this._images.service = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'serviceCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -5833,7 +5974,7 @@ class MarketplaceSocialSystem {
     }
 
     async handleCreateService() {
-        const overlay = document.getElementById('serviceCreateOverlay');
+        const overlay = document.getElementById('serviceCreateOverlay') || document.getElementById('inlineServiceForm');
         if (!overlay) return;
         const submitBtn = overlay.querySelector('[data-action="submit-service"]');
         if (!submitBtn) return;
@@ -5853,7 +5994,7 @@ class MarketplaceSocialSystem {
                 price_type: priceType,
                 price: (priceType === 'quote' || priceType === 'free') ? null : (parseFloat(getVal('csPrice')) || null),
                 price_max: parseFloat(getVal('csPriceMax')) || null,
-                currency: getVal('csCurrency') || 'HNL',
+                currency: (document.getElementById('csCurrencyVal')?.value || getVal('csCurrency') || 'HNL'),
                 duration_hours: parseFloat(getVal('csDuration')) || 1,
                 short_description: getVal('csShortDesc'),
                 description: getVal('csDescription'),
@@ -5926,7 +6067,7 @@ class MarketplaceSocialSystem {
         this._images.product = [];
 
         const overlay = document.createElement('div');
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.id = 'productCreateOverlay';
         overlay.innerHTML = `
             <div class="store-edit-modal">
@@ -6053,7 +6194,7 @@ class MarketplaceSocialSystem {
         const esc = (v) => this.escapeHtml(String(v ?? ''));
         const overlay = document.createElement('div');
         overlay.id = 'productEditOverlay';
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Producto</h3><button data-action="close-edit-product" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editProductForm">
@@ -6170,7 +6311,7 @@ class MarketplaceSocialSystem {
         document.getElementById('serviceEditOverlay')?.remove();
         const overlay = document.createElement('div');
         overlay.id = 'serviceEditOverlay';
-        overlay.className = 'store-edit-overlay ds-overlay';
+        overlay.className = 'store-edit-overlay';
         overlay.innerHTML = `<div class="store-edit-modal">
             <div class="store-edit-modal-header"><h3>Editar Servicio</h3><button data-action="close-edit-service" class="store-edit-close">&times;</button></div>
             <div class="store-create-form" id="editServiceForm">
@@ -7614,7 +7755,7 @@ function setupMarketplaceDelegatedListeners() {
                     ms3.showNotification('Tu tienda es de tipo Productos. No puedes crear servicios.', 'error');
                 } else if (ms3) {
                     if (!ms3.checkTierGate('create_listing')) break;
-                    ms3.openCreateServiceModal();
+                    ms3._showInlineServiceForm();
                 }
                 break;
             }
@@ -7622,19 +7763,33 @@ function setupMarketplaceDelegatedListeners() {
                 const ms4 = window.marketplaceSystem;
                 if (ms4?.isGuest) { ms4.showLoginPrompt('publicar productos'); break; }
                 if (ms4?._currentProvider?.shop_type === 'services') {
-                    // Removed: unhelpful message for service-only stores
+                    ms4.showNotification('Tu tienda es de tipo Servicios. Cambia el tipo en Config.', 'error');
                 } else if (ms4) {
                     if (!ms4.checkTierGate('create_listing')) break;
-                    ms4.openCreateProductModal();
+                    ms4._showInlineProductForm();
                 }
                 break;
             }
             case 'close-create-service': {
                 document.getElementById('serviceCreateOverlay')?.remove();
+                document.getElementById('inlineServiceForm')?.remove();
                 break;
             }
             case 'close-create-product': {
                 document.getElementById('productCreateOverlay')?.remove();
+                document.getElementById('inlineProductForm')?.remove();
+                break;
+            }
+            case 'preview-item': {
+                const msPreview = window.marketplaceSystem;
+                if (!msPreview) break;
+                const previewType = btn.dataset.type;
+                const previewId = btn.dataset.id;
+                if (previewType === 'products' || previewType === 'product') {
+                    if (typeof viewProduct === 'function') viewProduct(previewId);
+                } else {
+                    if (typeof viewService === 'function') viewService(previewId);
+                }
                 break;
             }
             case 'edit-item': {
@@ -7778,7 +7933,10 @@ function setupMarketplaceDelegatedListeners() {
                 break;
             }
             case 'sd-share-store': {
-                const shareUrl = btn.dataset.url;
+                let shareUrl = btn.dataset.url;
+                if (!shareUrl && window.marketplaceSystem?._currentProvider?.handle) {
+                    shareUrl = 'https://latanda.online/tienda/' + encodeURIComponent(window.marketplaceSystem._currentProvider.handle);
+                }
                 if (shareUrl && navigator.share) {
                     navigator.share({ title: 'Mi Tienda en La Tanda', url: shareUrl }).catch(() => {});
                 } else if (shareUrl && navigator.clipboard) {
@@ -7788,6 +7946,9 @@ function setupMarketplaceDelegatedListeners() {
                         window.marketplaceSystem?.showNotification(t('messages.copy_failed',{defaultValue:'No se pudo copiar'}), 'error');
                     });
                 }
+                
+                // Update setup checklist
+                try { var cl = JSON.parse(localStorage.getItem('store_setup_checklist') || '{}'); cl.share_store = true; localStorage.setItem('store_setup_checklist', JSON.stringify(cl)); } catch(e) {}
                 break;
             }
             case 'goto-pub-pedidos': {
@@ -7835,6 +7996,7 @@ function setupMarketplaceDelegatedListeners() {
                 carousel.dataset.current = current;
                 carousel.querySelector('.sd-carousel-track').style.transform = 'translateX(-' + (current * 100) + '%)';
                 carousel.querySelectorAll('.sd-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+                carousel.classList.add('sd-carousel-transitioning'); setTimeout(() => carousel.classList.remove('sd-carousel-transitioning'), 600);
                 const counter = carousel.querySelector('.sd-carousel-counter');
                 if (counter) counter.textContent = (current + 1) + '/' + total;
                 e.stopPropagation();

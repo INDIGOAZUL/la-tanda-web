@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7803.0">
-    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1775200000">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1.6">
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/header.css?v=26.0">
@@ -599,7 +599,7 @@ EOF
     <div id="latanda-footer" class="auto-footer"></div>
 
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=32.6"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <script src="js/edge-swipe.js?v=1.5"></script>
 
     <script>
@@ -1533,6 +1533,28 @@ EOF
 
                 showToast('success', 'Wallet conectada', state.address);
                 console.log('Keplr connected:', state.address);
+
+                // Check if wallet is linked to platform account
+                var authTk = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                if (authTk) {
+                    fetch('/api/wallet/chain/status', { headers: { 'Authorization': 'Bearer ' + authTk } })
+                        .then(function(r) { return r.json(); })
+                        .then(function(linkData) {
+                            var banner = document.getElementById('chainLinkBanner');
+                            if (banner) banner.remove();
+                            if (linkData.success && linkData.data.linked && linkData.data.chain_address === state.address) {
+                                // Already linked — show name badge
+                            } else if (linkData.success && !linkData.data.linked) {
+                                // Not linked — show link banner
+                                var b = document.createElement('div');
+                                b.id = 'chainLinkBanner';
+                                b.style.cssText = 'background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+                                b.innerHTML = '<div style="font-size:0.82rem;color:#a78bfa;"><i class="fas fa-link" style="margin-right:6px;"></i>Esta wallet no esta vinculada a tu cuenta La Tanda. <a href="/mi-perfil.html" style="color:#00FFFF;">Vinculala en Mi Perfil</a> para reclamar tus tokens.</div>';
+                                var container = document.querySelector('.gov-main') || document.querySelector('.container');
+                                if (container) container.insertBefore(b, container.firstChild);
+                            }
+                        }).catch(function() {});
+                }
 
                 // Load user's vote history
                 if (window._loadUserVotes) window._loadUserVotes();

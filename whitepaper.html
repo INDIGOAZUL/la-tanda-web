@@ -565,12 +565,61 @@
             </ul>
 
             <h2>6.3 Sistema de Mineria</h2>
+            <p>Cualquier usuario registrado puede minar LTD diariamente. La recompensa depende del tier alcanzado mediante achievement points — puntos que se acumulan por actividad real en la plataforma (verificar email, participar en tandas, pagar puntualmente, referir usuarios, etc.).</p>
+
+            <h3>6.3.1 Tiers de Mineria</h3>
+            <table>
+                <tr><th>Tier</th><th>Puntos requeridos</th><th>Reward base/dia</th><th>Streak bonus max</th></tr>
+                <tr><td>Bronce</td><td>0-49</td><td>1.0 LTD</td><td>+2.0 LTD</td></tr>
+                <tr><td>Plata</td><td>50-149</td><td>3.0 LTD</td><td>+4.0 LTD</td></tr>
+                <tr><td>Oro</td><td>150-299</td><td>5.0 LTD</td><td>+7.0 LTD</td></tr>
+                <tr><td>Platino</td><td>300-499</td><td>8.0 LTD</td><td>+10.0 LTD</td></tr>
+                <tr><td>Diamante</td><td>500+</td><td>12.0 LTD</td><td>+15.0 LTD</td></tr>
+            </table>
+
+            <h3>6.3.2 Achievement Points</h3>
+            <p>Los puntos se acumulan automaticamente al completar logros. Hay 20 logros en 7 categorias:</p>
             <ul>
-                <li>Recompensas diarias en LTD</li>
-                <li>Progresion de tiers (Bronce/Plata/Oro)</li>
-                <li>Bonos por racha consecutiva</li>
-                <li>Sistema anti-fraude</li>
+                <li><strong>Cuenta:</strong> Email verificado (10 pts)</li>
+                <li><strong>Participacion:</strong> Primera tanda (20 pts), tanda completada (25 pts)</li>
+                <li><strong>Financiero:</strong> L.1000+ contribuidos (15 pts), L.10,000+ (40 pts), puntualidad perfecta (35 pts)</li>
+                <li><strong>Social:</strong> Primer post (10 pts), 10 seguidores (15 pts), referidos (15-30 pts)</li>
+                <li><strong>Marketplace:</strong> Vendedor estrella — 5+ ventas con rating 4+ (30 pts)</li>
+                <li><strong>Verificacion:</strong> KYC basico (25 pts), KYC avanzado (50 pts)</li>
+                <li><strong>Engagement:</strong> Racha de 7 dias (10 pts), racha de 30 dias (30 pts)</li>
             </ul>
+            <p>Un usuario tipico que verifica email, participa en una tanda, y mina 7 dias seguidos alcanza Plata (50+ pts). Alcanzar Oro o superior requiere engagement sostenido.</p>
+
+            <h3>6.3.3 Emision y Limites</h3>
+            <ul>
+                <li><strong>Cap diario global:</strong> 500 LTD/dia maximo entre todos los mineros (testnet)</li>
+                <li><strong>Cooldown individual:</strong> 24 horas entre claims</li>
+                <li><strong>Pool de emision:</strong> 60M LTD (30% del supply) distribuido en 5 anos via participacion</li>
+                <li><strong>Anti-fraude:</strong> IP tracking, rate limiting, fraud flags</li>
+            </ul>
+
+            <h3>6.3.4 Modelo de Scaling Progresivo</h3>
+            <p>Las recompensas se reducen gradualmente conforme crece el ecosistema y LTD gana valor de mercado:</p>
+            <table>
+                <tr><th>Fase</th><th>Trigger</th><th>Multiplicador</th><th>Cap diario</th></tr>
+                <tr><td>Testnet (actual)</td><td>&lt;100 mineros activos</td><td>1.0x (base)</td><td>500 LTD</td></tr>
+                <tr><td>Pre-mainnet</td><td>100+ mineros activos</td><td>0.5x</td><td>500 LTD</td></tr>
+                <tr><td>Mainnet</td><td>TGE / exchange listing</td><td>0.25x</td><td>300 LTD</td></tr>
+                <tr><td>Madurez</td><td>5,000+ mineros activos</td><td>0.1x</td><td>200 LTD</td></tr>
+            </table>
+            <p>Cada fase reduce la emision ~50%. El multiplicador se aplica sobre las recompensas base de cada tier. La transicion entre fases es gobernada por el equipo durante testnet, y por propuestas de gobernanza on-chain en mainnet.</p>
+
+            <h3>6.3.5 Progresion del Ecosistema</h3>
+            <p>La Tanda esta disenada como una escalera de participacion donde cada nivel ofrece mayores beneficios:</p>
+            <ol>
+                <li><strong>Usuario:</strong> Se registra, mina LTD diario (Bronze, 1 LTD/dia)</li>
+                <li><strong>Minero activo:</strong> Sube de tier por actividad y rachas (Silver/Gold, 3-5 LTD/dia)</li>
+                <li><strong>Miembro de Tanda:</strong> Participa en ahorro grupal, gana achievements + acceso financiero</li>
+                <li><strong>Vendedor:</strong> Vende en marketplace, gana comisiones + seller achievements</li>
+                <li><strong>Delegador:</strong> Puentea LTD a la chain, delega a validador, gana block rewards + vota en gobernanza</li>
+                <li><strong>Validador:</strong> Opera nodo, valida bloques, recibe delegacion (2,000-5,000 LTD)</li>
+                <li><strong>Inversor:</strong> Aporta capital pre-TGE, obtiene tokens con descuento y vesting</li>
+            </ol>
 
             <h2>6.4 Suscripciones</h2>
             <table>
@@ -863,10 +912,10 @@
             <h2>8.3 Migracion de Token: Polygon → La Tanda Chain</h2>
             <p>LTD existe actualmente como ERC20 en Polygon Amoy testnet. La migracion a token nativo de La Tanda Chain sigue esta ruta:</p>
             <ol>
-                <li><strong>Polygon Mainnet (Q3 2026):</strong> Deploy de LTD ERC20 auditado en Polygon PoS. Token Generation Event (TGE) con 10M circulante inicial</li>
-                <li><strong>La Tanda Chain Testnet (Q4 2026):</strong> Lanzamiento con 5 nodos validadores Ray-Banks. Todos los modulos del ecosistema desplegados</li>
-                <li><strong>La Tanda Chain Mainnet + Bridge (Q1 2027):</strong> Bridge IBC bidireccional Polygon ↔ La Tanda Chain. Operaciones migran progresivamente a la cadena nativa</li>
-                <li><strong>Nativo-first (Q3 2027):</strong> Todas las operaciones por defecto en La Tanda Chain. LTD en Polygon se convierte en version "wrapped" (wLTD)</li>
+                <li><strong>Testnet Activa (Q1-Q2 2026):</strong> La Tanda Chain testnet en produccion con 10+ validadores, gobernanza on-chain, testnet incentivado</li>
+                <li><strong>Seed Round + Equipo (Q2-Q3 2026):</strong> Cierre de ronda seed, contratacion de equipo core, auditoria de seguridad</li>
+                <li><strong>Mainnet Launch + TGE (Q1-Q2 2027):</strong> Migracion de testnet a mainnet, Token Generation Event, primer listing DEX, IBC habilitado</li>
+                <li><strong>Expansion (Q3-Q4 2027):</strong> CEX listing, expansion regional (Guatemala, El Salvador), modulos nativos activos</li>
             </ol>
 
             <h2>8.4 Economia de Validadores</h2>
@@ -939,26 +988,34 @@
                 <li>Sistema de reputacion on-platform</li>
             </ul>
 
-            <h2>Q3-Q4 2026 — Fase 1: Genesis</h2>
+            <h2>Q1-Q2 2026 — Testnet Activa (en progreso)</h2>
             <ul>
-                <li>LTD en Polygon Mainnet (TGE — 10M circulante)</li>
-                <li>La Tanda Chain testnet activa (7+ validadores externos activos, testnet incentivado en progreso)</li>
-                <li>Todos los modulos del ecosistema en testnet</li>
-                <li>Dual-write: PostgreSQL + chain testnet en paralelo</li>
-                <li>Bug bounty para vulnerabilidades de la cadena</li>
+                <li>La Tanda Chain testnet con 10+ validadores activos</li>
+                <li>Testnet incentivado con tiers de delegacion (Validator 2K, Infra Partner 5K LTD)</li>
+                <li>Gobernanza on-chain activa (GOV-001, GOV-002 aprobadas)</li>
+                <li>Bug bounty y grants para contribuidores</li>
                 <li>Software de nodo y documentacion open-source</li>
             </ul>
 
-            <h2>Q1-Q2 2027 — Fase 2: Validadores Semilla</h2>
+            <h2>Q2-Q3 2026 — Seed Round + Equipo</h2>
             <ul>
-                <li>La Tanda Chain mainnet + bridge IBC a Polygon</li>
-                <li>10-20 coordinadores-validadores onboarded</li>
-                <li>Staking de delegadores habilitado</li>
-                <li>Chain se convierte en fuente de verdad (fin del dual-write)</li>
-                <li>Primeras propuestas de gobernanza comunitaria</li>
+                <li>Cierre de ronda seed ($500K, FDV $5M)</li>
+                <li>Contratacion de equipo core (5 personas)</li>
+                <li>Auditoria de seguridad (chain + plataforma)</li>
+                <li>25+ validadores en testnet</li>
+                <li>Dual-write: PostgreSQL + chain testnet en paralelo</li>
             </ul>
 
-            <h2>Q3-Q4 2027 — Fase 3: Expansion</h2>
+            <h2>Q1-Q2 2027 — Mainnet Launch + TGE</h2>
+            <ul>
+                <li>Migracion de testnet a mainnet</li>
+                <li>Token Generation Event (TGE — 10M LTD circulante)</li>
+                <li>Primer listing DEX (Osmosis o similar)</li>
+                <li>IBC habilitado, staking de delegadores abierto</li>
+                <li>Chain se convierte en fuente de verdad</li>
+            </ul>
+
+            <h2>Q3-Q4 2027 — Expansion</h2>
             <ul>
                 <li>50 validadores activos en 10+ paises</li>
                 <li>SDK de La Tanda para desarrolladores terceros</li>
@@ -1031,12 +1088,12 @@
                 </tr>
                 <tr>
                     <td><strong>Desarrollador Mobile</strong></td>
-                    <td style="color: #94a3b8;">Q3 2026</td>
+                    <td style="color: #94a3b8;">Post-Seed</td>
                     <td>2,500,000 LTD</td>
                 </tr>
                 <tr>
                     <td><strong>CTO / Desarrollador Backend+Chain</strong></td>
-                    <td style="color: #94a3b8;">Q3 2026</td>
+                    <td style="color: #94a3b8;">Post-Seed</td>
                     <td>4,000,000 LTD</td>
                 </tr>
                 <tr>

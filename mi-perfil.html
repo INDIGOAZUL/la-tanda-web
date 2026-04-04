@@ -50,7 +50,7 @@
     <div id="global-header"></div>
 
     <div class="profile-container">
-        <!-- Profile Header -->
+        <!-- Profile Hero (full-width) -->
         <div class="profile-header">
             <div class="profile-content">
                 <div class="profile-avatar" onclick="uploadAvatar()">
@@ -59,35 +59,72 @@
                         <i class="fas fa-check"></i>
                     </div>
                 </div>
-                
+
                 <div class="profile-info">
-                    <div class="profile-name" id="profileName">La Tanda Master</div>
-                    <div id="verificationBadge" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 8px; background: rgba(108, 117, 125, 0.3);">
-                        <i class="fas fa-question-circle" style="color: #6c757d;"></i>
-                        <span>Cargando...</span>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <div class="profile-name" id="profileName">La Tanda Master</div>
+                        <div id="verificationBadge" style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:rgba(108,117,125,0.3);">
+                            <i class="fas fa-question-circle" style="color:#6c757d;"></i>
+                            <span>Cargando...</span>
+                        </div>
+                        <span id="heroTierBadge"></span>
                     </div>
-                    <div class="profile-level">
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
                         <div class="level-badge" id="profileLevelBadge">Miembro</div>
-                    </div>
-                    <a id="viewPublicProfile" href="/perfil/" style="display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:5px 14px;border-radius:20px;border:1px solid var(--ds-cyan-border, rgba(0,255,255,0.3));color:#00FFFF;font-size:0.8rem;text-decoration:none;" ><i class="fas fa-external-link-alt"></i> Ver perfil publico</a>
-                    </div>
-                
-                <div class="profile-stats">
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalValue">--</div>
-                        <div class="stat-label">Balance Total</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalTransactions">--</div>
-                        <div class="stat-label">Transacciones</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="memberSince">--</div>
-                        <div class="stat-label">Días Activo</div>
+                        <span id="heroHandleDisplay" style="color:var(--text-secondary,#8896a8);font-size:0.82rem;"></span>
                     </div>
                 </div>
             </div>
+
+            <!-- Hero Stats Row -->
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalValue">--</div>
+                    <div class="stat-label">Balance</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalTransactions">--</div>
+                    <div class="stat-label">Transacciones</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="memberSince">--</div>
+                    <div class="stat-label">Dias Activo</div>
+                </div>
+                <div class="stat-item" id="heroStreakItem" style="display:none;">
+                    <div class="stat-value" id="heroStreakValue" style="color:#f59e0b;">--</div>
+                    <div class="stat-label">Racha</div>
+                </div>
+                <div class="stat-item" id="heroReferralItem" style="display:none;">
+                    <div class="stat-value" id="heroReferralValue" style="color:#a78bfa;">--</div>
+                    <div class="stat-label">Referidos</div>
+                </div>
+            </div>
+
+            <!-- Hero Action Buttons -->
+            <div class="profile-hero-actions">
+                <button class="profile-hero-btn" id="heroQrBtn" title="Codigo QR"><i class="fas fa-qrcode"></i> QR</button>
+                <button class="profile-hero-btn" id="heroRefBtn" title="Copiar link de referido"><i class="fas fa-user-plus"></i> Referir</button>
+                <button class="profile-hero-btn" id="heroShareBtn" title="Compartir perfil"><i class="fas fa-share-alt"></i> Compartir</button>
+                <a class="profile-hero-btn" id="viewPublicProfile" href="/perfil/" title="Ver perfil publico"><i class="fas fa-external-link-alt"></i> Perfil</a>
+            </div>
         </div>
+
+        <!-- QR Modal -->
+        <div id="qrModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:none;z-index:10000;align-items:center;justify-content:center;">
+            <div style="max-width:340px;width:90%;background:#1e293b;border:1px solid rgba(0,255,255,0.2);border-radius:16px;padding:28px;text-align:center;">
+                <h3 style="color:#f8fafc;margin-bottom:16px;font-size:1.1rem;">Tu Codigo QR</h3>
+                <div id="qrCanvas" style="margin:0 auto 16px;background:#fff;padding:16px;border-radius:12px;display:inline-block;"></div>
+                <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
+                    <button class="profile-hero-btn" id="qrTabProfile" style="border-color:#00FFFF;background:rgba(0,255,255,0.15);" onclick="generateQR('profile')">Perfil</button>
+                    <button class="profile-hero-btn" id="qrTabWallet" onclick="generateQR('wallet')">Wallet</button>
+                </div>
+                <div id="qrLabel" style="font-size:0.75rem;color:var(--text-secondary,#8896a8);margin-bottom:12px;word-break:break-all;"></div>
+                <button onclick="document.getElementById('qrModal').style.display='none'" style="background:none;border:1px solid rgba(255,255,255,0.2);color:#f8fafc;padding:8px 24px;border-radius:8px;cursor:pointer;font-family:inherit;">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- QR Library -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
         <!-- Tabs Section -->
         <div class="tabs-section">
@@ -414,21 +451,207 @@
                             <i class="fas fa-wallet"></i> Seguridad de Wallet
                         </div>
                         
-                        <div style="padding: 16px; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--border-accent); border-radius: 8px; margin-bottom: 16px;">
-                            <h4 style="color: var(--tanda-cyan); margin-bottom: 8px;">🔐 Wallet Conectada</h4>
-                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">Tu wallet está conectada y verificada</p>
-                            <div style="font-family: monospace; font-size: 12px; color: var(--text-primary); word-break: break-all;">
-                                0x1234567890abcdef1234567890abcdef12345678
-                            </div>
+                        <div id="chainWalletSection">
+                            <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Cargando wallet...</div>
                         </div>
-                        
-                        <button type="button" class="btn-save ds-btn ds-btn-primary" style="background: linear-gradient(135deg, var(--warning-color), #f59e0b); margin-bottom: 12px;">
-                            <i class="fas fa-link"></i> Conectar Nueva Wallet
-                        </button>
-                        
-                        <button type="button" class="btn-save ds-btn ds-btn-primary" style="background: linear-gradient(135deg, var(--error-color), #dc2626);">
-                            <i class="fas fa-unlink"></i> Desconectar Wallet
-                        </button>
+
+                        <script>
+                        (function() {
+                            var CHAIN_ID = 'latanda-testnet-1';
+                            var chainConfig = {
+                                chainId: CHAIN_ID, chainName: 'La Tanda Testnet',
+                                rpc: 'https://latanda.online/chain/rpc/', rest: 'https://latanda.online/chain/api/',
+                                bip44: { coinType: 118 },
+                                bech32Config: { bech32PrefixAccAddr: 'ltd', bech32PrefixAccPub: 'ltdpub', bech32PrefixValAddr: 'ltdvaloper', bech32PrefixValPub: 'ltdvaloperpub', bech32PrefixConsAddr: 'ltdvalcons', bech32PrefixConsPub: 'ltdvalconspub' },
+                                currencies: [{ coinDenom: 'LTD', coinMinimalDenom: 'ultd', coinDecimals: 6 }],
+                                feeCurrencies: [{ coinDenom: 'LTD', coinMinimalDenom: 'ultd', coinDecimals: 6, gasPriceStep: { low: 0.001, average: 0.005, high: 0.01 } }],
+                                stakeCurrency: { coinDenom: 'LTD', coinMinimalDenom: 'ultd', coinDecimals: 6 },
+                                features: ['ibc-transfer', 'ibc-go']
+                            };
+
+                            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                            var section = document.getElementById('chainWalletSection');
+
+                            async function loadWalletStatus() {
+                                if (!token) { renderNotLinked(); return; }
+                                try {
+                                    var res = await fetch('/api/wallet/chain/status', { headers: { 'Authorization': 'Bearer ' + token } });
+                                    var data = await res.json();
+                                    if (data.success && data.data.linked) {
+                                        renderLinked(data.data);
+                                    } else {
+                                        renderNotLinked();
+                                    }
+                                } catch(e) { renderNotLinked(); }
+                            }
+
+                            function renderNotLinked() {
+                                var hasKeplr = typeof window.keplr !== 'undefined';
+                                section.innerHTML = '<div style="padding:16px;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);border-radius:10px;margin-bottom:12px;">' +
+                                    '<h4 style="color:#a78bfa;margin-bottom:8px;"><i class="fas fa-link" style="margin-right:6px;"></i>La Tanda Chain Wallet</h4>' +
+                                    '<p style="color:var(--text-secondary);font-size:0.82rem;margin-bottom:12px;">Vincula tu wallet Keplr para ver tu balance on-chain, votar en gobernanza, y reclamar tokens minados.</p>' +
+                                    (hasKeplr
+                                        ? '<button type="button" id="btnConnectKeplr" class="btn-save ds-btn ds-btn-primary" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);width:100%;"><i class="fas fa-wallet"></i> Conectar Wallet Keplr</button>'
+                                        : '<p style="color:#f59e0b;font-size:0.78rem;"><i class="fas fa-exclamation-triangle"></i> Instala la extension <a href="https://www.keplr.app/" target="_blank" style="color:#00FFFF;">Keplr Wallet</a> para conectar.</p>'
+                                    ) +
+                                '</div>';
+                                if (hasKeplr) {
+                                    document.getElementById('btnConnectKeplr').addEventListener('click', connectKeplr);
+                                }
+                            }
+
+                            function renderLinked(data) {
+                                var addr = data.chain_address;
+                                var short = addr.substring(0, 10) + '...' + addr.substring(addr.length - 6);
+                                var b = data.balances || {};
+                                section.innerHTML = '<div style="padding:16px;background:rgba(0,255,255,0.08);border:1px solid rgba(0,255,255,0.2);border-radius:10px;margin-bottom:12px;">' +
+                                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                                        '<h4 style="color:#00FFFF;margin:0;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Wallet Vinculada</h4>' +
+                                        '<span style="font-family:monospace;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;" title="' + addr + '" onclick="navigator.clipboard.writeText(\'' + addr + '\');this.textContent=\'Copiado!\';setTimeout(()=>this.textContent=\'' + short + '\',1500)">' + short + '</span>' +
+                                    '</div>' +
+                                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+                                        '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">' +
+                                            '<div style="font-size:0.68rem;color:var(--text-secondary);margin-bottom:4px;">On-Chain</div>' +
+                                            '<div style="font-weight:700;color:#00FFFF;">' + (b.onchain_ltd || 0).toFixed(2) + ' LTD</div>' +
+                                        '</div>' +
+                                        '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">' +
+                                            '<div style="font-size:0.68rem;color:var(--text-secondary);margin-bottom:4px;">Plataforma</div>' +
+                                            '<div style="font-weight:700;color:#10B981;">' + (b.platform_ltd || 0).toFixed(2) + ' LTD</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div style="display:flex;gap:8px;">' +
+                                        '<a href="/governance.html" class="btn-save ds-btn ds-btn-primary" style="flex:1;text-align:center;text-decoration:none;background:linear-gradient(135deg,#00FFFF,#06b6d4);color:#0f172a;"><i class="fas fa-landmark"></i> Gobernanza</a>' +
+                                        '<button type="button" id="btnUnlinkWallet" class="btn-save ds-btn" style="flex:1;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);"><i class="fas fa-unlink"></i> Desvincular</button>' +
+                                    '</div>' +
+                                '</div>' +
+                                // Claim section
+                                '<div style="padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;margin-bottom:12px;">' +
+                                    '<h4 style="color:#10B981;margin-bottom:8px;"><i class="fas fa-exchange-alt" style="margin-right:6px;"></i>Reclamar LTD On-Chain</h4>' +
+                                    '<p style="color:var(--text-secondary);font-size:0.78rem;margin-bottom:10px;">Transfiere LTD de tu cuenta de plataforma a tu wallet on-chain.</p>' +
+                                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+                                        '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="document.getElementById(\'claimAmount\').value=\'' + (b.platform_mined_ltd || 0).toFixed(2) + '\';document.getElementById(\'claimSource\').value=\'mining\';" title="Click para usar maximo">' +
+                                            '<div style="font-size:0.65rem;color:var(--text-secondary);">Minado disponible</div>' +
+                                            '<div style="font-weight:600;color:#a78bfa;">' + (b.platform_mined_ltd || 0).toFixed(2) + ' LTD <span style="font-size:0.6rem;color:var(--text-secondary);">MAX</span></div>' +
+                                        '</div>' +
+                                        '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;cursor:pointer;" onclick="document.getElementById(\'claimAmount\').value=\'' + (b.platform_ltd || 0).toFixed(2) + '\';document.getElementById(\'claimSource\').value=\'wallet\';" title="Click para usar maximo">' +
+                                            '<div style="font-size:0.65rem;color:var(--text-secondary);">Wallet disponible</div>' +
+                                            '<div style="font-weight:600;color:#10B981;">' + (b.platform_ltd || 0).toFixed(2) + ' LTD <span style="font-size:0.6rem;color:var(--text-secondary);">MAX</span></div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+                                        '<select id="claimSource" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text-primary);border:1px solid var(--border-accent);font-size:0.82rem;">' +
+                                            '<option value="mining">Tokens minados</option>' +
+                                            '<option value="wallet">Balance wallet</option>' +
+                                        '</select>' +
+                                        '<input type="number" id="claimAmount" min="0.01" max="1000" step="0.01" placeholder="Cantidad LTD" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.3);color:var(--text-primary);border:1px solid var(--border-accent);font-size:0.82rem;">' +
+                                    '</div>' +
+                                    '<button type="button" id="btnClaim" class="btn-save ds-btn ds-btn-primary" style="width:100%;background:linear-gradient(135deg,#10B981,#059669);"><i class="fas fa-paper-plane"></i> Reclamar en Blockchain</button>' +
+                                    '<div id="claimResult" style="margin-top:8px;font-size:0.78rem;"></div>' +
+                                '</div>' +
+                                // Claims history
+                                '<div style="margin-bottom:12px;">' +
+                                    '<button type="button" id="btnShowClaims" style="background:none;border:none;color:var(--text-secondary);font-size:0.78rem;cursor:pointer;padding:4px 0;"><i class="fas fa-history"></i> Ver historial de reclamos</button>' +
+                                    '<div id="claimsHistory" style="display:none;margin-top:8px;"></div>' +
+                                '</div>';
+                                document.getElementById('btnUnlinkWallet').addEventListener('click', unlinkWallet);
+                                document.getElementById('btnClaim').addEventListener('click', claimTokens);
+                                document.getElementById('btnShowClaims').addEventListener('click', toggleClaimsHistory);
+                            }
+
+                            async function claimTokens() {
+                                var btn = document.getElementById('btnClaim');
+                                var amount = parseFloat(document.getElementById('claimAmount').value);
+                                var source = document.getElementById('claimSource').value;
+                                var resultDiv = document.getElementById('claimResult');
+                                if (!amount || amount <= 0) { resultDiv.innerHTML = '<span style="color:#f87171;">Ingresa un monto valido</span>'; return; }
+                                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                                try {
+                                    var res = await fetch('/api/wallet/chain/claim', {
+                                        method: 'POST',
+                                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ amount: amount, source: source })
+                                    });
+                                    var data = await res.json();
+                                    if (data.success) {
+                                        resultDiv.innerHTML = '<span style="color:#10B981;"><i class="fas fa-check-circle"></i> Reclamo en proceso (ID: ' + data.data.claim_id + '). Se enviara a tu wallet en ~30 segundos.</span>';
+                                        document.getElementById('claimAmount').value = '';
+                                        setTimeout(function() { loadWalletStatus(); }, 5000);
+                                    } else {
+                                        resultDiv.innerHTML = '<span style="color:#f87171;"><i class="fas fa-times-circle"></i> ' + (data.data?.error?.message || data.error || 'Error') + '</span>';
+                                    }
+                                } catch(e) {
+                                    resultDiv.innerHTML = '<span style="color:#f87171;">Error de conexion</span>';
+                                }
+                                btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Reclamar en Blockchain';
+                            }
+
+                            async function toggleClaimsHistory() {
+                                var div = document.getElementById('claimsHistory');
+                                if (div.style.display !== 'none') { div.style.display = 'none'; return; }
+                                div.style.display = 'block';
+                                div.innerHTML = '<div style="text-align:center;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i></div>';
+                                try {
+                                    var res = await fetch('/api/wallet/chain/claims', { headers: { 'Authorization': 'Bearer ' + token } });
+                                    var data = await res.json();
+                                    var claims = data.data?.claims || [];
+                                    if (claims.length === 0) { div.innerHTML = '<div style="color:var(--text-secondary);font-size:0.78rem;">Sin reclamos aun</div>'; return; }
+                                    div.innerHTML = claims.map(function(c) {
+                                        var statusColor = c.status === 'completed' ? '#10B981' : c.status === 'failed' ? '#f87171' : '#f59e0b';
+                                        var date = new Date(c.requested_at).toLocaleDateString('es-HN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                                        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.75rem;">' +
+                                            '<div><span style="color:' + statusColor + ';font-weight:500;">' + c.status + '</span> <span style="color:var(--text-secondary);">' + date + '</span></div>' +
+                                            '<div style="font-weight:600;">' + parseFloat(c.amount_ltd).toFixed(2) + ' LTD' + (c.tx_hash ? ' <a href="#" title="' + c.tx_hash + '" style="color:#00FFFF;font-size:0.65rem;" onclick="navigator.clipboard.writeText(\'' + c.tx_hash + '\');this.textContent=\'Copiado!\';return false;">TX</a>' : '') + '</div>' +
+                                        '</div>';
+                                    }).join('');
+                                } catch(e) { div.innerHTML = '<div style="color:#f87171;">Error</div>'; }
+                            }
+
+                            async function connectKeplr() {
+                                try {
+                                    await window.keplr.experimentalSuggestChain(chainConfig);
+                                    await window.keplr.enable(CHAIN_ID);
+                                    var key = await window.keplr.getKey(CHAIN_ID);
+                                    var address = key.bech32Address;
+                                    // Sign arbitrary message to prove ownership
+                                    var message = 'Link La Tanda account to ' + address;
+                                    var sig = await window.keplr.signArbitrary(CHAIN_ID, address, message);
+                                    // Send to backend
+                                    var res = await fetch('/api/wallet/chain/link', {
+                                        method: 'POST',
+                                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ chain_address: address, signature: JSON.stringify(sig), signed_message: message })
+                                    });
+                                    var data = await res.json();
+                                    if (data.success) {
+                                        loadWalletStatus();
+                                    } else {
+                                        alert(data.data?.error?.message || 'Error al vincular wallet');
+                                    }
+                                } catch(e) {
+                                    if (e.message && e.message.includes('rejected')) {
+                                        // User rejected in Keplr — do nothing
+                                    } else {
+                                        alert('Error: ' + (e.message || 'No se pudo conectar Keplr'));
+                                    }
+                                }
+                            }
+
+                            async function unlinkWallet() {
+                                if (!confirm('Desvincular tu wallet? Podras volver a vincularla despues.')) return;
+                                var res = await fetch('/api/wallet/chain/unlink', {
+                                    method: 'POST',
+                                    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                                });
+                                var data = await res.json();
+                                if (data.success) loadWalletStatus();
+                            }
+
+                            // Listen for Keplr account changes
+                            window.addEventListener('keplr_keystorechange', function() { loadWalletStatus(); });
+
+                            loadWalletStatus();
+                        })();
+                        </script>
 
                     <div class="form-section" style="margin-top: 24px; border-top: 1px solid var(--border-accent); padding-top: 24px;">
                         <div class="form-section-title">
@@ -466,11 +689,11 @@
         </a>
     </nav>
 
-    <script src="js/mi-perfil.js?v=1.0"></script>
+    <script src="js/mi-perfil.js?v=2.0"></script>
   <script nomodule crossorigin id="vite-legacy-polyfill" src="/assets/js/polyfills-legacy-YD97Sv6k.js"></script>
   <script nomodule crossorigin id="vite-legacy-entry" data-src="/assets/js/miPerfil-legacy-CvD272dr.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=32.6"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <script src="js/onboarding/onboarding-system.js?v=1.5"></script>
 </body>
 </html>
