@@ -24,7 +24,7 @@
 .gm-print-icon:hover { color: var(--ds-cyan, #00FFFF); border-color: rgba(0,255,255,0.3); }
 @media (max-width: 480px) { .gm-stat-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
-<link rel="stylesheet" href="css/gestionar.css?v=1.0">
+<link rel="stylesheet" href="css/gestionar.css?v=1.1">
     <style>
         :root {
             --tanda-cyan: var(--ds-cyan, #00FFFF);
@@ -235,12 +235,30 @@
                 health_score: healthScore,
                 frequency: sg.frequency,
                 contribution_amount: sg.contribution_amount,
-                commission_rate: sg.commission_rate
+                commission_rate: sg.commission_rate,
+                distribution_mode: sg.distribution_mode || 'rotation',
+                pool_balance: sg.pool_balance || 0,
+                total_shares: sg.total_shares || 0,
+                nav_per_share: sg.nav_per_share || 100,
+                min_contribution: sg.min_contribution,
+                max_contribution: sg.max_contribution,
+                total_cycles: sg.total_cycles
             };
 
             // Update header
             document.getElementById('gmGroupName').textContent = groupData.name;
             document.getElementById('gmRoleBadge').textContent = userRole === 'creator' ? 'Creador' : 'Coordinador';
+
+            // v4.25.12: Show distribution mode badge
+            var modeNames = { rotation: 'Tanda', lottery: 'Loteria', accumulate: 'Ahorro', shares: 'Inversion', request: 'Fondo' };
+            var modeName = modeNames[groupData.distribution_mode] || '';
+            if (modeName && groupData.distribution_mode !== 'rotation') {
+                var mb = document.createElement('span');
+                mb.className = 'gm-mode-badge';
+                mb.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:8px;font-size:0.7rem;font-weight:600;background:var(--ds-purple,#a855f7);color:#fff;margin-left:6px;';
+                mb.textContent = modeName;
+                document.getElementById('gmRoleBadge').after(mb);
+            }
 
             if (healthScore != null) {
                 var hb = document.getElementById('gmHealthBadge');
@@ -251,9 +269,40 @@
                 hb.style.display = 'inline-flex';
             }
 
+            // v4.25.12: Adapt tabs visibility based on distribution_mode
+            var dm = groupData.distribution_mode;
+            var tabPagos = document.querySelector('.gm-tab[data-tab="pagos"]');
+            var tabFinanzas = document.querySelector('.gm-tab[data-tab="finanzas"]');
+
+            if (dm === 'accumulate') {
+                // Savings: rename Pagos to "Contribuciones", hide Finanzas turnos
+                if (tabPagos) tabPagos.innerHTML = '<i class="fas fa-piggy-bank"></i> Aportes';
+            } else if (dm === 'shares') {
+                // Investment: rename Pagos to "Inversiones"
+                if (tabPagos) tabPagos.innerHTML = '<i class="fas fa-chart-line"></i> Inversiones';
+            } else if (dm === 'request') {
+                // Community: rename Pagos to "Aportes", add Solicitudes indicator
+                if (tabPagos) tabPagos.innerHTML = '<i class="fas fa-hands-helping"></i> Aportes';
+            } else if (dm === 'lottery') {
+                // Lottery: same as rotation but distribution shows "Sorteo"
+            }
+
             // Update summary cards
             // Ciclo: current cycle number
             document.getElementById('gmStatCycle').textContent = sg.current_cycle || 0;
+
+            // v4.25.12: Pool balance for accumulating modes
+            if (dm === 'accumulate' || dm === 'shares' || dm === 'request') {
+                var poolEl = document.getElementById('gmStatCycle');
+                var poolLbl = poolEl.parentElement.querySelector('.gm-stat-label');
+                if (dm === 'shares') {
+                    poolEl.textContent = 'L.' + (groupData.pool_balance || 0).toLocaleString('es-HN', {maximumFractionDigits:0});
+                    poolLbl.textContent = 'Pool (NAV: L.' + (groupData.nav_per_share || 100) + ')';
+                } else {
+                    poolEl.textContent = 'L.' + (groupData.pool_balance || 0).toLocaleString('es-HN', {maximumFractionDigits:0});
+                    poolLbl.textContent = dm === 'request' ? 'Fondo Disponible' : 'Pool de Ahorro';
+                }
+            }
             document.getElementById('gmStatCycle').parentElement.querySelector('.gm-stat-label').textContent = 'Ciclo de ' + (sg.max_members || '?');
 
             // Miembros: active / max
@@ -546,21 +595,67 @@
     function loadPagos() {
         var sp = statsData ? statsData.payments || {} : {};
         var pendingCount = sp.pending || 0;
-        var html = '<div class="gm-section"><div class="gm-section-title">Acciones de Pago</div>';
-        html += '<div class="gm-actions-grid">';
-        html += '<button class="gm-action-btn gm-action-primary" data-action="pagos-registrar"><i class="fas fa-plus-circle"></i> Registrar Pago</button>';
-        html += '<button class="gm-action-btn gm-action-warn" data-action="pagos-verificar"><i class="fas fa-check-double"></i> Verificar Pendientes' + (pendingCount > 0 ? ' <span class="gm-badge-count">' + pendingCount + '</span>' : '') + '</button>';
-        html += '<button class="gm-action-btn gm-action-green" data-action="pagos-distribuir"><i class="fas fa-share-alt"></i> Distribuir Ciclo</button>';
-        html += '</div></div>';
+        var dm = groupData ? groupData.distribution_mode : 'rotation';
+        var html = '';
 
-        html += '<div class="gm-section"><div class="gm-section-title">Informacion</div>';
-        html += '<div class="gm-actions-grid">';
-        html += '<button class="gm-action-btn" data-action="pagos-historial"><i class="fas fa-history"></i> Historial de Pagos</button>';
-        html += '<button class="gm-action-btn" data-action="pagos-reporte"><i class="fas fa-chart-bar"></i> Reporte Financiero</button>';
-        html += '</div></div>';
+        if (dm === 'request') {
+            // COMMUNITY FUND — Show pool + disbursement requests
+            html += '<div class="gm-section"><div class="gm-section-title"><i class="fas fa-hands-helping" style="margin-right:6px;color:var(--ds-amber);"></i>Fondo Comunitario</div>';
+            html += '<div style="display:flex;gap:12px;margin-bottom:12px;">';
+            html += '<div style="flex:1;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--ds-green);">L.' + (groupData.pool_balance || 0).toLocaleString('es-HN') + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Fondo Disponible</div></div>';
+            html += '</div>';
+            html += '<div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn gm-action-primary" data-action="pagos-registrar"><i class="fas fa-plus-circle"></i> Registrar Aporte</button>';
+            html += '<button class="gm-action-btn gm-action-green" data-action="disb-list"><i class="fas fa-list"></i> Solicitudes de Desembolso</button>';
+            html += '<button class="gm-action-btn" data-action="pagos-historial"><i class="fas fa-history"></i> Historial</button>';
+            html += '</div></div>';
+
+        } else if (dm === 'shares') {
+            // INVESTMENT — Show NAV + shares dashboard
+            html += '<div class="gm-section"><div class="gm-section-title"><i class="fas fa-chart-line" style="margin-right:6px;color:var(--ds-green);"></i>Club de Inversion</div>';
+            html += '<div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">';
+            html += '<div style="flex:1;min-width:120px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--ds-green);">L.' + (groupData.nav_per_share || 100).toLocaleString('es-HN') + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">NAV por Accion</div></div>';
+            html += '<div style="flex:1;min-width:120px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--ds-cyan);">L.' + (groupData.pool_balance || 0).toLocaleString('es-HN') + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Pool Total</div></div>';
+            html += '<div style="flex:1;min-width:120px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.2rem;font-weight:700;">' + (groupData.total_shares || 0) + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Acciones Totales</div></div>';
+            html += '</div>';
+            html += '<div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn gm-action-primary" data-action="invest-buy"><i class="fas fa-shopping-cart"></i> Comprar Acciones</button>';
+            html += '<button class="gm-action-btn gm-action-warn" data-action="invest-nav"><i class="fas fa-edit"></i> Actualizar NAV</button>';
+            html += '<button class="gm-action-btn" data-action="invest-dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>';
+            html += '<button class="gm-action-btn gm-action-green" data-action="invest-dissolve"><i class="fas fa-sign-out-alt"></i> Disolver Club</button>';
+            html += '</div></div>';
+
+        } else if (dm === 'accumulate') {
+            // SAVINGS — Show pool + contribute + share-out
+            html += '<div class="gm-section"><div class="gm-section-title"><i class="fas fa-piggy-bank" style="margin-right:6px;color:var(--ds-cyan);"></i>Ahorro Grupal</div>';
+            html += '<div style="display:flex;gap:12px;margin-bottom:12px;">';
+            html += '<div style="flex:1;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--ds-cyan);">L.' + (groupData.pool_balance || 0).toLocaleString('es-HN') + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Pool Acumulado</div></div>';
+            html += '</div>';
+            html += '<div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn gm-action-primary" data-action="pagos-registrar"><i class="fas fa-plus-circle"></i> Registrar Aporte</button>';
+            html += '<button class="gm-action-btn gm-action-warn" data-action="pagos-verificar"><i class="fas fa-check-double"></i> Verificar Aportes' + (pendingCount > 0 ? ' <span class="gm-badge-count">' + pendingCount + '</span>' : '') + '</button>';
+            html += '<button class="gm-action-btn gm-action-green" data-action="pagos-distribuir"><i class="fas fa-share-alt"></i> Ejecutar Reparto</button>';
+            html += '</div></div>';
+            html += '<div class="gm-section"><div class="gm-section-title">Informacion</div><div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn" data-action="pagos-historial"><i class="fas fa-history"></i> Historial</button>';
+            html += '</div></div>';
+
+        } else {
+            // ROTATION / LOTTERY — Original UI
+            var distLabel = dm === 'lottery' ? 'Sortear y Distribuir' : 'Distribuir Ciclo';
+            html += '<div class="gm-section"><div class="gm-section-title">Acciones de Pago</div>';
+            html += '<div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn gm-action-primary" data-action="pagos-registrar"><i class="fas fa-plus-circle"></i> Registrar Pago</button>';
+            html += '<button class="gm-action-btn gm-action-warn" data-action="pagos-verificar"><i class="fas fa-check-double"></i> Verificar Pendientes' + (pendingCount > 0 ? ' <span class="gm-badge-count">' + pendingCount + '</span>' : '') + '</button>';
+            html += '<button class="gm-action-btn gm-action-green" data-action="pagos-distribuir"><i class="fas fa-share-alt"></i> ' + distLabel + '</button>';
+            html += '</div></div>';
+            html += '<div class="gm-section"><div class="gm-section-title">Informacion</div><div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn" data-action="pagos-historial"><i class="fas fa-history"></i> Historial de Pagos</button>';
+            html += '<button class="gm-action-btn" data-action="pagos-reporte"><i class="fas fa-chart-bar"></i> Reporte Financiero</button>';
+            html += '</div></div>';
+        }
 
         html += '<div id="pagosSubPanel"></div>';
-
         document.getElementById('pagosContent').innerHTML = html;
     }
 
@@ -3376,6 +3471,26 @@
             // Pagos tab
             case 'pagos-registrar': renderRegistrarPago(pagosPanel); break;
             case 'pagos-verificar': renderVerificarPagos(pagosPanel); break;
+            case 'disb-list':
+                // Community: Load disbursement requests
+                loadDisbursements();
+                break;
+            case 'invest-buy':
+                // Investment: Buy shares prompt
+                promptInvestBuy();
+                break;
+            case 'invest-nav':
+                // Investment: Update NAV prompt
+                promptNavUpdate();
+                break;
+            case 'invest-dashboard':
+                // Investment: Load dashboard
+                loadInvestDashboard();
+                break;
+            case 'invest-dissolve':
+                // Investment: Dissolve club
+                if (confirm('Disolver el club? Se repartira el pool a todos los accionistas.')) dissolveClub();
+                break;
             case 'pagos-distribuir': renderDistribuir(pagosPanel); break;
             case 'pagos-historial': renderHistorial(pagosPanel); break;
             case 'pagos-reporte': renderReporteFinanciero(pagosPanel); break;
@@ -3617,6 +3732,111 @@
     }
 
     // === Init ===
+    // ╔══════════════════════════════════════════════════╗
+    // ║  MODE-SPECIFIC FUNCTIONS (v4.25.12)              ║
+    // ╚══════════════════════════════════════════════════╝
+
+    var isCreatorOrCoord = (userRole === 'creator' || userRole === 'coordinator' || userRole === 'admin');
+
+    async function loadDisbursements() {
+        var panel = document.getElementById('pagosSubPanel');
+        if (!panel) return;
+        panel.innerHTML = '<div style="text-align:center;padding:20px;color:var(--ds-text-faint);"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/disbursements', { headers: authHeaders() });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+            var reqs = data.data?.requests || [];
+            var html = '<div class="gm-section"><div class="gm-section-title">Solicitudes (' + reqs.length + ')</div>';
+            if (!reqs.length) { html += '<p style="color:var(--ds-text-faint);padding:12px;">No hay solicitudes.</p>'; }
+            reqs.forEach(function(r) {
+                var sc = r.status === 'pending' ? 'var(--ds-amber)' : r.status === 'approved' ? 'var(--ds-green)' : r.status === 'fulfilled' ? 'var(--ds-cyan)' : 'var(--ds-red)';
+                var sl = { pending:'Pendiente', approved:'Aprobada', rejected:'Rechazada', fulfilled:'Desembolsada', cancelled:'Cancelada' }[r.status] || r.status;
+                html += '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ' + sc + ';">';
+                html += '<div style="display:flex;justify-content:space-between;"><strong>' + esc(r.requester_name) + '</strong><span style="color:' + sc + ';font-size:0.75rem;font-weight:600;">' + sl + '</span></div>';
+                html += '<div style="font-size:0.85rem;margin-top:4px;">L.' + parseFloat(r.amount).toLocaleString('es-HN') + ' — ' + esc(r.reason) + '</div>';
+                html += '<div style="font-size:0.7rem;color:var(--ds-text-faint);margin-top:4px;">Votos: ' + r.votes_for + ' a favor, ' + r.votes_against + ' en contra</div>';
+                if (r.status === 'approved' && isCreatorOrCoord) {
+                    html += '<button class="gm-action-btn gm-action-green" style="margin-top:8px;padding:6px 16px;font-size:0.75rem;" data-action="disb-fulfill" data-rid="' + r.id + '"><i class="fas fa-check"></i> Desembolsar</button>';
+                }
+                if (r.status === 'pending' && !r.my_vote) {
+                    html += '<div style="margin-top:8px;display:flex;gap:8px;">';
+                    html += '<button class="gm-action-btn gm-action-green" style="padding:6px 12px;font-size:0.75rem;" data-action="disb-vote" data-rid="' + r.id + '" data-vote="approve"><i class="fas fa-thumbs-up"></i> Aprobar</button>';
+                    html += '<button class="gm-action-btn" style="padding:6px 12px;font-size:0.75rem;border-color:var(--ds-red);color:var(--ds-red);" data-action="disb-vote" data-rid="' + r.id + '" data-vote="reject"><i class="fas fa-thumbs-down"></i> Rechazar</button></div>';
+                } else if (r.my_vote) { html += '<div style="font-size:0.7rem;color:var(--ds-text-faint);margin-top:4px;">Tu voto: ' + (r.my_vote === 'approve' ? 'A favor' : 'En contra') + '</div>'; }
+                html += '</div>';
+            });
+            html += '</div>';
+            panel.innerHTML = html;
+        } catch(e) { panel.innerHTML = '<div style="color:var(--ds-red);padding:12px;">' + esc(e.message) + '</div>'; }
+    }
+
+    async function promptInvestBuy() {
+        var amount = prompt('Monto a invertir (L.):');
+        if (!amount || parseFloat(amount) <= 0) return;
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/invest', { method:'POST', headers:authHeaders(), body:JSON.stringify({amount:parseFloat(amount)}) });
+            var data = await res.json();
+            if (data.success) { if (window.showToast) showToast('Inversion: ' + (data.data.shares_purchased||0).toFixed(2) + ' acciones', 'success'); loadPagos(); }
+            else alert(data.data?.error?.message || 'Error');
+        } catch(e) { alert(e.message); }
+    }
+
+    async function promptNavUpdate() {
+        var nav = prompt('Nuevo NAV por accion (L.):', groupData?.nav_per_share || 100);
+        if (!nav || parseFloat(nav) <= 0) return;
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/investment/update-nav', { method:'POST', headers:authHeaders(), body:JSON.stringify({nav:parseFloat(nav)}) });
+            var data = await res.json();
+            if (data.success) { groupData.nav_per_share = parseFloat(nav); if (window.showToast) showToast('NAV actualizado', 'success'); loadPagos(); }
+            else alert(data.data?.error?.message || 'Error');
+        } catch(e) { alert(e.message); }
+    }
+
+    async function loadInvestDashboard() {
+        var panel = document.getElementById('pagosSubPanel');
+        if (!panel) return;
+        panel.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/investment', { headers:authHeaders() });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+            var d = data.data;
+            var html = '<div class="gm-section"><div class="gm-section-title">Accionistas</div>';
+            (d.members || []).forEach(function(m) {
+                html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><span>' + esc(m.name) + '</span><span style="color:var(--ds-cyan);">' + m.shares.toFixed(1) + ' acc (L.' + m.value.toLocaleString('es-HN',{maximumFractionDigits:0}) + ')</span></div>';
+            });
+            html += '</div>';
+            panel.innerHTML = html;
+        } catch(e) { panel.innerHTML = '<div style="color:var(--ds-red);padding:12px;">' + esc(e.message) + '</div>'; }
+    }
+
+    async function dissolveClub() {
+        try {
+            var res = await fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/investment/dissolve', { method:'POST', headers:authHeaders() });
+            var data = await res.json();
+            if (data.success) { if (window.showToast) showToast('Club disuelto', 'success'); setTimeout(function(){ location.reload(); }, 1500); }
+            else alert(data.data?.error?.message || 'Error');
+        } catch(e) { alert(e.message); }
+    }
+
+    // Delegated handlers for disbursement actions
+    document.addEventListener('click', function(ev) {
+        var btn = ev.target.closest('[data-action]');
+        if (!btn) return;
+        var act = btn.getAttribute('data-action');
+        if (act === 'disb-fulfill') {
+            var rid = btn.getAttribute('data-rid');
+            if (!rid || !confirm('Confirmar desembolso?')) return;
+            fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/disbursements/' + rid + '/fulfill', { method:'POST', headers:authHeaders() })
+                .then(function(r){return r.json();}).then(function(d){if(d.success){showToast && showToast('Desembolsado','success');loadDisbursements();}else{alert(d.data?.error?.message||'Error');}}).catch(function(e){alert(e.message);});
+        } else if (act === 'disb-vote') {
+            var rid2 = btn.getAttribute('data-rid'), vote = btn.getAttribute('data-vote');
+            fetch(API_BASE + '/api/groups/' + encodeURIComponent(groupId) + '/disbursements/' + rid2 + '/vote', { method:'POST', headers:authHeaders(), body:JSON.stringify({vote:vote}) })
+                .then(function(r){return r.json();}).then(function(d){if(d.success){showToast && showToast('Voto registrado','success');loadDisbursements();}else{alert(d.data?.error?.message||'Error');}}).catch(function(e){alert(e.message);});
+        }
+    });
+
     init();
 
 })();

@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIA - Asistente IA | La Tanda</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/header.css?v=26.0">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/dashboard-layout.css?v=7803">
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -511,7 +512,6 @@
 </head>
 <body>
     <div id="global-header"></div>
-    <div id="global-sidebar"></div>
     <style>.mp-header[style*="display:none"]~*,.mia-container,.inv-container{padding-top:56px!important}@media(max-width:768px){.mp-header[style*="display:none"]~*,.mia-container,.inv-container{padding-top:50px!important}}</style>
 
     <div class="mia-page-container">
@@ -527,6 +527,7 @@
                 </div>
                 <div class="mia-header-subtitle">Asistente Inteligente de La Tanda</div>
             </div>
+            <button class="mia-back-btn" onclick="clearChatHistory()" title="Limpiar chat" style="margin-right:8px;"><i class="fas fa-trash-alt"></i></button>
             <div class="mia-status">
                 <span class="mia-status-dot"></span>
                 En linea
@@ -542,17 +543,18 @@
                 <h2>Hola, soy MIA</h2>
                 <p>Tu asistente inteligente de La Tanda. Puedo ayudarte con informacion sobre tandas, el token LTD, marketplace, loteria y mas.</p>
                 <div id="miaAlerts"></div>
-                <div class="mia-quick-actions">
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi resumen financiero</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Quiero pagar mi tanda</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Consejos de ahorro</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Analizar mi tienda</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi rendimiento de pagos</button>
-                    <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Ayuda con una disputa</button>
                 </div>
             </div>
         </div>
         
+        <div class="mia-quick-actions" id="miaQuickActions" style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px;">
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi resumen financiero</button>
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Quiero pagar mi tanda</button>
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Consejos de ahorro</button>
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Analizar mi tienda</button>
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Mi rendimiento de pagos</button>
+            <button class="mia-quick-btn" onclick="sendQuickMessage(this.textContent)">Ayuda con una disputa</button>
+        </div>
         <!-- Chat Input -->
         <div class="mia-chat-input-container">
             <div class="mia-voice-status" id="voiceStatus">Escuchando...</div>
@@ -590,6 +592,45 @@
         const sendBtn = document.getElementById("sendBtn");
         let conversationHistory = [];
         let isLoading = false;
+        // ===== CHAT PERSISTENCE =====
+        const MIA_STORAGE_KEY = 'mia_page_chat_history';
+        const MIA_MAX_MESSAGES = 50;
+
+        function loadChatHistory() {
+            try {
+                const saved = localStorage.getItem(MIA_STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        conversationHistory = parsed.slice(-MIA_MAX_MESSAGES);
+                        // Remove welcome message
+                        const welcome = chatMessages.querySelector('.mia-welcome');
+                        if (welcome && conversationHistory.length > 0) welcome.remove();
+                        // Render saved messages
+                        for (const msg of conversationHistory) {
+                            addMessage(msg.role, msg.content, msg.actions, msg.source, true);
+                        }
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function saveChatHistory() {
+            try {
+                localStorage.setItem(MIA_STORAGE_KEY, JSON.stringify(conversationHistory.slice(-MIA_MAX_MESSAGES)));
+            } catch (e) { /* localStorage full */ }
+        }
+
+        function clearChatHistory() {
+            conversationHistory = [];
+            localStorage.removeItem(MIA_STORAGE_KEY);
+            chatMessages.innerHTML = '';
+            // Re-add welcome
+            chatMessages.innerHTML = '<div class="mia-welcome" style="text-align:center;padding:40px 20px;"><div style="font-size:3rem;margin-bottom:12px;"><i class="fas fa-robot" style="color:#00ffff;"></i></div><h3 style="color:#00ffff;font-family:Orbitron,sans-serif;margin-bottom:8px;">Hola! Soy MIA</h3><p style="color:rgba(255,255,255,0.6);font-size:0.9rem;">Tu asistente virtual inteligente</p></div>';
+        }
+
+        // Load on init
+        loadChatHistory();
 
         function getAuthToken() {
             return localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
@@ -646,6 +687,11 @@
             } else {
                 msgDiv.textContent = content;
             }
+            // Timestamp
+            const timeDiv = document.createElement("div");
+            timeDiv.style.cssText = "font-size:10px;color:rgba(255,255,255,0.25);margin-top:3px;padding:0 4px;" + (role==="user"?"text-align:right;":"");
+            timeDiv.textContent = new Date().toLocaleTimeString("es-HN", {hour:"2-digit",minute:"2-digit"});
+            msgDiv.appendChild(timeDiv);
             chatMessages.appendChild(msgDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
@@ -707,9 +753,11 @@
                         { role: "user", content: message },
                         { role: "assistant", content: data.data.response }
                     );
+                    saveChatHistory();
                     // L5: Cap local history
                     if (conversationHistory.length > 40) {
                         conversationHistory = conversationHistory.slice(-20);
+                        saveChatHistory();
                     }
                 } else {
                     addMessage("assistant", "Lo siento, hubo un error. Intenta de nuevo.");
@@ -838,6 +886,6 @@
         <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
     </nav>
     <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.1);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1rem}.mobile-nav-item.active,.mobile-nav-item:hover{color:#00FFFF}}</style>
-    <script src="js/components-loader.js?v=32.6"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
 </body>
 </html>

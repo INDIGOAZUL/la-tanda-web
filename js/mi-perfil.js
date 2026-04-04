@@ -42,6 +42,8 @@ class ProfileManager {
         await this.loadPortfolio();
         this.loadActivities();
         this.loadAchievements();
+        this.loadHeroExtras();
+        this.setupHeroActions();
         this.setupEventListeners();
         if (typeof load2FAStatus === 'function') load2FAStatus();
         loadPrivacySettings();
@@ -330,6 +332,179 @@ class ProfileManager {
         }).filter(function(html) { return html !== ""; }).join("");
 
         container.innerHTML = portfolioHTML || '<div class="empty-state">Sin datos disponibles</div>';
+
+        // Load extra cards: mining tier + chain balance
+        this.loadPortfolioExtras(container);
+    }
+
+    async loadPortfolioExtras(container) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token) return;
+        var extrasHtml = '';
+
+        // Mining tier card
+        try {
+            var mRes = await fetch('/api/mining/status', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+            if (mRes.success && mRes.data) {
+                var m = mRes.data;
+                var tierColors = { bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700', platinum: '#E5E4E2', diamond: '#B9F2FF' };
+                var tierIcons = { bronze: '🥉', silver: '🥈', gold: '🥇', platinum: '💎', diamond: '👑' };
+                var tier = m.current_tier || 'bronze';
+                var pts = m.achievement_points || 0;
+                var nextThresholds = { bronze: 50, silver: 150, gold: 300, platinum: 500, diamond: null };
+                var nextPts = nextThresholds[tier];
+                var pct = nextPts ? Math.min(100, Math.round((pts / nextPts) * 100)) : 100;
+                extrasHtml += '<div class="portfolio-card" style="border-left:3px solid ' + (tierColors[tier] || '#CD7F32') + ';">' +
+                    '<div class="portfolio-header"><div class="portfolio-icon" style="font-size:1.5rem;">' + (tierIcons[tier] || '🥉') + '</div>' +
+                    '<div class="portfolio-title">Mining Tier</div></div>' +
+                    '<div class="portfolio-value" style="color:' + (tierColors[tier] || '#CD7F32') + ';text-transform:capitalize;">' + tier + '</div>' +
+                    '<div style="margin-top:8px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + (tierColors[tier] || '#CD7F32') + ';border-radius:3px;"></div></div>' +
+                    '<div style="font-size:0.7rem;color:var(--text-secondary,#8896a8);margin-top:4px;">' + pts + ' pts' + (nextPts ? ' / ' + nextPts + ' para siguiente tier' : ' — tier maximo') + '</div>' +
+                    '<div style="font-size:0.7rem;color:var(--text-secondary,#8896a8);">' + (m.testnet_ltd_mined || 0).toFixed(2) + ' LTD minados total</div>' +
+                    '</div>';
+            }
+        } catch(e) {}
+
+        // Chain balance card
+        try {
+            var cRes = await fetch('/api/wallet/chain/status', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+            if (cRes.success && cRes.data) {
+                if (cRes.data.linked) {
+                    var b = cRes.data.balances || {};
+                    var addr = cRes.data.chain_address || '';
+                    var shortAddr = addr.substring(0, 8) + '...' + addr.substring(addr.length - 4);
+                    extrasHtml += '<div class="portfolio-card" style="border-left:3px solid #00FFFF;">' +
+                        '<div class="portfolio-header"><div class="portfolio-icon"><i class="fas fa-link" style="color:#00FFFF;"></i></div>' +
+                        '<div class="portfolio-title">On-Chain</div></div>' +
+                        '<div class="portfolio-value" style="color:#00FFFF;">' + (b.onchain_ltd || 0).toFixed(2) + ' LTD</div>' +
+                        '<div style="font-size:0.7rem;color:var(--text-secondary,#8896a8);margin-top:4px;font-family:monospace;">' + shortAddr + '</div>' +
+                        '</div>';
+                } else {
+                    extrasHtml += '<div class="portfolio-card" style="border-left:3px solid rgba(168,85,247,0.5);">' +
+                        '<div class="portfolio-header"><div class="portfolio-icon"><i class="fas fa-link" style="color:#a78bfa;"></i></div>' +
+                        '<div class="portfolio-title">Chain Wallet</div></div>' +
+                        '<div style="font-size:0.82rem;color:var(--text-secondary,#8896a8);">No vinculada</div>' +
+                        '<a href="/mi-perfil.html" onclick="switchTab(\'security\',event);return false;" style="font-size:0.75rem;color:#00FFFF;">Vincular Keplr →</a>' +
+                        '</div>';
+                }
+            }
+        } catch(e) {}
+
+        if (extrasHtml) container.innerHTML += extrasHtml;
+    }
+
+    async loadHeroExtras() {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+        if (!token) return;
+        var user = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+
+        // Show handle
+        var handleEl = document.getElementById('heroHandleDisplay');
+        if (handleEl && user.handle) handleEl.textContent = '@' + user.handle;
+
+        // Set public profile link
+        var pubLink = document.getElementById('viewPublicProfile');
+        if (pubLink && user.handle) pubLink.href = '/perfil/' + user.handle;
+        else if (pubLink && (user.user_id || user.id)) pubLink.href = '/perfil.html?id=' + (user.user_id || user.id);
+
+        // Mining tier badge + streak
+        try {
+            var mRes = await fetch('/api/mining/status', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+            if (mRes.success && mRes.data) {
+                var m = mRes.data;
+                var tierColors = { bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700', platinum: '#E5E4E2', diamond: '#B9F2FF' };
+                var tierNames = { bronze: 'Bronce', silver: 'Plata', gold: 'Oro', platinum: 'Platino', diamond: 'Diamante' };
+                var tierIcons = { bronze: '\u{1F949}', silver: '\u{1F948}', gold: '\u{1F947}', platinum: '\u{1F48E}', diamond: '\u{1F451}' };
+                var tier = m.current_tier || 'bronze';
+                // Tier badge
+                var badgeEl = document.getElementById('heroTierBadge');
+                if (badgeEl) {
+                    badgeEl.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:' + (tierColors[tier] || '#CD7F32') + '22;color:' + (tierColors[tier] || '#CD7F32') + ';border:1px solid ' + (tierColors[tier] || '#CD7F32') + '44;">' + (tierIcons[tier] || '') + ' ' + (tierNames[tier] || tier) + '</span>';
+                }
+                // Streak
+                var streak = m.mining_streak || 0;
+                var streakItem = document.getElementById('heroStreakItem');
+                var streakVal = document.getElementById('heroStreakValue');
+                if (streakItem && streakVal) {
+                    streakItem.style.display = '';
+                    streakVal.innerHTML = (streak > 0 ? '\u{1F525} ' : '<span style="opacity:0.4">\u{1F525}</span> ') + streak;
+                    streakVal.style.color = streak >= 7 ? '#f59e0b' : streak > 0 ? '#fb923c' : '#64748b';
+                }
+            }
+        } catch(e) {}
+
+        // Referral count
+        try {
+            var sRes = await fetch('/api/user/me/stats', { headers: { 'Authorization': 'Bearer ' + token } }).then(function(r) { return r.json(); });
+            if (sRes.success && sRes.data) {
+                var refs = sRes.data.referrals_made || 0;
+                var refItem = document.getElementById('heroReferralItem');
+                var refVal = document.getElementById('heroReferralValue');
+                if (refItem && refVal) {
+                    refItem.style.display = '';
+                    refVal.textContent = '\u{1F465} ' + refs;
+                }
+            }
+        } catch(e) {}
+    }
+
+    setupHeroActions() {
+        var user = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+        var userId = user.user_id || user.id || '';
+        var handle = user.handle || '';
+        var profileUrl = handle ? 'https://latanda.online/perfil/' + handle : 'https://latanda.online/perfil.html?id=' + userId;
+        var referralUrl = 'https://latanda.online/auth-enhanced.html?ref=' + userId;
+
+        // QR button
+        var qrBtn = document.getElementById('heroQrBtn');
+        if (qrBtn) {
+            qrBtn.addEventListener('click', function() {
+                var modal = document.getElementById('qrModal');
+                modal.style.display = 'flex';
+                window._qrProfileUrl = profileUrl;
+                window._qrWalletAddr = null;
+                // Check chain wallet
+                var tk = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                if (tk) {
+                    fetch('/api/wallet/chain/status', { headers: { 'Authorization': 'Bearer ' + tk } })
+                        .then(function(r) { return r.json(); })
+                        .then(function(d) { if (d.success && d.data.linked) window._qrWalletAddr = d.data.chain_address; })
+                        .catch(function() {});
+                }
+                generateQR('profile');
+            });
+        }
+
+        // Referral button
+        var refBtn = document.getElementById('heroRefBtn');
+        if (refBtn) {
+            refBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(referralUrl).then(function() {
+                    refBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                    setTimeout(function() { refBtn.innerHTML = '<i class="fas fa-user-plus"></i> Referir'; }, 2000);
+                }).catch(function() {
+                    prompt('Copia este link:', referralUrl);
+                });
+            });
+        }
+
+        // Share button
+        var shareBtn = document.getElementById('heroShareBtn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', function() {
+                if (navigator.share) {
+                    navigator.share({ title: 'Mi perfil en La Tanda', url: profileUrl }).catch(function() {});
+                } else {
+                    navigator.clipboard.writeText(profileUrl).then(function() {
+                        shareBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                        setTimeout(function() { shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> Compartir'; }, 2000);
+                    }).catch(function() {
+                        prompt('Comparte este link:', profileUrl);
+                    });
+                }
+            });
+        }
     }
 
     async loadActivities() {
@@ -403,7 +578,36 @@ class ProfileManager {
         const total = this.achievements.length;
         const percent = total > 0 ? Math.round((unlocked / total) * 100) : 0;
 
-        let html = '<div class="achievements-progress" style="margin-bottom: 24px; padding: 16px; background: var(--ds-cyan-muted, rgba(0,255,255,0.1)); border-radius: 12px; border: 1px solid rgba(0,255,255,0.2);">' +
+        // Mining tier header (loaded async, inserted at top)
+        var tierPlaceholder = '<div id="achievementsTierCard"></div>';
+
+        (async function() {
+            var tk = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            if (!tk) return;
+            try {
+                var r = await fetch('/api/mining/status', { headers: { 'Authorization': 'Bearer ' + tk } }).then(function(r) { return r.json(); });
+                if (!r.success || !r.data) return;
+                var m = r.data;
+                var tierColors = { bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700', platinum: '#E5E4E2', diamond: '#B9F2FF' };
+                var tierNames = { bronze: 'Bronce', silver: 'Plata', gold: 'Oro', platinum: 'Platino', diamond: 'Diamante' };
+                var tier = m.current_tier || 'bronze';
+                var pts = m.achievement_points || 0;
+                var nextT = { bronze: 50, silver: 150, gold: 300, platinum: 500, diamond: null };
+                var nextPts = nextT[tier]; var pct = nextPts ? Math.min(100, Math.round((pts / nextPts) * 100)) : 100;
+                var el = document.getElementById('achievementsTierCard');
+                if (el) el.innerHTML = '<div style="margin-bottom:16px;padding:16px;background:rgba(0,0,0,0.3);border:1px solid ' + (tierColors[tier] || '#CD7F32') + '44;border-radius:12px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                    '<span style="font-weight:600;">⛏️ Mining Tier</span>' +
+                    '<span style="color:' + (tierColors[tier]) + ';font-weight:700;font-size:1.1rem;text-transform:capitalize;">' + (tierNames[tier] || tier) + '</span></div>' +
+                    '<div style="height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-bottom:6px;">' +
+                    '<div style="height:100%;width:' + pct + '%;background:' + (tierColors[tier]) + ';border-radius:4px;"></div></div>' +
+                    '<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-secondary,#8896a8);">' +
+                    '<span>' + pts + ' achievement pts</span>' +
+                    '<span>' + (nextPts ? (nextPts - pts) + ' pts para ' + (tierNames[{ bronze:'silver',silver:'gold',gold:'platinum',platinum:'diamond' }[tier]] || 'max') : 'Tier maximo') + '</span></div></div>';
+            } catch(e) {}
+        })();
+
+        let html = tierPlaceholder + '<div class="achievements-progress" style="margin-bottom: 24px; padding: 16px; background: var(--ds-cyan-muted, rgba(0,255,255,0.1)); border-radius: 12px; border: 1px solid rgba(0,255,255,0.2);">' +
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
             '<span style="font-weight: 600; color: var(--text-primary);">Progreso Total</span>' +
             '<span style="color: var(--tanda-cyan); font-weight: bold;">' + unlocked + '/' + total + ' (' + percent + '%)</span></div>' +
@@ -767,9 +971,49 @@ function logout() {
     }
 }
 
+// === QR Generation (global for modal) ===
+var _qrInstance = null;
+window.generateQR = function(type) {
+    var canvas = document.getElementById('qrCanvas');
+    var label = document.getElementById('qrLabel');
+    var tabProfile = document.getElementById('qrTabProfile');
+    var tabWallet = document.getElementById('qrTabWallet');
+    if (!canvas) return;
+
+    canvas.innerHTML = '';
+    if (_qrInstance) { _qrInstance.clear(); _qrInstance = null; }
+
+    var url = '';
+    if (type === 'wallet' && window._qrWalletAddr) {
+        url = window._qrWalletAddr;
+        if (label) label.textContent = url;
+        if (tabProfile) tabProfile.style.background = 'rgba(0,0,0,0.3)';
+        if (tabWallet) tabWallet.style.background = 'rgba(0,255,255,0.15)';
+    } else {
+        url = window._qrProfileUrl || 'https://latanda.online';
+        if (label) label.textContent = url;
+        if (tabProfile) tabProfile.style.background = 'rgba(0,255,255,0.15)';
+        if (tabWallet) tabWallet.style.background = 'rgba(0,0,0,0.3)';
+    }
+
+    if (typeof QRCode !== 'undefined') {
+        _qrInstance = new QRCode(canvas, {
+            text: url,
+            width: 200,
+            height: 200,
+            colorDark: '#0f172a',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } else {
+        canvas.innerHTML = '<div style="padding:20px;color:#f87171;">QR library not loaded</div>';
+    }
+};
+
 // === Init ===
 let profileManager;
-document.addEventListener('DOMContentLoaded', () => {
+function _initProfile() {
+    if (profileManager) return;
     profileManager = new ProfileManager();
 
     var params = new URLSearchParams(window.location.search);
@@ -788,4 +1032,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (profileManager) profileManager.currentTab = tab;
     }
-});
+}
+
+// Init: run when DOM is ready (handles both cases — script at bottom or deferred)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initProfile);
+} else {
+    _initProfile();
+}

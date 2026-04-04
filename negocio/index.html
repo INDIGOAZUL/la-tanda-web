@@ -269,16 +269,34 @@
         }
 
                 /* Carousel */
-        .ns-carousel { position: relative; overflow: hidden; border-radius: 16px 16px 0 0; }
-        .ns-carousel-track { display: flex; transition: transform 0.3s ease; }
-        .ns-carousel-slide { min-width: 100%; }
-        .ns-carousel-slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-        .ns-carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,0.5); color: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; z-index: 2; opacity: 0; transition: opacity 0.2s; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        /* 3D Perspective Carousel */
+        .ns-carousel {
+            position: relative; overflow: hidden; border-radius: 16px 16px 0 0;
+            background: rgba(0,0,0,0.2); perspective: 1200px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .ns-carousel::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+        .ns-carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform-style: preserve-3d; }
+        .ns-carousel-slide { min-width: 100%; transform-style: preserve-3d; backface-visibility: hidden; }
+        .ns-carousel-slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; transition: filter 0.5s ease; }
+        .ns-carousel:hover .ns-carousel-slide img { filter: brightness(1.05); }
+        .ns-carousel-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(15,23,42,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 14px; z-index: 3; opacity: 0;
+            transition: all 0.3s ease;
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
         .ns-carousel:hover .ns-carousel-btn { opacity: 1; }
-        .ns-carousel-prev { left: 8px; }
-        .ns-carousel-next { right: 8px; }
-        .ns-carousel-counter { position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 8px; background: rgba(0,0,0,0.5); color: rgba(255,255,255,0.8); font-size: 12px; z-index: 2; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-        @media (max-width: 480px) { .ns-carousel-btn { opacity: 0.7; width: 30px; height: 30px; } }
+        .ns-carousel-btn:hover { background: rgba(139,92,246,0.4); border-color: rgba(139,92,246,0.5); box-shadow: 0 0 20px rgba(139,92,246,0.3); transform: translateY(-50%) scale(1.1); }
+        .ns-carousel-prev { left: 10px; }
+        .ns-carousel-next { right: 10px; }
+        .ns-carousel-counter { position: absolute; top: 12px; right: 12px; padding: 4px 12px; border-radius: 10px; background: rgba(15,23,42,0.6); color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 600; z-index: 3; border: 1px solid rgba(255,255,255,0.08); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+        .ns-carousel::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,0.15) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.15) 100%); }
+        @media (max-width: 480px) { .ns-carousel-btn { width: 34px; height: 34px; opacity: 0.7; } .ns-carousel-slide img { aspect-ratio: 4/3; } }
 
                 /* Listing Card (full-width item) */
         .ns-listing-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; margin-bottom: 16px; position: relative; }
@@ -624,6 +642,14 @@
 
             // Build slide labels based on CV presence
 
+            // Currency formatter
+            function fmtPrice(amount, currency) {
+                var a = parseFloat(amount || 0);
+                var fmt = a % 1 === 0 ? a.toLocaleString('es-HN', {maximumFractionDigits:0}) : a.toLocaleString('es-HN', {minimumFractionDigits:2});
+                if (currency === 'LTD') return fmt + ' LTD';
+                if (currency === 'USD') return '$ ' + fmt;
+                return 'L. ' + fmt;
+            }
             var createdDate = new Date(p.created_at);
             var portfolioUrl = "https://latanda.online/tienda/" + encodeURIComponent(u.handle);
             var html = '';
@@ -715,7 +741,7 @@
                 services.forEach(function(s) {
                     var sImgRaw = (s.images || []).map(function(i) { return typeof i === 'string' ? i : (i.url || ''); }).filter(function(u) { return u && (u.startsWith('/') || u.startsWith('http')); });
                     var sImg = sImgRaw.length > 0 ? sImgRaw[0] : '';
-                    var sPrice = s.price_type === 'fixed' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') : (s.price_type === 'hourly' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') + '/hr' : 'Consultar');
+                    var sPrice = s.price_type === 'fixed' ? fmtPrice(s.price, s.currency || 'HNL') : (s.price_type === 'hourly' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') + '/hr' : 'Consultar');
                     html += '<div class="ns-todos-item" data-action="view-item" data-id="' + (s.id || s.service_id) + '" data-type="service">';
                     html += '<div class="ns-todos-img">' + (sImg ? '<img src="' + esc(sImg) + '?v=' + Date.now() + '" alt="">' : '<i class="fas fa-wrench"></i>') + '</div>';
                     html += '<div class="ns-todos-body"><div class="ns-todos-title">' + esc(s.title) + '</div><div class="ns-todos-price" style="color:#10B981;">' + sPrice + '</div></div>';
@@ -727,7 +753,7 @@
                 products.forEach(function(pr) {
                     var pImgRaw = pr.images && pr.images[0] ? (typeof pr.images[0] === 'string' ? pr.images[0] : (pr.images[0].url || '')) : '';
                     var pImg = pImgRaw && (pImgRaw.startsWith('/') || pImgRaw.startsWith('http')) ? pImgRaw : '';
-                    var curr = pr.currency === 'LTD' ? 'LTD' : 'L.';
+                    // Currency handled by fmtPrice
                     html += '<div class="ns-todos-item" data-action="view-item" data-id="' + pr.id + '" data-type="product">';
                     html += '<div class="ns-todos-img">' + (pImg ? '<img src="' + esc(pImg) + '?v=' + Date.now() + '" alt="">' : '<i class="fas fa-box"></i>') + '</div>';
                     html += '<div class="ns-todos-body"><div class="ns-todos-title">' + esc(pr.title) + '</div><div class="ns-todos-price">' + curr + ' ' + parseFloat(pr.price || 0).toLocaleString('es-HN') + '</div></div>';
@@ -748,7 +774,7 @@
                     products.forEach(function(pr) {
                         var imgRaw = pr.images && pr.images[0] ? (typeof pr.images[0] === 'string' ? pr.images[0] : (pr.images[0].url || '')) : '';
                         var imgSrc = imgRaw && (imgRaw.startsWith('/') || imgRaw.startsWith('http')) ? imgRaw : '';
-                        var curr = pr.currency === 'LTD' ? 'LTD' : 'L.';
+                        // Currency handled by fmtPrice
                         html += '<div class="ns-hcard" data-action="view-item" data-id="' + pr.id + '" data-type="product">';
                         html += '<div class="ns-hcard-img">' + (imgSrc ? '<img src="' + esc(imgSrc) + '?v=' + Date.now() + '" alt="" loading="lazy">' : '<div class="ns-hcard-placeholder"><i class="fas fa-box"></i></div>') + '</div>';
                         html += '<div class="ns-hcard-price">' + curr + ' ' + parseFloat(pr.price || 0).toLocaleString('es-HN') + '</div>';
@@ -769,7 +795,7 @@
                     // Featured/first service gets full listing card
                     var firstSvc = services[0];
                     var validImgs = (firstSvc.images || []).map(function(i) { return typeof i === 'string' ? i : (i.url || ''); }).filter(function(u) { return u && (u.startsWith('/') || u.startsWith('http')); });
-                    var priceText = firstSvc.price_type === 'fixed' ? 'L. ' + parseFloat(firstSvc.price || 0).toLocaleString('es-HN') : (firstSvc.price_type === 'hourly' ? 'L. ' + parseFloat(firstSvc.price || 0).toLocaleString('es-HN') + '/hora' : 'Consultar');
+                    var priceText = firstSvc.price_type === 'fixed' ? fmtPrice(firstSvc.price, firstSvc.currency || 'HNL') : (firstSvc.price_type === 'hourly' ? fmtPrice(firstSvc.price, firstSvc.currency || 'HNL') + '/hora' : 'Consultar');
                     var priceTag = firstSvc.price_type === 'hourly' ? 'por hora' : (firstSvc.price_type === 'fixed' ? 'precio fijo' : '');
 
                     html += '<div class="ns-listing-card" data-id="' + (firstSvc.id || firstSvc.service_id) + '" data-type="service">';
@@ -816,7 +842,7 @@
                         services.slice(1).forEach(function(s) {
                             var sImgRaw = (s.images || []).map(function(i) { return typeof i === 'string' ? i : (i.url || ''); }).filter(function(u) { return u && (u.startsWith('/') || u.startsWith('http')); });
                             var sImg = sImgRaw.length > 0 ? sImgRaw[0] : '';
-                            var sPrice = s.price_type === 'fixed' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') : (s.price_type === 'hourly' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') + '/hr' : '');
+                            var sPrice = s.price_type === 'fixed' ? fmtPrice(s.price, s.currency || 'HNL') : (s.price_type === 'hourly' ? 'L. ' + parseFloat(s.price || 0).toLocaleString('es-HN') + '/hr' : '');
                             html += '<div class="ns-hcard" data-action="view-item" data-id="' + (s.id || s.service_id) + '" data-type="service">';
                             html += '<div class="ns-hcard-img">' + (sImg ? '<img src="' + esc(sImg) + '?v=' + Date.now() + '" alt="" loading="lazy">' : '<div class="ns-hcard-placeholder"><i class="fas fa-wrench"></i></div>') + '</div>';
                             if (sPrice) html += '<div class="ns-hcard-price">' + sPrice + '</div>';
@@ -1414,8 +1440,8 @@
                     imgUrl = typeof d.images[0] === 'string' ? d.images[0] : (d.images[0].url || d.images[0].thumbnail || '');
                 }
                 var priceText = type === 'service'
-                    ? (d.price_type === 'fixed' ? 'L. ' + d.price : d.price_type === 'hourly' ? 'L. ' + d.price + '/hora' : d.price_type === 'negotiable' ? 'Negociable' : 'L. ' + d.price)
-                    : 'L. ' + parseFloat(d.price || 0).toLocaleString('es-HN', {minimumFractionDigits:2});
+                    ? (d.price_type === 'fixed' ? fmtPrice(d.price, d.currency || 'HNL') : d.price_type === 'hourly' ? fmtPrice(d.price, d.currency || 'HNL') + '/hora' : d.price_type === 'negotiable' ? 'Negociable' : 'L. ' + d.price)
+                    : fmtPrice(d.price, d.currency || 'HNL');
 
                 var stockInfo = type === 'product' ? '<div class="negocio-modal-tag">Stock: ' + (d.quantity || 0) + '</div>' : '';
                 if (type === 'service' && d.duration_minutes) stockInfo = '<div class="negocio-modal-tag">' + d.duration_minutes + ' min</div>';

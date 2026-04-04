@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7803.0">
-    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1770560001">
+    <link rel="stylesheet" href="css/hub/contextual-widgets.css?v=1775200000">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1.6">
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/header.css?v=26.0">
@@ -88,6 +88,22 @@
         .tier-icon.gold {
             background: linear-gradient(135deg, var(--accent-gold), #b8860b);
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+        
+        .tier-icon.platinum {
+            background: linear-gradient(135deg, #E5E4E2, #B0B0B0);
+            box-shadow: 0 0 30px rgba(229, 228, 226, 0.5);
+        }
+        
+        .tier-icon.diamond {
+            background: linear-gradient(135deg, #B9F2FF, #4DD0E1);
+            box-shadow: 0 0 40px rgba(185, 242, 255, 0.6);
+            animation: diamond-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes diamond-glow {
+            from { box-shadow: 0 0 30px rgba(185, 242, 255, 0.4); }
+            to { box-shadow: 0 0 50px rgba(185, 242, 255, 0.7); }
         }
         
         .tier-name {
@@ -374,6 +390,14 @@
                         <span><i class="fas fa-medal" style="color: #ffd700"></i> Oro</span>
                         <span>5.0 LTD/día + hasta 7.0 bonus racha</span>
                     </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-gem" style="color: #E5E4E2"></i> Platino</span>
+                        <span>8.0 LTD/día + hasta 10.0 bonus racha</span>
+                    </div>
+                    <div class="reward-item">
+                        <span><i class="fas fa-gem" style="color: #B9F2FF"></i> Diamante</span>
+                        <span>12.0 LTD/día + hasta 15.0 bonus racha</span>
+                    </div>
                 </div>
             </div>
         </main>
@@ -408,7 +432,7 @@
     <div id="latanda-footer" class="auto-footer"></div>
     
     <script src="shared-components.js?v=7.20"></script>
-    <script src="js/components-loader.js?v=32.6"></script>
+    <script src="js/components-loader.js?v=32.7"></script>
     <script src="js/edge-swipe.js?v=1.5"></script>
     <script>
                 async function loadMiningData() {
@@ -450,7 +474,9 @@
                         const descriptions = {
                             bronze: "Nivel inicial de minero",
                             silver: "Minero experimentado",
-                            gold: "Minero experto"
+                            gold: "Minero experto",
+                            platinum: "Minero elite",
+                            diamond: "Leyenda de la mina"
                         };
                         tierDesc.textContent = descriptions[tierName] || "Nivel de minero";
                     }
@@ -463,8 +489,7 @@
                     // Update tier icon color
                     if (tierIcon) {
                         tierIcon.className = "tier-icon";
-                        if (tierName === "silver") tierIcon.classList.add("silver");
-                        if (tierName === "gold") tierIcon.classList.add("gold");
+                        if (["silver","gold","platinum","diamond"].includes(tierName)) tierIcon.classList.add(tierName);
                     }
                     
                     // Update progress bar

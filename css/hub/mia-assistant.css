@@ -1,7 +1,6 @@
 /**
  * LA TANDA - MIA Assistant CSS
- * Estilos para el widget flotante de MIA
- * Version: 1.0.0
+ * Version: 2.0.0 — Phase 1 upgrade
  */
 
 /* ================================
@@ -22,7 +21,7 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+    background: linear-gradient(135deg, var(--tanda-cyan, #00ffff), var(--tanda-cyan-light, #7fffd4));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -61,8 +60,8 @@
 .mia-avatar-fallback {
     width: 100%;
     height: 100%;
-    background: var(--tanda-black);
-    color: var(--tanda-cyan);
+    background: #0a0a0f;
+    color: #00ffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -76,7 +75,7 @@
     width: 16px;
     height: 16px;
     background: #22d55e;
-    border: 3px solid var(--bg-primary);
+    border: 3px solid #0a0a0f;
     border-radius: 50%;
     opacity: 0;
     transform: scale(0);
@@ -86,7 +85,7 @@
 .mia-indicator.active {
     opacity: 1;
     transform: scale(1);
-    animation: bounce 1s infinite;
+    animation: mia-bounce 1s infinite;
 }
 
 /* ================================
@@ -96,11 +95,12 @@
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 360px;
+    width: 380px;
     max-width: calc(100vw - 48px);
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(20px);
-    border: 1px solid var(--border-accent);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 255, 255, 0.15);
     border-radius: 20px;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
     opacity: 0;
@@ -109,6 +109,8 @@
     pointer-events: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .mia-widget.expanded .mia-widget-expanded {
@@ -124,189 +126,285 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(127, 255, 216, 0.05));
-    border-bottom: 1px solid var(--border-card);
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(127, 255, 216, 0.03));
+    border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+    flex-shrink: 0;
 }
 
 .mia-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .mia-avatar-small {
-    width: 36px;
-    height: 36px;
-    background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #00ffff, #7fffd4);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--tanda-black);
-    font-size: 16px;
-}
-
-.mia-header-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.mia-name {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-    color: var(--tanda-cyan);
+    color: #0a0a0f;
     font-size: 14px;
 }
 
-.mia-status {
-    font-size: 11px;
-    color: var(--text-secondary);
-}
+.mia-header-info { display: flex; flex-direction: column; }
+.mia-name { font-family: 'Orbitron', monospace; font-weight: 700; color: #00ffff; font-size: 13px; }
+.mia-header .mia-status { font-size: 10px; color: rgba(255,255,255,0.5); }
 
-.mia-header-actions {
-    display: flex;
-    gap: 8px;
-}
+.mia-header-actions { display: flex; gap: 6px; }
 
 .mia-btn-minimize,
-.mia-btn-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    border: 1px solid var(--border-card);
+.mia-btn-close,
+.mia-btn-clear {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,255,255,0.1);
     background: transparent;
-    color: var(--text-secondary);
+    color: rgba(255,255,255,0.5);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .mia-btn-minimize:hover,
-.mia-btn-close:hover {
+.mia-btn-close:hover,
+.mia-btn-clear:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
+    color: #fff;
 }
+
+.mia-btn-clear:hover { color: #ef4444; border-color: rgba(239,68,68,0.3); }
 
 /* ================================
    BODY
    ================================ */
 .mia-body {
-    padding: 20px;
-    max-height: 400px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    max-height: 450px;
 }
+
+/* ================================
+   CHAT MESSAGES
+   ================================ */
+#miaChatMessages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    min-height: 150px;
+    max-height: 300px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+#miaChatMessages::-webkit-scrollbar { width: 4px; }
+#miaChatMessages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 
 .mia-greeting {
     text-align: center;
-    margin-bottom: 20px;
+    padding: 20px 0;
 }
 
 .mia-greeting p {
-    color: var(--text-primary);
-    font-size: 15px;
+    color: #fff;
+    font-size: 14px;
     margin-bottom: 4px;
 }
+
+/* Messages */
+.mia-msg {
+    margin-bottom: 10px;
+    animation: mia-fadeIn 0.2s ease;
+}
+
+.mia-msg-user {
+    text-align: right;
+}
+
+.mia-msg-user .mia-msg-content {
+    display: inline-block;
+    background: rgba(0, 200, 200, 0.15);
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    border-radius: 14px 14px 4px 14px;
+    padding: 8px 14px;
+    max-width: 85%;
+    text-align: left;
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mia-msg-assistant .mia-msg-content {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px 14px 14px 4px;
+    padding: 8px 14px;
+    max-width: 85%;
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mia-msg-content p { margin: 0 0 6px; }
+.mia-msg-content p:last-child { margin-bottom: 0; }
+.mia-msg-content strong { color: #00ffff; }
+.mia-msg-content ul { margin: 4px 0; padding-left: 18px; }
+.mia-msg-content li { margin-bottom: 2px; }
+
+/* Action buttons in responses */
+.mia-msg-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.mia-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #00ffff;
+    font-size: 11px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.mia-action-link:hover {
+    background: rgba(0, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Timestamps */
+.mia-msg-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 3px;
+    padding: 0 4px;
+}
+
+.mia-msg-user .mia-msg-time { text-align: right; }
+
+/* Typing indicator */
+.mia-typing {
+    display: flex;
+    gap: 4px;
+    padding: 10px 16px;
+    align-items: center;
+}
+
+.mia-typing span {
+    width: 8px;
+    height: 8px;
+    background: rgba(0, 255, 255, 0.4);
+    border-radius: 50%;
+    animation: mia-typingDot 1.4s infinite;
+}
+
+.mia-typing span:nth-child(2) { animation-delay: 0.2s; }
+.mia-typing span:nth-child(3) { animation-delay: 0.4s; }
 
 /* ================================
    QUICK ACTIONS
    ================================ */
-.mia-quick-actions h4 {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    font-weight: 500;
+.mia-quick-actions {
+    padding: 0 16px 8px;
+    flex-shrink: 0;
 }
 
 .mia-actions-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
 }
 
 .mia-action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 14px 10px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-card);
-    border-radius: 12px;
-    color: var(--text-secondary);
+    gap: 4px;
+    padding: 10px 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0,255,255,0.08);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.6);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
+    font-size: 0;
 }
 
 .mia-action-btn:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: var(--border-accent);
-    color: var(--tanda-cyan);
-    transform: translateY(-2px);
+    background: rgba(0, 255, 255, 0.08);
+    border-color: rgba(0,255,255,0.2);
+    color: #00ffff;
+    transform: translateY(-1px);
 }
 
-.mia-action-btn i {
-    font-size: 20px;
-}
-
-.mia-action-btn span {
-    font-size: 12px;
-    font-weight: 500;
-}
+.mia-action-btn i { font-size: 16px; }
+.mia-action-btn span { font-size: 10px; font-weight: 500; font-family: 'Rajdhani', sans-serif; }
 
 /* ================================
    INPUT AREA
    ================================ */
 .mia-input-area {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    padding: 10px 16px 14px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
 }
 
 .mia-input {
     flex: 1;
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-card);
+    border: 1px solid rgba(0,255,255,0.1);
     border-radius: 12px;
-    color: var(--text-primary);
-    font-size: 14px;
+    color: #fff;
+    font-size: 13px;
     font-family: inherit;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s;
 }
 
 .mia-input:focus {
     outline: none;
-    border-color: var(--tanda-cyan);
-    box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.1);
+    border-color: #00ffff;
+    box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.1);
 }
 
-.mia-input::placeholder {
-    color: var(--text-secondary);
-}
+.mia-input::placeholder { color: rgba(255,255,255,0.3); }
 
 .mia-send-btn {
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, var(--tanda-cyan), var(--tanda-cyan-light));
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #00ffff, #0ea5e9);
     border: none;
-    border-radius: 12px;
-    color: var(--tanda-black);
+    border-radius: 10px;
+    color: #0a0a0f;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
-.mia-send-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
-}
+.mia-send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,255,255,0.3); }
+.mia-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 /* ================================
    MINIMIZED BAR STATE
@@ -315,108 +413,66 @@
     opacity: 1;
     transform: scale(1) translateY(0);
     pointer-events: all;
-    height: 60px;
+    height: 54px;
     overflow: hidden;
 }
 
-.mia-widget.minimized .mia-body {
-    display: none;
-}
+.mia-widget.minimized .mia-body { display: none; }
 
 /* ================================
    ANIMATIONS
    ================================ */
-@keyframes bounce {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2);
-    }
+@keyframes mia-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+@keyframes mia-fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mia-typingDot {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
 }
 
 /* ================================
    RESPONSIVE
    ================================ */
 @media (max-width: 480px) {
-    .mia-widget {
-        bottom: 16px;
-        right: 16px;
-    }
-
-    .mia-widget-minimized {
-        width: 50px;
-        height: 50px;
-    }
-
-    .mia-avatar {
-        width: 40px;
-        height: 40px;
-    }
-
-    .mia-widget-expanded {
-        width: calc(100vw - 32px);
-        bottom: 70px;
-        right: -8px;
-    }
-
-    .mia-body {
-        padding: 16px;
-        max-height: 350px;
-    }
-
-    .mia-actions-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .mia-action-btn {
-        padding: 12px 8px;
-    }
-
-    .mia-action-btn i {
-        font-size: 18px;
-    }
-
-    .mia-action-btn span {
-        font-size: 11px;
-    }
+    .mia-widget { bottom: 70px; right: 12px; }
+    .mia-widget-minimized { width: 50px; height: 50px; }
+    .mia-avatar { width: 40px; height: 40px; }
+    .mia-widget-expanded { width: calc(100vw - 24px); bottom: 60px; right: -4px; }
+    .mia-body { max-height: 350px; }
+    .mia-actions-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* MIA Chat Messages */
-.mia-user-msg {
-    background: rgba(0, 200, 200, 0.2);
-    border-radius: 12px 12px 4px 12px;
-    padding: 10px 14px;
-    margin: 8px 0;
-    margin-left: 20%;
-    text-align: right;
-}
-
-.mia-assistant-msg {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px 12px 12px 4px;
-    padding: 10px 14px;
-    margin: 8px 0;
-    margin-right: 20%;
-}
-
-.mia-user-msg p, .mia-assistant-msg p {
-    margin: 0;
+/* Voice input button */
+.mia-mic-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid rgba(0,255,255,0.15);
+    border-radius: 10px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
-    line-height: 1.4;
+    flex-shrink: 0;
 }
-
-.mia-greeting {
-    max-height: 300px;
-    overflow-y: auto;
-    padding-right: 5px;
+.mia-mic-btn:hover { border-color: #00ffff; color: #00ffff; }
+.mia-mic-btn.recording {
+    background: rgba(239,68,68,0.2);
+    border-color: #ef4444;
+    color: #ef4444;
+    animation: mia-pulse 1s infinite;
 }
-
-.mia-greeting::-webkit-scrollbar {
-    width: 4px;
-}
-
-.mia-greeting::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
+@keyframes mia-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
 }

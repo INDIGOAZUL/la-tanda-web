@@ -218,7 +218,7 @@
                             document.getElementById('grRecCard').style.display = 'none';
                         }
                     }, 400);
-                });
+                }).catch(function() {});
             }
             return;
         }
@@ -522,12 +522,11 @@
             var now = new Date();
             var entries = [];
             allGroups.forEach(function(g) {
-                if (g.status !== 'active') return;
-                if (!g.my_next_payment_due) return;
-                // v4.25.4: Skip groups where user already paid current cycle
-                if (g.my_payment_status === 'paid' || g.my_payment_status === 'up_to_date') return;
-                var d = new Date(g.my_next_payment_due.split('T')[0] + 'T12:00:00');
-                entries.push({ group: g, date: d });
+                // v4.25.12: Use payment_window from API
+                var pw = g.payment_window;
+                if (pw && pw.isActive && pw.dueDate) {
+                    entries.push({ group: g, date: new Date(pw.dueDate + 'T12:00:00'), pw: pw });
+                }
             });
 
             // Sort by date ascending (most urgent first), cap at 5
@@ -548,22 +547,27 @@
                 var amtStr = (window.ltFormatCurrency ? ltFormatCurrency(amt) : 'L. ' + amt.toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2}));
                 var dateStr = d.toLocaleDateString('es-HN', { day: '2-digit', month: 'short' });
 
-                var diffMs = d - now;
-                var diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                // v4.25.12: Use payment_window for countdown
+                var epw = entry.pw || {};
                 var countdownText = '';
                 var countdownClass = 'gs-next-countdown gs-countdown-ok';
-                if (diffDays < 0) {
-                    var absDays = Math.abs(diffDays);
-                    countdownText = 'Vencido ' + absDays + 'd';
+                if (epw.status === 'overdue') {
+                    countdownText = 'Vencido ' + epw.daysOverdue + 'd';
                     countdownClass = 'gs-next-countdown gs-countdown-late';
-                } else if (diffDays === 0) {
+                } else if (epw.status === 'grace') {
+                    countdownText = epw.daysUntilGrace + 'd gracia';
+                    countdownClass = 'gs-next-countdown gs-countdown-soon';
+                } else if (epw.daysUntilDue !== null && epw.daysUntilDue === 0) {
                     countdownText = 'Hoy';
                     countdownClass = 'gs-next-countdown gs-countdown-soon';
-                } else if (diffDays <= 3) {
-                    countdownText = diffDays + 'd';
+                } else if (epw.daysUntilDue !== null && epw.daysUntilDue <= 3 && epw.daysUntilDue > 0) {
+                    countdownText = epw.daysUntilDue + 'd';
                     countdownClass = 'gs-next-countdown gs-countdown-soon';
+                } else if (epw.daysUntilDue !== null && epw.daysUntilDue > 0) {
+                    countdownText = epw.daysUntilDue + 'd';
+                    countdownClass = 'gs-next-countdown gs-countdown-ok';
                 } else {
-                    countdownText = diffDays + 'd';
+                    countdownText = epw.label || '?';
                     countdownClass = 'gs-next-countdown gs-countdown-ok';
                 }
 
@@ -797,6 +801,29 @@
             const roleLabels = GC_ROLE_LABELS;
             const alertIcons = GC_ALERT_ICONS;
 
+            // v4.25.12: Pending membership — simplified card with cancel button
+            if (group.my_membership_status === 'pending') {
+                var pendName = escapeHtml(group.name || 'Grupo');
+                var pendLetter = (group.name || '?').charAt(0).toUpperCase();
+                var pendFreq = frequencyLabels[group.frequency] || group.frequency || '--';
+                var pendAmt = (window.ltFormatCurrency ? ltFormatCurrency(parseFloat(group.contribution_amount) || 0) : 'L. ' + (parseFloat(group.contribution_amount) || 0).toLocaleString('es-HN', {minimumFractionDigits:2}));
+                var pendMembers = (group.member_count || 0) + '/' + (group.max_members || '?');
+                return '<div class="gc-card" style="border-left:3px solid var(--ds-amber);opacity:0.85;" data-group-id="' + escapeHtml(group.id || group.group_id || '') + '">' +
+                    '<div class="gc-header">' +
+                        '<div class="gc-avatar" style="background:var(--ds-amber);color:#000;">' + pendLetter + '</div>' +
+                        '<div class="gc-header-info">' +
+                            '<div class="gc-title">' + pendName + '</div>' +
+                            '<div class="gc-subtitle" style="font-size:0.72rem;color:var(--ds-text-faint);">' + pendFreq + ' &middot; ' + pendAmt + ' &middot; ' + pendMembers + ' miembros</div>' +
+                        '</div>' +
+                        '<span class="gc-role ds-badge-amber" style="font-size:0.65rem;">Solicitud Pendiente</span>' +
+                    '</div>' +
+                    '<div style="padding:8px 12px 12px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.04);">' +
+                        '<span style="font-size:0.75rem;color:var(--ds-amber);"><i class="fas fa-clock" style="margin-right:4px;"></i>Esperando aprobacion del coordinador</span>' +
+                        '<button data-action="grp-cancel-join" data-group-id="' + escapeHtml(group.id || group.group_id || '') + '" style="background:transparent;border:1px solid var(--ds-red);color:var(--ds-red);padding:4px 12px;border-radius:8px;font-size:0.72rem;cursor:pointer;">Cancelar</button>' +
+                    '</div>' +
+                '</div>';
+            }
+
             // Status color mapping
             var st = group.status || 'active';
             var statusColor = ({ active: '#00FFFF', completed: '#22c55e', pending: '#f59e0b', paused: '#f59e0b', suspended: '#ef4444', cancelled: '#64748b' })[st] || '#00FFFF';
@@ -832,6 +859,14 @@
             // Role pill colors
             var roleClass = group.my_role === 'creator' ? 'gc-role-creator ds-badge-purple' : group.my_role === 'coordinator' ? 'gc-role-coord ds-badge-green' : 'gc-role-member ds-badge-blue';
 
+            // v4.25.12: Distribution mode label
+            var modeLabel = '';
+            var dm = group.distribution_mode || 'rotation';
+            if (dm === 'lottery') modeLabel = '<span class="gc-role ds-badge-purple" style="font-size:0.6rem;">Loteria</span>';
+            else if (dm === 'accumulate') modeLabel = '<span class="gc-role ds-badge-green" style="font-size:0.6rem;">Ahorro</span>';
+            else if (dm === 'shares') modeLabel = '<span class="gc-role ds-badge-green" style="font-size:0.6rem;">Inversion</span>';
+            else if (dm === 'request') modeLabel = '<span class="gc-role" style="font-size:0.6rem;background:var(--ds-amber);color:#000;">Fondo</span>';
+
             // Category + location subtitle
             var subParts = [];
             if (group.category) subParts.push(escapeHtml(group.category));
@@ -853,10 +888,10 @@
             // v4.25.4: Payment status info bar (visible to ALL roles)
             var statusInfoHtml = '';
             if (!group.is_public) {
-                var psLabels = { 'paid': 'Al dia', 'up_to_date': 'Al dia', 'pending': 'Pendiente', 'late': 'Atrasado', 'mora': 'En Mora', 'suspension_recommended': 'Suspension pendiente', 'suspended': 'Suspendido' };
-                var psColors = { 'paid': 'var(--ds-green)', 'up_to_date': 'var(--ds-green)', 'pending': 'var(--ds-amber)', 'late': 'var(--ds-red)', 'mora': 'var(--ds-red)', 'suspension_recommended': 'var(--ds-red)', 'suspended': '#94a3b8' };
-                var psIcons = { 'paid': 'fa-check-circle', 'up_to_date': 'fa-check-circle', 'pending': 'fa-clock', 'late': 'fa-exclamation-triangle', 'mora': 'fa-exclamation-circle', 'suspension_recommended': 'fa-ban', 'suspended': 'fa-ban' };
-                var psLabel = psLabels[effectivePaymentStatus] || 'Pendiente';
+                var psLabels = { 'paid': 'Al dia', 'up_to_date': 'Al dia', 'pending': 'Pendiente', 'late': 'Atrasado', 'mora': 'En Mora', 'suspension_recommended': 'Suspension pendiente', 'suspended': 'Suspendido', 'not_started': 'Sin iniciar' };
+                var psColors = { 'paid': 'var(--ds-green)', 'up_to_date': 'var(--ds-green)', 'pending': 'var(--ds-amber)', 'late': 'var(--ds-red)', 'mora': 'var(--ds-red)', 'suspension_recommended': 'var(--ds-red)', 'suspended': '#94a3b8', 'not_started': '#64748b' };
+                var psIcons = { 'paid': 'fa-check-circle', 'up_to_date': 'fa-check-circle', 'pending': 'fa-clock', 'late': 'fa-exclamation-triangle', 'mora': 'fa-exclamation-circle', 'suspension_recommended': 'fa-ban', 'suspended': 'fa-ban', 'not_started': 'fa-hourglass-start' };
+                var psLabel = psLabels[effectivePaymentStatus] || (effectivePaymentStatus === 'not_started' ? 'Sin iniciar' : 'Pendiente');
                 var psColor = psColors[effectivePaymentStatus] || 'var(--ds-amber)';
                 var psIcon = psIcons[effectivePaymentStatus] || 'fa-clock';
 
@@ -878,39 +913,31 @@
                 }
                 // Positions
                 if (group.my_num_positions > 1) statusInfoHtml += '<span style="color:var(--ds-cyan);font-size:0.68rem;">' + group.my_num_positions + ' pos.</span>';
-                // Next payment due — only show if member hasn't paid current cycle
-                if (group.my_next_payment_due && effectivePaymentStatus !== 'paid' && effectivePaymentStatus !== 'up_to_date') {
-                    var dueDate = new Date(group.my_next_payment_due + (group.my_next_payment_due.includes('T') ? '' : 'T12:00:00'));
-                    var now = new Date();
-                    var graceEnd = new Date(dueDate);
-                    graceEnd.setDate(graceEnd.getDate() + (parseInt(group.grace_period) || 5));
-                    var daysUntilGrace = Math.ceil((graceEnd - now) / 86400000);
-                    var daysUntilDue = Math.ceil((dueDate - now) / 86400000);
-                    var dueLabel, dueColor;
-                    // v4.25.9: Show actual deadline date for clarity
-                    var graceStr = group.my_next_payment_grace_deadline
-                        ? new Date(group.my_next_payment_grace_deadline + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'short' })
-                        : null;
-                    if (daysUntilGrace < 0) {
-                        dueLabel = 'Vencido hace ' + Math.abs(daysUntilGrace) + 'd';
-                        dueColor = 'var(--ds-red)';
-                    } else if (daysUntilDue < 0) {
-                        dueLabel = graceStr ? 'Paga antes del ' + graceStr : daysUntilGrace + 'd de gracia';
-                        dueColor = 'var(--ds-amber)';
-                    } else if (daysUntilDue === 0) {
-                        dueLabel = 'Vence hoy';
-                        dueColor = 'var(--ds-amber)';
-                    } else if (daysUntilDue <= 3) {
-                        dueLabel = 'Paga antes del ' + dueDate.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
-                        dueColor = 'var(--ds-amber)';
-                    } else {
-                        dueLabel = 'Vence en ' + daysUntilDue + 'd';
-                        dueColor = 'var(--ds-text-faint)';
-                    }
-                    statusInfoHtml += '<span style="color:' + dueColor + ';"><i class="fas fa-calendar" style="font-size:0.6rem;"></i> ' + dueLabel + '</span>';
+                // v4.25.12: Payment window from API (single source of truth)
+                var pw = group.payment_window;
+                if (pw && pw.isActive) {
+                    var dueColor = pw.status === 'overdue' ? 'var(--ds-red)' : (pw.status === 'grace' || pw.daysUntilDue <= 3) ? 'var(--ds-amber)' : 'var(--ds-text-faint)';
+                    statusInfoHtml += '<span style="color:' + dueColor + ';"><i class="fas fa-calendar" style="font-size:0.6rem;"></i> ' + escapeHtml(pw.label) + '</span>';
                 }
                 // Loans indicator (visible to all)
                 if (group.active_loans_count > 0) statusInfoHtml += '<span style="color:var(--ds-red);font-size:0.65rem;"><i class="fas fa-hand-holding-usd" style="font-size:0.55rem;"></i> ' + group.active_loans_count + ' prestamo' + (group.active_loans_count > 1 ? 's' : '') + ' en grupo</span>';
+
+                // v4.25.12: Mode-specific indicators
+                var mode = group.distribution_mode || 'rotation';
+                if (mode === 'lottery') {
+                    statusInfoHtml += '<span style="color:var(--ds-purple,#a855f7);font-size:0.68rem;"><i class="fas fa-dice" style="font-size:0.55rem;"></i> Sorteo</span>';
+                } else if (mode === 'accumulate') {
+                    var poolAmt = parseFloat(group.pool_balance) || 0;
+                    statusInfoHtml += '<span style="color:var(--ds-cyan);font-size:0.68rem;"><i class="fas fa-piggy-bank" style="font-size:0.55rem;"></i> Pool: L.' + poolAmt.toLocaleString('es-HN', {minimumFractionDigits:0}) + '</span>';
+                } else if (mode === 'shares') {
+                    var navVal = parseFloat(group.nav_per_share) || 100;
+                    var myShrs = parseFloat(group.my_shares) || 0;
+                    statusInfoHtml += '<span style="color:var(--ds-green);font-size:0.68rem;"><i class="fas fa-chart-line" style="font-size:0.55rem;"></i> NAV: L.' + navVal.toFixed(0) + '</span>';
+                    if (myShrs > 0) statusInfoHtml += '<span style="color:var(--ds-cyan);font-size:0.68rem;">' + myShrs.toFixed(1) + ' acciones</span>';
+                } else if (mode === 'request') {
+                    var poolReq = parseFloat(group.pool_balance) || 0;
+                    statusInfoHtml += '<span style="color:var(--ds-amber);font-size:0.68rem;"><i class="fas fa-hands-helping" style="font-size:0.55rem;"></i> Fondo: L.' + poolReq.toLocaleString('es-HN', {minimumFractionDigits:0}) + '</span>';
+                }
                 statusInfoHtml += '</div>';
             }
 
@@ -1028,7 +1055,7 @@
                         '<h3>' + escapeHtml(group.name) + '</h3>' +
                         (subtitle ? '<div class="gc-sub">' + subtitle + '</div>' : '') +
                     '</div>' +
-                    '<span class="gc-role ds-badge ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' +
+                    '<span class="gc-role ds-badge ' + roleClass + '">' + (roleLabels[group.my_role] || group.my_role) + '</span>' + modeLabel +
                     (group.active_loans_count > 0 ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.15);color:#f87171;font-size:0.68rem;font-weight:600;margin-left:6px;"><i class="fas fa-hand-holding-usd" style="font-size:0.6rem;"></i>' + (isAdmin ? group.active_loans_count + ' deuda' + (group.active_loans_count > 1 ? 's' : '') : 'Deudas activas') + '</span>' : '') +
                     _gcTrustBadge(group) +
                 '</div>' +
@@ -7569,6 +7596,28 @@ function renderTurnsList() {
         var action = btn.getAttribute('data-action');
 
         switch(action) {
+            // v4.25.12: Cancel pending join request
+            case 'grp-cancel-join':
+                var cancelGid = btn.getAttribute('data-group-id');
+                if (!cancelGid || !confirm('Cancelar tu solicitud de union a este grupo?')) break;
+                (async function() {
+                    try {
+                        var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                        var resp = await fetch('/api/groups/' + encodeURIComponent(cancelGid) + '/cancel-join', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+                        });
+                        var data = await resp.json();
+                        if (data.success) {
+                            var card = btn.closest('.gc-card');
+                            if (card) card.remove();
+                            if (window.showToast) showToast('Solicitud cancelada', 'success');
+                        } else {
+                            if (window.showToast) showToast(data.data?.error?.message || 'Error', 'error');
+                        }
+                    } catch(err) { if (window.showToast) showToast('Error de conexion', 'error'); }
+                })();
+                break;
             // Group card primary actions
             case 'grp-view-group':
                 var gid = btn.getAttribute('data-group-id');
@@ -7597,15 +7646,7 @@ function renderTurnsList() {
                 if (cPhone) cMsg += '\nTelefono: ' + cPhone;
                 alert(cMsg);
                 break;
-                var posGid = btn.getAttribute('data-group-id');
-                if (posGid) window.location.href = '/gestionar/' + encodeURIComponent(posGid) + '?tab=miembros';
-                break;
-            case 'grp-close-reject':
-            case 'grp-confirm-reject':
-            case 'grp-close-manual-assign':
-            case 'grp-confirm-manual-assign':
-                // Dead modal actions — no-op
-                break;
+            // Dead modal handlers removed — handled below
             case 'grp-request-extension':
                 var extGid = btn.getAttribute('data-group-id');
                 if (extGid && typeof showExtensionRequestModal === 'function') showExtensionRequestModal(extGid);
@@ -7909,6 +7950,31 @@ function renderTurnsList() {
                 break;
 
             // History
+            // === MOBILE NAVIGATION HANDLERS ===
+            case 'toggle-left-drawer':
+                if (window.EdgeSwipe && window.EdgeSwipe.toggleLeft) window.EdgeSwipe.toggleLeft();
+                else if (window.SidebarUI) window.SidebarUI.toggle();
+                else { var sb = document.querySelector('.sidebar,.mobile-drawer'); if (sb) sb.classList.toggle('active'); }
+                break;
+            case 'toggle-right-drawer':
+                if (window.EdgeSwipe && window.EdgeSwipe.toggleRight) window.EdgeSwipe.toggleRight();
+                break;
+            case 'drawer-close':
+                if (window.EdgeSwipe && window.EdgeSwipe.closeAll) window.EdgeSwipe.closeAll();
+                else { document.querySelectorAll('.mobile-drawer,.sidebar').forEach(function(el) { el.classList.remove('active'); }); }
+                break;
+            case 'drawer-logout':
+            case 'logout':
+                localStorage.removeItem('auth_token'); localStorage.removeItem('latanda_user'); sessionStorage.clear();
+                window.location.href = 'auth-enhanced.html';
+                break;
+            case 'drawer-mia':
+                window.location.href = '/mia.html';
+                break;
+            case 'toggle-more-menu':
+                if (typeof window.toggleMoreMenu === 'function') window.toggleMoreMenu();
+                break;
+
             case 'grp-open-history':
                 if (typeof openHistoryModal === 'function') openHistoryModal();
                 break;
@@ -8420,3 +8486,19 @@ function renderTurnsList() {
         });
     })();
 
+
+// v4.25.12: Distribution mode hint text
+(function() {
+    var hints = {
+        rotation: 'Cada ciclo, un miembro recibe el total recaudado en su turno asignado.',
+        lottery: 'Cada ciclo, se sortea aleatoriamente quien recibe el total recaudado.',
+        accumulate: 'El dinero se acumula y se reparte proporcionalmente al final del periodo.',
+        shares: 'Los miembros compran participaciones. Ganancias se reparten proporcionalmente.',
+        request: 'El fondo se acumula. Los miembros solicitan desembolsos que el grupo aprueba por votacion.'
+    };
+    var sel = document.getElementById('distribution-mode');
+    var hint = document.getElementById('distribution-mode-hint');
+    if (sel && hint) {
+        sel.addEventListener('change', function() { hint.textContent = hints[sel.value] || ''; });
+    }
+})();
