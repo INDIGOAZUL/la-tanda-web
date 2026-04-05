@@ -922,6 +922,11 @@
                 // Loans indicator (visible to all)
                 if (group.active_loans_count > 0) statusInfoHtml += '<span style="color:var(--ds-red);font-size:0.65rem;"><i class="fas fa-hand-holding-usd" style="font-size:0.55rem;"></i> ' + group.active_loans_count + ' prestamo' + (group.active_loans_count > 1 ? 's' : '') + ' en grupo</span>';
 
+                // v4.25.12: Unpaid members alert for coordinators
+                if (isAdmin && group.unpaid_count > 0) {
+                    statusInfoHtml += '<span style="color:var(--ds-red);font-size:0.68rem;font-weight:600;"><i class="fas fa-exclamation-circle" style="font-size:0.55rem;"></i> ' + group.unpaid_count + ' impago' + (group.unpaid_count > 1 ? 's' : '') + '</span>';
+                }
+
                 // v4.25.12: Mode-specific indicators
                 var mode = group.distribution_mode || 'rotation';
                 if (mode === 'lottery') {
@@ -944,8 +949,18 @@
             // Action buttons (contextual by role)
             var isAdmin = ['creator', 'coordinator', 'admin'].includes(group.my_role);
             var actionsHtml = '<button class="btn btn-primary ds-btn ds-btn-primary" data-action="grp-view-group" data-group-id="' + escapeHtml(group.id) + '"><i class="fas fa-eye" style="margin-right:4px;font-size:0.7rem;"></i>Ver Detalles</button>';
+
+            // v4.25.13: Pay button for pending/late payments (all roles)
+            if (group.has_active_tanda && group.tanda_id && (effectivePaymentStatus === 'pending' || effectivePaymentStatus === 'late' || effectivePaymentStatus === 'suspension_recommended')) {
+                actionsHtml += '<button class="btn ds-btn ds-btn-success" style="background:var(--ds-green,#22c55e);color:#fff;border:none;" data-action="grp-quick-pay" data-tanda-id="' + escapeHtml(group.tanda_id || '') + '" data-group-id="' + escapeHtml(group.id) + '"><i class="fas fa-money-bill-wave" style="margin-right:4px;font-size:0.7rem;"></i>Pagar</button>';
+            }
+
             if (isAdmin) {
                 actionsHtml += '<button class="btn btn-secondary ds-btn ds-btn-secondary" data-action="grp-manage-group" data-group-id="' + escapeHtml(group.id) + '"><i class="fas fa-cog" style="margin-right:4px;font-size:0.7rem;"></i>Administrar</button>';
+                // v4.25.13: Invite button for coordinators/creators (if group not full)
+                if (parseInt(group.members_count || group.member_count || 0) < parseInt(group.max_members || 999)) {
+                    actionsHtml += '<button class="btn ds-btn ds-btn-outline" data-action="grp-invite-member" data-group-id="' + escapeHtml(group.id) + '" style="border-color:var(--ds-purple,#8b5cf6);color:var(--ds-purple,#8b5cf6);"><i class="fas fa-user-plus" style="margin-right:4px;font-size:0.7rem;"></i>Invitar</button>';
+                }
             }
 
             // Member-specific actions
@@ -7589,6 +7604,41 @@ function renderTurnsList() {
         }
     });
 
+    // v4.25.12: Show members list modal (read-only for regular members)
+    async function showMembersList(groupId) {
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+        overlay.innerHTML = '<div style="background:var(--ds-bg-secondary,#111827);border-radius:16px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;padding:20px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;color:#fff;">Miembros del Grupo</h3><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;">&times;</button></div><div id="membersListContent" style="color:#94a3b8;text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div></div>';
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+
+        try {
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            var res = await fetch('/api/groups/' + encodeURIComponent(groupId) + '/members/payment-status', { headers: { 'Authorization': 'Bearer ' + token } });
+            var data = await res.json();
+            if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+            var members = data.data?.members || [];
+            var html = '';
+            var psColors = { paid:'var(--ds-green)', up_to_date:'var(--ds-green)', pending:'var(--ds-amber)', late:'var(--ds-red)', mora:'var(--ds-red)', suspended:'#94a3b8' };
+            var psLabels = { paid:'Al dia', up_to_date:'Al dia', pending:'Pendiente', late:'Atrasado', mora:'En mora', suspended:'Suspendido' };
+            members.forEach(function(m) {
+                var ps = m.payment_status || 'pending';
+                var color = psColors[ps] || 'var(--ds-amber)';
+                var label = psLabels[ps] || ps;
+                var roleTag = m.member_role === 'creator' ? ' <span style="font-size:0.6rem;padding:1px 5px;border-radius:4px;background:rgba(0,255,255,0.15);color:var(--ds-cyan);">Creador</span>' : m.member_role === 'coordinator' ? ' <span style="font-size:0.6rem;padding:1px 5px;border-radius:4px;background:rgba(168,85,247,0.15);color:#a855f7;">Coord</span>' : '';
+                html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">';
+                html += '<div><span style="font-weight:500;color:#e2e8f0;">' + escapeHtml(m.name || 'Miembro') + '</span>' + roleTag + '</div>';
+                html += '<span style="font-size:0.75rem;font-weight:600;color:' + color + ';">' + label + '</span>';
+                html += '</div>';
+            });
+            if (!members.length) html = '<div style="color:#64748b;padding:20px;text-align:center;">No hay miembros</div>';
+            document.getElementById('membersListContent').innerHTML = html;
+        } catch (e) {
+            document.getElementById('membersListContent').innerHTML = '<div style="color:var(--ds-red);">' + escapeHtml(e.message) + '</div>';
+        }
+    }
+
     // Delegated event handler for group card actions
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('[data-action]');
@@ -7629,7 +7679,7 @@ function renderTurnsList() {
                 break;
             case 'grp-manage-members':
                 var gid3 = btn.getAttribute('data-group-id');
-                if (gid3) window.location.href = '/gestionar/' + encodeURIComponent(gid3) + '?tab=miembros';
+                if (gid3) showMembersList(gid3);
                 break;
             // Position assignment actions — redirect to gestionar
             case 'grp-approve-position':
@@ -7647,6 +7697,21 @@ function renderTurnsList() {
                 alert(cMsg);
                 break;
             // Dead modal handlers removed — handled below
+            case 'grp-invite-member':
+                var invGroupId = target.dataset.groupId;
+                if (invGroupId && typeof inviteToGroup === 'function') {
+                    inviteToGroup(invGroupId);
+                }
+                break;
+            case 'grp-quick-pay':
+                var payTandaId = target.dataset.tandaId;
+                if (payTandaId && typeof quickPay === 'function') {
+                    quickPay(payTandaId);
+                } else {
+                    // Fallback: navigate to tandas tab
+                    switchGroupsTab('tandas');
+                }
+                break;
             case 'grp-request-extension':
                 var extGid = btn.getAttribute('data-group-id');
                 if (extGid && typeof showExtensionRequestModal === 'function') showExtensionRequestModal(extGid);

@@ -33,6 +33,9 @@ class ProfileManager {
         this.activities = [];
         this.achievements = [];
         this.currentTab = 'settings';
+        // Hero actions run immediately (not in async chain)
+        this.setupHeroActions();
+        this.loadHeroExtras();
         this.init();
     }
 
@@ -41,9 +44,6 @@ class ProfileManager {
         await this.updateProfileStats();
         await this.loadPortfolio();
         this.loadActivities();
-        this.loadAchievements();
-        this.loadHeroExtras();
-        this.setupHeroActions();
         this.setupEventListeners();
         if (typeof load2FAStatus === 'function') load2FAStatus();
         loadPrivacySettings();
@@ -297,7 +297,7 @@ class ProfileManager {
             } else {
                 this.portfolio = [];
             }
-            this.renderPortfolio();
+            // Portfolio tab removed — data used for stats only
         } catch (error) {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i> Error cargando portfolio</div>';
         }
@@ -984,9 +984,17 @@ window.generateQR = function(type) {
     if (_qrInstance) { _qrInstance.clear(); _qrInstance = null; }
 
     var url = '';
-    if (type === 'wallet' && window._qrWalletAddr) {
-        url = window._qrWalletAddr;
-        if (label) label.textContent = url;
+    if (type === 'wallet') {
+        if (window._qrWalletAddr) {
+            url = window._qrWalletAddr;
+            if (label) label.textContent = url;
+        } else {
+            canvas.innerHTML = '<div style="padding:30px 20px;color:#a78bfa;font-size:0.85rem;"><i class="fas fa-link" style="font-size:2rem;display:block;margin-bottom:12px;"></i>Vincula tu wallet Keplr en<br><a href="#" onclick="document.getElementById(\'qrModal\').style.display=\'none\';switchTab(\'security\',event);return false;" style="color:#00FFFF;">Seguridad → La Tanda Chain Wallet</a></div>';
+            if (label) label.textContent = 'Wallet no vinculada';
+            if (tabProfile) tabProfile.style.background = 'rgba(0,0,0,0.3)';
+            if (tabWallet) tabWallet.style.background = 'rgba(0,255,255,0.15)';
+            return;
+        }
         if (tabProfile) tabProfile.style.background = 'rgba(0,0,0,0.3)';
         if (tabWallet) tabWallet.style.background = 'rgba(0,255,255,0.15)';
     } else {

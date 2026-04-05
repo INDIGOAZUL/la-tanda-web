@@ -24,7 +24,7 @@
 .gm-print-icon:hover { color: var(--ds-cyan, #00FFFF); border-color: rgba(0,255,255,0.3); }
 @media (max-width: 480px) { .gm-stat-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>
-<link rel="stylesheet" href="css/gestionar.css?v=1.1">
+<link rel="stylesheet" href="css/gestionar.css?v=1.2">
     <style>
         :root {
             --tanda-cyan: var(--ds-cyan, #00FFFF);
@@ -151,6 +151,7 @@
     if (!groupId) { window.location.href = '/groups-advanced-system.html'; return; }
 
     var groupData = null;
+    var isReadOnly = false;
     var statsData = null;
     var userRole = null;
     var currentTab = 'resumen';
@@ -211,10 +212,15 @@
             // Role comes directly from stats endpoint
             userRole = statsData.my_role || 'member';
 
-            if (userRole !== 'coordinator' && userRole !== 'creator' && userRole !== 'admin') {
-                showToast('Solo coordinadores pueden acceder a esta pagina', 'error');
-                setTimeout(function() { window.location.href = '/groups-advanced-system.html'; }, 1500);
-                return;
+            // v4.25.12: Members can access in read-only mode
+            isReadOnly = (userRole !== 'coordinator' && userRole !== 'creator' && userRole !== 'admin');
+            if (isReadOnly) {
+                // Check they are at least a member
+                if (!statsData.my_role || statsData.my_role === 'open') {
+                    showToast('No tienes acceso a este grupo', 'error');
+                    setTimeout(function() { window.location.href = '/groups-advanced-system.html'; }, 1500);
+                    return;
+                }
             }
 
             // Health score from separate endpoint
@@ -247,7 +253,7 @@
 
             // Update header
             document.getElementById('gmGroupName').textContent = groupData.name;
-            document.getElementById('gmRoleBadge').textContent = userRole === 'creator' ? 'Creador' : 'Coordinador';
+            document.getElementById('gmRoleBadge').textContent = userRole === 'creator' ? 'Creador' : userRole === 'coordinator' ? 'Coordinador' : 'Miembro';
 
             // v4.25.12: Show distribution mode badge
             var modeNames = { rotation: 'Tanda', lottery: 'Loteria', accumulate: 'Ahorro', shares: 'Inversion', request: 'Fondo' };
@@ -271,6 +277,15 @@
 
             // v4.25.12: Adapt tabs visibility based on distribution_mode
             var dm = groupData.distribution_mode;
+
+            // v4.25.12: Hide admin-only tabs for read-only members
+            if (isReadOnly) {
+                var tabConfig = document.querySelector('.gm-tab[data-tab="config"]');
+                if (tabConfig) tabConfig.style.display = 'none';
+                // Rename Pagos to "Mi Pago" for members
+                var tabPagos = document.querySelector('.gm-tab[data-tab="pagos"]');
+                if (tabPagos) tabPagos.innerHTML = '<i class="fas fa-receipt"></i> Mi Info';
+            }
             var tabPagos = document.querySelector('.gm-tab[data-tab="pagos"]');
             var tabFinanzas = document.querySelector('.gm-tab[data-tab="finanzas"]');
 
@@ -593,6 +608,21 @@
     // ║  TAB: PAGOS                                      ║
     // ╚══════════════════════════════════════════════════╝
     function loadPagos() {
+        if (isReadOnly) {
+            // Read-only: show payment info without action buttons
+            var sp = statsData ? statsData.payments || {} : {};
+            var html = '<div class="gm-section"><div class="gm-section-title">Tu Estado de Pago</div>';
+            html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">';
+            html += '<div style="flex:1;min-width:120px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--ds-green);">' + (sp.paid_by_user || sp.paid || 0) + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Ciclos Pagados</div></div>';
+            html += '<div style="flex:1;min-width:120px;background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--ds-cyan);">Ciclo ' + (groupData.current_cycle || '?') + '</div><div style="font-size:0.72rem;color:var(--ds-text-faint);">Ciclo Actual</div></div>';
+            html += '</div>';
+            html += '<div class="gm-actions-grid">';
+            html += '<button class="gm-action-btn" data-action="pagos-historial"><i class="fas fa-history"></i> Mi Historial de Pagos</button>';
+            html += '</div></div>';
+            html += '<div id="pagosSubPanel"></div>';
+            document.getElementById('pagosContent').innerHTML = html;
+            return;
+        }
         var sp = statsData ? statsData.payments || {} : {};
         var pendingCount = sp.pending || 0;
         var dm = groupData ? groupData.distribution_mode : 'rotation';
@@ -682,12 +712,16 @@
 
         var html = '<div class="gm-section"><div class="gm-section-title">Gestion de Miembros</div>';
         html += '<div class="gm-actions-grid">';
+        if (!isReadOnly) {
         html += '<button class="gm-action-btn gm-action-warn" data-action="miembros-solicitudes"><i class="fas fa-user-clock"></i> Solicitudes de Ingreso <span id="solicitudesBadge" class="gm-badge-count" style="display:none;">0</span></button>';
         html += '<button class="gm-action-btn" data-action="miembros-lista"><i class="fas fa-users"></i> Lista de Miembros</button>';
         html += '<button class="gm-action-btn" data-action="miembros-turnos"><i class="fas fa-sort-numeric-down"></i> Gestionar Turnos</button>';
         html += '<button class="gm-action-btn" data-action="miembros-fairness"><i class="fas fa-chart-bar"></i> Equidad de Turnos</button>';
         html += '<button class="gm-action-btn" data-action="miembros-invitar"><i class="fas fa-user-plus"></i> Invitar Miembros</button>';
         html += '<button class="gm-action-btn" data-action="miembros-preadd"><i class="fas fa-user-plus"></i> Agregar Manual</button>';
+        } else {
+        html += '<button class="gm-action-btn" data-action="miembros-lista"><i class="fas fa-users"></i> Lista de Miembros</button>';
+        }
         html += '</div></div>';
         html += '<div id="miembrosSubPanel"></div>';
         document.getElementById('miembrosContent').innerHTML = html;

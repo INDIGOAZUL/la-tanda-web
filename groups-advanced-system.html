@@ -1569,7 +1569,7 @@
         </button>
     </nav>
 
-    <script src="js/groups-system.min.js?v=2.6"></script>
+    <script src="js/groups-system.min.js?v=2.7"></script>
     <script defer src="js/mobile-drawer.js?v=1769558148"></script>
     <script defer src="js/edge-swipe.js?v=1769558147"></script>
     <script>
@@ -1587,4 +1587,61 @@
     </script>
     <script src="js/components-loader.js?v=32.7"></script>
 </body>
+<!-- Invite Members Modal (v4.25.13) -->
+<div id="inviteMembersModal" class="ds-overlay" style="display:none;z-index:500;">
+    <div class="ds-modal" style="max-width:480px;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="color:var(--ds-cyan,#00FFFF);font-size:1.1rem;display:flex;align-items:center;gap:8px;margin:0;">
+                <i class="fas fa-user-plus"></i> Invitar Miembros
+            </h3>
+            <button onclick="document.getElementById('inviteMembersModal').style.display='none';document.body.style.overflow='';" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;">&times;</button>
+        </div>
+
+        <!-- Method toggle -->
+        <div style="display:flex;gap:4px;background:rgba(0,0,0,0.2);border-radius:8px;padding:3px;margin-bottom:16px;">
+            <button id="inviteMethodEmail" class="active" onclick="setInviteMethod('email')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:rgba(0,255,255,0.12);color:#00FFFF;">
+                <i class="fas fa-envelope"></i> Email
+            </button>
+            <button id="inviteMethodPhone" onclick="setInviteMethod('phone')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:transparent;color:#94a3b8;">
+                <i class="fas fa-phone"></i> Telefono
+            </button>
+        </div>
+
+        <!-- Email field -->
+        <div id="inviteEmailField" style="margin-bottom:12px;">
+            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Email del invitado</label>
+            <input type="email" id="inviteeEmail" placeholder="correo@ejemplo.com" required
+                style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
+        </div>
+
+        <!-- Phone field (hidden by default) -->
+        <div id="invitePhoneField" style="display:none;margin-bottom:12px;">
+            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Telefono del invitado</label>
+            <input type="tel" id="inviteePhone" placeholder="+504 9999-9999"
+                style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
+        </div>
+
+        <!-- Name -->
+        <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Nombre (opcional)</label>
+            <input type="text" id="inviteeName" placeholder="Nombre del invitado"
+                style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
+        </div>
+
+        <!-- Message -->
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Mensaje (opcional)</label>
+            <textarea id="inviteMessage" placeholder="Unete a nuestro grupo de ahorro!" rows="2"
+                style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+
+        <!-- Submit -->
+        <button id="inviteSubmitBtn" onclick="submitInvite()" style="width:100%;padding:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="fas fa-paper-plane"></i> Enviar Invitacion
+        </button>
+
+        <!-- Pending invitations list -->
+        <div id="invitePendingList" style="margin-top:16px;"></div>
+    </div>
+</div>
 </html>
