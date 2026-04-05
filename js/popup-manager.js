@@ -121,7 +121,12 @@ class LaTandaPopupManager {
             if (config.message) {
                 const msgP = document.createElement("p");
                 msgP.className = "latanda-popup-message";
-                msgP.innerHTML = config.message;
+                // v4.25.13 audit round 30: default textContent to prevent XSS; use html flag for trusted content only
+                if (config.html) {
+                    msgP.innerHTML = config.message;
+                } else {
+                    msgP.textContent = config.message;
+                }
                 body.appendChild(msgP);
             }
             if (config.details) {
@@ -419,6 +424,7 @@ class LaTandaPopupManager {
         var popup = this.show({
             type: "warning",
             title: "Cuentas Duplicadas Detectadas",
+            html: true,
             message: '<p>Encontramos multiples cuentas con tu informacion:</p><div class="latanda-duplicate-list">' + accountsHtml + '</div>',
             closable: false,
             buttons: [
@@ -452,6 +458,7 @@ class LaTandaPopupManager {
         return this.show({
             type: "warning",
             title: "Datos de la Cuenta",
+            html: true,
             message: '<p>Esta cuenta tiene:</p>' +
                 '<ul class="latanda-account-data">' +
                 '<li>Saldo: L. ' + (account.balance || "0.00") + '</li>' +

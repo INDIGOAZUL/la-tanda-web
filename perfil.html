@@ -222,7 +222,24 @@
         .pf-confirm-danger { padding: 8px 20px; border-radius: 20px; border: none; background: var(--ds-red, #ef4444); color: #fff; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
         .pf-confirm-danger:hover { background: var(--ds-red-dark, #dc2626); }
         /* Achievements */
-        .pf-achievements { padding: 8px 16px 4px; margin-top: 4px; border-top: 1px solid var(--ds-border, rgba(255,255,255,0.06)); }
+        /* Collapsible sections (v4.25.12) */
+        .pf-section { border-top: 1px solid var(--ds-border, rgba(255,255,255,0.06)); }
+        .pf-section-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; cursor:pointer; user-select:none; transition:background 0.2s; }
+        .pf-section-header:hover { background:rgba(255,255,255,0.02); }
+        .pf-section-title { font-size:0.82rem; font-weight:600; color:var(--ds-text-primary,#e2e8f0); display:flex; align-items:center; gap:6px; }
+        .pf-section-title i { font-size:0.75rem; }
+        .pf-section-meta { font-size:0.7rem; color:var(--ds-text-muted,#64748b); display:flex; align-items:center; gap:6px; }
+        .pf-section-chevron { transition:transform 0.2s; font-size:0.65rem; color:var(--ds-text-muted,#64748b); }
+        .pf-section.open .pf-section-chevron { transform:rotate(180deg); }
+        .pf-section-body { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+        .pf-section.open .pf-section-body { max-height:500px; }
+        .pf-section-body-inner { padding:0 16px 12px; }
+
+        /* La Tanda differentiators */
+        .pf-trust-bar { display:flex; gap:8px; padding:0 16px 8px; flex-wrap:wrap; }
+        .pf-trust-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:0.7rem; font-weight:600; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); }
+
+        .pf-achievements { padding: 8px 16px 4px; margin-top: 4px; border-top: 1px solid var(--ds-border, rgba(255,255,255,0.06)); } padding: 8px 16px 4px; margin-top: 4px; border-top: 1px solid var(--ds-border, rgba(255,255,255,0.06)); }
         .pf-ach-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .pf-ach-title { font-size: 0.82rem; font-weight: 600; color: var(--ds-text-muted, #94a3b8); }
         .pf-ach-title i { color: var(--ds-amber, #fbbf24); margin-right: 4px; }
@@ -477,7 +494,8 @@
             '<div class="pf-profile-row"><div class="pf-avatar">' + avatarHtml + (isSelf ? '<button class="pf-avatar-edit" id="pfAvatarEdit" style="display:block"><i class="fas fa-camera"></i></button><input type="file" class="pf-avatar-input" id="pfAvatarInput" accept="image/jpeg,image/png,image/webp">' : '') + '</div><div class="pf-actions">' + actionsHtml + '</div></div>' +
             '<div class="pf-details"><div class="pf-name">' + esc(user.name) + (user.verified ? ' <i class="fas fa-check-circle pf-verified"></i>' : '') + '</div>' + (user.handle ? '<span class="pf-handle">@' + esc(user.handle) + '</span>' : '') + (user.bio ? '<p class="pf-bio">' + esc(user.bio) + '</p>' : '') + '<div class="pf-meta">' + (user.location ? '<span class="pf-meta-item"><i class="fas fa-map-marker-alt"></i> ' + esc(user.location) + '</span>' : '') + (memberLabel ? '<span class="pf-meta-item"><i class="far fa-calendar-alt"></i> ' + esc(memberLabel) + '</span>' : '') + '</div>' + mutualHtml + '</div>' +
             '<div class="pf-stats"><span class="pf-stat" data-tab="posts"><strong>' + formatCount(stats.posts) + '</strong> publicaciones</span><span class="pf-stat" data-tab="followers"><strong>' + formatCount(stats.followers) + '</strong> seguidores</span><span class="pf-stat" data-tab="following"><strong>' + formatCount(stats.following) + '</strong> siguiendo</span>' + (isSelf && profileData.profile_views ? '<span class="pf-stat pf-stat-views"><i class="far fa-eye"></i> <strong>' + formatCount(profileData.profile_views) + '</strong> visitas</span>' : '') + '</div>' +
-            '<div class="pf-achievements" id="pfAchievements"></div>' +
+            '<div id="pfTrustBar" class="pf-trust-bar"></div>' +
+            '<div id="pfSections"></div>' +
             '<div class="pf-tabs"><div class="pf-tab active" data-tab="posts">Publicaciones</div><div class="pf-tab" data-tab="reposts">Reposts</div><div class="pf-tab" data-tab="activity">Actividad</div><div class="pf-tab" data-tab="media">Media</div><div class="pf-tab" data-tab="likes">Me gusta</div><div class="pf-tab" data-tab="followers">Seguidores</div><div class="pf-tab" data-tab="following">Siguiendo</div></div>' +
             '<div class="pf-tab-content"><div class="pf-tab-panel active" id="pfPanelPosts"></div><div class="pf-tab-panel" id="pfPanelReposts"></div><div class="pf-tab-panel" id="pfPanelActivity"></div><div class="pf-tab-panel" id="pfPanelMedia"></div><div class="pf-tab-panel" id="pfPanelLikes"></div><div class="pf-tab-panel" id="pfPanelFollowers"></div><div class="pf-tab-panel" id="pfPanelFollowing"></div></div>';
         if (accentColor) { document.getElementById('pfMain').style.setProperty('--pf-accent', accentColor); var nameEl = document.querySelector('.pf-name'); if (nameEl) nameEl.style.color = accentColor; }
@@ -841,26 +859,121 @@
 
     async function loadAchievements() {
         if (!profileData || !profileData.user) return;
+        var sectionsHtml = '';
+        var trustHtml = '';
+
+        // 1. Trust/reputation badges (inline, always visible)
+        try {
+            var stats = profileData.stats || {};
+            var user = profileData.user || {};
+            if (user.verified) trustHtml += '<span class="pf-trust-badge" style="border-color:rgba(0,255,255,0.2);color:var(--ds-cyan,#00FFFF)"><i class="fas fa-check-circle"></i> Verificado</span>';
+            if (user.member_since) {
+                var days = Math.floor((Date.now() - new Date(user.member_since).getTime()) / 86400000);
+                if (days > 365) trustHtml += '<span class="pf-trust-badge" style="border-color:rgba(255,215,0,0.2);color:#ffd700"><i class="fas fa-crown"></i> Veterano</span>';
+                else if (days > 90) trustHtml += '<span class="pf-trust-badge" style="border-color:rgba(34,197,94,0.2);color:#22c55e"><i class="fas fa-star"></i> Miembro activo</span>';
+            }
+            if (parseInt(stats.posts) >= 50) trustHtml += '<span class="pf-trust-badge" style="border-color:rgba(168,85,247,0.2);color:#a855f7"><i class="fas fa-pen"></i> Creador</span>';
+            if (parseInt(stats.followers) >= 10) trustHtml += '<span class="pf-trust-badge" style="border-color:rgba(236,72,153,0.2);color:#ec4899"><i class="fas fa-users"></i> ' + formatCount(stats.followers) + ' seg.</span>';
+        } catch(e) {}
+        var trustBar = document.getElementById('pfTrustBar');
+        if (trustBar && trustHtml) trustBar.innerHTML = trustHtml;
+
+        // 2. Achievements section (collapsible)
         try {
             var r = await fetchAuth('/api/users/' + profileData.user.id + '/achievements');
             var d = await r.json();
-            if (!d.success || !d.data) return;
-            var achs = d.data.achievements || [];
-            var earned = achs.filter(function(a) { return a.earned; });
-            var container = document.getElementById('pfAchievements');
-            if (!container || earned.length === 0) return;
-            var html = '<div class="pf-ach-header"><span class="pf-ach-title"><i class="fas fa-trophy"></i> Logros</span><span class="pf-ach-pts">' + (d.data.total_points || 0) + ' pts</span></div><div class="pf-ach-grid">';
-            achs.forEach(function(a) {
-                var icon = a.category === 'social' ? 'fa-users' : a.category === 'marketplace' ? 'fa-store' : a.category === 'tanda' ? 'fa-handshake' : 'fa-star';
-                var earnDate = a.earned_at ? new Date(a.earned_at).toLocaleDateString('es-HN', { month: 'short', year: 'numeric' }) : '';
-                html += '<div class="pf-ach-badge' + (a.earned ? '' : ' pf-ach-locked') + '" title="' + esc(a.description) + (earnDate ? ' — ' + earnDate : '') + '">' +
-                    '<i class="fas ' + icon + '"></i>' +
-                    '<span>' + esc(a.name) + '</span>' +
+            if (d.success && d.data) {
+                var achs = d.data.achievements || [];
+                var earned = achs.filter(function(a) { return a.earned; });
+                var earnedCount = earned.length;
+                var totalPts = d.data.total_points || 0;
+                var tierName = d.data.tier ? d.data.tier.name : '';
+
+                if (earnedCount > 0 || achs.length > 0) {
+                    var achInner = '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+                    achs.forEach(function(a) {
+                        var icon = a.icon || (a.category === 'social' ? 'fas fa-users' : a.category === 'financial' ? 'fas fa-coins' : 'fas fa-star');
+                        var color = a.unlocked || a.earned ? (a.color || 'var(--ds-cyan)') : '#475569';
+                        achInner += '<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;font-size:0.7rem;background:rgba(255,255,255,0.03);border:1px solid ' + (a.unlocked || a.earned ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)') + ';' + (a.unlocked || a.earned ? '' : 'opacity:0.4;') + '" title="' + esc(a.description) + '">' +
+                            '<i class="' + esc(icon) + '" style="color:' + color + ';font-size:0.65rem"></i>' +
+                            '<span style="color:' + (a.unlocked || a.earned ? '#e2e8f0' : '#64748b') + '">' + esc(a.title || a.name) + '</span>' +
+                        '</div>';
+                    });
+                    achInner += '</div>';
+
+                    sectionsHtml += '<div class="pf-section" id="secAch">' +
+                        '<div class="pf-section-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+                            '<span class="pf-section-title"><i class="fas fa-trophy" style="color:var(--ds-cyan)"></i> Logros</span>' +
+                            '<span class="pf-section-meta">' + earnedCount + '/' + achs.length + (tierName ? ' · ' + esc(tierName) : '') + (totalPts ? ' · ' + totalPts + 'pts' : '') + ' <i class="fas fa-chevron-down pf-section-chevron"></i></span>' +
+                        '</div>' +
+                        '<div class="pf-section-body"><div class="pf-section-body-inner">' + achInner + '</div></div>' +
+                    '</div>';
+                }
+            }
+        } catch(e) {}
+
+        // 3. Groups/Tandas section (collapsible)
+        try {
+            var userId = profileData.user.id;
+            var gr = await fetchAuth('/api/users/' + userId + '/groups');
+            var gd = await gr.json();
+            if (gd.success && gd.data && gd.data.length > 0) {
+                var groups = gd.data;
+                var active = groups.filter(function(g) { return g.status === 'active'; });
+                var completed = groups.filter(function(g) { return g.status === 'completed'; });
+                var grpInner = '<div style="display:flex;flex-direction:column;gap:6px">';
+                groups.slice(0, 6).forEach(function(g) {
+                    var statusColor = g.status === 'active' ? 'var(--ds-green,#22c55e)' : g.status === 'completed' ? 'var(--ds-cyan,#00FFFF)' : 'var(--ds-text-muted,#64748b)';
+                    var statusLabel = g.status === 'active' ? 'Activo' : g.status === 'completed' ? 'Completado' : g.status;
+                    grpInner += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">' +
+                        '<span style="font-size:0.78rem;color:#e2e8f0">' + esc(g.name) + '</span>' +
+                        '<span style="font-size:0.68rem;color:' + statusColor + '">' + statusLabel + '</span>' +
+                    '</div>';
+                });
+                if (groups.length > 6) grpInner += '<div style="font-size:0.7rem;color:var(--ds-text-muted);text-align:center;padding:4px">+' + (groups.length - 6) + ' mas</div>';
+                grpInner += '</div>';
+
+                sectionsHtml += '<div class="pf-section" id="secGroups">' +
+                    '<div class="pf-section-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+                        '<span class="pf-section-title"><i class="fas fa-users" style="color:var(--ds-green,#22c55e)"></i> Grupos</span>' +
+                        '<span class="pf-section-meta">' + active.length + ' activo' + (active.length !== 1 ? 's' : '') + (completed.length > 0 ? ' · ' + completed.length + ' completado' + (completed.length !== 1 ? 's' : '') : '') + ' <i class="fas fa-chevron-down pf-section-chevron"></i></span>' +
+                    '</div>' +
+                    '<div class="pf-section-body"><div class="pf-section-body-inner">' + grpInner + '</div></div>' +
                 '</div>';
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        } catch(e) { /* non-blocking */ }
+            }
+        } catch(e) {}
+
+        // 4. Mining/Rewards section (collapsible)
+        try {
+            var mr = await fetchAuth('/api/mining/status');
+            var md = await mr.json();
+            if (md.success && md.data) {
+                var m = md.data;
+                var tierColors = { bronze:'#CD7F32', silver:'#C0C0C0', gold:'#FFD700', platinum:'#E5E4E2', diamond:'#B9F2FF' };
+                var tierNames = { bronze:'Bronce', silver:'Plata', gold:'Oro', platinum:'Platino', diamond:'Diamante' };
+                var tier = m.current_tier || 'bronze';
+                var miningInner = '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+                    '<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px"><div style="font-size:1rem;font-weight:700;color:' + (tierColors[tier] || '#CD7F32') + '">' + esc(tierNames[tier] || tier) + '</div><div style="font-size:0.65rem;color:var(--ds-text-muted)">Tier</div></div>' +
+                    '<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px"><div style="font-size:1rem;font-weight:700;color:var(--ds-cyan)">' + (m.testnet_ltd_mined || 0).toFixed(0) + '</div><div style="font-size:0.65rem;color:var(--ds-text-muted)">LTD Minados</div></div>' +
+                    '<div style="flex:1;min-width:80px;text-align:center;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px"><div style="font-size:1rem;font-weight:700;color:var(--ds-amber,#f59e0b)">' + (m.mining_streak || 0) + 'd</div><div style="font-size:0.65rem;color:var(--ds-text-muted)">Racha</div></div>' +
+                '</div>';
+
+                // Only show for self
+                if (profileData.is_self) {
+                    sectionsHtml += '<div class="pf-section" id="secMining">' +
+                        '<div class="pf-section-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+                            '<span class="pf-section-title"><i class="fas fa-hammer" style="color:' + (tierColors[tier] || '#CD7F32') + '"></i> Mineria</span>' +
+                            '<span class="pf-section-meta">' + esc(tierNames[tier] || tier) + ' · ' + (m.testnet_ltd_mined || 0).toFixed(0) + ' LTD <i class="fas fa-chevron-down pf-section-chevron"></i></span>' +
+                        '</div>' +
+                        '<div class="pf-section-body"><div class="pf-section-body-inner">' + miningInner + '</div></div>' +
+                    '</div>';
+                }
+            }
+        } catch(e) {}
+
+        // Render all sections
+        var container = document.getElementById('pfSections');
+        if (container) container.innerHTML = sectionsHtml;
     }
 
     function trackProfileView() {

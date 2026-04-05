@@ -45,7 +45,7 @@
         }
         
         if (!hasValidAuth) {
-            localStorage.setItem("redirect_after_auth", currentPage);
+            // removed: admin panel has its own login modal
         } else {
         }
     })();
@@ -735,7 +735,21 @@
             </div>
         </div>
 
-        <div class="stats-grid" id="statsGrid">
+        
+    <!-- ADMIN TAB BAR v1.0 -->
+    <div class="admin-tab-bar" id="adminTabBar">
+        <button class="admin-tab-btn active" onclick="switchAdminTab('dashboard')" data-tab="dashboard"><i class="fas fa-chart-pie"></i> <span class="tab-label">Dashboard</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('depositos')" data-tab="depositos"><i class="fas fa-money-bill-wave"></i> <span class="tab-label">Depositos</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('usuarios')" data-tab="usuarios"><i class="fas fa-users"></i> <span class="tab-label">Usuarios</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('grupos')" data-tab="grupos"><i class="fas fa-users-cog"></i> <span class="tab-label">Grupos</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('bounties')" data-tab="bounties"><i class="fas fa-coins"></i> <span class="tab-label">Bounties</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('inteligencia')" data-tab="inteligencia"><i class="fas fa-brain"></i> <span class="tab-label">Inteligencia</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('outreach')" data-tab="outreach"><i class="fas fa-bullhorn"></i> <span class="tab-label">Outreach</span></button>
+        <button class="admin-tab-btn" onclick="switchAdminTab('herramientas')" data-tab="herramientas"><i class="fas fa-toolbox"></i> <span class="tab-label">Herramientas</span></button>
+    </div>
+
+    <div data-tab-content="dashboard" class="tab-active">
+<div class="stats-grid" id="statsGrid">
             <!-- Basic Stats Row -->
             <div class="stat-card ds-card ds-card-static">
                 <div class="stat-value" id="pendingCount">-</div>
@@ -873,7 +887,24 @@
             </div>
         </div>
 
-        <div class="deposits-section">
+            </div><!-- /dashboard -->
+
+    <div data-tab-content="depositos">
+    <!-- Depositos Sub-tabs -->
+    <div class="dep-sub-tabs" id="depSubTabs">
+        <button class="dep-sub-tab active" onclick="switchDepSubTab('deposits')" data-dep="deposits">
+            <i class="fas fa-money-bill-wave"></i> Depositos <span class="dep-badge" id="depBadgeDeposits">0</span>
+        </button>
+        <button class="dep-sub-tab" onclick="switchDepSubTab('withdrawals')" data-dep="withdrawals">
+            <i class="fas fa-university"></i> Retiros <span class="dep-badge warn" id="depBadgeWithdrawals">0</span>
+        </button>
+        <button class="dep-sub-tab" onclick="switchDepSubTab('appeals')" data-dep="appeals">
+            <i class="fas fa-gavel"></i> Apelaciones <span class="dep-badge" id="depBadgeAppeals">0</span>
+        </button>
+    </div>
+
+<div data-dep-content="deposits" class="dep-active">
+    <div class="deposits-section">
             <div class="section-header">
                 <div>
                     <h2 class="section-title">Gestión de Depósitos</h2>
@@ -903,7 +934,10 @@
             </div>
         </div>
 
-        <!-- Withdrawals Section -->
+            </div><!-- /dep-deposits -->
+
+    <div data-dep-content="withdrawals">
+    <!-- Withdrawals Section -->
         <div class="withdrawals-section">
             <div class="section-header">
                 <div>
@@ -923,7 +957,10 @@
             </div>
         </div>
 
-        <!-- Appeals Section -->
+            </div><!-- /dep-withdrawals -->
+
+    <div data-dep-content="appeals">
+    <!-- Appeals Section -->
         <div class="appeals-section">
             <div class="section-header">
                 <div>
@@ -941,7 +978,11 @@
         </div>
 
         <!-- Deleted Groups Management Section -->
-        <div class="deleted-groups-section" style="margin-top: 30px;">
+                </div><!-- /dep-appeals -->
+    </div><!-- /depositos -->
+
+    <div data-tab-content="grupos">
+<div class="deleted-groups-section" style="margin-top: 30px;">
             <div class="section-header">
                 <div>
                     <h2 class="section-title">🗑️ Grupos Eliminados</h2>
@@ -1196,7 +1237,10 @@
     </div>
 
         <!-- User Management Section -->
-        <div class="users-section" id="usersSection" style="margin-top: 30px;">
+            </div><!-- /grupos-part1 -->
+
+    <div data-tab-content="usuarios">
+<div class="users-section" id="usersSection" style="margin-top: 30px;">
             <div class="section-header">
                 <div>
                     <h2 class="section-title"><i class="fas fa-users"></i> Gestion de Usuarios</h2>
@@ -1301,7 +1345,10 @@
             </div>
         </div>
         <!-- Groups Management Section -->
-        <div class="groups-section" id="groupsSection" style="margin-top: 30px;">
+            </div><!-- /usuarios -->
+
+    <div data-tab-content="grupos">
+<div class="groups-section" id="groupsSection" style="margin-top: 30px;">
             <div class="section-header">
                 <div>
                     <h2 class="section-title"><i class="fas fa-users-cog"></i> Gestion de Grupos/Tandas</h2>
@@ -1353,7 +1400,10 @@
         </div>
 
         <!-- Bounty Payouts Section — v4.12.1 -->
-        <div class="bounty-section" id="bountySection" style="margin-top: 30px;">
+            </div><!-- /grupos-part2 -->
+
+    <div data-tab-content="bounties">
+<div class="bounty-section" id="bountySection" style="margin-top: 30px;">
             <div class="section-header">
                 <div>
                     <h2 class="section-title"><i class="fas fa-coins"></i> Bounty Payouts (LTD)</h2>
@@ -1410,27 +1460,269 @@
         </div>
 
         <!-- Intelligence Dashboard — Brain T3 -->
-        <div class="intel-section" id="intelSection" style="margin-top: 30px;">
-            <div class="section-header">
+            </div><!-- /bounties -->
+
+    <div data-tab-content="inteligencia">
+<div class="intel-section" id="intelSection" style="margin-top: 10px;">
+            <div class="section-header" style="margin-bottom: 16px;">
                 <div>
                     <h2 class="section-title"><i class="fas fa-brain"></i> Inteligencia 360°</h2>
-                    <p style="color: var(--text-secondary, #94a3b8); font-size: 0.9rem;">Cerebro central — 14 algoritmos sincronizados</p>
+                    <p style="color: var(--text-secondary, #94a3b8); font-size: 0.9rem;">Vision completa de la plataforma</p>
                 </div>
                 <div style="display:flex;gap:8px;">
                     <button class="refresh-btn" onclick="runIntelSync()" id="intelSyncBtn">
                         <i class="fas fa-sync-alt"></i> Sincronizar
                     </button>
-                    <button class="refresh-btn" onclick="loadIntelDashboard()">
-                        <i class="fas fa-chart-pie"></i> Actualizar
-                    </button>
                 </div>
             </div>
-            <div id="intelContent" style="color: var(--ds-text-muted, #94a3b8); padding: 20px; text-align: center;">
-                <i class="fas fa-spinner fa-spin"></i> Cargando inteligencia...
+
+            <div class="intel-sub-tabs">
+                <button class="intel-sub-tab active" onclick="switchIntelTab('brain')" data-intel="brain"><i class="fas fa-brain"></i> Brain</button>
+                <button class="intel-sub-tab" onclick="switchIntelTab('retention')" data-intel="retention"><i class="fas fa-user-check"></i> Retencion</button>
+                <button class="intel-sub-tab" onclick="switchIntelTab('churn')" data-intel="churn"><i class="fas fa-user-minus"></i> Churn</button>
+                <button class="intel-sub-tab" onclick="switchIntelTab('gaming')" data-intel="gaming"><i class="fas fa-exclamation-triangle"></i> Gaming</button>
+                <button class="intel-sub-tab" onclick="switchIntelTab('treasury')" data-intel="treasury"><i class="fas fa-landmark"></i> Tesoreria</button>
+                <button class="intel-sub-tab" onclick="switchIntelTab('priorities')" data-intel="priorities"><i class="fas fa-tasks"></i> Prioridades</button>
             </div>
+
+            <div data-intel-content="brain" class="intel-active">
+                <div id="intelContent" style="color: #94a3b8; padding: 20px; text-align: center;">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando inteligencia...
+                </div>
+            </div>
+
+            <div data-intel-content="retention">
+                <div class="intel-card"><h3><i class="fas fa-user-check"></i> Dashboard de Retencion</h3>
+                <div id="retentionData" style="color:#94a3b8;text-align:center;padding:20px;">Click para cargar datos...</div></div>
+            </div>
+
+            <div data-intel-content="churn">
+                <div class="intel-card"><h3><i class="fas fa-user-minus"></i> Reporte de Churn</h3>
+                <div id="churnData" style="color:#94a3b8;text-align:center;padding:20px;">Click para cargar datos...</div></div>
+            </div>
+
+            <div data-intel-content="gaming">
+                <div class="intel-card"><h3><i class="fas fa-exclamation-triangle"></i> Deteccion de Gaming</h3>
+                <div id="gamingData" style="color:#94a3b8;text-align:center;padding:20px;">Click para cargar datos...</div></div>
+            </div>
+
+            <div data-intel-content="treasury">
+                <div class="intel-card"><h3><i class="fas fa-landmark"></i> Tesoreria</h3>
+                <div id="treasuryData" style="color:#94a3b8;text-align:center;padding:20px;">Click para cargar datos...</div></div>
+            </div>
+
+            <div data-intel-content="priorities">
+                <div class="intel-card"><h3><i class="fas fa-tasks"></i> Prioridades de Accion</h3>
+                <div id="prioritiesData" style="color:#94a3b8;text-align:center;padding:20px;">Click para cargar datos...</div></div>
+            </div>
+
         </div>
 
-    <script>
+        </div><!-- /inteligencia -->
+
+    <!-- Outreach Tab -->
+    <div data-tab-content="outreach">
+        <div style="margin-top: 10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="font-size:1.3rem;display:flex;align-items:center;gap:8px;"><i class="fas fa-bullhorn" style="color:#00FFFF;"></i> Outreach Dashboard</h2>
+                <a href="outreach-dashboard.html" target="_blank" style="color:#00FFFF;text-decoration:none;font-size:0.85rem;display:flex;align-items:center;gap:4px;"><i class="fas fa-external-link-alt"></i> Nueva pestana</a>
+            </div>
+            <iframe src="outreach-dashboard.html" class="outreach-frame" id="outreachFrame" loading="lazy"></iframe>
+        </div>
+    </div>
+
+    <!-- Herramientas Tab -->
+    <div data-tab-content="herramientas">
+        <div style="margin-top: 10px;">
+            <h2 style="font-size:1.3rem;display:flex;align-items:center;gap:8px;margin-bottom:20px;"><i class="fas fa-toolbox" style="color:#00FFFF;"></i> Herramientas Administrativas</h2>
+            <div class="tools-grid">
+                <a href="admin-kyc-review.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(147,51,234,0.2);color:#9333ea;"><i class="fas fa-id-card"></i></div>
+                    <h3>KYC Review</h3>
+                    <p>Revision de documentos de identidad y verificacion de usuarios</p>
+                </a>
+                <a href="admin-audit-logs-viewer.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(99,102,241,0.2);color:#6366f1;"><i class="fas fa-clipboard-list"></i></div>
+                    <h3>Audit Logs</h3>
+                    <p>Registro de todas las acciones administrativas</p>
+                </a>
+                <a href="admin-realtime-dashboard.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(16,185,129,0.2);color:#10b981;"><i class="fas fa-satellite-dish"></i></div>
+                    <h3>Realtime Dashboard</h3>
+                    <p>Monitoreo en tiempo real de la plataforma</p>
+                </a>
+                <a href="outreach-dashboard.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(0,255,255,0.2);color:#00FFFF;"><i class="fas fa-paper-plane"></i></div>
+                    <h3>Outreach (standalone)</h3>
+                    <p>Dashboard de outreach en pagina completa</p>
+                </a>
+                <a href="dev-dashboard.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(245,158,11,0.2);color:#f59e0b;"><i class="fas fa-code"></i></div>
+                    <h3>Dev Portal</h3>
+                    <p>Documentacion API y portal de desarrolladores</p>
+                </a>
+                <a href="governance.html" class="tool-card">
+                    <div class="tool-icon" style="background:rgba(34,197,94,0.2);color:#22c55e;"><i class="fas fa-vote-yea"></i></div>
+                    <h3>Governance Hub</h3>
+                    <p>Propuestas, votacion y delegacion on-chain</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+
+<script>
+
+// ===== ADMIN TAB NAVIGATION v1.0 =====
+function switchAdminTab(tabName) {
+    document.querySelectorAll('[data-tab-content]').forEach(function(el) { el.classList.remove('tab-active'); });
+    document.querySelectorAll('[data-tab-content="' + tabName + '"]').forEach(function(el) { el.classList.add('tab-active'); });
+    document.querySelectorAll('.admin-tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+    var activeBtn = document.querySelector('.admin-tab-btn[data-tab="' + tabName + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+// ===== END TAB NAV =====
+
+// ===== DEPOSITOS SUB-TABS =====
+function switchDepSubTab(name) {
+    document.querySelectorAll('[data-dep-content]').forEach(function(el) { el.classList.remove('dep-active'); });
+    var target = document.querySelector('[data-dep-content="' + name + '"]');
+    if (target) target.classList.add('dep-active');
+    document.querySelectorAll('.dep-sub-tab').forEach(function(btn) { btn.classList.remove('active'); });
+    var activeBtn = document.querySelector('.dep-sub-tab[data-dep="' + name + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Update sub-tab badges when data loads
+function updateDepBadges() {
+    var pendingEl = document.getElementById('pending-count');
+    if (pendingEl) {
+        var badge = document.getElementById('depBadgeDeposits');
+        if (badge) badge.textContent = pendingEl.textContent || '0';
+    }
+}
+// Hook into existing load functions to update badges
+var _origLoadDeposits = typeof loadDepositsByStatus === 'function' ? loadDepositsByStatus : null;
+if (_origLoadDeposits) {
+    // Will be updated after loadDepositsByStatus is defined
+}
+setInterval(updateDepBadges, 5000);
+// ===== END DEPOSITOS SUB-TABS =====
+
+// ===== INTEL SUB-TABS =====
+var intelTabLoaded = { brain: true, retention: false, churn: false, gaming: false, treasury: false, priorities: false };
+
+function switchIntelTab(name) {
+    document.querySelectorAll('[data-intel-content]').forEach(function(el) { el.classList.remove('intel-active'); });
+    var target = document.querySelector('[data-intel-content="' + name + '"]');
+    if (target) target.classList.add('intel-active');
+    document.querySelectorAll('.intel-sub-tab').forEach(function(btn) { btn.classList.remove('active'); });
+    var activeBtn = document.querySelector('.intel-sub-tab[data-intel="' + name + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+    // Lazy load
+    if (!intelTabLoaded[name]) {
+        intelTabLoaded[name] = true;
+        loadIntelSubTab(name);
+    }
+}
+
+async function loadIntelSubTab(name) {
+    var containerId = name + 'Data';
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+
+    var endpoints = {
+        retention: '/api/admin/retention-dashboard',
+        churn: '/api/admin/churn-report',
+        gaming: '/api/admin/gaming-report',
+        treasury: '/api/admin/treasury',
+        priorities: '/api/admin/intelligence-priorities'
+    };
+
+    var adminToken = localStorage.getItem('admin_token');
+    try {
+        var res = await fetch(endpoints[name], {
+            headers: adminToken ? { 'x-admin-token': adminToken } : { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '') }
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.data?.error?.message || 'Error');
+        renderIntelData(name, data.data, container);
+    } catch (err) {
+        container.innerHTML = '<span style="color:#ef4444;">Error: ' + escapeHtml(err.message) + '</span>';
+    }
+}
+
+function renderIntelData(name, data, container) {
+    var html = '<div class="intel-metric-grid">';
+    if (name === 'retention') {
+        var r = data.cohort_summary || data;
+        html += metric('Usuarios Activos', r.active_users || r.total_active || '-', '#22c55e');
+        html += metric('Tasa Retencion 7d', (r.retention_7d || r.week1 || '-') + '%', '#a78bfa');
+        html += metric('Tasa Retencion 30d', (r.retention_30d || r.month1 || '-') + '%', '#6366f1');
+        html += metric('Usuarios Nuevos (7d)', r.new_users_7d || '-', '#00FFFF');
+    } else if (name === 'churn') {
+        var c = data.summary || data;
+        html += metric('En Riesgo', c.at_risk || c.high_risk || '-', '#f59e0b');
+        html += metric('Inactivos', c.inactive || c.churned || '-', '#ef4444');
+        html += metric('Score Promedio', c.avg_score || c.avg_engagement || '-', '#a78bfa');
+        html += metric('Intervenidos', c.intervened || '-', '#22c55e');
+    } else if (name === 'gaming') {
+        var g = data.summary || data;
+        html += metric('Anomalias', g.total_anomalies || g.flagged || '-', '#ef4444');
+        html += metric('Gaming Detectado', g.gaming_detected || g.gaming_count || '-', '#f59e0b');
+        html += metric('Usuarios Flagged', g.flagged_users || '-', '#dc2626');
+        html += metric('Score Promedio', g.avg_fraud_score || '-', '#a78bfa');
+    } else if (name === 'treasury') {
+        var t = data;
+        html += metric('Balance Total', 'L. ' + formatNum(t.total_balance || t.platform_balance || 0), '#22c55e');
+        html += metric('Wallets Activas', t.active_wallets || '-', '#00FFFF');
+        html += metric('Volumen 30d', 'L. ' + formatNum(t.volume_30d || 0), '#a78bfa');
+        html += metric('Comisiones 30d', 'L. ' + formatNum(t.commissions_30d || t.fees_30d || 0), '#f59e0b');
+    } else if (name === 'priorities') {
+        html += '</div>';
+        var items = data.priorities || data.actions || data;
+        if (Array.isArray(items) && items.length > 0) {
+            html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+            items.forEach(function(p, i) {
+                var urgency = p.urgency || p.priority || 'medium';
+                var color = urgency === 'high' ? '#ef4444' : urgency === 'medium' ? '#f59e0b' : '#22c55e';
+                html += '<div style="background:rgba(0,0,0,0.2);border-left:3px solid ' + color + ';padding:12px 16px;border-radius:0 8px 8px 0;">';
+                html += '<strong style="color:' + color + ';">' + escapeHtml(p.title || p.action || 'Accion ' + (i+1)) + '</strong>';
+                if (p.description) html += '<p style="color:#94a3b8;font-size:0.85rem;margin:4px 0 0;">' + escapeHtml(p.description) + '</p>';
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+            return;
+        } else {
+            html += '<p style="color:#94a3b8;">No hay prioridades pendientes</p>';
+            container.innerHTML = html;
+            return;
+        }
+    }
+    html += '</div>';
+
+    // Add raw data preview
+    html += '<details style="margin-top:12px;"><summary style="color:#64748b;font-size:0.8rem;cursor:pointer;">Ver datos crudos</summary>';
+    html += '<pre style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;font-size:0.75rem;color:#94a3b8;overflow-x:auto;max-height:300px;margin-top:8px;">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre></details>';
+
+    container.innerHTML = html;
+}
+
+function metric(label, value, color) {
+    return '<div class="intel-metric"><div class="value" style="color:' + color + ';">' + value + '</div><div class="label">' + label + '</div></div>';
+}
+
+function formatNum(n) {
+    return Number(n).toLocaleString('es-HN', { maximumFractionDigits: 0 });
+}
+// ===== END INTEL SUB-TABS =====
+
+
+
         let currentDepositId = null;
         let currentUser = null;
         let authToken = null;
@@ -1485,7 +1777,7 @@
             }
 
             try {
-                const response = await fetch('https://latanda.online/api/admin/verify', {
+                const response = await fetch('/api/admin/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: token })
@@ -1621,7 +1913,7 @@
             }
 
             try {
-                const response = await fetch('https://latanda.online/api/admin/login', {
+                const response = await fetch('/api/admin/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -1678,7 +1970,7 @@
             userInfo.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 10px;';
             userInfo.innerHTML = `
                 <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                    <i class="fas fa-user"></i> ${escapeHtml(currentUser.name)} (${currentUser.role})
+                    <i class="fas fa-user"></i> ${escapeHtml(currentUser.name)} (${escapeHtml(currentUser.role)})
                 </div>
                 <button onclick="adminLogout()" style="background: var(--danger-color); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
                     <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -1697,7 +1989,7 @@
         async function adminLogout() {
             if (authToken) {
                 try {
-                    await fetch('https://latanda.online/api/admin/logout', {
+                    await fetch('/api/admin/logout', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ token: authToken })
@@ -1736,7 +2028,7 @@
             }
 
             try {
-                const response = await makeAuthenticatedRequest('https://latanda.online/api/admin/contributions/pending', {
+                const response = await makeAuthenticatedRequest('/api/admin/contributions/pending', {
                     method: 'GET'
                 });
 
@@ -1927,10 +2219,10 @@
                                     <small>Neto: ${formatCurrency(deposit.net_amount, deposit.currency)}</small>
                                 </td>
                                 <td>${escapeHtml(deposit.bank_name || '')}</td>
-                                <td><span class="reference-code">${deposit.reference_number}</span></td>
+                                <td><span class="reference-code">${escapeHtml(deposit.reference_number || '')}</span></td>
                                 <td>
                                     <span class="status-badge status-${deposit.status.replace('_', '-')}">
-                                        ${deposit.status_description}
+                                        ${escapeHtml(deposit.status_description || '')}
                                     </span>
                                 </td>
                                 <td>
@@ -2043,7 +2335,7 @@
 
                 // Also try to send via API for persistence (fallback if API not available)
                 try {
-                    await makeAuthenticatedRequest('https://latanda.online/api/admin/request-resubmit', {
+                    await makeAuthenticatedRequest('/api/admin/request-resubmit', {
                         method: 'POST',
                         body: JSON.stringify({
                             deposit_id: depositId,
@@ -2200,7 +2492,7 @@
 
                 } else {
                     // Production API call
-                    const response = await makeAuthenticatedRequest('https://latanda.online/api/admin/deposits/confirm', {
+                    const response = await makeAuthenticatedRequest('/api/admin/deposits/confirm', {
                         method: 'POST',
                         body: JSON.stringify({
                             deposit_id: currentDepositId,
@@ -2282,7 +2574,7 @@
 
                 } else {
                     // Production API call
-                    const response = await makeAuthenticatedRequest('https://latanda.online/api/admin/deposits/reject', {
+                    const response = await makeAuthenticatedRequest('/api/admin/deposits/reject', {
                         method: 'POST',
                         body: JSON.stringify({
                             deposit_id: currentDepositId,
@@ -2315,7 +2607,7 @@
 
 
             // Check if we have local sample data with fileUrl
-            let imageUrl = `https://latanda.online/api/receipt/${escapeHtml(filename)}`;
+            let imageUrl = `/api/receipt/${escapeHtml(filename)}`;
             let isLocalData = false;
 
             // Look for receipt in our local sample data
@@ -2443,7 +2735,7 @@
                 overlay.style.zIndex = '10000';
                 overlay.innerHTML = `
                     <div class="modal-content ds-modal" style="max-width:400px;padding:24px;">
-                        <p style="color:var(--ds-text-primary,#e2e8f0);margin:0 0 20px;font-size:0.95rem;line-height:1.5;">${message}</p>
+                        <p style="color:var(--ds-text-primary,#e2e8f0);margin:0 0 20px;font-size:0.95rem;line-height:1.5;">${escapeHtml(message)}</p>
                         <div style="display:flex;gap:12px;justify-content:flex-end;">
                             <button id="adminConfirmNo" class="ds-btn ds-btn-secondary">Cancelar</button>
                             <button id="adminConfirmYes" class="ds-btn ds-btn-primary">Confirmar</button>
@@ -3203,11 +3495,12 @@
             tbody.innerHTML = '<tr><td colspan="6" style="padding: 40px; text-align: center;"><div class="loading"></div></td></tr>';
             
             try {
-                const token = localStorage.getItem('admin_token') || localStorage.getItem('auth_token');
+                const jwtToken = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+                const admToken = localStorage.getItem('admin_token');
                 
-                // Load active groups
-                const res = await fetch('/api/groups', {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                // Load active groups (uses JWT for /api/groups, admin token for /api/admin/*)
+                const res = await fetch('/api/groups?admin=true', {
+                    headers: jwtToken ? { 'Authorization': 'Bearer ' + jwtToken } : { 'x-admin-token': admToken }
                 });
                 const data = await res.json();
                 
@@ -3215,7 +3508,7 @@
                 let deletedCount = 0;
                 try {
                     const delRes = await fetch('/api/admin/groups/deleted', {
-                        headers: { 'Authorization': 'Bearer ' + token }
+                        headers: admToken ? { 'x-admin-token': admToken } : { 'Authorization': 'Bearer ' + (jwtToken || '') }
                     });
                     const delData = await delRes.json();
                     if (delData.success && delData.data) {
@@ -3297,7 +3590,7 @@
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Cargando...</td></tr>';
             try {
-                const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/bounty-credits');
+                const resp = await makeAuthenticatedRequest('/api/admin/bounty-credits');
                 const data = await resp.json();
                 if (!data.success || !data.data.credits.length) {
                     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-secondary);padding:30px;">Sin bounties acreditados aun</td></tr>';
@@ -3324,7 +3617,7 @@
             if (!query || query.length < 2) { container.classList.remove('active'); return; }
             bountySearchTimeout = setTimeout(async () => {
                 try {
-                    const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/user-search?q=' + encodeURIComponent(query));
+                    const resp = await makeAuthenticatedRequest('/api/admin/user-search?q=' + encodeURIComponent(query));
                     const data = await resp.json();
                     if (!data.success || !data.data.users.length) {
                         container.innerHTML = '<div class="bounty-user-item" style="color:var(--text-secondary)">Sin resultados</div>';
@@ -3366,7 +3659,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
             try {
-                const resp = await makeAuthenticatedRequest('https://latanda.online/api/admin/bounty-credit', {
+                const resp = await makeAuthenticatedRequest('/api/admin/bounty-credit', {
                     method: 'POST',
                     body: JSON.stringify({ user_id: userId, amount, reason, github_pr: pr || null, github_issue: issue || null })
                 });
@@ -4594,7 +4887,7 @@
 
             try {
                 // Load withdrawal data from API (PostgreSQL)
-                const response = await makeAuthenticatedRequest("https://latanda.online/api/admin/withdrawals/pending", {
+                const response = await makeAuthenticatedRequest("/api/admin/withdrawals/pending", {
                     method: "GET"
                 });
 
@@ -4703,9 +4996,9 @@
 
             return `
                 <div class="bank-summary">
-                    <strong>${bankName}</strong><br>
-                    <small style="font-family: monospace;">****${accountNumber.toString().slice(-4)}</small><br>
-                    <small style="color: var(--text-secondary);">${accountHolder}</small>
+                    <strong>${escapeHtml(bankName)}</strong><br>
+                    <small style="font-family: monospace;">****${escapeHtml(accountNumber.toString().slice(-4))}</small><br>
+                    <small style="color: var(--text-secondary);">${escapeHtml(accountHolder)}</small>
                     ${isVerified ? '<span class="account-verified">✅ Verificado</span>' : ''}
                 </div>
             `;
@@ -6149,10 +6442,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
             try {
                 const token = localStorage.getItem('auth_token') || localStorage.getItem('admin_token');
                 const response = await fetch('/api/admin/groups/deleted', {
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: (function() { var h = {'Content-Type':'application/json'}; var at = localStorage.getItem('admin_token'); if (at) h['x-admin-token'] = at; else h['Authorization'] = 'Bearer ' + token; return h; })()
                 });
                 
                 if (!response.ok) throw new Error('Failed to load deleted groups');
@@ -6182,8 +6472,8 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                 const groupId = group.group_id || group.id;
                 const groupName = (group.name || 'Sin nombre').replace(/'/g, "\\'");
                 html += '<tr>';
-                html += '<td><strong>' + (group.name || 'Sin nombre') + '</strong><br><small style="color: var(--ds-text-muted, #666);">' + groupId + '</small></td>';
-                html += '<td>' + (group.admin_id || 'N/A') + '</td>';
+                html += '<td><strong>' + escapeHtml(group.name || 'Sin nombre') + '</strong><br><small style="color: var(--ds-text-muted, #666);">' + escapeHtml(groupId) + '</small></td>';
+                html += '<td>' + escapeHtml(group.admin_id || 'N/A') + '</td>';
                 html += '<td style="text-align: center;">' + (group.contribution_count || 0) + '</td>';
                 html += '<td style="text-align: center;">' + (group.member_count || 0) + '</td>';
                 html += '<td>' + deletedDate + '</td>';
@@ -6201,9 +6491,9 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
         function openHardDeleteModal(groupId, groupName, contributionCount, memberCount) {
             currentHardDeleteGroup = { id: groupId, name: groupName };
             
-            document.getElementById('hardDeleteGroupInfo').innerHTML = 
-                '<p><strong>Grupo:</strong> ' + groupName + '</p>' +
-                '<p><strong>ID:</strong> ' + groupId + '</p>' +
+            document.getElementById('hardDeleteGroupInfo').innerHTML =
+                '<p><strong>Grupo:</strong> ' + escapeHtml(groupName) + '</p>' +
+                '<p><strong>ID:</strong> ' + escapeHtml(groupId) + '</p>' +
                 '<p><strong>Contribuciones a eliminar:</strong> ' + contributionCount + '</p>' +
                 '<p><strong>Miembros a remover:</strong> ' + memberCount + '</p>';
             
@@ -6304,11 +6594,11 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
             container.innerHTML = '<div class="loading" style="margin: 40px auto; display: block;"></div>';
 
             try {
-                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token') || localStorage.getItem('auth_token');
                 
                 // Load stats
                 const statsResponse = await fetch('/api/admin/failed-joins/stats', {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: (function(){ var h = {}; var at = localStorage.getItem('admin_token'); if (at) h['x-admin-token'] = at; else h['Authorization'] = 'Bearer ' + token; return h; })()
                 });
                 const statsData = await statsResponse.json();
 
@@ -6341,7 +6631,7 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
                 }
 
                 const response = await fetch(url, {
-                    headers: { 'Authorization': 'Bearer ' + token }
+                    headers: (function(){ var h = {}; var at = localStorage.getItem('admin_token'); if (at) h['x-admin-token'] = at; else h['Authorization'] = 'Bearer ' + token; return h; })()
                 });
                 const data = await response.json();
 
@@ -7054,7 +7344,164 @@ Fecha de solicitud: ${formatWithdrawalDate(withdrawal.created_at)}`;
             background: var(--ds-blue-muted, rgba(59,130,246,0.2));
             transform: translateY(-1px);
         }
-    </style>
+    
+
+/* ===== DEPOSITOS SUB-TABS ===== */
+.dep-sub-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+}
+.dep-sub-tab {
+    flex: 1;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+}
+.dep-sub-tab:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.dep-sub-tab.active { background: rgba(0,255,255,0.12); color: #00FFFF; font-weight: 600; }
+.dep-sub-tab .dep-badge {
+    background: rgba(0,255,255,0.15);
+    color: #00FFFF;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.dep-sub-tab .dep-badge.warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+[data-dep-content] { display: none; }
+[data-dep-content].dep-active { display: block; }
+/* ===== END DEPOSITOS SUB-TABS ===== */
+
+
+/* ===== INTEL SUB-TABS ===== */
+.intel-sub-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.intel-sub-tabs::-webkit-scrollbar { display: none; }
+.intel-sub-tab {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.intel-sub-tab:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.intel-sub-tab.active { background: rgba(139,92,246,0.15); color: #a78bfa; font-weight: 600; }
+[data-intel-content] { display: none; }
+[data-intel-content].intel-active { display: block; }
+.intel-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.intel-card h3 { color: #a78bfa; font-size: 1rem; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+.intel-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.intel-metric { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px; text-align: center; }
+.intel-metric .value { font-size: 1.6rem; font-weight: 700; color: #a78bfa; }
+.intel-metric .label { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; }
+/* ===== END INTEL SUB-TABS ===== */
+
+/* ===== ADMIN TAB NAVIGATION v1.0 ===== */
+.admin-tab-bar {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.admin-tab-bar::-webkit-scrollbar { display: none; }
+.admin-tab-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+}
+.admin-tab-btn:hover { background: rgba(0,255,255,0.08); color: #e2e8f0; }
+.admin-tab-btn.active {
+    background: rgba(0,255,255,0.15);
+    color: #00FFFF;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(0,255,255,0.1);
+}
+.admin-tab-btn i { font-size: 0.9rem; }
+[data-tab-content] { display: none; }
+[data-tab-content].tab-active { display: block; }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+.tool-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    color: #f8fafc;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.tool-card:hover { border-color: #00FFFF; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,255,255,0.1); }
+.tool-card .tool-icon { font-size: 2rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+.tool-card h3 { font-size: 1.1rem; margin: 0; }
+.tool-card p { font-size: 0.85rem; color: #94a3b8; margin: 0; }
+.outreach-frame { width: 100%; height: calc(100vh - 200px); min-height: 600px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: #0f172a; }
+@media (max-width: 768px) {
+    .admin-tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+    .admin-tab-btn .tab-label { display: none; }
+    .admin-tab-btn i { font-size: 1rem; }
+    .tools-grid { grid-template-columns: 1fr; }
+}
+/* ===== END ADMIN TAB NAV ===== */
+
+</style>
 <!-- Admin Login Modal -->
 <div id="loginModal" class="modal ds-overlay" style="display: flex; z-index: 10000;">
     <div class="modal-content ds-modal" style="max-width: 400px; padding: 30px; border: 1px solid var(--ds-cyan, #00d4ff);">

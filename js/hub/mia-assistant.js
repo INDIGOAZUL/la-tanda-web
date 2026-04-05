@@ -370,7 +370,12 @@ const MiaAssistant = {
         if (indicator) indicator.classList.remove("active");
     },
 
+    // v4.25.13 audit round 30: restored escapeHtml body (was empty, fell into voice section)
     escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    },
 
     // ===== VOICE INPUT =====
     recognition: null,
@@ -432,10 +437,6 @@ const MiaAssistant = {
         if (btn) { btn.classList.remove('recording'); btn.querySelector('i').className = 'fas fa-microphone'; }
         const input = document.getElementById('miaInput');
         if (input) input.placeholder = 'Escribe tu pregunta...';
-    },
-        const div = document.createElement('div');
-        div.textContent = text || '';
-        return div.innerHTML;
     }
 };
 

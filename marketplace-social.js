@@ -5334,12 +5334,13 @@ class MarketplaceSocialSystem {
             const isMine = msg.sender_id === currentUserId;
             const timeAgo = this.getTimeAgo(msg.created_at);
 
+            // v4.25.13 audit round 30: escape message to prevent stored XSS
             return `
                 <div class="chat-message ${isMine ? "sent" : "received"}">
                     <div class="message-bubble">
-                        ${msg.message}
+                        ${this.escapeHtml(msg.message)}
                     </div>
-                    <div class="message-time">${timeAgo}</div>
+                    <div class="message-time">${this.escapeHtml(timeAgo)}</div>
                 </div>
             `;
         }).join("");

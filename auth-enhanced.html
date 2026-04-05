@@ -1261,6 +1261,15 @@
         // H1 FIX: Safe localStorage for Safari Private Browsing
         window._safeSetItem = function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} };
         window._safeGetItem = function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } };
+        // Audit round 32: HTML escape helper
+        window._escHtml = function(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+        // Audit round 32 C13: Validate redirect URLs are same-origin
+        window._safeRedirectUrl = function(url, fallback) {
+            if (!url || typeof url !== 'string') return fallback || 'home-dashboard.html';
+            if (url.startsWith('/') && !url.startsWith('//')) return url;
+            if (!url.includes('://') && !url.startsWith('//')) return url;
+            return fallback || 'home-dashboard.html';
+        };
     </script>
     <script>
         /**
@@ -1314,9 +1323,8 @@
                     
                     // Handle redirect parameter from invitation or other pages
                     const redirectParam = urlParams.get("redirect");
-                    if (redirectParam) {
+                    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
                         _safeSetItem("redirect_after_auth", redirectParam);
-                        console.log("[AUTH] Redirect after auth set to:", redirectParam);
                     }
                 } catch (error) {
                     console.error('❌ Auth initialization error:', error);
@@ -1423,7 +1431,7 @@
 
                 if (this.isValidToken(token)) {
                     const payload = this.decodeToken(token);
-                    console.log('✅ Valid token found, payload:', payload);
+                    // Audit round 32: removed payload logging
                     
                     // Check if token expires within 5 minutes
                     const expiresIn = payload.exp * 1000 - Date.now();
@@ -1440,8 +1448,7 @@
 
                     if (isAuthPage) {
                         const redirectAfterAuth = _safeGetItem('redirect_after_auth');
-                        const targetUrl = redirectAfterAuth || payload.dashboard_url || 'home-dashboard.html';
-                        console.log('[AUTH] On auth page with valid token, auto-redirecting to:', targetUrl);
+                        const targetUrl = _safeRedirectUrl(redirectAfterAuth, payload.dashboard_url);
 
                         // Clear redirect intention
                         localStorage.removeItem('redirect_after_auth');
@@ -1506,7 +1513,7 @@
                     return match === '+' ? '-' : match === '/' ? '_' : '';
                 });
                 const jwt = `${encodedHeader}.${encodedPayload}.${signature}`;
-                console.log('🔑 Generated simulation JWT:', jwt.substring(0, 50) + '...');
+                // Audit round 32: removed JWT logging
                 return jwt;
             }
 
@@ -1559,13 +1566,9 @@
             // API Request Handler
             async makeAuthenticatedRequest(endpoint, options = {}) {
                 try {
-                    console.log('🔍 Making request to:', endpoint, 'with options:', options);
-                    
                     // Use Enhanced API proxy for development, real API for production
                     if (window.enhancedAPIProxy && typeof window.enhancedAPIProxy.makeRequest === 'function') {
-                        console.log('✅ Using Enhanced API proxy');
                         const result = await window.enhancedAPIProxy.makeRequest(endpoint, options);
-                        console.log('📦 Enhanced API proxy result:', result);
                         return result;
                     }
                     
@@ -1723,7 +1726,7 @@
 
                         // Proceed with redirect
                         const redirectAfterAuth = _safeGetItem('redirect_after_auth');
-                        const dashboardUrl = redirectAfterAuth || userData.dashboard_url || 'home-dashboard.html';
+                        const dashboardUrl = _safeRedirectUrl(redirectAfterAuth, userData.dashboard_url);
                         localStorage.removeItem('redirect_after_auth');
                         const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
                         window.location.href = redirectUrl;
@@ -2159,7 +2162,7 @@
                 const el = document.createElement('div');
                 el.className = 'auth-notification info';
                 el.id = 'authNotification';
-                el.innerHTML = '<i class="fas fa-info-circle"></i> ' + message;
+                el.innerHTML = '<i class="fas fa-info-circle"></i> ' + _escHtml(message);
                 el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10000;padding:14px 24px;border-radius:12px;font-size:0.9rem;font-weight:500;background:rgba(0,100,150,0.9);color:#e0f7ff;border:1px solid rgba(0,255,255,0.4);backdrop-filter:blur(8px);max-width:90%;text-align:center;animation:slideDown 0.3s ease;';
                 document.body.appendChild(el);
                 setTimeout(() => { el.remove(); }, 6000);
@@ -2171,9 +2174,9 @@
                 const el = document.createElement('div');
                 el.className = 'auth-notification error-cta';
                 el.id = 'authNotification';
-                el.innerHTML = '<div><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>' + message + '</div>' +
-                    '<div style="margin-top:10px;">' + (ctaQuestion ? ctaQuestion + ' ' : '') +
-                    '<button id="' + id + '" style="background:#00FFFF;color:#000;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem;">' + ctaLabel + '</button></div>';
+                el.innerHTML = '<div><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>' + _escHtml(message) + '</div>' +
+                    '<div style="margin-top:10px;">' + (ctaQuestion ? _escHtml(ctaQuestion) + ' ' : '') +
+                    '<button id="' + id + '" style="background:#00FFFF;color:#000;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem;">' + _escHtml(ctaLabel) + '</button></div>';
                 el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;padding:18px 28px;border-radius:14px;font-size:0.9rem;background:rgba(15,23,42,0.97);color:#f8fafc;border:1px solid rgba(0,255,255,0.2);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);width:90%;max-width:400px;text-align:center;animation:slideDown 0.3s ease;box-shadow:0 12px 40px rgba(0,0,0,0.5);';
                 document.body.appendChild(el);
                 setTimeout(() => { var ctaEl = document.getElementById(id); if (ctaEl) ctaEl.addEventListener('click', function() { el.remove(); ctaAction(); }); }, 50);
@@ -2431,6 +2434,7 @@
 
             // Show Continue to Dashboard Button (temporary fix for loops)
             showContinueToDashboard(dashboardUrl) {
+                dashboardUrl = _safeRedirectUrl(dashboardUrl);
                 const container = document.querySelector('.auth-container');
                 const existingButton = document.getElementById('continueToDashboard');
                 
@@ -3282,7 +3286,7 @@
                     setTimeout(() => {
                         const redirect = _safeGetItem('redirect_after_auth');
                         localStorage.removeItem('redirect_after_auth');
-                        window.location.href = redirect || result.data.user.dashboard_url || 'home-dashboard.html';
+                        window.location.href = _safeRedirectUrl(redirect, result.data.user.dashboard_url);
                     }, 1000);
                 } else {
                     throw new Error(result.data?.error?.message || 'Error al autenticar con Google');
