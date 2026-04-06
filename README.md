@@ -137,68 +137,116 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 
 ---
 
-## Desarrollo Local
+## Development Setup
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) 18+ (for serving files and running contract tests)
+- [Git](https://git-scm.com/) for version control
+- A modern web browser (Chrome, Firefox, Edge)
+
+### Quick Start
 
 ```bash
-# Clonar
+# 1. Clone the repository
 git clone https://github.com/INDIGOAZUL/la-tanda-web.git
 cd la-tanda-web
 
-# Frontend (archivos estaticos)
-# Abrir cualquier .html en el navegador o servir con:
+# 2. Serve the frontend locally
+# Option A: Using npx serve (recommended)
 npx serve .
 
-# Smart contracts
+# Option B: Using Python's built-in server
+python3 -m http.server 3000
+
+# Option C: Using Node's http-server
+npx http-server -p 3000
+```
+
+Then open `http://localhost:3000` (or the URL shown in your terminal) in your browser.
+
+### Smart Contract Development
+
+```bash
+# Navigate to smart contracts directory
 cd smart-contracts
+
+# Install dependencies
 npm install
+
+# Compile contracts
 npx hardhat compile
+
+# Run tests
 npx hardhat test
 ```
 
-> **Nota:** El backend (API + DB) corre en el servidor de produccion. Para desarrollo backend se requiere acceso SSH al servidor.
+### Backend Development
+
+> **Note:** The backend API and database run on the production server. For backend development, SSH access to the server is required. Contact the maintainers if you need backend access.
+>
+> The frontend connects to the production API at `latanda.online` by default, so you can develop the UI without a local backend.
+
+### Verify Your Setup
+
+After starting the local server:
+1. Open `http://localhost:3000` in your browser
+2. Check that the homepage loads correctly
+3. Navigate to a few pages to ensure routing works
+4. Open browser DevTools (F12) and check for any console errors
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
+
+This is a **vanilla JavaScript** frontend application with no build step required.
 
 ```
 la-tanda-web/
-├── *.html                        # 30+ paginas frontend (home-dashboard, explorar, etc.)
+├── *.html                        # 30+ HTML pages at root (home-dashboard, explorar, etc.)
 ├── marketplace-social.js         # Marketplace SPA (AT ROOT, not in js/)
 ├── marketplace-social.html       # Marketplace HTML (AT ROOT)
-├── js/
-│   ├── hub/                      # Core modules
+├── js/                           # JavaScript modules
+│   ├── hub/                      # Core application modules
 │   │   ├── social-feed.js        # Social feed (SocialFeed singleton)
 │   │   ├── contextual-widgets.js # Sidebar widgets
 │   │   ├── sidebar-widgets.js    # Sidebar data
 │   │   └── comments-modal.js     # Comments system
-│   ├── core/                     # Shared utilities
-│   ├── header/                   # Header components
-│   ├── sidebar/                  # Sidebar logic
-│   ├── onboarding/               # Onboarding flows
-│   ├── utils/                    # Utility functions
-│   ├── lib/                      # Libraries (ethers.js)
-│   └── components-loader.js      # Dynamic component loading
-├── css/
-│   ├── hub/                      # Hub styles (social-feed.css)
-│   ├── components/               # Component styles
-│   ├── dashboard-layout.css      # Main layout
-│   └── groups-page.css           # Groups/Tandas styles
-├── chain/                        # La Tanda Chain explorer + files
-├── docs/swagger/openapi.json     # OpenAPI spec (220+ paths)
-├── smart-contracts/
-│   ├── contracts/                # LTDToken, Vesting, Reserve (Solidity)
-│   ├── scripts/                  # Deploy scripts
-│   └── test/                     # Contract tests (Hardhat)
-├── .github/
-│   ├── workflows/                # CI/CD
-│   ├── ISSUE_TEMPLATE/           # Bounty templates
+│   ├── core/                     # Shared utilities and base classes
+│   ├── header/                   # Header component logic
+│   ├── sidebar/                  # Sidebar navigation logic
+│   ├── onboarding/               # User onboarding flows
+│   ├── utils/                    # Helper functions
+│   ├── lib/                      # Third-party libraries (ethers.js)
+│   └── components-loader.js      # Dynamic component loading system
+├── css/                          # Stylesheets
+│   ├── hub/                      # Hub-specific styles
+│   ├── components/               # Reusable component styles
+│   ├── dashboard-layout.css      # Main dashboard layout
+│   └── groups-page.css           # Groups/Tandas specific styles
+├── chain/                        # La Tanda Chain explorer files
+├── docs/swagger/openapi.json     # OpenAPI specification (220+ endpoints)
+├── smart-contracts/              # Blockchain smart contracts
+│   ├── contracts/                # Solidity contracts (LTDToken, Vesting, Reserve)
+│   ├── scripts/                  # Deployment scripts
+│   └── test/                     # Hardhat test suite
+├── .github/                      # GitHub configuration
+│   ├── workflows/                # CI/CD workflows
+│   ├── ISSUE_TEMPLATE/           # Issue and bounty templates
 │   └── PULL_REQUEST_TEMPLATE.md  # PR checklist
-├── CONTRIBUTING.md               # Contribution guide + codebase patterns
-└── DEVELOPER-QUICKSTART.md       # Quick setup guide
+├── CONTRIBUTING.md               # Detailed contribution guidelines
+└── DEVELOPER-QUICKSTART.md       # 5-minute quick start guide
 ```
 
-> **Important:** `marketplace-social.js` lives at the root alongside the HTML files, NOT inside `js/`. The `SocialFeed` module lives at `js/hub/social-feed.js`. Getting file paths wrong is the #1 reason PRs are rejected.
+### Key File Locations
+
+| File/Module | Location | Notes |
+|-------------|----------|-------|
+| **Marketplace JS** | `marketplace-social.js` (root) | NOT in `js/` folder |
+| **Social Feed** | `js/hub/social-feed.js` | Singleton pattern |
+| **Main API** | `integrated-api-complete-95-endpoints.js` | All backend endpoints |
+| **OpenAPI Spec** | `docs/swagger/openapi.json` | 220+ documented endpoints |
+
+> ⚠️ **Critical:** `marketplace-social.js` lives at the **root** alongside HTML files, NOT inside `js/`. The `SocialFeed` module is at `js/hub/social-feed.js`. Getting file paths wrong is the #1 reason PRs are rejected. See [CONTRIBUTING.md](./CONTRIBUTING.md) for full codebase patterns.
 
 ---
 
