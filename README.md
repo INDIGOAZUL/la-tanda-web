@@ -117,35 +117,35 @@ Desplegados en **Polygon Amoy Testnet** (Octubre 2025).
 
 ## API
 
-220+ endpoints organizados en modulos:
+220+ endpoints organized in modules:
 
-| Modulo | Endpoints | Descripcion |
+| Module | Endpoints | Description |
 |--------|-----------|-------------|
-| Auth | `/api/auth/*` | Login, registro, refresh, 2FA, verificacion |
-| Groups | `/api/groups/*` | CRUD grupos, miembros, contribuciones, sorteo |
-| Tandas | `/api/tandas/*` | Ciclos, turnos, pagos, coordinador |
-| Wallet | `/api/wallet/*` | Balance, transacciones, retiros, depositos |
-| Marketplace | `/api/marketplace/*` | Productos, servicios, tiendas, reservas, disputas, suscripciones |
+| Auth | `/api/auth/*` | Login, register, refresh, 2FA, verification |
+| Groups | `/api/groups/*` | CRUD groups, members, contributions, lottery draw |
+| Tandas | `/api/tandas/*` | Cycles, turns, payments, coordinator |
+| Wallet | `/api/wallet/*` | Balance, transactions, withdrawals, deposits |
+| Marketplace | `/api/marketplace/*` | Products, services, stores, reservations, disputes, subscriptions |
 | Social Feed | `/api/feed/social/*` | Posts, likes, comments, follow, trending, bookmarks, view tracking |
-| Admin | `/api/admin/*` | Dashboard, usuarios, auditoria, compliance |
-| Lottery | `/api/lottery/*` | Predicciones, scraping, estadisticas, WebSocket en vivo |
-| MIA | `/api/mia/*` | Chat con asistente IA |
-| Uploads | `/api/upload/*` | Imagenes, videos, comprobantes |
+| Admin | `/api/admin/*` | Dashboard, users, audit, compliance |
+| Lottery | `/api/lottery/*` | Predictions, scraping, statistics, live WebSocket |
+| MIA | `/api/mia/*` | AI assistant chat |
+| Uploads | `/api/upload/*` | Images, videos, receipts |
 
-**Documentacion interactiva:** [latanda.online/docs](https://latanda.online/docs) (Swagger UI)
-**Portal de desarrolladores:** [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) (sandbox, WebSocket, SDK, chain)
+**Interactive API docs:** [latanda.online/docs](https://latanda.online/docs) (Swagger UI)
+**Developer portal:** [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) (sandbox, WebSocket, SDK, chain)
 
 ---
 
-## Desarrollo Local
+## Development Setup
 
 ```bash
-# Clonar
+# Clone
 git clone https://github.com/INDIGOAZUL/la-tanda-web.git
 cd la-tanda-web
 
-# Frontend (archivos estaticos)
-# Abrir cualquier .html en el navegador o servir con:
+# Frontend (static files)
+# Open any .html in the browser, or serve locally with:
 npx serve .
 
 # Smart contracts
@@ -155,11 +155,11 @@ npx hardhat compile
 npx hardhat test
 ```
 
-> **Nota:** El backend (API + DB) corre en el servidor de produccion. Para desarrollo backend se requiere acceso SSH al servidor.
+> **Note:** The backend (API + DB) runs on the production server. Backend development requires SSH access to the server.
 
 ---
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 la-tanda-web/
@@ -202,38 +202,38 @@ la-tanda-web/
 
 ---
 
-## Contribuir
+## Contributing
 
-### Bounties Activos
+### Active Bounties
 
-Ver todos: **[Issues con label `bounty`](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)**
+See all: **[Issues with `bounty` label](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)**
 
-### Como Contribuir
+### How to Contribute
 
-1. Lee **[CONTRIBUTING.md](./CONTRIBUTING.md)** — especialmente la seccion "Codebase Patterns"
-2. Revisa los [bounties abiertos](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=label%3Abounty)
-3. Comenta en el issue que te interesa
-4. Fork, trabaja en tu branch, abre PR referenciando el issue
-5. Review por maintainers (24-48h)
-6. Merge y recompensa en LTD tokens
+1. Read **[CONTRIBUTING.md](./CONTRIBUTING.md)** — especially the "Codebase Patterns" section
+2. Browse [open bounties](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=label%3Abounty)
+3. Comment on the issue you're interested in
+4. Fork, work on your branch, open a PR referencing the issue
+5. Maintainer review (24-48h)
+6. Merge and reward in LTD tokens
 
-### Guias
+### Guides
 
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Codebase patterns, security rules, file structure
-- [Developer Quickstart](./DEVELOPER-QUICKSTART.md) — Setup en 5 minutos
+- [Developer Quickstart](./DEVELOPER-QUICKSTART.md) — Setup in 5 minutes
 - [Dev Portal](https://latanda.online/dev-dashboard.html) — Sandbox, WebSocket, SDK, chain docs
-- [API Docs (Swagger)](https://latanda.online/docs) — 220+ endpoints interactivos
+- [API Docs (Swagger)](https://latanda.online/docs) — 220+ interactive endpoints
 
 ---
 
-## Seguridad
+## Security
 
-Si descubres una vulnerabilidad de seguridad:
+If you discover a security vulnerability:
 
-1. **NO** abras un issue publico
-2. Contacta: security@latanda.online
-3. Incluye descripcion detallada y pasos para reproducir
-4. Bounty prioritario (hasta 500 LTD)
+1. **DO NOT** open a public issue
+2. Contact: security@latanda.online
+3. Include a detailed description and steps to reproduce
+4. Priority bounty (up to 500 LTD)
 
 ---
 
