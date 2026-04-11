@@ -1,6 +1,11 @@
 // Mi Perfil - Profile Management System
 // Extracted from mi-perfil.html
 
+// Notification helpers (delegate to LaTandaPopup)
+function showSuccess(msg) { if (window.LaTandaPopup) window.LaTandaPopup.showSuccess(msg); }
+function showError(msg) { if (window.LaTandaPopup) window.LaTandaPopup.showError(msg); }
+function showWarning(msg) { if (window.LaTandaPopup) window.LaTandaPopup.showWarning(msg); }
+
 // Auth helper
 window.getAuthHeaders = function() {
     const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
@@ -56,6 +61,74 @@ class ProfileManager {
             settingsForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveSettings();
+            });
+        }
+        // v4.25.14: Email change flow
+        const btnChange = document.getElementById('btnChangeEmail');
+        if (btnChange) {
+            btnChange.addEventListener('click', () => {
+                const flow = document.getElementById('emailChangeFlow');
+                const opening = flow.style.display === 'none';
+                flow.style.display = opening ? 'block' : 'none';
+                if (opening) {
+                    setTimeout(() => {
+                        const inp = document.getElementById('newEmailInput');
+                        if (inp) inp.focus();
+                    }, 100);
+                }
+            });
+        }
+        const btnSendCode = document.getElementById('btnSendEmailCode');
+        if (btnSendCode) {
+            btnSendCode.addEventListener('click', async () => {
+                const newEmail = document.getElementById('newEmailInput')?.value.trim();
+                if (!newEmail) { showWarning('Ingresa el nuevo email'); return; }
+                btnSendCode.disabled = true;
+                btnSendCode.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+                try {
+                    const result = await apiCall('/api/user/change-email', 'POST', { new_email: newEmail });
+                    if (result.success) {
+                        document.getElementById('emailCodeSection').style.display = 'block';
+                        document.getElementById('emailChangeMsg').textContent = 'Codigo enviado a ' + (result.email_sent_to || newEmail);
+                        document.getElementById('emailChangeMsg').style.color = 'var(--ds-green, #22c55e)';
+                        showSuccess('Codigo enviado al nuevo email');
+                    } else {
+                        document.getElementById('emailChangeMsg').textContent = result.error || 'Error al enviar codigo';
+                        document.getElementById('emailChangeMsg').style.color = 'var(--ds-red, #ef4444)';
+                        showError(result.error || 'Error al enviar codigo');
+                    }
+                } catch (e) { showError('Error de conexion'); }
+                btnSendCode.disabled = false;
+                btnSendCode.innerHTML = 'Enviar codigo de verificacion';
+            });
+        }
+        const btnVerify = document.getElementById('btnVerifyEmailCode');
+        if (btnVerify) {
+            btnVerify.addEventListener('click', async () => {
+                const code = document.getElementById('emailVerifyCode')?.value.trim();
+                if (!code || code.length !== 6) { showWarning('Ingresa el codigo de 6 digitos'); return; }
+                btnVerify.disabled = true;
+                btnVerify.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+                try {
+                    const result = await apiCall('/api/user/change-email/verify', 'POST', { code });
+                    if (result.success) {
+                        document.getElementById('settingsEmail').value = result.email;
+                        document.getElementById('emailChangeFlow').style.display = 'none';
+                        document.getElementById('emailCodeSection').style.display = 'none';
+                        document.getElementById('newEmailInput').value = '';
+                        document.getElementById('emailVerifyCode').value = '';
+                        const storedUser = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+                        storedUser.email = result.email;
+                        localStorage.setItem('latanda_user', JSON.stringify(storedUser));
+                        showSuccess('Email actualizado exitosamente');
+                    } else {
+                        document.getElementById('emailChangeMsg').textContent = result.error || 'Codigo incorrecto';
+                        document.getElementById('emailChangeMsg').style.color = 'var(--ds-red, #ef4444)';
+                        showError(result.error || 'Codigo incorrecto');
+                    }
+                } catch (e) { showError('Error de conexion'); }
+                btnVerify.disabled = false;
+                btnVerify.innerHTML = 'Verificar y cambiar email';
             });
         }
     }

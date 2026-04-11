@@ -748,8 +748,8 @@ class MarketplaceSocialSystem {
     // =====================================================
     // SHOPPING CART (sessionStorage)
     // =====================================================
-    _getCart() { try { return JSON.parse(sessionStorage.getItem('mp_cart') || '[]'); } catch { return []; } }
-    _saveCart(items) { sessionStorage.setItem('mp_cart', JSON.stringify(items)); this._updateCartBadge(); }
+    _getCart() { try { return JSON.parse(localStorage.getItem('mp_cart') || '[]'); } catch { return []; } }
+    _saveCart(items) { localStorage.setItem('mp_cart', JSON.stringify(items)); this._updateCartBadge(); }
     _addToCart(product, quantity) {
         const items = this._getCart();
         const pid = String(product.productId || product.id);
@@ -781,7 +781,7 @@ class MarketplaceSocialSystem {
         const item = items.find(i => i.product_id === String(productId));
         if (item) { item.quantity = Math.max(1, Math.min(qty, item.max_qty)); this._saveCart(items); }
     }
-    _clearCart() { sessionStorage.removeItem('mp_cart'); this._updateCartBadge(); }
+    _clearCart() { localStorage.removeItem('mp_cart'); this._updateCartBadge(); }
     _getCartCount() { return this._getCart().reduce((s, i) => s + i.quantity, 0); }
     _updateCartBadge() {
         const badge = document.getElementById('mcCartBadge');
@@ -2656,7 +2656,9 @@ class MarketplaceSocialSystem {
             } catch (e) { /* ok — may fail for new providers */ }
         }
 
-        return { services, products, reviews, orders, bookings, showServices, showProducts };
+        const storeData = { services, products, reviews, orders, bookings, showServices, showProducts };
+        this._storeData = storeData;
+        return storeData;
     }
 
     _buildStoreItemCards(items, type) {
@@ -3436,6 +3438,7 @@ class MarketplaceSocialSystem {
 
         this._loadChainBalance();
         this._loadReferralDashboard();
+        this._loadFollowersCount();
     }
 
     _renderDashboardClassicV2(container, provider, storeData, theme) {
@@ -3793,9 +3796,9 @@ class MarketplaceSocialSystem {
             <div class="sd-analytics-card sd-clickable" data-action="resumen-subtab" data-subtab="ventas" title="Ver ventas">
                 <div class="sd-analytics-icon sd-icon-ventas"><i class="fas fa-briefcase"></i></div>
                 <div class="sd-analytics-body">
-                    <div class="sd-analytics-value">${esc(String(jobs))}</div>
+                    <div class="sd-analytics-value">${jobs > 0 ? esc(String(jobs)) : '--'}</div>
                     <div class="sd-analytics-label">Trabajos completados</div>
-                    <div class="sd-analytics-sub">${esc(String(totalItems))} publicacion${totalItems !== 1 ? 'es' : ''} activa${totalItems !== 1 ? 's' : ''}</div>
+                    <div class="sd-analytics-sub">${totalItems > 0 ? esc(String(totalItems)) + ' publicacion' + (totalItems !== 1 ? 'es' : '') + ' activa' + (totalItems !== 1 ? 's' : '') : '<span style="opacity:0.6;">Agrega productos o servicios</span>'}</div>
                 </div>
             </div>
             <div class="sd-analytics-card">
@@ -3814,12 +3817,12 @@ class MarketplaceSocialSystem {
                     <div class="sd-analytics-sub">${storeData.showServices ? esc(String(storeData.services?.length || 0)) + ' servicio' + ((storeData.services?.length || 0) !== 1 ? 's' : '') : ''}${storeData.showServices && storeData.showProducts ? ' · ' : ''}${storeData.showProducts ? esc(String(storeData.products?.length || 0)) + ' producto' + ((storeData.products?.length || 0) !== 1 ? 's' : '') : ''}</div>
                 </div>
             </div>
-            <div class="sd-analytics-card sd-clickable" data-action="store-tab" data-tab="pedidos" title="Ver pedidos">
-                <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-bolt"></i></div>
+            <div class="sd-analytics-card" id="sdFollowersCard">
+                <div class="sd-analytics-icon sd-icon-rendimiento"><i class="fas fa-users"></i></div>
                 <div class="sd-analytics-body">
-                    <div class="sd-analytics-value">${esc(String(responseRate))}%</div>
-                    <div class="sd-analytics-label">Tasa de respuesta</div>
-                    <div class="sd-analytics-sub">Tiempo: ${esc(responseTime)}</div>
+                    <div class="sd-analytics-value" id="sdFollowersCount">--</div>
+                    <div class="sd-analytics-label">Seguidores</div>
+                    <div class="sd-analytics-sub" id="sdFollowersSub">Cargando...</div>
                 </div>
             </div>
         </div>`;
@@ -3844,8 +3847,8 @@ class MarketplaceSocialSystem {
                 </div>
                 <div class="sd-preview-stats">
                     <div class="sd-preview-stat"><div class="sd-preview-stat-value">${rating === '0.0' ? '--' : esc(rating)}</div><div class="sd-preview-stat-label">Rating</div></div>
-                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(jobs))}</div><div class="sd-preview-stat-label">Trabajos</div></div>
-                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${esc(String(reviews))}</div><div class="sd-preview-stat-label">Resenas</div></div>
+                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${jobs > 0 ? esc(String(jobs)) : '--'}</div><div class="sd-preview-stat-label">Trabajos</div></div>
+                    <div class="sd-preview-stat"><div class="sd-preview-stat-value">${reviews > 0 ? esc(String(reviews)) : '--'}</div><div class="sd-preview-stat-label">Resenas</div></div>
                 </div>
                 <div class="sd-preview-footer">
                     <a class="sd-preview-link" href="/tienda/${esc(handle)}" target="_blank"><i class="fas fa-external-link-alt"></i> Ver tienda</a>
@@ -4095,13 +4098,100 @@ class MarketplaceSocialSystem {
             tabs += `<button class="sd-subtab${isActive('ordenes')}" data-action="ped-subtab" data-subtab="ordenes"><i class="fas fa-shopping-bag"></i> <span>Ordenes</span>${oBadge}</button>`;
         }
         tabs += `<button class="sd-subtab${isActive('resenas')}" data-action="ped-subtab" data-subtab="resenas"><i class="fas fa-star"></i> <span>Resenas</span>${rBadge}</button>`;
+        tabs += `<button class="sd-subtab${isActive('mensajes')}" data-action="ped-subtab" data-subtab="mensajes"><i class="fas fa-comments"></i> <span>Mensajes</span></button>`;
 
         return `<div class="sd-subtabs-container">
             <div class="sd-subtabs-nav">${tabs}</div>
             ${showServices ? `<div class="sd-subtab-panel" data-panel="reservas"${isVisible('reservas')}>${reservasPanel}</div>` : ''}
             ${showProducts ? `<div class="sd-subtab-panel" data-panel="ordenes"${isVisible('ordenes')}>${ordenesPanel}</div>` : ''}
             <div class="sd-subtab-panel" data-panel="resenas"${isVisible('resenas')}>${resenasPanel}</div>
+            <div class="sd-subtab-panel" data-panel="mensajes"${isVisible('mensajes')}>${this._buildMensajesPanel(esc)}</div>
         </div>`;
+    }
+
+    _buildMensajesPanel(esc) {
+        return '<div id="sdMensajesPanel"><div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);"><i class="fas fa-spinner fa-spin"></i> Cargando conversaciones...</div></div>';
+    }
+
+    async _loadSellerMessages() {
+        const panel = document.getElementById('sdMensajesPanel');
+        if (!panel) return;
+        try {
+            const res = await this.apiRequest('/api/marketplace/messages/conversations');
+            if (!res.success) throw new Error('Error');
+            const convos = res.data?.conversations || [];
+            if (convos.length === 0) {
+                panel.innerHTML = '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-comments"></i></div><div class="sd-empty-title">Sin mensajes aun</div><div class="sd-empty-desc">Cuando un cliente te escriba, sus mensajes apareceran aqui.</div></div>';
+                return;
+            }
+            const esc = this.escapeHtml.bind(this);
+            const cards = convos.map(c => {
+                const unread = parseInt(c.unread_count || 0);
+                const lastMsg = (c.last_message || '').length > 60 ? c.last_message.substring(0, 60) + '...' : (c.last_message || '');
+                const timeAgo = c.last_message_at ? this._timeAgo(new Date(c.last_message_at)) : '';
+                const initial = (c.other_user_name || 'U').charAt(0).toUpperCase();
+                const avatarHtml = c.other_user_avatar
+                    ? '<img src="' + esc(c.other_user_avatar) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
+                    : '<span style="font-size:1rem;font-weight:600;">' + esc(initial) + '</span>';
+                return '<div class="sd-msg-card' + (unread > 0 ? ' sd-msg-unread' : '') + '" data-action="open-seller-chat" data-user-id="' + esc(String(c.other_user_id)) + '">'
+                    + '<div class="sd-msg-avatar">' + avatarHtml + '</div>'
+                    + '<div class="sd-msg-body">'
+                    + '<div class="sd-msg-name">' + esc(c.other_user_name || 'Usuario') + (unread > 0 ? ' <span class="sd-subtab-badge">' + unread + '</span>' : '') + '</div>'
+                    + '<div class="sd-msg-preview">' + esc(lastMsg) + '</div>'
+                    + '</div>'
+                    + '<div class="sd-msg-time">' + esc(timeAgo) + '</div>'
+                    + '</div>';
+            }).join('');
+            panel.innerHTML = cards;
+        } catch (err) {
+            panel.innerHTML = '<div class="sd-empty-state-card"><div class="sd-empty-icon"><i class="fas fa-exclamation-circle"></i></div><div class="sd-empty-title">Error cargando mensajes</div></div>';
+        }
+    }
+
+    _timeAgo(date) {
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'ahora';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd';
+        return date.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
+    }
+
+    _exportOrdersCSV(orders) {
+        if (!orders || orders.length === 0) { this.showNotification('No hay pedidos para exportar', 'info'); return; }
+        const headers = ['ID', 'Producto', 'Comprador', 'Cantidad', 'Precio Unitario', 'Total', 'Estado', 'Fecha'];
+        const rows = orders.map(o => [
+            o.id, '"' + (o.product_title || '').replace(/"/g, '""') + '"',
+            '"' + (o.buyer_name || '').replace(/"/g, '""') + '"',
+            o.quantity || 1, o.unit_price || 0, o.total_price || 0, o.status || '',
+            o.created_at ? new Date(o.created_at).toLocaleDateString('es-HN') : ''
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = 'pedidos-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click(); URL.revokeObjectURL(url);
+        this.showNotification('CSV exportado', 'success');
+    }
+
+    _exportBookingsCSV(bookings) {
+        if (!bookings || bookings.length === 0) { this.showNotification('No hay reservas para exportar', 'info'); return; }
+        const headers = ['ID', 'Servicio', 'Cliente', 'Fecha', 'Hora', 'Precio', 'Estado'];
+        const rows = bookings.map(b => [
+            b.booking_id, '"' + (b.service_title || '').replace(/"/g, '""') + '"',
+            '"' + (b.customer_name || b.user_name || '').replace(/"/g, '""') + '"',
+            b.scheduled_date || '', b.scheduled_time ? b.scheduled_time.substring(0, 5) : '',
+            b.quoted_price || 0, b.status || ''
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = 'reservas-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click(); URL.revokeObjectURL(url);
+        this.showNotification('CSV exportado', 'success');
     }
 
     _buildBookingsPanel(bookings, esc) {
@@ -4148,7 +4238,7 @@ class MarketplaceSocialSystem {
             </div>`;
         }).join('');
 
-        return html + `<div class="sd-orders-list">${cards}</div>`;
+        return html + `<div style="text-align:right;margin-bottom:8px;"><button class="sd-order-btn" style="background:rgba(255,255,255,0.08);color:var(--ds-text-secondary,rgba(255,255,255,0.6));font-size:0.8rem;" data-action="export-bookings"><i class="fas fa-download"></i> Exportar CSV</button></div><div class="sd-orders-list">${cards}</div>`;
     }
 
     _buildReviewsSummary(reviews, provider, esc) {
@@ -6529,6 +6619,26 @@ class MarketplaceSocialSystem {
         }
     }
 
+    async _loadFollowersCount() {
+        const card = document.getElementById('sdFollowersCard');
+        if (!card) return;
+        try {
+            const user = JSON.parse(localStorage.getItem('latanda_user') || '{}');
+            const userId = user.user_id || user.id;
+            if (!userId) return;
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+            const resp = await fetch('/api/feed/social/user/' + userId + '/profile', { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await resp.json();
+            if (data.success && data.data && data.data.stats) {
+                const count = data.data.stats.followers || 0;
+                const el = document.getElementById('sdFollowersCount');
+                const sub = document.getElementById('sdFollowersSub');
+                if (el) el.textContent = String(count);
+                if (sub) sub.textContent = count === 0 ? 'Comparte tu tienda para crecer' : count + ' persona' + (count !== 1 ? 's' : '') + ' te siguen';
+            }
+        } catch (err) {}
+    }
+
     _buildChainBalanceCard(esc) {
         return `<div class="chain-balance-card" id="chainBalanceCard">
             <div class="chain-balance-header"><i class="fas fa-link"></i> La Tanda Chain (on-chain)</div>
@@ -6622,7 +6732,7 @@ class MarketplaceSocialSystem {
             return `<div class="sd-empty"><div class="sd-empty-icon"><i class="fas fa-shopping-bag"></i></div><div class="sd-empty-title">No tienes pedidos aun</div><div class="sd-empty-desc">Cuando alguien compre tus productos, los veras aqui.</div></div>`;
         }
         const filterHtml = `<div class="sd-order-filter-row"><select class="sd-order-filter" data-action="filter-orders">
-            <option value="all">Todos</option><option value="pending">Pendientes</option><option value="paid">Pagados</option><option value="shipped">Enviados</option><option value="delivered">Entregados</option><option value="cancelled">Cancelados</option></select></div>`;
+            <option value="all">Todos</option><option value="pending">Pendientes</option><option value="paid">Pagados</option><option value="shipped">Enviados</option><option value="delivered">Entregados</option><option value="cancelled">Cancelados</option></select><button class="sd-order-btn" style="background:rgba(255,255,255,0.08);color:var(--ds-text-secondary,rgba(255,255,255,0.6));margin-left:auto;font-size:0.8rem;" data-action="export-orders"><i class="fas fa-download"></i> Exportar CSV</button></div>`;
         const cards = orders.map(o => {
             const imgSrc = o.product_images && o.product_images[0] ? (typeof o.product_images[0] === 'object' ? o.product_images[0].url : o.product_images[0]) : null;
             const imgHtml = imgSrc ? `<img src="${esc(imgSrc)}" alt="" class="sd-order-img">` : `<div class="sd-order-img sd-order-img-placeholder"><i class="fas fa-box"></i></div>`;
@@ -6825,14 +6935,16 @@ async function viewProduct(productId) {
                 '<div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:16px;line-height:1.5;">' + esc(p.description || '') + '</div>' +
                 '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:16px;">' +
                     '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + sellerName.charAt(0) + '</div>' +
-                    '<div><div style="color:#fff;font-size:14px;font-weight:600;">' + sellerName + '</div>' +
+                    '<div style="flex:1;"><div style="color:#fff;font-size:14px;font-weight:600;">' + sellerName + '</div>' +
                     (p.seller_city ? '<div style="color:rgba(255,255,255,0.5);font-size:12px;">📍 ' + esc(p.seller_city || p.location || '') + '</div>' : '') +
                     '</div>' +
+                    (p.seller_id ? '<button class="lt-follow-btn" data-user-id="' + esc(String(p.seller_id)) + '" onclick="toggleFollowStore(this)" style="background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.3);color:#00FFFF;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Seguir</button>' : '') +
                 '</div>' +
                 (p.quantity > 0 ? '<div style="display:flex;gap:8px;">' +
                     '<button class="ds-btn ds-btn-primary" style="flex:1;padding:12px;font-size:15px;" onclick="document.getElementById(\'vpOverlay\').remove(); buyProduct(\'' + esc(p.id) + '\')">Comprar ahora</button>' +
                     '<button class="ds-btn ds-btn-secondary" style="padding:12px 16px;" data-action="add-to-cart" data-id="' + esc(p.id) + '"><i class="fas fa-cart-plus"></i></button>' +
-                '</div>' : '<button class="ds-btn ds-btn-secondary" style="width:100%;padding:12px;opacity:0.5;" disabled>Agotado</button>') +
+                    (p.seller_id ? '<button class="ds-btn ds-btn-secondary" style="padding:12px 16px;" onclick="document.getElementById(\'vpOverlay\').remove(); openSellerChat(' + parseInt(p.seller_id) + ')"><i class="fas fa-comment-dots"></i></button>' : '') +
+                '</div>' : '<div style="display:flex;gap:8px;"><button class="ds-btn ds-btn-secondary" style="flex:1;padding:12px;opacity:0.5;" disabled>Agotado</button>' + (p.seller_id ? '<button class="ds-btn ds-btn-secondary" style="padding:12px 16px;" onclick="document.getElementById(\'vpOverlay\').remove(); openSellerChat(' + parseInt(p.seller_id) + ')"><i class="fas fa-comment-dots"></i> Mensaje</button>' : '') + '</div>') +
             '</div>' +
         '</div>';
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
@@ -6841,6 +6953,76 @@ async function viewProduct(productId) {
         ms.showNotification('Error al cargar producto', 'error');
         console.warn('viewProduct error:', err.message);
     }
+}
+
+async function toggleFollowStore(btn) {
+    const userId = btn.dataset.userId;
+    if (!userId) return;
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+    if (!token) { if (window.marketplaceSystem) window.marketplaceSystem.showNotification('Inicia sesion para seguir tiendas', 'info'); return; }
+    const isFollowing = btn.dataset.following === 'true';
+    try {
+        const resp = await fetch('/api/feed/social/follow/' + userId, {
+            method: isFollowing ? 'DELETE' : 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        });
+        const data = await resp.json();
+        if (data.success) {
+            btn.dataset.following = isFollowing ? 'false' : 'true';
+            btn.textContent = isFollowing ? 'Seguir' : 'Siguiendo';
+            btn.style.background = isFollowing ? 'rgba(0,255,255,0.1)' : 'rgba(0,255,255,0.25)';
+            btn.style.borderColor = isFollowing ? 'rgba(0,255,255,0.3)' : 'rgba(0,255,255,0.6)';
+        }
+    } catch (err) { console.warn('toggleFollow error:', err); }
+}
+
+async function checkFollowStatus(btn) {
+    const userId = btn.dataset.userId;
+    if (!userId) return;
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
+    if (!token) return;
+    try {
+        const resp = await fetch('/api/feed/social/user/' + userId + '/profile', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await resp.json();
+        if (data.success && data.data?.is_following) {
+            btn.dataset.following = 'true';
+            btn.textContent = 'Siguiendo';
+            btn.style.background = 'rgba(0,255,255,0.25)';
+            btn.style.borderColor = 'rgba(0,255,255,0.6)';
+        }
+    } catch (err) {}
+}
+
+// Auto-check follow status when modals open
+(function() {
+    var obs = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            m.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) {
+                    var btns = node.querySelectorAll ? node.querySelectorAll('.lt-follow-btn') : [];
+                    btns.forEach(function(btn) { checkFollowStatus(btn); });
+                }
+            });
+        });
+    });
+    obs.observe(document.body, { childList: true, subtree: false });
+})();
+
+function openSellerChat(sellerId) {
+    const ms = window.marketplaceSystem;
+    if (!ms) return;
+    // Navigate to marketplace Chat tab
+    ms.switchMainTab('compras');
+    setTimeout(() => {
+        const chatTab = document.querySelector('[data-action="compras-subtab"][data-subtab="chat"]');
+        if (chatTab) chatTab.click();
+        setTimeout(() => {
+            if (ms.openChat) ms.openChat(sellerId);
+            else if (ms.loadChatWith) ms.loadChatWith(sellerId);
+        }, 400);
+    }, 300);
 }
 
 async function buyProduct(productId) {
@@ -7050,7 +7232,8 @@ async function viewService(serviceId) {
                 (s.tags ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">' + (Array.isArray(s.tags) ? s.tags : []).map(t => '<span style="background:rgba(255,107,53,0.15);color:#FF6B35;padding:3px 10px;border-radius:12px;font-size:12px;">' + esc(t) + '</span>').join('') + '</div>' : '') +
                 '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:16px;">' +
                     '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#ff8c5a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">' + provName.charAt(0) + '</div>' +
-                    '<div style="color:#fff;font-size:14px;font-weight:600;">' + provName + '</div>' +
+                    '<div style="flex:1;color:#fff;font-size:14px;font-weight:600;">' + provName + '</div>' +
+                    (s.provider_user_id ? '<button class="lt-follow-btn" data-user-id="' + esc(String(s.provider_user_id)) + '" onclick="toggleFollowStore(this)" style="background:rgba(0,255,255,0.1);border:1px solid rgba(0,255,255,0.3);color:#00FFFF;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Seguir</button>' : '') +
                 '</div>' +
                 (function() {
                     var ctaLabel, ctaIcon, ctaOnclick;
@@ -7058,7 +7241,8 @@ async function viewService(serviceId) {
                     else if (s.price_type === 'hourly' || s.price_type === 'quote' || s.price_type === 'negotiable') { ctaLabel = '📋 Solicitar Cotizacion'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
                     else if (s.price_type === 'free') { ctaLabel = '📅 Agendar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); bookService(" + parseInt(serviceId) + ")"; }
                     else { ctaLabel = '✉️ Contactar'; ctaOnclick = "document.getElementById('vsOverlay').remove(); if(window.marketplaceSystem) window.marketplaceSystem.openMessageModal && window.marketplaceSystem.openMessageModal()"; }
-                    return '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="' + ctaOnclick + '">' + ctaLabel + '</button>';
+                    var msgBtn = s.provider_user_id ? '<button class="ds-btn ds-btn-secondary" style="width:100%;padding:10px;font-size:14px;margin-top:8px;" onclick="document.getElementById(\'vsOverlay\').remove(); openSellerChat(' + parseInt(s.provider_user_id) + ')"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>' : '';
+                    return '<button class="ds-btn ds-btn-primary" style="width:100%;padding:12px;font-size:15px;" onclick="' + ctaOnclick + '">' + ctaLabel + '</button>' + msgBtn;
                 })() +
             '</div>' +
         '</div>';
@@ -7883,6 +8067,32 @@ function setupMarketplaceDelegatedListeners() {
                 }
                 break;
             }
+            case 'export-orders': {
+                const ms = window.marketplaceSystem;
+                if (ms && ms._storeData?.orders) ms._exportOrdersCSV(ms._storeData.orders);
+                break;
+            }
+            case 'export-bookings': {
+                const ms = window.marketplaceSystem;
+                if (ms && ms._storeData?.bookings) ms._exportBookingsCSV(ms._storeData.bookings);
+                break;
+            }
+            case 'open-seller-chat': {
+                const userId = btn.dataset.userId;
+                if (userId) {
+                    // Navigate to marketplace Chat tab with this user
+                    const ms = window.marketplaceSystem;
+                    if (ms) {
+                        ms.switchMainTab('compras');
+                        setTimeout(() => {
+                            const chatTab = document.querySelector('[data-action="compras-subtab"][data-subtab="chat"]');
+                            if (chatTab) chatTab.click();
+                            setTimeout(() => { if (ms.openChat) ms.openChat(userId); }, 300);
+                        }, 300);
+                    }
+                }
+                break;
+            }
             case 'submit-service': {
                 window.marketplaceSystem?.handleCreateService();
                 break;
@@ -8648,6 +8858,10 @@ document.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
     window.marketplaceSystem = new MarketplaceSocialSystem();
     window.ms = window.marketplaceSystem; // Alias for shorter references
+    // Hash routing: #mi-tienda switches to Mi Tienda tab
+    if (location.hash === '#mi-tienda') {
+        setTimeout(function() { if (window.marketplaceSystem) if (window.mpNavigate) window.mpNavigate('my-store'); else window.marketplaceSystem.switchTab('my-store'); }, 600);
+    }
 });
 
 // Export for other modules

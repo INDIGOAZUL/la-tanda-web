@@ -60,6 +60,7 @@ body { margin:0; background:var(--ds-bg-base); color:var(--ds-text-primary); fon
 .status-dot.converted { background:#8b5cf6; }
 .status-dot.declined { background:#ef4444; }
 .status-dot.paused { background:#64748b; }
+.status-dot.bounced { background:#f59e0b; }
 
 /* Buttons */
 .btn { padding:8px 16px; border-radius:var(--ds-radius-md); border:none; cursor:pointer; font-size:0.8rem; font-weight:500; transition:all 0.2s; }
@@ -145,7 +146,7 @@ body { margin:0; background:var(--ds-bg-base); color:var(--ds-text-primary); fon
         <div class="filters">
             <select id="filterTier" onchange="loadContacts()"><option value="">Todos los Tiers</option><option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option></select>
             <select id="filterType" onchange="loadContacts()"><option value="">Todos los Tipos</option><option value="vc">VC</option><option value="angel">Angel</option><option value="grant">Grant</option><option value="accelerator">Aceleradora</option><option value="impact">Impact</option></select>
-            <select id="filterStatus" onchange="loadContacts()"><option value="">Todos los Estados</option><option value="pending">Pendiente</option><option value="active">Activo</option><option value="replied">Respondido</option><option value="converted">Convertido</option><option value="declined">Declinado</option><option value="paused">Pausado</option></select>
+            <select id="filterStatus" onchange="loadContacts()"><option value="">Todos los Estados</option><option value="pending">Pendiente</option><option value="active">Activo</option><option value="replied">Respondido</option><option value="converted">Convertido</option><option value="declined">Declinado</option><option value="paused">Pausado</option><option value="bounced">Bounced</option></select>
         </div>
         <div class="table-scroll">
         <table class="data-table">
@@ -312,11 +313,12 @@ async function loadPipeline() {
             <div class="stat-card"><div class="stat-value">${t.total_opened}</div><div class="stat-label">Abiertos</div></div>
             <div class="stat-card"><div class="stat-value">${t.total_clicked}</div><div class="stat-label">Clicks</div></div>
             <div class="stat-card"><div class="stat-value">${t.replied}</div><div class="stat-label">Respondidos</div></div>
+            <div class="stat-card"><div class="stat-value">${t.paused + (t.bounced || 0)}</div><div class="stat-label">Paused/Bounced</div></div>
             <div class="stat-card"><div class="stat-value">${t.total_sent > 0 ? Math.round(t.total_opened / t.total_sent * 100) : 0}%</div><div class="stat-label">Tasa Apertura</div></div>
         `;
 
-        const statuses = ['pending', 'active', 'replied', 'converted', 'paused', 'declined'];
-        const labels = { pending: 'Pendiente', active: 'Activo', replied: 'Respondido', converted: 'Convertido', paused: 'Pausado', declined: 'Declinado' };
+        const statuses = ['pending', 'active', 'replied', 'converted', 'paused', 'bounced', 'declined'];
+        const labels = { pending: 'Pendiente', active: 'Activo', replied: 'Respondido', converted: 'Convertido', paused: 'Pausado', bounced: 'Bounced', declined: 'Declinado' };
 
         let html = '';
         for (const status of statuses) {
@@ -367,6 +369,8 @@ async function loadContacts() {
             if (c.status === 'active') html += '<button class="btn btn-sm btn-ghost" onclick="pauseContact(' + c.id + ')"><i class="fas fa-pause"></i></button> ';
             if (c.status === 'paused') html += '<button class="btn btn-sm btn-primary" onclick="resumeContact(' + c.id + ')"><i class="fas fa-play"></i></button> ';
             if (c.status === 'active' || c.status === 'paused') html += '<button class="btn btn-sm btn-ghost" onclick="markReplied(' + c.id + ')" title="Marcar respondido"><i class="fas fa-reply"></i></button> ';
+            if (c.status === 'active' || c.status === 'paused') html += '<button class="btn btn-sm btn-ghost" onclick="bounceContact(' + c.id + ')" title="Marcar bounce" style="color:#f59e0b;"><i class="fas fa-exclamation-triangle"></i></button> ';
+            if (c.status === 'bounced') html += '<button class="btn btn-sm btn-primary" onclick="retryContact(' + c.id + ')" title="Reintentar con nuevo email"><i class="fas fa-redo"></i></button> ';
             html += '<button class="btn btn-sm btn-danger" onclick="deleteContact(' + c.id + ')" title="Eliminar"><i class="fas fa-trash"></i></button>';
             html += '</td></tr>';
         }
@@ -482,6 +486,27 @@ async function deleteContact(id) {
     }
     try { await api('/contacts/' + id, 'DELETE'); toast('Eliminado', 'success'); loadPipeline(); loadContacts(); }
     catch (e) { toast(e.message, 'error'); }
+}
+
+async function bounceContact(id) {
+    const reason = prompt('Razon del bounce (ej: mailbox not found, org-only group):');
+    if (!reason) return;
+    const altEmail = prompt('Email alternativo (dejar vacio si no hay):');
+    try {
+        await api('/contacts/' + id + '/bounce', 'POST', { reason: reason, alternative_email: altEmail || null });
+        toast('Marcado como bounced', 'success');
+        loadPipeline(); loadContacts();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function retryContact(id) {
+    const newEmail = prompt('Nuevo email para reintentar:');
+    if (!newEmail) return;
+    try {
+        await api('/contacts/' + id + '/retry', 'POST', { email: newEmail });
+        toast('Email actualizado. Inicia la secuencia cuando estes listo.', 'success');
+        loadPipeline(); loadContacts();
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 async function pauseContact(id) {

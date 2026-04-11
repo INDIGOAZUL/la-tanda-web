@@ -37,6 +37,7 @@
 
         /* Bottom Tab Navigation */
         .mp-bottom-nav {
+            transition: transform 0.3s ease;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -69,6 +70,7 @@
         }
         .mp-bottom-tab i { font-size: 20px; }
         .mp-bottom-tab.active { color: var(--mp-orange); }
+        .mp-bottom-nav.nav-hidden { transform: translateY(100%); }
         .mp-bottom-tab:hover { color: var(--ds-text-primary, rgba(255,255,255,0.8)); }
         .mp-bottom-tab.active:hover { color: var(--mp-orange); }
         .mp-tab-badge {
@@ -2752,8 +2754,9 @@
 .exp-load-more { text-align: center; padding: 16px 0; }
 .exp-load-more-btn { padding: 10px 32px; border-radius: 20px; border: 1px solid rgba(0,255,255,0.3); background: transparent; color: var(--ds-cyan, #00FFFF); font-size: 13px; cursor: pointer; transition: background 0.2s; }
 .exp-load-more-btn:hover { background: var(--ds-cyan-muted, rgba(0,255,255,0.08)); }
-.exp-sell-fab { position: fixed; bottom: 80px; right: 20px; width: 52px; height: 52px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--mp-orange), #E55A2B); color: #fff; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px var(--mp-orange-glow); z-index: 50; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; }
-.exp-sell-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px var(--mp-orange-muted, rgba(255,107,53,0.4)); }
+.exp-sell-fab { position: fixed; bottom: 70px; right: 20px; width: 52px; height: 52px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--mp-orange), #E55A2B); color: #fff; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px var(--mp-orange-glow); z-index: 1001; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; justify-content: center; }
+.exp-sell-fab.fab-hidden { transform: translateY(calc(100% + 20px)); opacity: 0; }
+        .exp-sell-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px var(--mp-orange-muted, rgba(255,107,53,0.4)); }
 .exp-empty { text-align: center; padding: 48px 16px; color: var(--ds-text-muted, rgba(255,255,255,0.4)); }
 .exp-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .exp-empty-text { font-size: 14px; margin-bottom: 12px; }
@@ -4433,6 +4436,10 @@
 
     <!-- Bottom Tab Navigation (mobile) -->
     <nav class="mp-bottom-nav">
+        <button class="mp-bottom-tab" data-action="toggle-left-drawer">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>Mas</span>
+        </button>
         <button class="mp-bottom-tab active" data-section="marketplace" onclick="mpNavigate('marketplace')">
             <i class="fas fa-search"></i>
             <span>Explorar</span>
@@ -4450,10 +4457,7 @@
             <span>Chat</span>
             <span class="mp-tab-badge" id="mpMsgBadge" style="display:none;">0</span>
         </button>
-        <a class="mp-bottom-tab" href="home-dashboard.html">
-            <i class="fas fa-home"></i>
-            <span>Inicio</span>
-        </a>
+
     </nav>
 
     <!-- Side Rail Navigation (desktop) -->
@@ -4570,7 +4574,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-    <script src="marketplace-social.js?v=1775101559"></script>
+    <script src="marketplace-social.js?v=1775778141"></script>
     <script src="pwa-manager.js"></script>
     <script>
 // ==========================================
@@ -4828,7 +4832,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
     /* Orders Tab */
     .sd-order-badge-pending { background: #f59e0b; color: var(--ds-bg-base, #000); font-weight: 700; }
-    .sd-order-filter-row { margin-bottom: 10px; }
+    .sd-order-filter-row { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .sd-msg-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--ds-bg-surface, rgba(255,255,255,0.04)); border-radius: 10px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
+    .sd-msg-card:hover { background: rgba(255,255,255,0.08); }
+    .sd-msg-card.sd-msg-unread { background: rgba(0,255,255,0.04); border-left: 3px solid var(--ds-cyan, #00FFFF); }
+    .sd-msg-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(168,85,247,0.2)); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; color: var(--ds-text-primary, #fff); }
+    .sd-msg-body { flex: 1; min-width: 0; }
+    .sd-msg-name { font-size: 0.9rem; font-weight: 600; color: var(--ds-text-primary, #fff); display: flex; align-items: center; gap: 6px; }
+    .sd-msg-preview { font-size: 0.8rem; color: var(--ds-text-secondary, rgba(255,255,255,0.5)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .sd-msg-time { font-size: 0.75rem; color: var(--ds-text-muted, rgba(255,255,255,0.35)); flex-shrink: 0; }
     .sd-order-filter { background: var(--ds-border, rgba(255,255,255,0.06)); color: #e0e0e0; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; }
     .sd-order-filter:focus { border-color: var(--mp-orange, #FF6B35); outline: none; }
     .sd-orders-list { display: flex; flex-direction: column; gap: 8px; max-height: 500px; overflow-y: auto; }
@@ -4930,13 +4942,7 @@ document.addEventListener("DOMContentLoaded", function() {
     .chain-refresh-btn:hover { background: var(--ds-cyan-muted, rgba(6,182,212,0.1)); }
     </style>
     <!-- Mobile Bottom Nav -->
-    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
-        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
-        <a href="/marketplace-social.html" class="mobile-nav-item active"><i class="fas fa-store"></i><span>Mercado</span></a>
-        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
-        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
-    </nav>
-    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.1);padding:6px 0 max(6px,env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1rem}.mobile-nav-item.active,.mobile-nav-item:hover{color:#00FFFF}}</style>
-    <script src="js/components-loader.js?v=32.7"></script>
+    <!-- global mobile-bottom-nav hidden on marketplace (uses mp-bottom-nav) -->
+    <script src="js/components-loader.js?v=33.2"></script>
 </body>
 </html>

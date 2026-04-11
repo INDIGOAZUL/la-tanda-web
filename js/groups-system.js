@@ -258,6 +258,7 @@
                     filteredGroups = [...allGroups];
                     updateStats();
                     renderGroups();
+                    updateTabVisibility();
 
                     // Also refresh tandas tab to sync turn positions
                     if (typeof refreshTandas === 'function') {
@@ -510,6 +511,29 @@
 
             // Next payment due
             updateNextPaymentCard();
+        }
+
+        // v4.25.14: Hide Tandas tab for pending-only members
+        function updateTabVisibility() {
+            var tandasTab = document.querySelector('[data-action="switch-groups-tab"][data-tab="tandas"]');
+            if (!tandasTab) return;
+            var hasActiveMembership = allGroups.some(function(g) {
+                return g.my_membership_status !== 'pending' && g.my_membership_status !== 'rejected' && g.my_membership_status !== 'removed' && g.my_membership_status !== 'left';
+            });
+            if (!hasActiveMembership && allGroups.length > 0) {
+                tandasTab.style.display = 'none';
+                // If tandas tab was active, switch back to groups
+                if (tandasTab.classList.contains('active')) {
+                    tandasTab.classList.remove('active');
+                    var groupsTab = document.querySelector('[data-action="switch-groups-tab"][data-tab="groups"]');
+                    if (groupsTab) { groupsTab.classList.add('active'); groupsTab.setAttribute('aria-selected', 'true'); }
+                    document.querySelectorAll('.content-section').forEach(function(s) { s.classList.remove('active'); });
+                    var groupsSection = document.getElementById('groups');
+                    if (groupsSection) groupsSection.classList.add('active');
+                }
+            } else {
+                tandasTab.style.display = '';
+            }
         }
 
         function updateNextPaymentCard() {
@@ -1463,32 +1487,15 @@
         }
 
         function registerPayment(groupId) {
-
-            // Check if payment integration manager exists
-            if (window.paymentIntegrationManager) {
-                const group = allGroups.find(g => g.id === groupId);
-                if (group) {
-                    // Open payment modal with group context
-                    window.paymentIntegrationManager.openPaymentModal({
-                        groupId: groupId,
-                        amount: group.contribution_amount,
-                        currency: 'HNL',
-                        description: `Pago para ${escapeHtml(group.name)}`,
-                        metadata: {
-                            group_name: group.name,
-                            payment_type: 'contribution'
-                        }
-                    });
-                } else {
-                    showError('Grupo no encontrado');
-                }
+            // v4.25.13 TIER0: Single entry point for all payments
+            if (typeof openPaymentModal === 'function') {
+                openPaymentModal(groupId);
             } else {
-                // Fallback: navigate to payment page with group ID
-                window.location.href = `/payment.html?group_id=${groupId}`;
+                switchGroupsTab('tandas');
             }
         }
 
-        function handleAlertAction(groupId, actionUrl, alertType) {
+                function handleAlertAction(groupId, actionUrl, alertType) {
 
             // Handle different action types
             switch (alertType) {
@@ -3556,6 +3563,31 @@ function attachTandasFunctions() {
             "</div>";
             
             document.body.insertAdjacentHTML("beforeend", modalHTML); if(window.lockBodyScroll)window.lockBodyScroll();
+
+            // v4.25.13 DEFINITIVE: Self-contained click listener on modal
+            var modalEl = document.getElementById('modalOverlay');
+            if (modalEl) {
+                modalEl.addEventListener('click', function(ev) {
+                    var actionBtn = ev.target.closest('[data-action]');
+                    if (!actionBtn) {
+                        // Click on overlay background — close modal
+                        if (ev.target === modalEl || ev.target.classList.contains('modal-overlay')) {
+                            window.advancedGroupsSystem.hideModal();
+                        }
+                        return;
+                    }
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var act = actionBtn.getAttribute('data-action');
+                    if (act === 'grp-hide-modal') {
+                        window.advancedGroupsSystem.hideModal();
+                    } else if (act === 'modal-process-payment') {
+                        if (typeof processModalPayment === 'function') processModalPayment();
+                    } else if (act === 'modal-close-error') {
+                        window.advancedGroupsSystem.hideModal();
+                    }
+                });
+            }
         };
     }
 
@@ -7546,6 +7578,14 @@ function renderTurnsList() {
             var tabName = tabBtn.getAttribute('data-tab');
             if (!tabName) return;
 
+            // v4.25.14: Block tandas tab for pending-only members
+            if (tabName === 'tandas') {
+                var hasActive = allGroups.some(function(g) {
+                    return g.my_membership_status !== 'pending' && g.my_membership_status !== 'rejected' && g.my_membership_status !== 'removed' && g.my_membership_status !== 'left';
+                });
+                if (!hasActive && allGroups.length > 0) return;
+            }
+
             // Update tab buttons
             document.querySelectorAll('.groups-tab').forEach(function(t) {
                 t.classList.remove('active');
@@ -7704,11 +7744,10 @@ function renderTurnsList() {
                 }
                 break;
             case 'grp-quick-pay':
-                var payTandaId = target.dataset.tandaId;
-                if (payTandaId && typeof quickPay === 'function') {
-                    quickPay(payTandaId);
+                var qpGroupId = target.dataset.groupId;
+                if (qpGroupId && typeof openPaymentModal === 'function') {
+                    openPaymentModal(qpGroupId);
                 } else {
-                    // Fallback: navigate to tandas tab
                     switchGroupsTab('tandas');
                 }
                 break;
@@ -8210,7 +8249,7 @@ function renderTurnsList() {
                 var agid = actionBtn.getAttribute('data-gid');
                 if (act === 'vd-go-gestionar' && agid) { closeVD(); window.location.href = '/gestionar/' + encodeURIComponent(agid); }
                 if (act === 'vd-go-miembros' && agid) { closeVD(); window.location.href = '/gestionar/' + encodeURIComponent(agid) + '?tab=miembros'; }
-                if (act === 'vd-pay' && agid) { closeVD(); if (typeof registerPayment === 'function') registerPayment(agid); else window.location.href = '/payment.html?group_id=' + encodeURIComponent(agid); }
+                if (act === 'vd-pay' && agid) { closeVD(); if (typeof openPaymentModal === 'function') openPaymentModal(agid); }
                 if (act === 'vd-extension' && agid) { closeVD(); if (typeof showExtensionRequestModal === 'function') showExtensionRequestModal(agid); }
                 if (act === 'vd-toggle-history' && agid) {
                     var histDiv = document.getElementById('vdHistory');

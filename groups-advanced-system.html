@@ -1546,7 +1546,7 @@
     </aside>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="mobile-bottom-nav" id="mobileBottomNav" role="navigation" aria-label="Navegacion principal">
+        <nav class="mobile-bottom-nav" id="mobileBottomNav">
         <button class="mobile-nav-item" data-action="toggle-left-drawer" aria-label="Abrir menu">
             <i class="fas fa-ellipsis-h"></i>
             <span>Mas</span>
@@ -1555,21 +1555,21 @@
             <i class="fas fa-home"></i>
             <span>Inicio</span>
         </a>
-        <a href="/groups-advanced-system.html" class="mobile-nav-item active">
-            <i class="fas fa-users"></i>
-            <span>Grupos</span>
-        </a>
         <a href="/marketplace-social.html" class="mobile-nav-item">
             <i class="fas fa-store"></i>
             <span>Mercado</span>
         </a>
-        <button class="mobile-nav-item" data-action="toggle-right-drawer" aria-label="Abrir widgets">
-            <i class="fas fa-th-large"></i>
-            <span>Widgets</span>
-        </button>
+        <a href="/marketplace-social.html#mi-tienda" class="mobile-nav-item" data-action="goto-mi-tienda">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Mi Tienda</span>
+        </a>
+        <a href="/mi-perfil.html" class="mobile-nav-item">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </a>
     </nav>
 
-    <script src="js/groups-system.min.js?v=2.7"></script>
+    <script src="js/groups-system.min.js?v=1775761639"></script>
     <script defer src="js/mobile-drawer.js?v=1769558148"></script>
     <script defer src="js/edge-swipe.js?v=1769558147"></script>
     <script>
@@ -1585,8 +1585,191 @@
         }
     });
     </script>
-    <script src="js/components-loader.js?v=32.7"></script>
+    <script src="js/components-loader.js?v=33.2"></script>
 </body>
+<!-- Payment Modal — Tier 0 Rebuild (v4.25.13) -->
+<div id="paymentModal" class="ds-overlay" style="display:none;z-index:500;">
+    <div class="ds-modal" style="max-width:480px;padding:0;overflow:hidden;">
+        <!-- Header -->
+        <div style="padding:20px 24px;background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(16,185,129,0.05));border-bottom:1px solid rgba(34,197,94,0.2);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="color:#22c55e;font-size:1.1rem;margin:0;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-money-bill-wave"></i> Realizar Pago
+            </h3>
+            <button onclick="closePaymentModal()" style="background:none;border:none;color:#94a3b8;font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+
+        <!-- Content -->
+        <div id="paymentModalContent" style="padding:24px;">
+            <div style="text-align:center;padding:30px;color:#94a3b8;">
+                <i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+                <p style="margin-top:8px;">Cargando datos de pago...</p>
+            </div>
+        </div>
+
+        <!-- Footer (hidden until loaded) -->
+        <div id="paymentModalFooter" style="display:none;padding:16px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:10px;justify-content:flex-end;">
+            <button onclick="closePaymentModal()" style="padding:10px 20px;background:rgba(255,255,255,0.08);color:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.9rem;">Cancelar</button>
+            <button id="paymentModalPayBtn" onclick="payNow()" style="padding:10px 24px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-family:inherit;font-size:0.9rem;display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-check"></i> Pagar Ahora
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+// ============================================================
+// PAYMENT MODAL — Tier 0 Self-Contained (v4.25.13)
+// ============================================================
+var _paymentModalData = { tandaId: null, groupId: null, amount: 0 };
+
+function closePaymentModal() {
+    var m = document.getElementById('paymentModal');
+    if (m) { m.style.display = 'none'; }
+    document.body.style.overflow = '';
+}
+
+function openPaymentModal(groupId) {
+    var modal = document.getElementById('paymentModal');
+    var content = document.getElementById('paymentModalContent');
+    var footer = document.getElementById('paymentModalFooter');
+    if (!modal || !content) return;
+
+    // Show with loading
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    footer.style.display = 'none';
+    content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><p style="margin-top:8px;">Cargando datos de pago...</p></div>';
+
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+    var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+
+    // Load tanda + wallet in parallel
+    Promise.all([
+        fetch('/api/tandas/my-tandas', { headers: headers }).then(function(r) { return r.json(); }),
+        fetch('/api/wallet/balance', { headers: headers }).then(function(r) { return r.json(); }).catch(function() { return { success: true, data: { balance: 0 } }; })
+    ]).then(function(results) {
+        var tandaRes = results[0];
+        var walletRes = results[1];
+
+        if (!tandaRes.success) {
+            content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>Error cargando datos</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+            return;
+        }
+
+        var tandas = tandaRes.data.tandas || tandaRes.data || [];
+        // Cache for future use
+        window.tandasData = tandas;
+
+        var tanda = tandas.find(function(t) { return t.group_id === groupId && (t.status === 'active' || t.status === 'collecting'); });
+        if (!tanda) {
+            content.innerHTML = '<div style="text-align:center;padding:30px;color:#f59e0b;"><i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i><p>No hay tanda activa para este grupo</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+            return;
+        }
+
+        var amount = parseFloat(tanda.contribution_amount || 0);
+        var balance = parseFloat(walletRes.data?.balance || walletRes.data?.balances?.available_usd || 0);
+        var beneficiary = tanda.collecting_member || 'Por definir';
+        if (typeof beneficiary === 'object') beneficiary = beneficiary.name || 'Participante';
+        var dueDate = tanda.next_payment_date ? new Date(tanda.next_payment_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha';
+        var groupName = tanda.group_name || tanda.name || 'Tanda';
+        var insufficientWallet = balance < amount;
+
+        _paymentModalData = { tandaId: tanda.tanda_id, groupId: groupId, amount: amount };
+
+        content.innerHTML =
+            '<div style="background:rgba(0,255,255,0.04);border-radius:10px;padding:16px;margin-bottom:16px;">' +
+                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Tanda</span><strong style="color:#fff;">' + escapeHtml(groupName) + '</strong></div>' +
+                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Monto</span><strong style="color:#22c55e;">L. ' + amount.toLocaleString('es-HN', {minimumFractionDigits:2}) + '</strong></div>' +
+                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Beneficiario</span><strong style="color:#fff;">' + escapeHtml(beneficiary) + '</strong></div>' +
+                '<div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="color:#94a3b8;">Fecha limite</span><strong style="color:#fff;">' + dueDate + '</strong></div>' +
+            '</div>' +
+            '<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">' +
+                '<i class="fas fa-wallet" style="color:#22c55e;"></i>' +
+                '<span style="color:#e2e8f0;font-size:0.9rem;">Saldo disponible: <strong>L. ' + balance.toLocaleString('es-HN', {minimumFractionDigits:2}) + '</strong></span>' +
+                (insufficientWallet ? '<span style="color:#f59e0b;font-size:0.75rem;margin-left:auto;">Fondos insuficientes para wallet</span>' : '') +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:8px;">' +
+                '<label style="display:flex;align-items:center;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;">' +
+                    '<input type="radio" name="payMethod" value="wallet" ' + (insufficientWallet ? '' : 'checked') + ' style="margin-right:10px;accent-color:#22c55e;"' + (insufficientWallet ? ' disabled' : '') + '>' +
+                    '<span style="color:' + (insufficientWallet ? '#64748b' : '#e2e8f0') + ';">Billetera La Tanda</span>' +
+                '</label>' +
+                '<label style="display:flex;align-items:center;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;">' +
+                    '<input type="radio" name="payMethod" value="bank_transfer" ' + (insufficientWallet ? 'checked' : '') + ' style="margin-right:10px;accent-color:#22c55e;">' +
+                    '<span style="color:#e2e8f0;">Transferencia Bancaria</span>' +
+                '</label>' +
+            '</div>';
+
+        footer.style.display = 'flex';
+        var payBtn = document.getElementById('paymentModalPayBtn');
+        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-check"></i> Pagar Ahora'; }
+
+    }).catch(function(err) {
+        content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>Error de conexion</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+    });
+}
+
+function payNow() {
+    var content = document.getElementById('paymentModalContent');
+    var footer = document.getElementById('paymentModalFooter');
+    var payBtn = document.getElementById('paymentModalPayBtn');
+    var selected = document.querySelector('input[name="payMethod"]:checked');
+
+    if (!selected) {
+        if (typeof showToast === 'function') showToast('Selecciona un metodo de pago', 'warning');
+        return;
+    }
+    if (!_paymentModalData.tandaId) {
+        if (typeof showToast === 'function') showToast('Error: datos de pago no disponibles', 'error');
+        return;
+    }
+
+    // Disable button, show loading
+    if (payBtn) { payBtn.disabled = true; payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'; }
+
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+
+    fetch('/api/tandas/pay', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            tanda_id: _paymentModalData.tandaId,
+            amount: _paymentModalData.amount,
+            payment_method: selected.value
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            // Success — show in modal
+            content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-check-circle" style="font-size:3rem;color:#22c55e;"></i><p style="color:#22c55e;font-size:1.1rem;font-weight:600;margin-top:12px;">Pago registrado exitosamente</p><p style="color:#94a3b8;font-size:0.85rem;margin-top:4px;">Metodo: ' + (selected.value === 'wallet' ? 'Billetera' : 'Transferencia') + ' — L. ' + _paymentModalData.amount.toLocaleString('es-HN') + '</p></div>';
+            footer.style.display = 'none';
+            // Auto-close after 2.5s and refresh
+            setTimeout(function() {
+                closePaymentModal();
+                // Refresh groups data
+                if (typeof loadMyGroups === 'function') loadMyGroups();
+                if (typeof refreshTandas === 'function') refreshTandas();
+                if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.refreshTandas === 'function') window.advancedGroupsSystem.refreshTandas();
+            }, 2500);
+        } else {
+            // Error — show in modal, keep it open
+            var errMsg = (data.data && data.data.error && data.data.error.message) || 'Error al procesar el pago';
+            content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-exclamation-triangle" style="font-size:2.5rem;color:#f59e0b;"></i><p style="color:#f59e0b;font-size:1rem;font-weight:500;margin-top:12px;">' + escapeHtml(errMsg) + '</p></div>';
+            footer.style.display = 'flex';
+            if (payBtn) { payBtn.style.display = 'none'; }
+        }
+    })
+    .catch(function(err) {
+        content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-times-circle" style="font-size:2.5rem;color:#ef4444;"></i><p style="color:#ef4444;margin-top:12px;">Error de conexion al procesar el pago</p></div>';
+        footer.style.display = 'flex';
+        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-check"></i> Reintentar'; payBtn.style.display = ''; }
+    });
+}
+
+// Make globally available
+window.openPaymentModal = openPaymentModal;
+window.closePaymentModal = closePaymentModal;
+window.payNow = payNow;
+</script>
 <!-- Invite Members Modal (v4.25.13) -->
 <div id="inviteMembersModal" class="ds-overlay" style="display:none;z-index:500;">
     <div class="ds-modal" style="max-width:480px;padding:24px;">
