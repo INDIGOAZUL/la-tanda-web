@@ -1,0 +1,71 @@
+name: Welcome New Contributors
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Welcome first-time PR authors
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const sender = context.payload.sender.login;
+          const pr = context.payload.pull_request;
+
+          // Check if this is user's first PR to this repo
+          const { data: prs } = await github.rest.pulls.list({
+            owner,
+            repo,
+            state: 'all',
+            per_page: 100
+          });
+
+          const prsByUser = prs.filter(p => p.user.login === sender);
+          if (prsByUser.length > 1) {
+            console.log(`${sender} has ${prsByUser.length} PRs — not first time`);
+            return;
+          }
+
+          const message = `## Welcome @${sender}!
+
+          Thanks for your first PR to La Tanda.
+
+          ### Before review, please confirm:
+
+          - [ ] I read the **[Codebase Patterns](https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md#-codebase-patterns-read-this-first)** section in CONTRIBUTING.md
+          - [ ] Auth token uses \`localStorage.getItem('auth_token')\` (not sessionStorage or other keys)
+          - [ ] All user data in HTML uses \`escapeHtml()\`
+          - [ ] UI text is in Spanish, code comments in English
+          - [ ] API endpoints verified against [Swagger UI](https://latanda.online/docs)
+          - [ ] I modified existing files (not created standalone scripts)
+
+          ### Resources
+          - [CONTRIBUTING.md](https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md) — Codebase patterns and rules
+          - [Swagger UI](https://latanda.online/docs) — API documentation (220+ endpoints)
+          - [Dev Portal](https://latanda.online/dev-dashboard.html) — Interactive sandbox and SDK examples
+
+          A maintainer will review your PR within 24-48 hours.
+
+          ---
+          *Automated message for first-time contributors*`;
+
+          await github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr.number,
+            body: message
+          });
+
+          await github.rest.issues.addLabels({
+            owner,
+            repo,
+            issue_number: pr.number,
+            labels: ['first-time contributor']
+          });
