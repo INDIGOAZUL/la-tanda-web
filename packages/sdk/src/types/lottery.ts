@@ -60,3 +60,28 @@ export interface SharePredictionData {
     prediction_id: string
     message?: string
 }
+
+export interface LotteryEntryRequest {
+    numbers: number[];
+    ticket_count: number;
+}
+
+export interface LotteryEntryResponse {
+    success: boolean;
+    entry_id: string;
+    message: string;
+}
+
+export interface PrizePool {
+    total_pot: number;
+    currency: string;
+    next_draw_date: string;
+}
+
+export interface DrawingStatus {
+    status: 'open' | 'closed' | 'drawing' | 'completed';
+    draw_date: string;
+    winning_numbers?: number[];
+}
+
+

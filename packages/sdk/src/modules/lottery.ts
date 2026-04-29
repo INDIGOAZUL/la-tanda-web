@@ -12,7 +12,11 @@ import type {
     LeaderboardEntry,
     Achievement,
     Jalador,
-    SharePredictionData
+    SharePredictionData,
+    LotteryEntryRequest,
+    LotteryEntryResponse,
+    PrizePool,
+    DrawingStatus
 } from '../types/lottery'
 
 export class LotteryModule {
@@ -90,5 +94,26 @@ export class LotteryModule {
      */
     async sharePrediction(data: SharePredictionData): Promise<{ success: boolean }> {
         return this._http.post<{ success: boolean }>('/lottery/share-prediction', data)
+    }
+
+    /**
+     * Enters the user into the lottery.
+     */
+    async enterLottery(data: LotteryEntryRequest): Promise<LotteryEntryResponse> {
+        return this._http.post<LotteryEntryResponse>('/lottery/enter', data)
+    }
+
+    /**
+     * Gets the current prize pool.
+     */
+    async getPrizePool(): Promise<PrizePool> {
+        return this._http.get<PrizePool>('/lottery/prize-pool')
+    }
+
+    /**
+     * Gets the status of the current drawing.
+     */
+    async getDrawingStatus(): Promise<DrawingStatus> {
+        return this._http.get<DrawingStatus>('/lottery/drawing-status')
     }
 }
