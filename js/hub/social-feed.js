@@ -57,7 +57,7 @@ const SocialFeed = {
     this.deepLinkEventId = t.get("event") || null;
     window.addEventListener("popstate", function() {
       var e = document.getElementById("postDetailOverlay");
-      e && (e.classList.remove("pd-active"), setTimeout(function() { e.remove(), document.body.style.overflow="" }, 250));
+      if (e) (e.classList.remove("pd-active"), setTimeout(function() { e.remove(), document.body.style.overflow="" }, 250));
     });
 
     const s = t.get("shared_title") || "", i = t.get("shared_text") || "", o = t.get("shared_url") || "";
