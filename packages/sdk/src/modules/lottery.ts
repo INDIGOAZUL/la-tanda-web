@@ -1,8 +1,3 @@
-// lottery module - Honduras national lottery number prediction engine
-// aligned with La Tanda v4.3.1
-// NOTE: This is NOT a tanda draw system. Tanda turn selection (tombola)
-// lives under Groups: POST /groups/:id/lottery-live
-
 import { HttpClient } from '../utils/http'
 import type {
     LotteryStats,
