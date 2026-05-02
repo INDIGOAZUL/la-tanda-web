@@ -218,3 +218,146 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+---
+
+## 🛠️ Development Setup
+
+### Prerequisites
+- Node.js 18+ (recommended: 20 LTS)
+- PostgreSQL 15+ (for full-stack development)
+- Git
+
+### Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# 2. Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration (see Environment Variables below)
+
+# 3. Start local development server
+npx serve . -p 3000
+# Or use Python:
+python3 -m http.server 3000
+
+# 4. Open http://localhost:3000 in your browser
+```
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable | Required | Description |
+|---|---|---|
+| `JWT_SECRET` | ✅ | JWT signing key (generate with `openssl rand -base64 48`) |
+| `DB_HOST` | ✅ | PostgreSQL host |
+| `DB_PORT` | ✅ | PostgreSQL port (default: 5432) |
+| `DB_NAME` | ✅ | Database name |
+| `DB_USER` | ✅ | Database user |
+| `DB_PASSWORD` | ✅ | Database password |
+| `NODE_ENV` | ⚠️ | `development` / `production` |
+| `PORT` | ⚠️ | Server port (default: 3000) |
+| `SMTP_HOST` | ❌ | Email service host |
+| `SMTP_USER` | ❌ | Email service user |
+| `SMTP_PASS` | ❌ | Email service password |
+
+### API Proxy Configuration
+
+The project uses `api-proxy.js` for backend communication:
+
+| Endpoint | Purpose |
+|---|---|
+| `/api/*` | Main API proxy |
+| `/api-adapter.js` | Legacy API adapter |
+| `/api-endpoints-config.js` | Endpoint configuration |
+
+For local development, the proxy forwards requests to the testnet API at `https://latanda.online`.
+
+### Internationalization
+
+Translations are in the `translations/` directory. The app supports:
+- 🇪🇸 Spanish (default)
+- 🇬🇧 English
+- Additional languages via `translations/*.json`
+
+---
+
+## 📁 Project Structure
+
+```
+la-tanda-web/
+├── README.md                          # This file
+├── .env.example                       # Environment variables template
+├── .github/                           # GitHub workflows & issue templates
+│   ├── ISSUE_TEMPLATE/                # Bounty & feature request templates
+│   └── workflows/                     # CI/CD pipelines
+├── assets/                            # Static assets
+│   ├── css/                           # Stylesheets
+│   ├── images/                        # Images & icons
+│   ├── js/                            # Shared JavaScript
+│   └── json/                          # Data files
+├── chain/                             # Blockchain documentation
+│   ├── la-tanda-chain-node-guide.md   # Node operator guide
+│   └── la-tanda-node-beginner-guide.md
+├── components/                        # Reusable UI components
+│   ├── header.html                    # Site header
+│   ├── footer.html                    # Site footer
+│   ├── sidebar.html                   # Navigation sidebar
+│   └── *.js                           # Component logic
+├── css/                               # Stylesheets
+│   ├── components/                    # Component-specific styles
+│   └── hub/                           # Creator hub styles
+├── examples/                          # Code examples & demos
+├── group/                             # Tandas group functionality
+├── html/                              # Additional HTML pages
+│   └── assets/                        # Page-specific assets
+├── images/                            # Image assets
+├── img/                               # Additional images
+├── js/                                # JavaScript modules
+│   ├── components/                    # UI component scripts
+│   ├── core/                          # Core application logic
+│   ├── header/                        # Header functionality
+│   ├── helpers/                       # Utility functions
+│   ├── hub/                           # Creator hub scripts
+│   ├── lib/                           # Third-party libraries
+│   ├── onboarding/                    # User onboarding flow
+│   ├── payment-providers/             # Payment integration
+│   ├── sidebar/                       # Sidebar logic
+│   └── utils/                         # Utility modules
+├── middleware/                        # Server middleware
+├── negocio/                           # Business logic
+├── packages/                          # Internal packages
+│   └── sdk/                           # La Tanda SDK
+├── translations/                      # i18n translation files
+├── utils/                             # Utility scripts
+└── workflows/                         # Automation workflows
+```
+
+### Key Directories
+
+| Directory | Purpose | Files |
+|---|---|---|
+| `js/` | Frontend JavaScript (~193 files) | Core logic, components, utilities |
+| `css/` | Stylesheets (~50 files) | Component & page styles |
+| `*.html` | Root-level pages (~61 files) | Main application pages |
+| `.github/` | CI/CD & templates | Automated workflows |
+| `chain/` | Blockchain docs | Node setup guides |
+| `translations/` | Internationalization | Multi-language support |
+
+### Development Workflow
+
+1. **Browse issues**: Check `.github/ISSUE_TEMPLATE/` for bounty types
+2. **Fork & branch**: Create a feature branch from `main`
+3. **Develop**: Make changes following existing code patterns
+4. **Test**: Verify locally with `npx serve .`
+5. **Submit PR**: Use the PR template, reference the bounty issue
+6. **Review**: Address maintainer feedback
+7. **Merge**: Bounty paid on merge
+
+---
+
+*Last updated: 2026-05-02 | La Tanda Web3 Ecosystem*
