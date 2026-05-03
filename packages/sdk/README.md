@@ -59,10 +59,12 @@ Community interaction layer.
 - `bookmarkPost(id)` / `listBookmarks()`: User engagement tools.
 
 ### 🎲 Lottery (`lottery`)
-Honduras national lottery prediction engine.
-- `getStats()`: Real-time prediction statistics.
-- `spin()`: Execute a paid prediction spin.
-- `getJaladores()`: Look up "pulling numbers" context.
+Full-featured module for lottery games, tickets, and prediction engine.
+- `listGames()` / `getGameDetail(id)`: Browse the available lottery catalog.
+- `buyTickets(drawId, numbers)`: Securely purchase tickets for upcoming draws.
+- `listUserTickets()`: Track your active and past tickets.
+- `submitPrediction(gameId, numbers)`: Submit picks to the prediction engine.
+- `getPredictorStats()`: View hit-rates and prediction performance.
 
 ### 🏪 Marketplace & Providers (`marketplace`, `providers`)
 Buy/sell products and manage business profiles.
@@ -75,6 +77,19 @@ Secure identity verification flows.
 - `uploadDocument(file, type)`: Submit identity documents for review.
 - `processOCR(data)`: Automated data extraction from documents.
 - `getStatus()`: Track your verification progress.
+
+---
+
+## Publishing
+
+To publish a new version of the SDK, follow these steps:
+
+1. Update the version in `package.json` (e.g., `npm version patch`).
+2. Run `npm run build` to ensure the distribution files are fresh.
+3. Run `npm run test` to verify that all 120+ tests pass.
+4. Use `npm pack` to inspect the contents of the tarball.
+5. Once verified, use `npm publish --access public` (requires maintainer permissions).
+6. Tag the release in Git to match the version: `git tag @latanda/sdk@x.y.z && git push --tags`.
 
 ---
 
