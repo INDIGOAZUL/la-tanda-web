@@ -1,6 +1,5 @@
-// lottery type definitions
-// aligned with La Tanda v4.3.1
-// Honduras national lottery prediction engine types
+// Update for SDK Phase 3 - Lottery Deepen
+// This file will track the new types for the expanded Lottery module.
 
 export interface LotteryStats {
     total_spins: number
@@ -10,6 +9,72 @@ export interface LotteryStats {
     best_streak: number
 }
 
+/**
+ * Game catalog types
+ */
+export interface LotteryGame {
+    id: string
+    name: string
+    description: string
+    price: number
+    frequency: string // e.g., 'daily', 'weekly'
+    next_draw: string
+    is_active: boolean
+    rules_url?: string
+}
+
+export interface LotteryDraw {
+    id: string
+    game_id: string
+    draw_number: number
+    draw_date: string
+    winning_numbers?: number[]
+    status: 'pending' | 'completed' | 'cancelled'
+}
+
+/**
+ * Ticket management types
+ */
+export interface LotteryTicket {
+    id: string
+    user_id: string
+    draw_id: string
+    numbers: number[]
+    purchase_date: string
+    status: 'active' | 'won' | 'lost' | 'claimed'
+    prize_amount?: number
+}
+
+export interface BuyTicketResponse {
+    success: boolean
+    ticket_ids: string[]
+    total_cost: number
+    balance_remaining: number
+}
+
+/**
+ * Prediction and Picks types
+ */
+export interface Prediction {
+    id: string
+    user_id: string
+    game_id: string
+    numbers: number[]
+    timestamp: string
+    result?: 'hit' | 'miss'
+}
+
+export interface PredictorStats {
+    user_id: string
+    total_picks: number
+    hits: number
+    hit_rate: number
+    rank: number
+}
+
+/**
+ * Legacy/Spin types (retained for compatibility if needed)
+ */
 export interface SpinResult {
     predicted_numbers: number[]
     spin_type: 'paid' | 'trial'
