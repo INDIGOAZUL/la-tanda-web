@@ -72,6 +72,33 @@ export interface PredictorStats {
     rank: number
 }
 
+export interface MLPrediction {
+    numbers: number[]
+    confidence_score: number
+    model_version: string
+    generated_at: string
+}
+
+export interface EnsemblePrediction {
+    numbers: number[]
+    agreement_score: number
+    source_models: string[]
+    generated_at: string
+}
+
+export interface TablaJaladora {
+    number: number
+    pulls: number[]
+    frequency: Record<number, number>
+}
+
+export interface AccuracyDashboard {
+    daily_stats: Record<string, number>
+    monthly_accuracy: number
+    prediction_volume: number
+    streak_history: number[]
+}
+
 /**
  * Legacy/Spin types (retained for compatibility if needed)
  */

@@ -3,6 +3,7 @@
 // Authoritative source: https://latanda.online/api/lottery/*
 
 import { HttpClient } from '../utils/http'
+import { ValidationError } from '../errors'
 import type {
     LotteryStats,
     SpinResult,
@@ -17,7 +18,11 @@ import type {
     LotteryTicket,
     BuyTicketResponse,
     Prediction,
-    PredictorStats
+    PredictorStats,
+    MLPrediction,
+    EnsemblePrediction,
+    TablaJaladora,
+    AccuracyDashboard
 } from '../types/lottery'
 
 export class LotteryModule {
@@ -41,6 +46,7 @@ export class LotteryModule {
      * @param gameId The unique identifier of the game.
      */
     async getGameDetail(gameId: string): Promise<LotteryGame> {
+        if (!gameId) throw new ValidationError('gameId is required', { gameId: 'required' })
         return this._http.get<LotteryGame>(`/lottery/games/${gameId}`)
     }
 
@@ -49,6 +55,7 @@ export class LotteryModule {
      * @param gameId The unique identifier of the game.
      */
     async listDraws(gameId: string): Promise<LotteryDraw[]> {
+        if (!gameId) throw new ValidationError('gameId is required', { gameId: 'required' })
         return this._http.get<LotteryDraw[]>(`/lottery/games/${gameId}/draws`)
     }
 
@@ -60,6 +67,7 @@ export class LotteryModule {
      * @param numbers Array of number sets to purchase.
      */
     async buyTickets(drawId: string, numbers: number[][]): Promise<BuyTicketResponse> {
+        if (!drawId) throw new ValidationError('drawId is required', { drawId: 'required' })
         return this._http.post<BuyTicketResponse>('/lottery/tickets/buy', { draw_id: drawId, numbers })
     }
 
@@ -75,6 +83,7 @@ export class LotteryModule {
      * @param ticketId The unique identifier of the ticket.
      */
     async getTicketDetail(ticketId: string): Promise<LotteryTicket> {
+        if (!ticketId) throw new ValidationError('ticketId is required', { ticketId: 'required' })
         return this._http.get<LotteryTicket>(`/lottery/tickets/${ticketId}`)
     }
 
@@ -83,6 +92,7 @@ export class LotteryModule {
      * @param ticketId The unique identifier of the winning ticket.
      */
     async claimWinnings(ticketId: string): Promise<{ success: boolean; amount: number }> {
+        if (!ticketId) throw new ValidationError('ticketId is required', { ticketId: 'required' })
         return this._http.post<{ success: boolean; amount: number }>(`/lottery/tickets/${ticketId}/claim`)
     }
 
@@ -94,7 +104,24 @@ export class LotteryModule {
      * @param numbers The numbers being predicted.
      */
     async submitPrediction(gameId: string, numbers: number[]): Promise<Prediction> {
+        if (!gameId) throw new ValidationError('gameId is required', { gameId: 'required' })
         return this._http.post<Prediction>('/lottery/predictions', { game_id: gameId, numbers })
+    }
+
+    /**
+     * Gets machine-learning based predictions for a game.
+     */
+    async getMLPredictions(gameId: string): Promise<MLPrediction[]> {
+        if (!gameId) throw new ValidationError('gameId is required', { gameId: 'required' })
+        return this._http.get<MLPrediction[]>(`/lottery/predictions/ml/${gameId}`)
+    }
+
+    /**
+     * Gets ensemble (multi-model) predictions for a game.
+     */
+    async getEnsemblePredictions(gameId: string): Promise<EnsemblePrediction[]> {
+        if (!gameId) throw new ValidationError('gameId is required', { gameId: 'required' })
+        return this._http.get<EnsemblePrediction[]>(`/lottery/predictions/ensemble/${gameId}`)
     }
 
     /**
@@ -111,7 +138,32 @@ export class LotteryModule {
         return this._http.get<PredictorStats>('/lottery/predictor/stats')
     }
 
-    // --- Section D: Legacy & Social (Phase 1/2) ---
+    /**
+     * Gets the comprehensive accuracy dashboard for the user.
+     */
+    async getAccuracyDashboard(): Promise<AccuracyDashboard> {
+        return this._http.get<AccuracyDashboard>('/lottery/predictor/dashboard')
+    }
+
+    // --- Section D: Analysis & Leaderboard ---
+
+    /**
+     * Gets the prediction leaderboard.
+     * @param gameId Optional game identifier for game-specific rankings.
+     */
+    async getLeaderboard(gameId?: string): Promise<LeaderboardEntry[]> {
+        const path = gameId ? `/lottery/leaderboard/${gameId}` : '/lottery/leaderboard'
+        return this._http.get<LeaderboardEntry[]>(path)
+    }
+
+    /**
+     * Gets the full "Tabla Jaladora" (Number Pulling Table).
+     */
+    async getTablaJaladora(): Promise<TablaJaladora[]> {
+        return this._http.get<TablaJaladora[]>('/lottery/analysis/tabla-jaladora')
+    }
+
+    // --- Section E: Legacy & Social (Phase 1/2) ---
 
     /**
      * Gets general prediction statistics for the current user.
@@ -147,13 +199,6 @@ export class LotteryModule {
      */
     async getResults(): Promise<LotteryResult[]> {
         return this._http.get<LotteryResult[]>('/lottery/results')
-    }
-
-    /**
-     * Gets the prediction leaderboard.
-     */
-    async getLeaderboard(): Promise<LeaderboardEntry[]> {
-        return this._http.get<LeaderboardEntry[]>('/lottery/leaderboard')
     }
 
     /**
