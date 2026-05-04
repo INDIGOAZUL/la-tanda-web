@@ -1,0 +1,50 @@
+
+
+groups:
+- name: validator-alerts
+  rules:
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is {{ $value }}% (above 90%)"
+
+  - alert: HighMemoryUsage
+    expr: 100 * (1 - (node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes) > 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "Memory usage is {{ $value }}% (above 90%)"
+
+  - alert: ValidatorDown
+    expr: up{job="validator-node"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Validator node {{ $labels.instance }} is down"
+      description: "Validator node has been down for more than 1 minute"
+
+  - alert: NoPeersConnected
+    expr: tendermint_p2p_peers < 3
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low peer count on {{ $labels.instance }}"
+      description: "Validator has only {{ $value }} peers connected (less than 3)"
+
+  - alert: MissedBlocks
+    expr: increase(tendermint_consensus_missed_blocks_counter[1h]) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Validator {{ $labels.instance }} is missing blocks"
+      description: "Validator has missed blocks in the last hour"
+
