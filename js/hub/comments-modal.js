@@ -486,9 +486,9 @@ const CommentsModal = {
         if (!text) return '';
         let escaped = this.escapeHtml(text);
         // Parse @mentions
-        escaped = escaped.replace(/@([\w\-\.]+)/g, '<a href="#" class="mention-link" data-handle="$1">@$1</a>');
+        escaped = escaped.replace(/@([\w\-\.]+)/g, '<span class="mention-link" data-handle="$1" role="button" tabindex="0" style="cursor:pointer;">@$1</span>');
         // Parse #hashtags
-        escaped = escaped.replace(/#([\wáéíóúñÁÉÍÓÚÑ]+)/g, '<a href="#" class="hashtag-link" data-tag="$1">#$1</a>');
+        escaped = escaped.replace(/#([\wáéíóúñÁÉÍÓÚÑ]+)/g, '<span class="hashtag-link" data-tag="$1" role="button" tabindex="0" style="cursor:pointer;">#$1</span>');
         return escaped;
     }
 };

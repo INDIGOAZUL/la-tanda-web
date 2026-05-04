@@ -307,7 +307,7 @@
             '<p>Ingresa el código enviado a tu email:</p>' +
             '<input type="text" id="verify-code-input" maxlength="6" placeholder="000000" style="font-size:24px;text-align:center;letter-spacing:8px;padding:10px;width:200px;">' +
             '<br><br><button class="btn-primary" onclick="window.laTandaOnboarding.verifyCode()">Verificar</button>' +
-            '<p style="margin-top:10px;font-size:12px;color:#666;">¿No recibiste el código? <a href="#" onclick="window.laTandaOnboarding.sendVerificationCode();return false;">Reenviar</a></p>' +
+            '<p style="margin-top:10px;font-size:12px;color:#666;">¿No recibiste el código? <button style="color:#00FFFF;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;font-size:inherit;text-decoration:underline;" onclick="window.laTandaOnboarding.sendVerificationCode();return false;">Reenviar</button></p>' +
             '</div>' +
             '<div id="email-verify-result" style="display:none;"></div>' +
             '</div></div></div>';

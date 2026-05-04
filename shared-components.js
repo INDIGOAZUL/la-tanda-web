@@ -290,7 +290,7 @@ class LaTandaComponents {
                                 <a href="https://twitter.com/TandaWeb3" target="_blank" class="social-link" title="Twitter">
                                     <i class="fab fa-twitter"></i>
                                 </a>
-                                <a href="#" class="social-link" title="Discord">
+                                <a href="#" class="social-link" title="Discord (Proximamente)" onclick="return false;" aria-disabled="true">
                                     <i class="fab fa-discord"></i>
                                 </a>
                                 <a href="https://t.me/lataboratory" target="_blank" class="social-link" title="Telegram">
@@ -299,7 +299,7 @@ class LaTandaComponents {
                                 <a href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" class="social-link" title="GitHub">
                                     <i class="fab fa-github"></i>
                                 </a>
-                                <a href="#" class="social-link" title="Medium">
+                                <a href="#" class="social-link" title="Medium (Proximamente)" onclick="return false;" aria-disabled="true">
                                     <i class="fab fa-medium"></i>
                                 </a>
                             </div>

@@ -1062,7 +1062,7 @@ window.generateQR = function(type) {
             url = window._qrWalletAddr;
             if (label) label.textContent = url;
         } else {
-            canvas.innerHTML = '<div style="padding:30px 20px;color:#a78bfa;font-size:0.85rem;"><i class="fas fa-link" style="font-size:2rem;display:block;margin-bottom:12px;"></i>Vincula tu wallet Keplr en<br><a href="#" onclick="document.getElementById(\'qrModal\').style.display=\'none\';switchTab(\'security\',event);return false;" style="color:#00FFFF;">Seguridad → La Tanda Chain Wallet</a></div>';
+            canvas.innerHTML = '<div style="padding:30px 20px;color:#a78bfa;font-size:0.85rem;"><i class="fas fa-link" style="font-size:2rem;display:block;margin-bottom:12px;"></i>Vincula tu wallet Keplr en<br><button onclick="document.getElementById(\'qrModal\').style.display=\'none\';switchTab(\'security\',event);return false;" style="color:#00FFFF;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;font-size:inherit;text-decoration:underline;">Seguridad → La Tanda Chain Wallet</button></div>';
             if (label) label.textContent = 'Wallet no vinculada';
             if (tabProfile) tabProfile.style.background = 'rgba(0,0,0,0.3)';
             if (tabWallet) tabWallet.style.background = 'rgba(0,255,255,0.15)';

@@ -459,11 +459,11 @@ const ContextualWidgets = {
             <div class="widget-card">
                 <h4><i class="fas fa-tags"></i> Categorías</h4>
                 <div class="category-list">
-                    <a href="#" class="cat-item">Electrónica</a>
-                    <a href="#" class="cat-item">Ropa</a>
-                    <a href="#" class="cat-item">Hogar</a>
-                    <a href="#" class="cat-item">Vehículos</a>
-                    <a href="#" class="cat-item">Servicios</a>
+                    <a href="#" class="cat-item" onclick="return false;" title="Proximamente">Electrónica</a>
+                    <a href="#" class="cat-item" onclick="return false;" title="Proximamente">Ropa</a>
+                    <a href="#" class="cat-item" onclick="return false;" title="Proximamente">Hogar</a>
+                    <a href="#" class="cat-item" onclick="return false;" title="Proximamente">Vehículos</a>
+                    <a href="#" class="cat-item" onclick="return false;" title="Proximamente">Servicios</a>
                 </div>
             </div>
 
