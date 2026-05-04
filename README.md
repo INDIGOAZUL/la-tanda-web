@@ -3,7 +3,7 @@
 > **Not an app. An ecosystem.**
 > Red social + tandas digitales + marketplace + minería + blockchain propia.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Chain](https://img.shields.io/badge/chain-latanda--testnet--1-00d4ff)](https://latanda.online/chain/)
 [![Supply](https://img.shields.io/badge/supply-200M%20LTD%20fijo-ffd700)](https://latanda.online/whitepaper.html)
 [![Inflation](https://img.shields.io/badge/inflation-0%25-22c55e)](https://latanda.online/whitepaper.html)
@@ -98,89 +98,139 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 | Full Node | 20 | 500 LTD |
 | Bug Reporter | abierto | 100-1,000 LTD |
 
-**Cómo sumarte**: [Node Operator Guide](./la-tanda-chain-node-guide.md) (si está en este repo) o [latanda.online/chain](https://latanda.online/chain/)
+**How to join**: [Node Operator Guide](./chain/la-tanda-chain-node-guide.md) (if present in this repo) or [latanda.online/chain](https://latanda.online/chain/)
 
 ---
 
 ## 🚀 Quick Start
 
-### Para usuarios (no technical)
-1. Ve a [latanda.online](https://latanda.online)
-2. Crea tu cuenta (email o Google Sign-In)
-3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
+### For users (non-technical)
+1. Go to [latanda.online](https://latanda.online)
+2. Create your account (email or Google Sign-In)
+3. Join a tanda, post in the feed, mine LTD, explore the marketplace
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
+### For developers (integrate with La Tanda API)
+1. API Documentation: https://latanda.online/docs
 2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+3. Authentication: JWT via `/api/auth/login`
+4. 160+ production endpoints
 
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+### For validators (run a node)
+1. Read the guide: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
+2. One-line install: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
+3. Chain page with seeds: https://latanda.online/chain/
+4. Join the Incentivized Testnet Program by submitting 10 LTD testnet + create-validator tx
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+This is a pure HTML/CSS/JS frontend with **no build step**. You can run it locally with any static file server.
+
+### Prerequisites
+- **Node.js** (v18+ recommended) — only needed for `npx serve`, not for the app itself
+- A modern browser (Chrome, Firefox, Safari, Edge)
+
+### Run locally
+
+```bash
+# Clone the repo
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve with npx (no install needed)
+npx serve .
+
+# Or use any static server:
+# python3 -m http.server 3000
+# php -S localhost:3000
+```
+
+The app will be available at `http://localhost:3000` (or the port shown by your server).
+
+### What you get
+- 55+ HTML pages served directly — no compilation, no bundling
+- All JavaScript and CSS loaded as-is from `js/` and `css/` directories
+- The app connects to the live La Tanda API at `latanda.online` by default (no local backend needed for frontend development)
+- Edit any `.html`, `.css`, or `.js` file and refresh your browser to see changes
+
+### Optional: Dev Portal
+The project has a developer dashboard with API documentation, endpoint explorer, and WebSocket status at [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html). You do not need to run it locally — it is available on the production site.
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Ecosystem pages (55+ HTML files at root)
+├── css/                      # Stylesheets (design-tokens, components, modules)
+│   ├── main.css              # Base styles
+│   ├── dashboard-layout.css  # Dashboard layout
+│   └── hub/                  # Hub-specific styles (social-feed, comments, etc.)
+├── js/                       # JavaScript modules
+│   ├── components-loader.js  # Dynamic component loader (header, footer, sidebar)
+│   ├── shared-components.js  # Shared UI components (footer, social links)
+│   ├── hub/                  # Hub modules (social-feed, comments-modal, contextual-widgets)
+│   └── onboarding/           # Onboarding flow
+├── assets/                   # Images, logos, favicons
+├── chain/                    # La Tanda Chain resources
+│   ├── node-setup.sh         # One-line node setup script
+│   ├── genesis.json          # Chain genesis configuration
+│   ├── index.html            # Chain landing page
+│   └── la-tanda-chain-node-guide.md  # Node operator guide
+├── components/               # HTML component partials (header, footer, sidebar)
+├── translations/             # i18n translation files
+├── utils/                    # Utility modules
+├── middleware/                # Server middleware
+├── .github/                  # Bounty templates, PR gatekeeper, ban list
+└── api-*.js                  # API adapters and proxies (at root)
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Key pages aligned with the 7-layer framework**:
+- `index.html` — Landing page with 3D cosmic hero + tokenomics donut + persona cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools + 6 sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet integration
+- `mia.html` — MIA AI assistant (7th layer of the ecosystem)
+- `chain/index.html` — Chain landing page with live stats
 
 ---
 
-## 🤝 Cómo contribuir
+## 🤝 How to Contribute
 
-La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
+La Tanda has a **3-tier bounty system** on GitHub Issues:
 
-| Tier | Quién puede | Reward |
+| Tier | Who can claim | Reward |
 |---|---|---|
-| **Tier 0** | Cualquiera | 10-50 LTD |
-| **Tier 1** | 1+ merge previo | 50-150 LTD |
-| **Tier 2** | 2+ merges previos | 150-500 LTD |
+| **Tier 0** | Anyone | 10-50 LTD |
+| **Tier 1** | 1+ prior merge | 50-150 LTD |
+| **Tier 2** | 2+ prior merges | 150-500 LTD |
 
-- Cada bounty requiere responder una pregunta de verificación del código (requiere leer la fuente real)
-- PR Gatekeeper automático rechaza: PRs sin asignación, cuentas <30 días, usuarios en ban list
+- Each bounty requires answering a codebase verification question (requires reading the actual source)
+- Automated PR Gatekeeper rejects: unassigned PRs, accounts <30 days old, users on ban list
 - Labels: `tier-0`, `tier-1`, `tier-2`
 
-**Antes de abrir PR**:
-1. Lee `CONTRIBUTING.md` (si existe) + `.github/ban-list.txt`
-2. Responde la pregunta de verificación del bounty
-3. Firma commits con tu email verificado en GitHub
-4. Un PR = un bounty
+**Before opening a PR**:
+1. Read `CONTRIBUTING.md` (if it exists) + `.github/ban-list.txt`
+2. Answer the bounty's verification question
+3. Sign commits with your GitHub-verified email
+4. One PR = one bounty
 
 ---
 
-## 📚 Recursos
+## 📚 Resources
 
-### Documentación pública
+### Public Documentation
 - 🌐 Website: [latanda.online](https://latanda.online)
 - 📜 Whitepaper v2.0: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
 - 💰 Tokenomics: [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html)
 - 🏛️ Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
 - 💻 Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
-- 📖 API Docs: [latanda.online/docs](https://latanda.online/docs)
-- 🔗 Chain: [latanda.online/chain](https://latanda.online/chain/)
+- 📖 API Docs (Swagger): [latanda.online/docs](https://latanda.online/docs)
+- 🔗 Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
 
-### Comunidad
+### Community
 - 💬 Discord: [discord.gg/Ve9M2ZSYC2](https://discord.gg/Ve9M2ZSYC2)
 - 📢 Telegram: [t.me/latandahn](https://t.me/latandahn)
 - 🐦 Twitter: [@TandaWeb3](https://twitter.com/TandaWeb3)
@@ -189,28 +239,28 @@ La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
 
 ---
 
-## 📜 Licencia
+## 📜 License
 
-MIT License — see [LICENSE](./LICENSE)
+MIT License — see [LICENSE](https://opensource.org/licenses/MIT)
 
-Código abierto, uso libre con atribución. Las marcas "La Tanda" y "La Tanda Chain" son propiedad de Ray-Banks LLC.
+Open source, free to use with attribution. The trademarks "La Tanda" and "La Tanda Chain" are owned by Ray-Banks LLC.
 
 ---
 
 ## ⚖️ Legal
 
-La Tanda es operada por **Ray-Banks LLC**. Más información en [raybanks.org](https://raybanks.org).
+La Tanda is operated by **Ray-Banks LLC**. More information at [raybanks.org](https://raybanks.org).
 
-Este repositorio es un mirror público del frontend. El código está liberado para transparencia y contribuciones comunitarias. No constituye oferta de valores ni asesoramiento financiero.
+This repository is a public mirror of the frontend. The code is released for transparency and community contributions. It does not constitute an offer of securities or financial advice.
 
 ---
 
-## 🚫 Reglas importantes
+## 🚫 Important Rules
 
-- **NUNCA** commitees `.env` o credenciales (ver `.env.example`)
-- **NUNCA** uses `rsync --delete` con este repo
-- **NUNCA** modifiques `api-proxy-enhanced.js` sin coordinar con el equipo
-- Ban list pública: `.github/ban-list.txt` (no aceptamos PRs de cuentas listadas)
+- **NEVER** commit `.env` or credentials (see `.env.example`)
+- **NEVER** use `rsync --delete` with this repo
+- **NEVER** modify `api-proxy-enhanced.js` without coordinating with the team
+- Public ban list: `.github/ban-list.txt` (PRs from listed accounts are rejected)
 
 ---
 
