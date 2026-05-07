@@ -115,6 +115,32 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 3. Autenticación: JWT via `/api/auth/login`
 4. 160+ endpoints productivos
 
+**Requisitos para desarrollo local:**
+| Herramienta | Version | Proposito |
+|------------|---------|-----------|
+| Node.js | 18+ | Servir archivos localmente |
+| npm | 9+ | Gestionar paquetes |
+| Git | cualquier | Control de versiones |
+| Navegador | Chrome/Firefox/Safari | Testing |
+
+**Desarrollo local (frontend es 100% archivos estáticos):**
+```bash
+git clone https://github.com/TU_USUARIO/la-tanda-web.git
+cd la-tanda-web
+npx serve . -l 3000  # Abre http://localhost:3000
+```
+> Todas las llamadas API van al servidor de producción en `latanda.online`. No necesitas backend local.
+
+**Solución de problemas comunes:**
+| Problema | Solución |
+|----------|----------|
+| Página en blanco | Verifica que sirves desde la raíz del proyecto, no desde un subdirectorio |
+| Error 401 en API | Los endpoints requieren JWT. Obtén token desde latanda.online > DevTools > localStorage |
+| `marketplace-social.js` no carga | Verifica que está en la **raíz** del proyecto, NO en `js/` |
+| `SocialFeed` undefined | El módulo vive en `js/hub/social-feed.js` |
+| Cambios no aparecen | Haz hard refresh (Ctrl+Shift+R / Cmd+Shift+R) |
+| Error de CORS | Asegúrate de que `npx serve` esté corriendo en el puerto correcto |
+
 ### Para validadores (correr un nodo)
 1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
 2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
@@ -130,12 +156,17 @@ la-tanda-web/
 ├── *.html                    # Páginas del ecosistema (60+ archivos)
 ├── css/                      # Estilos (design-tokens, components, modules)
 ├── js/                       # JavaScript (components-loader, hub, utilities)
+│   ├── hub/                  # Core: social-feed.js, contextual-widgets.js, sidebar-widgets.js
+│   │   └── social-feed.js   # SocialFeed singleton (importar desde js/hub/)
+│   └── components-loader.js # Carga dinámica de header/footer compartidos
 ├── assets/                   # Imágenes, logos, favicons
 ├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
 ├── docs/                     # OpenAPI spec + Swagger UI
 ├── .github/                  # Bounty templates, PR gatekeeper
 └── api-*.js                  # API adapters y proxies
 ```
+
+> ⚠️ **Importante:** `marketplace-social.js` vive en la **raíz** del proyecto (junto a los `.html`), NO dentro de `js/`. Este es el error #1 en PRs rechazados.
 
 **Páginas principales alineadas al framework**:
 - `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
@@ -163,7 +194,7 @@ La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
 
 **Antes de abrir PR**:
 1. Lee `CONTRIBUTING.md` (si existe) + `.github/ban-list.txt`
-2. Responde la pregunta de verificación del bounty
+2. Responde la pregunta de verificación del bounty en tu primer comentario del PR
 3. Firma commits con tu email verificado en GitHub
 4. Un PR = un bounty
 
