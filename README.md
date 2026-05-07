@@ -123,6 +123,94 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+---
+
+## Development Setup
+
+### Prerequisites
+- Node.js 18+ (for `npx` commands)
+- Git
+- Web browser (Chrome/Firefox/Safari recommended)
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve locally
+npx serve .
+
+# Open in browser at http://localhost:3000
+# Or open any .html file directly
+```
+
+### Smart Contracts (Optional)
+
+```bash
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
+```
+
+### Environment Variables
+
+```bash
+cp .env.example .env
+```
+
+Key variables:
+- `API_URL` — Backend API endpoint (default: production)
+- `CHAIN_RPC` — La Tanda Chain RPC URL
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Port 3000 in use | Run `npx serve . -l 3001` |
+| CORS errors | Locally some features need production backend |
+| Missing fonts/assets | Serve from project root, not a subdirectory |
+
+> **Note:** The backend (API + PostgreSQL + Redis) runs on the production server. Backend development requires SSH access.
+
+---
+
+## Project Structure
+
+```
+la-tanda-web/
+├── *.html                    # Pages (60+ ecosystem pages)
+├── marketplace-social.js     # Marketplace SPA (AT ROOT, not in js/)
+├── js/
+│   ├── hub/                  # Core modules (social-feed, comments, sidebar)
+│   ├── core/                 # Utilities (api-client, cache, event-bus)
+│   ├── header/               # Header components
+│   ├── sidebar/             # Sidebar logic
+│   └── components-loader.js # Dynamic component loading
+├── css/                     # Styles (design-tokens, components, modules)
+├── assets/                  # Images, logos, favicons
+├── chain/                   # La Tanda Chain resources
+├── docs/                    # OpenAPI spec + Swagger UI
+├── smart-contracts/         # Solidity contracts (Hardhat)
+├── .github/                 # Bounty templates, PR gatekeeper
+└── api-*.js                # API adapters and proxies
+```
+
+### Key File Locations
+
+| File | Location | Description |
+|------|----------|-------------|
+| `marketplace-social.js` | Root directory | Marketplace SPA (177KB, at ROOT not in js/) |
+| `integrated-api-complete-95-endpoints.js` | Root directory | Main API file (220+ endpoints, 1.3MB) |
+| `SocialFeed` singleton | `js/hub/social-feed.js` | Social feed module |
+| API spec | `docs/swagger/openapi.json` | OpenAPI specification |
+
+> **Important:** `marketplace-social.js` lives at the root alongside HTML files, NOT inside `js/`. Getting file paths wrong is the #1 reason PRs are rejected.
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
