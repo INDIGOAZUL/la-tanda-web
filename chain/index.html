@@ -1677,6 +1677,11 @@
                     <h3><i class="fas fa-cubes" style="color:var(--cyan);margin-right:0.5rem"></i>Bloques Recientes</h3>
                     <span class="hint">Actualiza cada 5s</span>
                 </div>
+                <!-- v4.26.0: Search bar for tx/address/block -->
+                <div class="explorer-search-bar">
+                    <input type="text" id="explorerSearchInput" placeholder="Buscar tx hash, direccion (ltd1...), o bloque..." autocomplete="off">
+                    <button id="explorerSearchBtn"><i class="fas fa-search"></i></button>
+                </div>
                 <table class="blocks-table">
                     <thead>
                         <tr>
@@ -1745,6 +1750,19 @@
                             <span class="net-key">Genesis Hash</span>
                             <span class="net-value" id="netGenesisHash" style="font-size:0.7rem">&mdash;</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- v4.26.0: Detail View Modal -->
+            <div id="detailModal" class="detail-modal" style="display:none;">
+                <div class="detail-modal-content">
+                    <div class="detail-modal-header">
+                        <h3 id="detailModalTitle">Detalle</h3>
+                        <button class="detail-modal-close" id="detailModalCloseBtn">&times;</button>
+                    </div>
+                    <div id="detailModalBody" class="detail-modal-body">
+                        <div class="loading">Cargando...</div>
                     </div>
                 </div>
             </div>
@@ -2242,7 +2260,177 @@
                 fetchSupply();
                 fetchStaking();
             }, 60000);
+
+            // v4.26.0: Explorer search & hash routing
+            initExplorerSearch();
+            initHashRouting();
         }
+
+        // v4.26.0: Explorer search functionality
+        function initExplorerSearch() {
+            var input = document.getElementById('explorerSearchInput');
+            var btn = document.getElementById('explorerSearchBtn');
+            if (!input || !btn) return;
+            btn.addEventListener('click', function() { handleExplorerSearch(input.value); });
+            input.addEventListener('keypress', function(e) { if (e.key === 'Enter') handleExplorerSearch(input.value); });
+        }
+
+        function handleExplorerSearch(query) {
+            query = (query || '').trim();
+            if (!query) return;
+            if (query.match(/^(0x)?[a-f0-9]{64}$/i) || query.length === 44) {
+                window.location.hash = '#tx/' + query;
+            } else if (query.match(/^ltd1[a-z0-9]{38,58}$/i)) {
+                window.location.hash = '#address/' + query;
+            } else if (query.match(/^\d+$/)) {
+                window.location.hash = '#block/' + query;
+            } else {
+                alert('Formato no reconocido. Use tx hash (64 hex), direccion (ltd1...), o numero de bloque.');
+            }
+        }
+
+        function initHashRouting() {
+            window.addEventListener('hashchange', handleHashChange);
+            if (window.location.hash) setTimeout(function() { handleHashChange(); }, 500);
+        }
+
+        async function handleHashChange() {
+            var hash = window.location.hash.slice(1);
+            if (!hash) return;
+            var parts = hash.split('/');
+            var type = parts[0];
+            var id = parts.slice(1).join('/');
+            if (type === 'tx') await showTxDetail(id);
+            else if (type === 'address') await showAddressDetail(id);
+            else if (type === 'block') await showBlockDetail(id);
+        }
+
+        async function showTxDetail(txHash) {
+            var modal = document.getElementById('detailModal');
+            var title = document.getElementById('detailModalTitle');
+            var body = document.getElementById('detailModalBody');
+            if (!modal || !title || !body) return;
+            title.textContent = 'Transaction Detail';
+            body.innerHTML = '<div class="loading">Cargando transaccion...</div>';
+            modal.style.display = 'flex';
+            try {
+                var data = await fetchJSON(RPC + '/tx?hash=0x' + txHash);
+                var tx = data.result;
+                if (!tx) throw new Error('Transaccion no encontrada');
+                var blk = tx.height;
+                var msgs = (tx.tx.result.messages || []);
+                var html = '<div class="detail-section"><h4>Informacion General</h4>';
+                html += '<div class="detail-row"><span class="detail-label">Hash</span><span class="detail-value" style="font-size:0.75rem">' + escapeHtml(txHash) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Bloque</span><span class="detail-value">' + escapeHtml(String(blk)) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Gas Used/Wanted</span><span class="detail-value">' + escapeHtml(String(tx.gas_used || 0)) + ' / ' + escapeHtml(String(tx.gas_wanted || 0)) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">' + escapeHtml(tx.timestamp || '--') + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Code</span><span class="detail-value" style="color:' + (tx.code === 0 ? 'var(--green)' : 'var(--red)') + '">' + (tx.code === 0 ? 'Success' : 'Error ' + (tx.code || 0)) + '</span></div>';
+                html += '</div>';
+                if (msgs.length > 0) {
+                    html += '<div class="detail-section"><h4>Mensajes (' + msgs.length + ')</h4>';
+                    msgs.forEach(function(m, i) {
+                        var type = m.type || 'unknown';
+                        var msgHtml = '<div class="tx-message"><strong>' + escapeHtml(type) + '</strong>';
+                        if (m.amount) {
+                            var amt = Array.isArray(m.amount) ? m.amount : [m.amount];
+                            amt.forEach(function(a) {
+                                if (a.denom) {
+                                    var val = a.amount;
+                                    if (a.denom === 'ultd') val = ultdToLtd(val) + ' LTD';
+                                    else val = Number(val).toLocaleString() + ' ' + escapeHtml(a.denom);
+                                    msgHtml += '<div style="margin-top:4px">' + escapeHtml(val) + '</div>';
+                                }
+                            });
+                        }
+                        if (m.from) msgHtml += '<div>From: ' + escapeHtml(shortHash(m.from)) + '</div>';
+                        if (m.to) msgHtml += '<div>To: ' + escapeHtml(shortHash(m.to)) + '</div>';
+                        msgHtml += '</div>';
+                        html += msgHtml;
+                    });
+                    html += '</div>';
+                }
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div style="color:var(--red);padding:1rem;">Error: ' + escapeHtml(String(e)) + '</div>';
+            }
+        }
+
+        async function showAddressDetail(addr) {
+            var modal = document.getElementById('detailModal');
+            var title = document.getElementById('detailModalTitle');
+            var body = document.getElementById('detailModalBody');
+            if (!modal || !title || !body) return;
+            title.textContent = 'Address Detail';
+            body.innerHTML = '<div class="loading">Cargando direccion...</div>';
+            modal.style.display = 'flex';
+            try {
+                var balData = await fetchJSON(REST + '/cosmos/bank/v1beta1/balances/' + addr);
+                var balances = balData.balances || [];
+                var delData = await fetchJSON(REST + '/cosmos/staking/v1beta1/delegations/' + addr).catch(function() { return { delegation_responses: [] }; });
+                var html = '<div class="detail-section"><h4>Informacion General</h4>';
+                html += '<div class="detail-row"><span class="detail-label">Direccion</span><span class="detail-value" style="font-size:0.7rem;word-break:break-all">' + escapeHtml(addr) + '</span></div>';
+                html += '</div><div class="detail-section"><h4>Saldos</h4>';
+                if (balances.length === 0) {
+                    html += '<div class="detail-row"><span class="detail-label">Balance</span><span class="detail-value">0 LTD</span></div>';
+                } else {
+                    balances.forEach(function(b) {
+                        var val = b.amount;
+                        var display = b.denom === 'ultd' ? ultdToLtd(val) + ' LTD' : Number(val).toLocaleString() + ' ' + escapeHtml(b.denom);
+                        html += '<div class="detail-row"><span class="detail-label">' + escapeHtml(b.denom) + '</span><span class="detail-value">' + escapeHtml(display) + '</span></div>';
+                    });
+                }
+                html += '</div>';
+                if (delData.delegation_responses && delData.delegation_responses.length > 0) {
+                    html += '<div class="detail-section"><h4>Delegaciones (' + delData.delegation_responses.length + ')</h4>';
+                    delData.delegation_responses.forEach(function(d) {
+                        var shares = Number(d.balance.amount);
+                        html += '<div class="detail-row"><span class="detail-label">' + escapeHtml(shortHash(d.delegation.validator_address)) + '</span><span class="detail-value">' + escapeHtml(ultdToLtd(shares) + ' LTD') + '</span></div>';
+                    });
+                    html += '</div>';
+                }
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div style="color:var(--red);padding:1rem;">Error: ' + escapeHtml(String(e)) + '</div>';
+            }
+        }
+
+        async function showBlockDetail(height) {
+            var modal = document.getElementById('detailModal');
+            var title = document.getElementById('detailModalTitle');
+            var body = document.getElementById('detailModalBody');
+            if (!modal || !title || !body) return;
+            title.textContent = 'Block Detail';
+            body.innerHTML = '<div class="loading">Cargando bloque...</div>';
+            modal.style.display = 'flex';
+            try {
+                var data = await fetchJSON(RPC + '/block?height=' + height);
+                var block = data.result.block;
+                var header = block.header;
+                var txs = parseInt(block.num_txs || 0);
+                var html = '<div class="detail-section"><h4>Informacion General</h4>';
+                html += '<div class="detail-row"><span class="detail-label">Altura</span><span class="detail-value">#' + escapeHtml(header.height) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Hash</span><span class="detail-value" style="font-size:0.7rem;word-break:break-all">' + escapeHtml(block.block_id.hash) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">' + escapeHtml(header.time || '--') + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Transacciones</span><span class="detail-value">' + escapeHtml(String(txs)) + '</span></div>';
+                html += '<div class="detail-row"><span class="detail-label">Proposer</span><span class="detail-value" style="font-size:0.75rem">' + escapeHtml(header.proposer_address || '--') + '</span></div>';
+                html += '</div>';
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div style="color:var(--red);padding:1rem;">Error: ' + escapeHtml(String(e)) + '</div>';
+            }
+        }
+
+        function closeDetailModal() {
+            var modal = document.getElementById('detailModal');
+            if (modal) modal.style.display = 'none';
+            window.location.hash = '';
+        }
+
+        document.getElementById('detailModalCloseBtn').addEventListener('click', closeDetailModal);
+        document.addEventListener('click', function(e) {
+            var modal = document.getElementById('detailModal');
+            if (modal && e.target === modal) closeDetailModal();
+        });
 
         init();
     })();
