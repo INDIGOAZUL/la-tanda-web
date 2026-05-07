@@ -23,6 +23,26 @@ class NotificationCenter {
 
         this.initFirebase();
         this.init();
+        this.setupBroadcastChannel();
+    }
+
+    setupBroadcastChannel() {
+        try {
+            this.bc = new BroadcastChannel('notifications');
+            this.bc.onmessage = (event) => {
+                if (event.data && event.data.type === 'SYNC_UNREAD') {
+                    this.loadNotificationsFromAPI(false, true); // Silent reload
+                }
+            };
+            window.addEventListener('storage', (e) => {
+                if (e.key === this.storageKey) {
+                    this.loadNotificationsFromLocalStorage();
+                    this.updateUnreadCount(false);
+                }
+            });
+        } catch (e) {
+            console.error("BroadcastChannel not supported", e);
+        }
     }
 
     resolveUserId() {
@@ -566,6 +586,7 @@ class NotificationCenter {
                         <h4 class="notification-title">${this.escapeHtml(notification.title)}</h4>
                         <p class="notification-message">${this.escapeHtml(notification.message)}</p>
                         ${(function(ctx){ return ctx ? '<span class="notification-context">' + ctx + '</span>' : '';})(this.escapeHtml(this.getContextLine(notification)))}
+                        ${this.renderInlineActions(notification)}
                         <span class="notification-time">${this.getTimeAgo(notification.time)}</span>
                     </div>
                     ${!notification.read ? `<button class="notification-mark-read" data-id="${this.escapeHtml(String(notification.id))}" title="Marcar leido">✓</button>` : ""}
@@ -594,6 +615,13 @@ class NotificationCenter {
             });
         });
 
+        list.querySelectorAll(".nc-inline-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.handleInlineAction(btn.dataset.id, btn.dataset.action);
+            });
+        });
+
         list.querySelectorAll(".notification-item").forEach(item => {
             item.addEventListener("click", () => {
                 const notifId = item.dataset.id;
@@ -604,6 +632,30 @@ class NotificationCenter {
                 }
             });
         });
+    }
+
+    renderInlineActions(notification) {
+        if (!notification.data || !notification.data.actions || !Array.isArray(notification.data.actions) || notification.data.actions.length === 0) return '';
+        
+        const actionsHtml = notification.data.actions.map(action => {
+            return `<button class="nc-inline-btn nc-inline-${action.style || 'primary'}" data-id="${this.escapeHtml(String(notification.id))}" data-action="${this.escapeHtml(action.id)}">${this.escapeHtml(action.label)}</button>`;
+        }).join('');
+        
+        return `<div class="nc-inline-actions-wrapper">${actionsHtml}</div>`;
+    }
+
+    async handleInlineAction(notificationId, actionId) {
+        try {
+            await fetch(this.apiBase + "/api/notifications/action", {
+                method: "POST",
+                headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                body: JSON.stringify({ notificationId, actionId })
+            });
+            this.markAsRead(notificationId);
+            if (window.showToast) window.showToast("Acción procesada", "success", 3000);
+        } catch (error) {
+            console.error("Error inline action", error);
+        }
     }
 
     getTimeAgo(dateString) {
@@ -754,7 +806,7 @@ class NotificationCenter {
         if (!notification || notification.read) return;
 
         notification.read = true;
-        this.updateUnreadCount();
+        this.updateUnreadCount(true);
         this.renderNotifications();
         this.saveToLocalStorage();
 
@@ -807,23 +859,48 @@ class NotificationCenter {
         } catch (_) {}
     }
 
-    updateUnreadCount() {
+    updateUnreadCount(broadcast = true) {
         this.unreadCount = this.notifications.filter(n => !n.read).length;
         this.updateBadge();
         this._updateTabCounts();
+        if (broadcast && this.bc) {
+            this.bc.postMessage({ type: 'SYNC_UNREAD', count: this.unreadCount });
+        }
     }
 
     updateBadge() {
-        const badge = document.querySelector("#notifBadge, .notification-badge, .notification-dot, .lt-badge, #notificationCount");
-        if (badge) {
-            badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
-            badge.style.display = this.unreadCount > 0 ? "flex" : "none";
+        const badges = document.querySelectorAll("#notifBadge, .notification-badge, .notification-dot, .lt-badge, #notificationCount, #nc-badge, .nav-badge.count[id='notifCount']");
+        badges.forEach(badge => {
+            if (badge) {
+                badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
+                badge.style.display = this.unreadCount > 0 ? "flex" : "none";
+                if (badge.classList.contains('notification-dot')) {
+                    badge.style.display = this.unreadCount > 0 ? "block" : "none";
+                }
+            }
+        });
+
+        // Update document title
+        const baseTitle = document.title.replace(/^\(\d+\+?\)\s/, "");
+        if (this.unreadCount > 0) {
+            document.title = `(${this.unreadCount}) ${baseTitle}`;
+        } else {
+            document.title = baseTitle;
+        }
+
+        // Custom event for other modules
+        document.dispatchEvent(new CustomEvent('notifications:updated', { 
+            detail: { unreadCount: this.unreadCount } 
+        }));
+
+        // Add urgent class if many unread
+        badges.forEach(badge => {
             if (this.unreadCount >= 5) {
                 badge.classList.add("urgent");
             } else {
                 badge.classList.remove("urgent");
             }
-        }
+        });
     }
 
     async refresh() {
