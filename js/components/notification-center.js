@@ -21,6 +21,34 @@ class NotificationCenter {
         this.timeRefreshInterval = null;
         this._apiLoaded = false;
 
+        // v4.26.0: Inline actions configuration
+        // Actionable notification types with inline action buttons
+        this.ACTIONABLE_TYPES = {
+            'group_invitation': {
+                actions: [
+                    { id: 'accept', label: 'Aceptar', apiCall: 'group/join', successMsg: 'Invitation accepted' },
+                    { id: 'reject', label: 'Rechazar', apiCall: 'group/decline', successMsg: 'Invitation declined' }
+                ]
+            },
+            'friend_request': {
+                actions: [
+                    { id: 'accept', label: 'Aceptar', apiCall: 'user/follow/accept', successMsg: 'Request accepted' },
+                    { id: 'reject', label: 'Rechazar', apiCall: 'user/follow/decline', successMsg: 'Request declined' }
+                ]
+            },
+            'payment_due': {
+                actions: [
+                    { id: 'pay', label: 'Pagar', action: 'navigate', navigate: 'payment-modal', successMsg: 'Opening payment' }
+                ]
+            },
+            'marketplace_order_confirmation': {
+                actions: [
+                    { id: 'confirm', label: 'Confirmar', apiCall: 'marketplace/order/confirm', successMsg: 'Order confirmed' },
+                    { id: 'dispute', label: 'Disputar', apiCall: 'marketplace/order/dispute', successMsg: 'Dispute filed' }
+                ]
+            }
+        };
+
         this.initFirebase();
         this.init();
     }
@@ -573,6 +601,110 @@ class NotificationCenter {
                 </div>
             `;
         }).join("");
+
+        // v4.26.0: Attach inline action handlers
+        this._attachInlineActionHandlers();
+    }
+
+    // v4.26.0: Get inline actions for a notification type
+    _getInlineActions(notification) {
+        const type = notification.originalType || notification.type || '';
+        return this.ACTIONABLE_TYPES[type] || null;
+    }
+
+    // v4.26.0: Render action buttons HTML
+    _renderActionButtons(notification) {
+        const actionable = this._getInlineActions(notification);
+        if (!actionable) return '';
+        
+        const nId = this.escapeHtml(String(notification.id));
+        const btns = actionable.actions.map(a => 
+            `<button class="notification-action-btn action-${a.id}" data-id="${nId}" data-action="${a.id}" data-api="${a.apiCall || ''}" data-nav="${a.navigate || ''}" title="${a.label}">${a.label}</button>`
+        ).join('');
+        
+        return `<div class="notification-actions">${btns}</div>`;
+    }
+
+    // v4.26.0: Attach event listeners to inline action buttons
+    _attachInlineActionHandlers() {
+        const list = document.getElementById("notificationList");
+        if (!list) return;
+
+        list.querySelectorAll(".notification-action-btn").forEach(btn => {
+            // Remove existing listener to avoid duplicates
+            btn.replaceWith(btn.cloneNode(true));
+        });
+
+        list.querySelectorAll(".notification-action-btn").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                const nId = btn.dataset.id;
+                const actionId = btn.dataset.action;
+                const apiCall = btn.dataset.api;
+                const navigate = btn.dataset.nav;
+
+                // Show loading state
+                btn.classList.add('loading');
+                const originalText = btn.textContent;
+                btn.textContent = '...';
+
+                try {
+                    if (navigate === 'payment-modal') {
+                        // Navigate to payment modal
+                        btn.textContent = '✓';
+                        btn.classList.remove('loading');
+                        btn.classList.add('success');
+                        this._showToast('Opening payment...', 'success');
+                        // Trigger payment modal with prefilled context
+                        const notif = this.notifications.find(n => String(n.id) === String(nId));
+                        window.dispatchEvent(new CustomEvent('openPaymentModal', { detail: notif }));
+                        return;
+                    }
+
+                    if (apiCall) {
+                        const response = await fetch(this.apiBase + '/api/' + apiCall, {
+                            method: 'POST',
+                            headers: Object.assign({}, this.getAuthHeaders(), { 'Content-Type': 'application/json' }),
+                            body: JSON.stringify({ notification_id: nId })
+                        });
+
+                        if (response.ok) {
+                            btn.textContent = '✓';
+                            btn.classList.remove('loading');
+                            btn.classList.add('success');
+                            this._showToast('Action completed', 'success');
+                            // Mark notification as read or update state
+                            this.markAsRead(nId);
+                        } else {
+                            throw new Error('API call failed');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Action failed:', err);
+                    btn.textContent = '✗';
+                    btn.classList.remove('loading');
+                    btn.classList.add('error');
+                    this._showToast('Action failed, please try again', 'error');
+                    // Rollback after 2 seconds
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.classList.remove('error');
+                    }, 2000);
+                }
+            });
+        });
+    }
+
+    // v4.26.0: Show toast notification
+    _showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
 
         // Show/hide Load More button
         const loadMoreBtn = document.getElementById("ncLoadMoreBtn");
