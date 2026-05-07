@@ -123,6 +123,34 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## 🛠️ Development Setup (English)
+
+### Local Frontend Development
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve locally (any HTML file works, or use npx serve for local server)
+npx serve .
+
+# Open http://localhost:3000 in your browser
+```
+
+**Note:** The backend (API + DB) runs on the production server. For local frontend development, you only need to serve the static files.
+
+### Smart Contract Development
+
+```bash
+cd smart-contracts
+npm install
+npx hardhat compile
+npx hardhat test
+```
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
