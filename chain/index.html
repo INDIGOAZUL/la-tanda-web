@@ -845,6 +845,163 @@
             font-size: 0.78rem;
         }
 
+        /* Search box */
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 42px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px var(--cyan-glow2);
+        }
+        .search-input::placeholder { color: var(--text-dim); }
+        .search-clear-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .search-clear-btn:hover { color: var(--text); background: var(--surface2); }
+        .search-results {
+            background: var(--surface-solid);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: var(--surface2); }
+        .search-result-type {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .search-result-type.block { background: var(--cyan-glow2); color: var(--cyan); }
+        .search-result-type.tx { background: var(--green-dim); color: var(--green); }
+        .search-result-type.addr { background: var(--purple-dim); color: var(--purple); }
+        .search-result-type.hash { background: var(--amber-dim); color: var(--amber); }
+        .search-result-data { flex: 1; min-width: 0; }
+        .search-result-title {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-meta { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+        .search-result-arrow { color: var(--text-dim); font-size: 0.75rem; }
+        .search-loading, .search-error {
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        .search-loading { color: var(--cyan); }
+        .search-error { background: var(--red-dim); color: var(--red); }
+        .detail-view {
+            background: var(--surface-solid);
+            border: 1px solid var(--border-bright);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 1rem;
+        }
+        .detail-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .detail-title {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            color: var(--cyan);
+        }
+        .detail-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .detail-close:hover { color: var(--text); background: var(--surface2); }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 16px;
+            font-size: 0.85rem;
+        }
+        .detail-key { color: var(--text-dim); font-weight: 500; }
+        .detail-val {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .detail-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            margin: 16px 0 8px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+        .tx-list { margin-top: 8px; }
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+        }
+        .tx-item:last-child { border-bottom: none; }
+        .tx-hash { font-family: var(--font-mono); color: var(--cyan); cursor: pointer; }
+        .tx-hash:hover { text-decoration: underline; }
+        .tx-amount { color: var(--green); font-weight: 500; }
+        .detail-val a { color: var(--cyan); }
+        .detail-val a:hover { text-decoration: underline; }
+
+
         /* Validator cards */
         .validator-list {
             padding: 1rem 1.25rem;
@@ -1671,6 +1828,21 @@
                 </p>
             </div>
 
+            <!-- Search -->
+            <div class="explorer-subsection fade-up">
+                <div class="explorer-header">
+                    <h3><i class="fas fa-search" style="color:var(--cyan);margin-right:0.5rem"></i>Buscar</h3>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por bloque, hash, tx hash o direccion..." autocomplete="off">
+                    <button id="searchClearBtn" class="search-clear-btn" style="display:none"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="searchResults" class="search-results" style="display:none"></div>
+                <div id="searchLoading" class="search-loading" style="display:none"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>
+                <div id="searchError" class="search-error" style="display:none"></div>
+            </div>
+
             <!-- Recent Blocks -->
             <div class="explorer-subsection fade-up">
                 <div class="explorer-header">
@@ -2242,6 +2414,164 @@
                 fetchSupply();
                 fetchStaking();
             }, 60000);
+
+            // ---- Search functionality ----
+            var searchTimer = null;
+            var currentDetailBlock = null;
+            var searchInput = document.getElementById('searchInput');
+            var searchClearBtn = document.getElementById('searchClearBtn');
+            var searchResults = document.getElementById('searchResults');
+            var searchLoading = document.getElementById('searchLoading');
+            var searchError = document.getElementById('searchError');
+
+            function showDetail(blockData) {
+                // Remove existing detail
+                var existing = document.getElementById('blockDetailView');
+                if (existing) existing.remove();
+                currentDetailBlock = blockData;
+                var detailDiv = document.createElement('div');
+                detailDiv.id = 'blockDetailView';
+                detailDiv.className = 'detail-view';
+                var h = blockData.header;
+                var txs = parseInt(blockData.num_txs || 0);
+                detailDiv.innerHTML = '<div class="detail-header"><span class="detail-title">Bloque #' + escapeHtml(fmt(parseInt(h.height))) + '</span><button class="detail-close" onclick="document.getElementById(\x27blockDetailView\x27).remove()"><i class="fas fa-times"></i></button></div><div class="detail-grid"><div class="detail-key">Height</div><div class="detail-val">' + escapeHtml(h.height) + '</div><div class="detail-key">Hash</div><div class="detail-val">' + escapeHtml(h.hash || blockData.block_id.hash || '') + '</div><div class="detail-key">Proposer</div><div class="detail-val">' + escapeHtml(shortHash(h.proposer_address)) + ' <span style="color:var(--text-dim);font-size:0.75rem">(' + escapeHtml(h.proposer_address) + ')</span></div><div class="detail-key">Transactions</div><div class="detail-val">' + txs + '</div><div class="detail-key">Time</div><div class="detail-val">' + escapeHtml(new Date(h.time).toLocaleString('es-HN')) + '</div><div class="detail-key">Last Commit Hash</div><div class="detail-val">' + escapeHtml(h.last_commit_hash || '') + '</div><div class="detail-key">Data Hash</div><div class="detail-val">' + escapeHtml(h.data_hash || '') + '</div></div>';
+                var searchSection = document.getElementById('searchResults');
+                searchSection.parentNode.insertBefore(detailDiv, searchSection.nextSibling);
+            }
+
+            function renderSearchResults(results, query) {
+                if (results.length === 0) {
+                    searchResults.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);font-size:0.85rem">Sin resultados para "' + escapeHtml(query) + '"</div>';
+                } else {
+                    searchResults.innerHTML = results.map(function(r) {
+                        return '<div class="search-result-item" data-type="' + escapeHtml(r.type) + '" data-value="' + escapeHtml(String(r.value)) + '">' +
+                            '<span class="search-result-type ' + escapeHtml(r.type) + '">' + escapeHtml(r.type) + '</span>' +
+                            '<div class="search-result-data"><div class="search-result-title">' + escapeHtml(r.title) + '</div><div class="search-result-meta">' + escapeHtml(r.meta) + '</div></div>' +
+                            '<i class="fas fa-chevron-right search-result-arrow"></i></div>';
+                    }).join('');
+                }
+                searchResults.style.display = 'block';
+            }
+
+            function handleSearchResultClick(e) {
+                var item = e.target.closest('.search-result-item');
+                if (!item) return;
+                var type = item.getAttribute('data-type');
+                var value = item.getAttribute('data-value');
+                if (type === 'block') {
+                    var block = recentBlocks.find(function(b) { return String(b.header.height) === value; });
+                    if (block) { showDetail(block); searchResults.style.display = 'none'; }
+                }
+            }
+
+            searchResults.addEventListener('click', handleSearchResultClick);
+
+            searchInput.addEventListener('input', function() {
+                var q = searchInput.value.trim();
+                searchClearBtn.style.display = q ? 'flex' : 'none';
+                if (!q) { searchResults.style.display = 'none'; searchResults.innerHTML = ''; searchError.style.display = 'none'; searchLoading.style.display = 'none'; var dv = document.getElementById('blockDetailView'); if (dv) dv.remove(); return; }
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(async function() {
+                    searchResults.style.display = 'none';
+                    searchError.style.display = 'none';
+                    searchLoading.style.display = 'block';
+                    var dv = document.getElementById('blockDetailView'); if (dv) dv.remove();
+                    try {
+                        var results = [];
+                        var lq = q.toLowerCase();
+
+                        // Search blocks by height
+                        if (/^\d+$/.test(q)) {
+                            var height = parseInt(q);
+                            if (height > 0) {
+                                var blockData = await fetchJSON(RPC + '/block?height=' + height);
+                                if (blockData && blockData.result) {
+                                    results.push({
+                                        type: 'block',
+                                        title: '#' + fmt(height),
+                                        meta: new Date(blockData.result.block.header.time).toLocaleString('es-HN'),
+                                        value: String(height)
+                                    });
+                                }
+                            }
+                        }
+
+                        // Search transactions by hash
+                        if (q.length >= 16 && !/^\d+$/.test(q)) {
+                            try {
+                                var txData = await fetchJSON(RPC + '/tx?hash=' + encodeURIComponent(q));
+                                if (txData && txData.result && txData.result.hash) {
+                                    var txInfo = txData.result;
+                                    results.push({
+                                        type: 'tx',
+                                        title: shortHash(txInfo.hash),
+                                        meta: 'Height: ' + txInfo.height + ' | Result: ' + (txInfo.result ? (txInfo.result.code === 0 ? 'Success' : 'Error ' + txInfo.result.code) : 'N/A'),
+                                        value: txInfo.hash
+                                    });
+                                }
+                            } catch (_) {}
+                        }
+
+
+                        // Search addresses
+                        if (q.length >= 8 && !/^\d+$/.test(q) && !q.startsWith('0x') && results.length < 5) {
+                            // Search validators by address
+                            var valsData = await fetchJSON(REST + '/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED');
+                            var matchedVals = (valsData.validators || []).filter(function(v) {
+                                return v.operator_address.toLowerCase().includes(lq) || v.moniker.toLowerCase().includes(lq);
+                            }).slice(0, 3);
+                            matchedVals.forEach(function(v) {
+                                results.push({
+                                    type: 'addr',
+                                    title: v.moniker || v.operator_address,
+                                    meta: v.operator_address.substring(0, 20) + '...' + ' | Tokens: ' + ultdToLtd(v.tokens),
+                                    value: v.operator_address
+                                });
+                            });
+                        }
+
+                        // Local block search (partial height match)
+                        if (/^\d+$/.test(q)) {
+                            recentBlocks.forEach(function(b) {
+                                if (String(b.header.height).startsWith(q)) {
+                                    results.push({
+                                        type: 'block',
+                                        title: '#' + fmt(parseInt(b.header.height)),
+                                        meta: timeAgo(b.header.time),
+                                        value: String(b.header.height)
+                                    });
+                                }
+                            });
+                        }
+
+                        renderSearchResults(results.slice(0, 10), q);
+                    } catch (err) {
+                        searchError.textContent = 'Error al buscar: ' + err.message;
+                        searchError.style.display = 'block';
+                    } finally {
+                        searchLoading.style.display = 'none';
+                    }
+                }, 400);
+            });
+
+            searchClearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                searchClearBtn.style.display = 'none';
+                searchResults.style.display = 'none';
+                searchResults.innerHTML = '';
+                searchError.style.display = 'none';
+                searchLoading.style.display = 'none';
+                var dv = document.getElementById('blockDetailView'); if (dv) dv.remove();
+                searchInput.focus();
+            });
+
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    searchResults.style.display = 'none';
+                    var dv = document.getElementById('blockDetailView'); if (dv) dv.remove();
+                }
+            });
         }
 
         init();
