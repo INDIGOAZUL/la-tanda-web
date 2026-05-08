@@ -218,3 +218,70 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+---
+
+## 🛠️ Development Setup
+
+### Prerequisites
+- Node.js 18+ 
+- npm 9+
+
+### Running Locally
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+   cd la-tanda-web
+   ```
+
+2. **Serve locally**
+   ```bash
+   npx serve .
+   ```
+   Then open `http://localhost:3000` in your browser.
+
+### Key API Endpoints
+| Service | URL |
+|---------|-----|
+| Dev Portal | https://latanda.online/dev-dashboard.html |
+| API Docs (Swagger) | https://latanda.online/docs |
+| Chain Explorer | https://latanda.online/chain/ |
+| Whitepaper | https://latanda.online/whitepaper.html |
+
+---
+
+## 📁 Project Structure
+
+```
+la-tanda-web/
+├── index.html              # Landing page
+├── auth-enhanced.html      # Authentication flow
+├── home-dashboard.html     # Main dashboard (requires auth)
+├── marketplace-social.html # Marketplace + Social hub
+├── groups-advanced-system.html # Tandas management
+├── js/                     # Core JavaScript modules
+│   ├── core/               # API client, event bus, cache
+│   ├── components/        # UI components (loader, etc.)
+│   ├── hub/                # Hub page modules
+│   ├── header/             # Header navigation
+│   ├── sidebar/            # Sidebar navigation
+│   └── helpers/            # Utility functions
+├── css/                    # Stylesheets
+│   ├── design-tokens.css   # CSS custom properties
+│   ├── components.css      # Shared components
+│   ├── hub/                # Hub-specific styles
+│   └── dashboard-*.css     # Dashboard layouts
+├── components/              # HTML component templates
+│   ├── header.html
+│   ├── sidebar.html
+│   └── footer.html
+└── assets/                 # Images, fonts, bundled assets
+```
+
+### Core Files
+| File | Purpose |
+|------|---------|
+| `js/components-loader.js` | Main component loader (all pages use this) |
+| `js/core/api-client.js` | API client for backend communication |
+| `js/marketplace-social.js` | Marketplace & social system (in js/ directory) |
