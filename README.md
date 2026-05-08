@@ -115,6 +115,49 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 3. Autenticación: JWT via `/api/auth/login`
 4. 160+ endpoints productivos
 
+## Development Setup
+
+This repository is a static frontend mirror, so no build step is required for basic local development.
+
+### Serve locally
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` in your browser.
+
+### Useful developer links
+
+- Swagger UI / API docs: [latanda.online/docs](https://latanda.online/docs)
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+- Chain page: [latanda.online/chain](https://latanda.online/chain/)
+
+### Local verification notes
+
+- `marketplace-social.js` exists both at the HTML root and in `js/`; the active marketplace page references `js/marketplace-social.js`.
+- The main API proxy file is `api-proxy-enhanced.js`.
+
+## Project Structure
+
+```text
+la-tanda-web/
+├── *.html                    # Main static pages for the ecosystem
+├── css/                      # Global styles, design tokens, component styles, and page modules
+├── js/                       # Browser JavaScript modules, shared components, hub code, and utilities
+├── js/components/            # Reusable UI components such as wallet, notifications, and network switcher
+├── js/helpers/               # Shared helper utilities
+├── assets/                   # Logos, favicons, generated assets, and public images
+├── chain/                    # La Tanda Chain resources, genesis file, and node setup script
+├── packages/sdk/             # TypeScript SDK package and tests
+├── components/               # Static HTML snippets and quick-action widgets
+├── docs                      # Swagger/OpenAPI entrypoint for public API documentation
+└── api-*.js                  # API adapters and proxy implementations
+```
+
+When contributing, keep changes focused: one pull request should address one bounty or one issue.
+
 ### Para validadores (correr un nodo)
 1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
 2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
