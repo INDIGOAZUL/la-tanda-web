@@ -218,3 +218,78 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+
+## 🛠 Tech Stack
+
+- **Frontend:** Next.js 15 + React 18 + TypeScript
+- **Styling:** Tailwind CSS + Radix UI
+- **Chains:** Cosmos SDK (testnet), Lens Protocol
+- **Wallet:** Wagmi + WalletConnect
+- **Database:** PostgreSQL + Prisma
+- **Payments:** Un limit + Holded API
+
+## 👩‍💻 Developer Quick Start
+
+### Prerequisites
+- Node.js >= 18
+- pnpm (recommended) or npm
+- Git
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Start the development server
+pnpm dev
+```
+
+The app will be running at **http://localhost:3000**.
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_CHAIN_ID` | Chain ID for the network | Yes |
+| `NEXT_PUBLIC_RPC_URL` | RPC endpoint URL | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect project ID | Yes |
+
+### Project Structure
+
+```
+src/
+├── app/          # Next.js App Router pages
+├── components/   # Reusable UI components
+├── lib/          # Utility functions and helpers
+├── hooks/        # Custom React hooks
+├── styles/       # Global styles
+└── types/        # TypeScript type definitions
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature`
+3. Make your changes
+4. Run tests: `pnpm test`
+5. Commit using conventional commits: `feat:`, `fix:`, `docs:`
+6. Push and open a Pull Request
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+
+### Need Help?
+
+- Join our [Discord](https://discord.gg/latanda)
+- Read the [Whitepaper](https://latanda.online/whitepaper.html)
+- Check [open issues](https://github.com/INDIGOAZUL/la-tanda-web/issues)
