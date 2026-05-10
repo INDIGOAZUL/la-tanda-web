@@ -2,21 +2,444 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Notificaciones - La Tanda</title>
-    <meta http-equiv="refresh" content="0;url=/home-dashboard.html?open=notifications">
-    <script>window.location.href = '/home-dashboard.html?open=notifications';</script>
+    <meta name="description" content="Historial completo de notificaciones de La Tanda">
+    <link rel="stylesheet" href="css/design-tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/components/notification-center.css">
+    <link rel="stylesheet" href="notification-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --nc-bg: #0a0e17;
+            --nc-surface: #111827;
+            --nc-border: rgba(0,255,255,0.08);
+            --nc-accent: #00ffff;
+            --nc-text: #e2e8f0;
+            --nc-muted: #64748b;
+            --nc-radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--nc-bg); color: var(--nc-text); font-family: 'Inter', 'Segoe UI', sans-serif; min-height: 100vh; }
+
+        /* ---- HEADER ---- */
+        .notif-page-header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(10,14,23,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--nc-border);
+            padding: 16px;
+        }
+        .notif-page-header h1 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .notif-page-header h1 i { color: var(--nc-accent); }
+
+        /* ---- SEARCH ---- */
+        .notif-search-wrap { position: relative; margin-bottom: 10px; }
+        .notif-search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--nc-muted); font-size: 0.85rem; }
+        #notifSearch { width: 100%; background: var(--nc-surface); border: 1px solid var(--nc-border); border-radius: 8px; padding: 9px 12px 9px 34px; color: var(--nc-text); font-size: 0.9rem; outline: none; transition: border 0.2s; }
+        #notifSearch:focus { border-color: rgba(0,255,255,0.4); }
+
+        /* ---- FILTER PILLS ---- */
+        .notif-filter-pills { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+        .notif-filter-pills::-webkit-scrollbar { display: none; }
+        .notif-pill { flex-shrink: 0; border: 1px solid var(--nc-border); background: transparent; color: var(--nc-muted); border-radius: 20px; padding: 4px 14px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+        .notif-pill.active { background: var(--nc-accent); color: #000; border-color: var(--nc-accent); font-weight: 600; }
+
+        /* ---- LIST AREA ---- */
+        .notif-page-body { max-width: 680px; margin: 0 auto; padding: 16px; }
+
+        /* ---- SKELETON ---- */
+        .nc-skeleton { display: flex; flex-direction: column; gap: 12px; }
+        .nc-skeleton-item { background: var(--nc-surface); border-radius: var(--nc-radius); padding: 14px; display: flex; gap: 12px; }
+        .nc-skeleton-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); flex-shrink: 0; animation: skeletonPulse 1.4s ease-in-out infinite; }
+        .nc-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nc-skeleton-line { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.05); animation: skeletonPulse 1.4s ease-in-out infinite; }
+        .nc-skeleton-line.short { width: 60%; }
+        @keyframes skeletonPulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
+
+        /* ---- NOTIFICATION ITEMS (standalone page) ---- */
+        .notif-page-list { display: flex; flex-direction: column; gap: 8px; }
+        .np-item { background: var(--nc-surface); border: 1px solid var(--nc-border); border-radius: var(--nc-radius); padding: 14px 16px; display: flex; gap: 12px; cursor: pointer; transition: border-color 0.2s, transform 0.15s; position: relative; }
+        .np-item:hover { border-color: rgba(0,255,255,0.25); transform: translateY(-1px); }
+        .np-item.unread { border-left: 3px solid var(--nc-accent); }
+        .np-item.urgent { border-left: 3px solid #ef4444; }
+        .np-icon { font-size: 1.4rem; flex-shrink: 0; position: relative; }
+        .np-body { flex: 1; min-width: 0; }
+        .np-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .np-msg { font-size: 0.8rem; color: var(--nc-muted); line-height: 1.4; }
+        .np-meta { font-size: 0.72rem; color: var(--nc-muted); margin-top: 6px; }
+        .np-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--nc-accent); flex-shrink: 0; margin-top: 6px; }
+
+        /* ---- INLINE ACTIONS (page) ---- */
+        .np-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+        .np-action-btn { border: none; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: flex; align-items: center; gap: 4px; }
+        .np-action-btn.success { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .np-action-btn.danger { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+        .np-action-btn.primary { background: rgba(0,255,255,0.1); color: var(--nc-accent); border: 1px solid rgba(0,255,255,0.25); }
+        .np-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ---- EMPTY STATE ---- */
+        .notif-empty { text-align: center; padding: 60px 20px; }
+        .notif-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .notif-empty h3 { font-size: 1.1rem; margin-bottom: 6px; }
+        .notif-empty p { color: var(--nc-muted); font-size: 0.85rem; }
+
+        /* ---- LOAD MORE / INFINITE ---- */
+        #npLoadMoreBtn { display: block; width: 100%; margin-top: 16px; background: var(--nc-surface); border: 1px solid var(--nc-border); color: var(--nc-muted); border-radius: var(--nc-radius); padding: 12px; cursor: pointer; font-size: 0.85rem; transition: border-color 0.2s; }
+        #npLoadMoreBtn:hover { border-color: rgba(0,255,255,0.3); color: var(--nc-accent); }
+        #npLoadMoreBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ---- MOBILE BOTTOM NAV ---- */
+        .mobile-bottom-nav { display: none; }
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; background: rgba(10,14,23,0.97); backdrop-filter: blur(10px); border-top: 1px solid var(--nc-border); padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
+            .mobile-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; text-decoration: none; color: var(--nc-muted); font-size: 0.6rem; transition: color 0.2s; position: relative; }
+            .mobile-nav-item i { font-size: 1.1rem; }
+            .mobile-nav-item.active, .mobile-nav-item:hover { color: var(--nc-accent); }
+            .notif-page-body { padding-bottom: 80px; }
+            .mobile-notif-badge { position: absolute; top: 0; right: 18%; background: #ef4444; color: #fff; border-radius: 10px; font-size: 0.55rem; padding: 1px 5px; font-weight: 700; display: none; }
+        }
+    </style>
 </head>
 <body>
-    <p>Redirigiendo a notificaciones...</p>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
-        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
-        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
-        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
-        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
-    </nav>
-    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(10,14,23,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.08);padding:4px 0;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1.1rem}.mobile-nav-item:hover{color:#00FFFF}}</style>
+<!-- Page Header -->
+<header class="notif-page-header">
+    <h1><i class="fas fa-bell"></i> Notificaciones</h1>
+    <div class="notif-search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="search" id="notifSearch" placeholder="Buscar notificaciones..." autocomplete="off">
+    </div>
+    <div class="notif-filter-pills" id="notifFilterPills">
+        <button class="notif-pill active" data-filter="all">Todo</button>
+        <button class="notif-pill" data-filter="transactions">Pagos</button>
+        <button class="notif-pill" data-filter="tandas">Tandas</button>
+        <button class="notif-pill" data-filter="social">Social</button>
+        <button class="notif-pill" data-filter="system">Sistema</button>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="notif-page-body">
+    <!-- Skeleton loader shown during initial load -->
+    <div class="nc-skeleton" id="npSkeleton">
+        <div class="nc-skeleton-item"><div class="nc-skeleton-icon"></div><div class="nc-skeleton-lines"><div class="nc-skeleton-line"></div><div class="nc-skeleton-line short"></div></div></div>
+        <div class="nc-skeleton-item"><div class="nc-skeleton-icon"></div><div class="nc-skeleton-lines"><div class="nc-skeleton-line"></div><div class="nc-skeleton-line short"></div></div></div>
+        <div class="nc-skeleton-item"><div class="nc-skeleton-icon"></div><div class="nc-skeleton-lines"><div class="nc-skeleton-line"></div><div class="nc-skeleton-line short"></div></div></div>
+        <div class="nc-skeleton-item"><div class="nc-skeleton-icon"></div><div class="nc-skeleton-lines"><div class="nc-skeleton-line"></div><div class="nc-skeleton-line short"></div></div></div>
+    </div>
+
+    <!-- Notification list -->
+    <div class="notif-page-list" id="npList" style="display:none"></div>
+
+    <!-- Empty state -->
+    <div class="notif-empty" id="npEmpty" style="display:none">
+        <div class="notif-empty-icon">🔔</div>
+        <h3>Sin notificaciones</h3>
+        <p>No hay notificaciones que coincidan con tu búsqueda o filtro.</p>
+    </div>
+
+    <!-- Load more -->
+    <button id="npLoadMoreBtn" style="display:none">
+        <i class="fas fa-chevron-down"></i> Cargar más notificaciones
+    </button>
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="mobile-bottom-nav">
+    <a href="home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
+    <a href="marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
+    <a href="notificaciones.html" class="mobile-nav-item active">
+        <i class="fas fa-bell"></i><span>Alertas</span>
+        <span class="mobile-notif-badge" id="mobileNotifBadge"></span>
+    </a>
+    <a href="mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
+</nav>
+
+<script>
+// Standalone page notification manager
+// Reuses NotificationCenter's data layer but renders independently (no panel)
+(function() {
+    const API_BASE = window.API_BASE_URL || '';
+    const ITEMS_PER_PAGE = 20;
+
+    let allNotifications = [];
+    let displayedCount = 0;
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let loadedAll = false;
+    let isLoading = false;
+
+    // --- Auth helpers ---
+    function getAuthHeaders() {
+        const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+        return token ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    }
+    function resolveUserId() {
+        const directId = localStorage.getItem('latanda_user_id') || sessionStorage.getItem('userId');
+        if (directId) return directId;
+        try {
+            const u = localStorage.getItem('latanda_user_data') || localStorage.getItem('latanda_user');
+            if (u) { const p = JSON.parse(u); return p.id || p.user_id || p.userId || 'demo-user'; }
+        } catch (_) {}
+        return 'demo-user';
+    }
+
+    // --- Load from API or localStorage ---
+    async function loadNotifications(append) {
+        if (isLoading) return;
+        isLoading = true;
+        const offset = append ? allNotifications.length : 0;
+        try {
+            const res = await fetch(API_BASE + '/api/notifications?limit=' + ITEMS_PER_PAGE + '&offset=' + offset, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error();
+            const result = await res.json();
+            if (result.success && result.data && result.data.notifications) {
+                const mapped = result.data.notifications.map(mapNotification);
+                if (append) {
+                    const ids = new Set(allNotifications.map(n => n.id));
+                    allNotifications = allNotifications.concat(mapped.filter(n => !ids.has(n.id)));
+                    loadedAll = mapped.length < ITEMS_PER_PAGE;
+                } else {
+                    allNotifications = mapped;
+                    displayedCount = 0;
+                    loadedAll = mapped.length < ITEMS_PER_PAGE;
+                    saveToStorage();
+                }
+            }
+        } catch (_) {
+            // Fallback to localStorage
+            if (!append) {
+                try {
+                    const userId = resolveUserId();
+                    const stored = localStorage.getItem('notifications_' + userId);
+                    if (stored) allNotifications = JSON.parse(stored);
+                } catch (_) {}
+                loadedAll = true;
+            }
+        } finally {
+            isLoading = false;
+        }
+        renderPage();
+        updateBadge();
+    }
+
+    function saveToStorage() {
+        try {
+            const userId = resolveUserId();
+            localStorage.setItem('notifications_' + userId, JSON.stringify(allNotifications.slice(0, 100)));
+        } catch (_) {}
+    }
+
+    function mapNotification(n) {
+        return { id: n.id, type: mapType(n.type), originalType: n.type, icon: n.icon || iconFor(n.type), title: n.title, message: n.message, time: n.created_at, read: n.read || false, data: n.data || {}, urgent: isUrgent(n.type) };
+    }
+
+    function mapType(t) {
+        const m = { payment_reminder:'transactions', payment_received:'transactions', payment_due:'transactions', payment_late:'transactions', mora_applied:'transactions', deposit_confirmed:'transactions', payout_ready:'transactions', lottery_scheduled:'tandas', lottery_completed:'tandas', turn_assigned:'tandas', tanda_joined:'tandas', group_invitation:'social', group_joined:'social', member_joined:'social', new_follower:'social', security_alert:'system', system_notice:'system', kyc_approved:'system' };
+        return m[t] || 'system';
+    }
+    function iconFor(t) { const m = { payment_due:'⏰', payment_received:'✅', payout_ready:'🎉', security_alert:'🚨', group_invitation:'💌', turn_assigned:'🎯', tanda_joined:'👥', kyc_approved:'🛡️', new_follower:'👤' }; return m[t] || '🔔'; }
+    function isUrgent(t) { return ['security_alert','payment_due','mora_applied','suspension_warning','compliance_alert','loan_plan_defaulted'].includes(t); }
+
+    function getTimeAgo(d) {
+        const s = Math.floor((Date.now() - new Date(d)) / 1000);
+        if (s < 60) return 'Ahora mismo';
+        if (s < 3600) return 'Hace ' + Math.floor(s/60) + ' min';
+        if (s < 86400) return 'Hace ' + Math.floor(s/3600) + ' h';
+        if (s < 604800) return 'Hace ' + Math.floor(s/86400) + ' d';
+        return new Date(d).toLocaleDateString('es-HN');
+    }
+
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
+
+    // --- Inline actions (same spec as panel) ---
+    function getActions(n) {
+        const t = n.originalType || ''; const d = n.data || {}; const acts = [];
+        if (['group_invitation','group_invited','invitation'].includes(t)) {
+            acts.push({ label:'Aceptar', icon:'fas fa-check', style:'success', endpoint:'/api/groups/'+encodeURIComponent(d.group_id||'')+'/invitations/accept', method:'POST', payload:{} });
+            acts.push({ label:'Rechazar', icon:'fas fa-times', style:'danger', endpoint:'/api/groups/'+encodeURIComponent(d.group_id||'')+'/invitations/reject', method:'POST', payload:{} });
+        }
+        if (['payment_due','payment_due_soon','payment_reminder'].includes(t)) {
+            acts.push({ label:'Registrar Pago', icon:'fas fa-wallet', style:'primary', endpoint:'/api/groups/'+encodeURIComponent(d.group_id||'')+'/payments', method:'POST', payload:{amount:d.amount,cycle_number:d.cycle_number} });
+        }
+        if (t === 'member_request_pending') {
+            acts.push({ label:'Aprobar', icon:'fas fa-user-check', style:'success', endpoint:'/api/groups/'+encodeURIComponent(d.group_id||'')+'/members/'+encodeURIComponent(d.member_id||'')+'/approve', method:'POST', payload:{} });
+            acts.push({ label:'Rechazar', icon:'fas fa-user-times', style:'danger', endpoint:'/api/groups/'+encodeURIComponent(d.group_id||'')+'/members/'+encodeURIComponent(d.member_id||'')+'/reject', method:'POST', payload:{} });
+        }
+        return acts;
+    }
+
+    function renderActionsHtml(n) {
+        const acts = n.read ? [] : getActions(n);
+        if (!acts.length) return '';
+        return '<div class="np-actions">' + acts.map((a, i) =>
+            `<button class="np-action-btn ${a.style}" data-notif-id="${escapeHtml(String(n.id))}" data-action-idx="${i}"><i class="${a.icon}"></i> ${escapeHtml(a.label)}</button>`
+        ).join('') + '</div>';
+    }
+
+    async function handleAction(notifId, actionIdx) {
+        const n = allNotifications.find(x => String(x.id) === String(notifId));
+        if (!n) return;
+        const acts = getActions(n);
+        const act = acts[actionIdx];
+        if (!act) return;
+        const btn = document.querySelector(`.np-action-btn[data-notif-id="${CSS.escape(String(notifId))}"][data-action-idx="${actionIdx}"]`);
+        const orig = btn ? btn.innerHTML : '';
+        try {
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+            const res = await fetch(API_BASE + act.endpoint, { method: act.method, headers: getAuthHeaders(), body: JSON.stringify(act.payload) });
+            if (!res.ok) throw new Error();
+            n.read = true; n._actionsCompleted = true;
+            saveToStorage(); broadcastBadge(); renderPage();
+        } catch (_) {
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            alert('No se pudo completar la acción. Inténtalo de nuevo.');
+        }
+    }
+
+    // --- Render ---
+    function getFiltered() {
+        let list = currentFilter === 'all' ? allNotifications : allNotifications.filter(n => n.type === currentFilter);
+        if (currentSearch) {
+            const q = currentSearch.toLowerCase();
+            list = list.filter(n => (n.title||'').toLowerCase().includes(q) || (n.message||'').toLowerCase().includes(q));
+        }
+        return list;
+    }
+
+    function renderPage() {
+        const skeleton = document.getElementById('npSkeleton');
+        const listEl = document.getElementById('npList');
+        const emptyEl = document.getElementById('npEmpty');
+        const loadMoreBtn = document.getElementById('npLoadMoreBtn');
+
+        skeleton.style.display = 'none';
+
+        const filtered = getFiltered();
+        const toShow = filtered.slice(0, displayedCount + ITEMS_PER_PAGE);
+        displayedCount = toShow.length;
+
+        if (toShow.length === 0) {
+            listEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            loadMoreBtn.style.display = 'none';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+        listEl.style.display = 'flex';
+
+        listEl.innerHTML = toShow.map(n => {
+            const classes = ['np-item', !n.read ? 'unread' : '', n.urgent ? 'urgent' : ''].filter(Boolean).join(' ');
+            return `<div class="${classes}" data-id="${escapeHtml(String(n.id))}">
+                <div class="np-icon">${escapeHtml(n.icon)}</div>
+                <div class="np-body">
+                    <div class="np-title">${escapeHtml(n.title)}</div>
+                    <div class="np-msg">${escapeHtml(n.message)}</div>
+                    <div class="np-meta">${escapeHtml(getTimeAgo(n.time))}</div>
+                    ${!n._actionsCompleted ? renderActionsHtml(n) : ''}
+                </div>
+                ${!n.read ? '<div class="np-unread-dot"></div>' : ''}
+            </div>`;
+        }).join('');
+
+        // Wire events
+        listEl.querySelectorAll('.np-item').forEach(el => {
+            el.addEventListener('click', (evt) => {
+                if (evt.target.closest('.np-action-btn')) return;
+                const id = el.dataset.id;
+                markRead(id);
+            });
+        });
+        listEl.querySelectorAll('.np-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleAction(btn.dataset.notifId, parseInt(btn.dataset.actionIdx, 10));
+            });
+        });
+
+        const canLoadMore = filtered.length > displayedCount || !loadedAll;
+        loadMoreBtn.style.display = canLoadMore ? 'block' : 'none';
+    }
+
+    async function markRead(id) {
+        const n = allNotifications.find(x => String(x.id) === String(id));
+        if (!n || n.read) return;
+        n.read = true;
+        saveToStorage(); broadcastBadge(); renderPage();
+        try {
+            await fetch(API_BASE + '/api/notifications/read/' + id, { method: 'POST', headers: getAuthHeaders(), body: '{}' });
+        } catch (_) {}
+    }
+
+    function updateBadge() {
+        const count = allNotifications.filter(n => !n.read).length;
+        const mob = document.getElementById('mobileNotifBadge');
+        if (mob) { mob.textContent = count > 99 ? '99+' : count; mob.style.display = count > 0 ? 'inline-flex' : 'none'; }
+        const base = document.title.replace(/^\(\d+\)\s*/, '');
+        document.title = count > 0 ? `(${count}) ${base}` : base;
+    }
+
+    function broadcastBadge() {
+        const count = allNotifications.filter(n => !n.read).length;
+        updateBadge();
+        try { new BroadcastChannel('notifications').postMessage({ type: 'BADGE_UPDATE', count }); } catch (_) {}
+        try { localStorage.setItem('_nc_badge_count', String(count)); } catch (_) {}
+    }
+
+    // --- Cross-tab badge sync ---
+    try {
+        const bc = new BroadcastChannel('notifications');
+        bc.onmessage = (evt) => { if (evt.data && evt.data.type === 'BADGE_UPDATE') updateBadge(); };
+    } catch (_) {
+        window.addEventListener('storage', (e) => { if (e.key === '_nc_badge_count') updateBadge(); });
+    }
+
+    // --- Event wiring ---
+    document.getElementById('notifSearch').addEventListener('input', (e) => {
+        currentSearch = e.target.value.trim();
+        displayedCount = 0;
+        renderPage();
+    });
+
+    document.getElementById('notifFilterPills').addEventListener('click', (e) => {
+        const pill = e.target.closest('.notif-pill');
+        if (!pill) return;
+        document.querySelectorAll('.notif-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentFilter = pill.dataset.filter;
+        displayedCount = 0;
+        renderPage();
+    });
+
+    document.getElementById('npLoadMoreBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('npLoadMoreBtn');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+        if (!loadedAll) {
+            await loadNotifications(true);
+        } else {
+            displayedCount += ITEMS_PER_PAGE;
+            renderPage();
+        }
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-chevron-down"></i> Cargar más notificaciones';
+    });
+
+    // --- Infinite scroll ---
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoading) {
+                const btn = document.getElementById('npLoadMoreBtn');
+                if (btn && btn.style.display !== 'none') btn.click();
+            }
+        });
+    }, { rootMargin: '200px' });
+    observer.observe(document.getElementById('npLoadMoreBtn'));
+
+    // --- Init ---
+    loadNotifications(false);
+})();
+</script>
 </body>
 </html>

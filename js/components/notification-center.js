@@ -509,34 +509,8 @@ class NotificationCenter {
             ? this.notifications
             : this.notifications.filter(n => n.type === this.currentFilter);
 
-        // v4.16.12: Group similar consecutive notifications
-        const grouped = [];
-        let i = 0;
-        while (i < filtered.length) {
-            const n = filtered[i];
-            const type = n.originalType || n.type || '';
-            if (['turn_updated', 'recruitment_starting', 'recruitment_halfway', 'recruitment_almost_full', 'recruitment_urgent'].includes(type)) {
-                let count = 1;
-                const groupId = (n.data || {}).group_id;
-                while (i + count < filtered.length) {
-                    const next = filtered[i + count];
-                    const nextType = next.originalType || next.type || '';
-                    const nextGroup = (next.data || {}).group_id;
-                    if (nextType === type && nextGroup === groupId) { count++; } else { break; }
-                }
-                if (count > 2) {
-                    const gn = Object.assign({}, n);
-                    gn._groupedCount = count;
-                    gn.title = (n.title || '').split(' — ')[0] + ' (' + count + ' notificaciones)';
-                    grouped.push(gn);
-                    i += count;
-                    continue;
-                }
-            }
-            grouped.push(n);
-            i++;
-        }
-        filtered = grouped;
+        // v4.30: Full grouping engine (by type + target_id within 24h)
+        filtered = this.buildGroups(filtered);
 
         if (filtered.length === 0) {
             list.innerHTML = `
@@ -551,22 +525,29 @@ class NotificationCenter {
 
         list.innerHTML = filtered.map(notification => {
             const navUrl = this.getNavigationUrl(notification);
+            const isGroup = notification._isGroup;
             const classes = [
                 "notification-item",
                 !notification.read ? "unread" : "",
                 navUrl ? "clickable" : "",
                 notification.urgent ? "urgent" : "",
-                "type-" + notification.type
+                "type-" + notification.type,
+                isGroup ? "nc-grouped" : ""
             ].filter(Boolean).join(" ");
-            
+
+            const groupBadge = isGroup
+                ? `<span class="nc-group-count">${notification._groupCount}</span>`
+                : '';
+
             return `
-                <div class="${classes}" data-id="${this.escapeHtml(String(notification.id))}" data-nav="${this.escapeHtml(navUrl || '')}" data-type="${this.escapeHtml(notification.type)}">
-                    <div class="notification-icon">${this.escapeHtml(notification.icon)}</div>
+                <div class="${classes}" data-id="${this.escapeHtml(String(notification.id))}" data-nav="${this.escapeHtml(navUrl || '')}" data-type="${this.escapeHtml(notification.type)}" data-is-group="${isGroup ? '1' : '0'}">
+                    <div class="notification-icon">${this.escapeHtml(notification.icon)}${groupBadge}</div>
                     <div class="notification-content">
                         <h4 class="notification-title">${this.escapeHtml(notification.title)}</h4>
                         <p class="notification-message">${this.escapeHtml(notification.message)}</p>
                         ${(function(ctx){ return ctx ? '<span class="notification-context">' + ctx + '</span>' : '';})(this.escapeHtml(this.getContextLine(notification)))}
                         <span class="notification-time">${this.getTimeAgo(notification.time)}</span>
+                        ${(!notification._actionsCompleted) ? this._renderInlineActions(notification) : ''}
                     </div>
                     ${!notification.read ? `<button class="notification-mark-read" data-id="${this.escapeHtml(String(notification.id))}" title="Marcar leido">✓</button>` : ""}
                     <button class="notification-delete" data-id="${this.escapeHtml(String(notification.id))}" title="Eliminar">×</button>
@@ -580,13 +561,16 @@ class NotificationCenter {
             loadMoreBtn.style.display = this.loadedAll ? 'none' : 'block';
         }
 
+        // Mark-read buttons
         list.querySelectorAll(".notification-mark-read").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 this.markAsRead(btn.dataset.id);
+                this._broadcastBadgeUpdate();
             });
         });
 
+        // Delete buttons
         list.querySelectorAll(".notification-delete").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -594,11 +578,25 @@ class NotificationCenter {
             });
         });
 
+        // Inline action buttons (feature 2)
+        list.querySelectorAll(".nc-inline-action").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const notifId = btn.dataset.notifId;
+                const actionIdx = parseInt(btn.dataset.actionIdx, 10);
+                this._handleInlineAction(notifId, actionIdx);
+            });
+        });
+
+        // Item click — navigate
         list.querySelectorAll(".notification-item").forEach(item => {
-            item.addEventListener("click", () => {
+            item.addEventListener("click", (evt) => {
+                // Don't navigate if an inline action was clicked
+                if (evt.target.closest(".nc-inline-action")) return;
                 const notifId = item.dataset.id;
                 const navUrl = item.dataset.nav;
                 this.markAsRead(notifId);
+                this._broadcastBadgeUpdate();
                 if (navUrl && navUrl !== "null" && navUrl !== "") {
                     window.location.href = navUrl;
                 }
@@ -1386,21 +1384,317 @@ class NotificationCenter {
         toast.classList.add("exiting");
         setTimeout(() => toast.remove(), 300);
     }
+
+    // ===== FEATURE 1: NOTIFICATION GROUPING ENGINE (v4.30) =====
+    // Groups notifications by composite key: originalType + target_id within a 24-hour window.
+    // Extends existing basic grouping (turn_updated / recruitment types) to full spec.
+
+    buildGroups(notifications) {
+        const WINDOW_MS = 24 * 60 * 60 * 1000; // 24-hour window
+        const now = Date.now();
+        const groups = [];
+        const visited = new Set();
+
+        notifications.forEach((n, idx) => {
+            if (visited.has(idx)) return;
+
+            const type = n.originalType || n.type || '';
+            const targetId = (n.data && (n.data.group_id || n.data.target_id || n.data.tanda_id)) || null;
+            const nTime = new Date(n.time).getTime();
+
+            // Skip if older than 24h — show as individual
+            if (now - nTime > WINDOW_MS || !targetId) {
+                groups.push({ ...n, _isGroup: false });
+                visited.add(idx);
+                return;
+            }
+
+            // Find siblings: same type + same target within 24h window
+            const siblings = [n];
+            for (let j = idx + 1; j < notifications.length; j++) {
+                if (visited.has(j)) continue;
+                const m = notifications[j];
+                const mType = m.originalType || m.type || '';
+                const mTargetId = (m.data && (m.data.group_id || m.data.target_id || m.data.tanda_id)) || null;
+                const mTime = new Date(m.time).getTime();
+                if (mType === type && mTargetId === targetId && Math.abs(nTime - mTime) <= WINDOW_MS) {
+                    siblings.push(m);
+                    visited.add(j);
+                }
+            }
+            visited.add(idx);
+
+            if (siblings.length < 2) {
+                // Single notification — no grouping needed
+                groups.push({ ...n, _isGroup: false });
+                return;
+            }
+
+            // Build group entry
+            const actors = [...new Set(siblings.map(s => (s.data && (s.data.actor_name || s.data.member_name)) || '').filter(Boolean))];
+            const actorLabel = actors.length === 0 ? ''
+                : actors.length <= 2 ? actors.join(', ')
+                : actors.slice(0, 2).join(', ') + ' +' + (actors.length - 2) + ' más';
+
+            const groupEntry = {
+                ...n,
+                _isGroup: true,
+                _groupMembers: siblings.map(s => s.id),
+                _groupCount: siblings.length,
+                _expanded: false,
+                _siblings: siblings,
+                title: actorLabel
+                    ? actorLabel + ' ' + (n.title || '')
+                    : '(' + siblings.length + ' notificaciones) ' + (n.title || ''),
+                read: siblings.every(s => s.read)
+            };
+            groups.push(groupEntry);
+        });
+
+        return groups;
+    }
+
+    async markGroupAsRead(groupEntry) {
+        if (!groupEntry._isGroup) return this.markAsRead(groupEntry.id);
+        // Optimistically mark all members
+        groupEntry._siblings.forEach(s => {
+            const n = this.notifications.find(x => String(x.id) === String(s.id));
+            if (n) n.read = true;
+        });
+        this.updateUnreadCount();
+        this.renderNotifications();
+        this.saveToLocalStorage();
+        // Fire API calls for each member
+        await Promise.allSettled(groupEntry._siblings.map(s =>
+            fetch(this.apiBase + "/api/notifications/read/" + s.id, {
+                method: "POST",
+                headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                body: JSON.stringify({})
+            })
+        ));
+    }
+
+    // ===== FEATURE 2: INLINE ACTIONS =====
+    // Renders action buttons for actionable notification types.
+    // Uses optimistic UI: button → loading → success/error.
+
+    _getInlineActions(notification) {
+        const type = notification.originalType || '';
+        const data = notification.data || {};
+        const actions = [];
+
+        if (type === 'group_invitation' || type === 'group_invited' || type === 'invitation') {
+            actions.push({
+                label: 'Aceptar',
+                icon: 'fas fa-check',
+                style: 'success',
+                endpoint: '/api/groups/' + encodeURIComponent(data.group_id || '') + '/invitations/accept',
+                method: 'POST',
+                payload: {}
+            });
+            actions.push({
+                label: 'Rechazar',
+                icon: 'fas fa-times',
+                style: 'danger',
+                endpoint: '/api/groups/' + encodeURIComponent(data.group_id || '') + '/invitations/reject',
+                method: 'POST',
+                payload: {}
+            });
+        }
+
+        if (type === 'payment_due' || type === 'payment_due_soon' || type === 'payment_reminder') {
+            actions.push({
+                label: 'Registrar Pago',
+                icon: 'fas fa-wallet',
+                style: 'primary',
+                endpoint: '/api/groups/' + encodeURIComponent(data.group_id || '') + '/payments',
+                method: 'POST',
+                payload: { amount: data.amount, cycle_number: data.cycle_number }
+            });
+        }
+
+        if (type === 'marketplace_order_confirmation') {
+            actions.push({
+                label: 'Confirmar',
+                icon: 'fas fa-check-double',
+                style: 'success',
+                endpoint: '/api/marketplace/orders/' + encodeURIComponent(data.order_id || '') + '/confirm',
+                method: 'POST',
+                payload: {}
+            });
+        }
+
+        if (type === 'member_request_pending') {
+            actions.push({
+                label: 'Aprobar',
+                icon: 'fas fa-user-check',
+                style: 'success',
+                endpoint: '/api/groups/' + encodeURIComponent(data.group_id || '') + '/members/' + encodeURIComponent(data.member_id || '') + '/approve',
+                method: 'POST',
+                payload: {}
+            });
+            actions.push({
+                label: 'Rechazar',
+                icon: 'fas fa-user-times',
+                style: 'danger',
+                endpoint: '/api/groups/' + encodeURIComponent(data.group_id || '') + '/members/' + encodeURIComponent(data.member_id || '') + '/reject',
+                method: 'POST',
+                payload: {}
+            });
+        }
+
+        return actions;
+    }
+
+    _renderInlineActions(notification) {
+        const actions = this._getInlineActions(notification);
+        if (actions.length === 0 || notification.read) return '';
+
+        const btns = actions.map((a, i) =>
+            `<button class="nc-inline-action nc-action-${a.style}" data-action-idx="${i}" data-notif-id="${this.escapeHtml(String(notification.id))}">
+                <i class="${a.icon}"></i> ${this.escapeHtml(a.label)}
+            </button>`
+        ).join('');
+
+        return `<div class="nc-inline-actions">${btns}</div>`;
+    }
+
+    async _handleInlineAction(notificationId, actionIdx) {
+        const notification = this.notifications.find(n => String(n.id) === String(notificationId));
+        if (!notification) return;
+
+        const actions = this._getInlineActions(notification);
+        const action = actions[actionIdx];
+        if (!action) return;
+
+        // Find the button element for optimistic UI
+        const btn = document.querySelector(
+            `.nc-inline-action[data-notif-id="${CSS.escape(String(notificationId))}"][data-action-idx="${actionIdx}"]`
+        );
+        const originalHtml = btn ? btn.innerHTML : '';
+
+        // Snapshot current state for rollback
+        const wasRead = notification.read;
+
+        try {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            }
+
+            const response = await fetch(this.apiBase + action.endpoint, {
+                method: action.method,
+                headers: Object.assign({}, this.getAuthHeaders(), { "Content-Type": "application/json" }),
+                body: JSON.stringify(action.payload)
+            });
+
+            if (!response.ok) throw new Error("API error: " + response.status);
+
+            // Success — mark notification as read and remove actions
+            notification.read = true;
+            notification._actionsCompleted = true;
+            this.updateUnreadCount();
+            this.renderNotifications();
+            this.saveToLocalStorage();
+            this._broadcastBadgeUpdate();
+            this.showToast({ type: "success", message: "Acción completada correctamente" });
+
+        } catch (err) {
+            // Rollback UI
+            notification.read = wasRead;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+            this.showToast({ type: "error", title: "Error", message: "No se pudo completar la acción. Inténtalo de nuevo." });
+        }
+    }
+
+    // ===== FEATURE 4: CROSS-PAGE BADGE CONSISTENCY =====
+    // Uses BroadcastChannel for same-origin cross-tab sync.
+    // Falls back to storage events for older browsers.
+
+    _initBadgeSync() {
+        // BroadcastChannel for instant cross-tab sync
+        try {
+            this._bc = new BroadcastChannel('notifications');
+            this._bc.onmessage = (evt) => {
+                if (evt.data && evt.data.type === 'BADGE_UPDATE') {
+                    this.unreadCount = evt.data.count;
+                    this._applyBadgeUI(this.unreadCount);
+                }
+            };
+        } catch (_) {
+            // Fallback: storage event
+            window.addEventListener('storage', (evt) => {
+                if (evt.key === '_nc_badge_count') {
+                    const count = parseInt(evt.newValue || '0', 10);
+                    this._applyBadgeUI(count);
+                }
+            });
+        }
+    }
+
+    _broadcastBadgeUpdate() {
+        const count = this.unreadCount;
+        // BroadcastChannel
+        try {
+            if (this._bc) this._bc.postMessage({ type: 'BADGE_UPDATE', count });
+        } catch (_) {}
+        // Storage event fallback (picked up by other tabs without BroadcastChannel)
+        try { localStorage.setItem('_nc_badge_count', String(count)); } catch (_) {}
+    }
+
+    _applyBadgeUI(count) {
+        // 1) Notification panel badge
+        const badge = document.querySelector("#notifBadge, .notification-badge, .notification-dot, .lt-badge, #notificationCount");
+        if (badge) {
+            badge.textContent = count > 99 ? "99+" : count;
+            badge.style.display = count > 0 ? "flex" : "none";
+            badge.classList.toggle("urgent", count >= 5);
+        }
+
+        // 2) Sidebar widget (js/sidebar-widgets.js exports window.sidebarWidgets)
+        try {
+            const swBadge = document.querySelector(".sidebar-notification-badge, #sidebarNotifBadge");
+            if (swBadge) {
+                swBadge.textContent = count > 99 ? "99+" : count;
+                swBadge.style.display = count > 0 ? "flex" : "none";
+            }
+        } catch (_) {}
+
+        // 3) Mobile bottom-nav badge
+        try {
+            const mobileNavBadge = document.querySelector(".mobile-notif-badge, #mobileNotifBadge");
+            if (mobileNavBadge) {
+                mobileNavBadge.textContent = count > 99 ? "99+" : count;
+                mobileNavBadge.style.display = count > 0 ? "inline-flex" : "none";
+            }
+        } catch (_) {}
+
+        // 4) Document title — append (N) when unread > 0
+        try {
+            const baseTitle = document.title.replace(/^\(\d+\)\s*/, '');
+            document.title = count > 0 ? `(${count}) ${baseTitle}` : baseTitle;
+        } catch (_) {}
+    }
 }
 
-// Initialize
+// Initialize singleton
 let notificationCenter;
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         notificationCenter = new NotificationCenter();
         window.notificationCenter = notificationCenter;
+        notificationCenter._initBadgeSync();
     });
 } else {
     notificationCenter = new NotificationCenter();
     window.notificationCenter = notificationCenter;
+    notificationCenter._initBadgeSync();
 }
 
-// Global functions
+// Global functions — maintain existing public API
 window.showToast = function(options) {
     if (window.notificationCenter) return window.notificationCenter.showToast(options);
 };
@@ -1411,9 +1705,16 @@ window.openNotificationPreferences = function() {
 
 // Update badge when header loads
 document.addEventListener("headerLoaded", function() {
-    if (window.notificationCenter) window.notificationCenter.updateBadge();
+    if (window.notificationCenter) {
+        window.notificationCenter.updateBadge();
+        window.notificationCenter._broadcastBadgeUpdate();
+    }
 });
 
 setTimeout(function() {
-    if (window.notificationCenter) window.notificationCenter.updateBadge();
+    if (window.notificationCenter) {
+        window.notificationCenter.updateBadge();
+        window.notificationCenter._broadcastBadgeUpdate();
+    }
 }, 2000);
+
