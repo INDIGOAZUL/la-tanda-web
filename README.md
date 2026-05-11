@@ -13,6 +13,44 @@ Este repositorio es el **mirror público** del frontend de La Tanda, el primer e
 
 ---
 
+## Development Setup
+
+This repository is a static frontend, so you can preview it locally with a simple static server:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed in the terminal.
+
+### Verified links
+- Swagger UI: https://latanda.online/docs
+- Dev Portal: https://latanda.online/dev-dashboard.html
+- Chain Explorer: https://exp.utsa.tech/latanda/staking
+
+---
+
+## Project Structure
+
+```text
+la-tanda-web/
+├── *.html                 # Main public pages and app entry points
+├── assets/                # Shared static assets
+├── html/                  # HTML-only API proxy and generated assets
+├── packages/sdk/          # TypeScript SDK and tests
+├── translations/          # i18n message files
+├── utils/                 # Shared utility scripts
+├── workflows/             # CI/CD automation
+├── *.js                   # Root-level frontend scripts and proxies
+└── README.md              # Project overview and developer onboarding
+```
+
+Key files:
+- `marketplace-social.js` lives at the **HTML root**.
+- The main API file is `api-proxy-enhanced.js`.
+
+---
+
 ## 🌐 Qué es La Tanda
 
 La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
