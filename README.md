@@ -1,4 +1,4 @@
-# La Tanda — Web3 Ecosystem of Honduras
+# La Tanda �?Web3 Ecosystem of Honduras
 
 > **Not an app. An ecosystem.**
 > Red social + tandas digitales + marketplace + minería + blockchain propia.
@@ -23,9 +23,9 @@ La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de 
 |---|---|---|
 | 1 | 💬 **Red Social** | Feed, stories, comentarios, reacciones. Tu tiempo genera reputación on-chain. |
 | 2 | 🔄 **Tandas Digitales** | Grupos de ahorro rotativo 0% comisión, score on-chain, préstamos integrados |
-| 3 | 🛍️ **Marketplace Web3** | Productos, servicios, bookings. Seller Score on-chain. Pagos en lempiras o LTD |
+| 3 | 🛍�?**Marketplace Web3** | Productos, servicios, bookings. Seller Score on-chain. Pagos en lempiras o LTD |
 | 4 | ⛏️ **Minería de LTD** | 5 tiers (1-12 LTD/día), cap 500 LTD/día global, gana por actividad real |
-| 5 | ⭐ **Reputación On-Chain** | Score financiero unificado 300-850, portable entre capas, anclado en blockchain |
+| 5 | �?**Reputación On-Chain** | Score financiero unificado 300-850, portable entre capas, anclado en blockchain |
 | 6 | 🔗 **La Tanda Chain** | Blockchain soberana Cosmos SDK + CometBFT, 200M LTD fijo, 0% inflación |
 | 7 | 🤖 **MIA AI** | Asistente financiero con 16 capacidades (Groq Llama 3.3 70B) |
 
@@ -67,7 +67,7 @@ Toda métrica es verificable contra datos on-chain o el dev portal público.
 | Fondo de Seguro | 2% | 4M LTD | Emergency governance vote |
 | **TOTAL** | **100%** | **200M LTD** | |
 
-**Post-Staking-Pool sustainability** (post año 8): 6 fuentes redundantes incluyendo **marketplace commission routing (0.5% GMV → validadores)** — un revenue stream único vs cadenas pure store-of-value.
+**Post-Staking-Pool sustainability** (post año 8): 6 fuentes redundantes incluyendo **marketplace commission routing (0.5% GMV �?validadores)** �?un revenue stream único vs cadenas pure store-of-value.
 
 Tokenomics completa: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
 
@@ -123,6 +123,42 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## Development Setup
+
+This repository is a static frontend mirror. You can serve it locally without a build step:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` and verify the main pages such as `index.html`, `chain/index.html`, and `dev-dashboard.html`.
+
+Developer links to verify while testing:
+
+- Swagger UI / API docs: https://latanda.online/docs
+- Dev Portal: https://latanda.online/dev-dashboard.html
+- Chain Explorer: https://exp.utsa.tech/latanda/staking
+
+## Project Structure
+
+```text
+la-tanda-web/
+������ *.html                    # Static ecosystem pages and entry points
+������ css/                      # Styles, design tokens, components, and modules
+������ js/                       # Frontend JavaScript, loaders, widgets, and utilities
+������ assets/                   # Images, logos, favicons, and generated assets
+������ chain/                    # La Tanda Chain landing page and node resources
+������ docs/                     # OpenAPI specification and Swagger UI resources
+������ .github/                  # Issue templates, bounty metadata, and PR automation
+������ api-*.js                  # API adapters, proxies, endpoint configs, and handlers
+```
+
+Important implementation notes:
+
+- `marketplace-social.js` exists at the HTML root and under `js/`.
+- `api-proxy-enhanced.js` is the main API proxy file and should not be changed without coordination.
+- This snapshot does not include `CONTRIBUTING.md`; use the existing README rules and `.github/` files for contribution guidance.
+
 ## 📂 Estructura del repositorio
 
 ```
@@ -138,12 +174,12 @@ la-tanda-web/
 ```
 
 **Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+- `index.html` �?Landing con hero cósmico 3D + tokenomics donut + personas cards
+- `whitepaper.html` �?Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
+- `ltd-token-economics.html` �?Tokenomics interactiva con datos live del chain
+- `governance.html` �?Hub de gobernanza on-chain con Keplr wallet
+- `mia.html` �?MIA AI (7ma capa del ecosistema)
+- `chain/index.html` �?Chain landing con stats live
 
 ---
 
@@ -175,7 +211,7 @@ La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
 - 🌐 Website: [latanda.online](https://latanda.online)
 - 📜 Whitepaper v2.0: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
 - 💰 Tokenomics: [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html)
-- 🏛️ Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
+- 🏛�?Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
 - 💻 Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
 - 📖 API Docs: [latanda.online/docs](https://latanda.online/docs)
 - 🔗 Chain: [latanda.online/chain](https://latanda.online/chain/)
@@ -191,7 +227,7 @@ La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
 
 ## 📜 Licencia
 
-MIT License — see [LICENSE](./LICENSE)
+MIT License �?see [LICENSE](./LICENSE)
 
 Código abierto, uso libre con atribución. Las marcas "La Tanda" y "La Tanda Chain" son propiedad de Ray-Banks LLC.
 
@@ -216,5 +252,5 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 
 <p align="center">
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
-🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
+🇭🇳 Honduras �?🌎 LatAm �?🌍 Global
 </p>
