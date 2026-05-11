@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <!-- Custom chart implementation - no external dependencies needed -->
   <script type="module" crossorigin src="/assets/js/web3Dashboard-CatT3MLp.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-YP0FEG5d.js">
+<link rel="modulepreload" crossorigin href="/assets/js/modulepreload-polyfill-legacy-CvD272dr.js">
   <link rel="modulepreload" crossorigin href="/assets/js/api-proxy-chunk-l0sNRNKZ.js">
   <link rel="modulepreload" crossorigin href="/assets/js/web3-dashboard-chunk-l0sNRNKZ.js">
   <link rel="modulepreload" crossorigin href="/assets/js/tandas-manager-chunk-l0sNRNKZ.js">
@@ -173,45 +173,44 @@
                             </div>
                             
                             <div class="profile-menu-items">
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openProfile()">
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openProfile()">
                                     <i class="fas fa-user"></i>
                                     <span>My Profile</span>
-                                </a>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openWalletDetails()">
+                                </button>
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openWalletDetails()">
                                     <i class="fas fa-wallet"></i>
                                     <span>Wallet Details</span>
-                                </a>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openTransactionHistory()">
+                                </button>
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openTransactionHistory()">
                                     <i class="fas fa-history"></i>
                                     <span>Transaction History</span>
-                                </a>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openSettings()">
+                                </button>
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openSettings()">
                                     <i class="fas fa-cog"></i>
                                     <span>Settings</span>
-                                </a>
+                                </button>
                                 <div class="profile-menu-divider"></div>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.toggleTheme()">
+                                <button type="button" class="profile-menu-item" onclick="dashboard.toggleTheme()">
                                     <i class="fas fa-moon" id="themeToggleIcon"></i>
                                     <span>Dark Mode</span>
-                                    <div class="theme-toggle">
-                                        <input type="checkbox" id="themeCheckbox" checked>
-                                        <label for="themeCheckbox" class="toggle-slider"></label>
+                                    <div class="theme-toggle is-on" id="themeToggleState" aria-hidden="true">
+                                        <span class="toggle-slider"></span>
                                     </div>
-                                </a>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openLanguageSelector()">
+                                </button>
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openLanguageSelector()">
                                     <i class="fas fa-globe"></i>
                                     <span>Language</span>
                                     <span class="language-current">EN</span>
-                                </a>
+                                </button>
                                 <div class="profile-menu-divider"></div>
-                                <a href="#" class="profile-menu-item" onclick="dashboard.openSupport()">
+                                <button type="button" class="profile-menu-item" onclick="dashboard.openSupport()">
                                     <i class="fas fa-question-circle"></i>
                                     <span>Help & Support</span>
-                                </a>
-                                <a href="#" class="profile-menu-item disconnect" onclick="laTandaEcosystem?.handleWalletConnect()" id="disconnectWalletBtn" style="display: none;">
+                                </button>
+                                <button type="button" class="profile-menu-item disconnect" onclick="laTandaEcosystem?.handleWalletConnect()" id="disconnectWalletBtn" style="display: none;">
                                     <i class="fas fa-sign-out-alt"></i>
                                     <span>Disconnect Wallet</span>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -4024,17 +4023,19 @@
                     
                     // Theme toggle
                     toggleTheme: function() {
-                        const checkbox = document.getElementById('themeCheckbox');
+                        const toggle = document.getElementById('themeToggleState');
                         const icon = document.getElementById('themeToggleIcon');
-                        const isDark = checkbox.checked;
+                        const isDark = toggle ? toggle.classList.contains('is-on') : true;
                         
                         if (isDark) {
                             // Switch to light mode
+                            if (toggle) toggle.classList.remove('is-on');
                             icon.className = 'fas fa-sun';
                             document.body.style.filter = 'brightness(1.1) contrast(0.9)';
                             laTandaEcosystem.showNotification('☀️ Switched to Light Mode');
                         } else {
                             // Switch to dark mode
+                            if (toggle) toggle.classList.add('is-on');
                             icon.className = 'fas fa-moon';
                             document.body.style.filter = '';
                             laTandaEcosystem.showNotification('🌙 Switched to Dark Mode');
