@@ -218,3 +218,45 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+---
+
+## Development Setup
+
+This repository is a static frontend mirror. You do not need a database, build
+step, or backend service to inspect most pages locally.
+
+1. Install Node.js 18+ if `npx` is not already available.
+2. From the repository root, run:
+
+   ```bash
+   npx serve .
+   ```
+
+3. Open the local URL printed by `serve` and start with `index.html`,
+   `dev-dashboard.html`, or `chain/index.html`.
+
+Useful public references while developing:
+
+- Swagger UI / API docs: [latanda.online/docs](https://latanda.online/docs)
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+
+## Project Structure
+
+Key paths for new contributors:
+
+| Path | Purpose |
+|---|---|
+| `*.html` | Root-level public pages for the ecosystem, dashboard, wallet, marketplace, governance, chain, and admin surfaces. |
+| `css/` | Shared styles, design tokens, dashboard layout, mobile fixes, components, and page-specific CSS modules. |
+| `js/` | Shared frontend behavior, dashboard connectors, header/sidebar modules, marketplace social code, helpers, and UI components. |
+| `assets/` | Logos, favicons, Open Graph images, generated CSS/JS bundles, and static image assets. |
+| `components/` | Reusable HTML/JS snippets such as header, footer, quick actions, and portfolio overview. |
+| `chain/` | La Tanda Chain static resources including node setup scripts, genesis data, logos, and node guides. |
+| `docs/` | API documentation assets, including the Swagger UI referenced by the public docs link. |
+| `packages/sdk/` | TypeScript SDK source, tests, examples, and package metadata for API consumers. |
+| `api-*.js` | API adapter/proxy files used by frontend pages; coordinate before changing `api-proxy-enhanced.js`. |
+
+For local link checks, focus first on the root `.html` files because those are
+the public entry points most users and bounty reviewers exercise.
