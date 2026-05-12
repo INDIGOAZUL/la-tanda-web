@@ -1,0 +1,126 @@
+# =============================================================================
+# Alertmanager configuration TEMPLATE — rendered at container startup.
+#
+# Variables substituted from environment (.env):
+#   ${DISCORD_WEBHOOK_URL}
+#   ${TELEGRAM_BOT_TOKEN}
+#   ${TELEGRAM_CHAT_ID}     (numeric)
+#   ${CHAIN_ID}
+#   ${VALIDATOR_MONIKER}
+#
+# Routing strategy:
+#   critical -> Discord + Telegram (no group delay)
+#   warning  -> Discord + Telegram (15s group delay)
+#   info     -> Discord only (5m group delay)
+#
+# If DISCORD_WEBHOOK_URL or TELEGRAM_BOT_TOKEN is empty, Alertmanager will
+# still start; matching receivers will simply fail to deliver. This is
+# intentional so a validator with only Discord configured does not need to
+# edit the YAML to suppress Telegram errors.
+# =============================================================================
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ['alertname', 'severity', 'chain_id', 'moniker']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = critical
+      receiver: critical-receiver
+      group_wait: 0s
+      group_interval: 30s
+      repeat_interval: 1h
+      continue: false
+
+    - matchers:
+        - severity = warning
+      receiver: warning-receiver
+      group_wait: 15s
+      group_interval: 1m
+      repeat_interval: 4h
+      continue: false
+
+    - matchers:
+        - severity = info
+      receiver: info-receiver
+      group_wait: 5m
+      group_interval: 10m
+      repeat_interval: 24h
+      continue: false
+
+inhibit_rules:
+  - source_matchers: [ 'alertname = ValidatorJailed' ]
+    target_matchers: [ 'alertname =~ "ValidatorMissedBlocks(Warning|Critical)"' ]
+    equal: ['moniker', 'chain_id']
+
+  - source_matchers: [ 'alertname = NodeDown' ]
+    target_matchers: [ 'category = slashing' ]
+    equal: ['moniker', 'chain_id']
+
+receivers:
+
+  - name: default
+    discord_configs:
+      - webhook_url: '${DISCORD_WEBHOOK_URL}'
+        send_resolved: true
+
+  - name: critical-receiver
+    discord_configs:
+      - webhook_url: '${DISCORD_WEBHOOK_URL}'
+        send_resolved: true
+        title: '🚨 CRITICAL — {{ .CommonLabels.alertname }} on {{ .CommonLabels.moniker }}'
+        message: |
+          **{{ .CommonAnnotations.summary }}**
+
+          {{ .CommonAnnotations.description }}
+
+          Chain: `{{ .CommonLabels.chain_id }}`
+          Moniker: `{{ .CommonLabels.moniker }}`
+          {{ with .CommonAnnotations.runbook }}Runbook: {{ . }}{{ end }}
+    telegram_configs:
+      - bot_token: '${TELEGRAM_BOT_TOKEN}'
+        chat_id: ${TELEGRAM_CHAT_ID}
+        api_url: https://api.telegram.org
+        parse_mode: 'Markdown'
+        send_resolved: true
+        message: |
+          🚨 *CRITICAL* — `{{ .CommonLabels.alertname }}`
+
+          *{{ .CommonAnnotations.summary }}*
+
+          {{ .CommonAnnotations.description }}
+
+          Chain: `{{ .CommonLabels.chain_id }}` · Moniker: `{{ .CommonLabels.moniker }}`
+
+  - name: warning-receiver
+    discord_configs:
+      - webhook_url: '${DISCORD_WEBHOOK_URL}'
+        send_resolved: true
+        title: '⚠️ Warning — {{ .CommonLabels.alertname }}'
+        message: |
+          {{ .CommonAnnotations.summary }}
+          {{ .CommonAnnotations.description }}
+    telegram_configs:
+      - bot_token: '${TELEGRAM_BOT_TOKEN}'
+        chat_id: ${TELEGRAM_CHAT_ID}
+        api_url: https://api.telegram.org
+        parse_mode: 'Markdown'
+        send_resolved: true
+        message: |
+          ⚠️ *Warning* — `{{ .CommonLabels.alertname }}`
+
+          {{ .CommonAnnotations.summary }}
+
+  - name: info-receiver
+    discord_configs:
+      - webhook_url: '${DISCORD_WEBHOOK_URL}'
+        send_resolved: false
+        title: 'ℹ️ {{ .CommonLabels.alertname }}'
+        message: |
+          {{ .CommonAnnotations.summary }}
+          {{ .CommonAnnotations.description }}

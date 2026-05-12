@@ -1,0 +1,78 @@
+# =============================================================================
+# Prometheus recording rules.
+#
+# These pre-compute values that are expensive to evaluate at dashboard load
+# time. Dashboards reference the recorded series instead of recomputing,
+# which keeps Grafana panels snappy even with 30-day retention.
+# =============================================================================
+
+groups:
+
+  - name: validator-slo
+    interval: 30s
+    rules:
+
+      # Uptime as a fraction of the slashing window.
+      # 1.0 = signed every block in the window; 0.0 = missed every block.
+      - record: latanda:validator_uptime_ratio
+        expr: |
+          1 - (cosmos_validator_missed_blocks_counter / 10000)
+
+      # Uptime expressed as a percentage for human-friendly display.
+      - record: latanda:validator_uptime_percent
+        expr: latanda:validator_uptime_ratio * 100
+
+      # Remaining headroom before jail (blocks). Negative means already jailed.
+      - record: latanda:validator_jail_headroom_blocks
+        expr: 5000 - cosmos_validator_missed_blocks_counter
+
+  - name: chain-health
+    interval: 30s
+    rules:
+
+      # Average seconds per block over the last 5 minutes.
+      - record: latanda:block_time_5m_avg
+        expr: |
+          rate(cometbft_consensus_block_interval_seconds_sum[5m])
+          /
+          rate(cometbft_consensus_block_interval_seconds_count[5m])
+
+      # Transactions per second over the last 5 minutes.
+      - record: latanda:tps_5m
+        expr: rate(cometbft_consensus_num_txs_sum[5m])
+
+      # P2P bandwidth (bytes/sec) ingress + egress.
+      - record: latanda:p2p_bytes_in_rate
+        expr: sum(rate(cometbft_p2p_peer_receive_bytes_total[1m]))
+
+      - record: latanda:p2p_bytes_out_rate
+        expr: sum(rate(cometbft_p2p_peer_send_bytes_total[1m]))
+
+  - name: host-resources
+    interval: 30s
+    rules:
+
+      # CPU utilization as a 0..1 ratio.
+      - record: latanda:host_cpu_busy_ratio
+        expr: |
+          1 - avg without(cpu) (
+            rate(node_cpu_seconds_total{mode="idle"}[1m])
+          )
+
+      # Memory utilization as a 0..1 ratio.
+      - record: latanda:host_memory_used_ratio
+        expr: |
+          1 - (
+            node_memory_MemAvailable_bytes
+            /
+            node_memory_MemTotal_bytes
+          )
+
+      # Disk utilization for the root filesystem as a 0..1 ratio.
+      - record: latanda:host_disk_used_ratio
+        expr: |
+          1 - (
+            node_filesystem_avail_bytes{mountpoint="/host/root",fstype!~"tmpfs|overlay"}
+            /
+            node_filesystem_size_bytes{mountpoint="/host/root",fstype!~"tmpfs|overlay"}
+          )

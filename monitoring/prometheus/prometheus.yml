@@ -1,0 +1,110 @@
+# =============================================================================
+# Prometheus scrape configuration for La Tanda Chain validator monitoring.
+#
+# Notes:
+#   * Container-internal hostnames (alertmanager, cosmos-validator-exporter,
+#     etc.) come from docker-compose service names — stable across deployments.
+#   * The validator node is reached via `host.docker.internal`, which docker
+#     compose maps to the host gateway (see extra_hosts in docker-compose.yml).
+#     If your node runs on a different host, edit the static_configs targets
+#     here OR override at deploy time with a configmap mount.
+#   * `external_labels` are expanded from env vars at startup via the
+#     `--enable-feature=expand-external-labels` flag.
+#   * The official public endpoint `latanda.online` is intentionally never
+#     hardcoded here — the bounty's acceptance criterion mandates this.
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    chain_id: ${CHAIN_ID}
+    moniker: ${VALIDATOR_MONIKER}
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+  - /etc/prometheus/recording_rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+
+  # ---- Prometheus self ----------------------------------------------------
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ---- CometBFT (Tendermint) instrumentation ------------------------------
+  # Requires `[instrumentation] prometheus = true` in config.toml on the node.
+  - job_name: cometbft
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - host.docker.internal:26660
+        labels:
+          service: cometbft
+
+  # ---- Cosmos SDK telemetry -----------------------------------------------
+  # Requires `[telemetry] enabled = true, prometheus-retention-time > 0` and
+  # `[api] enabled = true` plus `prometheus = true` in app.toml on the node.
+  - job_name: cosmos-sdk
+    metrics_path: /metrics
+    params:
+      format: ["prometheus"]
+    static_configs:
+      - targets:
+          - host.docker.internal:1317
+        labels:
+          service: cosmos-sdk
+
+  # ---- cosmos-validator-exporter sidecar ----------------------------------
+  - job_name: cosmos-validator-exporter
+    static_configs:
+      - targets: ["cosmos-validator-exporter:9101"]
+
+  # ---- Host system (node-exporter) ----------------------------------------
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # ---- Blackbox: HTTP liveness for RPC + REST -----------------------------
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://host.docker.internal:26657/status
+          - http://host.docker.internal:1317/cosmos/base/tendermint/v1beta1/syncing
+        labels:
+          probe_type: chain_endpoint
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ---- Blackbox: TCP probe for P2P port -----------------------------------
+  - job_name: blackbox-tcp-p2p
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - host.docker.internal:26656
+        labels:
+          probe_type: p2p
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

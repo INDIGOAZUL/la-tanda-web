@@ -1,0 +1,236 @@
+# =============================================================================
+# La Tanda Chain — Validator Monitoring Stack
+#
+# Usage:
+#   cp .env.example .env       # fill in your validator addresses + webhooks
+#   docker compose up -d
+#
+# Then open:
+#   Grafana:       http://localhost:${GRAFANA_PORT:-3000}     (admin / from .env)
+#   Prometheus:    http://localhost:${PROMETHEUS_PORT:-9090}
+#   Alertmanager:  http://localhost:${ALERTMANAGER_PORT:-9093}
+#
+# Every image is pinned to an explicit version — no `:latest`.
+# =============================================================================
+
+name: latanda-validator-monitoring
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: latanda-prometheus
+    restart: unless-stopped
+    user: "65534:65534"  # nobody:nogroup
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-30d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-10GB}
+      - --web.enable-lifecycle
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --enable-feature=expand-external-labels
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/recording_rules.yml:/etc/prometheus/recording_rules.yml:ro
+      - prometheus-data:/prometheus
+    environment:
+      NODE_PROMETHEUS_URL: ${NODE_PROMETHEUS_URL}
+      NODE_API_URL: ${NODE_API_URL}
+      VALIDATOR_MONIKER: ${VALIDATOR_MONIKER}
+      CHAIN_ID: ${CHAIN_ID}
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - monitoring
+    depends_on:
+      - alertmanager
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # One-shot init: renders alertmanager.yml.template with values from .env
+  # (alertmanager itself does not support env expansion in config-time fields
+  # like webhook_url / chat_id, so we substitute beforehand).
+  alertmanager-config-init:
+    image: alpine:3.20.3
+    container_name: latanda-alertmanager-config-init
+    user: "0:0"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -eu
+        apk add --no-cache --quiet gettext > /dev/null
+        : "${DISCORD_WEBHOOK_URL:=}"
+        : "${TELEGRAM_BOT_TOKEN:=}"
+        : "${TELEGRAM_CHAT_ID:=0}"
+        envsubst '$$DISCORD_WEBHOOK_URL $$TELEGRAM_BOT_TOKEN $$TELEGRAM_CHAT_ID' \
+          < /templates/alertmanager.yml.template \
+          > /rendered/alertmanager.yml
+        chmod 0644 /rendered/alertmanager.yml
+        echo "Rendered /rendered/alertmanager.yml"
+    environment:
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-0}
+    volumes:
+      - ./alertmanager/alertmanager.yml.template:/templates/alertmanager.yml.template:ro
+      - alertmanager-config:/rendered
+    restart: "no"
+    logging: *default-logging
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: latanda-alertmanager
+    restart: unless-stopped
+    user: "65534:65534"
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=  # disable cluster (single-node setup)
+    volumes:
+      - alertmanager-config:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    networks:
+      - monitoring
+    depends_on:
+      alertmanager-config-init:
+        condition: service_completed_successfully
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana-oss:11.2.2
+    container_name: latanda-grafana
+    restart: unless-stopped
+    user: "472:472"  # grafana:grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme-on-first-boot}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_INSTALL_PLUGINS: ""  # keep empty; no untrusted plugins
+      VALIDATOR_MONIKER: ${VALIDATOR_MONIKER}
+      CHAIN_ID: ${CHAIN_ID}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: latanda-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/host/root
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|var/lib/docker/.+)($$|/)
+      - --collector.netclass.ignored-devices=^(veth.*|docker.*|br-.*)$$
+      - --collector.netdev.device-exclude=^(veth.*|docker.*|br-.*)$$
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+    ports:
+      - "127.0.0.1:${NODE_EXPORTER_PORT:-9100}:9100"
+    networks:
+      - monitoring
+    logging: *default-logging
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: latanda-blackbox-exporter
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+    volumes:
+      - ./prometheus/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    ports:
+      - "127.0.0.1:${BLACKBOX_EXPORTER_PORT:-9115}:9115"
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging: *default-logging
+
+  cosmos-validator-exporter:
+    # Sidecar: queries the REST API for jail status, signing-info, governance
+    # proposals, and pool stats — exposes them as Prometheus metrics on :9101.
+    # Source lives in ./cosmos-validator-exporter/ so it is auditable.
+    build:
+      context: ./cosmos-validator-exporter
+      dockerfile: Dockerfile
+    image: latanda/cosmos-validator-exporter:0.1.0
+    container_name: latanda-cosmos-exporter
+    restart: unless-stopped
+    environment:
+      NODE_API_URL: ${NODE_API_URL}
+      VALIDATOR_OPERATOR_ADDRESS: ${VALIDATOR_OPERATOR_ADDRESS}
+      VALIDATOR_CONSENSUS_ADDRESS: ${VALIDATOR_CONSENSUS_ADDRESS}
+      VALIDATOR_MONIKER: ${VALIDATOR_MONIKER}
+      CHAIN_ID: ${CHAIN_ID}
+      POLL_INTERVAL: ${COSMOS_EXPORTER_INTERVAL:-30}
+      LISTEN_PORT: "9101"
+    ports:
+      - "127.0.0.1:${COSMOS_EXPORTER_PORT:-9101}:9101"
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9101/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  prometheus-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  alertmanager-config:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  monitoring:
+    driver: bridge

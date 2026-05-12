@@ -1,0 +1,168 @@
+# =============================================================================
+# La Tanda Chain — Validator alert rules.
+#
+# Slashing parameters in latanda-testnet-1 (queried 2026-05-12 from
+# https://latanda.online/chain/api/cosmos/slashing/v1beta1/params):
+#   signed_blocks_window      = 10000  blocks (~13.9 h at 5s block time)
+#   min_signed_per_window     = 0.50   (50% — jail threshold)
+#   downtime_jail_duration    = 600s
+#   slash_fraction_double_sign = 5%
+#   slash_fraction_downtime   = 1%
+#
+# Alert thresholds (from bounty issue #267):
+#   Critical: validator jailed
+#   Critical: missed blocks > 40% of signed_blocks_window (> 4000 blocks)
+#   Warning:  missed blocks > 20% of signed_blocks_window (> 2000 blocks)
+#   Warning:  peer count < 3
+#   Info:     new governance proposal active
+# Plus chain-liveness alerts that are not in the issue list but operationally
+# required (node down, sync lag, block production stalled).
+# =============================================================================
+
+groups:
+
+  # --------------------------------------------------------------------------
+  - name: validator-slashing
+    rules:
+
+      - alert: ValidatorJailed
+        expr: cosmos_validator_jailed == 1
+        for: 30s
+        labels:
+          severity: critical
+          category: slashing
+        annotations:
+          summary: "Validator {{ $labels.moniker }} is JAILED on {{ $labels.chain_id }}"
+          description: |
+            The validator at operator address {{ $labels.operator_address }} is
+            currently jailed by the chain. Voting power is zero until manually
+            unjailed (after the 600s downtime_jail_duration window has elapsed).
+            Run: `latandad tx slashing unjail --from <key>`
+          runbook: "https://github.com/INDIGOAZUL/la-tanda-web/blob/main/monitoring/VALIDATOR_GUIDE.md#recovering-from-jail"
+
+      - alert: ValidatorMissedBlocksCritical
+        # 40% of signed_blocks_window = 4000 blocks
+        expr: cosmos_validator_missed_blocks_counter > 4000
+        for: 1m
+        labels:
+          severity: critical
+          category: slashing
+        annotations:
+          summary: "{{ $labels.moniker }} missed > 4000 blocks (40% of window) — jail imminent"
+          description: |
+            Missed blocks in the current rolling signed_blocks_window has
+            exceeded 40% of the 10000-block window. At 50% (5000 blocks)
+            the chain will jail the validator.
+            Current missed: {{ $value }}.
+          runbook: "https://github.com/INDIGOAZUL/la-tanda-web/blob/main/monitoring/VALIDATOR_GUIDE.md#missed-blocks"
+
+      - alert: ValidatorMissedBlocksWarning
+        # 20% of signed_blocks_window = 2000 blocks
+        expr: cosmos_validator_missed_blocks_counter > 2000
+        for: 2m
+        labels:
+          severity: warning
+          category: slashing
+        annotations:
+          summary: "{{ $labels.moniker }} missed > 2000 blocks (20% of window)"
+          description: |
+            Missed blocks in the current rolling signed_blocks_window has
+            exceeded 20% of the 10000-block window. Investigate node health,
+            peer connectivity, and CPU/memory pressure.
+            Current missed: {{ $value }}.
+          runbook: "https://github.com/INDIGOAZUL/la-tanda-web/blob/main/monitoring/VALIDATOR_GUIDE.md#missed-blocks"
+
+  # --------------------------------------------------------------------------
+  - name: validator-network
+    rules:
+
+      - alert: ValidatorLowPeerCount
+        expr: cometbft_p2p_peers < 3
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "{{ $labels.moniker }} has fewer than 3 peers"
+          description: |
+            P2P peer count is {{ $value }}. The node may be partitioning or
+            behind a firewall. Check persistent_peers in config.toml and that
+            port 26656 is reachable from the public internet.
+          runbook: "https://github.com/INDIGOAZUL/la-tanda-web/blob/main/monitoring/VALIDATOR_GUIDE.md#low-peer-count"
+
+      - alert: NodeDown
+        expr: up{job=~"cometbft|cosmos-sdk"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: liveness
+        annotations:
+          summary: "{{ $labels.moniker }} node is unreachable on {{ $labels.job }}"
+          description: |
+            Prometheus has not scraped {{ $labels.job }} metrics for >1 minute.
+            The node process may have crashed, the metrics endpoint may be
+            disabled, or the network path to the host is broken.
+
+      - alert: RpcUnreachable
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: liveness
+        annotations:
+          summary: "Chain endpoint {{ $labels.instance }} unreachable"
+          description: |
+            Blackbox HTTP probe to {{ $labels.instance }} has failed for >2
+            minutes. The RPC/REST API may be down even if the node is still
+            producing blocks internally.
+
+  # --------------------------------------------------------------------------
+  - name: chain-liveness
+    rules:
+
+      - alert: BlockProductionStalled
+        # No new blocks for 30s on a chain with 5s block time = ~6 missed slots.
+        expr: increase(cometbft_consensus_height[1m]) == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: liveness
+        annotations:
+          summary: "Block height not advancing on {{ $labels.chain_id }}"
+          description: |
+            cometbft_consensus_height has not increased in the last minute.
+            Either the chain has halted or the local node has stopped syncing.
+
+      - alert: NodeBehindNetwork
+        # Local node behind cosmos sidecar's reported network head by > 30 blocks.
+        expr: |
+          (cosmos_network_block_height - on() cometbft_consensus_height) > 30
+        for: 5m
+        labels:
+          severity: warning
+          category: liveness
+        annotations:
+          summary: "Node is behind chain head by {{ $value }} blocks"
+          description: |
+            The local CometBFT height lags the network head reported by the
+            sidecar. Persistent lag usually points to disk I/O, CPU, or peer
+            issues.
+
+  # --------------------------------------------------------------------------
+  - name: governance
+    rules:
+
+      - alert: NewGovernanceProposalActive
+        # Triggers when an active (voting-period) proposal appears.
+        expr: cosmos_gov_proposal_voting_active == 1
+        for: 1m
+        labels:
+          severity: info
+          category: governance
+        annotations:
+          summary: "Governance proposal #{{ $labels.proposal_id }} entered voting period"
+          description: |
+            {{ $labels.title }} — voting ends at
+            {{ $labels.voting_end_time }}. Review and cast your vote with:
+            `latandad tx gov vote {{ $labels.proposal_id }} <yes|no|abstain|no_with_veto> --from <key>`
+          runbook: "https://github.com/INDIGOAZUL/la-tanda-web/blob/main/monitoring/VALIDATOR_GUIDE.md#governance-voting"
