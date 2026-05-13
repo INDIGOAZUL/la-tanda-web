@@ -123,27 +123,58 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+This repository is a static frontend mirror. You can serve it locally with any static file server; the simplest path is `npx serve .`.
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Git
+
+### Run locally
+
+```bash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+npx serve .
+```
+
+Then open the local URL printed by `serve` (usually `http://localhost:3000`). From there you can verify:
+
+- Swagger UI / API docs: `https://latanda.online/docs`
+- Dev Portal: `https://latanda.online/dev-dashboard.html`
+- Chain Explorer / chain page: `https://latanda.online/chain/`
+
+### Local API behavior
+
+Some pages use simulated or proxy API helpers for local development. The main local API proxy is `api-proxy.js`, while shared API configuration lives in `api-endpoints-config.js` and dashboard/hub connectors live under `js/`.
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Ecosystem pages (60+ HTML files)
+├── css/                      # Styles, design tokens, components, and modules
+├── js/                       # JavaScript modules, dashboard connectors, hub utilities
+├── assets/                   # Images, logos, favicons, and generated static assets
+├── chain/                    # La Tanda Chain resources (node-setup.sh, genesis.json)
+├── docs/                     # OpenAPI specification and Swagger UI
+├── .github/                  # Bounty templates and PR gatekeeper configuration
+├── api-*.js                  # API adapters, endpoint configuration, and proxy helpers
+└── marketplace-social.js     # Marketplace/social page logic loaded from the HTML root
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Key pages and files:**
+- `index.html` — Landing page with 3D cosmic hero, tokenomics donut, and personas cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools and sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics page with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet integration
+- `mia.html` — MIA AI, the seventh ecosystem layer
+- `chain/index.html` — Chain landing page with live statistics
+- `api-proxy.js` — Main local API proxy used for simulated local responses
+- `api-endpoints-config.js` — Shared endpoint mapping and API URL configuration
+- `js/marketplace-social.js` — Modular marketplace/social implementation; the current HTML page also loads the root-level `marketplace-social.js`
 
 ---
 
