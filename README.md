@@ -104,46 +104,67 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ## 🚀 Quick Start
 
-### Para usuarios (no technical)
-1. Ve a [latanda.online](https://latanda.online)
-2. Crea tu cuenta (email o Google Sign-In)
-3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
+### For users
+1. Go to [latanda.online](https://latanda.online).
+2. Create an account with email or Google Sign-In.
+3. Join a tanda, publish in the feed, mine LTD, or explore the marketplace.
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+### For developers using the La Tanda API
+1. Swagger UI / API docs: [latanda.online/docs/](https://latanda.online/docs/).
+2. Developer portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html).
+3. Authentication: JWT through `/api/auth/login`.
+4. Public chain explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking).
 
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+### For validators running a node
+1. Read the [node operator guide](https://latanda.online/la-tanda-chain-node-guide.md).
+2. Run the one-line installer: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`.
+3. Use the chain page for seeds and network information: [latanda.online/chain/](https://latanda.online/chain/).
+4. Join the Incentivized Testnet Program by sending the required testnet LTD and `create-validator` transaction.
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+1. Install Node.js 18+ (or any current LTS release with `npx`).
+2. From the repository root, run `npx serve .` to serve the static mirror locally.
+3. Open the local URL printed by `serve` (usually `http://localhost:3000`) and test pages such as `index.html`, `dev-dashboard.html`, and `marketplace-social.html`.
+
+Link checks performed for this README section:
+- Swagger UI / API docs: [https://latanda.online/docs/](https://latanda.online/docs/)
+- Dev Portal: [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [https://exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+- Chain page: [https://latanda.online/chain/](https://latanda.online/chain/)
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Static pages for the ecosystem (landing, dashboard, marketplace, governance, etc.)
+├── css/                      # Global styles, design tokens, components, and modules
+├── js/                       # Shared JavaScript modules, connectors, hub utilities, and feature helpers
+├── marketplace-social.js     # Active marketplace social script loaded by marketplace-social.html from the HTML root
+├── assets/                   # Built assets, images, logos, and favicons
+├── chain/                    # La Tanda Chain resources such as node setup scripts and genesis data
+├── docs -> /var/www/html/docs # Deployed Swagger UI / OpenAPI mount, served publicly at /docs/
+├── .github/                  # Bounty templates, PR gatekeeper, and repository automation
+├── api-proxy-enhanced.js     # Main API proxy file; coordinate changes before editing
+├── api-proxy.js              # Legacy/basic API proxy implementation
+└── api-*.js                  # API adapters, endpoint config, handlers, and test helpers
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Main pages aligned with the framework:**
+- `index.html` — Landing page with the 3D cosmic hero, tokenomics donut, and persona cards.
+- `whitepaper.html` — Whitepaper v2.0 with the 10 pools and six sustainability sources.
+- `ltd-token-economics.html` — Interactive tokenomics with live chain data.
+- `governance.html` — On-chain governance hub with Keplr wallet integration.
+- `mia.html` — MIA AI, the seventh layer of the ecosystem.
+- `chain/index.html` — Chain landing page with live stats.
+
+**Codebase verification notes for bounty contributors:**
+- `marketplace-social.html` loads `marketplace-social.js` from the HTML root. A `js/marketplace-social.js` file also exists, but it is not the script referenced by the page.
+- The main API file called out by the repository rules is `api-proxy-enhanced.js`.
 
 ---
 
