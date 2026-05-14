@@ -1,220 +1,141 @@
-# La Tanda — Web3 Ecosystem of Honduras
+# La Tanda Web
 
-> **Not an app. An ecosystem.**
-> Red social + tandas digitales + marketplace + minería + blockchain propia.
+La Tanda is a public mirror of the frontend for the La Tanda Web3 ecosystem in Honduras. It includes social features, digital rotating savings groups, a marketplace, LTD token pages, wallet screens, chain resources, and developer-facing API pages.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Chain](https://img.shields.io/badge/chain-latanda--testnet--1-00d4ff)](https://latanda.online/chain/)
-[![Supply](https://img.shields.io/badge/supply-200M%20LTD%20fijo-ffd700)](https://latanda.online/whitepaper.html)
-[![Inflation](https://img.shields.io/badge/inflation-0%25-22c55e)](https://latanda.online/whitepaper.html)
-[![Mainnet](https://img.shields.io/badge/mainnet-Q1%202027-8b5cf6)](https://latanda.online/chain/)
+The repository is mostly static HTML, CSS, and JavaScript. It can be served locally without a build step.
 
-Este repositorio es el **mirror público** del frontend de La Tanda, el primer ecosistema Web3 soberano construido en Honduras para Latinoamérica.
+## Live Resources
 
----
+| Resource | URL |
+| --- | --- |
+| Website | https://latanda.online |
+| Swagger UI / API docs | https://latanda.online/docs/ |
+| Developer portal | https://latanda.online/dev-dashboard.html |
+| Chain page | https://latanda.online/chain/ |
+| Chain explorer | https://exp.utsa.tech/latanda/staking |
+| Whitepaper | https://latanda.online/whitepaper.html |
+| LTD tokenomics | https://latanda.online/ltd-token-economics.html |
 
-## 🌐 Qué es La Tanda
+## Development Setup
 
-La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
+Prerequisites:
 
-### Las 7 capas del ecosistema
+- Node.js 18 or newer
+- npm, included with Node.js
+- Git
 
-| # | Capa | Qué hace |
-|---|---|---|
-| 1 | 💬 **Red Social** | Feed, stories, comentarios, reacciones. Tu tiempo genera reputación on-chain. |
-| 2 | 🔄 **Tandas Digitales** | Grupos de ahorro rotativo 0% comisión, score on-chain, préstamos integrados |
-| 3 | 🛍️ **Marketplace Web3** | Productos, servicios, bookings. Seller Score on-chain. Pagos en lempiras o LTD |
-| 4 | ⛏️ **Minería de LTD** | 5 tiers (1-12 LTD/día), cap 500 LTD/día global, gana por actividad real |
-| 5 | ⭐ **Reputación On-Chain** | Score financiero unificado 300-850, portable entre capas, anclado en blockchain |
-| 6 | 🔗 **La Tanda Chain** | Blockchain soberana Cosmos SDK + CometBFT, 200M LTD fijo, 0% inflación |
-| 7 | 🤖 **MIA AI** | Asistente financiero con 16 capacidades (Groq Llama 3.3 70B) |
+Run the site locally:
 
----
-
-## 📊 Estado actual (live en testnet)
-
-| Métrica | Valor actual |
-|---|---|
-| **Usuarios activos mensuales** | 15,000+ |
-| **Tandas activas** | 300+ |
-| **Validadores de chain** | 13+ |
-| **API endpoints en producción** | 160+ |
-| **Algoritmos productivos** | 14 (fraud, ranking, credit, salud, etc.) |
-| **Propuestas de gobernanza pasadas** | 2 (GOV-001, GOV-002) |
-| **Uptime testnet desde Q1 2026** | 100% (sin incidentes de consenso) |
-
-Toda métrica es verificable contra datos on-chain o el dev portal público.
-
----
-
-## 💎 Tokenomics (200M LTD fijo)
-
-**Modelo**: Supply fijo + Treasury pre-acuñado (similar a THORChain), **cero inflación real**.
-
-### Distribución (10 pools)
-
-| Pool | % | Amount | Uso |
-|---|---|---|---|
-| Comunidad y Minería | 30% | 60M LTD | Recompensas usuarios, Incentivized Testnet |
-| Staking y Validadores | 20% | 40M LTD | Rewards pre-acuñados (APY 15-25%, ~8 años) |
-| Fondo de Desarrollo | 12% | 24M LTD | 6 meses cliff + 3 años linear |
-| Equipo y Fundadores | 12% | 24M LTD | 1 año cliff + 2 años linear |
-| Marketing y Alianzas | 6% | 12M LTD | Trimestral por hitos |
-| Seed Round | 5% | 10M LTD | $0.02/LTD, 6mo cliff + 18mo linear |
-| Strategic / Private | 5% | 10M LTD | $0.03/LTD, 3mo cliff + 12mo linear |
-| Liquidez Inicial TGE | 5% | 10M LTD | DEX pools + listings |
-| Bug Bounties y Grants | 3% | 6M LTD | Via governance |
-| Fondo de Seguro | 2% | 4M LTD | Emergency governance vote |
-| **TOTAL** | **100%** | **200M LTD** | |
-
-**Post-Staking-Pool sustainability** (post año 8): 6 fuentes redundantes incluyendo **marketplace commission routing (0.5% GMV → validadores)** — un revenue stream único vs cadenas pure store-of-value.
-
-Tokenomics completa: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
-
----
-
-## 🔗 La Tanda Chain
-
-Blockchain soberana construida con **Cosmos SDK + CometBFT**, específicamente diseñada para fintech comunitaria en Latinoamérica.
-
-- **Chain ID (testnet)**: `latanda-testnet-1`
-- **Token**: LTD (denom `ultd`, 1 LTD = 1,000,000 ultd)
-- **Address prefix**: `ltd`
-- **Block time**: ~5 segundos
-- **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validators activos**: 13+ (genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, +community)
-- **Governance**: activa, 2 props pasadas
-- **Mainnet**: Q1 2027 planificado
-- **Explorer (community)**: https://exp.utsa.tech/latanda/staking
-
-### Incentivized Testnet Program
-
-Reservados ~100K LTD para validadores que se suman antes del mainnet:
-
-| Tier | Slots | Reward al genesis |
-|---|---|---|
-| Infra Partner | 5 (4 ocupados) | 5,000 LTD |
-| Validator | 10 | 2,000 LTD |
-| Full Node | 20 | 500 LTD |
-| Bug Reporter | abierto | 100-1,000 LTD |
-
-**Cómo sumarte**: [Node Operator Guide](./la-tanda-chain-node-guide.md) (si está en este repo) o [latanda.online/chain](https://latanda.online/chain/)
-
----
-
-## 🚀 Quick Start
-
-### Para usuarios (no technical)
-1. Ve a [latanda.online](https://latanda.online)
-2. Crea tu cuenta (email o Google Sign-In)
-3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
-
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
-
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
-
----
-
-## 📂 Estructura del repositorio
-
+```bash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+npx serve .
 ```
+
+The `serve` command prints a local URL such as `http://localhost:3000`. Open that URL in a browser and navigate to pages directly, for example:
+
+- `http://localhost:3000/index.html`
+- `http://localhost:3000/dev-dashboard.html`
+- `http://localhost:3000/marketplace-social.html`
+- `http://localhost:3000/chain/`
+
+There is no package install or build step required for normal frontend/documentation work.
+
+## Project Structure
+
+This structure reflects the current repository layout:
+
+```text
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+|-- *.html                         Static pages for the ecosystem
+|-- api-*.js                       API adapters, proxies, endpoint config, and handlers
+|-- marketplace-social.js          Root-level marketplace implementation
+|-- marketplace-social.html        Marketplace page
+|-- css/                           Global styles, layout, components, and feature CSS
+|-- js/                            Shared JavaScript, components, sidebar, hub, and utilities
+|-- js/core/                       Core browser helpers such as API client, cache, and event bus
+|-- js/components/                 Reusable UI components
+|-- js/hub/                        Social feed, assistant, widgets, and hub modules
+|-- chain/                         Chain landing page, node guides, genesis, and setup script
+|-- assets/                        Built JavaScript assets and legacy chunks
+|-- components/                    Shared page components
+|-- group/                         Group-related frontend resources
+|-- html/                          Additional HTML fragments/pages
+|-- images/, img/, avatars/, covers/ Static image assets
+|-- middleware/, utils/            Role guard and shared utility files
+|-- examples/                      Example integrations
+|-- translations/                  Translation resources
+|-- packages/                      Package-related project files
+|-- workflows/                     Workflow examples
+|-- .github/                       Issue templates, workflows, ban list, and PR template
+|-- docs                           Deployment pointer for the live Swagger UI path
+|-- README.md                      Developer onboarding documentation
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+Notes for contributors:
 
----
+- `marketplace-social.js` lives at the repository root, not under `js/`.
+- The main API proxy file is `api-proxy-enhanced.js`.
+- `docs` is currently a small deployment pointer file, while the public Swagger UI is available at `https://latanda.online/docs/`.
+- The issue mentions `CONTRIBUTING.md`, but this branch does not currently include that file. Use `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ban-list.txt`, the developer portal, and the current file tree as the source of truth.
 
-## 🤝 Cómo contribuir
+## Key Pages
 
-La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
+| File | Purpose |
+| --- | --- |
+| `index.html` | Main landing page |
+| `dev-dashboard.html` | Developer API portal |
+| `marketplace-social.html` | Marketplace interface |
+| `marketplace-social.js` | Main marketplace logic |
+| `my-wallet.html` / `my-wallet.js` | Wallet UI and logic |
+| `governance.html` | Governance page |
+| `ltd-token-economics.html` / `ltd-token-economics.js` | LTD tokenomics page |
+| `chain/index.html` | La Tanda Chain landing page |
+| `chain/la-tanda-chain-node-guide.md` | Node operator guide |
 
-| Tier | Quién puede | Reward |
-|---|---|---|
-| **Tier 0** | Cualquiera | 10-50 LTD |
-| **Tier 1** | 1+ merge previo | 50-150 LTD |
-| **Tier 2** | 2+ merges previos | 150-500 LTD |
+## API Files
 
-- Cada bounty requiere responder una pregunta de verificación del código (requiere leer la fuente real)
-- PR Gatekeeper automático rechaza: PRs sin asignación, cuentas <30 días, usuarios en ban list
-- Labels: `tier-0`, `tier-1`, `tier-2`
+| File | Purpose |
+| --- | --- |
+| `api-proxy-enhanced.js` | Main API proxy implementation |
+| `api-proxy.js` | Base API proxy |
+| `api-proxy-working.js` | Working proxy variant |
+| `api-proxy-updated.js` | Updated proxy variant |
+| `api-adapter.js` | Frontend API adapter |
+| `api-endpoints-config.js` | Endpoint configuration |
+| `api-handlers-complete.js` | API handler collection |
+| `postman-collection.json` | Postman collection for API exploration |
 
-**Antes de abrir PR**:
-1. Lee `CONTRIBUTING.md` (si existe) + `.github/ban-list.txt`
-2. Responde la pregunta de verificación del bounty
-3. Firma commits con tu email verificado en GitHub
-4. Un PR = un bounty
+Before changing API behavior, check the live Swagger UI at https://latanda.online/docs/ and keep endpoint names, request shapes, and response expectations aligned.
 
----
+## Link Verification
 
-## 📚 Recursos
+The following links were checked while updating this README:
 
-### Documentación pública
-- 🌐 Website: [latanda.online](https://latanda.online)
-- 📜 Whitepaper v2.0: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
-- 💰 Tokenomics: [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html)
-- 🏛️ Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
-- 💻 Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
-- 📖 API Docs: [latanda.online/docs](https://latanda.online/docs)
-- 🔗 Chain: [latanda.online/chain](https://latanda.online/chain/)
+- Swagger UI: https://latanda.online/docs/
+- Developer portal: https://latanda.online/dev-dashboard.html
+- Chain explorer: https://exp.utsa.tech/latanda/staking
+- Chain page: https://latanda.online/chain/
+- Whitepaper: https://latanda.online/whitepaper.html
+- LTD tokenomics: https://latanda.online/ltd-token-economics.html
 
-### Comunidad
-- 💬 Discord: [discord.gg/Ve9M2ZSYC2](https://discord.gg/Ve9M2ZSYC2)
-- 📢 Telegram: [t.me/latandahn](https://t.me/latandahn)
-- 🐦 Twitter: [@TandaWeb3](https://twitter.com/TandaWeb3)
-- 📰 Cosmos Forum: [Thread #16709](https://forum.cosmos.network/t/la-tanda-chain-incentivized-testnet-live-validators-node-operators-welcome-cosmos-sdk-v0-53-6/16709)
-- 🟣 Reddit (own sub): [r/LaTandaChain](https://reddit.com/r/LaTandaChain)
+## Contribution Notes
 
----
+- Keep each pull request scoped to one bounty or one issue.
+- Modify existing files unless the issue explicitly asks for a new file.
+- Do not commit `.env` files, tokens, credentials, or private keys.
+- Check `.github/ban-list.txt` before opening a PR.
+- Follow `.github/PULL_REQUEST_TEMPLATE.md` when preparing the PR body.
+- Use English for developer documentation.
+- Use the existing file layout and naming patterns instead of inventing new structures.
 
-## 📜 Licencia
+## Bounty Verification Answer
 
-MIT License — see [LICENSE](./LICENSE)
+For issue `#50`:
 
-Código abierto, uso libre con atribución. Las marcas "La Tanda" y "La Tanda Chain" son propiedad de Ray-Banks LLC.
+- `marketplace-social.js` lives at the repository root.
+- The main API file is `api-proxy-enhanced.js`.
 
----
+## Legal
 
-## ⚖️ Legal
-
-La Tanda es operada por **Ray-Banks LLC**. Más información en [raybanks.org](https://raybanks.org).
-
-Este repositorio es un mirror público del frontend. El código está liberado para transparencia y contribuciones comunitarias. No constituye oferta de valores ni asesoramiento financiero.
-
----
-
-## 🚫 Reglas importantes
-
-- **NUNCA** commitees `.env` o credenciales (ver `.env.example`)
-- **NUNCA** uses `rsync --delete` con este repo
-- **NUNCA** modifiques `api-proxy-enhanced.js` sin coordinar con el equipo
-- Ban list pública: `.github/ban-list.txt` (no aceptamos PRs de cuentas listadas)
-
----
-
-<p align="center">
-<strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
-🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
-</p>
+This repository is a public frontend mirror for transparency and community contributions. It is not an offer of securities or financial advice.
