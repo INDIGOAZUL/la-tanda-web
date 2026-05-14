@@ -1,0 +1,247 @@
+/* ============================================
+   LA TANDA — DARK / LIGHT THEME SYSTEM
+   Issue #84 — Theme Toggle
+   ============================================ */
+
+/* ── Smooth transition for theme changes ── */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+    transition: background-color 0.35s ease,
+                color 0.35s ease,
+                border-color 0.35s ease,
+                box-shadow 0.35s ease,
+                fill 0.35s ease,
+                stroke 0.35s ease !important;
+}
+
+/* ── Theme Toggle Button ── */
+.lt-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-md, 10px);
+    background: var(--ds-bg-surface, rgba(255,255,255,0.03));
+    color: var(--ds-text-muted, #94a3b8);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.lt-theme-toggle:hover {
+    background: var(--ds-bg-surface-hover, rgba(255,255,255,0.06));
+    border-color: var(--ds-border-hover, rgba(255,255,255,0.12));
+    color: var(--ds-text-primary, #f8fafc);
+    transform: scale(1.05);
+}
+
+.lt-theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.lt-theme-toggle:focus-visible {
+    outline: 2px solid var(--ds-cyan, #00FFFF);
+    outline-offset: 2px;
+}
+
+/* Sun/Moon icon swap */
+.lt-theme-toggle .lt-theme-icon {
+    position: absolute;
+    transition: opacity 0.25s ease, transform 0.35s ease;
+}
+
+/* Dark mode: show moon, hide sun */
+[data-theme="dark"] .lt-theme-toggle .lt-theme-icon-sun {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+}
+
+[data-theme="dark"] .lt-theme-toggle .lt-theme-icon-moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Light mode: show sun, hide moon */
+[data-theme="light"] .lt-theme-toggle .lt-theme-icon-sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+[data-theme="light"] .lt-theme-toggle .lt-theme-icon-moon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+}
+
+/* ── Light Theme Overrides for design-tokens ── */
+[data-theme="light"] {
+    --ds-bg-base: #f8fafc;
+    --ds-bg-surface: rgba(0,0,0,0.03);
+    --ds-bg-surface-hover: rgba(0,0,0,0.06);
+    --ds-bg-elevated: rgba(0,0,0,0.04);
+    --ds-bg-overlay: rgba(0,0,0,0.4);
+    --ds-bg-overlay-heavy: rgba(0,0,0,0.6);
+    --ds-bg-input: rgba(0,0,0,0.04);
+    --ds-bg-input-focus: rgba(0,0,0,0.06);
+
+    --ds-text-primary: #1e293b;
+    --ds-text-secondary: #334155;
+    --ds-text-muted: #64748b;
+    --ds-text-faint: #94a3b8;
+    --ds-text-inverse: #f8fafc;
+
+    --ds-cyan: #0891b2;
+    --ds-cyan-hover: #0e7490;
+    --ds-cyan-muted: rgba(8,145,178,0.12);
+    --ds-cyan-border: rgba(8,145,178,0.25);
+    --ds-cyan-glow: 0 0 16px rgba(8,145,178,0.2);
+
+    --ds-border: rgba(0,0,0,0.08);
+    --ds-border-hover: rgba(0,0,0,0.15);
+    --ds-border-accent: rgba(8,145,178,0.25);
+
+    --ds-shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --ds-shadow-md: 0 2px 8px rgba(0,0,0,0.1);
+    --ds-shadow-lg: 0 4px 20px rgba(0,0,0,0.12);
+    --ds-shadow-modal: 0 8px 32px rgba(0,0,0,0.15);
+    --ds-shadow-glow: 0 0 16px rgba(8,145,178,0.15);
+    --ds-shadow-glow-lg: 0 2px 12px rgba(8,145,178,0.2);
+
+    --ds-glass-bg: rgba(255,255,255,0.7);
+    --ds-glass-border: rgba(0,0,0,0.08);
+}
+
+/* ── Light Theme for variables.css tokens ── */
+[data-theme="light"] {
+    --lt-primary: #0891b2;
+    --lt-primary-dark: #0e7490;
+    --lt-primary-light: #22d3ee;
+    --lt-bg-dark: #ffffff;
+    --lt-bg-card: #ffffff;
+    --lt-bg-hover: #f1f5f9;
+    --lt-text-primary: #1e293b;
+    --lt-text-secondary: #475569;
+    --lt-text-muted: #94a3b8;
+    --lt-border: #e2e8f0;
+    --lt-border-accent: rgba(8,145,178,0.25);
+    --lt-header-bg: rgba(255,255,255,0.95);
+    --lt-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --lt-shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+    --lt-shadow-lg: 0 4px 20px rgba(0,0,0,0.1);
+    --lt-shadow-glow: 0 0 16px rgba(8,145,178,0.15);
+}
+
+/* ── Light Theme body overrides ── */
+[data-theme="light"] body {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+[data-theme="light"] a {
+    color: #0891b2;
+}
+
+/* ── Header light theme ── */
+[data-theme="light"] .latanda-header {
+    background: rgba(255,255,255,0.95);
+    border-bottom-color: rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .lt-header {
+    background: rgba(255,255,255,0.95);
+    border-bottom-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .header-brand,
+[data-theme="light"] .brand-info h1,
+[data-theme="light"] .lt-brand-name {
+    color: #1e293b;
+}
+
+/* ── Cards light theme ── */
+[data-theme="light"] .card,
+[data-theme="light"] [class*="card"],
+[data-theme="light"] .glass-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ── Sidebar light theme ── */
+[data-theme="light"] .sidebar,
+[data-theme="light"] .lt-sidebar {
+    background: #ffffff;
+    border-color: #e2e8f0;
+}
+
+/* ── Input light theme ── */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+    background: rgba(0,0,0,0.03);
+    border-color: #e2e8f0;
+    color: #1e293b;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+    border-color: #0891b2;
+    box-shadow: 0 0 0 3px rgba(8,145,178,0.1);
+}
+
+/* ── Mobile bottom nav light ── */
+[data-theme="light"] .mobile-bottom-nav {
+    background: rgba(255,255,255,0.95);
+    border-top-color: #e2e8f0;
+}
+
+/* ── Modal light ── */
+[data-theme="light"] .modal,
+[data-theme="light"] [class*="modal-content"],
+[data-theme="light"] [class*="overlay"] {
+    background: #ffffff;
+}
+
+/* ── Scrollbar light ── */
+[data-theme="light"] ::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ── Footer light ── */
+[data-theme="light"] footer,
+[data-theme="light"] .latanda-footer,
+[data-theme="light"] [class*="footer"] {
+    background: #ffffff;
+    border-top-color: #e2e8f0;
+    color: #475569;
+}
+
+/* ── Notification badge stays visible ── */
+[data-theme="light"] .lt-badge {
+    background: #ef4444;
+    color: #fff;
+}
