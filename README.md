@@ -102,6 +102,58 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## 🛠️ Development Setup
+
+### Prerequisites
+- Node.js 18+ (for local tooling)
+- A modern browser (Chrome, Firefox, Edge)
+
+### Serving Locally
+
+The project is a static frontend — no build step required. Serve it with any static file server:
+
+```bash
+# Option 1: Using npx serve (recommended)
+npx serve .
+
+# Option 2: Using Python
+python3 -m http.server 8000
+
+# Option 3: Using Node.js http-server
+npx http-server -p 3000
+```
+
+Then open `http://localhost:3000` (or the port shown) in your browser.
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values for local development:
+
+```bash
+cp .env.example .env
+```
+
+> ⚠️ **Never commit `.env` or credentials to the repository.**
+
+### API Proxy Setup
+
+API adapters are located in `api-*.js` files at the root. These proxy requests to the La Tanda backend. For local development, ensure the proxy target points to the testnet API.
+
+> ⚠️ **Never modify `api-proxy-enhanced.js` without coordinating with the team.**
+
+### Swagger UI
+
+Interactive API documentation is available at:
+- **Local**: `http://localhost:3000/docs` (when serving locally)
+- **Production**: [latanda.online/docs](https://latanda.online/docs)
+
+### Dev Portal
+
+The developer dashboard provides real-time stats and testing tools:
+- **Production**: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+
+---
+
 ## 🚀 Quick Start
 
 ### Para usuarios (no technical)
