@@ -684,6 +684,8 @@
     <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<style>.skip-link{position:absolute;top:-40px;left:0;background:#000;color:#fff;padding:8px 16px;z-index:10000;transition:top 0.2s}.skip-link:focus{top:0}</style>
     <!-- Global Header Component -->
     <div id="global-header"></div>
     <!-- Navigation Header -->
@@ -895,8 +897,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Alias de Miembro</label>
-                        <input type="text" class="form-input" placeholder="Ej: TandaMaster">
+                        <label class="form-label" for="memberAlias">Alias de Miembro</label>
+                        <input type="text" id="memberAlias" class="form-input" placeholder="Ej: TandaMaster">
                     </div>
                     
                     <div class="form-group">
@@ -911,8 +913,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Duración</label>
-                        <select class="form-select">
+                        <label class="form-label" for="durationSelect">Duración</label>
+                        <select class="form-select" id="durationSelect">
                             <option value="monthly">Mensual (+10% costo)</option>
                             <option value="quarterly">Trimestral (precio estándar)</option>
                             <option value="yearly">Anual (-15% descuento)</option>
@@ -921,8 +923,8 @@
                     </div>
                     
                     <div class="form-group full-width">
-                        <label class="form-label">Red de Mint</label>
-                        <select class="form-select">
+                        <label class="form-label" for="mintNetwork">Red de Mint</label>
+                        <select class="form-select" id="mintNetwork">
                             <option value="latanda-mainnet">La Tanda Chain (Recomendado)</option>
                             <option value="polygon">Polygon (Menor costo gas)</option>
                             <option value="ethereum">Ethereum (Máxima compatibilidad)</option>
@@ -1161,7 +1163,7 @@
                     const progress = (membership.minted / membership.supply * 100).toFixed(1);
 
                     return `
-                        <div class="nft-card" onclick="showMembershipDetails('${membership.id}')">
+                        <div class="nft-card" role="button" tabindex="0" onclick="showMembershipDetails('${membership.id}')" onkeydown="if(event.key===&apos;Enter&apos;)this.click()">
                             <div class="nft-image" style="background: ${tierColors[membership.tier]}; display: flex; align-items: center; justify-content: center; position: relative;">
                                 <img src="${membership.image}" alt="${membership.name}" style="width: 80px; height: 80px; border-radius: 50%;" loading="lazy">
                                 <div class="nft-rarity rarity-${membership.tier}">${membership.tier}</div>
@@ -1230,7 +1232,7 @@
                     };
 
                     return `
-                        <div class="nft-card" onclick="showServiceDetails('${service.id}')">
+                        <div class="nft-card" role="button" tabindex="0" onclick="showServiceDetails('${service.id}')" onkeydown="if(event.key===&apos;Enter&apos;)this.click()">
                             <div class="nft-image" style="background: linear-gradient(135deg, var(--tanda-cyan), var(--crypto-purple)); display: flex; align-items: center; justify-content: center;">
                                 <i class="${categoryIcons[service.category]}" style="font-size: 48px; color: var(--tanda-black);"></i>
                             </div>
@@ -1563,5 +1565,7 @@
             <span>Perfil</span>
         </a>
     </nav>
+<main id="main-content" role="main">
+</main>
 </body>
 </html>

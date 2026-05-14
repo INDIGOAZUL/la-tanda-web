@@ -119,6 +119,8 @@ body { margin:0; background:var(--ds-bg-base); color:var(--ds-text-primary); fon
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<style>.skip-link{position:absolute;top:-40px;left:0;background:#000;color:#fff;padding:8px 16px;z-index:10000;transition:top 0.2s}.skip-link:focus{top:0}</style>
 <div class="container">
     <div class="header">
         <h1><i class="fas fa-paper-plane"></i> Outreach Dashboard</h1>
@@ -242,7 +244,7 @@ body { margin:0; background:var(--ds-bg-base); color:var(--ds-text-primary); fon
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="toast" aria-live="polite" id="toast"></div>
 
 <script>
 const API = '/api/outreach';
@@ -325,7 +327,7 @@ async function loadPipeline() {
             const items = allContacts.filter(c => c.status === status);
             html += '<div class="pipeline-col"><div class="pipeline-col-header"><span>' + labels[status] + '</span><span class="count">' + items.length + '</span></div>';
             for (const c of items) {
-                html += '<div class="pipe-card" onclick="showContactActions(' + c.id + ')">';
+                html += '<div class="pipe-card" role="button" tabindex="0" onclick="showContactActions(' + c.id + ')" onkeydown="if(event.key===&apos;Enter&apos;)this.click()">';
                 html += '<div class="name">' + esc(c.name) + ' ' + tierBadge(c.tier) + '</div>';
                 html += '<div class="company">' + esc(c.company || '') + '</div>';
                 html += '<div class="meta"><span><i class="fas fa-envelope"></i> ' + (c.emails_sent || 0) + '</span>';

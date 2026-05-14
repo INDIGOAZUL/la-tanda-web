@@ -304,6 +304,8 @@
     </style>
 </head>
 <body data-sidebar="true">
+<a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+<style>.skip-link{position:absolute;top:-40px;left:0;background:#000;color:#fff;padding:8px 16px;z-index:10000;transition:top 0.2s}.skip-link:focus{top:0}</style>
     <div id="global-header"></div>
     <div class="bg-effects"><div class="gradient-orb gradient-orb-1"></div><div class="gradient-orb gradient-orb-2"></div><div class="gradient-orb gradient-orb-3"></div></div>
     <div class="dashboard-3col">
@@ -580,7 +582,7 @@
                     if (imgEl) {
                         var lb = document.createElement('div');
                         lb.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;';
-                        lb.innerHTML = '<img src="' + imgEl.src + '" style="max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;">';
+                        lb.innerHTML = '<img src="' + imgEl.src + '" style="max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;" alt="">';
                         lb.addEventListener('click', function() { lb.remove(); });
                         document.body.appendChild(lb);
                     }
@@ -660,7 +662,7 @@
                 '<div class="pf-post-body">' +
                     '<div class="pf-post-header"><span class="pf-post-name">' + esc(actor.name || 'Usuario') + '</span><span class="pf-post-time">' + esc(p.time_ago || '') + '</span></div>' +
                     '<p class="pf-post-text">' + esc(p.description || p.title || '') + '</p>' +
-                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy">' : '') +
+                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy" alt="Imagen del post">' : '') +
                     '<div class="pf-post-engagement">' +
                         '<span><i class="far fa-heart"></i> ' + formatCount(p.engagement && p.engagement.likes || 0) + '</span>' +
                         '<span><i class="far fa-comment"></i> ' + formatCount(p.engagement && p.engagement.comments || 0) + '</span>' +
@@ -717,7 +719,7 @@
         var text = a.title || a.description || '';
         if (text.length > 120) text = text.substring(0, 120) + '...';
         var date = a.created_at ? new Date(a.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' }) : '';
-        var imgHtml = a.image_url ? '<img src="' + esc(a.image_url) + '" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" loading="lazy">' : '';
+        var imgHtml = a.image_url ? '<img src="' + esc(a.image_url) + '" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" alt="" loading="lazy">' : '';
         return '<div class="pf-activity-item" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--ds-border, rgba(255,255,255,0.06));"' + (a.target_event_id ? ' data-event-id="' + esc(a.target_event_id) + '"' : '') + '>' +
             '<div style="width:32px;height:32px;border-radius:50%;background:var(--ds-bg-elevated, rgba(255,255,255,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas ' + icon + '" style="color:' + color + ';font-size:0.8rem;"></i></div>' +
             '<div style="flex:1;min-width:0;"><div style="font-size:0.82rem;color:rgba(255,255,255,0.5);margin-bottom:2px;">' + esc(label) + ' <span style="color:var(--ds-text-muted, rgba(255,255,255,0.3));">' + esc(date) + '</span></div>' +
@@ -784,7 +786,7 @@
                 '<div class="pf-post-body">' +
                     '<div class="pf-post-header"><span class="pf-post-name">' + esc(actor.name || 'Usuario') + '</span>' + (actor.handle ? '<span class="pf-post-handle-sm">@' + esc(actor.handle) + '</span>' : '') + '</div>' +
                     '<p class="pf-post-text">' + parsePostContent(text) + '</p>' +
-                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy">' : '') +
+                    (p.image_url ? '<img src="' + esc(p.image_url) + '" class="pf-post-img" loading="lazy" alt="Imagen del post">' : '') +
                     '<div class="pf-post-engagement">' +
                         '<span><i class="far fa-heart"></i> ' + formatCount(p.engagement && p.engagement.likes || 0) + '</span>' +
                         '<span><i class="far fa-comment"></i> ' + formatCount(p.engagement && p.engagement.comments || 0) + '</span>' +
@@ -1062,7 +1064,7 @@
         var user = profileData.user;
         var url = user.handle ? 'https://latanda.online/perfil/' + user.handle : window.location.href;
         var initials = getInitials(user.name);
-        var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">' : '<div style="width:64px;height:64px;border-radius:50%;background:var(--ds-cyan-muted, rgba(0,255,255,0.15));display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#00FFFF;">' + initials + '</div>';
+        var avatarHtml = user.avatar_url ? '<img src="' + esc(user.avatar_url) + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;" alt="">' : '<div style="width:64px;height:64px;border-radius:50%;background:var(--ds-cyan-muted, rgba(0,255,255,0.15));display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#00FFFF;">' + initials + '</div>';
         var ov = document.createElement('div');
         ov.className = 'pf-qr-overlay';
         ov.innerHTML = '<div class="pf-qr-card">' +
