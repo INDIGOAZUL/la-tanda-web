@@ -60,3 +60,61 @@ export interface SharePredictionData {
     prediction_id: string
     message?: string
 }
+
+export interface ActiveGame {
+    id: string
+    name: string
+    status: 'active' | 'closed'
+    next_draw_at: string
+    jackpot?: number
+}
+
+export interface GameDetail extends ActiveGame {
+    description?: string
+    ticket_price: number
+    rules?: string
+}
+
+export interface DrawRound {
+    id: string
+    game_id: string
+    draw_date: string
+    status: 'pending' | 'completed'
+    winning_numbers?: number[]
+}
+
+export interface Ticket {
+    id: string
+    game_id: string
+    draw_id: string
+    numbers: number[][]
+    status: 'active' | 'won' | 'lost' | 'claimed'
+    purchase_date: string
+    amount_won?: number
+}
+
+export interface BuyTicketData {
+    game_id: string
+    draw_id: string
+    numbers: number[][]
+}
+
+export interface ClaimWinningsResult {
+    success: boolean
+    amount: number
+    transaction_id?: string
+}
+
+export interface Prediction {
+    id: string
+    game_id: string
+    predicted_numbers: number[]
+    timestamp: string
+    status: 'pending' | 'resolved'
+    hit_count?: number
+}
+
+export interface SubmitPredictionData {
+    game_id: string
+    predicted_numbers: number[]
+}

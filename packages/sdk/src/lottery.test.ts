@@ -77,4 +77,104 @@ describe('LotteryModule (Prediction Engine)', () => {
             })
         )
     })
+
+    // --- Phase 3 Tests ---
+
+    test('getActiveGames calls /lottery/games/active', async () => {
+        await client.lottery.getActiveGames()
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/games/active'),
+            expect.any(Object)
+        )
+    })
+
+    test('getGameDetail calls /lottery/games/:id', async () => {
+        await client.lottery.getGameDetail('game_123')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/games/game_123'),
+            expect.any(Object)
+        )
+    })
+
+    test('getDraws calls /lottery/games/:id/draws', async () => {
+        await client.lottery.getDraws('game_123')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/games/game_123/draws'),
+            expect.any(Object)
+        )
+    })
+
+    test('buyTicket calls POST /lottery/tickets/buy', async () => {
+        const data = { game_id: 'g1', draw_id: 'd1', numbers: [[1, 2, 3]] }
+        await client.lottery.buyTicket(data)
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/tickets/buy'),
+            expect.objectContaining({ method: 'POST', body: JSON.stringify(data) })
+        )
+    })
+
+    test('getUserTickets calls /lottery/tickets', async () => {
+        await client.lottery.getUserTickets()
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/tickets'),
+            expect.any(Object)
+        )
+    })
+
+    test('getTicketDetail calls /lottery/tickets/:id', async () => {
+        await client.lottery.getTicketDetail('tick_123')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/tickets/tick_123'),
+            expect.any(Object)
+        )
+    })
+
+    test('claimWinnings calls POST /lottery/tickets/:id/claim', async () => {
+        await client.lottery.claimWinnings('tick_123')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/tickets/tick_123/claim'),
+            expect.objectContaining({ method: 'POST' })
+        )
+    })
+
+    test('submitPrediction calls POST /lottery/predictions', async () => {
+        const data = { game_id: 'g1', predicted_numbers: [1, 2, 3] }
+        await client.lottery.submitPrediction(data)
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/predictions'),
+            expect.objectContaining({ method: 'POST', body: JSON.stringify(data) })
+        )
+    })
+
+    test('getUserPredictions calls /lottery/predictions', async () => {
+        await client.lottery.getUserPredictions()
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/predictions'),
+            expect.any(Object)
+        )
+    })
+
+    test('getPredictionHistory calls /lottery/predictions/history', async () => {
+        await client.lottery.getPredictionHistory()
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/predictions/history'),
+            expect.any(Object)
+        )
+    })
+
+    test('getHitRateStats calls /lottery/predictions/stats', async () => {
+        await client.lottery.getHitRateStats()
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/predictions/stats'),
+            expect.any(Object)
+        )
+    })
+
+    test('getGameLeaderboard calls /lottery/games/:id/leaderboard', async () => {
+        await client.lottery.getGameLeaderboard('game_123')
+        expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/lottery/games/game_123/leaderboard'),
+            expect.any(Object)
+        )
+    })
 })

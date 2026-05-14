@@ -94,6 +94,16 @@ try {
 }
 ```
 
+## Publishing to NPM
+
+This package is configured for automatic prepublish testing. To publish a new version:
+
+1. Update the version in `package.json`.
+2. Run `npm install` to ensure dependencies are up to date.
+3. Commit and merge the PR.
+4. The organization maintainer will run `npm publish` from the `main` branch.
+5. Create a git tag matching the version (e.g. `git tag @latanda/sdk@1.0.0` and `git push --tags`).
+
 ## License
 
 MIT
