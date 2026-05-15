@@ -123,6 +123,52 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+
+## Development Setup
+
+### Prerequisites
+
+- **Node.js** >= 18 (for tooling only — the frontend is static HTML/JS/CSS)
+- A modern browser (Chrome, Firefox, Edge)
+
+### Serving Locally
+
+The frontend is a collection of static HTML files. To serve them locally:
+
+```bash
+# Option 1: npx serve (no install required)
+npx serve .
+
+# Option 2: Python's built-in HTTP server
+python3 -m http.server 8000
+
+# Option 3: VS Code Live Server extension
+# Right-click index.html -> Open with Live Server
+```
+
+The site will be available at http://localhost:3000 (serve) or http://localhost:8000 (Python).
+
+### API Proxy
+
+For local development, the project includes pi-proxy.js which provides simulated API responses to avoid CORS issues when testing from localhost. The main API adapter is pi-adapter.js.
+
+### Environment Variables
+
+Copy .env.example to .env and fill in the required values. **Never commit .env to the repository.**
+
+```bash
+cp .env.example .env
+```
+
+### Key Entry Points
+
+| File | Purpose |
+|------|---------|
+| index.html | Main landing page |
+| pi-proxy.js | Local dev API proxy with simulated responses |
+| pi-adapter.js | API adapter for production endpoints |
+| sw.js | Service worker for PWA offline support |
+| marketplace-social.js | Marketplace social features (root level) |
 ## 📂 Estructura del repositorio
 
 ```
