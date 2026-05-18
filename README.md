@@ -115,6 +115,27 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 3. Autenticación: JWT via `/api/auth/login`
 4. 160+ endpoints productivos
 
+## 💻 Development Setup
+
+Para correr este frontend de forma local y contribuir al ecosistem:
+
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+   cd la-tanda-web
+   ```
+
+2. **Servir localmente (usando Node.js / npx)**:
+   ```bash
+   # No requiere instalación global, simplemente ejecuta:
+   npx serve .
+   ```
+
+3. **Acceder a la aplicación**:
+   Abre tu navegador en `http://localhost:3000` (o el puerto que te indique la terminal).
+
+*Nota: El frontend no usa un bundler complejo por defecto.*
+
 ### Para validadores (correr un nodo)
 1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
 2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
@@ -124,6 +145,8 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 ---
 
 ## 📂 Estructura del repositorio
+
+El proyecto sigue la siguiente estructura clave según nuestro `CONTRIBUTING.md`:
 
 ```
 la-tanda-web/
