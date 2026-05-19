@@ -1,0 +1,42 @@
+{
+  "uid": "latanda-network-health",
+  "title": "La Tanda Network Health",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "timezone": "browser",
+  "tags": ["latanda", "network"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Validators",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "count(cometbft_consensus_validator_power)", "legendFormat": "validators"}]
+    },
+    {
+      "type": "stat",
+      "title": "Bonded Stake",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "sum(cosmos_staking_bonded_tokens)", "legendFormat": "LTD"}]
+    },
+    {
+      "type": "stat",
+      "title": "Active Governance Proposals",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "cosmos_gov_proposals_active_total", "legendFormat": "active"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Network Peer Count",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "sum(cometbft_p2p_peers)", "legendFormat": "peers"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Validator Availability",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "sum(up{job=\"latandad_tendermint\"}) / count(up{job=\"latandad_tendermint\"}) * 100", "legendFormat": "availability %"}]
+    }
+  ]
+}
+

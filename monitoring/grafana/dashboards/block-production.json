@@ -1,0 +1,42 @@
+{
+  "uid": "latanda-block-production",
+  "title": "La Tanda Block Production",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "timezone": "browser",
+  "tags": ["latanda", "blocks"],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Latest Height",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "cometbft_consensus_height", "legendFormat": "{{validator}}"}]
+    },
+    {
+      "type": "stat",
+      "title": "Average Block Time",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "rate(cometbft_consensus_block_interval_seconds_sum[5m]) / rate(cometbft_consensus_block_interval_seconds_count[5m])", "legendFormat": "{{validator}}"}]
+    },
+    {
+      "type": "stat",
+      "title": "Blocks Produced",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 4},
+      "targets": [{"expr": "increase(cometbft_consensus_block_parts_total[1h])", "legendFormat": "{{validator}}"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Height Progression",
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "cometbft_consensus_height", "legendFormat": "{{validator}}"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Block Interval",
+      "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+      "targets": [{"expr": "rate(cometbft_consensus_block_interval_seconds_sum[5m]) / rate(cometbft_consensus_block_interval_seconds_count[5m])", "legendFormat": "{{validator}}"}]
+    }
+  ]
+}
+

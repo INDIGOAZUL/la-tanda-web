@@ -1,0 +1,47 @@
+groups:
+  - name: latanda-validator-alerts
+    rules:
+      - alert: ValidatorJailed
+        expr: cosmos_staking_validator_jailed == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Validator {{ $labels.validator }} is jailed"
+          description: "The validator is marked jailed by the staking module and is not signing blocks."
+
+      - alert: MissedBlocksCritical
+        expr: cosmos_slashing_validator_missed_blocks > 4000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Validator {{ $labels.validator }} missed more than 40% of the 10,000 block signing window"
+          description: "The chain uses min_signed_per_window 0.5, so jail risk begins above 5,000 missed blocks."
+
+      - alert: MissedBlocksWarning
+        expr: cosmos_slashing_validator_missed_blocks > 2000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Validator {{ $labels.validator }} missed more than 20% of the 10,000 block signing window"
+          description: "Investigate node health, peers, disk, and validator process logs."
+
+      - alert: LowPeerCount
+        expr: cometbft_p2p_peers < 3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Validator {{ $labels.validator }} has fewer than 3 peers"
+          description: "Peer count has stayed below the recommended minimum for 10 minutes."
+
+      - alert: ActiveGovernanceProposal
+        expr: increase(cosmos_gov_proposals_active_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "New active governance proposal detected"
+          description: "A governance proposal became active on La Tanda Chain."

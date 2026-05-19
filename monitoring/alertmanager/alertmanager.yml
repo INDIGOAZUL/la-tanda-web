@@ -1,0 +1,23 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: webhook
+  group_by:
+    - alertname
+    - validator
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="critical"
+      repeat_interval: 30m
+      receiver: webhook
+
+receivers:
+  - name: webhook
+    webhook_configs:
+      - url: '${ALERT_WEBHOOK_URL}'
+        send_resolved: true
+
