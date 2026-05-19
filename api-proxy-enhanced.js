@@ -126,6 +126,10 @@ class EnhancedAPIProxy {
 
         // Parse user ID from token or default
         const userId = this.extractUserIdFromAuth(options) || 'admin_001';
+        const socialReportMatch = baseEndpoint.match(/^\/api\/feed\/social\/([^/]+)\/report$/);
+        if (method === 'POST' && socialReportMatch) {
+            return this.handleSocialReport(socialReportMatch[1], userId, options);
+        }
         
         // FORCE: Skip missingHandlers for /groups - go directly to switch statement
         console.log(`🔍 ENDPOINT CHECK: ${baseEndpoint} - bypassing missingHandlers for /groups`);
@@ -1524,6 +1528,65 @@ class EnhancedAPIProxy {
                 note: "This endpoint is simulated and will be implemented in production"
             },
             meta: this.createMeta()
+        };
+    }
+
+    handleSocialReport(eventId, userId, options = {}) {
+        const allowedReasons = ['spam', 'harassment', 'misinformation', 'inappropriate', 'other'];
+        let body = {};
+        try {
+            body = typeof options.body === 'string' ? JSON.parse(options.body || '{}') : (options.body || {});
+        } catch (error) {
+            body = {};
+        }
+
+        const reason = String(body.reason || '').trim();
+        const description = String(body.description || '').trim();
+
+        if (!eventId) {
+            return { success: false, message: 'Publicacion no encontrada', status: 404 };
+        }
+
+        if (!allowedReasons.includes(reason)) {
+            return { success: false, message: 'Motivo invalido', status: 400 };
+        }
+
+        if (description.length > 500) {
+            return { success: false, message: 'La descripcion no puede exceder 500 caracteres', status: 400 };
+        }
+
+        const storageKey = 'latanda_social_reports';
+        let reports = [];
+        try {
+            reports = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        } catch (error) {
+            reports = [];
+        }
+
+        const duplicate = reports.some(report =>
+            String(report.event_id) === String(eventId) && String(report.reporter_id) === String(userId)
+        );
+        if (duplicate) {
+            return { success: false, message: 'Ya reportaste esta publicacion', status: 409 };
+        }
+
+        const report = {
+            id: 'report_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+            reporter_id: userId,
+            event_id: eventId,
+            reason,
+            description,
+            status: 'open',
+            created_at: new Date().toISOString()
+        };
+
+        reports.push(report);
+        localStorage.setItem(storageKey, JSON.stringify(reports));
+
+        return {
+            success: true,
+            message: 'Reporte recibido',
+            data: { report }
         };
     }
 }

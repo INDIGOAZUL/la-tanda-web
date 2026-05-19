@@ -15,3 +15,107 @@ inp.parentNode!==btn&&btn.appendChild(inp);
 },1500);
 });
 })();
+
+// v4.25.13: content report/flag flow for social feed posts
+(function(){
+var feed=window.SocialFeed||("undefined"!==typeof SocialFeed?SocialFeed:null);
+if(!feed||feed.__reportFlowPatched)return;
+window.SocialFeed=feed;
+feed.__reportFlowPatched=!0;
+var reasons=["spam","harassment","misinformation","inappropriate","other"];
+var labels={spam:"Spam o publicidad",harassment:"Acoso o abuso",misinformation:"Informacion falsa",inappropriate:"Contenido inapropiado",other:"Otro"};
+function reportButton(id){
+ return '<button class="engagement-btn report-btn" data-action="sf-report-post" data-event-id="'+feed.escapeHtml(String(id))+'" title="Reportar"><i class="far fa-flag"></i></button>';
+}
+function injectReportButton(html,id){
+ if(!html||html.indexOf(" report-btn")!==-1)return html;
+ return html.replace(/(<button class="engagement-btn bookmark-btn[\s\S]*?<\/button>)/, "$1"+reportButton(id));
+}
+var originalRenderEventCard=feed.renderEventCard;
+if("function"===typeof originalRenderEventCard){
+ feed.renderEventCard=function(event){
+  var html=originalRenderEventCard.call(this,event);
+  return injectReportButton(html,event&&event.id);
+ };
+}
+var originalRenderPostDetail=feed._renderPostDetail;
+if("function"===typeof originalRenderPostDetail){
+ feed._renderPostDetail=function(post,comments,total){
+  originalRenderPostDetail.call(this,post,comments,total);
+  var bar=document.querySelector("#postDetailOverlay .pd-engagement-bar");
+  if(!bar||bar.querySelector(".report-btn")||!post)return;
+  var bookmark=bar.querySelector(".bookmark-btn");
+  if(bookmark)bookmark.insertAdjacentHTML("afterend",reportButton(post.id));
+ };
+}
+feed.openReportModal=function(eventId){
+ if(!eventId)return;
+ var existing=document.getElementById("sfReportModal");
+ existing&&existing.remove();
+ var modal=document.createElement("div");
+ modal.id="sfReportModal";
+ modal.className="sf-report-modal";
+ modal.innerHTML='<div class="sf-report-backdrop" data-action="sf-report-close"></div><form class="sf-report-dialog" id="sfReportForm"><div class="sf-report-header"><div><h3>Reportar publicacion</h3><p>Ayudanos a mantener segura la comunidad.</p></div><button type="button" class="sf-report-close" data-action="sf-report-close" aria-label="Cerrar"><i class="fas fa-times"></i></button></div><input type="hidden" name="event_id" value="'+this.escapeHtml(String(eventId))+'"><label class="sf-report-label" for="sfReportReason">Motivo</label><select id="sfReportReason" name="reason" required>'+reasons.map(function(reason){return'<option value="'+reason+'">'+labels[reason]+"</option>"}).join("")+'</select><label class="sf-report-label" for="sfReportDescription">Descripcion opcional</label><textarea id="sfReportDescription" name="description" maxlength="500" rows="4" placeholder="Agrega contexto para el equipo de moderacion"></textarea><div class="sf-report-meta"><span id="sfReportCount">0</span>/500</div><div class="sf-report-actions"><button type="button" class="sf-report-cancel" data-action="sf-report-close">Cancelar</button><button type="submit" class="sf-report-submit">Enviar reporte</button></div></form>';
+ document.body.appendChild(modal);
+ document.body.style.overflow="hidden";
+ var textarea=modal.querySelector("#sfReportDescription");
+ var count=modal.querySelector("#sfReportCount");
+ textarea&&textarea.addEventListener("input",function(){count&&(count.textContent=String(textarea.value.length))});
+ modal.querySelector("#sfReportForm").addEventListener("submit",this.submitReport.bind(this));
+ setTimeout(function(){modal.classList.add("active")},0);
+};
+feed.closeReportModal=function(){
+ var modal=document.getElementById("sfReportModal");
+ if(!modal)return;
+ modal.classList.remove("active");
+ document.body.style.overflow="";
+ setTimeout(function(){modal.remove()},180);
+};
+feed.submitReport=async function(event){
+ event.preventDefault();
+ var form=event.currentTarget;
+ var token=localStorage.getItem("auth_token")||localStorage.getItem("authToken");
+ if(!token){window.LaTandaPopup&&window.LaTandaPopup.showError("Inicia sesion para reportar");return}
+ var eventId=form.event_id.value;
+ var reason=form.reason.value;
+ var description=(form.description.value||"").trim();
+ if(reasons.indexOf(reason)===-1){window.LaTandaPopup&&window.LaTandaPopup.showWarning("Selecciona un motivo valido");return}
+ if(description.length>500){window.LaTandaPopup&&window.LaTandaPopup.showWarning("La descripcion no puede exceder 500 caracteres");return}
+ var submit=form.querySelector(".sf-report-submit");
+ submit&&(submit.disabled=!0,submit.textContent="Enviando...");
+ try{
+  var response=await fetch("/api/feed/social/"+encodeURIComponent(eventId)+"/report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({reason:reason,description:description})});
+  var data=await response.json().catch(function(){return{}});
+  if(response.status===409){window.LaTandaPopup&&window.LaTandaPopup.showWarning(data.message||"Ya reportaste esta publicacion");return}
+  if(!response.ok||!data.success){
+   if(window.apiProxy&&"function"===typeof window.apiProxy.makeRequest){
+    data=await window.apiProxy.makeRequest("/api/feed/social/"+encodeURIComponent(eventId)+"/report",{method:"POST",body:{reason:reason,description:description},headers:{Authorization:"Bearer "+token}});
+   }
+  }
+  if(!data.success)throw new Error(data.message||"No se pudo enviar el reporte");
+  this.closeReportModal();
+  window.LaTandaPopup&&window.LaTandaPopup.showSuccess("Reporte enviado. Gracias por ayudarnos.");
+ }catch(err){
+  window.LaTandaPopup&&window.LaTandaPopup.showError(err.message||"Error al enviar reporte");
+ }finally{
+  submit&&(submit.disabled=!1,submit.textContent="Enviar reporte");
+ }
+};
+document.addEventListener("click",function(event){
+ var close=event.target.closest('[data-action="sf-report-close"]');
+ if(close){event.preventDefault();window.SocialFeed.closeReportModal();return}
+ var report=event.target.closest('[data-action="sf-report-post"],.report-btn');
+ if(!report)return;
+ var eventId=report.dataset.eventId||report.dataset.id;
+ if(!eventId)return;
+ event.preventDefault();
+ event.stopPropagation();
+ event.stopImmediatePropagation&&event.stopImmediatePropagation();
+ var popup=report.closest(".sf-more-popup");
+ popup&&popup.remove();
+ window.SocialFeed.openReportModal(eventId);
+},true);
+document.addEventListener("keydown",function(event){
+ if("Escape"===event.key&&document.getElementById("sfReportModal"))window.SocialFeed.closeReportModal();
+});
+})();
