@@ -13,6 +13,99 @@ Este repositorio es el **mirror público** del frontend de La Tanda, el primer e
 
 ---
 
+## 🛠️ Development Setup
+
+
+
+To run the La Tanda frontend locally, you don't need complex build tools as this is a vanilla HTML/JS/CSS frontend utilizing web components and module scripts.
+
+
+
+1. **Clone the repository:**
+
+   ```bash
+
+   git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+
+   cd la-tanda-web
+
+   ```
+
+
+
+2. **Serve locally:**
+
+   Since it uses ES modules (`type="module"`), you must serve the files over HTTP rather than opening them directly via `file://`.
+
+   ```bash
+
+   # Using npx (recommended)
+
+   npx serve .
+
+
+
+   # Or using Python
+
+   python3 -m http.server 3000
+
+   ```
+
+
+
+3. **View the app:**
+
+   Open your browser and navigate to `http://localhost:3000`
+
+
+
+---
+
+
+
+## 📂 Project Structure
+
+
+
+- **`/` (Root):** Contains all the primary `.html` pages (`index.html`, `dashboard.html`, `marketplace.html`, etc.)
+
+- **`/css/`:** Core stylesheets and component styling.
+
+- **`/js/`:** Main JavaScript logic, modular components, and frontend logic.
+
+- **`/assets/`:** Images, icons, and static web assets.
+
+- **`/docs/`:** Additional technical documentation and the whitepaper source.
+
+- **`api-proxy.js` & `api-endpoints-config.js`:** The root configurations for mapping the frontend to the backend APIs.
+
+
+
+*(Note: There is a `marketplace-social.js` both in the root and in the `/js/` folder depending on the component's entry point, but the main API configuration is typically managed via `api-proxy.js` / `api-endpoints-config.js` and `api-adapter.js`.)*
+
+
+
+---
+
+
+
+## 📚 Developer Resources
+
+
+
+- 👨‍💻 **[Developer Portal](https://latanda.online/dev-dashboard.html):** Manage API keys, view limits, and read deep-dive integration guides.
+
+- 📡 **[Swagger UI API Docs](https://latanda.online/api-docs/index.html):** Interactive REST API playground.
+
+- 🔗 **[La Tanda Chain Explorer](https://latanda.online/chain/):** View blocks, transactions, and validator status on `latanda-testnet-1`.
+
+
+
+---
+
+
+
+
 ## 🌐 Qué es La Tanda
 
 La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
