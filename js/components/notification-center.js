@@ -1417,3 +1417,51 @@ document.addEventListener("headerLoaded", function() {
 setTimeout(function() {
     if (window.notificationCenter) window.notificationCenter.updateBadge();
 }, 2000);
+
+// v4.25.15: activity-gated mobile push permission prompt
+(function(){
+if(!window.NotificationCenter||window.NotificationCenter.prototype.__activityPushPatched)return;
+var proto=window.NotificationCenter.prototype;
+proto.__activityPushPatched=true;
+proto.initPushSubscription=function(){
+    if(!("Notification" in window)||!("PushManager" in window))return;
+    if(Notification.permission==="denied")return this.rememberPushPromptDismissal();
+    if(this.preferences&&this.preferences.push_enabled===false)return;
+    if(Notification.permission==="granted"){this.subscribeToPush();return}
+    var promptCount=parseInt(localStorage.getItem("push_prompt_count")||"0",10);
+    if(promptCount>=3)return;
+    var dismissed=parseInt(localStorage.getItem("push_banner_dismissed")||"0",10);
+    if(dismissed&&Date.now()-dismissed<604800000)return;
+    this.startActivityGatedPushPrompt();
+};
+proto.rememberPushPromptDismissal=function(){
+    var count=parseInt(localStorage.getItem("push_prompt_count")||"0",10);
+    localStorage.setItem("push_prompt_count",String(count+1));
+    localStorage.setItem("push_banner_dismissed",String(Date.now()));
+};
+proto.startActivityGatedPushPrompt=function(){
+    if(this._pushActivityTrackerStarted)return;
+    this._pushActivityTrackerStarted=true;
+    var self=this,activeSeconds=parseInt(sessionStorage.getItem("push_active_seconds")||"0",10),lastActivity=0,interacted=false;
+    function markActivity(){interacted=true;lastActivity=Date.now()}
+    function stop(){clearInterval(timer);window.removeEventListener("click",markActivity,true);window.removeEventListener("scroll",markActivity,true);window.removeEventListener("touchstart",markActivity,true)}
+    var timer=setInterval(function(){
+        if(Notification.permission!=="default"||self.preferences&&self.preferences.push_enabled===false){stop();return}
+        if(interacted&&Date.now()-lastActivity<=5000){activeSeconds+=1;sessionStorage.setItem("push_active_seconds",String(activeSeconds))}
+        if(activeSeconds>=30){stop();self.showPushBanner()}
+    },1000);
+    window.addEventListener("click",markActivity,true);
+    window.addEventListener("scroll",markActivity,{passive:true,capture:true});
+    window.addEventListener("touchstart",markActivity,{passive:true,capture:true});
+};
+var originalShowPushBanner=proto.showPushBanner;
+proto.showPushBanner=function(){
+    if(this.preferences&&this.preferences.push_enabled===false)return;
+    if(parseInt(sessionStorage.getItem("push_active_seconds")||"0",10)<30){this.startActivityGatedPushPrompt();return}
+    originalShowPushBanner.call(this);
+    var accept=document.getElementById("pushBannerAccept"),dismiss=document.getElementById("pushBannerDismiss"),self=this;
+    if(accept&&!accept.dataset.activityGateBound){accept.dataset.activityGateBound="1";accept.addEventListener("click",function(){setTimeout(function(){if(Notification.permission==="denied"||Notification.permission==="default")self.rememberPushPromptDismissal()},400)})}
+    if(dismiss&&!dismiss.dataset.activityGateBound){dismiss.dataset.activityGateBound="1";dismiss.addEventListener("click",function(){self.rememberPushPromptDismissal()})}
+};
+setTimeout(function(){if(window.notificationCenter)window.notificationCenter.initPushSubscription()},2500);
+})();
