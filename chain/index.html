@@ -845,6 +845,83 @@
             font-size: 0.78rem;
         }
 
+        .explorer-search {
+            display: flex;
+            gap: 0.75rem;
+            margin: 1.5rem 0 1rem;
+        }
+        .explorer-search input {
+            flex: 1;
+            min-height: 46px;
+            border: 1px solid var(--border-bright);
+            border-radius: 12px;
+            background: rgba(8, 13, 26, 0.72);
+            color: var(--text);
+            font: 500 0.95rem var(--font-body);
+            padding: 0 1rem;
+            outline: none;
+        }
+        .explorer-search input:focus {
+            box-shadow: 0 0 0 3px var(--cyan-glow2);
+        }
+        .explorer-search button,
+        .detail-back {
+            border: 1px solid var(--border-bright);
+            border-radius: 12px;
+            background: var(--cyan-glow);
+            color: var(--cyan);
+            cursor: pointer;
+            font-weight: 700;
+            padding: 0 1rem;
+        }
+        .explorer-detail {
+            display: none;
+            margin: 1rem 0 1.5rem;
+            padding: 1.25rem;
+        }
+        .explorer-detail.active {
+            display: block;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .detail-item {
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface2);
+            overflow-wrap: anywhere;
+        }
+        .detail-label {
+            display: block;
+            color: var(--text-dim);
+            font-size: 0.72rem;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+        }
+        .detail-value {
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.86rem;
+        }
+        .message-list {
+            display: grid;
+            gap: 0.65rem;
+            margin-top: 1rem;
+        }
+        .message-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.72);
+            padding: 0.8rem;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            overflow-wrap: anywhere;
+        }
+
         /* Validator cards */
         .validator-list {
             padding: 1rem 1.25rem;
@@ -1251,6 +1328,10 @@
 
             .blocks-table th:nth-child(3),
             .blocks-table td:nth-child(3) { display: none; }
+
+            .explorer-search { flex-direction: column; }
+            .explorer-search button { min-height: 44px; }
+            .detail-grid { grid-template-columns: 1fr; }
 
             .footer-inner {
                 flex-direction: column;
@@ -1669,6 +1750,11 @@
                 <p class="section-subtitle">
                     Datos en tiempo real de la blockchain. Bloques, validadores e informaci&oacute;n de red.
                 </p>
+                <form class="explorer-search" id="explorerSearchForm">
+                    <input id="explorerSearchInput" type="search" placeholder="Buscar tx hash, direccion ltd1... o bloque" aria-label="Buscar en la cadena">
+                    <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+                </form>
+                <div class="explorer-detail glass" id="explorerDetail"></div>
             </div>
 
             <!-- Recent Blocks -->
@@ -2127,7 +2213,7 @@
             tbody.innerHTML = recentBlocks.map(function(b) {
                 var h = b.header;
                 var txs = parseInt(b.num_txs || 0);
-                return '<tr>' +
+                return '<tr data-block-height="' + escapeHtml(String(h.height)) + '">' +
                     '<td><span class="block-height">#' + escapeHtml(fmt(parseInt(h.height))) + '</span></td>' +
                     '<td><span class="hash">' + escapeHtml(shortHash(b.block_id.hash)) + '</span></td>' +
                     '<td><span class="hash">' + escapeHtml(shortHash(h.proposer_address)) + '</span></td>' +
@@ -2169,6 +2255,118 @@
                     '</div>' +
                 '</div>';
             }).join('');
+            tbody.querySelectorAll('[data-block-height]').forEach(function(row) {
+                row.addEventListener('click', function() {
+                    location.hash = 'block/' + row.getAttribute('data-block-height');
+                });
+            });
+        }
+
+        function setDetail(title, html) {
+            var detail = document.getElementById('explorerDetail');
+            detail.classList.add('active');
+            detail.innerHTML = '<button class="detail-back" id="detailBack" type="button">Volver</button>' +
+                '<h3 style="margin:1rem 0 0.25rem;color:var(--cyan)">' + escapeHtml(title) + '</h3>' + html;
+            document.getElementById('detailBack').addEventListener('click', function() {
+                history.pushState({}, '', '#explorador');
+                detail.classList.remove('active');
+                detail.innerHTML = '';
+            });
+            detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function detailItem(label, value) {
+            return '<div class="detail-item"><span class="detail-label">' + escapeHtml(label) +
+                '</span><span class="detail-value">' + escapeHtml(value == null ? '--' : String(value)) + '</span></div>';
+        }
+
+        async function showTx(hash) {
+            setDetail('Transaccion', '<div class="loading">Cargando transaccion...</div>');
+            try {
+                var data = await fetchJSON(REST + '/cosmos/tx/v1beta1/txs/' + encodeURIComponent(hash));
+                var tx = data.tx_response || {};
+                var body = data.tx && data.tx.body || {};
+                var messages = body.messages || [];
+                var msgHtml = messages.length ? '<div class="message-list">' + messages.map(function(m) {
+                    return '<div class="message-card">' + escapeHtml(JSON.stringify(m, null, 2)) + '</div>';
+                }).join('') + '</div>' : '<p class="section-subtitle">Sin mensajes decodificados.</p>';
+                setDetail('Transaccion', '<div class="detail-grid">' +
+                    detailItem('Hash', tx.txhash || hash) +
+                    detailItem('Bloque', tx.height || '--') +
+                    detailItem('Gas usado / solicitado', (tx.gas_used || '--') + ' / ' + (tx.gas_wanted || '--')) +
+                    detailItem('Timestamp', tx.timestamp ? new Date(tx.timestamp).toLocaleString('es-HN') : '--') +
+                    '</div><h4 style="margin-top:1rem">Mensajes</h4>' + msgHtml);
+            } catch (e) {
+                setDetail('Transaccion no encontrada', '<p class="section-subtitle">No se pudo cargar el hash indicado.</p>');
+            }
+        }
+
+        async function showAddress(address) {
+            setDetail('Direccion', '<div class="loading">Cargando direccion...</div>');
+            try {
+                var results = await Promise.all([
+                    fetchJSON(REST + '/cosmos/bank/v1beta1/balances/' + encodeURIComponent(address)),
+                    fetchJSON(REST + '/cosmos/staking/v1beta1/delegations/' + encodeURIComponent(address)).catch(function() { return { delegation_responses: [] }; })
+                ]);
+                var balances = results[0].balances || [];
+                var ultd = balances.find(function(b) { return b.denom === 'ultd'; });
+                var delegations = results[1].delegation_responses || [];
+                var delegationHtml = delegations.length ? '<div class="message-list">' + delegations.map(function(d) {
+                    var del = d.delegation || {}, bal = d.balance || {};
+                    return '<div class="message-card">' + escapeHtml(del.validator_address || '--') + '<br>' + escapeHtml(ultdToLtd(bal.amount || 0)) + ' LTD</div>';
+                }).join('') + '</div>' : '<p class="section-subtitle">Sin delegaciones activas.</p>';
+                setDetail('Direccion', '<div class="detail-grid">' +
+                    detailItem('Direccion', address) +
+                    detailItem('Balance', ultd ? ultdToLtd(ultd.amount) + ' LTD' : '0 LTD') +
+                    detailItem('Denom base', 'ultd') +
+                    detailItem('Conversion', '1 LTD = 1,000,000 ultd') +
+                    '</div><h4 style="margin-top:1rem">Delegaciones</h4>' + delegationHtml);
+            } catch (e) {
+                setDetail('Direccion no encontrada', '<p class="section-subtitle">No se pudo cargar la direccion indicada.</p>');
+            }
+        }
+
+        async function showBlock(height) {
+            setDetail('Bloque', '<div class="loading">Cargando bloque...</div>');
+            try {
+                var data = await fetchJSON(RPC + '/block?height=' + encodeURIComponent(height));
+                var block = data.result.block, header = block.header, txs = block.data && block.data.txs || [];
+                setDetail('Bloque #' + fmt(parseInt(header.height)), '<div class="detail-grid">' +
+                    detailItem('Altura', header.height) +
+                    detailItem('Hash', data.result.block_id && data.result.block_id.hash || '--') +
+                    detailItem('Proposer', header.proposer_address) +
+                    detailItem('Timestamp', new Date(header.time).toLocaleString('es-HN')) +
+                    detailItem('Transacciones', txs.length) +
+                    detailItem('Chain ID', header.chain_id) +
+                    '</div>');
+            } catch (e) {
+                setDetail('Bloque no encontrado', '<p class="section-subtitle">No se pudo cargar el bloque indicado.</p>');
+            }
+        }
+
+        function routeExplorer(value) {
+            var q = String(value || '').trim();
+            if (!q) return;
+            if (/^#?(tx|address|block)\//i.test(q)) q = q.replace(/^#/, '');
+            if (/^tx\//i.test(q)) return showTx(q.split('/')[1]);
+            if (/^address\//i.test(q)) return showAddress(q.split('/')[1]);
+            if (/^block\//i.test(q)) return showBlock(q.split('/')[1]);
+            if (/^\d+$/.test(q)) { location.hash = 'block/' + q; return showBlock(q); }
+            if (/^ltd1[a-z0-9]+$/i.test(q)) { location.hash = 'address/' + q; return showAddress(q); }
+            location.hash = 'tx/' + q;
+            return showTx(q);
+        }
+
+        function setupExplorerSearch() {
+            var form = document.getElementById('explorerSearchForm');
+            var input = document.getElementById('explorerSearchInput');
+            if (!form || !input) return;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                routeExplorer(input.value);
+            });
+            window.addEventListener('hashchange', function() { routeExplorer(location.hash.slice(1)); });
+            if (location.hash) routeExplorer(location.hash.slice(1));
         }
 
         // ---- Init ----
@@ -2219,6 +2417,7 @@
         }
 
         async function init() {
+            setupExplorerSearch();
             await fetchStatus();
             await Promise.all([
                 fetchNodeInfo(),
