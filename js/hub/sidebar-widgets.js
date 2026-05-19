@@ -251,3 +251,6 @@ if (document.readyState === 'loading') {
 
 // Make globally available
 window.SidebarWidgets = SidebarWidgets;
+
+// v4.25.14: mirror notification unread count into sidebar widgets when present
+(function(){function updateSidebarNotificationBadge(count){document.querySelectorAll('[data-notification-badge],#sidebarNotifBadge,.sidebar-notification-badge').forEach(function(badge){badge.textContent=count>99?"99+":String(count);badge.style.display=count>0?"flex":"none";badge.classList.toggle("urgent",count>=5)})}try{var stored=parseInt(localStorage.getItem("notifications_unread_count")||"0",10);if(stored>0)updateSidebarNotificationBadge(stored)}catch(error){}try{var channel=new BroadcastChannel("notifications");channel.onmessage=function(event){if(event.data&&event.data.type==="unread")updateSidebarNotificationBadge(event.data.count||0)}}catch(error){}window.addEventListener("storage",function(event){if(event.key==="notifications_unread_count")updateSidebarNotificationBadge(parseInt(event.newValue||"0",10))});window.addEventListener("notifications:unread",function(event){updateSidebarNotificationBadge(event.detail&&event.detail.count||0)})})();

@@ -2,21 +2,45 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Notificaciones - La Tanda</title>
-    <meta http-equiv="refresh" content="0;url=/home-dashboard.html?open=notifications">
-    <script>window.location.href = '/home-dashboard.html?open=notifications';</script>
+    <link rel="stylesheet" href="css/design-tokens.css">
+    <link rel="stylesheet" href="css/components/notification-center.css">
+    <script src="js/components-loader.js" defer></script>
+    <script src="js/components/notification-center.js" defer></script>
 </head>
-<body>
-    <p>Redirigiendo a notificaciones...</p>
+<body data-sidebar data-footer>
+    <div id="global-sidebar"></div>
+    <main class="notification-history-page" id="mainContent">
+        <section class="notification-history-shell">
+            <header class="notification-history-header">
+                <div>
+                    <p class="notification-history-kicker">Centro de actividad</p>
+                    <h1>Notificaciones</h1>
+                </div>
+                <label class="notification-history-search">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input id="notificationSearch" type="search" placeholder="Buscar notificaciones">
+                </label>
+            </header>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="mobile-bottom-nav" id="mobileBottomNav" style="display:none">
-        <a href="/home-dashboard.html" class="mobile-nav-item"><i class="fas fa-home"></i><span>Inicio</span></a>
-        <a href="/marketplace-social.html" class="mobile-nav-item"><i class="fas fa-store"></i><span>Mercado</span></a>
-        <a href="/recompensas.html" class="mobile-nav-item"><i class="fas fa-gift"></i><span>Rewards</span></a>
-        <a href="/mi-perfil.html" class="mobile-nav-item"><i class="fas fa-user"></i><span>Perfil</span></a>
-    </nav>
-    <style>.mobile-bottom-nav{display:none}@media(max-width:768px){.mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:1000;background:rgba(10,14,23,0.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(0,255,255,0.08);padding:4px 0;padding-bottom:calc(4px + env(safe-area-inset-bottom))}.mobile-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;text-decoration:none;color:#64748b;font-size:0.6rem;transition:color 0.2s}.mobile-nav-item i{font-size:1.1rem}.mobile-nav-item:hover{color:#00FFFF}}</style>
+            <nav class="notification-history-filters" aria-label="Filtros de notificaciones">
+                <button class="notification-history-filter active" data-filter="all">Todo</button>
+                <button class="notification-history-filter" data-filter="transactions">Pagos</button>
+                <button class="notification-history-filter" data-filter="tandas">Tandas</button>
+                <button class="notification-history-filter" data-filter="social">Social</button>
+                <button class="notification-history-filter" data-filter="system">Sistema</button>
+            </nav>
+
+            <div class="notification-history-list" id="notificationHistoryList" data-limit="20">
+                <div class="notification-history-skeleton"></div>
+                <div class="notification-history-skeleton"></div>
+                <div class="notification-history-skeleton"></div>
+            </div>
+
+            <button class="notification-history-more" id="notificationHistoryMore" hidden>Cargar mas</button>
+        </section>
+    </main>
+    <div id="latanda-footer"></div>
 </body>
 </html>

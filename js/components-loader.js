@@ -202,3 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
         LaTandaComponentLoader.loadMobileDrawer();
     }, 500);
 });
+
+// v4.25.14: keep mobile/sidebar notification badges in sync across pages
+(function(){function updateNotificationBadges(count){document.querySelectorAll('[data-notification-badge],#mobileNotifBadge,#sidebarNotifBadge,#notifBadge,.notification-badge,.lt-badge,#notificationCount').forEach(function(badge){badge.textContent=count>99?"99+":String(count);badge.style.display=count>0?"flex":"none";badge.classList.toggle("urgent",count>=5)})}try{var stored=parseInt(localStorage.getItem("notifications_unread_count")||"0",10);if(stored>0)updateNotificationBadges(stored)}catch(error){}try{var channel=new BroadcastChannel("notifications");channel.onmessage=function(event){if(event.data&&event.data.type==="unread")updateNotificationBadges(event.data.count||0)}}catch(error){}window.addEventListener("storage",function(event){if(event.key==="notifications_unread_count")updateNotificationBadges(parseInt(event.newValue||"0",10))});window.addEventListener("notifications:unread",function(event){updateNotificationBadges(event.detail&&event.detail.count||0)})})();
