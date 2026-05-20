@@ -123,27 +123,72 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## Development Setup
+
+This repository is a static frontend mirror. You do not need a build step for the public HTML pages.
+
+### Prerequisites
+
+- Node.js 18+ if you want to use `npx serve .`
+- A modern browser for manual checks
+
+### Serve locally
+
+From the repository root:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve`, usually `http://localhost:3000`.
+
+If `serve` chooses another port, use that port in the browser. For a quick smoke test, open:
+
+- `index.html`
+- `home-dashboard.html`
+- `marketplace-social.html`
+- `dev-dashboard.html`
+- `docs/`
+- `chain/`
+
+### External developer resources
+
+- Swagger UI: [latanda.online/docs](https://latanda.online/docs)
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+
+---
+
+## Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Public ecosystem pages at the repository root
+├── css/                      # Shared styles, design tokens, components, and page modules
+├── js/                       # Shared browser JavaScript, hub modules, and utilities
+├── assets/                   # Images, logos, favicons, and generated static assets
+├── chain/                    # La Tanda Chain assets such as genesis and node setup scripts
+├── docs/                     # OpenAPI/Swagger UI assets
+├── components/               # Reusable HTML snippets loaded by frontend helpers
+├── .github/                  # Bounty templates, issue templates, workflows, and PR automation
+└── api-*.js                  # API adapters, proxy variants, and endpoint configuration
 ```
 
-**Páginas principales alineadas al framework**:
+Key frontend entry points:
+
 - `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
 - `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
 - `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
 - `governance.html` — Hub de gobernanza on-chain con Keplr wallet
 - `mia.html` — MIA AI (7ma capa del ecosistema)
 - `chain/index.html` — Chain landing con stats live
+- `marketplace-social.html` — Marketplace experience; loads the root-level `marketplace-social.js`
+
+Important implementation notes:
+
+- The main API proxy file is `api-proxy-enhanced.js`; coordinate with maintainers before editing it.
+- There is also a shared `js/marketplace-social.js`, but the marketplace HTML page currently loads `marketplace-social.js` from the repository root.
+- Keep public routes as root HTML files unless an issue explicitly asks for a different layout.
 
 ---
 
