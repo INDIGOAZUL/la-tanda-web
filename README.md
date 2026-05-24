@@ -104,46 +104,150 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ## 🚀 Quick Start
 
-### Para usuarios (no technical)
-1. Ve a [latanda.online](https://latanda.online)
-2. Crea tu cuenta (email o Google Sign-In)
-3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
+### For Users (Non-Technical)
+1. Go to [latanda.online](https://latanda.online)
+2. Create your account (email or Google Sign-In)
+3. Join a tanda, post on the feed, mine LTD, explore the marketplace
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+### For Developers (Integrating with La Tanda API)
+1. API Documentation: [latanda.online/docs](https://latanda.online/docs)
+2. Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+3. Authentication: JWT via `/api/auth/login`
+4. 160+ production endpoints
+5. Swagger UI: [latanda.online/docs](https://latanda.online/docs) (interactive API explorer)
+6. Chain Explorer: [exp.utsa.tech/latanda](https://exp.utsa.tech/latanda/staking)
 
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+### For Validators (Running a Node)
+1. Read the guide: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
+2. One-line install: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
+3. Chain page with seeds: [latanda.online/chain](https://latanda.online/chain/)
+4. Join the Incentivized Testnet Program by sending 10 LTD testnet + create-validator tx
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+### Prerequisites
+- **Node.js** 18+ (for local development server)
+- **Git** (for cloning the repository)
+- A modern web browser (Chrome, Firefox, Safari, or Edge)
+
+### Getting Started
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# 2. Serve locally (no build step required — this is a static site)
+npx serve .
+
+# 3. Open in your browser
+# The server will start at http://localhost:3000 (or the next available port)
+```
+
+> **Note:** This project is a static web application — no compilation, bundling, or build step is needed. Simply serve the files and open in a browser.
+
+### Alternative Local Servers
+
+```bash
+# Using Python
+python3 -m http.server 8000
+
+# Using PHP
+php -S localhost:8000
+
+# Using VS Code Live Server extension
+# Right-click index.html → "Open with Live Server"
+```
+
+### API Integration (for Developers)
+
+The project uses a simulated API proxy (`api-proxy-enhanced.js`) that provides 120+ endpoint stubs. To connect to the live API:
+
+1. Review the endpoint definitions in `api-endpoints-config.js`
+2. Authentication is JWT-based — obtain a token via `/api/auth/login`
+3. See the [API Documentation](https://latanda.online/docs) for full endpoint reference
+4. The [Dev Portal](https://latanda.online/dev-dashboard.html) provides live API status and metrics
+
+### Key Links
+
+| Resource | URL |
+|----------|-----|
+| Live Site | [latanda.online](https://latanda.online) |
+| API Docs (Swagger UI) | [latanda.online/docs](https://latanda.online/docs) |
+| Dev Portal | [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) |
+| Chain Explorer | [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking) |
+| Whitepaper | [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html) |
+| Governance | [latanda.online/governance.html](https://latanda.online/governance.html) |
+| Tokenomics | [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html) |
+| MIA AI | [latanda.online/mia.html](https://latanda.online/mia.html) |
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                        # Ecosystem pages (55+ files)
+│   ├── index.html                # Landing page with 3D hero + tokenomics
+│   ├── whitepaper.html           # Whitepaper v2.0 (10 pools + sustainability)
+│   ├── ltd-token-economics.html  # Interactive tokenomics with live chain data
+│   ├── governance.html           # On-chain governance hub (Keplr wallet)
+│   ├── mia.html                  # MIA AI assistant (7th ecosystem layer)
+│   ├── auth.html                 # Login/signup page
+│   ├── dashboard.html            # User dashboard
+│   ├── groups.html               # Tanda groups management
+│   ├── marketplace.html          # Web3 marketplace
+│   ├── trading.html              # LTD token trading
+│   └── staking.html              # Staking interface
+│
+├── js/                           # Modular JavaScript (framework-aligned)
+│   ├── components-loader.js      # Dynamic component loader
+│   ├── dashboard-api-connector.js# Dashboard API integration
+│   ├── groups-system.js          # Tanda group logic
+│   ├── firebase-config.js        # Firebase configuration
+│   ├── global-search.js          # Unified search
+│   ├── sidebar/                  # Sidebar navigation (index, events, ui)
+│   └── hub/                      # Hub connectors and utilities
+│
+├── css/                          # Stylesheets
+│   ├── design-tokens.css         # Design system variables
+│   ├── components/               # Reusable component styles
+│   └── *.css                     # Page-specific styles
+│
+├── assets/                       # Images, logos, favicons
+├── translations/                 # i18n files (en.json, es.json, pt.json)
+├── packages/sdk/                 # TypeScript SDK package
+├── chain/                        # La Tanda Chain resources (genesis, node setup)
+├── docs/                         # OpenAPI spec + Swagger UI
+├── utils/                        # Shared utilities (roleGuard)
+├── middleware/                   # Server middleware
+│
+├── api-proxy-enhanced.js         # Main API proxy (120+ simulated endpoints)
+├── api-adapter.js                # API adapter layer
+├── api-endpoints-config.js       # Endpoint configuration registry
+├── marketplace-social.js         # Marketplace social features
+├── shared-components.js          # Shared UI component library
+├── smart-suggestions-engine.js   # AI-powered suggestions
+├── real-time-api-integration.js  # Real-time data sync
+├── sw.js                         # Service worker (PWA)
+├── pwa-manager.js                # PWA lifecycle manager
+│
+├── .github/                      # Bounty templates, PR gatekeeper, ban list
+├── workflows/                    # CI/CD configuration
+├── postman-collection.json       # Postman API collection for testing
+└── robots.txt                    # Search engine directives
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+### Key Architecture Notes
+
+- **Static site**: No build step — HTML, CSS, and JS are served directly
+- **API simulation**: `api-proxy-enhanced.js` simulates 120+ endpoints for development and demo purposes
+- **PWA support**: Service worker (`sw.js`) enables offline functionality
+- **Multi-language**: Translation files in `translations/` (English, Spanish, Portuguese)
+- **SDK**: TypeScript SDK in `packages/sdk/` for programmatic integration
+- **Important**: `api-proxy-enhanced.js` is the main API file — do not modify without team coordination
 
 ---
 
