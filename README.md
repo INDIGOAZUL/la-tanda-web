@@ -123,27 +123,37 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## 💻 Development Setup
 
-```
+To run this project locally for development, you just need a local static server. We recommend using `serve`:
+
+1. Clone the repository
+2. Run `npx serve .` in the root directory
+3. Open `http://localhost:3000` in your browser
+
+---
+
+## 📂 Project Structure
+
+```text
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
+├── *.html                    # Ecosystem pages (60+ files)
+├── css/                      # Styles (design-tokens, components, modules)
 ├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
+├── assets/                   # Images, logos, favicons
+├── chain/                    # La Tanda Chain resources (node-setup.sh, genesis.json)
 ├── docs/                     # OpenAPI spec + Swagger UI
 ├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+└── api-*.js                  # API adapters and proxies
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Main pages aligned to the framework**:
+- `index.html` — Landing with cosmic 3D hero + tokenomics donut + persona cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools + 6 sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet integration
+- `mia.html` — MIA AI (7th layer of the ecosystem)
+- `chain/index.html` — Chain landing with live stats
 
 ---
 
