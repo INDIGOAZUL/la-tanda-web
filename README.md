@@ -123,6 +123,55 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## Development Setup
+
+This repository is a static frontend mirror. No build step is required for local development.
+
+1. Clone the repository.
+2. From the repository root, run:
+
+   ```bash
+   npx serve .
+   ```
+
+3. Open the local URL printed by `serve` in your browser.
+4. Start with `index.html`, `dev-dashboard.html`, `docs/`, or the feature page you are changing.
+
+Do not commit `.env` files or credentials. Use `.env.example` only as a reference for expected configuration names.
+
+## Project Structure
+
+The repository is organized around static HTML pages, shared JavaScript modules, API proxy scripts, and public chain/API documentation.
+
+```text
+la-tanda-web/
+├── *.html                    # Main ecosystem pages and feature screens
+├── css/                      # Shared styles and page-level CSS
+├── js/                       # Browser JavaScript modules and feature helpers
+├── assets/                   # Bundled frontend assets
+├── chain/                    # La Tanda Chain resources such as genesis and setup files
+├── components/               # Reusable frontend components
+├── docs/                     # OpenAPI and Swagger UI documentation assets
+├── examples/                 # Example integration files
+├── middleware/               # Frontend middleware helpers
+├── translations/             # Locale JSON files
+├── utils/                    # Utility scripts and helpers
+├── .github/                  # Issue templates, bounty workflow, and repository automation
+└── api-*.js                  # API adapters, proxies, endpoint config, and test helpers
+```
+
+Important entry points:
+
+- `api-proxy.js` is the main API proxy file, with specialized variants such as `api-proxy-enhanced.js`, `api-proxy-working.js`, and `api-proxy-updated.js`.
+- `marketplace-social.js` exists at the repository root and also under `js/`.
+- Public API documentation is available through [Swagger UI](https://latanda.online/docs).
+- The developer portal is [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html).
+- The community chain explorer is [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking).
+
+The Swagger UI, developer portal, and chain explorer links were verified as reachable while updating this README.
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
