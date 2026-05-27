@@ -16,6 +16,35 @@ Este repositorio es el **mirror público** del frontend de La Tanda, el primer e
 ## 🌐 Qué es La Tanda
 
 La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
+## 🛠️ Development Setup
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) 18+ or Python 3.x
+- Git
+
+### Quick Start
+```bash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+cp .env.example .env
+npx serve .  # or: python3 -m http.server 8000
+```
+
+### Project Structure
+```
+├── index.html    # Main entry
+├── css/ js/      # Styles & scripts
+├── components/   # UI components
+└── translations/ # i18n files
+```
+
+### Troubleshooting
+| Issue | Solution |
+|-------|----------|
+| npx serve not found | Install Node.js |
+| CORS errors | Use npx serve |
+| Missing .env | cp .env.example .env |
+
 
 ### Las 7 capas del ecosistema
 
