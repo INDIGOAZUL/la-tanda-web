@@ -2,7 +2,7 @@
 Whitepaper La Tanda v2.0 — tradução canônica para português brasileiro.
 Source: es.md (fonte canônica em espanhol).
 Workflow: ver ../README.md.
-NÃO EDITAR es.md. Tradução mantida apenas em pt-br.md.
+NÃO editar es.md. Tradução mantida apenas em pt-br.md.
 -->
 
 La Tanda
@@ -16,7 +16,7 @@ Fevereiro 2026 \| Ray-Banks LLC
 -   [1. Resumo Executivo](#abstract)
 -   [2. O Problema](#problem)
 -   [3. A Solução](#solution)
--   [4. Tecnologia](#technology)
+-   [4. Arquitetura Técnica](#technology)
 -   [5. Tokenomics](#tokenomics)
 -   [6. Funcionalidades](#features)
 -   [7. Segurança](#security)
@@ -208,7 +208,7 @@ validadores permanentemente:
     store-of-value.
 3.  **Mecanismo de burn (queima, ativo):** 5-20% de cada tipo de fee é
     queimado (ver Seção 8.4). Isso reduz o supply circulante com o
-    tempo, fazendo com que os LTD restantes valham proporcionalmente    mais.
+    tempo, fazendo com que os LTD restantes valham proporcionalmente mais.
     Efeito composto ano após ano, similar ao Ethereum pós-EIP-1559.
 4.  **Treasury subsidy (Ano 8+ se necessário):** Os pools *Fundo de
     Desenvolvimento* (24M), *Bug Bounties* (6M) e *Fundo de Seguro* (4M)
@@ -260,7 +260,7 @@ participar em tandas, pagar pontualmente, indicar usuários, etc.).
 
 ### 6.3.1 Tiers de Mineração
 
-| Tier     | Pontos requeridos |   Reward base/dia   | Streak bonus max |
+| Tier     | Pontos requeridos | Reward base/dia | Streak bonus max |
 |----------|-------------------|-----------------|------------------|
 | Bronze   | 0-49              | 1.0 LTD             | +2.0 LTD         |
 | Prata    | 50-149            | 3.0 LTD             | +4.0 LTD         |
@@ -274,7 +274,7 @@ Os pontos são acumulados automaticamente ao completar conquistas. Há 20
 conquistas em 7 categorias:
 
 -   **Conta:** Email verificado (10 pts)
--   **Participação:** Primeira tanda (20 pts), tanda concluída (25      pts)
+-   **Participação:** Primeira tanda (20 pts), tanda concluída (25 pts)
 -   **Financeiro:** L.1000+ contribuídos (15 pts), L.10,000+ (40 pts),
     pontualidade perfeita (35 pts)
 -   **Social:** Primeiro post (10 pts), 10 seguidores (15 pts), indicações
@@ -376,7 +376,7 @@ oferece maiores benefícios:
 La Tanda começou como uma plataforma para digitalizar tandas e     
 evoluiu para um ecossistema financeiro completo: poupança em grupo,
 mercado P2P, predições com ML, mineração de tokens, assistente IA e
-governança comunitária. La Tanda Chain é a camada de infraestrutura     que 
+governança comunitária. La Tanda Chain é a camada de infraestrutura que
 unifica esses serviços sob uma rede descentralizada e soberana.
 
 **Fase 1:** LTD como ERC20 na Polygon (atual)  
@@ -410,7 +410,7 @@ Interoperabilidade
 
 | Módulo           | Função                                                                                                                |
 |------------------|-----------------------------------------------------------------------------------------------------------------------|
-| **x/ltd**        | Token nativo — transferências, burns, fees.     Supply fixo 200M (0% inflação). Recompensas via treasury pré-mintado       |
+| **x/ltd**        | Token nativo — transferências, burns, fees. Supply fixo 200M (0% inflação). Recompensas via treasury pré-mintado       |
 | **x/tanda**      | Ciclos de tandas, contribuições, pagamentos, resultados de sorteio. Multi-sig para distribuição                         |
 | **x/mercado**    | Escrow de mercado, reputação de vendedores, arbitragem de disputas                                                |
 | **x/loteria**    | RNG verificável (commit-reveal), scheduling de sorteios, mercado de       predições                                       |
@@ -462,7 +462,7 @@ produção de blocos.
 | Fase 2 — Trusted Set (em progresso) | 15-25       | Testnet  incentivada: validadores + infra partners       |
 | Fase 3 — Crescimento               | 50          | Aplicações   abertas, por stake                        |
 | Fase 4 — Maturidade                 | 100         | Sem permissão, por stake                                |
-| Fase 5 — Aberta                   | 150+        | Sem limite, mercado  livre                               |
+| Fase 5 — Aberta                   | 150+        | Sem limite, mercado livre                               |
 
 ### Condições de Slashing
 
@@ -527,7 +527,7 @@ chains tecnicamente separadas. A estratégia oficial é a seguinte:
 ### 8.3.2 Programa Testnet incentivado 
 
 Os validadores, nós e colaboradores ativos durante testnet recebem
-compensação em LTD *real* no genesis da mainnet, financiada a partir      do
+compensação em LTD *real* no genesis da mainnet, financiada a partir do
 pool **Comunidade e Mineração**. Seu trabalho na testnet se converte
 diretamente em participação de mainnet:
 
@@ -538,10 +538,10 @@ diretamente em participação de mainnet:
 | **Full Node**        | 20      | 500          | 10,000        | Nó sincronizado, relay de transações               |
 | **Bug Reporter**     | Aberto  | 100-1,000    | \~10,000      | Relatório verificado via GitHub issue              |
 | **Buffer adicional** | —       | —            | \~35,000      | Reserva para novos participantes até mainnet    |
-| **TOTAL**            |         |              | **\~100,000** | 0.    05% do supply total                             |
+| **TOTAL**            |         |              | **\~100,000** | 0.05% do supply total                             |
 
 Este programa substitui qualquer necessidade de modificar os parâmetros
-da testnet via governança. Os validadores externos que contribuíram     para
+da testnet via governança. Os validadores externos que contribuíram para
 o bootstrap da rede recebem sua compensação na mainnet como
 reconhecimento explícito do valor aportado, em vez de depender de
 recompensas inflacionárias de testnet que não teriam valor econômico
@@ -578,7 +578,7 @@ alocados para staking/validadores). Sem inflação — supply fixo de
     Finalidade de 5 segundos
 -   **Staking:** Delegação do projeto durante testnet. Mainnet       
     exigirá stake significativo como desincentivo econômico
--   **Bridge:** Verificação light client IBC (sem intermediários).      Rate
+-   **Bridge:** Verificação light client IBC (sem intermediários). Rate
     limit: max 1M LTD/24h. Pausa de emergência via governança
 -   **Privacidade:** Montantes on-chain visíveis apenas para participantes 
     e validadores designados. ZK-SNARKs planejados para Fase 4
@@ -709,7 +709,7 @@ para papéis especializados. Contato: <contact@latanda.online>
 -   **Corporate:** [raybanks.org](https://raybanks.org)
 -   **Email:** contact@latanda.online
 -   **GitHub:**
-    [INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/    la-tanda-web)
+    [INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
 -   **Twitter:** @TandaWeb3
 -   **Investors:** [latanda.online/invest](/invest.html) \|
     <invest@latanda.online>
