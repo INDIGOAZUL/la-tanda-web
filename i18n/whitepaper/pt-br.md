@@ -1,8 +1,8 @@
 <!--
-Whitepaper La Tanda v2.0 — tradução para Português (Brasil).
-Convertido de /var/www/html/main/whitepaper.html em 04/05/2026 via   pandoc + cleanup.
-NÃO EDITE este arquivo, a menos que seja para sincronizá-lo com o HTML canônico publicado.
-As traduções encontram-se em arquivos irmãos: pt-br.md, en.md, etc.
+Whitepaper La Tanda v2.0 — tradução canônica para português brasileiro.
+Source: es.md (fonte canônica em espanhol).
+Workflow: ver ../README.md.
+NÃO EDITAR es.md. Tradução mantida apenas em pt-br.md.
 -->
 
 La Tanda
@@ -186,7 +186,7 @@ Round estão sujeitos a cliff e vesting, protegendo o preço pós-TGE.
 
 O pool **Staking e Validadores** (40M LTD, 20% do supply) está
 projetado para sustentar o APY de validadores durante aproximadamente 8 
-anos de distribuição programada. Dado que LTD possui** supply fixo de 
+anos de distribuição programada. Dado que LTD possui **supply fixo de 
 200M sem inflação**, quando esse pool se esgotar, a rede deverá sustentar a
 segurança por meio de mecanismos alternativos. Diferentemente de Bitcoin (que 
 depende exclusivamente de fees de transação post block-subsidy), La 
@@ -319,8 +319,8 @@ mainnet.
 La Tanda foi desenhada como uma escada de participação onde cada nível
 oferece maiores benefícios:
 
-1.  **Usuário:** Registra-se, minera LTD diariamente (Bronce, 1 LTD/dia)
-2.  **Minerador ativo:** Sobe de nível por atividades e sequências (prata/   Oro, 
+1.  **Usuário:** Registra-se, minera LTD diariamente (Bronze, 1 LTD/dia)
+2.  **Minerador ativo:** Sobe de nível por atividades e sequências (Prata/Ouro,
     3-5 LTD/dia)
 3.  **Membro de Tanda:** Participa em poupança em grupo, ganha conquista   
     de vendedor + acesso financeiro
@@ -374,7 +374,7 @@ oferece maiores benefícios:
 # 8. La Tanda Chain
 
 La Tanda começou como uma plataforma para digitalizar tandas e     
-evoluiu para um ecossistema financeiro completo: pupança em grupo,
+evoluiu para um ecossistema financeiro completo: poupança em grupo,
 mercado P2P, predições com ML, mineração de tokens, assistente IA e
 governança comunitária. La Tanda Chain é a camada de infraestrutura     que 
 unifica esses serviços sob uma rede descentralizada e soberana.
@@ -593,7 +593,7 @@ alocados para staking/validadores). Sem inflação — supply fixo de
 -   Sistema de tandas com WebSocket e loterias comunitárias ao vivo
 -   LTD Token na Polygon Amoy (ERC20)
 -   Preditor de loteria com ML (XGBoost, 42% precisão)
--   Sistema de mineração, gamificação e mecado
+-   Sistema de mineração, gamificação e mercado
 -   MIA — assistente financeiro de IA
 
 ## Q1-Q2 2026 — Plataforma
