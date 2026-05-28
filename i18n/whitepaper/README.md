@@ -5,7 +5,7 @@ This directory holds the La Tanda whitepaper in multiple languages for the inter
 ## Files
 
 - **`es.md`** — Source in Spanish (canonical). Mirrors the published whitepaper at <https://latanda.online/whitepaper.html>. **Do not edit** unless syncing from the canonical HTML.
-- **`pt-br.md`** — Brazilian Portuguese translation (in progress, by @zkgm).
+- **`pt-br.md`** — Brazilian Portuguese translation completed by @Josmar-J (PR #297, merged 2026-05-28; 800 LTD bounty paid on-chain, tx 12C15843ACC3554A48BF187E649E580FEE4CF0EE49A5CA9DD2CE102D99C1D740).
 - **Future:** `en.md`, `fr.md`, etc. — open to contributors.
 
 ## Workflow for translators
