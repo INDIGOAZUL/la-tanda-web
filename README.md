@@ -13,6 +13,30 @@ Este repositorio es el **mirror público** del frontend de La Tanda, el primer e
 
 ---
 
+## Development Setup
+
+Run the static site locally with:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` (usually `http://localhost:3000`). Use this for quick checks before submitting UI or documentation changes.
+
+## Project Structure
+
+- `index.html` — main landing page.
+- `dev-dashboard.html` — developer portal entry point for API and project links.
+- `assets/` — shared images, icons, and static files.
+- `api/` — API-related static resources when present in the public mirror.
+- `.github/` — repository automation, issue templates, and workflow configuration.
+
+## Developer Links
+
+- [Dev Portal](https://latanda.online/dev-dashboard.html)
+- [Swagger UI](https://latanda.online/swagger-ui.html)
+- [Chain Explorer](https://latanda.online/chain/)
+
 ## 🌐 Qué es La Tanda
 
 La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
