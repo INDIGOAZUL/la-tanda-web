@@ -102,6 +102,58 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## 🛠️ Development Setup
+
+This project is a static frontend that can be served locally with any static file server.
+
+### Prerequisites
+- **Node.js** (v18 or later recommended)
+- **npm** (comes with Node.js)
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve the project locally
+npx serve .
+```
+
+The app will be available at `http://localhost:3000` (or the next available port).
+
+### Environment Configuration
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+Required environment variables:
+- `JWT_SECRET` — Generate with `openssl rand -base64 48`
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — PostgreSQL credentials
+
+> **Note**: The `.env` file is only needed for backend API integration. The frontend static pages can be viewed without it.
+
+### Verifying Your Setup
+
+1. Open `http://localhost:3000` in your browser
+2. You should see the La Tanda landing page
+3. Navigate to the Dev Portal at `http://localhost:3000/dev-dashboard.html`
+4. Check the API docs at `http://localhost:3000/docs`
+
+### Troubleshooting
+
+| Issue | Solution |
+|---|---|
+| Port 3000 in use | `npx serve . -l 4000` to use a different port |
+| Missing assets | Ensure you're running from the repo root directory |
+| API calls fail | The frontend requires the backend API — run against production URLs or set up the backend separately |
+
+---
+
 ## 🚀 Quick Start
 
 ### Para usuarios (no technical)
@@ -123,27 +175,59 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## 📂 Project Structure
+
+The repository is organized as a static frontend with JavaScript-driven interactivity:
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
+├── *.html                    # Ecosystem pages (60+ files)
+├── css/                      # Stylesheets (design tokens, components, modules)
 ├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── assets/                   # Images, logos, favicons
+├── chain/                    # La Tanda Chain resources (node-setup.sh, genesis.json)
+├── components/               # Reusable HTML components and partials
+├── docs/                     # OpenAPI specification + Swagger UI
+├── i18n/                     # Internationalization files (en.json, es.json, pt.json)
+├── translations/             # Translation system design and locale resources
+├── utils/                    # Utility scripts and helpers
+├── html/                     # Additional HTML partials
+├── middleware/                # API middleware and proxy adapters
+├── examples/                 # Example code and integration samples
+├── workflows/                # GitHub Actions workflows
+├── images/                   # Image resources
+├── img/                      # Additional image assets
+├── .github/                  # Bounty templates, PR gatekeeper, ban list
+├── .env.example              # Environment variable template
+├── api-*.js                  # API adapters and proxies (api-adapter.js, api-proxy.js, etc.)
+└── manifest.json             # PWA manifest
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+### Key Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `css/` | Design system tokens, component styles, module-level CSS |
+| `js/` | Application logic: components loader, utility functions, API handlers |
+| `chain/` | Blockchain node setup scripts and genesis configuration |
+| `docs/` | API documentation via OpenAPI/Swagger |
+| `i18n/` | Translation files for multi-language support (English, Spanish, Portuguese) |
+| `components/` | Shared HTML components reused across pages |
+| `.github/` | Bounty templates, verification checks, contributor ban list |
+
+### Main Pages
+
+| Page | Purpose |
+|------|---------|
+| `index.html` | Landing page with cosmic 3D hero, tokenomics chart, user personas |
+| `whitepaper.html` | Whitepaper v2.0 with 10-pool tokenomics and sustainability framework |
+| `ltd-token-economics.html` | Interactive tokenomics dashboard with live chain data |
+| `governance.html` | On-chain governance hub with Keplr wallet integration |
+| `mia.html` | MIA AI assistant (the 7th ecosystem layer) |
+| `chain/index.html` | Chain landing page with live validator and network stats |
+| `dev-dashboard.html` | Developer portal with API documentation links |
+| `auth.html` | Authentication page (email and Google Sign-In) |
+| `web3-dashboard.html` | Web3 wallet and blockchain interaction dashboard |
 
 ---
 
