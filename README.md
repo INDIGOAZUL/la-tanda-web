@@ -218,3 +218,45 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+---
+
+## Development Setup
+
+This repository is a static frontend mirror. You can serve it locally without a build step:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` and start from `index.html`, `dev-dashboard.html`, or any standalone HTML page. Use the public developer resources below to verify integrations while working:
+
+- Swagger UI: [latanda.online/docs](https://latanda.online/docs)
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [latanda.online/chain](https://latanda.online/chain/)
+
+## Project Structure
+
+```text
+la-tanda-web/
+├── *.html                    # Ecosystem pages and standalone screens
+├── css/                      # Global styles, design tokens, and page modules
+├── js/                       # Shared JavaScript helpers, hub modules, and loaders
+├── assets/                   # Static images, logos, icons, and generated assets
+├── chain/                    # La Tanda Chain resources, guides, and explorer files
+├── docs/                     # OpenAPI specification and Swagger UI assets
+├── .github/                  # Bounty templates, PR gatekeeper, and repo automation
+└── api-*.js                  # API adapters, endpoint config, and proxy implementations
+```
+
+Key frontend entry points:
+
+- `index.html` - Landing page and primary public entry.
+- `dev-dashboard.html` - Developer portal surface with API and chain links.
+- `marketplace-social.html` - Marketplace page; it loads `marketplace-social.js` from the repository root.
+- `chain/index.html` - Chain landing and explorer entry point.
+
+Important implementation notes:
+
+- `marketplace-social.html` loads `marketplace-social.js` from the repository root.
+- `api-proxy-enhanced.js` is the main enhanced API proxy file and should only be changed with team coordination.
