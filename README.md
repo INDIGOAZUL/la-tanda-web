@@ -189,6 +189,92 @@ La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
 
 ---
 
+## 🛠️ Development Setup
+
+This is a static HTML/JS frontend — no build tooling required.
+
+### Serve locally
+
+```bash
+# From the repository root
+npx serve .
+```
+
+The site will be available at `http://localhost:3000` (or the next available port).
+
+### Environment
+
+Copy `.env.example` to `.env` and fill in any required values:
+
+```bash
+cp .env.example .env
+```
+
+**Never commit `.env` or credentials to the repository.**
+
+### External links (verify these work before submitting PRs)
+
+| Service | URL |
+|---|---|
+| Dev Portal | [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html) |
+| Swagger UI / API Docs | [latanda.online/docs](https://latanda.online/docs) |
+| Chain Explorer | [latanda.online/chain](https://latanda.online/chain/) |
+| Whitepaper | [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html) |
+
+---
+
+## 📁 Project Structure
+
+```
+la-tanda-web/
+├── *.html                  # Frontend pages (home, dashboard, admin, etc.)
+├── js/                     # JavaScript modules
+│   ├── core/               # Core framework modules
+│   ├── components/         # Reusable UI components
+│   ├── onboarding/         # Onboarding flow
+│   ├── payment-providers/  # Payment provider integrations
+│   ├── utils/              # Shared utilities
+│   ├── helpers/            # Helper functions
+│   ├── hub/                # Hub-specific logic
+│   ├── sidebar/            # Sidebar navigation
+│   ├── marketplace-social.js   # Marketplace social features
+│   └── ...
+├── css/                    # Stylesheets
+│   ├── components/         # Component-specific styles
+│   ├── design-tokens.css   # CSS custom properties / design tokens
+│   ├── variables.css       # SCSS-like variables
+│   └── ...
+├── html/                   # HTML partials
+├── assets/                 # Static assets
+├── chain/                  # Blockchain node setup guides & config
+│   ├── genesis.json        # Chain genesis file
+│   └── *.md                # Node setup guides
+├── middleware/             # Server middleware (roleGuard.js)
+├── examples/               # Example code / postman collections
+├── docs/                   # (reserved for future documentation)
+├── .env.example            # Environment variable template
+├── CONTRIBUTING.md         # Contribution guidelines
+├── SECURITY.md             # Security policy
+├── LICENSE                 # MIT License
+└── README.md               # This file
+```
+
+### Key files
+
+| File | Purpose |
+|---|---|
+| `index.html` | Main entry point |
+| `api-handlers-complete.js` | Primary API handler |
+| `api-proxy.js` | API proxy layer |
+| `js/core/` | Core application framework |
+| `js/firebase-config.js` | Firebase configuration |
+| `css/design-tokens.css` | Design system tokens |
+| `.github/ban-list.txt` | Banned accounts (do not submit PRs from listed accounts) |
+
+See the [Dev Portal](https://latanda.online/dev-dashboard.html) for comprehensive architecture documentation.
+
+---
+
 ## 📜 Licencia
 
 MIT License — see [LICENSE](./LICENSE)
