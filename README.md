@@ -123,19 +123,47 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## Development Setup
+
+This repository is a static frontend mirror, so you can run it locally with any simple static file server. From the repository root:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve`, usually `http://localhost:3000`. The static server is enough for browsing pages, testing frontend changes, and checking links. API calls still target the configured La Tanda API endpoints unless you override them in local configuration.
+
+Useful public developer links:
+
+- Swagger UI / API docs: [latanda.online/docs](https://latanda.online/docs)
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+
+## Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Main static pages for the ecosystem
+├── api-*.js                  # API adapters, proxy scripts, and endpoint configuration
+├── api-proxy-enhanced.js     # Main API proxy implementation
+├── assets/                   # Shared images, logos, JSON, and generated bundles
+├── chain/                    # Chain resources such as setup scripts and genesis data
+├── components/               # Reusable HTML/component fragments
+├── css/                      # Global styles, design tokens, and component CSS
+├── docs/                     # OpenAPI / Swagger UI assets when present
+├── examples/                 # Example integrations and usage references
+├── html/                     # Alternate exported HTML bundle and mirrored assets
+├── i18n/                     # Localized whitepaper and language resources
+├── js/                       # Frontend JavaScript modules, helpers, and hub code
+├── middleware/               # Request/response middleware helpers
+├── packages/sdk/             # Developer SDK package and SDK README
+├── translations/             # Translation support files
+├── utils/                    # Utility scripts
+├── workflows/                # Workflow support files
+└── .github/                  # Issue templates, bounty metadata, and automation
 ```
+
+`marketplace-social.js` currently exists both at the repository root and under `js/`; check the import path used by the page you are changing before editing either copy.
 
 **Páginas principales alineadas al framework**:
 - `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
