@@ -123,6 +123,44 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## Development Setup
+
+This repository is a static frontend mirror. You can serve it locally without a build step:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` in your browser. Most pages are plain HTML files at the repository root, with shared assets loaded from `css/`, `js/`, `assets/`, `images/`, and related folders.
+
+Before opening a pull request, keep the change focused on one bounty, verify the relevant page locally, and do not commit `.env` files or credentials.
+
+## Project Structure
+
+Key repository areas for new contributors:
+
+```text
+la-tanda-web/
+├── *.html                 # Main public pages at the repository root
+├── css/                   # Shared styles and page/module CSS
+├── js/                    # Shared frontend JavaScript modules and utilities
+├── assets/, images/, img/ # Logos, images, favicons, and visual assets
+├── chain/                 # La Tanda Chain resources such as node setup and genesis data
+├── docs/                  # Public API documentation and Swagger UI assets
+├── .github/               # Issue templates, bounty metadata, and automation
+└── api-*.js               # API adapters, proxies, and endpoint configuration helpers
+```
+
+Verification notes for issue #50:
+
+- `marketplace-social.js` exists at the HTML root and also under `js/`.
+- The main API proxy file is `api-proxy.js`; additional API helpers include `api-proxy-enhanced.js`, `api-handlers-complete.js`, and `api-endpoints-config.js`.
+- Swagger UI/API docs: https://latanda.online/docs
+- Dev Portal: https://latanda.online/dev-dashboard.html
+- Chain Explorer: https://exp.utsa.tech/latanda/staking
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
