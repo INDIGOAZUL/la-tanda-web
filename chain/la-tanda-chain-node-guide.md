@@ -121,20 +121,54 @@ sudo ufw allow 26657/tcp comment "La Tanda Chain RPC"
 - **Port 26656** — P2P communication between nodes (REQUIRED)
 - **Port 26657** — RPC for querying the node (optional, for monitoring)
 
-### Step 9: Start the Node
+### Step 9: Create a systemd Service
+
+For production or testnet validator infrastructure, run `latandad` under systemd so it starts automatically after reboots and exposes logs through `journalctl`.
 
 ```bash
-# Option A: Run directly (foreground)
-latandad start
+sudo tee /etc/systemd/system/latandad@.service > /dev/null <<'EOF'
+[Unit]
+Description=La Tanda Chain Node
+After=network-online.target
+Wants=network-online.target
 
-# Option B: Run with PM2 (recommended — auto-restart, logs)
-npm install -g pm2    # if not already installed
-pm2 start latandad --name latanda-chain -- start
-pm2 save
-pm2 startup           # auto-start on reboot
+[Service]
+User=%i
+WorkingDirectory=/home/%i
+ExecStart=/usr/local/bin/latandad start --home /home/%i/.latanda
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+Environment=DAEMON_HOME=/home/%i/.latanda
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable the service for your current Linux user
+sudo systemctl daemon-reload
+sudo systemctl enable latandad@$USER
 ```
 
-### Step 10: Verify Sync
+Run the service as a regular Linux user, not `root`, so the node home remains under `/home/<user>/.latanda` and file permissions stay predictable.
+
+### Step 10: Start and Manage the Node
+
+```bash
+# Start now
+sudo systemctl start latandad@$USER
+
+# Check service status
+systemctl status latandad@$USER --no-pager
+
+# Follow live logs
+journalctl -u latandad@$USER -f
+
+# Restart after config changes
+sudo systemctl restart latandad@$USER
+```
+
+### Step 11: Verify Sync
 
 ```bash
 # Check if your node is syncing
@@ -163,6 +197,30 @@ Before running your node, ensure:
 ### No VPN Required
 
 Node communication is encrypted by default (Ed25519 authenticated P2P). You do NOT need a VPN. The P2P protocol is designed for the public internet.
+
+---
+
+## Monitoring and Health Checks
+
+Use these checks during bootstrap and ongoing operation:
+
+```bash
+# Service health
+systemctl is-active latandad@$USER
+systemctl status latandad@$USER --no-pager
+
+# Recent errors
+journalctl -u latandad@$USER -p warning -n 50 --no-pager
+
+# RPC status
+curl -s localhost:26657/status | jq '.result.sync_info'
+
+# Peer count
+curl -s localhost:26657/net_info | jq '.result.n_peers'
+
+# Disk usage for chain data
+du -sh ~/.latanda/data
+```
 
 ---
 
@@ -226,6 +284,58 @@ latandad tx bank send <from-key> <to-address> 1000000ultd \
 
 ---
 
+## Optional: State Sync for Faster Bootstrap
+
+State sync lets a new node download a recent trusted application state instead of replaying every historical block. Use it only with trusted RPC endpoints.
+
+```bash
+RPC="https://latanda.online/chain/rpc"
+LATEST_HEIGHT=$(curl -s "$RPC/block" | jq -r '.result.block.header.height')
+TRUST_HEIGHT=$((LATEST_HEIGHT - 2000))
+TRUST_HASH=$(curl -s "$RPC/block?height=$TRUST_HEIGHT" | jq -r '.result.block_id.hash')
+
+# Stop the node before editing state-sync settings. The reset command below
+# deletes local block data but keeps config/keys; back up validator keys first.
+sudo systemctl stop latandad@$USER
+latandad comet unsafe-reset-all --home ~/.latanda
+
+export RPC TRUST_HEIGHT TRUST_HASH
+python3 - <<'PY'
+from pathlib import Path
+import os
+path = Path.home() / '.latanda/config/config.toml'
+text = path.read_text()
+replacements = {
+    'enable = false': 'enable = true',
+    'rpc_servers = ""': f'rpc_servers = "{os.environ["RPC"]},{os.environ["RPC"]}"',
+    'trust_height = 0': f'trust_height = {os.environ["TRUST_HEIGHT"]}',
+    'trust_hash = ""': f'trust_hash = "{os.environ["TRUST_HASH"]}"',
+    'trust_period = "168h0m0s"': 'trust_period = "336h0m0s"',
+}
+start = text.index('[statesync]')
+end = text.find('\n[', start + len('[statesync]'))
+if end == -1:
+    end = len(text)
+section = text[start:end]
+for old, new in replacements.items():
+    if old not in section:
+        raise SystemExit(f'missing statesync setting: {old}')
+    section = section.replace(old, new, 1)
+path.write_text(text[:start] + section + text[end:])
+PY
+
+sudo systemctl start latandad@$USER
+```
+
+Confirm the node is catching up with:
+
+```bash
+latandad status | jq '.sync_info'
+journalctl -u latandad@$USER -n 100 --no-pager
+```
+
+---
+
 ## Becoming a Validator (Phase 2+)
 
 Once your full node is synced and running stable, you can apply to become a validator.
@@ -234,6 +344,27 @@ Once your full node is synced and running stable, you can apply to become a vali
 - Node running with 99.5%+ uptime for at least 1 week
 - 50,000 LTD staked (testnet tokens — request from the La Tanda team)
 - KYC verification completed on La Tanda platform
+
+### Create a Validator Wallet
+
+Use a named key for validator operations and record the address before requesting faucet funds or completing verification. The `test` keyring backend is convenient for testnet automation, but it stores keys unencrypted; use the OS keyring or a hardware signer for production funds.
+
+```bash
+latandad keys add validator --keyring-backend test
+latandad keys show validator -a --keyring-backend test
+```
+
+For production key management, replace `--keyring-backend test` with your secure keyring backend in every command below.
+
+### Faucet / Verification Process
+
+1. Copy the wallet address from `latandad keys show validator -a`.
+2. Request testnet LTD through the La Tanda validator onboarding or faucet flow.
+3. Verify the balance before creating the validator:
+
+```bash
+latandad query bank balances $(latandad keys show validator -a --keyring-backend test)
+```
 
 ### Create Validator
 ```bash
@@ -247,7 +378,7 @@ latandad tx staking create-validator \
   --commission-max-change-rate="0.01" \
   --min-self-delegation="1" \
   --keyring-backend=test \
-  --from=my-wallet \
+  --from=validator \
   --gas=auto \
   --gas-adjustment=1.5 \
   --fees=5000ultd
@@ -264,14 +395,33 @@ latandad query slashing signing-info $(latandad comet show-validator)
 
 ---
 
+## Maintenance Commands
+
+```bash
+# Upgrade the binary after building a new release
+sudo install -m 0755 latandad /usr/local/bin/latandad
+sudo systemctl restart latandad@$USER
+
+# Back up validator-critical config files
+tar -czf latanda-validator-config-backup.tgz ~/.latanda/config/node_key.json ~/.latanda/config/priv_validator_key.json ~/.latanda/config/config.toml ~/.latanda/config/app.toml
+
+# Prune old journal logs if the host is low on disk
+sudo journalctl --vacuum-time=14d
+```
+
+The backup archive contains validator signing secrets. Store it encrypted or offline with restricted permissions, and never delete `priv_validator_key.json` unless you are intentionally retiring the validator identity.
+
+---
+
 ## Troubleshooting
 
 ### Node won't start
 ```bash
 # Check logs
-pm2 logs latanda-chain --lines 50
+journalctl -u latandad@$USER -n 100 --no-pager
 
-# Common fix: reset data (keeps config/keys)
+# Common fix for a disposable full node: reset local block data (keeps config/keys)
+# Back up validator keys first if this node has ever signed as a validator.
 latandad comet unsafe-reset-all
 ```
 
@@ -293,7 +443,7 @@ curl -s localhost:26657/net_info | jq '.result.n_peers'
 
 # If 0 peers, re-add the seed
 sed -i 's|seeds = ".*"|seeds = "483a8110c3cd93c8dd3801d935151e98656f5b67@168.231.67.201:26656"|' ~/.latanda/config/config.toml
-pm2 restart latanda-chain
+sudo systemctl restart latandad@$USER
 ```
 
 ### Genesis hash mismatch
