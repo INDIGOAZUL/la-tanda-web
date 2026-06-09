@@ -104,46 +104,200 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ## 🚀 Quick Start
 
-### Para usuarios (no technical)
-1. Ve a [latanda.online](https://latanda.online)
-2. Crea tu cuenta (email o Google Sign-In)
-3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
+### For Users (non-technical)
+1. Visit [latanda.online](https://latanda.online)
+2. Create your account (email or Google Sign-In)
+3. Join a tanda, post on the feed, mine LTD, explore the marketplace
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+### For Developers (integrate with La Tanda API)
+1. API Documentation: https://latanda.online/docs
+2. Dev Portal: https://latanda.online/dev-dashboard.html
+3. Authentication: JWT via `/api/auth/login`
+4. 160+ production endpoints
 
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+### For Validators (run a node)
+1. Read the guide: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
+2. One-line install: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
+3. Chain page with seeds: https://latanda.online/chain/
+4. Join the Incentivized Testnet Program by sending 10 LTD testnet + create-validator tx
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+This project is a static site (HTML + vanilla JS + CSS) with no build step required.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+ (only needed for `npx serve`)
+- Git
+
+### Running Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+
+# Serve locally (no build step needed)
+npx serve .
+
+# The site will be available at http://localhost:3000
+```
+
+Alternatively, any static file server works:
+
+```bash
+# Python
+python3 -m http.server 3000
+
+# PHP
+php -S localhost:3000
+
+# VS Code Live Server extension
+# Right-click index.html -> "Open with Live Server"
+```
+
+### Project Architecture
+
+This is a **static site** — HTML pages are served directly with no compilation or bundling step. JavaScript is loaded via `<script>` tags, and CSS via `<link>` tags.
+
+- **No build tools** (Webpack, Vite, etc.) are required
+- **No npm install** is needed for the frontend itself
+- The `packages/sdk/` directory contains a TypeScript SDK that requires its own build process (see `packages/sdk/README.md`)
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Main landing page |
+| `api-proxy.js` | Main API adapter and proxy |
+| `marketplace-social.js` | Marketplace social features (at HTML root) |
+| `firebase-config.js` | Firebase configuration |
+| `sw.js` | Service Worker for PWA |
+| `manifest.json` | PWA manifest |
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                        # Ecosystem pages (60+ files)
+│   ├── index.html                # Landing page
+│   ├── whitepaper.html           # Whitepaper v2.0
+│   ├── ltd-token-economics.html # Interactive tokenomics
+│   ├── governance.html           # On-chain governance hub
+│   ├── dev-dashboard.html        # Developer portal
+│   ├── documentation.html       # Documentation page
+│   ├── marketplace-social.html   # Social marketplace
+│   ├── web3-dashboard.html       # Web3 dashboard
+│   ├── staking.html              # Staking interface
+│   ├── bridge.html               # Token bridge
+│   └── ...                       # Other ecosystem pages
+│
+├── css/                          # Stylesheets
+│   ├── main.css                  # Core styles
+│   ├── variables.css              # CSS design tokens
+│   ├── design-tokens.css         # Design system tokens
+│   ├── components.css             # Shared component styles
+│   ├── header.css / footer.css   # Layout components
+│   ├── dashboard-layout.css       # Dashboard layout
+│   ├── dashboard-polish.css      # Dashboard refinements
+│   ├── components/                # Component-specific styles
+│   │   ├── notification-center.css
+│   │   └── wallet-dropdown.css
+│   └── hub/                       # Social hub styles
+│       ├── social-feed.css
+│       ├── comments-modal.css
+│       └── ...
+│
+├── js/                           # JavaScript modules
+│   ├── core/                     # Core utilities
+│   │   ├── api-client.js         # API client
+│   │   ├── cache.js              # Caching layer
+│   │   └── event-bus.js          # Event system
+│   ├── components/               # UI components
+│   │   ├── loading-states.js
+│   │   ├── network-switcher.js
+│   │   ├── notification-center.js
+│   │   ├── transaction-modal.js
+│   │   └── wallet-dropdown.js
+│   ├── header/                   # Header module
+│   │   ├── index.js / ui.js / events.js / sync.js / dropdown.js
+│   ├── sidebar/                  # Sidebar navigation
+│   │   ├── index.js / ui.js / navigation.js / events.js
+│   ├── hub/                      # Social hub module
+│   │   ├── social-feed.js
+│   │   ├── comments-modal.js
+│   │   ├── mia-assistant.js
+│   │   └── ...
+│   ├── helpers/                  # Utility helpers
+│   │   ├── fetch-retry.js
+│   │   ├── locale-helpers.js
+│   │   └── ios-pwa-prompt.js
+│   ├── onboarding/               # Onboarding system
+│   ├── payment-providers/        # Payment integrations
+│   │   └── tigo-money.js
+│   ├── utils/                    # General utilities
+│   │   └── rate-limiter.js
+│   ├── marketplace-social.js    # Marketplace logic (also at root)
+│   ├── global-search.js          # Global search functionality
+│   ├── groups-system.js          # Tandas/groups system
+│   └── ...
+│
+├── assets/                       # Build artifacts & static assets
+│   ├── css/                      # Compiled CSS bundles
+│   ├── js/                       # Compiled JS bundles
+│   ├── images/                   # Favicons, icons
+│   └── json/                     # Manifest data
+│
+├── chain/                        # La Tanda Chain resources
+│   ├── index.html                # Chain landing page
+│   ├── genesis.json              # Chain genesis file
+│   ├── node-setup.sh             # Automated node setup script
+│   ├── la-tanda-chain-node-guide.md     # Node operator guide
+│   ├── la-tanda-node-beginner-guide.md  # Beginner-friendly guide
+│   └── logos/                    # Validator logos
+│
+├── components/                   # HTML component partials
+│   ├── header.html
+│   ├── footer.html
+│   └── sidebar.html
+│
+├── packages/sdk/                 # TypeScript SDK
+│   ├── src/                      # SDK source modules
+│   │   ├── modules/              # Feature modules (auth, wallet, tandas, etc.)
+│   │   ├── types/                # TypeScript type definitions
+│   │   └── utils/                # HTTP client, validation, JWT
+│   └── examples/                 # Usage examples
+│
+├── translations/                 # i18n translation files
+│   ├── en.json                   # English
+│   ├── es.json                   # Spanish
+│   └── pt.json                   # Portuguese
+│
+├── i18n/                         # Translated content (whitepaper, etc.)
+│   └── whitepaper/
+│
+├── .github/                      # GitHub configuration
+│   ├── ISSUE_TEMPLATE/           # Bounty issue templates
+│   ├── workflows/                # CI/CD, PR gatekeeper
+│   └── PULL_REQUEST_TEMPLATE.md
+│
+├── middleware/                    # Server-side middleware
+├── examples/                      # Integration examples
+└── api-proxy.js                   # Main API proxy file
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Key Pages**:
+- `index.html` — Landing page with 3D cosmic hero + tokenomics donut + persona cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools + 6 sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet
+- `mia.html` — MIA AI (7th ecosystem layer)
+- `chain/index.html` — Chain landing page with live stats
+- `dev-dashboard.html` — Developer portal with API documentation
 
 ---
 
