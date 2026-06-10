@@ -109,41 +109,63 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 2. Crea tu cuenta (email o Google Sign-In)
 3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+### For developers (integrating with the La Tanda API)
+1. API documentation and Swagger UI: https://latanda.online/docs
+2. Developer portal: https://latanda.online/dev-dashboard.html
+3. Authentication: JWT via `/api/auth/login`
+4. Chain explorer: https://exp.utsa.tech/latanda/staking
+5. 160+ production endpoints
 
-### Para validadores (correr un nodo)
-1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
-2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
-3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+### For validators (running a node)
+1. Read the guide: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
+2. One-line setup: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
+3. Chain page with seeds: https://latanda.online/chain/
+4. Join the Incentivized Testnet Program by sending 10 testnet LTD and creating a validator transaction
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+This repository is a static frontend mirror. You can serve it locally without a build step:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` and test the pages you changed. For developer-facing flows, verify the public references below:
+
+- Swagger UI / API docs: https://latanda.online/docs
+- Developer portal: https://latanda.online/dev-dashboard.html
+- Chain explorer: https://exp.utsa.tech/latanda/staking
+
+No secrets are required for local static preview. Never commit `.env` files or credentials.
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Static pages for the ecosystem and dashboards
+├── css/                      # Global styles, design tokens, components, and responsive fixes
+├── js/                       # Frontend modules, helpers, dashboard logic, and UI integrations
+├── assets/                   # Built assets, images, icons, generated CSS, and generated JS
+├── components/               # Shared HTML/JS components such as header, footer, and widgets
+├── chain/                    # La Tanda Chain resources, guides, genesis data, and setup scripts
+├── docs/                     # Public documentation and API/Swagger-related assets when present
+├── packages/sdk/             # TypeScript SDK source, module tests, examples, and package config
+├── translations/             # Localization JSON files used by the frontend
+├── .github/                  # Issue templates, PR template, CI, and bounty gatekeeper workflows
+└── api-*.js                  # API adapters, proxies, and endpoint configuration helpers
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+**Key pages aligned with the framework**:
+- `index.html` — Landing page with 3D cosmic hero, tokenomics donut, and persona cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools and sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics page with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet support
+- `mia.html` — MIA AI, the seventh layer of the ecosystem
+- `chain/index.html` — Chain landing page with live stats
 
 ---
 
