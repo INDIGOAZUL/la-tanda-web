@@ -447,7 +447,9 @@
         var escaped = esc(text);
         escaped = escaped.replace(/@([\w\-\.]+)/g, '<a href="/perfil.html?handle=$1" class="pf-mention" data-handle="$1" style="color:var(--ds-cyan,#00FFFF);text-decoration:none;">@$1</a>');
         escaped = escaped.replace(/#([\wáéíóúñÁÉÍÓÚÑ]+)/g, '<a href="/explorar.html?tag=$1" class="pf-hashtag" data-tag="$1" style="color:var(--ds-cyan,#00FFFF);text-decoration:none;">#$1</a>');
-        escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--ds-cyan,#00FFFF);text-decoration:underline;">$1</a>');
+        escaped = escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url) {
+            return '<a href="' + url + '" target="_blank" rel="noopener" style="color:var(--ds-cyan,#00FFFF);text-decoration:underline;">' + url + '</a>';
+        });
         return escaped;
     }
     var getInitials = function(name) { if (!name) return '?'; return name.split(' ').map(function(w){return w[0]}).join('').substring(0,2).toUpperCase(); };
