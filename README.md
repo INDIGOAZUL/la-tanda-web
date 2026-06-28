@@ -1,61 +1,56 @@
 # La Tanda Web3 Platform
 
-A decentralized group savings platform built with web technologies. This repository contains the frontend application for the La Tanda Web3 ecosystem.
+[La Tanda](https://latanda.online) is a decentralized savings and lending platform built on Web3 technology. This repository contains the frontend web application.
+
+## Table of Contents
+- [Development Setup](#development-setup)
+- [Project Structure](#project-structure)
+- [Links](#links)
+- [Contributing](#contributing)
 
 ## Development Setup
 
-To serve the project locally with hot-reload:
+To serve the application locally, you need Node.js (v14+). Use the following commands:
 
 ```bash
+# Clone the repository
+git clone https://github.com/la-tanda/la-tanda-web.git
+cd la-tanda-web
+
+# Serve the static files using a simple HTTP server
 npx serve .
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. The app is a static site; no build step is required.
+The app will be available at `http://localhost:3000` (or the port specified by serve).
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v16 or later recommended)
-- npm or yarn
+> Note: The application is a static frontend. For full functionality (API calls, real-time data), you need to run the backend services separately or use the production API endpoints.
 
 ## Project Structure
 
-```
-.
-├── js/                    # Main JavaScript source
-│   ├── core/              # Core utilities (API client, event bus, cache)
-│   ├── header/            # Header UI module
-│   ├── sidebar/           # Sidebar navigation module
-│   ├── hub/               # Hub dashboard module
-│   ├── components/        # Reusable UI components
-│   ├── helpers/           # Helper utilities (fetch, locale, error handling)
-│   ├── onboarding/        # Onboarding system
-│   ├── payment-providers/ # Payment provider integrations
-│   └── lib/               # External libraries (e.g., ethers)
-├── index.html             # Entry point
-├── favicon.ico
-└── ...
-```
+- `index.html` - Main entry point
+- `js/` - JavaScript modules organized by feature:
+  - `core/` - Core utilities (API client, event bus, cache)
+  - `components/` - UI components (wallet dropdown, notification center, etc.)
+  - `header/` - Header module
+  - `sidebar/` - Sidebar navigation
+  - `hub/` - Intelligent Hub module
+  - `helpers/` - Helper utilities (fetch retry, iOS PWA prompt)
+  - `onboarding/` - Onboarding system
+  - `lib/` - Third-party libraries (ethers.js)
+- `docs/` - API documentation (auto-generated)
+- `assets/` - Static assets (images, icons)
+- `styles/` - CSS stylesheets
+- `api-proxy-updated.js` - Main API proxy file (consolidated endpoint handling)
 
-For a detailed breakdown, see [CONTRIBUTING.md](CONTRIBUTING.md).
+> For a detailed description of the codebase, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Key Links
+## Links
 
-- **Dev Portal**: [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
-- **Swagger API Docs**: [https://latanda.online/docs](https://latanda.online/docs)
-- **Chain Explorer**: [https://latanda.online/explorer](https://latanda.online/explorer)
-
-## Verification
-
-> **Where does `marketplace-social.js` live — in `js/` or at the HTML root?**  
-> **Answer:** It lives in `js/` (`js/marketplace-social.js`).
-
-> **What is the name of the main API file?**  
-> **Answer:** `api-proxy-updated.js` (the consolidated API proxy serving all endpoints).
+- **Live Platform**: [https://latanda.online](https://latanda.online)
+- **Developer Portal**: [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+- **API Documentation (Swagger UI)**: [https://latanda.online/docs](https://latanda.online/docs)
+- **Chain Explorer**: [https://latanda.online/explorer](https://latanda.online/explorer) (if available)
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, bounty program details, and code of conduct.
