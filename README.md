@@ -1,61 +1,144 @@
-# La Tanda Web
+# La Tanda Web3 Platform
 
-**Decentralized community savings and lending platform (Web3)**
+La Tanda is a decentralized savings and lending platform built on Web3 principles. It enables community-based rotating savings groups (tandas) with blockchain transparency and mobile-first design.
 
-## Development Setup
+## 📚 Resources
 
-To run the project locally:
+- [Developer Portal](https://latanda.online/dev-dashboard.html) — Dashboard and API key management
+- [Swagger API Docs](https://latanda.online/docs) — Interactive API reference
+- [Chain Explorer](https://latanda.online/explorer) — Blockchain transaction viewer
+- [Postman Collection](postman-collection.json) — Importable API request examples
+
+## 🚀 Development Setup
+
+### Prerequisites
+- Node.js v16+ (recommended)
+- npm or yarn
+- A modern browser (Chrome, Firefox, Edge)
+
+### Local Server
+
+Serve the project locally with a single command:
 
 ```bash
-# Clone the repository
-git clone https://github.com/la-tanda/la-tanda-web.git
-cd la-tanda-web
-
-# Serve the static files with a local HTTP server
 npx serve .
 ```
 
-The app will be available at `http://localhost:3000` (or the port shown by `serve`).
+This starts a static HTTP server (default port 3000) that serves the HTML, JavaScript, and other assets directly. No build step is required.
 
-> **Note:** This project is a static web app. No build step is required. The `npx serve .` command starts a lightweight server that serves the HTML, CSS, and JavaScript files directly.
+### Configuration
 
-## Project Structure
+The application reads runtime configuration from `js/firebase-config.js` (Firebase credentials) and uses `js/core/api-client.js` as the main API client. By default, it connects to the production backend at `https://latanda.online`. For development, you can override the base URL by setting `window.API_BASE_URL` before loading the app.
 
-| Directory / File | Description |
-|------------------|-------------|
-| `js/` | Core JavaScript modules organized by feature (components, header, sidebar, hub, helpers, core, payment-providers, onboarding) |
-| `index.html` | Main dashboard entry point |
-| `my-wallet.html` | Wallet page |
-| `invest.html` | Investment page |
-| `terms-of-service.html` | Terms of service |
-| `privacy-policy.html` | Privacy policy |
-| `commission-system.html` | Commission system documentation |
-| `groups-advanced-system.min.js` | Minified group system logic (legacy) |
-| `api-proxy-updated.js` | Consolidated API proxy (production) |
-| `api-proxy-working.js` | Enhanced API proxy with 120+ simulated endpoints |
-| `real-time-api-integration.js` | Real-time dashboard API connector |
-| `postman-collection.json` | Postman API collection for testing |
-| `robots.txt` | Search engine crawling rules |
-| `50x.html` | Error page for 50x HTTP status |
+### Running with HTTPS (for PWA features)
 
-The `js/` directory contains sub-folders:
-- `components/` – Reusable UI components (transaction-modal, notification-center, etc.)
-- `core/` – API client, event bus, cache utilities
-- `header/` – Header module (UI, events, dropdown, sync)
-- `sidebar/` – Sidebar module (navigation, UI, events)
-- `hub/` – Hub intelligence (API connector, widget modules, social feed)
-- `helpers/` – Utilities (locale helpers, fetch-retry, error i18n interceptor)
-- `onboarding/` – Onboarding system
-- `payment-providers/` – Payment gateway integrations (e.g., Tigo Money)
-- `lib/` – External libraries (e.g., ethers.js)
+Some Progressive Web App features require HTTPS. Use a tool like `ngrok` or `localtunnel` to expose your local server:
 
-## Resources
+```bash
+npx localtunnel --port 3000
+```
 
-- **Dev Portal:** [https://latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
-- **Swagger API Docs:** [https://latanda.online/docs](https://latanda.online/docs)
-- **Chain Explorer:** [https://latanda.online/explorer](https://latanda.online/explorer)
-- **Postman Collection:** [`postman-collection.json`](./postman-collection.json)
+## 📁 Project Structure
 
-## Contributing
+```
+.
+├── index.html              # Main entry point
+├── invest.html             # Investment page
+├── my-wallet.html          # User wallet page
+├── terms-of-service.html   # Legal pages
+├── privacy-policy.html
+├── 50x.html                # Error pages
+├── robots.txt
+├── postman-collection.json # API test collection
+├── js/
+│   ├── core/               # Core modules
+│   │   ├── api-client.js   # Main API client (LaTandaAPI)
+│   │   ├── event-bus.js    # Global event bus
+│   │   └── cache.js        # Client-side cache
+│   ├── components/         # Reusable UI components
+│   │   ├── transaction-modal.js
+│   │   ├── notification-center.js
+│   │   ├── network-switcher.js
+│   │   ├── wallet-dropdown.js
+│   │   └── loading-states.js
+│   ├── sidebar/            # Sidebar module
+│   │   ├── index.js        # Main entry (LaTandaSidebar)
+│   │   ├── ui.js
+│   │   ├── events.js
+│   │   └── navigation.js
+│   ├── hub/                # Hub Intelligence module
+│   │   ├── hub-api-connector.js
+│   │   ├── mia-assistant.js
+│   │   ├── social-feed.js
+│   │   ├── comments-modal.js
+│   │   └── ...
+│   ├── header/             # Header module
+│   │   ├── index.js
+│   │   ├── ui.js
+│   │   ├── events.js
+│   │   ├── dropdown.js
+│   │   └── sync.js
+│   ├── helpers/            # Utility helpers
+│   │   ├── fetch-retry.js
+│   │   ├── ios-pwa-prompt.js
+│   │   ├── locale-helpers.js
+│   │   └── error-i18n-interceptor.js
+│   ├── onboarding/         # User onboarding system
+│   │   └── onboarding-system.js
+│   ├── payment-providers/  # Payment integrations
+│   │   └── tigo-money.js
+│   ├── lib/                # External libraries
+│   │   └── ethers-5.7.umd.min.js
+│   ├── firebase-config.js  # Firebase credentials
+│   ├── marketplace-social.js  # Social marketplace module
+│   ├── dashboard-api-connector.js # Dashboard data connector
+│   ├── dashboard-sections-loader.js
+│   ├── dashboard-polish.js
+│   ├── groups-system.js
+│   ├── global-search.js
+│   ├── accessibility-enhancements.js
+│   └── ...
+├── css/                    # Stylesheets (if present)
+├── .github/                # GitHub Actions workflows
+│   └── workflows/
+└── api-proxy-*.js          # API proxy for simulation/testing
+```
 
-Please see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for detailed contribution guidelines.
+### Key Files
+
+- `js/core/api-client.js` — The primary API client (`LaTandaAPI`) with request deduplication, retry, and timeout. All production API calls go through this module.
+- `js/firebase-config.js` — Firebase project credentials for authentication and real-time features.
+- `js/dashboard-api-connector.js` — Connects dashboard components to live API endpoints with caching.
+- `js/hub/hub-api-connector.js` — Parallel data fetcher for the Hub Intelligence dashboard.
+- `js/marketplace-social.js` — Social marketplace logic (located in `js/` directory).
+
+## 🤝 Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on pull requests, code style, and the bounty process. **Do not duplicate documentation from CONTRIBUTING.md here.**
+
+## 🔒 Security
+
+- Never commit sensitive API keys or secrets.
+- Authentication tokens are stored in `localStorage` (key `auth_token`).
+- All API requests include bearer token from local storage.
+- For production, use environment variables or server-side proxy.
+
+## 🧪 Testing
+
+Automated checks run via GitHub Actions on PRs. You can run locally:
+
+```bash
+# Check HTML validity
+# Check JavaScript syntax
+# Validate JSON files
+```
+
+See `.github/workflows/README.md` for workflow details.
+
+## 📄 License
+
+Proprietary — see LICENSE file (if present).
+
+---
+
+*Last updated: 2025-04-11*
