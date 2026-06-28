@@ -123,6 +123,53 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## Developer onboarding (English)
+
+> Contributor-facing docs for this mirror repo. User/validator sections above remain in Spanish.
+
+### Development Setup
+
+1. Clone this repository and `cd` into the project root.
+2. Serve the static frontend locally (no build step required):
+
+```bash
+npx serve .
+```
+
+3. Open `http://localhost:3000` (or the port `serve` prints).
+4. For API integration details use the live [Dev Portal](https://latanda.online/dev-dashboard.html) — do not duplicate portal content here.
+
+### Project Structure
+
+```
+la-tanda-web/
+├── *.html                 # Ecosystem pages (landing, marketplace, governance, …)
+├── css/                   # Stylesheets and design tokens
+├── js/                    # Shared JS (components-loader, hub modules, utilities)
+├── assets/                # Images, logos, favicons
+├── chain/                 # Chain resources (genesis, node-setup.sh)
+├── docs/                  # OpenAPI spec + Swagger UI
+├── .github/               # Bounty templates, PR gatekeeper
+├── api-proxy-enhanced.js  # Main API proxy adapter (production)
+├── marketplace-social.js  # Marketplace page logic (HTML root; also mirrored under js/)
+└── packages/sdk/          # TypeScript SDK for external integrators
+```
+
+Key files verified in this repo:
+- Marketplace UI script loaded by `marketplace-social.html`: `marketplace-social.js` at the **HTML root**
+- Primary API adapter: **`api-proxy-enhanced.js`** at the repository root
+
+### Developer links
+
+| Resource | URL |
+|---|---|
+| Dev Portal | https://latanda.online/dev-dashboard.html |
+| Swagger UI / API docs | https://latanda.online/docs |
+| Chain explorer (community) | https://exp.utsa.tech/latanda/staking |
+| Chain landing | https://latanda.online/chain/ |
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
