@@ -123,6 +123,47 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
+## Development Setup
+
+English onboarding for developers working on this static frontend mirror:
+
+```bash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+npx serve .
+```
+
+Then open the local URL printed by `serve` (typically `http://localhost:3000`).
+
+Useful entry points while developing:
+
+- [Swagger UI / OpenAPI docs](https://latanda.online/docs)
+- [Dev Portal](https://latanda.online/dev-dashboard.html)
+- [Chain Explorer / chain landing](https://latanda.online/chain/)
+
+JWT auth for API calls uses `/api/auth/login` against the production API base documented in the Dev Portal.
+
+---
+
+## Project Structure
+
+Key directories in this repository:
+
+| Path | Purpose |
+|---|---|
+| `*.html` | Static ecosystem pages (landing, marketplace, governance, chain, docs shell) |
+| `css/` | Shared styles, design tokens, and module CSS |
+| `js/` | Frontend modules (component loader, hub connectors, page helpers) |
+| `assets/` | Built/bundled JS chunks, images, and favicons |
+| `chain/` | Chain resources such as genesis metadata and node setup helpers |
+| `docs/` | OpenAPI spec and Swagger UI assets |
+| `api-proxy.js` | Local-development API proxy/simulator used by static pages |
+| `.github/` | Issue/PR templates, bounty labels, automation |
+
+Main marketplace social page wiring: `marketplace-social.html` loads `marketplace-social.js` from the repository root.
+
+---
+
 ## 📂 Estructura del repositorio
 
 ```
