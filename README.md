@@ -218,3 +218,46 @@ Este repositorio es un mirror público del frontend. El código está liberado p
 <strong>Construyendo el Web3 de Latinoamérica, un tanda a la vez.</strong><br>
 🇭🇳 Honduras → 🌎 LatAm → 🌍 Global
 </p>
+
+
+## Development Setup
+
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+
+### Local Development
+
+1. Clone the repository:
+\\\ash
+git clone https://github.com/INDIGOAZUL/la-tanda-web.git
+cd la-tanda-web
+\\\
+
+2. Serve locally:
+\\\ash
+npx serve .
+\\\
+
+The app will be available at \http://localhost:3000\ (or the next available port).
+
+### Project Structure
+
+The project is a static web application with:
+- \index.html\ — Main entry point
+- \css/\ — Stylesheets
+- \js/\ — JavaScript modules
+- \components/\ — Reusable UI components
+- \ssets/\ — Static assets (images, icons)
+- \pi-adapter.js\ — API integration layer
+
+### Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| \
+px serve .\ | Start local development server |
+| \
+px serve . -l 3000\ | Start on specific port |
+
+> 💡 The project already has a [Dev Portal](https://latanda.online/dev-dashboard.html) with live documentation. This setup is for local development only.
