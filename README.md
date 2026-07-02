@@ -147,6 +147,40 @@ la-tanda-web/
 
 ---
 
+
+## Development Setup
+
+This repository is a static frontend mirror. You can review and test the public pages locally with any static file server. A simple option is:
+
+```bash
+npx serve .
+```
+
+Then open the local URL printed by `serve` and navigate through the root HTML pages. No build step is required for basic HTML/CSS/JavaScript review.
+
+Useful developer links:
+- Dev Portal: https://latanda.online/dev-dashboard.html
+- Swagger UI / API documentation: https://latanda.online/docs
+- Chain Explorer: https://exp.utsa.tech/latanda/staking
+
+## Project Structure
+
+Key areas for new contributors:
+
+```
+la-tanda-web/
+├── *.html                    # Public pages at the repository root
+├── css/                      # Design tokens, components, and page styles
+├── js/                       # Shared browser JavaScript utilities and loaders
+├── assets/                   # Images, logos, icons, and static media
+├── chain/                    # La Tanda Chain static resources
+├── docs/                     # OpenAPI and Swagger-related documentation assets
+├── .github/                  # Issue templates, bounty workflow, and repository automation
+└── api-*.js                  # API adapters, proxy examples, and integration helpers
+```
+
+`marketplace-social.js` lives at the HTML root, and `api-proxy.js` is the main API proxy file for the static frontend integration helpers.
+
 ## 🤝 Cómo contribuir
 
 La Tanda tiene un **sistema de bounties de 3 tiers** en GitHub Issues:
