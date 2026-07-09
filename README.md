@@ -31,6 +31,53 @@ La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de 
 
 ---
 
+## 🛠️ Development Setup
+
+### Prerequisites
+- **Node.js** >= 18 (check with `node --version`)
+- **pnpm** (recommended), npm, or yarn
+
+### Local Development
+
+This is a static frontend — no build step required. Serve it locally with any static file server:
+
+```bash
+# Install a local server globally (one-time)
+npm install -g serve
+
+# Serve the project root
+npx serve .
+
+# Default: http://localhost:3000
+```
+
+Or use Python:
+
+```bash
+python3 -m http.server 8080
+```
+
+> **Note:** Some API proxy files (`api-proxy-enhanced.js`, `api-proxy.js`) are included for local testing with CORS handling. The production API runs on `latanda.online`.
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+See `.env.example` for all available configuration keys.
+
+### Project Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npx serve .` | Serve the frontend locally on port 3000 |
+| `node api-proxy.js` | Start the local API proxy (CORS bridge) |
+
+---
+
 ## 📊 Estado actual (live en testnet)
 
 | Métrica | Valor actual |
@@ -123,18 +170,39 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Ecosystem pages (60+ files — index, governance, wallet, etc.)
+├── css/                      # Stylesheets (design-tokens, components, dashboard, mobile fixes)
+├── js/                       # JavaScript modules (components-loader, utilities, helpers)
+│   ├── components/           # Reusable UI components
+│   ├── core/                 # Core runtime modules
+│   ├── hub/                  # Feature hub modules
+│   ├── helpers/              # Utility helpers
+│   ├── lib/                  # Third-party library wrappers
+│   └── onboarding/           # New user onboarding flow
+├── assets/                   # Images, logos, favicons
+├── chain/                    # La Tanda Chain resources (genesis.json, node-setup.sh, guides)
+├── components/               # Shared HTML partials (header, footer, sidebar)
+├── html/                     # Legacy API proxy variants
+├── i18n/                     # Internationalization config
+├── images/                   # Additional images
+├── img/                      # Image assets
+├── middleware/                # Backend middleware stubs (roleGuard.js)
+├── packages/                 # SDK packages
+│   └── sdk/                  # @latanda/sdk — TypeScript client SDK
+├── translations/             # Locale files (en, es, pt)
+├── utils/                    # Utility scripts
+├── workflows/                # GitHub Actions workflow exports
+├── .github/                  # GitHub config (bounty templates, PR gatekeeper, CI)
+├── api-*.js                  # API adapters and proxy implementations
+│   └── marketplace-social.js # ✅ lives in js/ (verification answer)
+├── .env.example              # Environment variable template
+├── sw.js                     # Service worker (PWA)
+└── manifest.webmanifest      # PWA manifest
+```
 ```
 
 **Páginas principales alineadas al framework**:
