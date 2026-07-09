@@ -700,7 +700,7 @@ class MarketplaceSocialSystem {
     _renderBuyerOrderCard(o, esc) {
         const statusLabels = { pending: 'Pendiente', paid: 'Pagado', shipped: 'Enviado', delivered: 'Entregado', cancelled: 'Cancelado', refunded: 'Reembolsado' };
         const img = (o.product_images && Array.isArray(o.product_images) && o.product_images[0]) ? esc(o.product_images[0]) : '';
-        const imgTag = img ? `<img src="${img}" class="mc-order-img" alt="">` : '<div class="mc-order-img" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📦</div>';
+        const imgTag = img ? `<img src="${img}" class="mc-order-img" alt="" loading="lazy">` : '<div class="mc-order-img" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📦</div>';
         const total = parseFloat(o.total_price) || 0;
         const date = new Date(o.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' });
         const status = o.status || 'pending';
