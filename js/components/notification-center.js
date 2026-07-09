@@ -1151,21 +1151,47 @@ class NotificationCenter {
             return;
         }
 
-        // Smart push permission timing — max 3 prompts with progressive delay
+        // Respect existing notification_preferences (check push_enabled setting)
+        if (this.preferences && this.preferences.push_enabled === false) return;
+
         const promptCount = parseInt(localStorage.getItem("push_prompt_count") || "0", 10);
         if (promptCount >= 3) return;
 
         const dismissed = localStorage.getItem("push_banner_dismissed");
         if (dismissed) {
             const elapsed = Date.now() - parseInt(dismissed, 10);
-            // 1st dismiss → wait 1 day, 2nd → wait 7 days
-            const waitMs = promptCount <= 1 ? 86400000 : 604800000;
+            // Don't ask again for 7 days (604800000 ms)
+            const waitMs = 604800000;
             if (elapsed < waitMs) return;
         }
 
-        // Delay: 30s on first visit, 15s on subsequent
-        const delay = promptCount === 0 ? 30000 : 15000;
-        setTimeout(() => this.showPushBanner(), delay);
+        // Track user activity (clicks, scrolls) for 30+ seconds before showing prompt
+        let activeSeconds = 0;
+        let lastActivityTime = Date.now();
+        let activityTracked = false;
+
+        const onUserActivity = () => {
+            activityTracked = true;
+            lastActivityTime = Date.now();
+        };
+
+        window.addEventListener("click", onUserActivity, { passive: true });
+        window.addEventListener("scroll", onUserActivity, { passive: true });
+
+        const activeInterval = setInterval(() => {
+            // Count as active if user interacted in the last 2 seconds
+            if (activityTracked && (Date.now() - lastActivityTime < 2000)) {
+                activeSeconds++;
+                activityTracked = false; // Reset flag for next tick
+            }
+
+            if (activeSeconds >= 30) {
+                clearInterval(activeInterval);
+                window.removeEventListener("click", onUserActivity);
+                window.removeEventListener("scroll", onUserActivity);
+                this.showPushBanner();
+            }
+        }, 1000);
     }
 
     showPushBanner() {
