@@ -1,5 +1,12 @@
+// Initialize theme immediately to prevent FOUC (Issue #84)
+(function(){
+  const savedTheme = localStorage.getItem("theme_preference") || "dark";
+  document.documentElement.setAttribute("data-theme", savedTheme);
+})();
+
 // Phase 0: Load helpers + iOS PWA prompt (i18n removed — platform uses Spanish)
 (function(){
+
   var scripts = [
     'js/helpers/locale-helpers.js?v=1.0',
     'js/helpers/fetch-retry.js?v=1.0',
@@ -58,6 +65,7 @@ LaTandaComponentLoader.loadMobileDrawer = async function() {
         +     '<div class="mobile-drawer-divider"></div>'
         +     '<a href="/mi-perfil.html" class="mobile-drawer-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>'
         +     '<a href="/help-center.html" class="mobile-drawer-item"><i class="fas fa-question-circle"></i><span>Ayuda</span></a>'
+        +     '<a href="#" class="mobile-drawer-item" id="mobileThemeToggleBtn" onclick="event.preventDefault(); toggleTheme();"><i class="fas fa-moon mobile-theme-icon"></i><span>Modo Claro</span></a>'
         +   '</nav>'
         +   '<div class="mobile-drawer-divider"></div>'
         +   '<div class="mobile-drawer-section-label">Tu Resumen</div>'
@@ -201,4 +209,49 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
         LaTandaComponentLoader.loadMobileDrawer();
     }, 500);
+});
+
+// Theme Management Logic (Issue #84)
+window.toggleTheme = function() {
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    window._safeSetItem("theme_preference", newTheme);
+    window.updateThemeUI(newTheme);
+};
+
+window.updateThemeUI = function(theme) {
+    const isLight = theme === "light";
+    
+    // Update sidebar items
+    const sidebarBtns = document.querySelectorAll("#sidebarThemeToggleBtn");
+    sidebarBtns.forEach(btn => {
+        const textSpan = btn.querySelector(".theme-toggle-text");
+        const icon = btn.querySelector(".theme-toggle-icon");
+        if (textSpan) textSpan.textContent = isLight ? "Modo Oscuro" : "Modo Claro";
+        if (icon) {
+            icon.className = isLight ? "fas fa-moon nav-icon theme-toggle-icon" : "fas fa-sun nav-icon theme-toggle-icon";
+        }
+    });
+    
+    // Update mobile drawer items
+    const mobileBtns = document.querySelectorAll("#mobileThemeToggleBtn");
+    mobileBtns.forEach(btn => {
+        const textSpan = btn.querySelector("span");
+        const icon = btn.querySelector("i");
+        if (textSpan) textSpan.textContent = isLight ? "Modo Oscuro" : "Modo Claro";
+        if (icon) {
+            icon.className = isLight ? "fas fa-moon mobile-theme-icon" : "fas fa-sun mobile-theme-icon";
+        }
+    });
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+    const savedTheme = window._safeGetItem("theme_preference") || "dark";
+    window.updateThemeUI(savedTheme);
+});
+
+document.addEventListener("sidebarLoaded", function() {
+    const savedTheme = window._safeGetItem("theme_preference") || "dark";
+    window.updateThemeUI(savedTheme);
 });
