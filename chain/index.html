@@ -772,6 +772,45 @@
                 linear-gradient(180deg, transparent, rgba(0, 255, 255, 0.015) 50%, transparent);
         }
 
+        /* Search styling (Issue #89) */
+        .explorer-search-container {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 600px;
+        }
+        .explorer-search-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(0,255,255,0.15);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .explorer-search-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+        }
+        .explorer-search-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--cyan), #00b4d8);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .explorer-search-btn:hover {
+            opacity: 0.9;
+        }
+
+
         .explorer-subsection {
             background: var(--surface-solid);
             border: 1px solid var(--border);
@@ -1669,6 +1708,22 @@
                 <p class="section-subtitle">
                     Datos en tiempo real de la blockchain. Bloques, validadores e informaci&oacute;n de red.
                 </p>
+                <!-- Search bar (Issue #89) -->
+                <div class="explorer-search-container">
+                    <input type="text" id="explorerSearchInput" class="explorer-search-input" placeholder="Buscar por Tx Hash, Dirección (ltd1...) o Altura de Bloque" onkeydown="if(event.key==='Enter') executeSearch();">
+                    <button class="explorer-search-btn" onclick="executeSearch();">Buscar</button>
+                </div>
+            </div>
+
+            <!-- Search Results/Detail View (Issue #89) -->
+            <div class="explorer-subsection" id="searchResultSection" style="display: none; position: relative;">
+                <div class="explorer-header">
+                    <h3 id="searchResultTitle"><i class="fas fa-search" style="color:var(--cyan);margin-right:0.5rem"></i>Detalle de Búsqueda</h3>
+                    <button onclick="closeSearchResult();" style="background: none; border: 1px solid rgba(0,255,255,0.3); color: var(--cyan); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Volver</button>
+                </div>
+                <div id="searchResultContent" style="padding: 20px; background: rgba(255,255,255,0.03); border-radius: 10px; margin: 15px; word-break: break-all; border: 1px solid rgba(255,255,255,0.04);">
+                    Cargando...
+                </div>
             </div>
 
             <!-- Recent Blocks -->
@@ -1923,6 +1978,157 @@
             d.textContent = s;
             return d.innerHTML;
         }
+
+        // ---- Search & Hash Routing (Issue #89) ----
+        function showSection(view) {
+            const blocksSub = document.querySelector('.blocks-table').parentElement;
+            const valsSub = document.querySelector('.validator-list').parentElement;
+            const netSub = document.querySelector('.network-grid').parentElement;
+            const searchSub = document.getElementById('searchResultSection');
+            
+            if (view === 'search') {
+                blocksSub.style.display = 'none';
+                valsSub.style.display = 'none';
+                netSub.style.display = 'none';
+                searchSub.style.display = 'block';
+            } else {
+                blocksSub.style.display = 'block';
+                valsSub.style.display = 'block';
+                netSub.style.display = 'block';
+                searchSub.style.display = 'none';
+            }
+        }
+
+        async function executeSearch(query) {
+            if (!query) {
+                const input = document.getElementById('explorerSearchInput');
+                if (input) query = input.value.trim();
+            }
+            if (!query) return;
+
+            if (query.startsWith('ltd1')) {
+                window.location.hash = '#address/' + query;
+            } else if (query.length === 64) {
+                window.location.hash = '#tx/' + query;
+            } else if (/^\d+$/.test(query)) {
+                window.location.hash = '#block/' + query;
+            } else {
+                alert('La búsqueda debe ser un Tx Hash, Dirección (ltd1...) o Altura de Bloque');
+            }
+        }
+        window.executeSearch = executeSearch;
+
+        async function handleHashRoute() {
+            const hash = window.location.hash;
+            if (!hash) {
+                showSection('explorer');
+                return;
+            }
+
+            showSection('search');
+            const contentDiv = document.getElementById('searchResultContent');
+            const titleHeader = document.getElementById('searchResultTitle');
+            contentDiv.innerHTML = '<div class="loading">Cargando datos del chain...</div>';
+
+            try {
+                if (hash.startsWith('#tx/')) {
+                    const txHash = hash.replace('#tx/', '').trim();
+                    titleHeader.innerHTML = `<i class="fas fa-receipt" style="color:var(--cyan);margin-right:0.5rem"></i>Transacción: <span style="font-size:0.85rem">${escapeHtml(txHash)}</span>`;
+                    
+                    const data = await fetchJSON(REST + '/cosmos/tx/v1beta1/txs/' + txHash);
+                    if (data && data.tx_response) {
+                        const tx = data.tx_response;
+                        const bodyTx = data.tx;
+                        const msgs = bodyTx.body.messages.map(m => `
+                            <div style="background:rgba(255,255,255,0.02);padding:10px;border-radius:6px;margin-top:5px;border:1px solid rgba(255,255,255,0.04)">
+                                Type: <strong>${escapeHtml(m['@type'])}</strong><br>
+                                <pre style="font-family:var(--font-mono);font-size:0.75rem;margin-top:5px;white-space:pre-wrap;">${escapeHtml(JSON.stringify(m, null, 2))}</pre>
+                            </div>
+                        `).join('');
+                        contentDiv.innerHTML = `
+                            <div class="net-item"><span class="net-key">Hash</span><span class="net-value">${escapeHtml(tx.txhash)}</span></div>
+                            <div class="net-item"><span class="net-key">Altura</span><span class="net-value">#${escapeHtml(tx.height)}</span></div>
+                            <div class="net-item"><span class="net-key">Gas (Usado / Querido)</span><span class="net-value">${escapeHtml(tx.gas_used)} / ${escapeHtml(tx.gas_wanted)}</span></div>
+                            <div class="net-item"><span class="net-key">Código de Retorno</span><span class="net-value">${escapeHtml(tx.code === 0 ? 'Exitoso (0)' : 'Error (' + tx.code + ')')}</span></div>
+                            <div class="net-item"><span class="net-key">Mensaje de Log</span><span class="net-value" style="font-size:0.8rem;white-space:pre-wrap;">${escapeHtml(tx.raw_log || 'Ninguno')}</span></div>
+                            <div style="margin-top:15px;"><span class="net-key" style="display:block;margin-bottom:5px;">Mensajes</span>${msgs}</div>
+                        `;
+                    } else {
+                        contentDiv.innerHTML = `<div style="color:var(--red);">Transacción no encontrada o formato inválido.</div>`;
+                    }
+                } else if (hash.startsWith('#address/')) {
+                    const addr = hash.replace('#address/', '').trim();
+                    titleHeader.innerHTML = `<i class="fas fa-wallet" style="color:var(--cyan);margin-right:0.5rem"></i>Dirección: <span style="font-size:0.85rem">${escapeHtml(addr)}</span>`;
+                    
+                    const balData = await fetchJSON(REST + '/cosmos/bank/v1beta1/balances/' + addr);
+                    let delegationsHtml = '';
+                    try {
+                        const delData = await fetchJSON(REST + '/cosmos/staking/v1beta1/delegations/' + addr);
+                        if (delData && delData.delegation_responses && delData.delegation_responses.length > 0) {
+                            const rows = delData.delegation_responses.map(d => {
+                                const amt = ultdToLtd(d.balance.amount);
+                                return `<tr>
+                                    <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);"><a href="#address/${escapeHtml(d.delegation.validator_address)}" style="color:var(--cyan);text-decoration:none;">${escapeHtml(shortHash(d.delegation.validator_address))}</a></td>
+                                    <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.03);">${escapeHtml(amt)} LTD</td>
+                                </tr>`;
+                            }).join('');
+                            delegationsHtml = `
+                                <table style="width:100%;margin-top:10px;border-collapse:collapse;">
+                                    <thead><tr><th style="text-align:left;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.08);">Validador</th><th style="text-align:right;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.08);">Monto Delegado</th></tr></thead>
+                                    <tbody>${rows}</tbody>
+                                </table>
+                            `;
+                        } else {
+                            delegationsHtml = '<div style="color:#64748b;font-size:0.85rem;margin-top:5px;">Sin delegaciones activas.</div>';
+                        }
+                    } catch(e) {
+                        delegationsHtml = '<div style="color:#64748b;font-size:0.85rem;margin-top:5px;">Sin delegaciones activas o error al obtener.</div>';
+                    }
+
+                    const balances = balData.balances || [];
+                    const ltdBal = balances.find(b => b.denom === 'ultd');
+                    const balValue = ltdBal ? ultdToLtd(ltdBal.amount) : '0';
+
+                    contentDiv.innerHTML = `
+                        <div class="net-item"><span class="net-key">Dirección</span><span class="net-value">${escapeHtml(addr)}</span></div>
+                        <div class="net-item"><span class="net-key">Balance LTD</span><span class="net-value" style="color:var(--cyan);font-weight:700;">${escapeHtml(balValue)} LTD</span></div>
+                        <div class="net-item" style="border-bottom:none;"><span class="net-key">Denom Completa</span><span class="net-value">${escapeHtml(ltdBal ? fmt(ltdBal.amount) + ' ultd' : '0 ultd')}</span></div>
+                        <div style="margin-top:20px;">
+                            <span class="net-key" style="display:block;margin-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:5px;">Delegaciones de Staking</span>
+                            ${delegationsHtml}
+                        </div>
+                    `;
+                } else if (hash.startsWith('#block/')) {
+                    const height = hash.replace('#block/', '').trim();
+                    titleHeader.innerHTML = `<i class="fas fa-cube" style="color:var(--cyan);margin-right:0.5rem"></i>Bloque: #${escapeHtml(height)}`;
+                    
+                    const data = await fetchJSON(REST + '/cosmos/base/tendermint/v1beta1/blocks/' + height);
+                    if (data && data.block) {
+                        const header = data.block.header;
+                        const txs = data.block.data.txs || [];
+                        contentDiv.innerHTML = `
+                            <div class="net-item"><span class="net-key">Altura</span><span class="net-value">#${escapeHtml(header.height)}</span></div>
+                            <div class="net-item"><span class="net-key">Hash de Bloque</span><span class="net-value" style="font-size:0.85rem;">${escapeHtml(data.block_id.hash)}</span></div>
+                            <div class="net-item"><span class="net-key">Proposer Address</span><span class="net-value">${escapeHtml(header.proposer_address)}</span></div>
+                            <div class="net-item"><span class="net-key">Timestamp</span><span class="net-value">${escapeHtml(new Date(header.time).toLocaleString())}</span></div>
+                            <div class="net-item" style="border-bottom:none;"><span class="net-key">Total Transacciones</span><span class="net-value">${escapeHtml(txs.length)}</span></div>
+                        `;
+                    } else {
+                        contentDiv.innerHTML = `<div style="color:var(--red);">Bloque no encontrado o fuera de rango.</div>`;
+                    }
+                }
+            } catch (err) {
+                contentDiv.innerHTML = `<div style="color:var(--red);">Error al obtener datos: ${escapeHtml(err.message || err)}</div>`;
+            }
+        }
+        window.handleHashRoute = handleHashRoute;
+
+        function closeSearchResult() {
+            window.location.hash = '';
+        }
+        window.closeSearchResult = closeSearchResult;
+
+        window.addEventListener('hashchange', handleHashRoute);
 
         async function fetchJSON(url) {
             var r = await fetch(url);
@@ -2233,6 +2439,9 @@
             renderCommunityProviders();
             checkEndpointHealth();
             setInterval(checkEndpointHealth, 30000);
+            
+            // Check hash routing on page load (Issue #89)
+            handleHashRoute();
 
 
             // Refresh status + blocks every 5s
