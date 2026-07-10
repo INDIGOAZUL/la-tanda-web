@@ -109,11 +109,12 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 2. Crea tu cuenta (email o Google Sign-In)
 3. Únete a una tanda, publica en el feed, mina LTD, explora el marketplace
 
-### Para desarrolladores (integrar con La Tanda API)
-1. Documentación API: https://latanda.online/docs
-2. Dev portal: https://latanda.online/dev-dashboard.html
-3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+### For developers (integrate with the La Tanda API)
+1. Swagger UI / API documentation: [latanda.online/docs](https://latanda.online/docs)
+2. Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
+3. Authentication: JWT via `/api/auth/login`
+4. Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking)
+5. 160+ production endpoints
 
 ### Para validadores (correr un nodo)
 1. Lee la guía: [la-tanda-chain-node-guide.md](https://latanda.online/la-tanda-chain-node-guide.md)
@@ -123,27 +124,64 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 
 ---
 
-## 📂 Estructura del repositorio
+## 🛠️ Development Setup
+
+This repository is a static frontend mirror. You do not need a build step for the basic local development loop.
+
+1. Install a static file server if you do not already have one:
+
+   ```bash
+   npm install --global serve
+   ```
+
+2. Serve the repository root:
+
+   ```bash
+   npx serve .
+   ```
+
+3. Open the local URL printed by `serve` and test pages such as `index.html`, `dev-dashboard.html`, `marketplace-social.html`, and `chain/index.html`.
+
+Keep API credentials out of Git. Use `.env.example` as the reference for local environment names, and use the online Dev Portal and Swagger UI to verify API contracts before changing frontend integration code.
+
+---
+
+## 📂 Project Structure
 
 ```
 la-tanda-web/
-├── *.html                    # Páginas del ecosistema (60+ archivos)
-├── css/                      # Estilos (design-tokens, components, modules)
-├── js/                       # JavaScript (components-loader, hub, utilities)
-├── assets/                   # Imágenes, logos, favicons
-├── chain/                    # Recursos de La Tanda Chain (node-setup.sh, genesis.json)
-├── docs/                     # OpenAPI spec + Swagger UI
-├── .github/                  # Bounty templates, PR gatekeeper
-└── api-*.js                  # API adapters y proxies
+├── *.html                    # Static ecosystem pages served from the web root
+├── api-proxy.js              # Main local API proxy entry point
+├── api-proxy-enhanced.js     # Enhanced API simulation layer for wider endpoint flows
+├── marketplace-social.js     # Marketplace page script loaded from the HTML root
+├── css/                      # Shared styles, design tokens, and page modules
+├── js/                       # Hub modules, loaders, and shared browser utilities
+├── components/               # Shared HTML snippets used by multiple pages
+├── assets/                   # Built frontend assets emitted by the production pipeline
+├── chain/                    # La Tanda Chain resources, node scripts, and chain landing page
+├── docs -> /var/www/html/docs # Production symlink target for Swagger UI / OpenAPI docs
+├── middleware/               # Edge/server middleware helpers
+├── packages/                 # Package-level code used by the ecosystem
+├── translations/             # Translation source files and localization helpers
+├── .github/                  # Bounty templates, PR gatekeeper, and automation
+└── .env.example              # Local environment variable reference
 ```
 
-**Páginas principales alineadas al framework**:
-- `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
-- `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
-- `governance.html` — Hub de gobernanza on-chain con Keplr wallet
-- `mia.html` — MIA AI (7ma capa del ecosistema)
-- `chain/index.html` — Chain landing con stats live
+Key developer-facing files and live links:
+
+- `api-proxy.js` is the main local API proxy file; `api-proxy-enhanced.js` contains the larger enhanced simulation layer.
+- `marketplace-social.html` loads the root-level `marketplace-social.js`. A second copy exists at `js/marketplace-social.js`, but the marketplace page uses the root file.
+- `docs` is a production symlink target; verify the live Swagger UI at [latanda.online/docs](https://latanda.online/docs).
+- Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html).
+- Chain Explorer: [exp.utsa.tech/latanda/staking](https://exp.utsa.tech/latanda/staking).
+
+**Main pages aligned to the ecosystem framework**:
+- `index.html` — Landing with 3D cosmic hero, tokenomics donut, and persona cards
+- `whitepaper.html` — Whitepaper v2.0 with 10 pools and sustainability sources
+- `ltd-token-economics.html` — Interactive tokenomics page with live chain data
+- `governance.html` — On-chain governance hub with Keplr wallet support
+- `mia.html` — MIA AI, the seventh ecosystem layer
+- `chain/index.html` — Chain landing page with live stats
 
 ---
 
