@@ -541,8 +541,29 @@
             border: none;
             color: white;
             cursor: pointer;
-            padding: 4px;
+            padding: 8px;
+            min-width: 44px;
+            min-height: 44px;
             margin-left: auto;
+        }
+
+        .divider {
+            color: var(--text-dark);
+        }
+
+        .pwa-install-button,
+        .pwa-install-close,
+        .pwa-floating-install {
+            min-width: 44px !important;
+            min-height: 44px !important;
+        }
+
+        .pwa-install-button {
+            color: #0f172a !important;
+        }
+
+        .pwa-install-close {
+            color: #1e293b !important;
         }
         
         /* Security Badge */
@@ -910,12 +931,12 @@
     <div id="notification" class="notification">
         <i class="fas fa-check-circle"></i>
         <span id="notificationText">Mensaje</span>
-        <button class="notification-close" onclick="window.auth.removeNotification()">
+        <button class="notification-close" onclick="window.auth.removeNotification()" aria-label="Cerrar notificación">
             <i class="fas fa-times"></i>
         </button>
     </div>
     
-    <div class="auth-wrapper">
+    <main class="auth-wrapper" id="main-content">
         <div class="auth-container">
             <!-- Header -->
             <div class="auth-header">
@@ -991,7 +1012,7 @@
                     ¿Olvidaste tu contraseña?
                 </button>
                 <div style="text-align:center;margin-top:8px;">
-                    <button type="button" style="background:none;border:0;color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;padding:0;cursor:pointer;" onclick="var em=document.getElementById('loginEmail').value.trim(); if(!em||!window.auth.validateEmail(em)){window.auth.showError('Ingresa tu email primero');document.getElementById('loginEmail').focus();return false;} window.auth.showInfo('Enviando codigo...'); fetch('/api/auth/send-verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(){window.auth.showEmailVerificationForm(em)}).catch(function(){window.auth.showEmailVerificationForm(em)});">¿Ya te registraste pero no verificaste tu email?</button>
+                    <button type="button" style="background:none;border:0;color:#0052cc;font-size:0.78rem;text-decoration:underline;padding:10px;min-height:44px;cursor:pointer;" onclick="var em=document.getElementById('loginEmail').value.trim(); if(!em||!window.auth.validateEmail(em)){window.auth.showError('Ingresa tu email primero');document.getElementById('loginEmail').focus();return false;} window.auth.showInfo('Enviando codigo...'); fetch('/api/auth/send-verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(){window.auth.showEmailVerificationForm(em)}).catch(function(){window.auth.showEmailVerificationForm(em)});">¿Ya te registraste pero no verificaste tu email?</button>
                 </div>
                 
                 <button type="submit" class="btn-primary" id="loginSubmit">
@@ -1117,12 +1138,12 @@
                 <form id="emailVerificationForm">
                     <p id="verifyEmailDisplay" style="color: var(--tanda-cyan); margin-bottom: 16px; font-size: 0.95rem;"></p>
                     <div class="code-input-container">
-                        <input type="text" class="code-input" id="emailCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="emailCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="emailCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="emailCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="emailCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="emailCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="emailCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 1">
+                        <input type="text" class="code-input" id="emailCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 2">
+                        <input type="text" class="code-input" id="emailCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 3">
+                        <input type="text" class="code-input" id="emailCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 4">
+                        <input type="text" class="code-input" id="emailCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 5">
+                        <input type="text" class="code-input" id="emailCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*" aria-label="Código de correo, dígito 6">
                     </div>
 
                     <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="emailTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
@@ -1178,12 +1199,12 @@
                 
                 <form id="passwordResetVerifyForm">
                     <div class="code-input-container" id="resetCodeInputs">
-                        <input type="text" class="code-input" id="resetCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="resetCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="resetCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="resetCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="resetCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="resetCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="resetCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 1">
+                        <input type="text" class="code-input" id="resetCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 2">
+                        <input type="text" class="code-input" id="resetCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 3">
+                        <input type="text" class="code-input" id="resetCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 4">
+                        <input type="text" class="code-input" id="resetCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 5">
+                        <input type="text" class="code-input" id="resetCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*" aria-label="Código de recuperación, dígito 6">
                     </div>
 
                     <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="resetTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
@@ -1237,12 +1258,12 @@
                 
                 <form id="twoFactorForm">
                     <div class="code-input-container" id="twoFactorCodeInputs">
-                        <input type="text" class="code-input" id="tfaCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="tfaCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="tfaCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="tfaCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="tfaCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*">
-                        <input type="text" class="code-input" id="tfaCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
+                        <input type="text" class="code-input" id="tfaCode1" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 1">
+                        <input type="text" class="code-input" id="tfaCode2" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 2">
+                        <input type="text" class="code-input" id="tfaCode3" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 3">
+                        <input type="text" class="code-input" id="tfaCode4" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 4">
+                        <input type="text" class="code-input" id="tfaCode5" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 5">
+                        <input type="text" class="code-input" id="tfaCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*" aria-label="Código 2FA, dígito 6">
                     </div>
 
                     <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="tfaTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
@@ -1260,7 +1281,7 @@
                 </a>
             </div>
         </div>
-    </div>
+    </main>
     <script>
         // H1 FIX: Safe localStorage for Safari Private Browsing
         window._safeSetItem = function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} };
@@ -2453,7 +2474,7 @@
                         <div style="color: #22d55e; margin-bottom: 15px;">
                             <i class="fas fa-check-circle" style="font-size: 48px;"></i>
                         </div>
-                        <h3 style="color: #22d55e; margin-bottom: 10px;">¡Autenticación Exitosa!</h3>
+                        <h2 style="color: #22d55e; margin-bottom: 10px; font-size: 1.25rem;">¡Autenticación Exitosa!</h2>
                         <p style="color: var(--text-secondary); margin-bottom: 20px;">Tu sesión ha sido validada correctamente</p>
                         <button onclick="localStorage.removeItem('redirect_after_auth'); window.location.href='${dashboardUrl}'" class="btn-primary" style="width: auto; margin: 0 10px;">
                             🚀 Continuar al Dashboard

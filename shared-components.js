@@ -843,7 +843,8 @@ class LaTandaComponents {
                     display: flex; justify-content: space-between; align-items: center;
                     margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color, #333);
                 }
-                .mobile-menu-header h3 { margin: 0; color: var(--text-primary, #fff); }
+                .mobile-menu-header h3,
+                .mobile-menu-title { margin: 0; color: var(--text-primary, #fff); font-size: 1.17em; font-weight: 700; }
                 .mobile-menu-close {
                     background: none; border: none; color: var(--text-secondary, #888);
                     font-size: 28px; cursor: pointer;
@@ -870,8 +871,8 @@ class LaTandaComponents {
             menu.className = "mobile-menu";
             menu.innerHTML = `
                 <div class="mobile-menu-header">
-                    <h3>La Tanda</h3>
-                    <button class="mobile-menu-close" onclick="laTandaComponents.closeMobileMenu()">&times;</button>
+                    <div class="mobile-menu-title">La Tanda</div>
+                    <button class="mobile-menu-close" onclick="laTandaComponents.closeMobileMenu()" aria-label="Cerrar menú">&times;</button>
                 </div>
                 <nav>
                     <a href="home-dashboard.html" class="mobile-nav-link">Dashboard</a>
