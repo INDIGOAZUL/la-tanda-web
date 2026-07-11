@@ -37,19 +37,25 @@ La Tanda is a **Web3 ecosystem with 7 integrated layers**, not a simple savings 
 
 ## 📊 Current status (live on testnet)
 
-| Metric | Current value |
+We are **early-stage and real**. These are the actual figures from our production database and the live chain, as of **2026-07-11** — not projections, not rounded up.
+
+| Metric | Actual value |
 |---|---|
-| **Registered users** (email-verified) | 15,000+ |
-| **Active tandas** | 300+ |
-| **Chain validators** | 13+ |
-| **Production API endpoints** | 160+ |
-| **Algorithms in production** | 14 (fraud, ranking, credit, health, etc.) |
-| **Governance proposals passed** | 2 (GOV-001, GOV-002) |
+| **Registered users** | **70** (of which **60** are email-verified) |
+| **Active group memberships** | 43 |
+| **Tandas** | **4** (3 running, 1 recruiting) |
+| **Contributions made** | **663** |
+| **Money cycled through tandas** | **L 1,243,100 HNL** (≈ **US$50,500**) |
+| **Chain validators** | **30 bonded** (35 registered) |
+| **Chain height** | 2,128,891 (`latanda-testnet-1`) |
+| **Governance proposals passed** | **3** |
 | **Testnet uptime since Q1 2026** | 100% (no consensus incidents) |
 
-Every metric is verifiable against on-chain data or the public dev portal.
+**Every metric on this page is verifiable** against on-chain data or the public dev portal. We would rather you check.
 
-> **A note on how we count users.** "Registered" means an account exists and its email is verified. It does **not** mean identity-verified or KYC'd — we do not currently run KYC on end users (the platform is non-custodial and KYC-ready by design; identity verification is a pre-mainnet workstream). We will not describe these users as "verified users" or "KYC'd users", and neither should anyone citing us.
+**Why we publish numbers this small.** 70 real people have cycled **US$50,500** of their own money through tandas that have run to **cycles 11 and 15** — that is real retention, real money, and a fully working 7-layer product with a sovereign chain, 30 bonded validators and 3 passed governance proposals behind it. Those are the hard parts. Growth is the easy part, and we would rather earn it than claim it.
+
+> **A note on how we count users.** "Registered" means an account exists; "email-verified" means its email is confirmed. Neither means identity-verified or KYC'd — we do **not** currently run KYC on end users (the platform is non-custodial and KYC-ready by design; identity verification is a pre-mainnet workstream). We will never describe these users as "verified users" or "KYC'd users", and neither should anyone citing us.
 
 ## 💎 Tokenomics (200M LTD fixed)
 
@@ -113,7 +119,7 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 1. API documentation (Swagger UI): https://latanda.online/docs
 2. Dev portal: https://latanda.online/dev-dashboard.html
 3. Auth: JWT via `/api/auth/login`
-4. 160+ production endpoints
+4. The full endpoint list is in the Swagger UI above — it is the source of truth
 5. The API base URL is **`latanda.online`** — there is **no** `api.` subdomain. Chain endpoints are at `latanda.online/chain/rpc/` and `latanda.online/chain/api/`.
 
 ### For validators (running a node)
@@ -247,19 +253,25 @@ La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de 
 
 ## 📊 Estado actual (live en testnet)
 
-| Métrica | Valor actual |
+Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra base de datos de producción y del chain en vivo, al **2026-07-11** — no son proyecciones, y no están redondeadas hacia arriba.
+
+| Métrica | Valor real |
 |---|---|
-| **Usuarios registrados** (email verificado) | 15,000+ |
-| **Tandas activas** | 300+ |
-| **Validadores de chain** | 13+ |
-| **API endpoints en producción** | 160+ |
-| **Algoritmos productivos** | 14 (fraud, ranking, credit, salud, etc.) |
-| **Propuestas de gobernanza pasadas** | 2 (GOV-001, GOV-002) |
+| **Usuarios registrados** | **70** (de los cuales **60** tienen email verificado) |
+| **Membresías activas en grupos** | 43 |
+| **Tandas** | **4** (3 en marcha, 1 reclutando) |
+| **Aportaciones realizadas** | **663** |
+| **Dinero ciclado en tandas** | **L 1,243,100 HNL** (≈ **US$50,500**) |
+| **Validadores del chain** | **30 bonded** (35 registrados) |
+| **Altura del chain** | 2,128,891 (`latanda-testnet-1`) |
+| **Propuestas de gobernanza pasadas** | **3** |
 | **Uptime testnet desde Q1 2026** | 100% (sin incidentes de consenso) |
 
-Toda métrica es verificable contra datos on-chain o el dev portal público.
+**Toda métrica de esta página es verificable** contra datos on-chain o el dev portal público. Preferimos que la compruebes.
 
-> **Nota sobre cómo contamos usuarios.** "Registrado" significa que la cuenta existe y su email está verificado. **No** significa identidad verificada ni KYC — hoy no hacemos KYC a los usuarios finales (la plataforma es no-custodial y está diseñada para ser KYC-ready; la verificación de identidad es un workstream previo al mainnet). No describimos a estos usuarios como "usuarios verificados" ni "usuarios con KYC".
+**Por qué publicamos números tan pequeños.** 70 personas reales han ciclado **US$50,500** de su propio dinero en tandas que ya llegaron a los **ciclos 11 y 15** — eso es retención real, dinero real, y un producto de 7 capas funcionando, con chain soberana, 30 validadores bonded y 3 propuestas de gobernanza aprobadas detrás. Esa es la parte difícil. Crecer es la parte fácil, y preferimos ganárnoslo a inventarlo.
+
+> **Nota sobre cómo contamos usuarios.** "Registrado" significa que la cuenta existe; "email verificado" significa que su correo está confirmado. Ninguno de los dos significa identidad verificada ni KYC — hoy **no** hacemos KYC a los usuarios finales (la plataforma es no-custodial y está diseñada para ser KYC-ready; la verificación de identidad es un workstream previo al mainnet). Nunca describimos a estos usuarios como "usuarios verificados" ni "usuarios con KYC".
 
 ## 💎 Tokenomics (200M LTD fijo)
 
@@ -323,7 +335,7 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 1. Documentación API: https://latanda.online/docs
 2. Dev portal: https://latanda.online/dev-dashboard.html
 3. Autenticación: JWT via `/api/auth/login`
-4. 160+ endpoints productivos
+4. El listado completo de endpoints está en el Swagger UI de arriba — esa es la fuente de verdad
 5. La API base es **`latanda.online`** — **no** existe un subdominio `api.`. Los endpoints del chain están en `latanda.online/chain/rpc/` y `latanda.online/chain/api/`.
 
 ### Para validadores (correr un nodo)
