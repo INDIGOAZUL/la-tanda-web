@@ -88,8 +88,10 @@ Runs on changed files only. It **fails** on:
 |---|---|
 | Auth tokens | Auth tokens live in `localStorage`, never `sessionStorage`. Use `localStorage.getItem('auth_token')` (the tolerated fallback is `localStorage.getItem('authToken')`). `getItem('jwtToken')` is rejected. |
 | `Math.random()` | Banned in `.js`. Use `crypto.getRandomValues()` (browser) or `crypto.randomInt()` (Node). |
-| Fabricated URLs | These do not exist and are rejected on sight: `api.latanda.online`, `my.tanda.co`, `rpc.latandachain`, `explorer.latandachain`, `testnet-rpc.latandachain`. The real API is at **`latanda.online`** with **no `api.` prefix**; chain endpoints are `latanda.online/chain/rpc/` and `latanda.online/chain/api/`. |
+| Fabricated URLs | Hosts invented by past spam PRs are rejected on sight: `api[.]latanda[.]online`, `my[.]tanda[.]co`, `rpc[.]latandachain`, `explorer[.]latandachain`, `testnet-rpc[.]latandachain`. **None of them exist.** The real API is at **`latanda.online`** with **no `api.` prefix**; chain endpoints are `latanda.online/chain/rpc/` and `latanda.online/chain/api/`. |
 | `src/` directory | **This repo has no `src/` directory.** Any file added under `src/` fails the build. |
+
+> **Why the `[.]` above?** The linter greps the raw text of *every* changed file, including Markdown. Writing those hostnames literally in this document would make this document fail the check it is describing (ask us how we know). They are deliberately defanged — please leave them that way.
 
 And it **warns** (does not fail) on:
 
