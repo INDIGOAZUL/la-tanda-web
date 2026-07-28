@@ -204,11 +204,46 @@
         </a>
     </nav>
 
-    <!-- Logout Footer -->
-    <div class="sidebar-footer">
+    <!-- Theme Toggle Button -->
+    <div class="sidebar-footer" style="display:flex;flex-direction:column;gap:0;">
+        <button class="theme-toggle-btn" id="themeToggleBtn" title="Cambiar tema claro/oscuro">
+            <i class="fas fa-sun" id="themeToggleLightIcon" style="display:none;"></i>
+            <i class="fas fa-moon" id="themeToggleDarkIcon"></i>
+            <span id="themeToggleLabel">Modo Claro</span>
+        </button>
         <button class="logout-btn" id="sidebarLogoutBtn">
             <i class="fas fa-sign-out-alt"></i>
             <span data-i18n="nav.logout">Cerrar Sesión</span>
         </button>
     </div>
+
+    <!-- Theme Toggle JS (inline for immediate binding) -->
+    <script>
+    (function() {
+        var root = document.documentElement;
+        var btn = document.getElementById('themeToggleBtn');
+        var sunIcon = document.getElementById('themeToggleIcon');
+        var moonIcon = document.getElementById('themeToggleDarkIcon');
+        var label = document.getElementById('themeToggleLabel');
+
+        function updateUI() {
+            var isLight = root.getAttribute('data-theme') === 'light';
+            document.getElementById('themeToggleLightIcon').style.display = isLight ? 'inline' : 'none';
+            document.getElementById('themeToggleDarkIcon').style.display = isLight ? 'none' : 'inline';
+            label.textContent = isLight ? 'Modo Oscuro' : 'Modo Claro';
+        }
+
+        // Watch for clicks
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('#themeToggleBtn');
+            if (!btn) return;
+            var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme_preference', next); } catch(e) {}
+            updateUI();
+        });
+
+        updateUI();
+    })();
+    </script>
 </aside>

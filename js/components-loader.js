@@ -1,3 +1,12 @@
+// Early Theme Initialization — MUST run synchronously BEFORE any rendering to avoid FOUC
+(function() {
+  var theme = null;
+  try { theme = localStorage.getItem('theme_preference'); } catch(e) {}
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+})();
+
 // Phase 0: Load helpers + iOS PWA prompt (i18n removed — platform uses Spanish)
 (function(){
   var scripts = [
