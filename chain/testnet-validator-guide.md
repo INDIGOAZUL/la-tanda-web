@@ -221,6 +221,14 @@ the official RPC and an independent community RPC:
 sudo systemctl stop latandad
 sudo -iu latanda
 
+# Required if this home has already started normal sync. This preserves config
+# and keys, but removes block data. Back up signing state first for a validator.
+if [ -f "$HOME/.latanda/data/priv_validator_state.json" ]; then
+  cp "$HOME/.latanda/data/priv_validator_state.json" \
+    "$HOME/priv_validator_state.json.$(date +%s).bak"
+fi
+latandad comet unsafe-reset-all --home "$HOME/.latanda"
+
 RPC1="https://latanda.online/chain/rpc"
 RPC2="https://t-latanda.rpc.utsa.tech"
 LATEST_HEIGHT=$(curl -fsSL "$RPC1/status" \
@@ -401,8 +409,8 @@ latandad tx staking unbond "$VALOPER" 1000000ultd \
 Check jail and signing state before attempting an unjail transaction:
 
 ```bash
-CONS_ADDRESS=$(latandad comet show-address)
-latandad query slashing signing-info "$CONS_ADDRESS"
+CONS_PUBKEY=$(latandad comet show-validator)
+latandad query slashing signing-info "$CONS_PUBKEY"
 
 latandad tx slashing unjail \
   --from "$KEY_NAME" --keyring-backend file \
@@ -440,7 +448,7 @@ Monitor the validator record and recent signing history:
 ```bash
 latandad query staking validator "$VALOPER" --output json \
   | jq '{status, jailed, tokens, delegator_shares, description}'
-latandad query slashing signing-info "$CONS_ADDRESS" --output json
+latandad query slashing signing-info "$CONS_PUBKEY" --output json
 ```
 
 Useful alert conditions include:
