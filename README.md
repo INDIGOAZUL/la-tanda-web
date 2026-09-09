@@ -37,25 +37,27 @@ La Tanda is a **Web3 ecosystem with 7 integrated layers**, not a simple savings 
 
 ## 📊 Current status (live on testnet)
 
-We are **early-stage and real**. These are the actual figures from our production database and the live chain, as of **2026-07-11** — not projections, not rounded up.
+We are **early-stage and real**. These are the actual figures from our production database and the live chain, as of **2026-09-09** — not projections, not rounded up.
 
 | Metric | Actual value |
 |---|---|
-| **Registered users** | **70** (of which **60** are email-verified) |
-| **Active group memberships** | 43 |
-| **Tandas** | **4** (3 running, 1 recruiting) |
-| **Contributions made** | **663** |
-| **Money cycled through tandas** | **L 1,243,100 HNL** (≈ **US$50,500**) |
-| **Chain validators** | **30 bonded** (35 registered) |
-| **Chain height** | 2,128,891 (`latanda-testnet-1`) |
+| **Registered users** | **80** (of which **66** are email-verified) |
+| **Groups (tandas)** | **5** (3 with completed real-money payouts) |
+| **Completed payouts** | **41** (coordinator-confirmed with a transfer reference) |
+| **Contributions recorded** | **883** |
+| **Money cycled through tandas** | **L 1,652,100 HNL** collected (≈ **US$63,500**); **L 1,574,500** net to beneficiaries |
+| **Chain validators** | **36 bonded** (45 registered) |
+| **Chain height** | 3,058,040 (`latanda-testnet-1`) |
 | **Governance proposals passed** | **3** |
 | **Testnet uptime since Q1 2026** | 100% (no consensus incidents) |
 
 **Every metric on this page is verifiable** against on-chain data or the public dev portal. We would rather you check.
 
-**Why we publish numbers this small.** 70 real people have cycled **US$50,500** of their own money through tandas that have run to **cycles 11 and 15** — that is real retention, real money, and a fully working 7-layer product with a sovereign chain, 30 bonded validators and 3 passed governance proposals behind it. Those are the hard parts. Growth is the easy part, and we would rather earn it than claim it.
+**Live figures: https://latanda.online/api/public/metrics** (same query for every surface, 5-minute cache; the table above is a dated snapshot of that endpoint).
 
-> **A note on how we count users.** "Registered" means an account exists; "email-verified" means its email is confirmed. Neither means identity-verified or KYC'd — we do **not** currently run KYC on end users (the platform is non-custodial and KYC-ready by design; identity verification is a pre-mainnet workstream). We will never describe these users as "verified users" or "KYC'd users", and neither should anyone citing us.
+**Why we publish numbers this small.** 80 registered users have cycled **≈US$63,500 (L 1,652,100)** of their own money through **41 completed payouts** in 3 groups — that is real retention, real money, and a fully working 7-layer product with a sovereign chain, 36 bonded validators and 3 passed governance proposals behind it. Those are the hard parts. Growth is the easy part, and we would rather earn it than claim it.
+
+> **A note on how we count users.** "Registered" means an account exists; "email-verified" means its email is confirmed. Neither means identity-verified or KYC'd — we do **not** currently run KYC on end users (the platform never holds the group's money — payments settle off-platform today; identity verification is a pre-mainnet workstream). We will never describe these users as "verified users" or "KYC'd users", and neither should anyone citing us.
 
 ## 💎 Tokenomics (200M LTD fixed)
 
@@ -90,8 +92,8 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 - **Address prefix**: `ltd`
 - **Block time**: ~5 seconds
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Active validators**: 13+ (genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, + community)
-- **Governance**: active, 2 proposals passed
+- **Validators**: **36 bonded / 45 registered** (2026-09-09; live count at https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, + community
+- **Governance**: active, 3 proposals passed
 - **Mainnet**: planned for **Q1 2027**
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
@@ -253,25 +255,27 @@ La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de 
 
 ## 📊 Estado actual (live en testnet)
 
-Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra base de datos de producción y del chain en vivo, al **2026-07-11** — no son proyecciones, y no están redondeadas hacia arriba.
+Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra base de datos de producción y del chain en vivo, al **2026-09-09** — no son proyecciones, y no están redondeadas hacia arriba.
 
 | Métrica | Valor real |
 |---|---|
-| **Usuarios registrados** | **70** (de los cuales **60** tienen email verificado) |
-| **Membresías activas en grupos** | 43 |
-| **Tandas** | **4** (3 en marcha, 1 reclutando) |
-| **Aportaciones realizadas** | **663** |
-| **Dinero ciclado en tandas** | **L 1,243,100 HNL** (≈ **US$50,500**) |
-| **Validadores del chain** | **30 bonded** (35 registrados) |
-| **Altura del chain** | 2,128,891 (`latanda-testnet-1`) |
+| **Usuarios registrados** | **80** (de los cuales **66** tienen email verificado) |
+| **Grupos (tandas)** | **5** (3 con pagos reales completados) |
+| **Pagos completados** | **41** (confirmados por el coordinador con referencia de transferencia) |
+| **Aportaciones registradas** | **883** |
+| **Dinero ciclado en tandas** | **L 1,652,100 HNL** recaudados (≈ **US$63,500**); **L 1,574,500** netos a beneficiarios |
+| **Validadores del chain** | **36 bonded** (45 registrados) |
+| **Altura del chain** | 3,058,040 (`latanda-testnet-1`) |
 | **Propuestas de gobernanza pasadas** | **3** |
 | **Uptime testnet desde Q1 2026** | 100% (sin incidentes de consenso) |
 
 **Toda métrica de esta página es verificable** contra datos on-chain o el dev portal público. Preferimos que la compruebes.
 
-**Por qué publicamos números tan pequeños.** 70 personas reales han ciclado **US$50,500** de su propio dinero en tandas que ya llegaron a los **ciclos 11 y 15** — eso es retención real, dinero real, y un producto de 7 capas funcionando, con chain soberana, 30 validadores bonded y 3 propuestas de gobernanza aprobadas detrás. Esa es la parte difícil. Crecer es la parte fácil, y preferimos ganárnoslo a inventarlo.
+**Cifras en vivo: https://latanda.online/api/public/metrics** (la misma consulta para toda superficie, caché de 5 minutos; la tabla de arriba es una foto fechada de ese endpoint).
 
-> **Nota sobre cómo contamos usuarios.** "Registrado" significa que la cuenta existe; "email verificado" significa que su correo está confirmado. Ninguno de los dos significa identidad verificada ni KYC — hoy **no** hacemos KYC a los usuarios finales (la plataforma es no-custodial y está diseñada para ser KYC-ready; la verificación de identidad es un workstream previo al mainnet). Nunca describimos a estos usuarios como "usuarios verificados" ni "usuarios con KYC".
+**Por qué publicamos números tan pequeños.** 80 usuarios registrados han ciclado **≈US$63,500 (L 1,652,100)** de su propio dinero en **41 pagos completados** en 3 grupos — eso es retención real, dinero real, y un producto de 7 capas funcionando, con chain soberana, 36 validadores bonded y 3 propuestas de gobernanza aprobadas detrás. Esa es la parte difícil. Crecer es la parte fácil, y preferimos ganárnoslo a inventarlo.
+
+> **Nota sobre cómo contamos usuarios.** "Registrado" significa que la cuenta existe; "email verificado" significa que su correo está confirmado. Ninguno de los dos significa identidad verificada ni KYC — hoy **no** hacemos KYC a los usuarios finales (la plataforma nunca retiene el dinero del grupo — hoy los pagos se liquidan fuera de la plataforma; la verificación de identidad es un workstream previo al mainnet). Nunca describimos a estos usuarios como "usuarios verificados" ni "usuarios con KYC".
 
 ## 💎 Tokenomics (200M LTD fijo)
 
@@ -306,8 +310,8 @@ Blockchain soberana construida con **Cosmos SDK + CometBFT**, específicamente d
 - **Address prefix**: `ltd`
 - **Block time**: ~5 segundos
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validators activos**: 13+ (genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, +community)
-- **Governance**: activa, 2 props pasadas
+- **Validadores**: **36 bonded / 45 registrados** (2026-09-09; conteo en vivo en https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, +community
+- **Governance**: activa, 3 propuestas pasadas
 - **Mainnet**: Q1 2027 planificado
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
