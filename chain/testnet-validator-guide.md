@@ -319,8 +319,20 @@ ADDRESS=$(latandad keys show "$KEY_NAME" -a --keyring-backend file)
 latandad query bank balances "$ADDRESS" --node http://127.0.0.1:26657
 ```
 
-The repository's current validator program calls for 50,000 testnet LTD staked.
-Confirm the current requirement with the team before broadcasting a transaction.
+Request 10 testnet LTD from the faucet to create the validator. After the
+validator is running, complete the control-proof flow in Discord:
+
+1. `!register-validator`
+2. `!verify`
+3. `!verify-rdns <ip>` (or the HTTP nonce alternative)
+4. Run for seven days without being jailed
+5. Sign the requested batch
+
+Successful operators receive a genesis delegation according to their approved
+tier: 500 LTD for a full node, 2,000 LTD for a validator, or 5,000 LTD for an
+infrastructure partner that provides public RPC, API, and state-sync services.
+Confirm the current program status with the team before broadcasting a
+transaction.
 
 ## 14. Create the validator
 
@@ -339,7 +351,7 @@ hand-copying the consensus public key:
 PUBKEY=$(latandad comet show-validator)
 jq -n --argjson pubkey "$PUBKEY" '{
   pubkey: $pubkey,
-  amount: "50000000000ultd",
+  amount: "10000000ultd",
   moniker: "replace-with-your-validator-name",
   identity: "",
   website: "",
