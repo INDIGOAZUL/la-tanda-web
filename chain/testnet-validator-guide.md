@@ -4,6 +4,14 @@ This guide covers the complete validator lifecycle on Ubuntu: host preparation,
 node installation, systemd, state sync, wallet and validator creation,
 monitoring, maintenance, and recovery.
 
+Verified on Ubuntu 24.04 (CI runner), 2026-09-17: Go 1.25.6 setup, source
+build, node initialization, genesis hash and chain ID, peer configuration,
+short node start, and local RPC status. See the
+[validation run](https://github.com/Aming9303/la-tanda-web/actions/runs/35124521868).
+Long-running synchronization, inbound connectivity, systemd service operation,
+faucet funding, wallet transactions, and validator signing were not verified on
+the runner.
+
 The network values below were checked against the repository and live endpoints.
 Block heights and state-sync trust hashes are intentionally calculated at setup
 time because they become stale quickly.
