@@ -1,0 +1,57 @@
+name: Validator guide Ubuntu smoke test
+
+on:
+  pull_request:
+    paths:
+      - chain/testnet-validator-guide.md
+      - .github/workflows/validator-guide-smoke.yml
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.6'
+      - name: Install guide prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq wget curl
+      - name: Build current chain source
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/latanda-src"
+          cd "$RUNNER_TEMP/latanda-src"
+          wget -q https://latanda.online/chain/latanda-chain-source.tar.gz -O source.tar.gz
+          tar -xzf source.tar.gz
+          go mod download
+          go build -trimpath -o "$RUNNER_TEMP/latandad" ./cmd/latandad
+          "$RUNNER_TEMP/latandad" version --long
+      - name: Initialize, verify genesis, configure peers, and start node briefly
+        run: |
+          set -euo pipefail
+          export DAEMON_HOME="$RUNNER_TEMP/latanda-home"
+          "$RUNNER_TEMP/latandad" init ci-guide-check --chain-id latanda-testnet-1 --default-denom ultd --home "$DAEMON_HOME"
+          wget -q https://latanda.online/chain/genesis.json -O "$DAEMON_HOME/config/genesis.json"
+          echo "98fc9871d6a3b7b12b3f7fcaa1ca3303ffcfad0f209d61355975a15069ac3907  $DAEMON_HOME/config/genesis.json" | sha256sum --check
+          test "$(jq -r '.chain_id' "$DAEMON_HOME/config/genesis.json")" = latanda-testnet-1
+          PEERS='483a8110c3cd93c8dd3801d935151e98656f5b67@168.231.67.201:26656'
+          sed -i "s|^persistent_peers *=.*|persistent_peers = \"$PEERS\"|" "$DAEMON_HOME/config/config.toml"
+          sed -i "s|^seeds *=.*|seeds = \"$PEERS\"|" "$DAEMON_HOME/config/config.toml"
+          sed -i 's|^minimum-gas-prices *=.*|minimum-gas-prices = "0.001ultd"|' "$DAEMON_HOME/config/app.toml"
+          grep -F "persistent_peers = \"$PEERS\"" "$DAEMON_HOME/config/config.toml"
+          grep -F 'minimum-gas-prices = "0.001ultd"' "$DAEMON_HOME/config/app.toml"
+          timeout --preserve-status --signal=INT 30s "$RUNNER_TEMP/latandad" start --home "$DAEMON_HOME" > "$RUNNER_TEMP/latanda-start.log" 2>&1 &
+          pid=$!
+          sleep 12
+          if ! kill -0 "$pid" 2>/dev/null; then
+            cat "$RUNNER_TEMP/latanda-start.log"
+            exit 1
+          fi
+          curl -fsSL http://127.0.0.1:26657/status | jq -e '.result.node_info.network == "latanda-testnet-1"'
+          kill -INT "$pid" || true
+          wait "$pid" || true
+          tail -40 "$RUNNER_TEMP/latanda-start.log"
