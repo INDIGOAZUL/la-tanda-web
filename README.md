@@ -7,7 +7,7 @@
 [![Chain](https://img.shields.io/badge/chain-latanda--testnet--1-00d4ff)](https://latanda.online/chain/)
 [![Supply](https://img.shields.io/badge/supply-200M%20LTD%20fixed-ffd700)](https://latanda.online/whitepaper.html)
 [![Inflation](https://img.shields.io/badge/inflation-0%25-22c55e)](https://latanda.online/whitepaper.html)
-[![Mainnet](https://img.shields.io/badge/mainnet-Q1%202027-8b5cf6)](https://latanda.online/chain/)
+[![Mainnet](https://img.shields.io/badge/mainnet-objetivo%20Q1--2027%20(no%20compromiso)-8b5cf6)](https://latanda.online/chain/)
 
 **[English](#english) · [Español](#español)**
 
@@ -94,7 +94,7 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
 - **Validators**: **36 bonded / 45 registered** (2026-09-09; live count at https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, + community
 - **Governance**: active, 3 proposals passed
-- **Mainnet**: planned for **Q1 2027**
+- **Mainnet**: internal target **Q1-2027**, conditional on legal counsel; not a commitment
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
 ### Incentivized Testnet Program
@@ -312,7 +312,7 @@ Blockchain soberana construida con **Cosmos SDK + CometBFT**, específicamente d
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
 - **Validadores**: **36 bonded / 45 registrados** (2026-09-09; conteo en vivo en https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, +community
 - **Governance**: activa, 3 propuestas pasadas
-- **Mainnet**: Q1 2027 planificado
+- **Mainnet**: objetivo interno Q1-2027, condicionado a asesoría legal; no es compromiso
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
 ### Incentivized Testnet Program
