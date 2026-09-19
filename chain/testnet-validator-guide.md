@@ -332,7 +332,8 @@ validator is running, complete the control-proof flow in Discord:
 
 1. `!register-validator`
 2. `!verify`
-3. `!verify-rdns <ip>` (or the HTTP nonce alternative)
+3. `!verify-rdns <ip>`, or `!verify-http <ip>` + `!verify-http-check` (HTTP nonce,
+   see below) when your ISP cannot set a PTR record
 4. Run for seven days without being jailed
 5. Sign the requested batch
 
@@ -341,6 +342,72 @@ tier: 500 LTD for a full node, 2,000 LTD for a validator, or 5,000 LTD for an
 infrastructure partner that provides public RPC, API, and state-sync services.
 Confirm the current program status with the team before broadcasting a
 transaction.
+
+### Control proof via HTTP nonce (no PTR needed)
+
+Infrastructure control must be proven with a challenge that cannot be forged
+with documents or screenshots. The default challenge is reverse DNS
+(`!verify-rdns <ip>`): you set the PTR record of your node's IP to a hostname
+containing the token the bot gives you. Residential ISPs usually do not let you
+edit a PTR record, so the bot accepts an HTTP-nonce proof with the same weight.
+
+Requirements the bot enforces before it issues a nonce:
+
+- `!verify` already completed for this validator (key-control proof).
+- The IP you claim must be the address your node is peered with the genesis
+  node from (`remote_ip` in the genesis `/net_info`, or the address announced
+  in `external_address`), and that peer's `moniker` in `config.toml` must equal
+  the validator's on-chain moniker. If your node moniker is generic (for
+  example `validator` or `node`), set `moniker = "<your on-chain moniker>"` in
+  `~/.latanda/config/config.toml`, restart `latandad`, wait about a minute for
+  the peer to reconnect, and run the command again.
+- The IP must be public. Loopback and private ranges are rejected.
+
+Flow (both commands in the Discord validators channel):
+
+1. `!verify-http <public-ip>` (add your `ltdvaloper...` as a third argument if
+   you have several validators linked). The bot answers with a 64-character
+   random nonce, valid for 30 minutes.
+2. Serve that exact text, and nothing else, at
+   `http://<public-ip>/.well-known/latanda-verify.txt` from the node itself.
+   Port 80 must be reachable from the internet (open it in the firewall and,
+   on a home connection, forward TCP 80 on the router to the node).
+
+   Quick option, no packages needed:
+
+   ```bash
+   mkdir -p /tmp/lt/.well-known
+   printf '%s' '<nonce-from-the-bot>' > /tmp/lt/.well-known/latanda-verify.txt
+   cd /tmp/lt && sudo python3 -m http.server 80
+   ```
+
+   nginx option, if you already run it on the node:
+
+   ```nginx
+   server {
+       listen 80 default_server;
+       location = /.well-known/latanda-verify.txt {
+           default_type text/plain;
+           return 200 '<nonce-from-the-bot>';
+       }
+   }
+   ```
+
+   Check from another machine before asking the bot:
+
+   ```bash
+   curl -s http://<public-ip>/.well-known/latanda-verify.txt
+   ```
+
+3. `!verify-http-check`. The bot fetches the file directly from that IP
+   (8-second timeout, at most 1 KB, no redirects to other hosts), compares it
+   with the nonce, and on success records the proof as `infra_method =
+   http-nonce`. `!tier-status` then shows "HTTP-nonce verificado (<ip>)" on
+   step 3.
+
+Limits: one pending nonce per Discord account, three checks per hour, and the
+nonce is consumed on success. After the proof is accepted you can stop the web
+server and close port 80 again; the proof does not require it to stay up.
 
 ## 14. Create the validator
 
@@ -589,6 +656,7 @@ Do not perform unattended upgrades of the validator binary.
 - Follow logs: `sudo journalctl -u latandad -f`
 - Local status: `curl -s http://127.0.0.1:26657/status | jq`
 - Peer count: use the `net_info` command from Section 16.
+- HTTP control proof: `!verify-http <ip>` then `!verify-http-check` (Section 13)
 - Node ID: `latandad comet show-node-id`
 - Validator public key: `latandad comet show-validator`
 - Wallet address: `latandad keys show validator -a --keyring-backend file`
