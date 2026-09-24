@@ -1,6 +1,6 @@
 ---
 name: 📚 Documentation Bounty
-about: Improve documentation and earn LTD tokens
+about: Improve documentation and receive testnet LTD rewards
 title: "[DOCS] "
 labels: documentation, bounty
 assignees: ''

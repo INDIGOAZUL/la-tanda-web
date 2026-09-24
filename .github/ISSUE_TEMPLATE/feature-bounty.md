@@ -1,6 +1,6 @@
 ---
 name: ✨ Feature Bounty
-about: Propose a feature and earn LTD tokens
+about: Propose a feature and receive testnet LTD rewards
 title: "[FEATURE] "
 labels: enhancement, bounty
 assignees: ''
