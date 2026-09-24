@@ -68,7 +68,7 @@ We are **early-stage and real**. These are the actual figures from our productio
 | Pool | % | Amount | Use |
 |---|---|---|---|
 | Community & Mining | 30% | 60M LTD | User rewards, Incentivized Testnet |
-| Staking & Validators | 20% | 40M LTD | Pre-minted rewards (APY 15–25%, ~8 years) |
+| Staking & Validators | 20% | 40M LTD | Pre-minted rewards, programmed distribution (no published yield figure)* |
 | Development Fund | 12% | 24M LTD | 6-month cliff + 3-year linear |
 | Team & Founders | 12% | 24M LTD | 1-year cliff + 2-year linear |
 | Marketing & Partnerships | 6% | 12M LTD | Quarterly, milestone-based |
@@ -229,6 +229,9 @@ La Tanda is operated by **Ray-Banks LLC**. More at [raybanks.org](https://rayban
 
 This repository is a public mirror of the frontend. The code is released for transparency and community contribution. It does not constitute an offer of securities or financial advice.
 
+<sub>\* Staking rewards have no published yield figure: they will depend on the validator's commission and network activity, and are not guaranteed.<br>
+**Version history — September 2026:** This version supersedes earlier ones. Previous versions included a staking yield (APY) estimate; that estimate has been withdrawn and no longer applies. While the network is on testnet we do not publish yield figures: staking rewards will depend on the validator's commission and network activity, and are not guaranteed.</sub>
+
 ---
 
 <a name="español"></a>
@@ -286,7 +289,7 @@ Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra
 | Pool | % | Amount | Uso |
 |---|---|---|---|
 | Comunidad y Minería | 30% | 60M LTD | Recompensas usuarios, Incentivized Testnet |
-| Staking y Validadores | 20% | 40M LTD | Rewards pre-acuñados (APY 15-25%, ~8 años) |
+| Staking y Validadores | 20% | 40M LTD | Rewards pre-acuñados, distribución programada (sin cifra de rendimiento publicada)* |
 | Fondo de Desarrollo | 12% | 24M LTD | 6 meses cliff + 3 años linear |
 | Equipo y Fundadores | 12% | 24M LTD | 1 año cliff + 2 años linear |
 | Marketing y Alianzas | 6% | 12M LTD | Trimestral por hitos |
@@ -445,6 +448,9 @@ Código abierto, uso libre con atribución. Las marcas "La Tanda" y "La Tanda Ch
 La Tanda es operada por **Ray-Banks LLC**. Más información en [raybanks.org](https://raybanks.org).
 
 Este repositorio es un mirror público del frontend. El código está liberado para transparencia y contribuciones comunitarias. No constituye oferta de valores ni asesoramiento financiero.
+
+<sub>\* Las recompensas de staking no tienen cifra de rendimiento publicada: dependerán de la comisión del validador y de la actividad de la red, y no están garantizadas.<br>
+**Historial de versiones — septiembre 2026:** Esta versión reemplaza a las anteriores. Las versiones previas incluían una estimación de rendimiento (APY) para staking; esa estimación fue retirada y ya no aplica. Mientras la red esté en testnet no publicamos cifras de rendimiento: las recompensas de staking dependerán de la comisión del validador y de la actividad de la red, y no están garantizadas.</sub>
 
 ---
 
