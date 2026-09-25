@@ -1,6 +1,6 @@
 ---
 name: Developer Bounty
-about: Claim a development task and earn LTD tokens
+about: Claim a development task and receive testnet LTD rewards
 title: '[BOUNTY] '
 labels: bounty, developer
 assignees: ''
@@ -8,7 +8,7 @@ assignees: ''
 
 ## 💰 Bounty Information
 
-**Reward:** [X] LTD tokens (~$[Y] USD)
+**Reward:** [X] LTD (testnet, no monetary value)
 **Difficulty:** [Easy/Medium/Hard]
 **Estimated Time:** [Hours/Days]
 **Skills Required:** [List technologies]

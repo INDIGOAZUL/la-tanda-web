@@ -1,6 +1,6 @@
 ---
 name: 🐛 Bug Bounty
-about: Report a bug and earn LTD tokens
+about: Report a bug and receive testnet LTD rewards
 title: "[BUG] "
 labels: bug, bounty
 assignees: ''

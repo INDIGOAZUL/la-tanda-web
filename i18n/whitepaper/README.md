@@ -34,7 +34,7 @@ This translation is part of the **Community Tier** of the La Tanda contributor p
 
 - **Range:** 500–1,500 LTD depending on final quality + completeness.
 - **Vesting:** per recruitment plan — 6 month cliff + 24 month linear.
-- Payment is in LTD on La Tanda Chain testnet (mainnet conversion 1:1 at TGE).
+- Payment is in LTD on La Tanda Chain testnet. Testnet LTD has no monetary value; holding it does not guarantee mainnet LTD.
 
 ## Estimated timeline
 

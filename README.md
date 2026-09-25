@@ -30,7 +30,7 @@ La Tanda is a **Web3 ecosystem with 7 integrated layers**, not a simple savings 
 | 1 | 💬 **Social Network** | Feed, stories, comments, reactions. Your activity builds on-chain reputation. |
 | 2 | 🔄 **Digital Tandas** | Rotating savings groups, 0% commission, on-chain score, integrated lending |
 | 3 | 🛍️ **Web3 Marketplace** | Products, services, bookings. On-chain Seller Score. Pay in lempiras or LTD |
-| 4 | ⛏️ **LTD Mining** | 5 tiers (1–12 LTD/day), global cap 500 LTD/day, earned through real activity |
+| 4 | ⛏️ **LTD Mining** | 5 tiers (1–12 LTD/day), global cap 500 LTD/day, rewarded for real activity (testnet LTD, no monetary value) |
 | 5 | ⭐ **On-Chain Reputation** | Unified financial score 300–850, portable across layers, anchored on-chain |
 | 6 | 🔗 **La Tanda Chain** | Sovereign blockchain, Cosmos SDK + CometBFT, 200M LTD fixed, 0% inflation |
 | 7 | 🤖 **MIA AI** | Financial assistant with 16 capabilities (Groq Llama 3.3 70B) |
@@ -248,7 +248,7 @@ La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de 
 | 1 | 💬 **Red Social** | Feed, stories, comentarios, reacciones. Tu tiempo genera reputación on-chain. |
 | 2 | 🔄 **Tandas Digitales** | Grupos de ahorro rotativo 0% comisión, score on-chain, préstamos integrados |
 | 3 | 🛍️ **Marketplace Web3** | Productos, servicios, bookings. Seller Score on-chain. Pagos en lempiras o LTD |
-| 4 | ⛏️ **Minería de LTD** | 5 tiers (1-12 LTD/día), cap 500 LTD/día global, gana por actividad real |
+| 4 | ⛏️ **Minería de LTD** | 5 tiers (1-12 LTD/día), cap 500 LTD/día global, se suma por actividad real (LTD de testnet, sin valor monetario) |
 | 5 | ⭐ **Reputación On-Chain** | Score financiero unificado 300-850, portable entre capas, anclado en blockchain |
 | 6 | 🔗 **La Tanda Chain** | Blockchain soberana Cosmos SDK + CometBFT, 200M LTD fijo, 0% inflación |
 | 7 | 🤖 **MIA AI** | Asistente financiero con 16 capacidades (Groq Llama 3.3 70B) |
