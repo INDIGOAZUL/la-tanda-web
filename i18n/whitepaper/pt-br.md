@@ -9,7 +9,7 @@ La Tanda
 
 Whitepaper Técnico v2.0
 
-Fevereiro 2026 \| Ray-Banks LLC
+Fevereiro 2026 (roadmap e staking atualizados em setembro de 2026) \| Ray-Banks LLC
 
 ## Conteúdo
 
@@ -184,9 +184,9 @@ Round estão sujeitos a cliff e vesting, protegendo o preço pós-TGE.
 
 ## 5.4 Sustentabilidade Pós-Staking Pool
 
-O pool **Staking e Validadores** (40M LTD, 20% do supply) está
-projetado para sustentar o APY de validadores durante aproximadamente 8 
-anos de distribuição programada. Dado que LTD possui **supply fixo de 
+O pool **Staking e Validadores** (40M LTD, 20% do supply) financia as recompensas
+de validadores por meio de distribuição programada (sem número de
+rendimento publicado; ver 8.4). Dado que LTD possui **supply fixo de 
 200M sem inflação**, quando esse pool se esgotar, a rede deverá sustentar a
 segurança por meio de mecanismos alternativos. Diferentemente de Bitcoin (que 
 depende exclusivamente de fees de transação post block-subsidy), La 
@@ -247,7 +247,6 @@ necessário — algo impossível no Bitcoin.
 Sistema ML para predições de "La Diaria" Honduras:
 
 -   Modelos XGBoost por horário (11am, 3pm, 9pm)
--   42% de precisão Top-1 (42x melhor que aleatório)
 -   Sistema freemium (Grátis/Premium/Diamante)
 -   Gamificação: logros, pontos, rankings
 
@@ -496,15 +495,16 @@ Staking em um validador = delegação econômica explícita de longo prazo.
 LTD existe atualmente como ERC20 na Polygon Amoy testnet. A migração
 para token nativo da La Tanda Chain segue esta rota:
 
-1.  **Testnet Ativa (Q1-Q2 2026):** La Tanda Chain testnet em       
-    produção com 10+ validadores, governança on-chain, testnet       
-    incentivada (ver 8.3.1)
-2.  **Seed Round + Equipe (Q2-Q3 2026):** Fechamento da rodada seed,
-    contratação da equipe core, auditoria de segurança
-3.  **Mainnet Launch + TGE (Q1-Q2 2027):** Mainnet lançada como chain
-    nova com genesis independente, Token Generation Event, primeiro
-    listing DEX, IBC habilitado
-4.  **Expansão (Q3-Q4 2027):** CEX listing, expansão regional
+1.  **Testnet Ativa (2026, em andamento):** La Tanda Chain testnet
+    (`latanda-testnet-1`) produzindo blocos desde fevereiro de 2026, com
+    validadores ativos, governança on-chain e testnet incentivada (ver
+    8.3.1)
+2.  **Rodada formal + Equipe (data a definir):** rodada de investimento
+    após constituir a C-Corp em Delaware, contratação da equipe core,
+    auditoria de segurança
+3.  **Mainnet + TGE (meta interna Q1-2027, não é compromisso):** Mainnet lançada como chain
+    nova com genesis independente, Token Generation Event, IBC habilitado
+4.  **Expansão (sem data comprometida):** expansão regional
     (Guatemala, El Salvador), módulos nativos ativos
 
 ### 8.3.1 Estratégia Testnet → Mainnet
@@ -557,10 +557,10 @@ real.
 | Assinaturas de loteria            | Tesouraria 70% \| Oráculos 20%     \| Burn 10%     |
 | Fees de bridge (0.1%)               | Validadores 60% \| Tesouraria   30% \| Burn 10%  |
 
-**APY estimado:** Validadores 15-25% \| Delegadores 10-20% (varia segundo
-a comissão do validador e a atividade da rede). Fonte: fees de
-transação + distribuição programada do treasury pré-mintado (40M LTD
-alocados para staking/validadores). Sem inflação — supply fixo de
+**Recompensas de staking:** sem número de rendimento publicado; variam
+conforme a comissão do validador e a atividade da rede e não são
+garantidas. Fonte: fees de transação + distribuição programada do
+treasury pré-mintado (40M LTD alocados para staking/validadores). Sem inflação — supply fixo de
 200M.
 
 ## 8.5 Interoperabilidade
@@ -575,15 +575,15 @@ alocados para staking/validadores). Sem inflação — supply fixo de
 ## 8.6 Segurança da Cadeia
 
 -   **Consenso:** CometBFT tolera \<1/3 validadores bizantinos.
-    Finalidade de 5 segundos
+    Finalidade de ~5-6 segundos
 -   **Staking:** Delegação do projeto durante testnet. Mainnet       
     exigirá stake significativo como desincentivo econômico
 -   **Bridge:** Verificação light client IBC (sem intermediários). Rate
     limit: max 1M LTD/24h. Pausa de emergência via governança
 -   **Privacidade:** Montantes on-chain visíveis apenas para participantes 
     e validadores designados. ZK-SNARKs planejados para Fase 4
--   **Auditorias:** Smart contracts e módulos auditados por 2+ firmas
-    independentes antes de cada fase
+-   **Auditorias:** Smart contracts e módulos serão auditados por firmas externas
+    antes da mainnet (planejado)
 
 # 9. Roadmap Integral
 
@@ -592,45 +592,64 @@ alocados para staking/validadores). Sem inflação — supply fixo de
 -   Infraestrutura core e API (140+ endpoints)
 -   Sistema de tandas com WebSocket e loterias comunitárias ao vivo
 -   LTD Token na Polygon Amoy (ERC20)
--   Preditor de loteria com ML (XGBoost, 42% precisão)
+-   Preditor de loteria com ML (XGBoost)
 -   Sistema de mineração, gamificação e mercado
 -   MIA — assistente financeiro de IA
 
-## Q1-Q2 2026 — Plataforma
+## 2026 — Plataforma (em produção)
 
--   OAuth (Google, Apple, Telegram)
--   Integração de pagamentos (Stripe)
--   App móvel (React Native)
--   Auditoria de smart contracts
--   Hash anchors de pagamentos (SHA-256 para futura migração on-chain)
--   Sistema de reputação na plataforma
+-   Registro de tandas: aportes e pagamentos de turno registrados na
+    plataforma e confirmados pela coordenadora (em 24-set-2026: 4 tandas criadas,
+    3 com pagamentos de turno concluídos; 44 pagamentos de turno concluídos)
+-   84 usuários registrados em 24-set-2026 (conta criada; não
+    verificados por KYC)
+-   Login com Google e recuperação de conta
+-   Chat de grupo em tempo real
+-   Equipes e jornadas para negócios: escala da equipe, jornadas
+    abertas, lembretes e registro de presença
+-   Agenda de horários para serviços: disponibilidade, remarcação,
+    lembretes e convites de calendário
+-   Suíte de negócios gratuita (Mi Negocio): faturamento, relatórios,
+    despesas e gerador de documentos
+-   MIA, assistente de IA (web e Telegram)
 
-## Q1-Q2 2026 — Testnet Ativa (em progresso)
+## 2026 — Testnet Ativa (em andamento)
 
--   La Tanda Chain testnet com 10+ validadores (validators) ativos
+-   La Tanda Chain testnet (`latanda-testnet-1`) produzindo blocos
+    desde o genesis de fevereiro de 2026: mais de 3,2 milhões de blocos
+    em 24-set-2026
+-   48 validadores registrados na chain, 36 deles no conjunto ativo
+    (em 24-set-2026)
+-   Governança on-chain: 3 propostas aprovadas (GOV-001 a GOV-003,
+    mar-abr 2026)
 -   Testnet incentivada com tiers de delegação (Validator 2K, Infra
     Partner 5K LTD)
--   Governança on-chain ativa (GOV-001, GOV-002 aprovadas)
 -   Bug bounty e grants para contribuidores
 -   Software de nó e documentação open-source
 
-## Q2-Q3 2026 — Seed Round + Equipe
+## 2026 — Institucional
 
--   Fechamento da rodada seed ($500K, FDV $5M)
--   Contratação da equipe core (5 pessoas)
+-   Em conversa com o Hub de Inovação Financeira da CNBS (Honduras),
+    setembro de 2026
+-   C-Corp em Delaware: em preparação (ainda não constituída)
+-   Rodada formal de investimento: data a definir
+
+## Próximos passos (sem data comprometida)
+
 -   Auditoria de segurança (chain + plataforma)
--   25+ validadores em testnet
--   Dual-write: PostgreSQL + chain testnet em paralelo
+-   Contratação da equipe core
+-   App móvel
+-   Hash anchors de pagamentos (SHA-256 para futura migração on-chain)
+    e dual-write PostgreSQL + chain testnet
 
-## Q1-Q2 2027 — Mainnet Launch + TGE
+## Meta interna Q1-2027 (não é compromisso) — Mainnet + TGE
 
 -   Migração de testnet para mainnet
 -   Token Generation Event (TGE — 10M LTD circulante)
--   Primeiro listing DEX (Osmosis ou similar)
 -   IBC habilitado, staking de delegadores aberto
 -   A chain se torna a fonte da verdade
 
-## Q3-Q4 2027 — Expansão
+## Expansão (sem data comprometida)
 
 -   50 validadores ativos em 10+ países
 -   SDK da La Tanda para desenvolvedores terceiros
@@ -721,6 +740,16 @@ aconselhamento financeiro, legal ou de investimento. Os tokens LTD
 atualmente operam em testnet e não têm valor monetário. Investir em
 criptomoedas envolve riscos significativos. Consulte          
 profissionais antes de tomar decisões financeiras.
+
+### Histórico de versões
+
+*Setembro de 2026:* esta versão substitui as anteriores. As versões
+anteriores incluíam uma estimativa de rendimento (APY) para staking;
+essa estimativa foi retirada e não se aplica mais. Enquanto a rede
+estiver em testnet, não publicamos números de rendimento: as
+recompensas de staking dependerão da comissão do validador e da
+atividade da rede, e não são garantidas. O roadmap (seção 9) foi
+atualizado com o estado em setembro de 2026.
 
 2024-2026 Ray-Banks LLC. Todos os direitos reservados.
 

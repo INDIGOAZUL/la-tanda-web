@@ -9,7 +9,7 @@ La Tanda
 
 Whitepaper Teknis v2.0
 
-Februari 2026 \| Ray-Banks LLC
+Februari 2026 (roadmap dan staking diperbarui September 2026) \| Ray-Banks LLC
 
 ## Contenido
 
@@ -185,8 +185,9 @@ tunduk pada cliff dan vesting, melindungi harga pasca-TGE.
 ## 5.4 Keberlanjutan Pasca-Staking Pool
 
 Pool **Staking dan Validator** (40M LTD, 20% dari supply) 
-dirancang untuk menopang APY validator selama sekitar 8 
-tahun distribusi terjadwal. Karena LTD memiliki **supply tetap 
+mendanai imbalan validator
+melalui distribusi terjadwal (tanpa angka imbal hasil yang
+dipublikasikan; lihat 8.4). Karena LTD memiliki **supply tetap 
 200M tanpa inflasi**, ketika pool ini habis, jaringan harus menopang 
 keamanan melalui mekanisme alternatif. Berbeda dengan Bitcoin 
 (yang hanya bergantung pada biaya transaksi pasca block-subsidy), La 
@@ -247,7 +248,6 @@ jika diperlukan — sesuatu yang mustahil di Bitcoin.
 Sistem ML untuk prediksi "La Diaria" Honduras:
 
 -   Model XGBoost per jadwal (11am, 3pm, 9pm)
--   Presisi Top-1 42% (42x lebih baik dari acak)
 -   Sistem freemium (Gratis/Premium/Diamante)
 -   Gamifikasi: pencapaian, poin, peringkat
 
@@ -496,15 +496,16 @@ Staking ke validator = delegasi ekonomi eksplisit jangka panjang.
 LTD saat ini ada sebagai ERC20 di Polygon Amoy testnet. Migrasi 
 ke token asli La Tanda Chain mengikuti rute ini:
 
-1.  **Testnet Aktif (Q1-Q2 2026):** La Tanda Chain testnet 
-beroperasi dengan 10+ validator, tata kelola on-chain, testnet 
-berinsentif (lihat 8.3.1)
-2.  **Seed Round + Tim (Q2-Q3 2026):** Penutupan seed round, 
-perekrutan tim inti, audit keamanan
-3.  **Mainnet Launch + TGE (Q1-Q2 2027):** Mainnet diluncurkan sebagai chain baru 
-dengan genesis independen, Token Generation Event, listing 
-DEX pertama, IBC diaktifkan
-4.  **Ekspansi (Q3-Q4 2027):** Listing CEX, ekspansi regional 
+1.  **Testnet Aktif (2026, sedang berjalan):** La Tanda Chain testnet
+    (`latanda-testnet-1`) memproduksi blok sejak Februari 2026, dengan
+    validator aktif, tata kelola on-chain, dan testnet berinsentif
+    (lihat 8.3.1)
+2.  **Putaran pendanaan formal + Tim (tanggal belum ditentukan):**
+    putaran investasi setelah pembentukan C-Corp di Delaware, perekrutan
+    tim inti, audit keamanan
+3.  **Mainnet + TGE (target internal Q1-2027, bukan komitmen):** Mainnet diluncurkan sebagai chain baru 
+dengan genesis independen, Token Generation Event, IBC diaktifkan
+4.  **Ekspansi (tanpa tanggal yang dijanjikan):** ekspansi regional 
 (Guatemala, El Salvador), modul asli aktif
 
 ### 8.3.1 Strategi Testnet → Mainnet
@@ -557,10 +558,10 @@ nyata.
 | Langganan loteria                   | Treasury 70% \| Oracle 20% \| Burn 10%        |
 | Biaya bridge (0,1%)                 | Validator 60% \| Treasury 30% \| Burn 10%     |
 
-**APY estimasi:** Validator 15-25% \| Delegator 10-20% (berubah sesuai 
-komisi validator dan aktivitas jaringan). Sumber: biaya 
-transaksi + distribusi terjadwal dari treasury pra-minting (40M LTD 
-dialokasikan untuk staking/validator). Tanpa inflasi — supply tetap 
+**Imbalan staking:** tanpa angka imbal hasil yang dipublikasikan;
+bervariasi sesuai komisi validator dan aktivitas jaringan, dan tidak
+dijamin. Sumber: biaya transaksi + distribusi terjadwal dari treasury
+pra-minting (40M LTD dialokasikan untuk staking/validator). Tanpa inflasi — supply tetap 
 200M.
 
 ## 8.5 Interoperabilitas
@@ -575,15 +576,15 @@ dialokasikan untuk staking/validator). Tanpa inflasi — supply tetap
 ## 8.6 Keamanan Chain
 
 -   **Konsensus:** CometBFT mentolerir <1/3 validator Byzantine. 
-    Finality 5 detik
+    Finality ~5-6 detik
 -   **Staking:** Delegasi proyek selama testnet. Mainnet 
     akan memerlukan stake signifikan sebagai disinsentif ekonomi
 -   **Bridge:** Verifikasi light client IBC (tanpa perantara). Rate 
     limit: maks 1M LTD/24 jam. Pause darurat via tata kelola
 -   **Privasi:** Jumlah on-chain terlihat hanya untuk peserta dan 
     validator yang ditugaskan. ZK-SNARKs direncanakan untuk Fase 4
--   **Audit:** Smart contract dan modul diaudit oleh 2+ firma 
-    independen sebelum setiap fase
+-   **Audit:** Smart contract dan modul akan diaudit oleh firma eksternal
+    sebelum mainnet (direncanakan)
 
 # 9. Peta Jalan
 
@@ -592,45 +593,63 @@ dialokasikan untuk staking/validator). Tanpa inflasi — supply tetap
 -   Infrastruktur inti dan API (140+ endpoint)
 -   Sistem tanda dengan WebSocket dan tombola langsung
 -   Token LTD di Polygon Amoy (ERC20)
--   Predictor loteria dengan ML (XGBoost, presisi 42%)
+-   Predictor loteria dengan ML (XGBoost)
 -   Sistem mining, gamifikasi, dan marketplace
 -   MIA — asisten AI keuangan
 
-## Q1-Q2 2026 — Platform
+## 2026 — Platform (sudah berjalan)
 
--   OAuth (Google, Apple, Telegram)
--   Integrasi pembayaran (Stripe)
--   Aplikasi mobile (React Native)
--   Audit smart contract
--   Hash anchor pembayaran (SHA-256 untuk migrasi on-chain mendatang)
--   Sistem reputasi on-platform
+-   Pencatatan tanda: setoran dan pembayaran giliran dicatat di
+    platform dan dikonfirmasi oleh koordinator (per 24-Sep-2026: 4 tanda dibuat, 3
+    dengan pembayaran giliran selesai; 44 pembayaran giliran selesai)
+-   84 pengguna terdaftar per 24-Sep-2026 (akun dibuat; tidak
+    diverifikasi KYC)
+-   Masuk dengan Google dan pemulihan akun
+-   Chat grup real-time
+-   Tim dan jadwal kerja untuk usaha: jadwal tim, shift terbuka,
+    pengingat, dan pencatatan kehadiran
+-   Agenda janji temu untuk layanan: ketersediaan, penjadwalan ulang,
+    pengingat, dan undangan kalender
+-   Paket alat usaha gratis (Mi Negocio): faktur, laporan, pengeluaran,
+    dan pembuat dokumen
+-   MIA, asisten AI (web dan Telegram)
 
-## Q1-Q2 2026 — Testnet Aktif (sedang berjalan)
+## 2026 — Testnet Aktif (sedang berjalan)
 
--   La Tanda Chain testnet dengan 10+ validator aktif
--   Testnet berinsentif dengan tier delegasi (Validator 2K, Infra 
+-   La Tanda Chain testnet (`latanda-testnet-1`) memproduksi blok sejak
+    genesis Februari 2026: lebih dari 3,2 juta blok per 24-Sep-2026
+-   48 validator terdaftar di chain, 36 di antaranya dalam set aktif
+    (per 24-Sep-2026)
+-   Tata kelola on-chain: 3 proposal disetujui (GOV-001 sampai
+    GOV-003, Mar-Apr 2026)
+-   Testnet berinsentif dengan tier delegasi (Validator 2K, Infra
     Partner 5K LTD)
--   Tata kelola on-chain aktif (GOV-001, GOV-002 disetujui)
 -   Bug bounty dan grants untuk kontributor
 -   Perangkat lunak node dan dokumentasi open-source
 
-## Q2-Q3 2026 — Seed Round + Tim
+## 2026 — Kelembagaan
 
--   Penutupan seed round ($500K, FDV $5M)
--   Perekrutan tim inti (5 orang)
+-   Dalam pembicaraan dengan Hub Inovasi Keuangan CNBS (Honduras),
+    September 2026
+-   C-Corp di Delaware: dalam persiapan (belum dibentuk)
+-   Putaran pendanaan formal: tanggal belum ditentukan
+
+## Langkah berikutnya (tanpa tanggal yang dijanjikan)
+
 -   Audit keamanan (chain + platform)
--   25+ validator di testnet
--   Dual-write: PostgreSQL + chain testnet secara paralel
+-   Perekrutan tim inti
+-   Aplikasi mobile
+-   Hash anchor pembayaran (SHA-256 untuk migrasi on-chain mendatang)
+    dan dual-write PostgreSQL + chain testnet
 
-## Q1-Q2 2027 — Mainnet Launch + TGE
+## Target internal Q1-2027 (bukan komitmen) — Mainnet + TGE
 
 -   Migrasi dari testnet ke mainnet
 -   Token Generation Event (TGE — 10M LTD beredar)
--   Listing DEX pertama (Osmosis atau serupa)
 -   IBC diaktifkan, staking delegator dibuka
 -   Chain menjadi sumber kebenaran
 
-## Q3-Q4 2027 — Ekspansi
+## Ekspansi (tanpa tanggal yang dijanjikan)
 
 -   50 validator aktif di 10+ negara
 -   SDK La Tanda untuk developer pihak ketiga
@@ -721,6 +740,16 @@ nasihat keuangan, hukum, atau investasi. Token LTD saat ini
 beroperasi di testnet dan tidak memiliki nilai moneter. Investasi 
 dalam kriptocurrency melibatkan risiko signifikan. Konsultasikan 
 dengan profesional sebelum mengambil keputusan keuangan.
+
+### Riwayat versi
+
+*September 2026:* versi ini menggantikan versi sebelumnya. Versi
+sebelumnya memuat estimasi imbal hasil (APY) untuk staking; estimasi
+tersebut telah ditarik dan tidak berlaku lagi. Selama jaringan masih di
+testnet, kami tidak mempublikasikan angka imbal hasil: imbalan staking
+akan bergantung pada komisi validator dan aktivitas jaringan, dan tidak
+dijamin. Roadmap (bagian 9) diperbarui dengan kondisi per September
+2026.
 
 2024-2026 Ray-Banks LLC. Hak cipta dilindungi undang-undang.
 
