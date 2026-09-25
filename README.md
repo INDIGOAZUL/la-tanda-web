@@ -5,9 +5,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Chain](https://img.shields.io/badge/chain-latanda--testnet--1-00d4ff)](https://latanda.online/chain/)
-[![Supply](https://img.shields.io/badge/supply-200M%20LTD%20fixed-ffd700)](https://latanda.online/whitepaper.html)
-[![Inflation](https://img.shields.io/badge/inflation-0%25-22c55e)](https://latanda.online/whitepaper.html)
-[![Mainnet](https://img.shields.io/badge/mainnet-objetivo%20Q1--2027%20(no%20compromiso)-8b5cf6)](https://latanda.online/chain/)
+[![Genesis supply](https://img.shields.io/badge/genesis%20supply-200M%20LTD-ffd700)](https://latanda.online/whitepaper.html)
 
 **[English](#english) · [Español](#español)**
 
@@ -17,51 +15,49 @@
 
 # 🇬🇧 English
 
-This repository is the **public mirror** of the La Tanda frontend — the first sovereign Web3 ecosystem built in Honduras for Latin America.
+This repository is the **public mirror** of the La Tanda frontend — a sovereign Web3 ecosystem built in Honduras for Latin America.
 
 ## 🌐 What is La Tanda
 
-La Tanda is a **Web3 ecosystem with 7 integrated layers**, not a simple savings app. Tandas (rotating savings groups, ROSCAs) are ONE of the 7 layers. Think of it the way Amazon relates to e-commerce: much more than a cardboard box.
+La Tanda is a **Web3 ecosystem with 7 layers**. Savings groups (tandas / ROSCAs) are the core; the other layers build reputation and community around them.
 
 ### The 7 layers
 
 | # | Layer | What it does |
 |---|---|---|
-| 1 | 💬 **Social Network** | Feed, stories, comments, reactions. Your activity builds on-chain reputation. |
-| 2 | 🔄 **Digital Tandas** | Rotating savings groups, 0% commission, on-chain score, integrated lending |
-| 3 | 🛍️ **Web3 Marketplace** | Products, services, bookings. On-chain Seller Score. Pay in lempiras or LTD |
-| 4 | ⛏️ **LTD Mining** | 5 tiers (1–12 LTD/day), global cap 500 LTD/day, rewarded for real activity (testnet LTD, no monetary value) |
-| 5 | ⭐ **On-Chain Reputation** | Unified financial score 300–850, portable across layers, anchored on-chain |
-| 6 | 🔗 **La Tanda Chain** | Sovereign blockchain, Cosmos SDK + CometBFT, 200M LTD fixed, 0% inflation |
-| 7 | 🤖 **MIA AI** | Financial assistant with 16 capabilities (Groq Llama 3.3 70B) |
+| 1 | 💬 **Social Network** | Feed, stories, comments, reactions. Your activity builds your reputation. |
+| 2 | 🔄 **Digital Tandas** | Record contributions, turns and payouts for your savings group. No fees charged to date. Members pay each other directly; La Tanda keeps the record. |
+| 3 | 🛍️ **Web3 Marketplace** | Listings, services and bookings from local sellers (early stage). Buyer and seller agree on payment directly. |
+| 4 | ⛏️ **LTD Mining** | Claim testnet LTD every day for real activity†. 5 tiers (base 1–12 LTD/day + streak bonus), global cap 500 LTD/day |
+| 5 | ⭐ **Reputation** | Reputation score from your payment history in groups, portable across layers. Stored off-chain today. Not a credit score. |
+| 6 | 🔗 **La Tanda Chain** | Sovereign blockchain, Cosmos SDK + CometBFT, 200M LTD genesis supply; inflation set by on-chain governance |
+| 7 | 🤖 **MIA AI** | AI assistant that helps you use La Tanda and understand your groups. Guidance only, not financial advice. |
 
 ## 📊 Current status (live on testnet)
 
-We are **early-stage and real**. These are the actual figures from our production database and the live chain, as of **2026-09-09** — not projections, not rounded up.
+We are **early-stage and real**. These are figures from our platform records and the live chain, as of **2026-09-25** — not projections, not rounded up.
 
-| Metric | Actual value |
+| Metric | Value (2026-09-25) |
 |---|---|
-| **Registered users** | **80** (of which **66** are email-verified) |
-| **Groups (tandas)** | **5** (3 with completed real-money payouts) |
-| **Completed payouts** | **41** (coordinator-confirmed with a transfer reference) |
-| **Contributions recorded** | **883** |
-| **Money cycled through tandas** | **L 1,652,100 HNL** collected (≈ **US$63,500**); **L 1,574,500** net to beneficiaries |
-| **Chain validators** | **36 bonded** (45 registered) |
-| **Chain height** | 3,058,040 (`latanda-testnet-1`) |
+| **Registered users** | **83** (**67** email-verified; none identity-verified) |
+| **Savings groups (tandas)** | **4** created — **3** active with completed payouts |
+| **Completed payouts** | **44**, recorded as completed by the group coordinator (paid off-platform, in cash or bank transfer) |
+| **Money recorded on the platform** | more than **L 1.5 million** (≈ **US$60,000**) recorded by coordinators as paid out to beneficiaries. No fees charged to date. |
+| **Chain validators** | **36 bonded** (48 registered) |
+| **Chain** | `latanda-testnet-1`, running since **2026-02-25**; height ~3.3M; average block time ~5.6 s |
 | **Governance proposals passed** | **3** |
-| **Testnet uptime since Q1 2026** | 100% (no consensus incidents) |
 
-**Every metric on this page is verifiable** against on-chain data or the public dev portal. We would rather you check.
+Chain figures are verifiable on-chain; group figures are platform records, published live at the endpoint below.
 
-**Live figures: https://latanda.online/api/public/metrics** (same query for every surface, 5-minute cache; the table above is a dated snapshot of that endpoint).
+**Live figures: https://latanda.online/api/public/metrics** (same query for every surface, 5-minute cache; the table above is a dated snapshot).
 
-**Why we publish numbers this small.** 80 registered users have cycled **≈US$63,500 (L 1,652,100)** of their own money through **41 completed payouts** in 3 groups — that is real retention, real money, and a fully working 7-layer product with a sovereign chain, 36 bonded validators and 3 passed governance proposals behind it. Those are the hard parts. Growth is the easy part, and we would rather earn it than claim it.
+**Why we publish numbers this small.** The members of 3 real savings groups have recorded more than **L 1.5 million** in **44 completed payouts** on La Tanda: real people, their own savings, moved among themselves off-platform and recorded here. The chain behind it has **36 bonded validators** and **3 passed governance proposals**. That is the hard part. We would rather earn growth than claim it.
 
-> **A note on how we count users.** "Registered" means an account exists; "email-verified" means its email is confirmed. Neither means identity-verified or KYC'd — we do **not** currently run KYC on end users (the platform never holds the group's money — payments settle off-platform today; identity verification is a pre-mainnet workstream). We will never describe these users as "verified users" or "KYC'd users", and neither should anyone citing us.
+> **How we count users.** "Registered" = an account exists; "email-verified" = its email is confirmed. Neither means identity-verified or KYC'd. La Tanda does not run KYC today; if payments ever move through the app, identity checks will be run by the licensed payment partner.
 
-## 💎 Tokenomics (200M LTD fixed)
+## 💎 Tokenomics (200M LTD genesis supply)
 
-**Model**: fixed supply + pre-minted treasury (similar to THORChain), **zero real inflation**.
+**Model**: fixed genesis supply + pre-minted treasury (similar to THORChain). Inflation is a governance parameter: the testnet currently runs 5% (GOV-003); the mainnet design is 0%.
 
 ### Distribution (10 pools)
 
@@ -72,14 +68,14 @@ We are **early-stage and real**. These are the actual figures from our productio
 | Development Fund | 12% | 24M LTD | 6-month cliff + 3-year linear |
 | Team & Founders | 12% | 24M LTD | 1-year cliff + 2-year linear |
 | Marketing & Partnerships | 6% | 12M LTD | Quarterly, milestone-based |
-| Seed Round | 5% | 10M LTD | $0.02/LTD, 6mo cliff + 18mo linear |
-| Strategic / Private | 5% | 10M LTD | $0.03/LTD, 3mo cliff + 12mo linear |
-| Initial TGE Liquidity | 5% | 10M LTD | DEX pools + listings |
+| Early supporters (private) | 5% | 10M LTD | Private agreements, not offered to the public; vesting applies |
+| Strategic partners (private) | 5% | 10M LTD | Private agreements, not offered to the public; vesting applies |
+| Liquidity reserve | 5% | 10M LTD | Reserved for mainnet, if and when launched |
 | Bug Bounties & Grants | 3% | 6M LTD | Via governance |
 | Insurance Fund | 2% | 4M LTD | Emergency governance vote |
 | **TOTAL** | **100%** | **200M LTD** | |
 
-**Post-staking-pool sustainability** (after year 8): 6 redundant sources, including **marketplace commission routing (0.5% of GMV → validators)** — a revenue stream that pure store-of-value chains do not have.
+**Long-term design** (after year 8): six funding sources for network security are described in the whitepaper. Design only; subject to governance and legal review.
 
 Full tokenomics: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Interactive page](https://latanda.online/ltd-token-economics.html)
 
@@ -90,23 +86,25 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 - **Chain ID (testnet)**: `latanda-testnet-1`
 - **Token**: LTD (denom `ultd`, 1 LTD = 1,000,000 ultd)
 - **Address prefix**: `ltd`
-- **Block time**: ~5 seconds
+- **Block time**: ~5.6 seconds (measured average)
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validators**: **36 bonded / 45 registered** (2026-09-09; live count at https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, + community
+- **Validators**: **36 bonded / 48 registered** (2026-09-25; live count at https://latanda.online/api/public/metrics; full list in the explorer below)
 - **Governance**: active, 3 proposals passed
 - **Mainnet**: internal target **Q1-2027**, conditional on legal counsel; not a commitment
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
 ### Incentivized Testnet Program
 
-~100K LTD reserved for validators who join before mainnet:
+Validators and node operators who join before mainnet are eligible for an allocation under the program rules*.
 
-| Tier | Slots | Reward at genesis |
+| Tier | Slots | Target allocation* |
 |---|---|---|
-| Infra Partner | 5 (4 taken) | 5,000 LTD |
+| Infra Partner | 5 | 5,000 LTD |
 | Validator | 10 | 2,000 LTD |
 | Full Node | 20 | 500 LTD |
 | Bug Reporter | open | 100–1,000 LTD |
+
+<sub>* Targets, not guarantees. Final allocations follow the published program rules (snapshot, uptime, anti-fraud review) and legal review before mainnet.</sub>
 
 **How to join**: [Node Operator Guide](./chain/la-tanda-chain-node-guide.md) · [Beginner's Guide](./chain/la-tanda-node-beginner-guide.md) · [latanda.online/chain](https://latanda.online/chain/)
 
@@ -128,7 +126,7 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 1. Read the guide: [chain/la-tanda-chain-node-guide.md](https://latanda.online/chain/la-tanda-chain-node-guide.md) (new to node operation? start with the [beginner's guide](https://latanda.online/chain/la-tanda-node-beginner-guide.md))
 2. One-line install: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
 3. Chain page with seeds: https://latanda.online/chain/
-4. Join the Incentivized Testnet Program by sending 10 testnet LTD + a create-validator tx
+4. Get 10 testnet LTD from the Discord faucet, create your validator, then run `!verify` in [Discord](https://discord.gg/Ve9M2ZSYC2) to join the Incentivized Testnet Program
 
 ## 🛠️ Development Setup
 
@@ -150,7 +148,7 @@ The pages talk to the **live production API** at `https://latanda.online`; there
 
 ```
 la-tanda-web/
-├── *.html                  # ~60 ecosystem pages, served as-is
+├── *.html                  # ~55 ecosystem pages, served as-is
 ├── *.js                    # Root-level browser scripts — these are the ones
 │                           #   the HTML pages actually load (no build step)
 ├── css/                    # Stylesheets (design tokens, components, modules)
@@ -190,7 +188,7 @@ A bot (`pr-gatekeeper.yml`) **automatically closes** pull requests that referenc
 
 We **no longer run open-ended Tier-0 bounties**. Work is scoped and assigned to one contributor, with a named reviewer.
 
-**Want to be assigned real, paid work?** Join us on **[Discord](https://discord.gg/Ve9M2ZSYC2)** and say hello. That is the fastest way to get scoped and assigned.
+**Want scoped work assigned to you?** Join us on **[Discord](https://discord.gg/Ve9M2ZSYC2)** and say hello. That is the fastest way to get scoped and assigned.
 
 ## 📚 Resources
 
@@ -227,10 +225,9 @@ Open source, free to use with attribution. The marks "La Tanda" and "La Tanda Ch
 
 La Tanda is operated by **Ray-Banks LLC**. More at [raybanks.org](https://raybanks.org).
 
-This repository is a public mirror of the frontend. The code is released for transparency and community contribution. It does not constitute an offer of securities or financial advice.
+La Tanda is not a bank and does not lend money. It does not hold, move or guarantee group funds: members pay each other directly and La Tanda keeps the record. Figures on this page come from platform records and are not audited. This repository is a public mirror of the frontend, released for transparency and community contribution; nothing here is an offer of securities or financial advice.
 
-<sub>\* Staking rewards have no published yield figure: they will depend on the validator's commission and network activity, and are not guaranteed.<br>
-**Version history — September 2026:** This version supersedes earlier ones. Previous versions included a staking yield (APY) estimate; that estimate has been withdrawn and no longer applies. While the network is on testnet we do not publish yield figures: staking rewards will depend on the validator's commission and network activity, and are not guaranteed.</sub>
+<sub>† LTD is currently a testnet token: it has no monetary value and cannot be bought, sold or exchanged for money. Any future mainnet allocation is not guaranteed and will follow published rules. \* Staking rewards have no published yield figure; they depend on validator commission and network activity and are not guaranteed. Earlier versions of this page showed a staking APY estimate and seed-round prices; both were withdrawn in September 2026.</sub>
 
 ---
 
@@ -238,51 +235,49 @@ This repository is a public mirror of the frontend. The code is released for tra
 
 # 🇭🇳 Español
 
-Este repositorio es el **mirror público** del frontend de La Tanda, el primer ecosistema Web3 soberano construido en Honduras para Latinoamérica.
+Este repositorio es el **mirror público** del frontend de La Tanda, un ecosistema Web3 soberano construido en Honduras para Latinoamérica.
 
 ## 🌐 Qué es La Tanda
 
-La Tanda es un **ecosistema Web3 con 7 capas integradas**, no una simple app de tandas. Las tandas (grupos de ahorro rotativo ROSCA) son UNA de las 7 capas. Piénsalo como Amazon al e-commerce: mucho más que una caja de cartón.
+La Tanda es un **ecosistema Web3 de 7 capas**. Las tandas (grupos de ahorro rotativo) son el centro; las demás capas construyen reputación y comunidad alrededor de ellas.
 
 ### Las 7 capas del ecosistema
 
 | # | Capa | Qué hace |
 |---|---|---|
-| 1 | 💬 **Red Social** | Feed, stories, comentarios, reacciones. Tu tiempo genera reputación on-chain. |
-| 2 | 🔄 **Tandas Digitales** | Grupos de ahorro rotativo 0% comisión, score on-chain, préstamos integrados |
-| 3 | 🛍️ **Marketplace Web3** | Productos, servicios, bookings. Seller Score on-chain. Pagos en lempiras o LTD |
-| 4 | ⛏️ **Minería de LTD** | 5 tiers (1-12 LTD/día), cap 500 LTD/día global, se suma por actividad real (LTD de testnet, sin valor monetario) |
-| 5 | ⭐ **Reputación On-Chain** | Score financiero unificado 300-850, portable entre capas, anclado en blockchain |
-| 6 | 🔗 **La Tanda Chain** | Blockchain soberana Cosmos SDK + CometBFT, 200M LTD fijo, 0% inflación |
-| 7 | 🤖 **MIA AI** | Asistente financiero con 16 capacidades (Groq Llama 3.3 70B) |
+| 1 | 💬 **Red Social** | Feed, stories, comentarios, reacciones. Tu actividad construye tu reputación. |
+| 2 | 🔄 **Tandas Digitales** | Registra aportes, turnos y pagos de tu grupo de ahorro. Sin comisiones cobradas a la fecha. Los miembros se pagan entre ellos; La Tanda lleva el registro. |
+| 3 | 🛍️ **Marketplace Web3** | Publicaciones, servicios y reservas de vendedores locales (etapa temprana). Comprador y vendedor acuerdan el pago directamente. |
+| 4 | ⛏️ **Minería de LTD** | Reclama LTD de testnet cada día por tu actividad real†. 5 niveles (base 1-12 LTD/día + bono por racha), tope global 500 LTD/día |
+| 5 | ⭐ **Reputación** | Puntaje de reputación según tu historial de pagos en grupos, portable entre capas. Hoy se guarda fuera de la cadena. No es un puntaje de crédito. |
+| 6 | 🔗 **La Tanda Chain** | Blockchain soberana Cosmos SDK + CometBFT, 200M LTD de suministro inicial; inflación definida por gobernanza on-chain |
+| 7 | 🤖 **MIA AI** | Asistente con IA que te ayuda a usar La Tanda y entender tus grupos. Orientación, no asesoría financiera. |
 
 ## 📊 Estado actual (live en testnet)
 
-Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra base de datos de producción y del chain en vivo, al **2026-09-09** — no son proyecciones, y no están redondeadas hacia arriba.
+Estamos **en etapa temprana, y es real**. Estas son cifras de los registros de la plataforma y del chain en vivo, al **2026-09-25** — no son proyecciones, y no están redondeadas hacia arriba.
 
-| Métrica | Valor real |
+| Métrica | Valor (2026-09-25) |
 |---|---|
-| **Usuarios registrados** | **80** (de los cuales **66** tienen email verificado) |
-| **Grupos (tandas)** | **5** (3 con pagos reales completados) |
-| **Pagos completados** | **41** (confirmados por el coordinador con referencia de transferencia) |
-| **Aportaciones registradas** | **883** |
-| **Dinero ciclado en tandas** | **L 1,652,100 HNL** recaudados (≈ **US$63,500**); **L 1,574,500** netos a beneficiarios |
-| **Validadores del chain** | **36 bonded** (45 registrados) |
-| **Altura del chain** | 3,058,040 (`latanda-testnet-1`) |
-| **Propuestas de gobernanza pasadas** | **3** |
-| **Uptime testnet desde Q1 2026** | 100% (sin incidentes de consenso) |
+| **Usuarios registrados** | **83** (**67** con email verificado; ninguno con identidad verificada) |
+| **Tandas (grupos de ahorro)** | **4** creadas — **3** activas con pagos completados |
+| **Pagos completados** | **44**, registrados como completados por el coordinador del grupo (pagados fuera de la plataforma, en efectivo o transferencia) |
+| **Dinero registrado en la plataforma** | más de **L 1.5 millones** (≈ **US$60,000**) registrados por los coordinadores como entregados a beneficiarios. Sin comisiones cobradas a la fecha. |
+| **Validadores del chain** | **36 bonded** (48 registrados) |
+| **Chain** | `latanda-testnet-1`, en marcha desde el **2026-02-25**; altura ~3.3M; tiempo de bloque promedio ~5.6 s |
+| **Propuestas de gobernanza aprobadas** | **3** |
 
-**Toda métrica de esta página es verificable** contra datos on-chain o el dev portal público. Preferimos que la compruebes.
+Las cifras de la cadena se verifican on-chain; las de grupos son registros de la plataforma, publicados en vivo en el endpoint de abajo.
 
-**Cifras en vivo: https://latanda.online/api/public/metrics** (la misma consulta para toda superficie, caché de 5 minutos; la tabla de arriba es una foto fechada de ese endpoint).
+**Cifras en vivo: https://latanda.online/api/public/metrics** (la misma consulta para toda superficie, caché de 5 minutos; la tabla de arriba es una foto fechada).
 
-**Por qué publicamos números tan pequeños.** 80 usuarios registrados han ciclado **≈US$63,500 (L 1,652,100)** de su propio dinero en **41 pagos completados** en 3 grupos — eso es retención real, dinero real, y un producto de 7 capas funcionando, con chain soberana, 36 validadores bonded y 3 propuestas de gobernanza aprobadas detrás. Esa es la parte difícil. Crecer es la parte fácil, y preferimos ganárnoslo a inventarlo.
+**Por qué publicamos números tan pequeños.** Los miembros de 3 grupos de ahorro reales han registrado más de **L 1.5 millones** en **44 pagos completados** en La Tanda: gente real, con sus propios ahorros, moviéndolos entre ellos fuera de la plataforma y registrándolos aquí. Detrás hay una cadena con **36 validadores bonded** y **3 propuestas de gobernanza aprobadas**. Esa es la parte difícil. Preferimos ganarnos el crecimiento a inventarlo.
 
-> **Nota sobre cómo contamos usuarios.** "Registrado" significa que la cuenta existe; "email verificado" significa que su correo está confirmado. Ninguno de los dos significa identidad verificada ni KYC — hoy **no** hacemos KYC a los usuarios finales (la plataforma nunca retiene el dinero del grupo — hoy los pagos se liquidan fuera de la plataforma; la verificación de identidad es un workstream previo al mainnet). Nunca describimos a estos usuarios como "usuarios verificados" ni "usuarios con KYC".
+> **Cómo contamos usuarios.** "Registrado" = la cuenta existe; "email verificado" = su correo está confirmado. Ninguno significa identidad verificada ni KYC. Hoy La Tanda no hace KYC; si algún día los pagos pasan por la app, la verificación de identidad la hará el socio de pagos con licencia.
 
-## 💎 Tokenomics (200M LTD fijo)
+## 💎 Tokenomics (200M LTD de suministro inicial)
 
-**Modelo**: Supply fijo + Treasury pre-acuñado (similar a THORChain), **cero inflación real**.
+**Modelo**: suministro inicial fijo + tesorería pre-acuñada (similar a THORChain). La inflación es un parámetro de gobernanza: el testnet corre hoy con 5% (GOV-003); el diseño de mainnet es 0%.
 
 ### Distribución (10 pools)
 
@@ -293,14 +288,14 @@ Estamos **en etapa temprana, y es real**. Estas son las cifras reales de nuestra
 | Fondo de Desarrollo | 12% | 24M LTD | 6 meses cliff + 3 años linear |
 | Equipo y Fundadores | 12% | 24M LTD | 1 año cliff + 2 años linear |
 | Marketing y Alianzas | 6% | 12M LTD | Trimestral por hitos |
-| Seed Round | 5% | 10M LTD | $0.02/LTD, 6mo cliff + 18mo linear |
-| Strategic / Private | 5% | 10M LTD | $0.03/LTD, 3mo cliff + 12mo linear |
-| Liquidez Inicial TGE | 5% | 10M LTD | DEX pools + listings |
+| Apoyos tempranos (privado) | 5% | 10M LTD | Acuerdos privados, no se ofrecen al público; con vesting |
+| Socios estratégicos (privado) | 5% | 10M LTD | Acuerdos privados, no se ofrecen al público; con vesting |
+| Reserva de liquidez | 5% | 10M LTD | Reservada para mainnet, si y cuando se lance |
 | Bug Bounties y Grants | 3% | 6M LTD | Via governance |
 | Fondo de Seguro | 2% | 4M LTD | Emergency governance vote |
 | **TOTAL** | **100%** | **200M LTD** | |
 
-**Post-Staking-Pool sustainability** (post año 8): 6 fuentes redundantes incluyendo **marketplace commission routing (0.5% GMV → validadores)** — un revenue stream único vs cadenas pure store-of-value.
+**Diseño a largo plazo** (después del año 8): el whitepaper describe seis fuentes para financiar la seguridad de la red. Solo diseño; sujeto a gobernanza y revisión legal.
 
 Tokenomics completa: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
 
@@ -311,23 +306,25 @@ Blockchain soberana construida con **Cosmos SDK + CometBFT**, específicamente d
 - **Chain ID (testnet)**: `latanda-testnet-1`
 - **Token**: LTD (denom `ultd`, 1 LTD = 1,000,000 ultd)
 - **Address prefix**: `ltd`
-- **Block time**: ~5 segundos
+- **Block time**: ~5.6 segundos (promedio medido)
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validadores**: **36 bonded / 45 registrados** (2026-09-09; conteo en vivo en https://latanda.online/api/public/metrics) — genesis, PRO Delegators, drops, UTSA/lesnik, OwlStake, StakerHouse, ANODE.TEAM, AlxVoy, VALIDARIOS, narkosha, oleg1, +community
+- **Validadores**: **36 bonded / 48 registrados** (2026-09-25; conteo en vivo en https://latanda.online/api/public/metrics; lista completa en el explorer de abajo)
 - **Governance**: activa, 3 propuestas pasadas
 - **Mainnet**: objetivo interno Q1-2027, condicionado a asesoría legal; no es compromiso
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
 ### Incentivized Testnet Program
 
-Reservados ~100K LTD para validadores que se suman antes del mainnet:
+Los validadores y operadores de nodo que se sumen antes del mainnet son elegibles para una asignación según las reglas del programa*.
 
-| Tier | Slots | Reward al genesis |
+| Tier | Slots | Asignación objetivo* |
 |---|---|---|
-| Infra Partner | 5 (4 ocupados) | 5,000 LTD |
+| Infra Partner | 5 | 5,000 LTD |
 | Validator | 10 | 2,000 LTD |
 | Full Node | 20 | 500 LTD |
 | Bug Reporter | abierto | 100-1,000 LTD |
+
+<sub>* Montos objetivo, no garantizados. La asignación final sigue las reglas publicadas del programa (snapshot, uptime, revisión antifraude) y revisión legal antes del mainnet.</sub>
 
 **Cómo sumarte**: [Guía de Node Operator](./chain/la-tanda-chain-node-guide.md) · [Guía para principiantes](./chain/la-tanda-node-beginner-guide.md) · [latanda.online/chain](https://latanda.online/chain/)
 
@@ -349,7 +346,7 @@ Reservados ~100K LTD para validadores que se suman antes del mainnet:
 1. Lee la guía: [chain/la-tanda-chain-node-guide.md](https://latanda.online/chain/la-tanda-chain-node-guide.md) (¿primera vez? empieza por la [guía para principiantes](https://latanda.online/chain/la-tanda-node-beginner-guide.md))
 2. Instalación one-line: `wget -q https://latanda.online/chain/node-setup.sh -O node-setup.sh && chmod +x node-setup.sh && ./node-setup.sh`
 3. Chain page con seeds: https://latanda.online/chain/
-4. Únete al Incentivized Testnet Program enviando 10 LTD testnet + create-validator tx
+4. Pide 10 LTD de testnet al faucet de Discord, crea tu validador y ejecuta `!verify` en [Discord](https://discord.gg/Ve9M2ZSYC2) para sumarte al Incentivized Testnet Program
 
 ## 🛠️ Entorno de desarrollo
 
@@ -371,7 +368,7 @@ Las páginas hablan con la **API de producción** en `https://latanda.online`; e
 
 ```
 la-tanda-web/
-├── *.html                  # ~60 páginas del ecosistema, servidas tal cual
+├── *.html                  # ~55 páginas del ecosistema, servidas tal cual
 ├── *.js                    # Scripts de navegador en la raíz — estos son los que
 │                           #   las páginas HTML realmente cargan (sin build)
 ├── css/                    # Estilos (design tokens, components, modules)
@@ -410,7 +407,7 @@ Un bot (`pr-gatekeeper.yml`) **cierra automáticamente** los pull requests que r
 
 **Ya no corremos bounties Tier-0 abiertos.** El trabajo se define y se asigna a un contribuidor, con un revisor con nombre y apellido.
 
-**¿Quieres que te asignemos trabajo real y pagado?** Pásate por **[Discord](https://discord.gg/Ve9M2ZSYC2)** y saluda. Es la vía más rápida para que te definamos y te asignemos una tarea.
+**¿Quieres que te asignemos una tarea definida?** Pásate por **[Discord](https://discord.gg/Ve9M2ZSYC2)** y saluda. Es la vía más rápida para que te definamos y te asignemos una tarea.
 
 ## 📚 Recursos
 
@@ -447,10 +444,9 @@ Código abierto, uso libre con atribución. Las marcas "La Tanda" y "La Tanda Ch
 
 La Tanda es operada por **Ray-Banks LLC**. Más información en [raybanks.org](https://raybanks.org).
 
-Este repositorio es un mirror público del frontend. El código está liberado para transparencia y contribuciones comunitarias. No constituye oferta de valores ni asesoramiento financiero.
+La Tanda no es un banco y no presta dinero. No guarda, no mueve ni garantiza el dinero de los grupos: los miembros se pagan entre ellos y La Tanda lleva el registro. Las cifras de esta página vienen de los registros de la plataforma y no están auditadas. Este repositorio es un mirror público del frontend, liberado para transparencia y contribuciones comunitarias; nada aquí es una oferta de valores ni asesoría financiera.
 
-<sub>\* Las recompensas de staking no tienen cifra de rendimiento publicada: dependerán de la comisión del validador y de la actividad de la red, y no están garantizadas.<br>
-**Historial de versiones — septiembre 2026:** Esta versión reemplaza a las anteriores. Las versiones previas incluían una estimación de rendimiento (APY) para staking; esa estimación fue retirada y ya no aplica. Mientras la red esté en testnet no publicamos cifras de rendimiento: las recompensas de staking dependerán de la comisión del validador y de la actividad de la red, y no están garantizadas.</sub>
+<sub>† LTD es hoy un token de testnet: no tiene valor monetario y no se puede comprar, vender ni cambiar por dinero. Una asignación futura en mainnet no está garantizada y seguirá reglas publicadas. \* Las recompensas de staking no tienen cifra de rendimiento publicada; dependen de la comisión del validador y de la actividad de la red, y no están garantizadas. Versiones anteriores de esta página mostraban una estimación de APY para staking y precios de ronda seed; ambos se retiraron en septiembre de 2026.</sub>
 
 ---
 
