@@ -2004,7 +2004,7 @@ class LaTandaWallet {
         const bankData = {
             atlantida: {
                 name: 'Banco Atlántida',
-                account: '30613012837',
+                account: 'CUENTA-RETIRADA',
                 accountName: 'La Tanda Web3 Platform',
                 swift: 'ATLAHNHN',
                 instructions: 'Realiza la transferencia y envía el comprobante a deposits@latanda.online'
@@ -11111,7 +11111,7 @@ function submitDeposit() {
         reference: reference,
         timestamp: new Date().toISOString(),
         status: 'pending_approval',
-        accountUsed: '30613012837',
+        accountUsed: 'CUENTA-RETIRADA',
         receiptFile: receiptFile,
         receiptId: receiptId  // Add the receipt ID from receiptManager
     };
