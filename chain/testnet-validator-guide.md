@@ -337,9 +337,10 @@ validator is running, complete the control-proof flow in Discord:
 4. Run for seven days without being jailed
 5. Sign the requested batch
 
-Successful operators receive a genesis delegation according to their approved
-tier: 500 LTD for a full node, 2,000 LTD for a validator, or 5,000 LTD for an
+Successful operators can be considered for a founder-signed delegation according
+to their approved tier: 2,000 LTD for a validator, or 5,000 LTD for an
 infrastructure partner that provides public RPC, API, and state-sync services.
+Delegations go to validators only, are decided case by case and are not automatic.
 Confirm the current program status with the team before broadcasting a
 transaction.
 
@@ -426,7 +427,7 @@ hand-copying the consensus public key:
 PUBKEY=$(latandad comet show-validator)
 jq -n --argjson pubkey "$PUBKEY" '{
   pubkey: $pubkey,
-  amount: "10000000ultd",
+  amount: "9000000ultd",
   moniker: "replace-with-your-validator-name",
   identity: "",
   website: "",

@@ -226,32 +226,42 @@ latandad tx bank send <from-key> <to-address> 1000000ultd \
 
 ---
 
-## Becoming a Validator (Phase 2+)
+## Becoming a Validator
 
-Once your full node is synced and running stable, you can apply to become a validator.
+Once your full node is synced and running stable, you can create a validator. The full, step-by-step operator guide (keyring, `validator.json`, control proofs) is [`testnet-validator-guide.md`](https://github.com/INDIGOAZUL/la-tanda-web/blob/main/chain/testnet-validator-guide.md).
 
-### Requirements
-- Node running with 99.5%+ uptime for at least 1 week
-- 50,000 LTD staked (testnet tokens — request from the La Tanda team)
-- KYC verification completed on La Tanda platform
+### How it works
+1. **Get testnet LTD from the Discord faucet.** Join the [La Tanda Discord](https://discord.gg/Ve9M2ZSYC2) and post your public `ltd1...` address in the validators channel. The auto-faucet sends **10 testnet LTD** (one claim per Discord user, subject to a daily faucet cap; your Discord account needs a member role in the server, such as Verified, and must be older than 3 days). Never share a recovery phrase or private key.
+2. **Create your validator** with a small self-delegation (see below). At least 1 LTD of self-delegation is needed to enter the active set.
+3. **Prove control in Discord:** `!register-validator <ltdvaloper...>`, then `!verify` (key-control proof), then `!verify-rdns <ip>` or `!verify-http <ip>` + `!verify-http-check` (infrastructure proof).
+4. **Run for 7 days without being jailed.** Check your checklist at any time with `!tier-status`.
+5. **Tier delegation.** When every item is complete you can be considered for a founder-signed delegation batch: 2,000 LTD (validator) or 5,000 LTD (infrastructure partner with public RPC/API/state-sync). Delegations go to validators only (a full node without a validator cannot receive one), are decided case by case and are not automatic; confirm the current program status with the team.
 
 ### Create Validator
 ```bash
-latandad tx staking create-validator \
-  --amount=50000000000ultd \
-  --pubkey=$(latandad comet show-validator) \
-  --moniker="your-validator-name" \
-  --chain-id=latanda-testnet-1 \
-  --commission-rate="0.10" \
-  --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01" \
-  --min-self-delegation="1" \
-  --keyring-backend=test \
-  --from=my-wallet \
-  --gas=auto \
-  --gas-adjustment=1.5 \
-  --fees=5000ultd
+PUBKEY=$(latandad comet show-validator)
+jq -n --argjson pubkey "$PUBKEY" '{
+  pubkey: $pubkey,
+  amount: "9000000ultd",
+  moniker: "your-validator-name",
+  identity: "", website: "", security: "",
+  details: "La Tanda testnet validator",
+  "commission-rate": "0.10",
+  "commission-max-rate": "0.20",
+  "commission-max-change-rate": "0.01",
+  "min-self-delegation": "1"
+}' > "$HOME/validator.json"
+
+latandad tx staking create-validator "$HOME/validator.json" \
+  --chain-id latanda-testnet-1 \
+  --from my-wallet \
+  --keyring-backend test \
+  --gas auto \
+  --gas-adjustment 1.5 \
+  --fees 5000ultd
 ```
+
+`9000000ultd` = 9 LTD self-delegation, which leaves room for fees out of the 10 LTD faucet grant.
 
 ### Monitor Validator
 ```bash
