@@ -1,400 +1,362 @@
 <!--
-Whitepaper La Tanda v2.0 — sumber kanon dalam Bahasa Indonesia.
-Diterjemahkan dari es.md.
-Tidak Perlu Di UBAH kecuali untuk sinkronisasi dengan sumber kanon.
-Terjemahan tersimpan dalam berkas-berkas terpisah: pt-br.md, en.md, dll.
+Whitepaper La Tanda v2.1 — terjemahan Bahasa Indonesia.
+Diterjemahkan dari es.md (sumber kanon berbahasa Spanyol), disinkronkan pada 2026-10-11 dengan v2.1.
+Terjemahan awal v2.0 oleh kontributor komunitas; struktur dan isi diselaraskan kembali dengan es.md v2.1.
+Jangan diubah kecuali untuk sinkronisasi dengan sumber kanon.
+Terjemahan tersimpan dalam berkas-berkas terpisah: pt-br.md, id.md, dll.
 -->
+
+Dokumen desain, tidak menggambarkan produk yang sedang beroperasi.
+Menyebut komponen yang tidak aktif (kontrak kustodi, modul rantai yang
+direncanakan) dan sebuah prototipe EVM yang sudah dihentikan; La Tanda
+tidak menyimpan dana pengguna dan tidak memberikan kredit.
 
 La Tanda
 
-Whitepaper Teknis v2.0
+Whitepaper Teknis v2.1
 
-Februari 2026 (roadmap dan staking diperbarui September 2026) \| Ray-Banks LLC
+Februari 2026 (diperbarui 11 Oktober 2026) \| Ray-Banks LLC
 
-## Contenido
+## Daftar Isi
 
--   [1. Ringkasan Eksekutif](#abstract)
--   [2. Permasalahan](#problem)
--   [3. Solusi](#solution)
--   [4. Teknologi](#technology)
--   [5. Tokenomics](#tokenomics)
--   [6. Fungsionalitas](#features)
--   [7. Keamanan](#security)
--   [8. La Tanda Chain](#chain)
--   [9. Peta Jalan](#roadmap)
--   [10. Tim dan Hukum](#team)
+- [1. Ringkasan Eksekutif](#abstract)
+- [2. Masalah](#problem)
+- [3. Solusi](#solution)
+- [4. Teknologi](#technology)
+- [5. Tokenomics](#tokenomics)
+- [6. Fitur](#features)
+- [7. Keamanan](#security)
+- [8. La Tanda Chain](#chain)
+- [9. Roadmap](#roadmap)
+- [10. Tim dan Legal](#team)
 
 # 1. Ringkasan Eksekutif
 
-La Tanda adalah platform Web3 yang mendigitalisasi dan meningkatkan sistem 
-tanda tradisional (sistem tabungan dan kredit bergilir)
-melalui teknologi blockchain, mendemokratisasi akses ke layanan
-keuangan bagi komunitas yang kurang terlayani.
+La Tanda adalah platform Web3 yang mendigitalkan dan menyempurnakan
+sistem tanda tradisional (arisan: kelompok tabungan dan kredit
+bergilir) melalui teknologi blockchain, sehingga akses ke layanan
+keuangan lebih terbuka bagi komunitas yang kurang terlayani.
 
-**Misi:** Membangun platform keuangan Web3 paling mudah diakses
-di dunia, menggabungkan kepercayaan tanda tradisional dengan
+**Misi:** Membangun platform keuangan Web3 yang paling mudah diakses di
+dunia, dengan memadukan kepercayaan tanda tradisional dengan
 transparansi dan keamanan blockchain.
 
 1.7B
 
 Orang tanpa akses perbankan
 
-$500B+
+\$500B+
 
-Pasar ROSCAs global
+Pasar ROSCA global
 
-140+
+Cosmos SDK
 
-Endpoints API
+Rantai sendiri (testnet)
 
 200M
 
 LTD Token Supply
 
-# 2. Permasalahan
+# 2. Masalah
 
-## 2.1 Pengucilan Keuangan
+## 2.1 Eksklusi Keuangan
 
-Menurut Bank Dunia, 1,7 miliar orang dewasa tidak memiliki akses
-ke layanan perbankan. Di Amerika Latin, 45% populasi mengalami
-underbanked, bergantung pada sistem informal untuk tabungan dan
-kredit.
+Menurut Bank Dunia, 1,7 miliar orang dewasa tidak memiliki akses ke
+layanan perbankan. Di Amerika Latin, 45% penduduk kurang terlayani bank
+dan bergantung pada sistem informal untuk menabung dan meminjam.
 
-## 2.2 Keterbatasan dari Pendekatan Tradisional
+## 2.2 Keterbatasan Tanda Tradisional
 
--   **Kepercayaan:** Bergantung pada hubungan pribadi, membatasi 
-    jangkauan
--   **Transparansi:** Tanpa catatan transaksi yang dapat diverifikasi
--   **Skala:** Sulit berkembang di luar komunitas lokal
--   **Keamanan:** Risiko gagal bayar tanpa jaminan
--   **Akses:** Memerlukan kehadiran fisik dan koordinasi manual
+- **Kepercayaan:** Bergantung pada hubungan pribadi, sehingga
+  jangkauannya terbatas
+- **Transparansi:** Tidak ada catatan transaksi yang dapat diverifikasi
+- **Skala:** Sulit berkembang di luar komunitas lokal
+- **Keamanan:** Risiko gagal bayar tanpa jaminan
+- **Akses:** Memerlukan kehadiran fisik dan koordinasi manual
 
 ## 2.3 Hambatan Web3
 
-Solusi DeFi yang ada terlalu kompleks bagi pengguna 
-non-teknis, dengan antarmuka yang menakutkan, biaya gas yang tidak dapat diprediksi, 
-dan risiko keamanan.
+Solusi DeFi yang ada terlalu rumit bagi pengguna non-teknis, dengan
+antarmuka yang mengintimidasi, biaya gas yang tidak terduga, dan risiko
+keamanan.
 
 # 3. Solusi: La Tanda
 
-La Tanda menggabungkan yang terbaik dari kedua dunia: keakraban dan kepercayaan
-tanda tradisional dengan keamanan, transparansi, dan jangkauan 
-blockchain global.
+La Tanda menggabungkan yang terbaik dari dua dunia: keakraban dan
+kepercayaan tanda tradisional dengan keamanan, transparansi, dan
+jangkauan global blockchain.
 
 ## 3.1 Proposisi Nilai
 
-| Caracteristica | Tanda Tradisional      | La Tanda Web3         |
-|----------------|------------------------|-----------------------|
-| Jangkauan      | Lokal (10-20 orang)    | Global (tanpa batas)  |
-| Transparansi   | Lisan/kertas           | Blockchain permanen   |
-| Keamanan       | Kepercayaan pribadi    | Kontrak Pintar + KYC  |
-| Pembayaran     | Tunai/bank             | Kripto + fiat         |
-| Hadiah         | Tidak ada              | Token LTD             |
+| Karakteristik  | Tanda Tradisional      | La Tanda Web3            |
+|----------------|------------------------|--------------------------|
+| Jangkauan      | Lokal (10-20 orang)    | Global (tanpa batas)     |
+| Transparansi   | Lisan/kertas           | Blockchain tidak berubah |
+| Keamanan       | Kepercayaan pribadi    | Kontrak Pintar + KYC     |
+| Pembayaran     | Tunai/bank             | Crypto + fiat            |
+| Imbalan        | Tidak ada              | Token LTD                |
 
-## 3.2 Cara Kerjanya
+## 3.2 Cara Kerja
 
-1.  **Buat/Bergabung:** Pengguna membuat tanda atau bergabung dengan yang sudah ada
-2.  **Berkontribusi:** Pembayaran berkala otomatis atau manual
-3.  **Undian:** Sistem lotre langsung menentukan giliran
-4.  **Terima:** Anggota menerima pot sesuai gilirannya
-5.  **Menang:** Token LTD untuk partisipasi dan kepatuhan
+1.  **Membuat/Bergabung:** Pengguna membuat tanda atau bergabung dengan
+    tanda yang sudah ada
+2.  **Menyetor:** Setiap anggota menyerahkan setorannya (tunai atau
+    transfer) dan koordinator mencatatnya di platform
+3.  **Undian:** Sistem tombola langsung menentukan giliran
+4.  **Menerima:** Anggota menerima dana terkumpul pada gilirannya
+5.  **Mendapatkan:** Token LTD atas partisipasi dan ketepatan waktu
 
-# 4. Teknologi
+# 4. Arsitektur Teknis
 
-## 4.1 Arsitektur Teknologi
+## 4.1 Tumpukan Teknologi
 
-| Tingkat             | Teknologi                               |
-|---------------------|-----------------------------------------|
-| Frontend            | HTML5, CSS3, JavaScript (Vanilla + PWA) |
-| Backend             | Node.js (HTTP native), PM2 cluster      |
-| Basis Data          | PostgreSQL 16 (25 tabel)                |
-| Cache               | Redis                                   |
-| Blockchain (Fase 1) | Polygon (Amoy testnet → PoS mainnet)    |
-| Blockchain (Fase 2) | La Tanda Chain (Cosmos SDK / CometBFT)  |
-| Smart Contracts     | Solidity + Modul Cosmos SDK (Go)        |
-| ML/AI               | Python, XGBoost, scikit-learn           |
+| Lapisan                       | Teknologi                                                                              |
+|-------------------------------|----------------------------------------------------------------------------------------|
+| Frontend                      | HTML5, CSS3, JavaScript (Vanilla + PWA)                                                |
+| Backend                       | Node.js (HTTP native), PM2 cluster                                                     |
+| Basis Data                    | PostgreSQL 16                                                                          |
+| Cache                         | Redis                                                                                  |
+| Blockchain                    | La Tanda Chain (Cosmos SDK / CometBFT), testnet `latanda-testnet-1` sejak Februari 2026 |
+| Modul rantai                  | Cosmos SDK (Go)                                                                        |
+| Asisten AI                    | MIA (web dan Telegram)                                                                 |
+| Historis (2025, dihentikan)   | Prototipe EVM di Polygon Amoy (Solidity)                                               |
 
 ## 4.2 API RESTful
 
-140+ endpoints yang diatur dalam kategori:
+API REST terdokumentasi di [latanda.online/docs](https://latanda.online/docs/) (Swagger).
+Kategori utama:
 
--   **Auth (12):** Login, registrasi, verifikasi, token
--   **Wallet (15):** Saldo, deposit, penarikan, riwayat
--   **Groups/Tandas (18):** CRUD, anggota, giliran, lotre
--   **Admin (12):** Pengguna, KYC, pembayaran, audit
--   **Lottery (15):** Prediksi ML, langganan, statistik
--   **Mining (7):** Hadiah harian, tingkatan, pencapaian
+- **Auth:** Login, registrasi, verifikasi email, token
+- **Wallet:** Saldo LTD testnet dan riwayat
+- **Groups/Tandas:** CRUD, anggota, giliran, tombola, pencatatan setoran
+  dan pembayaran giliran
+- **Admin:** Pengguna, moderasi, audit
+- **Mining:** Imbalan harian, tier, pencapaian
 
-## 4.3 Smart Contracts
+## 4.3 Token LTD dan prototipe EVM (historis)
 
-LTD Token: 0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc (Polygon Amoy)
+Saat ini LTD adalah token asli La Tanda Chain (`latanda-testnet-1`,
+denominasi `ultd`). Ini adalah token testnet tanpa nilai moneter.
 
--   **TandaToken.sol:** Token ERC20 dengan fungsi tata kelola (governance)
--   **TandaGroup.sol:** Logika grup dan kontribusi
--   **TandaEscrow.sol:** Penitipan dana dengan pelepasan terjadwal
+Pada 2025 dibangun sebuah prototipe EVM di Polygon Amoy (testnet)
+dengan tiga kontrak: **TandaToken.sol** (ERC20), **TandaGroup.sol**
+(grup dan setoran), dan **TandaEscrow.sol** (kustodi terjadwal).
+Prototipe tersebut dihentikan saat beralih ke rantai sendiri pada
+Februari 2026 dan tidak digunakan lagi.
+
+Historis, tanpa nilai: 0x8633212865B90FC0E44F1c41Fe97a3d2907d9cFc
+(ERC20 prototipe di Polygon Amoy, dihentikan)
 
 # 5. Tokenomics
 
 ## 5.1 LTD Token
 
-LTD (La Tanda Dollar) adalah token utilitas asli ekosistem La 
-Tanda. Saat ini ada dalam dua bentuk: sebagai token ERC20 di Polygon 
-Amoy testnet (Fase 1, legacy) dan sebagai token asli **La Tanda Chain** 
-(Fase 2, testnet aktif). Lihat Bagian 8 untuk detail migrasi.
+LTD (La Tanda Dollar) adalah token utilitas asli platform.
+
+**Supply tetap + 0% inflasi riil.** Total supply 200M LTD tetap untuk
+selamanya di mainnet (chain target `latanda-1`; target internal
+Q1-2027, bergantung pada nasihat hukum; bukan komitmen). Imbalan untuk
+validator dan penambang TIDAK berasal dari inflasi, melainkan dari pool
+pra-cetak 40M LTD (Staking dan Validator), yang didistribusikan dalam
+kurva ~5 tahun.  
+  
+**Testnet saat ini (`latanda-testnet-1`): inflasi 0% sejak GOV-004
+(September 2026).** Antara April dan September 2026 testnet berjalan
+dengan inflasi bootstrap 5% (GOV-003), sebuah mekanisme uji coba
+sementara. Pada genesis mainnet,
+`inflation_min = inflation_max = 0.0`. Spesifikasi lengkap: ITP-SPEC §6
+(dokumen teknis sedang disiapkan).
 
 200M
 
-Total Supply Tetap
+Total Supply
 
-0%
+Native
 
-Inflasi
-
-Cosmos SDK
+Token rantai
 
 La Tanda Chain
 
+Blockchain (testnet)
+
 ## 5.2 Distribusi
 
-| Kategori                     | %   | Token      | Vesting                                       |
-|------------------------------|-----|------------|-----------------------------------------------|
-| Komunitas dan Mining         | 30% | 60.000.000 | Emisi selama 5 tahun via partisipasi          |
-| Staking dan Validator        | 20% | 40.000.000 | Delegasi terjadwal + hadiah blok              |
-| Dana Pengembangan            | 12% | 24.000.000 | 6 bulan cliff, 3 tahun linear                 |
-| Tim dan Pendiri              | 12% | 24.000.000 | 1 tahun cliff, 2 tahun linear                 |
-| Pemasaran dan Aliansi        | 6%  | 12.000.000 | Triwulanan berdasarkan milestone              |
-| **Seed Round**               | 5%  | 10.000.000 | 6 bulan cliff, 18 bulan linear                |
-| **Strategic / Private Sale** | 5%  | 10.000.000 | 3 bulan cliff, 12 bulan linear                |
-| Likuiditas Awal (TGE)        | 5%  | 10.000.000 | Tersedia saat TGE                             |
-| Bug Bounty dan Grants        | 3%  | 6.000.000  | Via proposal tata kelola                      |
-| Dana Asuransi                | 2%  | 4.000.000  | Hanya via pemungutan suara darurat            |
+| Kategori                     | %   | Token      | Vesting                                     |
+|------------------------------|-----|------------|---------------------------------------------|
+| Komunitas dan Penambangan    | 30% | 60,000,000 | Emisi selama 5 tahun melalui partisipasi    |
+| Staking dan Validator        | 20% | 40,000,000 | Delegasi terjadwal + imbalan blok           |
+| Dana Pengembangan            | 12% | 24,000,000 | Cliff 6 bulan, linear 3 tahun               |
+| Tim dan Pendiri              | 12% | 24,000,000 | Cliff 1 tahun, linear 2 tahun               |
+| Pemasaran dan Kemitraan      | 6%  | 12,000,000 | Triwulanan berdasarkan pencapaian           |
+| **Seed Round**               | 5%  | 10,000,000 | Cliff 6 bulan, linear 18 bulan              |
+| **Strategic / Private Sale** | 5%  | 10,000,000 | Cliff 3 bulan, linear 12 bulan              |
+| Likuiditas Awal (TGE)        | 5%  | 10,000,000 | Tersedia saat TGE                           |
+| Bug Bounty dan Hibah         | 3%  | 6,000,000  | Melalui proposal tata kelola                |
+| Dana Asuransi                | 2%  | 4,000,000  | Hanya melalui pemungutan suara darurat      |
 
-**Supply Awal yang Beredar (TGE):** 10.000.000 LTD (5% dari total). 
-190.000.000 sisanya akan dirilis secara bertahap sesuai jadwal 
-vesting selama 5 tahun. Token Seed dan Strategic Round 
-tunduk pada cliff dan vesting, melindungi harga pasca-TGE.
+**Sirkulasi Awal (TGE):** 10,000,000 LTD (5% dari total). Sisa
+190,000,000 dilepas secara bertahap sesuai jadwal vesting selama 5
+tahun. Token Seed dan Strategic Round tunduk pada cliff dan vesting,
+untuk melindungi harga pasca-TGE.
 
 ## 5.3 Utilitas Token
 
--   **Staking:** Mengunci LTD untuk mendapatkan manfaat premium
--   **Tata Kelola (Governance):** Memilih proposal platform
--   **Diskon:** Pengurangan biaya saat membayar dengan LTD
--   **Akses:** Fitur eksklusif untuk pemegang
--   **Hadiah:** Mendapatkan LTD melalui aktivitas di platform
+- **Staking:** Mengunci LTD untuk mendapatkan manfaat premium
+- **Tata kelola:** Memberikan suara pada proposal platform
+- **Diskon:** Pengurangan komisi saat membayar dengan LTD
+- **Akses:** Fitur eksklusif untuk pemegang
+- **Imbalan:** Mendapatkan LTD atas aktivitas di platform
 
-## 5.4 Keberlanjutan Pasca-Staking Pool
-
-Pool **Staking dan Validator** (40M LTD, 20% dari supply) 
-mendanai imbalan validator
-melalui distribusi terjadwal (tanpa angka imbal hasil yang
-dipublikasikan; lihat 8.4). Karena LTD memiliki **supply tetap 
-200M tanpa inflasi**, ketika pool ini habis, jaringan harus menopang 
-keamanan melalui mekanisme alternatif. Berbeda dengan Bitcoin 
-(yang hanya bergantung pada biaya transaksi pasca block-subsidy), La 
-Tanda memiliki **enam sumber redundan** untuk menopang 
-validator secara abadi:
-
-1.  **Biaya transaksi (diaktifkan di genesis):** Dengan min_gas_price 
-0.001 ultd, chain dengan penggunaan nyata (puluhan ribu pengguna 
-yang melakukan kontribusi harian ke tanda, booking marketplace, 
-interaksi sosial on-chain) menghasilkan biaya yang cukup 
-untuk menopang jaringan validator profesional. Berbeda dengan 
-Bitcoin, LTD adalah chain *ekonomi produktif*, bukan hanya 
-store-of-value.
-2.  **Komisi marketplace → validator (Tahun 1):** 
-Micro-komisi (contoh: 0,5% dari GMV marketplace) dirutekan secara 
-otomatis ke fee pool validator di setiap blok. Dengan 
-marketplace yang memproses volume nyata, ini menambahkan arus pendapatan 
-yang signifikan yang tidak ada di Bitcoin maupun chain 
-store-of-value murni.
-3.  **Mekanisme burn (sudah aktif):** 5-20% dari setiap jenis fee 
-dibakar (lihat Bagian 8.4). Ini mengurangi supply yang beredar seiring 
-waktu, membuat LTD yang tersisa bernilai lebih proporsional. 
-Efek majemuk tahun demi tahun, mirip Ethereum pasca-EIP-1559.
-4.  **Subsidi treasury (Tahun 8+ jika diperlukan):** Pool *Dana 
-Pengembangan* (24M), *Bug Bounty* (6M), dan *Dana Asuransi* (4M) 
-dapat mensubsidi validator selama 10+ tahun tambahan melalui proposal 
-tata kelola, tanpa menyentuh supply tetap 200M.
-5.  **Re-alokasi pool yang diatur komunitas:** Komunitas dapat memilih 
-untuk mengalokasikan ulang token yang tidak digunakan dari pool yang matang 
-(contoh: Likuiditas Awal yang sudah dieksekusi) ke insentif keamanan. Ini TIDAK 
-melanggar cap 200M, hanya memindahkan LTD antar pool.
-6.  **Tanda network fee (opsional, sumber terakhir):** Biaya 
-jaringan kecil atas kontribusi tanda (bukan merupakan komisi 
-platform), hanya diaktifkan jika lima sumber lain 
-tidak cukup. Mempertahankan pitch *0% komisi di tanda* karena ini 
-adalah fee blockchain, bukan fee La Tanda sebagai platform.
-
-**Dibandingkan dengan Bitcoin:** Bitcoin hanya bergantung pada biaya 
-transaksi setelah habisnya block subsidi (diproyeksikan 
-\~2140), model yang belum teruji jangka panjang. La Tanda memiliki **enam 
-mekanisme redundan** dan ekonomi produktif nyata (tanda, 
-marketplace, sosial) yang menghasilkan fee sejak hari pertama. 
-Selain itu, tata kelola on-chain memungkinkan aktivasi mekanisme darurat 
-jika diperlukan — sesuatu yang mustahil di Bitcoin.
-
-# 6. Fungsionalitas
+# 6. Fitur
 
 ## 6.1 Sistem Tanda
 
--   Membuat grup dengan konfigurasi fleksibel
--   Beberapa posisi per anggota
--   Tombola langsung dengan WebSocket
--   Penguncian posisi untuk koordinator
--   Sistem komisi 90/10
+- Membuat grup dengan konfigurasi fleksibel
+- Beberapa posisi per anggota
+- Tombola langsung dengan WebSocket
+- Penguncian posisi oleh koordinator
+- Komisi koordinator opsional (100% untuk koordinator; La Tanda tidak
+  memungut komisi)
 
-## 6.2 Prediktor Lotre
+## 6.2 Sistem Penambangan
 
-Sistem ML untuk prediksi "La Diaria" Honduras:
+Setiap pengguna terdaftar dapat menambang LTD setiap hari. Imbalannya
+bergantung pada tier yang dicapai melalui achievement points — poin
+yang terkumpul dari aktivitas nyata di platform (verifikasi email,
+ikut tanda, membayar tepat waktu, mengajak pengguna, dll.).
 
--   Model XGBoost per jadwal (11am, 3pm, 9pm)
--   Sistem freemium (Gratis/Premium/Diamante)
--   Gamifikasi: pencapaian, poin, peringkat
+### 6.2.1 Tier Penambangan
 
-## 6.3 Sistem Penambangan
+| Tier     | Poin yang dibutuhkan | Imbalan dasar/hari | Bonus streak maks. |
+|----------|----------------------|--------------------|--------------------|
+| Perunggu | 0-49                 | 1.0 LTD            | +2.0 LTD           |
+| Perak    | 50-149               | 3.0 LTD            | +4.0 LTD           |
+| Emas     | 150-299              | 5.0 LTD            | +7.0 LTD           |
+| Platinum | 300-499              | 8.0 LTD            | +10.0 LTD          |
+| Berlian  | 500+                 | 12.0 LTD           | +15.0 LTD          |
 
-Setiap pengguna terdaftar dapat mining LTD setiap hari. Hadiah bergantung 
-pada tier yang dicapai melalui achievement points — poin yang terkumpul 
-dari aktivitas nyata di platform (verifikasi email, 
-berpartisipasi dalam tanda, membayar tepat waktu, merujuk pengguna lain, dll.).
+### 6.2.2 Achievement Points
 
-### 6.3.1 Tingkat Penambangan
-
-| Tier     | Poin Diperlukan | Reward dasar/hari | Streak bonus maks |
-|----------|-----------------|-------------------|-------------------|
-| Perunggu | 0-49            | 1.0 LTD           | +2.0 LTD          |
-| Perak    | 50-149          | 3.0 LTD           | +4.0 LTD          |
-| Emas     | 150-299         | 5.0 LTD           | +7.0 LTD          |
-| Platinum | 300-499         | 8.0 LTD           | +10.0 LTD         |
-| Berlian  | 500+            | 12.0 LTD          | +15.0 LTD         |
-
-### 6.3.2 Achievement Points
-
-Poin terkumpul secara otomatis saat menyelesaikan pencapaian. Ada 20 
+Poin terkumpul otomatis saat menyelesaikan pencapaian. Ada 20
 pencapaian dalam 7 kategori:
 
--   **Akun:** Email terverifikasi (10 pts)
--   **Partisipasi:** Tanda pertama (20 pts), tanda selesai (25 pts)
--   **Keuangan:** L.1000+ dikontribusikan (15 pts), L.10.000+ (40 pts), 
-ketepatan waktu sempurna (35 pts)
--   **Sosial:** Post pertama (10 pts), 10 pengikut (15 pts), referral 
-(15-30 pts)
--   **Marketplace:** Penjual bintang — 5+ penjualan dengan rating 4+ (30 
-pts)
--   **Verifikasi:** KYC dasar (25 pts), KYC lanjutan (50 pts)
--   **Keterlibatan:** Streak 7 hari (10 pts), streak 30 hari (30 pts)
+- **Akun:** Email terverifikasi (10 pts)
+- **Partisipasi:** Tanda pertama (20 pts), tanda selesai (25 pts)
+- **Keuangan:** L.1000+ disetor (15 pts), L.10,000+ (40 pts), selalu
+  tepat waktu (35 pts)
+- **Sosial:** Posting pertama (10 pts), 10 pengikut (15 pts), referal
+  (15-30 pts)
+- **Marketplace:** Penjual bintang — 5+ penjualan dengan rating 4+ (30
+  pts)
+- **Verifikasi:** KYC dasar (25 pts), KYC lanjutan (50 pts)
+- **Keterlibatan:** Streak 7 hari (10 pts), streak 30 hari (30 pts)
 
-Pengguna biasa yang memverifikasi email, berpartisipasi dalam satu tanda, dan mining 7 hari 
-berturut-turut mencapai Perak (50+ pts). Mencapai Emas atau lebih tinggi memerlukan 
-keterlibatan berkelanjutan.
+Pengguna biasa yang memverifikasi email, ikut satu tanda, dan menambang
+7 hari berturut-turut mencapai Perak (50+ pts). Mencapai Emas atau lebih
+tinggi membutuhkan keterlibatan berkelanjutan.
 
-### 6.3.3 Emisi dan Batas
+### 6.2.3 Emisi dan Batas
 
--   **Cap harian global:** Maksimal 500 LTD/hari di antara semua miner 
-(testnet)
--   **Cooldown individu:** 24 jam antar claim
--   **Pool emisi:** 60M LTD (30% dari supply) didistribusikan dalam 5 tahun 
-via partisipasi
--   **Anti-penipuan:** Pelacakan IP, rate limiting, flag penipuan
+- **Batas harian global:** maksimum 500 LTD/hari untuk semua penambang
+  (testnet)
+- **Cooldown individu:** 24 jam antar klaim
+- **Pool emisi:** 60M LTD (30% dari supply) didistribusikan selama 5
+  tahun melalui partisipasi
+- **Anti-penipuan:** IP tracking, rate limiting, fraud flags
 
-### 6.3.4 Model Scaling Progresif
+### 6.2.4 Model Penskalaan Progresif
 
-Hadiah berkurang secara bertahap seiring pertumbuhan ekosistem dan 
-nilai pasar LTD:
+Imbalan berkurang secara bertahap seiring pertumbuhan ekosistem dan
+meningkatnya nilai pasar LTD:
 
-| Fase               | Trigger                  | Multiplier | Cap harian |
-|--------------------|--------------------------|------------|------------|
-| Testnet (saat ini) | <100 miner aktif         | 1.0x (base)| 500 LTD    |
-| Pre-mainnet        | 100+ miner aktif         | 0.5x       | 500 LTD    |
-| Mainnet            | TGE / listing exchange   | 0.25x      | 300 LTD    |
-| Kematangan         | 5.000+ miner aktif       | 0.1x       | 200 LTD    |
+| Fase              | Pemicu                   | Pengali       | Batas harian |
+|-------------------|--------------------------|---------------|--------------|
+| Testnet (saat ini)| \<100 penambang aktif    | 1.0x (dasar)  | 500 LTD      |
+| Pra-mainnet       | 100+ penambang aktif     | 0.5x          | 500 LTD      |
+| Mainnet           | TGE / listing di bursa   | 0.25x         | 300 LTD      |
+| Kematangan        | 5,000+ penambang aktif   | 0.1x          | 200 LTD      |
 
-Setiap fase mengurangi emisi ~50%. Multiplier diterapkan pada 
-reward dasar setiap tier. Transisi antar fase diatur oleh 
-tim selama testnet, dan oleh proposal tata kelola on-chain 
-di mainnet.
+Setiap fase mengurangi emisi ~50%. Pengali diterapkan pada imbalan
+dasar setiap tier. Transisi antar fase diatur oleh tim selama testnet,
+dan oleh proposal tata kelola on-chain di mainnet.
 
-### 6.3.5 Progres Ekosistem
+### 6.2.5 Progresi Ekosistem
 
-La Tanda dirancang sebagai tangga partisipasi di mana setiap 
-level menawarkan manfaat lebih besar:
+La Tanda dirancang sebagai tangga partisipasi di mana setiap tingkat
+memberikan manfaat lebih besar:
 
-1.  **Pengguna:** Mendaftar, mining LTD harian (Perunggu, 1 LTD/hari)
-2.  **Miner aktif:** Naik tier melalui aktivitas dan streak (Perak/Emas, 
-3-5 LTD/hari)
-3.  **Anggota Tanda:** Berpartisipasi dalam tabungan kelompok, dapatkan 
-pencapaian + akses keuangan
-4.  **Penjual:** Jual di marketplace, dapatkan komisi + pencapaian 
-seller
-5.  **Delegator:** Bridge LTD ke chain, delegasikan ke validator, 
-dapatkan block reward + voting tata kelola
-6.  **Validator:** Operasikan node, validasi blok, terima delegasi 
-(2.000-5.000 LTD)
-7.  **Investor:** Menyediakan modal pra-TGE, dapatkan token dengan diskon dan 
-vesting
-
-## 6.4 Langganan
-
-| Plan     | Harga   | Manfaat                                |
-|----------|---------|----------------------------------------|
-| Gratis   | $0      | 1 spin/hari, jadwal 9pm                |
-| Premium  | $25/bln | 3 spin/hari, semua jadwal, riwayat     |
-| Berlian  | $49/bln | Tak terbatas, 5 angka, akses API       |
+1.  **Pengguna:** Mendaftar, menambang LTD harian (Perunggu, 1 LTD/hari)
+2.  **Penambang aktif:** Naik tier melalui aktivitas dan streak
+    (Perak/Emas, 3-5 LTD/hari)
+3.  **Anggota Tanda:** Ikut menabung bersama, mendapatkan pencapaian +
+    akses keuangan
+4.  **Penjual:** Berjualan di marketplace, mendapatkan komisi +
+    pencapaian penjual
+5.  **Delegator:** Mendelegasikan LTD ke validator di La Tanda Chain,
+    menerima imbalan blok + memberikan suara dalam tata kelola
+6.  **Validator:** Mengoperasikan node, memvalidasi blok, menerima
+    delegasi (2,000-5,000 LTD)
+7.  **Investor:** Menyetor modal pra-TGE, memperoleh token dengan diskon
+    dan vesting
 
 # 7. Keamanan
 
 ## 7.1 Infrastruktur
 
--   SSL/TLS 1.2+ wajib
--   Rate limiting (nginx + fail2ban)
--   Firewall UFW terkonfigurasi
--   PostgreSQL/Redis hanya localhost
+- SSL/TLS 1.2+ wajib
+- Rate limiting (nginx + fail2ban)
+- Firewall UFW terkonfigurasi
+- PostgreSQL/Redis hanya localhost
 
 ## 7.2 Aplikasi
 
--   JWT dengan masa berlaku (24j/7h)
--   Bcrypt untuk password (12 round)
--   Sanitasi input (pencegahan XSS)
--   Query terparameterisasi (pencegahan SQL injection)
--   CORS dibatasi
+- JWT dengan masa berlaku (24h/7d)
+- Bcrypt untuk kata sandi (12 rounds)
+- Sanitasi input (pencegahan XSS)
+- Query berparameter (pencegahan SQL injection)
+- CORS dibatasi
 
 ## 7.3 Header Keamanan
 
--   Strict-Transport-Security (HSTS)
--   Content-Security-Policy (CSP)
--   X-Frame-Options: DENY
--   X-Content-Type-Options: nosniff
+- Strict-Transport-Security (HSTS)
+- Content-Security-Policy (CSP)
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
 
 ## 7.4 Kepatuhan
 
--   KYC/AML untuk verifikasi identitas
--   Evaluasi PCI-DSS selesai
--   Log audit yang tidak dapat diubah
+- Alur verifikasi identitas (KYC) sudah dirancang, belum diaktifkan (0
+  pengguna terverifikasi per 11-Okt-2026)
+- Log audit untuk tindakan sensitif (login, perubahan akun, tindakan
+  administrasi)
 
 # 8. La Tanda Chain
 
-La Tanda dimulai sebagai platform untuk mendigitalisasi tanda. Telah 
-berkembang menjadi ekosistem keuangan lengkap: tabungan kelompok, 
-marketplace P2P, prediksi dengan ML, mining token, asisten AI, dan 
-tata kelola komunitas. La Tanda Chain adalah lapisan infrastruktur yang 
-menyatukan layanan ini di bawah jaringan terdesentralisasi dan berdaulat.
+La Tanda dimulai sebagai platform untuk mendigitalkan tanda. Kini
+berkembang menjadi ekosistem keuangan yang lengkap: tabungan kelompok,
+marketplace P2P, penambangan token, asisten AI, dan tata kelola
+komunitas. La Tanda Chain adalah lapisan infrastruktur yang menyatukan
+layanan-layanan ini dalam jaringan yang terdesentralisasi dan
+berdaulat.
 
-**Fase 1:** LTD sebagai ERC20 di Polygon (saat ini)  
-**Fase 2:** La Tanda Chain — blockchain berdaulat yang dibangun dengan Cosmos 
-SDK / CometBFT di mana LTD adalah token asli untuk gas, staking, dan 
-tata kelola.
+**Saat ini (sejak Februari 2026):** La Tanda Chain — blockchain
+berdaulat yang dibangun dengan Cosmos SDK / CometBFT, di mana LTD adalah
+token asli untuk gas, staking, dan tata kelola. Berjalan sebagai testnet
+(`latanda-testnet-1`); LTD testnet tidak memiliki nilai moneter.  
+**Sebelumnya (2025):** prototipe EVM di Polygon Amoy (testnet),
+dihentikan.
 
-## 8.1 Arsitektur Chain
+## 8.1 Arsitektur Rantai
 
-La Tanda Chain menggunakan **CometBFT** (sebelumnya Tendermint) sebagai mesin 
-konsensus, menyediakan toleransi terhadap kegagalan Byzantine, finality 
-instan, dan Delegated Proof of Stake (DPoS).
+La Tanda Chain menggunakan **CometBFT** (sebelumnya Tendermint) sebagai
+mesin konsensus, yang memberikan toleransi kesalahan Bizantium,
+finalitas instan, dan Delegated Proof of Stake (DPoS).
 
 5s
 
 Waktu blok
 
-1.000+
+1,000+
 
 Target TPS
 
@@ -406,283 +368,245 @@ IBC
 
 Interoperabilitas
 
-### Modul asli chain
+### Modul asli rantai
 
 | Modul            | Fungsi                                                                                                                |
 |------------------|-----------------------------------------------------------------------------------------------------------------------|
-| **x/ltd**        | Token asli — transfer, burn, fee. Supply tetap 200M (0% inflasi). Hadiah via treasury pra-minting                     |
-| **x/tanda**      | Siklus tanda, kontribusi, pembayaran, hasil undian. Multi-sig untuk distribusi                                        |
-| **x/mercado**    | Escrow marketplace, reputasi penjual, arbitrase perselisihan                                                          |
-| **x/loteria**    | RNG yang dapat diverifikasi (commit-reveal), penjadwalan undian, pasar prediksi                                       |
-| **x/mineria**    | Hadiah berdasarkan aktivitas, tier, anti-sybil, distribusi terjadwal dari treasury                                    |
-| **x/gobernanza** | Proposal, pemungutan suara (1 LTD = 1 suara, 1.5x jika staking >180 hari), kuorum 33%                                 |
+| **x/ltd**        | Token asli — transfer, burn, fee. Supply tetap 200M (0% inflasi). Imbalan melalui treasury pra-cetak                  |
+| **x/tanda**      | Siklus tanda, setoran, pembayaran, hasil undian. Multi-sig untuk distribusi                                           |
+| **x/mercado**    | Escrow marketplace, reputasi penjual, arbitrase sengketa                                                              |
+| **x/mineria**    | Imbalan aktivitas, tier, anti-sybil, distribusi terjadwal dari treasury                                               |
+| **x/gobernanza** | Proposal, pemungutan suara (1 LTD = 1 suara, 1.5x jika staking \>180d), kuorum 33%                                    |
 
 ### On-chain vs Off-chain
 
-| On-chain (La Tanda Chain)           | Off-chain (PostgreSQL + Redis) |
-|-------------------------------------|--------------------------------|
-| Transfer dan saldo LTD              | Profil pengguna, PII, KYC      |
-| Pembuatan tanda, aturan, pembayaran | Feed sosial, komentar, chat    |
-| Escrow marketplace                  | Percakapan dengan MIA (AI)     |
-| Pengujian RNG untuk undian          | Model ML prediksi              |
-| Staking, tata kelola, mining        | Sesi, analitik, UI             |
+| On-chain (La Tanda Chain)             | Off-chain (PostgreSQL + Redis)                        |
+|---------------------------------------|-------------------------------------------------------|
+| Transfer dan saldo LTD                | Profil pengguna, PII, KYC                             |
+| Pembuatan tanda, aturan, pembayaran   | Feed sosial, komentar, chat                           |
+| Escrow marketplace                    | Percakapan dengan MIA (AI)                            |
+| Bukti RNG untuk undian                | Pencatatan setoran dan pembayaran giliran (saat ini)  |
+| Staking, tata kelola, penambangan     | Sesi, analitik, UI                                    |
 
 ## 8.2 Peserta Jaringan
 
 ### Node
 
-Setiap mesin yang menjalankan perangkat lunak La Tanda Chain. Node menyimpan 
-salinan state dan meneruskan transaksi.
+Setiap mesin yang menjalankan perangkat lunak La Tanda Chain. Node
+menyimpan salinan state dan meneruskan transaksi.
 
-| Jenis          | Peran                                                                 | Operator                           |
-|----------------|-----------------------------------------------------------------------|------------------------------------|
-| Full Node      | Riwayat lengkap, validasi transaksi, melayani query                   | Ray-Banks, mitra, developer        |
-| Validator Node | Full node + berpartisipasi dalam konsensus (usul & tanda tangan blok) | Validator terverifikasi            |
-| Archive Node   | Full node + menyimpan seluruh state historis                          | Blockchain explorer, analitik      |
-| Light Client   | Verifikasi header, query state via full node                          | Wallet mobile, integrasi           |
+| Jenis          | Peran                                                          | Operator                             |
+|----------------|----------------------------------------------------------------|--------------------------------------|
+| Full Node      | Riwayat lengkap, memvalidasi transaksi, melayani kueri         | Ray-Banks, mitra, pengembang         |
+| Validator Node | Full node + ikut konsensus (mengusulkan dan menandatangani blok) | Validator yang memenuhi syarat       |
+| Archive Node   | Full node + menyimpan seluruh state historis                   | Penjelajah blok, analitik            |
+| Light Client   | Memverifikasi header, mengkueri state melalui full node        | Dompet seluler, integrasi            |
 
 ### Validator
 
-Operator node yang diterima ke set aktif yang berpartisipasi dalam 
+Operator node yang diterima dalam set aktif dan berpartisipasi dalam
 produksi blok.
 
-| Persyaratan   | Detail                                                          |
-|---------------|-----------------------------------------------------------------|
-| Stake minimum | 1 LTD self-delegation minimum (testnet: delegasi proyek)        |
-| Riwayat       | 6+ bulan aktif di La Tanda                                      |
-| Verifikasi    | KYC/KYB selesai                                                 |
-| Uptime        | 99,5%+ per epoch (10.000 blok)                                  |
-| Tata Kelola   | Memilih di 75%+ proposal                                        |
+| Persyaratan    | Detail                                                          |
+|----------------|-----------------------------------------------------------------|
+| Stake minimum  | Self-delegation minimum 1 LTD (testnet: delegasi dari proyek)   |
+| Riwayat        | Aktif 6+ bulan di La Tanda                                      |
+| Verifikasi     | KYC/KYB selesai                                                 |
+| Uptime         | 99.5%+ per epoch (10,000 blok)                                  |
+| Tata kelola    | Memberikan suara pada 75%+ proposal                             |
 
-**Set validator (ekspansi progresif):**
+**Set validator (perluasan bertahap):**
 
-| Fase                                   | Validator | Seleksi                                                 |
-|----------------------------------------|-----------|---------------------------------------------------------|
-| Fase 1 — Genesis (selesai)             | 7+        | Selesai: 7+ validator aktif, tata kelola on-chain       |
-| Fase 2 — Trusted Set (sedang berjalan) | 15-25     | Testnet berinsentif: validator + mitra infra            |
-| Fase 3 — Pertumbuhan                   | 50        | Aplikasi terbuka, berdasarkan stake                     |
-| Fase 4 — Kematangan                    | 100       | Tanpa izin, berdasarkan stake                           |
-| Fase 5 — Terbuka                       | 150+      | Tanpa batas, pasar bebas                                |
+| Fase                                 | Validator | Seleksi                                                 |
+|--------------------------------------|-----------|---------------------------------------------------------|
+| Fase 1 — Genesis (selesai)           | 7+        | Selesai: 7+ validator aktif, tata kelola on-chain       |
+| Fase 2 — Trusted Set (berjalan)      | 15-25     | Testnet berinsentif: validator + infra partner          |
+| Fase 3 — Pertumbuhan                 | 50        | Pendaftaran terbuka, berdasarkan stake                  |
+| Fase 4 — Kematangan                  | 100       | Tanpa izin, berdasarkan stake                           |
+| Fase 5 — Terbuka                     | 150+      | Tanpa batas, pasar bebas                                |
 
 ### Kondisi Slashing
 
-| Pelanggaran                                             | Sanksi                                    |
-|---------------------------------------------------------|-------------------------------------------|
-| Double signing (tanda tangan 2 blok di ketinggian sama) | 5% stake + jail permanen                  |
-| Downtime berkepanjangan (500+ blok hilang)              | 0,1% stake + jail sementara (24 jam)      |
-| Perilaku buruk di tanda (gagal distribusi)              | 10% bonus koordinator + pemberhentian     |
-| Absen tata kelola (<50% suara dalam 3 bulan)            | Peringatan → 0,05% slash pada pengulangan |
+| Pelanggaran                                            | Sanksi                                       |
+|--------------------------------------------------------|----------------------------------------------|
+| Tanda tangan ganda (2 blok pada ketinggian yang sama)  | 5% dari stake + jail permanen                |
+| Downtime berkepanjangan (500+ blok terlewat)           | 0.1% dari stake + jail sementara (24h)       |
+| Pelanggaran dalam tanda (gagal distribusi)             | 10% dari bonus koordinator + pencopotan      |
+| Abstain dalam tata kelola (\<50% suara dalam 3 bulan)  | Peringatan → slash 0.05% jika berulang       |
 
 ### Delegator
 
-Setiap pemegang LTD yang staking token ke validator, berbagi 
-hadiah dan risiko.
+Setiap pemegang LTD yang melakukan staking token ke validator, berbagi
+imbalan dan risiko.
 
 1.  Delegator memilih validator berdasarkan reputasi, komisi, dan uptime
-2.  Staking LTD via transaksi `MsgDelegate`
-3.  LTD yang distaking berkontribusi pada bobot validator
-4.  Delegator mendapatkan hadiah proporsional, dikurangi komisi 
-validator
-5.  Dapat redelegasi ke validator lain (periode unbonding: 21 hari)
+2.  Melakukan staking LTD melalui transaksi `MsgDelegate`
+3.  LTD yang di-stake menambah bobot validator
+4.  Delegator memperoleh imbalan proporsional, dikurangi komisi
+    validator
+5.  Dapat mendelegasikan ulang ke validator lain (periode unbonding: 21
+    hari)
 
 **Delegasi dalam konteks ekosistem:**  
-Bergabung dengan grup tanda = delegasi implisit ke 
+Bergabung dengan grup tanda = delegasi implisit kepada
 koordinator-validator.  
 Membeli di marketplace = delegasi kepercayaan sementara.  
 Staking ke validator = delegasi ekonomi eksplisit jangka panjang.
 
-## 8.3 Migrasi Token: Polygon → La Tanda Chain
+## 8.3 Migrasi Token: dari prototipe EVM ke La Tanda Chain
 
-LTD saat ini ada sebagai ERC20 di Polygon Amoy testnet. Migrasi 
-ke token asli La Tanda Chain mengikuti rute ini:
+Migrasi sudah terjadi: LTD meninggalkan prototipe ERC20 di Polygon Amoy
+(2025, dihentikan, tanpa nilai) dan sejak Februari 2026 menjadi token
+asli testnet sendiri `latanda-testnet-1`. Rute selanjutnya:
 
-1.  **Testnet Aktif (2026, sedang berjalan):** La Tanda Chain testnet
-    (`latanda-testnet-1`) memproduksi blok sejak Februari 2026, dengan
-    validator aktif, tata kelola on-chain, dan testnet berinsentif
-    (lihat 8.3.1)
-2.  **Putaran pendanaan formal + Tim (tanggal belum ditentukan):**
-    putaran investasi setelah pembentukan C-Corp di Delaware, perekrutan
-    tim inti, audit keamanan
-3.  **Mainnet + TGE (target internal Q1-2027, bukan komitmen):** Mainnet diluncurkan sebagai chain baru 
-dengan genesis independen, Token Generation Event, IBC diaktifkan
-4.  **Ekspansi (tanpa tanggal yang dijanjikan):** ekspansi regional 
-(Guatemala, El Salvador), modul asli aktif
-
-### 8.3.1 Strategi Testnet → Mainnet
-
-Testnet (`latanda-testnet-1`) dan mainnet (`latanda-1`, pending) adalah 
-chain yang secara teknis terpisah. Strategi resmi adalah sebagai berikut:
-
--   **Testnet mempertahankan parameter saat ini:** 5% inflasi 
-    blok (warisan genesis eksperimental) dipertahankan sebagai 
-    sandbox pengembangan. Tidak akan ada proposal tata kelola 
-    untuk mengubah parameter testnet — mengubah aturan di tengah 
-    jalan menimbulkan gesekan yang tidak perlu dengan validator aktif.
--   **Mainnet lahir bersih dengan model resmi:** 200M tetap, 0% 
-    inflasi nyata, hadiah dari pool Staking dan Validator 
-    pra-minting. Testnet dapat terus berjalan paralel 
-    pasca-launch atau dibongkar sesuai kebutuhan komunitas.
--   **Token testnet tidak bermigrasi secara otomatis:** ini adalah play money 
-    untuk pengembangan, tidak diwariskan ke genesis mainnet.
-
-### 8.3.2 Program Testnet Berinsentif
-
-Validator, node, dan kontributor aktif selama testnet menerima 
-kompensasi dalam LTD *nyata* di genesis mainnet, didanai dari 
-pool **Komunitas dan Mining**. Pekerjaan mereka di testnet langsung 
-menjadi partisipasi di mainnet:
-
-| Tier                 | Slot    | LTD per slot | Total         | Persyaratan                                         |
-|----------------------|---------|--------------|---------------|-----------------------------------------------------|
-| **Infra Partner**    | 5       | 5.000        | 25.000        | RPC/API publik, explorer, statesync, panduan teknis |
-| **Validator**        | 10      | 2.000        | 20.000        | Uptime >95%, voting tata kelola, tanpa jail         |
-| **Full Node**        | 20      | 500          | 10.000        | Node tersinkronisasi, relay transaksi               |
-| **Bug Reporter**     | Terbuka | 100-1.000    | ~10.000       | Laporan terverifikasi via GitHub issue              |
-| **Buffer tambahan**  | —       | —            | ~35.000       | Cadangan untuk peserta baru hingga mainnet          |
-| **TOTAL**            |         |              | **~100.000**  | 0,05% dari total supply                             |
-
-Program ini menggantikan kebutuhan mengubah parameter testnet 
-via tata kelola. Validator eksternal yang berkontribusi pada 
-bootstrap jaringan menerima kompensasi di mainnet sebagai pengakuan 
-eksplisit atas nilai yang diberikan, bukan bergantung pada hadiah 
-inflasioner testnet yang tidak memiliki nilai ekonomi 
-nyata.
+1.  **Testnet Aktif (sejak Februari 2026, berjalan):** La Tanda Chain
+    testnet (`latanda-testnet-1`) memproduksi blok sejak Februari 2026,
+    dengan validator aktif, tata kelola on-chain, dan testnet
+    berinsentif
+2.  **Putaran formal + Tim (tanggal belum ditentukan):** putaran
+    investasi setelah pendirian C-Corp di Delaware, perekrutan tim inti,
+    audit keamanan
+3.  **Mainnet + TGE (target internal Q1-2027, bukan komitmen):**
+    Migrasi dari testnet ke mainnet, Token Generation Event, IBC
+    diaktifkan
+4.  **Ekspansi (tanpa tanggal yang dijanjikan):** ekspansi regional
+    (Guatemala, El Salvador), modul asli aktif
 
 ## 8.4 Ekonomi Validator
 
-| Sumber Pendapatan                   | Distribusi                                    |
-|-------------------------------------|-----------------------------------------------|
-| Biaya transaksi (0,01 LTD dasar)    | Validator 80% \| Treasury 15% \| Burn 5%      |
-| Komisi tanda                        | Koordinator 85% \| Treasury 10% \| Burn 5%    |
-| Biaya marketplace                   | Arbitrator 50% \| Treasury 30% \| Burn 20%    |
-| Langganan loteria                   | Treasury 70% \| Oracle 20% \| Burn 10%        |
-| Biaya bridge (0,1%)                 | Validator 60% \| Treasury 30% \| Burn 10%     |
+| Sumber Pendapatan                                         | Distribusi                                       |
+|-----------------------------------------------------------|--------------------------------------------------|
+| Fee transaksi (0.01 LTD dasar)                            | Validator 80% \| Treasury 15% \| Burn 5%         |
+| Komisi tanda (opsional, disepakati tiap grup)             | Koordinator 100% (La Tanda tidak memungut komisi) |
+| Fee marketplace                                           | Arbiter 50% \| Treasury 30% \| Burn 20%          |
+| Fee bridge (0.1%)                                         | Validator 60% \| Treasury 30% \| Burn 10%        |
 
-**Imbalan staking:** tanpa angka imbal hasil yang dipublikasikan;
+**Imbalan staking:** tidak ada angka imbal hasil yang dipublikasikan;
 bervariasi sesuai komisi validator dan aktivitas jaringan, dan tidak
-dijamin. Sumber: biaya transaksi + distribusi terjadwal dari treasury
-pra-minting (40M LTD dialokasikan untuk staking/validator). Tanpa inflasi — supply tetap 
-200M.
+dijamin. Sumber: fee transaksi + distribusi terjadwal dari treasury
+pra-cetak (40M LTD dialokasikan untuk staking/validator). Tanpa inflasi
+— supply tetap 200M.
 
 ## 8.5 Interoperabilitas
 
--   **IBC (Cosmos):** Koneksi dengan Osmosis (DEX), Noble (USDC asli), 
-    Cosmos Hub
--   **Polygon Bridge:** Komposabilitas DeFi, listing di exchange, 
-    integrasi legacy
--   **Ramp Fiat:** Transfer bank / uang seluler ↔ LTD via 
-    mitra yang diatur di Honduras dan LATAM
+- **IBC (Cosmos):** Koneksi dengan Osmosis (DEX), Noble (USDC asli),
+  Cosmos Hub
+- **Jembatan ke jaringan lain:** interoperabilitas (IBC/jembatan), tanpa
+  tanggal
+- **Jalur Fiat:** transfer bank / uang seluler, sedang dijajaki dengan
+  mitra berlisensi; belum ada yang dikontrak, tanpa tanggal
 
-## 8.6 Keamanan Chain
+## 8.6 Keamanan Rantai
 
--   **Konsensus:** CometBFT mentolerir <1/3 validator Byzantine. 
-    Finality ~5-6 detik
--   **Staking:** Delegasi proyek selama testnet. Mainnet 
-    akan memerlukan stake signifikan sebagai disinsentif ekonomi
--   **Bridge:** Verifikasi light client IBC (tanpa perantara). Rate 
-    limit: maks 1M LTD/24 jam. Pause darurat via tata kelola
--   **Privasi:** Jumlah on-chain terlihat hanya untuk peserta dan 
-    validator yang ditugaskan. ZK-SNARKs direncanakan untuk Fase 4
--   **Audit:** Smart contract dan modul akan diaudit oleh firma eksternal
-    sebelum mainnet (direncanakan)
+- **Konsensus:** CometBFT menoleransi \<1/3 validator Bizantium.
+  Finalitas ~5-6 detik
+- **Staking:** Delegasi dari proyek selama testnet. Mainnet akan
+  mensyaratkan stake signifikan sebagai disinsentif ekonomi
+- **Bridge:** Verifikasi light client IBC (tanpa perantara). Rate
+  limit: maks. 1M LTD/24h. Jeda darurat melalui tata kelola
+- **Privasi:** Nilai on-chain hanya terlihat oleh peserta dan validator
+  yang ditugaskan. ZK-SNARKs direncanakan untuk Fase 4
+- **Audit:** Akan diaudit oleh firma eksternal sebelum mainnet
+  (direncanakan)
 
-# 9. Peta Jalan
+# 9. Roadmap Integral
 
 ## Selesai (2024-2025)
 
--   Infrastruktur inti dan API (140+ endpoint)
--   Sistem tanda dengan WebSocket dan tombola langsung
--   Token LTD di Polygon Amoy (ERC20)
--   Predictor loteria dengan ML (XGBoost)
--   Sistem mining, gamifikasi, dan marketplace
--   MIA — asisten AI keuangan
+- Infrastruktur inti dan API REST
+- Sistem tanda dengan WebSocket dan tombola langsung
+- Prototipe EVM LTD di Polygon Amoy (ERC20, dihentikan pada 2026)
+- Sistem penambangan, gamifikasi, dan marketplace
+- MIA — asisten keuangan AI
 
-## 2026 — Platform (sudah berjalan)
+## 2026 — Platform (dalam produksi)
 
--   Pencatatan tanda: setoran dan pembayaran giliran dicatat di
-    platform dan dikonfirmasi oleh koordinator (per 24-Sep-2026: 4 tanda dibuat, 3
-    dengan pembayaran giliran selesai; 44 pembayaran giliran selesai)
--   84 pengguna terdaftar per 24-Sep-2026 (akun dibuat; tidak
-    diverifikasi KYC)
--   Masuk dengan Google dan pemulihan akun
--   Chat grup real-time
--   Tim dan jadwal kerja untuk usaha: jadwal tim, shift terbuka,
-    pengingat, dan pencatatan kehadiran
--   Agenda janji temu untuk layanan: ketersediaan, penjadwalan ulang,
-    pengingat, dan undangan kalender
--   Paket alat usaha gratis (Mi Negocio): faktur, laporan, pengeluaran,
-    dan pembuat dokumen
--   MIA, asisten AI (web dan Telegram)
+- Pencatatan tanda: setoran dan pembayaran giliran dicatat di platform
+  dan dikonfirmasi oleh koordinator (per 11-Okt-2026: 5 tanda dibuat, 3
+  aktif; 3 dengan pembayaran giliran selesai; 47 pembayaran giliran
+  selesai)
+- 95 pengguna terdaftar per 11-Okt-2026 (akun dibuat; tidak
+  diverifikasi KYC)
+- Login dengan Google dan pemulihan akun
+- Chat grup secara real-time
+- Tim dan jadwal kerja untuk usaha: jadwal tim, shift terbuka,
+  pengingat, dan pencatatan kehadiran
+- Agenda janji temu untuk layanan: ketersediaan, penjadwalan ulang,
+  pengingat, dan undangan kalender
+- Paket usaha gratis (Mi Negocio): penagihan, laporan, pengeluaran, dan
+  pembuat dokumen
+- MIA, asisten AI (web dan Telegram)
 
-## 2026 — Testnet Aktif (sedang berjalan)
+## 2026 — Testnet Aktif (berjalan)
 
--   La Tanda Chain testnet (`latanda-testnet-1`) memproduksi blok sejak
-    genesis Februari 2026: lebih dari 3,2 juta blok per 24-Sep-2026
--   48 validator terdaftar di chain, 36 di antaranya dalam set aktif
-    (per 24-Sep-2026)
--   Tata kelola on-chain: 3 proposal disetujui (GOV-001 sampai
-    GOV-003, Mar-Apr 2026)
--   Testnet berinsentif dengan tier delegasi (Validator 2K, Infra
-    Partner 5K LTD)
--   Bug bounty dan grants untuk kontributor
--   Perangkat lunak node dan dokumentasi open-source
+- La Tanda Chain testnet (`latanda-testnet-1`) memproduksi blok sejak
+  genesis Februari 2026: lebih dari 3,5 juta blok per 11-Okt-2026
+- 51 validator terdaftar di rantai, 35 di antaranya dalam set aktif
+  (per 11-Okt-2026)
+- Tata kelola on-chain: 4 proposal disetujui (GOV-001 sampai GOV-004,
+  Mar-Sep 2026)
+- Testnet berinsentif dengan tier delegasi (Validator 2K, Infra Partner
+  5K LTD)
+- Bug bounty dan hibah untuk kontributor
+- Perangkat lunak node dan dokumentasi open-source
 
-## 2026 — Kelembagaan
+Angka per 11-Okt-2026; angka langsung:
+[latanda.online/api/public/metrics](https://latanda.online/api/public/metrics)
 
--   Dalam pembicaraan dengan Hub Inovasi Keuangan CNBS (Honduras),
-    September 2026
--   C-Corp di Delaware: dalam persiapan (belum dibentuk)
--   Putaran pendanaan formal: tanggal belum ditentukan
+## 2026 — Institusional
+
+- Dalam pembicaraan dengan Hub Inovasi Keuangan CNBS (Honduras), sejak
+  September 2026
+- C-Corp di Delaware: sedang dipersiapkan (belum didirikan)
+- Putaran investasi formal: tanggal belum ditentukan
 
 ## Langkah berikutnya (tanpa tanggal yang dijanjikan)
 
--   Audit keamanan (chain + platform)
--   Perekrutan tim inti
--   Aplikasi mobile
--   Hash anchor pembayaran (SHA-256 untuk migrasi on-chain mendatang)
-    dan dual-write PostgreSQL + chain testnet
+- Audit keamanan (rantai + platform)
+- Perekrutan tim inti
+- Aplikasi seluler
+- Hash anchor pembayaran (SHA-256 untuk migrasi on-chain di masa depan)
+  dan dual-write PostgreSQL + chain testnet
 
 ## Target internal Q1-2027 (bukan komitmen) — Mainnet + TGE
 
--   Migrasi dari testnet ke mainnet
--   Token Generation Event (TGE — 10M LTD beredar)
--   IBC diaktifkan, staking delegator dibuka
--   Chain menjadi sumber kebenaran
+- Migrasi dari testnet ke mainnet
+- Token Generation Event (TGE — 10M LTD beredar)
+- IBC diaktifkan, staking delegator dibuka
+- Rantai menjadi sumber kebenaran
 
 ## Ekspansi (tanpa tanggal yang dijanjikan)
 
--   50 validator aktif di 10+ negara
--   SDK La Tanda untuk developer pihak ketiga
--   Tanda lintas batas (settlement di LTD atau USDC via IBC)
--   Peran khusus: validator tanda, arbitrator 
-    marketplace, oracle
--   Koneksi IBC: Osmosis (DEX), Noble (USDC)
+- 50 validator aktif di 10+ negara
+- SDK La Tanda untuk pengembang pihak ketiga
+- Tanda lintas negara (settlement dalam LTD atau USDC melalui IBC)
+- Peran khusus: validator tanda, arbiter marketplace, oracle
+- Koneksi IBC: Osmosis (DEX), Noble (USDC)
 
-## 2028 — Fase 4: Kematangan
+## Visi jangka panjang, tanpa tanggal maupun komitmen — Kematangan
 
--   100+ validator, masuk tanpa izin
--   Treasury DAO aktif — fee protokol dikendalikan 
-    komunitas
--   Dana asuransi operasional
--   Integrasi DeFi (posisi tanda sebagai kolateral)
--   API perusahaan: bank dan lembaga mikrofinansial mengintegrasikan 
-    tanda-as-a-service
--   Yayasan La Tanda didirikan
+- 100+ validator, masuk tanpa izin
+- Treasury DAO aktif — fee protokol dikendalikan komunitas
+- Dana asuransi operasional
+- Integrasi DeFi (posisi tanda sebagai jaminan)
+- API perusahaan: bank dan lembaga keuangan mikro mengintegrasikan
+  tanda-as-a-service
+- Yayasan La Tanda didirikan
 
-## 2029+ — Fase 5: Protokol Terbuka
+## Visi jangka panjang, tanpa tanggal maupun komitmen — Protokol Terbuka
 
--   150+ validator, tanpa batas
--   Chain satelit regional terhubung via IBC (Afrika, Asia)
--   Dukungan multi-model: chit funds (India), susu (Afrika), hui 
-(Vietnam), paluwagan (Filipina)
--   Interoperabilitas dengan keuangan tradisional (kartu, remitansi)
--   DAO sepenuhnya otonom dengan dewan terpilih untuk keadaan darurat
+- 150+ validator, tanpa batas
+- Rantai satelit regional terhubung melalui IBC (Afrika, Asia)
+- Dukungan multi-model: chit fund (India), susu (Afrika), hui (Vietnam),
+  paluwagan (Filipina)
+- Interoperabilitas dengan keuangan tradisional (kartu, remitansi)
+- DAO sepenuhnya otonom dengan dewan terpilih untuk keadaan darurat
 
-[Ver roadmap detallado →](roadmap.html)
+[Lihat roadmap terperinci →](roadmap.html)
 
-# 10. Tim dan Hukum
+# 10. Tim dan Legal
 
-## 10.1 Entidad Legal
+## 10.1 Entitas Hukum
 
 **Ray-Banks LLC**  
 New Mexico Limited Liability Company  
@@ -691,68 +615,73 @@ Beroperasi sebagai: Latanda Financial Services
 
 ## 10.2 Tim Pendiri
 
-La Tanda dikembangkan oleh tim terdistribusi yang dipimpin oleh 
-pendiri, dengan peran kunci yang sedang direkrut secara aktif 
-melalui program bounty dan komunitas Cosmos.
+La Tanda dikembangkan oleh tim terdistribusi yang dipimpin oleh pendiri,
+dengan peran-peran kunci yang sedang aktif direkrut melalui program
+bounty dan komunitas Cosmos.
 
-| Peran                                 | Status     | Alokasi (Pool Tim) |
-|---------------------------------------|------------|--------------------|
-| **Pendiri / Arsitek**                 | Aktif      | 8.000.000 LTD      |
-| **Pemimpin Infrastruktur**            | Merekrut   | 2.500.000 LTD      |
-| **Developer Frontend**                | Merekrut   | 2.500.000 LTD      |
-| **Komunitas / Pertumbuhan**           | Merekrut   | 2.000.000 LTD      |
-| **Developer Mobile**                  | Pasca-Seed | 2.500.000 LTD      |
-| **CTO / Developer Backend+Chain**     | Pasca-Seed | 4.000.000 LTD      |
-| **Desainer / UX**                     | 2027       | 1.500.000 LTD      |
-| **Cadangan**                          | -          | 1.000.000 LTD      |
+| Peran                                   | Status        | Alokasi (Pool Tim) |
+|-----------------------------------------|---------------|--------------------|
+| **Pendiri / Arsitek**                   | Aktif         | 8,000,000 LTD      |
+| **Pemimpin Infrastruktur**              | Merekrut      | 2,500,000 LTD      |
+| **Pengembang Frontend**                 | Merekrut      | 2,500,000 LTD      |
+| **Komunitas / Pertumbuhan**             | Merekrut      | 2,000,000 LTD      |
+| **Pengembang Mobile**                   | Pasca-Seed    | 2,500,000 LTD      |
+| **CTO / Pengembang Backend+Chain**      | Pasca-Seed    | 4,000,000 LTD      |
+| **Desainer / UX**                       | 2027          | 1,500,000 LTD      |
+| **Cadangan**                            | \-            | 1,000,000 LTD      |
 
-**Vesting:** Semua peran tim memiliki 1 tahun cliff dan 2 tahun 
-vesting linear. Total pool Tim: 24.000.000 LTD (12% dari 
-supply).
+**Vesting:** Semua peran tim memiliki cliff 1 tahun dan vesting linear 2
+tahun. Total pool Tim: 24,000,000 LTD (12% dari supply).
 
-**Bergabung dengan tim:** Kontributor terbaik dari [program 
-bounty](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty) 
-diundang ke peran tim. Kami juga menerima lamaran langsung 
-untuk peran khusus. Kontak: <contact@latanda.online>
+**Bergabunglah dengan tim:** Kontributor terbaik dari [program
+bounty](https://github.com/INDIGOAZUL/la-tanda-web/issues?q=is%3Aopen+label%3Abounty)
+diundang ke peran tim. Kami juga menerima lamaran langsung untuk peran
+khusus. Kontak: <contact@latanda.online>
 
 ## 10.3 Validator dan Mitra Infrastruktur
 
-| Operator                         | Status | Sejak         |
-|----------------------------------|--------|---------------|
-| **Ray-Banks** (genesis)          | Aktif  | Februari 2026 |
-| **PRO Delegators** (Nuxian Labs) | Aktif  | Maret 2026    |
+| Operator                         | Status | Sejak          |
+|----------------------------------|--------|----------------|
+| **Ray-Banks** (genesis)          | Aktif  | Februari 2026  |
+| **PRO Delegators** (Nuxian Labs) | Aktif  | Maret 2026     |
 
 ## 10.4 Kontak
 
--   **Website:** [latanda.online](https://latanda.online)
--   **Corporate:** [raybanks.org](https://raybanks.org)
--   **Email:** contact@latanda.online
--   **GitHub:** 
-    [INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
--   **Twitter:** @TandaWeb3
--   **Investor:** [latanda.online/invest](/invest.html) \| 
-    <invest@latanda.online>
+- **Website:** [latanda.online](https://latanda.online)
+- **Corporate:** [raybanks.org](https://raybanks.org)
+- **Email:** contact@latanda.online
+- **GitHub:**
+  [INDIGOAZUL/la-tanda-web](https://github.com/INDIGOAZUL/la-tanda-web)
+- **Twitter:** @TandaWeb3
+- **Investors:** [latanda.online/invest](/invest.html) \|
+  <invest@latanda.online>
 
 ## 10.5 Disclaimer
 
-Dokumen ini hanya untuk tujuan informasi dan bukan merupakan 
-nasihat keuangan, hukum, atau investasi. Token LTD saat ini 
-beroperasi di testnet dan tidak memiliki nilai moneter. Investasi 
-dalam kriptocurrency melibatkan risiko signifikan. Konsultasikan 
-dengan profesional sebelum mengambil keputusan keuangan.
+Dokumen ini hanya untuk tujuan informasi dan bukan merupakan nasihat
+keuangan, hukum, atau investasi. Token LTD saat ini beroperasi di
+testnet dan tidak memiliki nilai moneter. Berinvestasi dalam mata uang
+kripto mengandung risiko yang signifikan. Konsultasikan dengan
+profesional sebelum mengambil keputusan keuangan.
 
 ### Riwayat versi
 
-*September 2026:* versi ini menggantikan versi sebelumnya. Versi
-sebelumnya memuat estimasi imbal hasil (APY) untuk staking; estimasi
-tersebut telah ditarik dan tidak berlaku lagi. Selama jaringan masih di
-testnet, kami tidak mempublikasikan angka imbal hasil: imbalan staking
+**Oktober 2026 (v2.1):** Fitur-fitur yang tidak lagi menjadi bagian dari
+platform publik telah dihapus dari dokumen ini. Prototipe EVM di Polygon
+Amoy dijelaskan sebagai historis (dihentikan). Klaim tanpa dasar
+(evaluasi PCI-DSS, jumlah tabel dan endpoint) dihapus, kembalinya
+inflasi testnet ke 0% (GOV-004) dicatat, dan angka-angka diperbarui per 11-Okt-2026 dari sumber publik.
+
+**September 2026:** Versi ini menggantikan versi sebelumnya. Versi
+sebelumnya memuat perkiraan imbal hasil (APY) untuk staking; perkiraan
+itu telah ditarik dan tidak berlaku lagi. Selama jaringan masih di
+testnet, kami tidak memublikasikan angka imbal hasil: imbalan staking
 akan bergantung pada komisi validator dan aktivitas jaringan, dan tidak
-dijamin. Roadmap (bagian 9) diperbarui dengan kondisi per September
+dijamin. Roadmap (bagian 9) juga diperbarui dengan status per September
 2026.
 
-2024-2026 Ray-Banks LLC. Hak cipta dilindungi undang-undang.
+2024-2026 Ray-Banks LLC. Semua hak dilindungi.
 
 [Roadmap](roadmap.html) \| [Privasi](privacy-policy.html) \|
-[Termin](terms-of-service.html) \| [API 
+[Ketentuan](terms-of-service.html) \| [API
 Docs](https://latanda.online/docs)

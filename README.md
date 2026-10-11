@@ -35,29 +35,29 @@ La Tanda is a **Web3 ecosystem with 7 layers**. Savings groups (tandas / ROSCAs)
 
 ## 📊 Current status (live on testnet)
 
-We are **early-stage and real**. These are figures from our platform records and the live chain, as of **2026-09-25** — not projections, not rounded up.
+We are **early-stage and real**. These are figures from our platform records and the live chain, as of **2026-10-11** — not projections, not rounded up.
 
-| Metric | Value (2026-09-25) |
+| Metric | Value (2026-10-11) |
 |---|---|
-| **Registered users** | **83** (**67** email-verified; none identity-verified) |
-| **Savings groups (tandas)** | **4** created — **3** active with completed payouts |
-| **Completed payouts** | **44**, recorded as completed by the group coordinator (paid off-platform, in cash or bank transfer) |
-| **Money recorded on the platform** | more than **L 1.5 million** (≈ **US$60,000**) recorded by coordinators as paid out to beneficiaries. No fees charged to date. |
-| **Chain validators** | **36 bonded** (48 registered) |
-| **Chain** | `latanda-testnet-1`, running since **2026-02-25**; height ~3.3M; average block time ~5.6 s |
-| **Governance proposals passed** | **3** |
+| **Registered users** | **95** (**80** email-verified; none identity-verified) |
+| **Savings groups (tandas)** | **5** created — **3** active, **3** with completed payouts |
+| **Completed payouts** | **47**, recorded as completed by the group coordinator (paid off-platform, in cash or bank transfer) |
+| **Money recorded on the platform** | **L 1,782,100** (≈ **US$68,500** at L26/US$) recorded by coordinators as contributions for completed payouts. No fees charged to date. |
+| **Chain validators** | **35 bonded** (51 registered) |
+| **Chain** | `latanda-testnet-1`, running since **2026-02-25**; height ~3.54M; average block time ~5.6 s |
+| **Governance proposals passed** | **4** |
 
 Chain figures are verifiable on-chain; group figures are platform records, published live at the endpoint below.
 
 **Live figures: https://latanda.online/api/public/metrics** (same query for every surface, 5-minute cache; the table above is a dated snapshot).
 
-**Why we publish numbers this small.** The members of 3 real savings groups have recorded more than **L 1.5 million** in **44 completed payouts** on La Tanda: real people, their own savings, moved among themselves off-platform and recorded here. The chain behind it has **36 bonded validators** and **3 passed governance proposals**. That is the hard part. We would rather earn growth than claim it.
+**Why we publish numbers this small.** The members of 3 real savings groups have recorded **L 1,782,100** for **47 completed payouts** on La Tanda: real people, their own savings, moved among themselves off-platform and recorded here. The chain behind it has **35 bonded validators** and **4 passed governance proposals**. That is the hard part. We would rather earn growth than claim it.
 
 > **How we count users.** "Registered" = an account exists; "email-verified" = its email is confirmed. Neither means identity-verified or KYC'd. La Tanda does not run KYC today; if payments ever move through the app, identity checks will be run by the licensed payment partner.
 
 ## 💎 Tokenomics (200M LTD genesis supply)
 
-**Model**: fixed genesis supply + pre-minted treasury (similar to THORChain). Inflation is a governance parameter: the testnet currently runs 5% (GOV-003); the mainnet design is 0%.
+**Model**: fixed genesis supply + pre-minted treasury (similar to THORChain). Inflation is a governance parameter: GOV-003 enabled 5% on testnet (Apr 2026) and GOV-004 set it back to 0% (Sep 2026); the mainnet design is 0%.
 
 ### Distribution (10 pools)
 
@@ -77,7 +77,7 @@ Chain figures are verifiable on-chain; group figures are platform records, publi
 
 **Long-term design** (after year 8): six funding sources for network security are described in the whitepaper. Design only; subject to governance and legal review.
 
-Full tokenomics: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Interactive page](https://latanda.online/ltd-token-economics.html)
+Full tokenomics: [Whitepaper v2.1](https://latanda.online/whitepaper.html) · [Interactive page](https://latanda.online/ltd-token-economics.html)
 
 ## 🔗 La Tanda Chain
 
@@ -88,8 +88,8 @@ A sovereign blockchain built with **Cosmos SDK + CometBFT**, purpose-built for c
 - **Address prefix**: `ltd`
 - **Block time**: ~5.6 seconds (measured average)
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validators**: **36 bonded / 48 registered** (2026-09-25; live count at https://latanda.online/api/public/metrics; full list in the explorer below)
-- **Governance**: active, 3 proposals passed
+- **Validators**: **35 bonded / 51 registered** (2026-10-11; live count at https://latanda.online/api/public/metrics; full list in the explorer below)
+- **Governance**: active, 4 proposals passed
 - **Mainnet**: internal target **Q1-2027**, conditional on legal counsel; not a commitment
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
@@ -170,7 +170,7 @@ la-tanda-web/
 
 **Key pages**:
 - `index.html` — landing page (3D cosmic hero, tokenomics donut, persona cards)
-- `whitepaper.html` — Whitepaper v2.0 (10 pools + 6 sustainability sources)
+- `whitepaper.html` — Whitepaper v2.1 (10 pools)
 - `ltd-token-economics.html` — interactive tokenomics with live chain data
 - `governance.html` — on-chain governance hub with Keplr wallet
 - `mia.html` — MIA AI (the 7th layer)
@@ -194,7 +194,7 @@ We **no longer run open-ended Tier-0 bounties**. Work is scoped and assigned to 
 
 ### Public documentation
 - 🌐 Website: [latanda.online](https://latanda.online)
-- 📜 Whitepaper v2.0: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
+- 📜 Whitepaper v2.1: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
 - 💰 Tokenomics: [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html)
 - 🏛️ Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
 - 💻 Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
@@ -255,29 +255,29 @@ La Tanda es un **ecosistema Web3 de 7 capas**. Las tandas (grupos de ahorro rota
 
 ## 📊 Estado actual (live en testnet)
 
-Estamos **en etapa temprana, y es real**. Estas son cifras de los registros de la plataforma y del chain en vivo, al **2026-09-25** — no son proyecciones, y no están redondeadas hacia arriba.
+Estamos **en etapa temprana, y es real**. Estas son cifras de los registros de la plataforma y del chain en vivo, al **2026-10-11** — no son proyecciones, y no están redondeadas hacia arriba.
 
-| Métrica | Valor (2026-09-25) |
+| Métrica | Valor (2026-10-11) |
 |---|---|
-| **Usuarios registrados** | **83** (**67** con email verificado; ninguno con identidad verificada) |
-| **Tandas (grupos de ahorro)** | **4** creadas — **3** activas con pagos completados |
-| **Pagos completados** | **44**, registrados como completados por el coordinador del grupo (pagados fuera de la plataforma, en efectivo o transferencia) |
-| **Dinero registrado en la plataforma** | más de **L 1.5 millones** (≈ **US$60,000**) registrados por los coordinadores como entregados a beneficiarios. Sin comisiones cobradas a la fecha. |
-| **Validadores del chain** | **36 bonded** (48 registrados) |
-| **Chain** | `latanda-testnet-1`, en marcha desde el **2026-02-25**; altura ~3.3M; tiempo de bloque promedio ~5.6 s |
-| **Propuestas de gobernanza aprobadas** | **3** |
+| **Usuarios registrados** | **95** (**80** con email verificado; ninguno con identidad verificada) |
+| **Tandas (grupos de ahorro)** | **5** creadas — **3** activas, **3** con pagos completados |
+| **Pagos completados** | **47**, registrados como completados por el coordinador del grupo (pagados fuera de la plataforma, en efectivo o transferencia) |
+| **Dinero registrado en la plataforma** | **L 1,782,100** (≈ **US$68,500** a L26/US$) registrados por los coordinadores como aportes de los pagos completados. Sin comisiones cobradas a la fecha. |
+| **Validadores del chain** | **35 bonded** (51 registrados) |
+| **Chain** | `latanda-testnet-1`, en marcha desde el **2026-02-25**; altura ~3.54M; tiempo de bloque promedio ~5.6 s |
+| **Propuestas de gobernanza aprobadas** | **4** |
 
 Las cifras de la cadena se verifican on-chain; las de grupos son registros de la plataforma, publicados en vivo en el endpoint de abajo.
 
 **Cifras en vivo: https://latanda.online/api/public/metrics** (la misma consulta para toda superficie, caché de 5 minutos; la tabla de arriba es una foto fechada).
 
-**Por qué publicamos números tan pequeños.** Los miembros de 3 grupos de ahorro reales han registrado más de **L 1.5 millones** en **44 pagos completados** en La Tanda: gente real, con sus propios ahorros, moviéndolos entre ellos fuera de la plataforma y registrándolos aquí. Detrás hay una cadena con **36 validadores bonded** y **3 propuestas de gobernanza aprobadas**. Esa es la parte difícil. Preferimos ganarnos el crecimiento a inventarlo.
+**Por qué publicamos números tan pequeños.** Los miembros de 3 grupos de ahorro reales han registrado **L 1,782,100** en **47 pagos completados** en La Tanda: gente real, con sus propios ahorros, moviéndolos entre ellos fuera de la plataforma y registrándolos aquí. Detrás hay una cadena con **35 validadores bonded** y **4 propuestas de gobernanza aprobadas**. Esa es la parte difícil. Preferimos ganarnos el crecimiento a inventarlo.
 
 > **Cómo contamos usuarios.** "Registrado" = la cuenta existe; "email verificado" = su correo está confirmado. Ninguno significa identidad verificada ni KYC. Hoy La Tanda no hace KYC; si algún día los pagos pasan por la app, la verificación de identidad la hará el socio de pagos con licencia.
 
 ## 💎 Tokenomics (200M LTD de suministro inicial)
 
-**Modelo**: suministro inicial fijo + tesorería pre-acuñada (similar a THORChain). La inflación es un parámetro de gobernanza: el testnet corre hoy con 5% (GOV-003); el diseño de mainnet es 0%.
+**Modelo**: suministro inicial fijo + tesorería pre-acuñada (similar a THORChain). La inflación es un parámetro de gobernanza: GOV-003 activó 5% en testnet (abr-2026) y GOV-004 la devolvió a 0% (sep-2026); el diseño de mainnet es 0%.
 
 ### Distribución (10 pools)
 
@@ -297,7 +297,7 @@ Las cifras de la cadena se verifican on-chain; las de grupos son registros de la
 
 **Diseño a largo plazo** (después del año 8): el whitepaper describe seis fuentes para financiar la seguridad de la red. Solo diseño; sujeto a gobernanza y revisión legal.
 
-Tokenomics completa: [Whitepaper v2.0](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
+Tokenomics completa: [Whitepaper v2.1](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
 
 ## 🔗 La Tanda Chain
 
@@ -308,8 +308,8 @@ Blockchain soberana construida con **Cosmos SDK + CometBFT**, específicamente d
 - **Address prefix**: `ltd`
 - **Block time**: ~5.6 segundos (promedio medido)
 - **Consensus**: CometBFT (BFT, Delegated Proof of Stake)
-- **Validadores**: **36 bonded / 48 registrados** (2026-09-25; conteo en vivo en https://latanda.online/api/public/metrics; lista completa en el explorer de abajo)
-- **Governance**: activa, 3 propuestas pasadas
+- **Validadores**: **35 bonded / 51 registrados** (2026-10-11; conteo en vivo en https://latanda.online/api/public/metrics; lista completa en el explorer de abajo)
+- **Governance**: activa, 4 propuestas pasadas
 - **Mainnet**: objetivo interno Q1-2027, condicionado a asesoría legal; no es compromiso
 - **Explorer (community)**: https://exp.utsa.tech/latanda/staking
 
@@ -389,7 +389,7 @@ la-tanda-web/
 
 **Páginas principales alineadas al framework**:
 - `index.html` — Landing con hero cósmico 3D + tokenomics donut + personas cards
-- `whitepaper.html` — Whitepaper v2.0 con 10 pools + 6 fuentes sustainability
+- `whitepaper.html` — Whitepaper v2.1 con 10 pools
 - `ltd-token-economics.html` — Tokenomics interactiva con datos live del chain
 - `governance.html` — Hub de gobernanza on-chain con Keplr wallet
 - `mia.html` — MIA AI (7ma capa del ecosistema)
@@ -413,7 +413,7 @@ Un bot (`pr-gatekeeper.yml`) **cierra automáticamente** los pull requests que r
 
 ### Documentación pública
 - 🌐 Website: [latanda.online](https://latanda.online)
-- 📜 Whitepaper v2.0: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
+- 📜 Whitepaper v2.1: [latanda.online/whitepaper.html](https://latanda.online/whitepaper.html)
 - 💰 Tokenomics: [latanda.online/ltd-token-economics.html](https://latanda.online/ltd-token-economics.html)
 - 🏛️ Governance: [latanda.online/governance.html](https://latanda.online/governance.html)
 - 💻 Dev Portal: [latanda.online/dev-dashboard.html](https://latanda.online/dev-dashboard.html)
