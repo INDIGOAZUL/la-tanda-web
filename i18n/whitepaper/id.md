@@ -55,7 +55,7 @@ Rantai sendiri (testnet)
 
 200M
 
-LTD Token Supply
+LTD genesis (desain mainnet)
 
 # 2. Masalah
 
@@ -91,17 +91,17 @@ jangkauan global blockchain.
 | Karakteristik  | Tanda Tradisional      | La Tanda Web3            |
 |----------------|------------------------|--------------------------|
 | Jangkauan      | Lokal (10-20 orang)    | Global (tanpa batas)     |
-| Transparansi   | Lisan/kertas           | Blockchain tidak berubah |
-| Keamanan       | Kepercayaan pribadi    | Kontrak Pintar + KYC     |
-| Pembayaran     | Tunai/bank             | Crypto + fiat            |
-| Imbalan        | Tidak ada              | Token LTD                |
+| Transparansi   | Lisan/kertas           | Catatan digital bersama dengan grup |
+| Keamanan       | Kepercayaan pribadi    | Riwayat dan reputasi terlihat (tanpa jaminan atau asuransi) |
+| Pembayaran     | Tunai/bank             | Tunai atau transfer antar anggota; La Tanda hanya mencatat |
+| Imbalan        | Tidak ada              | LTD testnet (tanpa nilai moneter) |
 
 ## 3.2 Cara Kerja
 
 1.  **Membuat/Bergabung:** Pengguna membuat tanda atau bergabung dengan
     tanda yang sudah ada
 2.  **Menyetor:** Setiap anggota menyerahkan setorannya (tunai atau
-    transfer) dan koordinator mencatatnya di platform
+    transfer) dan pihak yang mengoordinasi grup mencatatnya di platform
 3.  **Undian:** Sistem tombola langsung menentukan giliran
 4.  **Menerima:** Anggota menerima dana terkumpul pada gilirannya
 5.  **Mendapatkan:** Token LTD atas partisipasi dan ketepatan waktu
@@ -162,14 +162,15 @@ kurva ~5 tahun.
   
 **Testnet saat ini (`latanda-testnet-1`): inflasi 0% sejak GOV-004
 (September 2026).** Antara April dan September 2026 testnet berjalan
-dengan inflasi bootstrap 5% (GOV-003), sebuah mekanisme uji coba
-sementara. Pada genesis mainnet,
+dengan inflasi uji coba 5% (GOV-003), yang mendistorsi imbalan dan
+dibatalkan; karena itu supply testnet kini ~204.4M LTD (200M saat
+genesis). Pada genesis mainnet,
 `inflation_min = inflation_max = 0.0`. Spesifikasi lengkap: ITP-SPEC §6
 (dokumen teknis sedang disiapkan).
 
 200M
 
-Total Supply
+Supply genesis
 
 Native
 
@@ -262,7 +263,8 @@ tinggi membutuhkan keterlibatan berkelanjutan.
 - **Cooldown individu:** 24 jam antar klaim
 - **Pool emisi:** 60M LTD (30% dari supply) didistribusikan selama 5
   tahun melalui partisipasi
-- **Anti-penipuan:** IP tracking, rate limiting, fraud flags
+- **Anti-penyalahgunaan:** pencatatan IP per klaim, batas 24 jam, batas
+  harian dan seumur hidup
 
 ### 6.2.4 Model Penskalaan Progresif
 
@@ -325,8 +327,9 @@ memberikan manfaat lebih besar:
 
 ## 7.4 Kepatuhan
 
-- Alur verifikasi identitas (KYC) sudah dirancang, belum diaktifkan (0
-  pengguna terverifikasi per 11-Okt-2026)
+- Verifikasi identitas (KYC): tidak aktif. Jika suatu saat pembayaran
+  melewati platform, verifikasi akan dilakukan oleh mitra pembayaran
+  berlisensi
 - Log audit untuk tindakan sensitif (login, perubahan akun, tindakan
   administrasi)
 
@@ -368,7 +371,7 @@ IBC
 
 Interoperabilitas
 
-### Modul asli rantai
+### Modul asli rantai (direncanakan)
 
 | Modul            | Fungsi                                                                                                                |
 |------------------|-----------------------------------------------------------------------------------------------------------------------|
@@ -380,7 +383,7 @@ Interoperabilitas
 
 ### On-chain vs Off-chain
 
-| On-chain (La Tanda Chain)             | Off-chain (PostgreSQL + Redis)                        |
+| On-chain (La Tanda Chain, desain)     | Off-chain (PostgreSQL + Redis)                        |
 |---------------------------------------|-------------------------------------------------------|
 | Transfer dan saldo LTD                | Profil pengguna, PII, KYC                             |
 | Pembuatan tanda, aturan, pembayaran   | Feed sosial, komentar, chat                           |
@@ -411,7 +414,7 @@ produksi blok.
 |----------------|-----------------------------------------------------------------|
 | Stake minimum  | Self-delegation minimum 1 LTD (testnet: delegasi dari proyek)   |
 | Riwayat        | Aktif 6+ bulan di La Tanda                                      |
-| Verifikasi     | KYC/KYB selesai                                                 |
+| Verifikasi     | KYC/KYB direncanakan untuk mainnet, tunduk pada tinjauan hukum; tidak diwajibkan di testnet |
 | Uptime         | 99.5%+ per epoch (10,000 blok)                                  |
 | Tata kelola    | Memberikan suara pada 75%+ proposal                             |
 
@@ -493,8 +496,8 @@ pra-cetak (40M LTD dialokasikan untuk staking/validator). Tanpa inflasi
   Cosmos Hub
 - **Jembatan ke jaringan lain:** interoperabilitas (IBC/jembatan), tanpa
   tanggal
-- **Jalur Fiat:** transfer bank / uang seluler, sedang dijajaki dengan
-  mitra berlisensi; belum ada yang dikontrak, tanpa tanggal
+- **Jalur Fiat:** transfer bank / uang seluler, hanya melalui mitra
+  berlisensi; saat ini belum ada yang dikontrak dan tanpa tanggal
 
 ## 8.6 Keamanan Rantai
 
@@ -522,7 +525,7 @@ pra-cetak (40M LTD dialokasikan untuk staking/validator). Tanpa inflasi
 ## 2026 — Platform (dalam produksi)
 
 - Pencatatan tanda: setoran dan pembayaran giliran dicatat di platform
-  dan dikonfirmasi oleh koordinator (per 11-Okt-2026: 5 tanda dibuat, 3
+  dan dikonfirmasi oleh pihak yang mengoordinasi tiap grup (per 11-Okt-2026: 5 tanda dibuat, 3
   aktif; 3 dengan pembayaran giliran selesai; 47 pembayaran giliran
   selesai)
 - 95 pengguna terdaftar per 11-Okt-2026 (akun dibuat; tidak
@@ -667,10 +670,13 @@ profesional sebelum mengambil keputusan keuangan.
 ### Riwayat versi
 
 **Oktober 2026 (v2.1):** Fitur-fitur yang tidak lagi menjadi bagian dari
-platform publik telah dihapus dari dokumen ini. Prototipe EVM di Polygon
-Amoy dijelaskan sebagai historis (dihentikan). Klaim tanpa dasar
-(evaluasi PCI-DSS, jumlah tabel dan endpoint) dihapus, kembalinya
-inflasi testnet ke 0% (GOV-004) dicatat, dan angka-angka diperbarui per 11-Okt-2026 dari sumber publik.
+platform publik telah dihapus. Klaim yang tidak mencerminkan produk
+telah dikoreksi: verifikasi identitas (KYC) tidak aktif, tidak ada
+evaluasi PCI-DSS yang selesai, log audit tidak lagi disebut tidak dapat
+diubah, jalur fiat tidak memiliki mitra yang dikontrak, dan jumlah tabel
+serta endpoint dihapus. Prototipe EVM di Polygon Amoy dicantumkan sebagai
+historis (dihentikan). Inflasi testnet kembali ke 0% (GOV-004). Angka
+per 11-Okt-2026 dari sumber publik.
 
 **September 2026:** Versi ini menggantikan versi sebelumnya. Versi
 sebelumnya memuat perkiraan imbal hasil (APY) untuk staking; perkiraan

@@ -55,7 +55,7 @@ Cadeia própria (testnet)
 
 200M
 
-LTD Token Supply
+LTD de genesis (design da mainnet)
 
 # 2. O Problema
 
@@ -91,16 +91,16 @@ global da blockchain.
 | Característica | Tanda Tradicional      | La Tanda Web3         |
 |----------------|------------------------|-----------------------|
 | Alcance        | Local (10-20 pessoas)  | Global (sem limite)   |
-| Transparência  | Verbal/papel           | Blockchain imutável   |
-| Segurança      | Confiança pessoal      | Smart contracts + KYC |
-| Pagamentos     | Dinheiro/banco         | Crypto + fiat         |
-| Recompensas    | Nenhuma                | Tokens LTD            |
+| Transparência  | Verbal/papel           | Registro digital compartilhado com o grupo |
+| Segurança      | Confiança pessoal      | Histórico e reputação visíveis (sem garantia nem seguro) |
+| Pagamentos     | Dinheiro/banco         | Dinheiro ou transferência entre membros; La Tanda só registra |
+| Recompensas    | Nenhuma                | LTD de testnet (sem valor monetário) |
 
 ## 3.2 Como Funciona
 
 1.  **Criar/Entrar:** O usuário cria uma tanda ou entra em uma existente
 2.  **Contribuir:** Cada membro entrega sua contribuição (dinheiro ou
-    transferência) e a coordenadora a registra na plataforma
+    transferência) e quem coordena o grupo a registra na plataforma
 3.  **Sorteio:** Sistema de tômbola ao vivo determina os turnos
 4.  **Receber:** O membro recebe o pote no seu turno
 5.  **Ganhar:** Tokens LTD por participação e pontualidade
@@ -161,14 +161,15 @@ distribuído em uma curva de ~5 anos.
   
 **Testnet atual (`latanda-testnet-1`): 0% de inflação desde a GOV-004
 (setembro de 2026).** Entre abril e setembro de 2026 rodou com 5% de
-inflação bootstrap (GOV-003), um mecanismo temporário de teste. No
+inflação de teste (GOV-003), que distorceu as recompensas e foi revertida;
+por isso o supply da testnet é hoje ~204.4M LTD (200M no genesis). No
 genesis da mainnet,
 `inflation_min = inflation_max = 0.0`. Especificação completa: ITP-SPEC
 §6 (documento técnico em preparação).
 
 200M
 
-Supply Total
+Supply de genesis
 
 Nativo
 
@@ -261,7 +262,8 @@ exige engajamento contínuo.
 - **Cooldown individual:** 24 horas entre claims
 - **Pool de emissão:** 60M LTD (30% do supply) distribuído em 5 anos
   via participação
-- **Antifraude:** IP tracking, rate limiting, fraud flags
+- **Antiabuso:** registro de IP por claim, limite de 24 h, tetos
+  diário e vitalício
 
 ### 6.2.4 Modelo de Scaling Progressivo
 
@@ -325,8 +327,9 @@ nível oferece mais benefícios:
 
 ## 7.4 Compliance
 
-- Fluxo de verificação de identidade (KYC) desenhado, não ativado (0
-  usuários verificados em 11-out-2026)
+- Verificação de identidade (KYC): não ativa. Se algum dia os pagamentos
+  passarem pela plataforma, ela será feita por um parceiro de pagamentos
+  licenciado
 - Logs de auditoria de ações sensíveis (login, alterações de conta,
   ações de administração)
 
@@ -366,7 +369,7 @@ IBC
 
 Interoperabilidade
 
-### Módulos nativos da cadeia
+### Módulos nativos da cadeia (planejados)
 
 | Módulo           | Função                                                                                                             |
 |------------------|--------------------------------------------------------------------------------------------------------------------|
@@ -378,7 +381,7 @@ Interoperabilidade
 
 ### On-chain vs Off-chain
 
-| On-chain (La Tanda Chain)             | Off-chain (PostgreSQL + Redis)                    |
+| On-chain (La Tanda Chain, design)     | Off-chain (PostgreSQL + Redis)                    |
 |---------------------------------------|---------------------------------------------------|
 | Transferências e saldos de LTD        | Perfis de usuário, PII, KYC                       |
 | Criação de tandas, regras, pagamentos | Feed social, comentários, chat                    |
@@ -409,7 +412,7 @@ de blocos.
 |--------------|-----------------------------------------------------------------|
 | Stake mínimo | 1 LTD de self-delegation mínima (testnet: delegação do projeto) |
 | Histórico    | 6+ meses ativo na La Tanda                                      |
-| Verificação  | KYC/KYB concluído                                               |
+| Verificação  | KYC/KYB previsto para a mainnet, sujeito a revisão jurídica; não exigido na testnet |
 | Uptime       | 99.5%+ por época (10,000 blocos)                                |
 | Governança   | Votar em 75%+ das propostas                                     |
 
@@ -491,8 +494,8 @@ inflação — supply fixo de 200M.
   Cosmos Hub
 - **Pontes para outras redes:** interoperabilidade (IBC/pontes), sem
   data
-- **Rampas Fiat:** transferência bancária / dinheiro móvel, em
-  exploração com parceiros licenciados; nenhum contratado, sem data
+- **Rampas Fiat:** transferência bancária / dinheiro móvel, somente por
+  meio de um parceiro licenciado; hoje não há nenhum contratado nem data
 
 ## 8.6 Segurança da Cadeia
 
@@ -520,7 +523,7 @@ inflação — supply fixo de 200M.
 ## 2026 — Plataforma (em produção)
 
 - Registro de tandas: contribuições e pagamentos de turno registrados na
-  plataforma e confirmados pela coordenadora (em 11-out-2026: 5 tandas
+  plataforma e confirmados por quem coordena cada grupo (em 11-out-2026: 5 tandas
   criadas, 3 ativas; 3 com pagamentos de turno concluídos; 47 pagamentos
   de turno concluídos)
 - 95 usuários registrados em 11-out-2026 (conta criada; não verificados
@@ -665,12 +668,15 @@ antes de tomar decisões financeiras.
 
 ### Histórico de versões
 
-**Outubro de 2026 (v2.1):** Foram retiradas deste documento funções que
-não fazem mais parte da plataforma pública. O protótipo EVM na Polygon
-Amoy é descrito como histórico (desativado). Foram removidas afirmações
-sem respaldo (avaliação PCI-DSS, contagens de tabelas e endpoints),
-registrou-se que a inflação da testnet voltou a 0% (GOV-004) e os
-números foram atualizados em 11-out-2026 a partir da fonte pública.
+**Outubro de 2026 (v2.1):** Foram retiradas funções que não fazem mais
+parte da plataforma pública. Foram corrigidas afirmações que não
+refletiam o produto: a verificação de identidade (KYC) não está ativa,
+não houve uma avaliação PCI-DSS concluída, os registros de auditoria não
+são mais descritos como imutáveis, as rampas fiat não têm parceiro
+contratado e foram removidas as contagens de tabelas e endpoints. O
+protótipo EVM na Polygon Amoy aparece como histórico (desativado). A
+inflação da testnet voltou a 0% (GOV-004). Números em 11-out-2026 a
+partir da fonte pública.
 
 **Setembro de 2026:** Esta versão substitui as anteriores. As versões
 anteriores incluíam uma estimativa de rendimento (APY) para staking;

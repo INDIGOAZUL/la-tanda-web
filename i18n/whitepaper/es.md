@@ -54,7 +54,7 @@ Cadena propia (testnet)
 
 200M
 
-LTD Token Supply
+LTD de genesis (diseno mainnet)
 
 # 2. El Problema
 
@@ -87,19 +87,20 @@ global de blockchain.
 
 ## 3.1 Propuesta de Valor
 
-| Caracteristica | Tanda Tradicional      | La Tanda Web3         |
-|----------------|------------------------|-----------------------|
-| Alcance        | Local (10-20 personas) | Global (sin limite)   |
-| Transparencia  | Verbal/papel           | Blockchain inmutable  |
-| Seguridad      | Confianza personal     | Smart contracts + KYC |
-| Pagos          | Efectivo/banco         | Crypto + fiat         |
-| Recompensas    | Ninguna                | Tokens LTD            |
+| Caracteristica | Tanda Tradicional      | La Tanda Web3                                                   |
+|----------------|------------------------|-----------------------------------------------------------------|
+| Alcance        | Local (10-20 personas) | Global (sin limite)                                             |
+| Transparencia  | Verbal/papel           | Registro digital compartido con el grupo                        |
+| Seguridad      | Confianza personal     | Historial y reputacion visibles (sin garantia ni seguro)        |
+| Pagos          | Efectivo/banco         | Efectivo o transferencia entre miembros; La Tanda solo registra |
+| Recompensas    | Ninguna                | LTD de testnet (sin valor monetario)                            |
 
 ## 3.2 Como Funciona
 
 1.  **Crear/Unirse:** Usuario crea una tanda o se une a una existente
 2.  **Aportar:** Cada miembro entrega su aporte (efectivo o
-    transferencia) y la coordinadora lo registra en la plataforma
+    transferencia) y quien coordina el grupo lo registra en la
+    plataforma
 3.  **Sorteo:** Sistema de tombola en vivo determina turnos
 4.  **Recibir:** Miembro recibe el pozo en su turno
 5.  **Ganar:** Tokens LTD por participacion y cumplimiento
@@ -159,13 +160,15 @@ distribuido en una curva de ~5 anos.
   
 **Testnet actual (`latanda-testnet-1`): 0% de inflacion desde GOV-004
 (septiembre 2026).** Entre abril y septiembre de 2026 corrio con 5% de
-inflacion bootstrap (GOV-003), un mecanismo temporal de prueba. En el
-genesis de mainnet, `inflation_min = inflation_max = 0.0`. Spec
-completa: ITP-SPEC §6 (documento técnico en preparación).
+inflacion de prueba (GOV-003), que distorsiono las recompensas y fue
+revertida; por eso el supply de testnet es hoy ~204.4M LTD (200M en el
+genesis). En el genesis de mainnet,
+`inflation_min = inflation_max = 0.0`. Spec completa: ITP-SPEC §6
+(documento técnico en preparación).
 
 200M
 
-Supply Total
+Supply de genesis
 
 Nativo
 
@@ -257,7 +260,8 @@ engagement sostenido.
 - **Cooldown individual:** 24 horas entre claims
 - **Pool de emision:** 60M LTD (30% del supply) distribuido en 5 anos
   via participacion
-- **Anti-fraude:** IP tracking, rate limiting, fraud flags
+- **Anti-abuso:** registro de IP por reclamo, limite de 24 h, topes
+  diario y de por vida
 
 ### 6.2.4 Modelo de Scaling Progresivo
 
@@ -321,8 +325,8 @@ nivel ofrece mayores beneficios:
 
 ## 7.4 Compliance
 
-- Flujo de verificacion de identidad (KYC) disenado, no activado (0
-  usuarios verificados al 11-oct-2026)
+- Verificacion de identidad (KYC): no activa. Si algun dia los pagos
+  pasan por la plataforma, la hara un socio de pagos con licencia
 - Logs de auditoria de acciones sensibles (inicio de sesion, cambios de
   cuenta, acciones de administracion)
 
@@ -362,7 +366,7 @@ IBC
 
 Interoperabilidad
 
-### Modulos nativos de la cadena
+### Modulos nativos de la cadena (planeados)
 
 | Modulo           | Funcion                                                                                                               |
 |------------------|-----------------------------------------------------------------------------------------------------------------------|
@@ -374,7 +378,7 @@ Interoperabilidad
 
 ### On-chain vs Off-chain
 
-| On-chain (La Tanda Chain)         | Off-chain (PostgreSQL + Redis)             |
+| On-chain (La Tanda Chain, diseno) | Off-chain (PostgreSQL + Redis)             |
 |-----------------------------------|--------------------------------------------|
 | Transferencias y balances LTD     | Perfiles de usuario, PII, KYC              |
 | Creacion de tandas, reglas, pagos | Feed social, comentarios, chat             |
@@ -401,13 +405,13 @@ mantienen una copia del estado y retransmiten transacciones.
 Operadores de nodo admitidos al conjunto activo que participan en la
 produccion de bloques.
 
-| Requisito    | Detalle                                                         |
-|--------------|-----------------------------------------------------------------|
-| Stake minimo | 1 LTD self-delegation minima (testnet: delegacion del proyecto) |
-| Historial    | 6+ meses activo en La Tanda                                     |
-| Verificacion | KYC/KYB completado                                              |
-| Uptime       | 99.5%+ por epoca (10,000 bloques)                               |
-| Gobernanza   | Votar en 75%+ de propuestas                                     |
+| Requisito    | Detalle                                                                        |
+|--------------|--------------------------------------------------------------------------------|
+| Stake minimo | 1 LTD self-delegation minima (testnet: delegacion del proyecto)                |
+| Historial    | 6+ meses activo en La Tanda                                                    |
+| Verificacion | KYC/KYB previsto para mainnet, sujeto a revision legal; no se exige en testnet |
+| Uptime       | 99.5%+ por epoca (10,000 bloques)                                              |
+| Gobernanza   | Votar en 75%+ de propuestas                                                    |
 
 **Conjunto de validadores (expansion progresiva):**
 
@@ -485,8 +489,8 @@ inflacion — suministro fijo de 200M.
 - **IBC (Cosmos):** Conexion con Osmosis (DEX), Noble (USDC nativo),
   Cosmos Hub
 - **Puentes a otras redes:** interoperabilidad (IBC/puentes), sin fecha
-- **Rampas Fiat:** transferencia bancaria / dinero movil, en exploracion
-  con socios con licencia; ninguno contratado, sin fecha
+- **Rampas Fiat:** transferencia bancaria / dinero movil, solo a traves
+  de un socio con licencia; hoy no hay ninguno contratado ni fecha
 
 ## 8.6 Seguridad de la Cadena
 
@@ -514,9 +518,9 @@ inflacion — suministro fijo de 200M.
 ## 2026 — Plataforma (en produccion)
 
 - Registro de tandas: aportes y pagos de turno registrados en la
-  plataforma y confirmados por la coordinadora (al 11-oct-2026: 5 tandas
-  creadas, 3 activas; 3 con pagos de turno completados; 47 pagos de
-  turno completados)
+  plataforma y confirmados por quien coordina cada grupo (al
+  11-oct-2026: 5 tandas creadas, 3 activas; 3 con pagos de turno
+  completados; 47 pagos de turno completados)
 - 95 usuarios registrados al 11-oct-2026 (cuenta creada; no verificados
   por KYC)
 - Inicio de sesion con Google y recuperacion de cuenta
@@ -660,12 +664,14 @@ profesionales antes de tomar decisiones financieras.
 
 ### Historial de versiones
 
-**Octubre 2026 (v2.1):** Se retiraron de este documento funciones que ya
-no forman parte de la plataforma publica. El prototipo EVM en Polygon
-Amoy se describe como historico (retirado). Se quitaron afirmaciones sin
-respaldo (evaluacion PCI-DSS, conteos de tablas y endpoints), se reflejo
-que la inflacion de testnet volvio a 0% (GOV-004) y las cifras se
-actualizaron al 11-oct-2026 desde la fuente publica.
+**Octubre 2026 (v2.1):** Se retiraron funciones que ya no forman parte
+de la plataforma publica. Se corrigieron afirmaciones que no reflejaban
+el producto: la verificacion de identidad (KYC) no esta activa, no hubo
+una evaluacion PCI-DSS completada, los registros de auditoria ya no se
+describen como inmutables, las rampas fiat no tienen socio contratado y
+se quitaron conteos de tablas y endpoints. El prototipo EVM en Polygon
+Amoy figura como historico (retirado). La inflacion de testnet volvio a
+0% (GOV-004). Cifras al 11-oct-2026 desde la fuente publica.
 
 **Septiembre 2026:** Esta version reemplaza a las anteriores. Las
 versiones previas incluian una estimacion de rendimiento (APY) para

@@ -42,7 +42,7 @@ We are **early-stage and real**. These are figures from our platform records and
 | **Registered users** | **95** (**80** email-verified; none identity-verified) |
 | **Savings groups (tandas)** | **5** created — **3** active, **3** with completed payouts |
 | **Completed payouts** | **47**, recorded as completed by the group coordinator (paid off-platform, in cash or bank transfer) |
-| **Money recorded on the platform** | **L 1,782,100** (≈ **US$68,500** at L26/US$) recorded by coordinators as contributions for completed payouts. No fees charged to date. |
+| **Money recorded on the platform** | **L 1,782,100** (≈ **US$68,500** at L26/US$) recorded by the group coordinator (the founder coordinates the 3 groups with payouts) as contributions for completed payouts. No fees charged to date. |
 | **Chain validators** | **35 bonded** (51 registered) |
 | **Chain** | `latanda-testnet-1`, running since **2026-02-25**; height ~3.54M; average block time ~5.6 s |
 | **Governance proposals passed** | **4** |
@@ -51,7 +51,7 @@ Chain figures are verifiable on-chain; group figures are platform records, publi
 
 **Live figures: https://latanda.online/api/public/metrics** (same query for every surface, 5-minute cache; the table above is a dated snapshot).
 
-**Why we publish numbers this small.** The members of 3 real savings groups have recorded **L 1,782,100** for **47 completed payouts** on La Tanda: real people, their own savings, moved among themselves off-platform and recorded here. The chain behind it has **35 bonded validators** and **4 passed governance proposals**. That is the hard part. We would rather earn growth than claim it.
+**Why we publish numbers this small.** In 3 real savings groups, **47 completed payouts** for **L 1,782,100** have been recorded on La Tanda: members pay each other off-platform and the coordinator records it here. The chain behind it has **35 bonded validators** and **4 passed governance proposals**. That is the hard part. We would rather earn growth than claim it.
 
 > **How we count users.** "Registered" = an account exists; "email-verified" = its email is confirmed. Neither means identity-verified or KYC'd. La Tanda does not run KYC today; if payments ever move through the app, identity checks will be run by the licensed payment partner.
 
@@ -75,7 +75,7 @@ Chain figures are verifiable on-chain; group figures are platform records, publi
 | Insurance Fund | 2% | 4M LTD | Emergency governance vote |
 | **TOTAL** | **100%** | **200M LTD** | |
 
-**Long-term design** (after year 8): six funding sources for network security are described in the whitepaper. Design only; subject to governance and legal review.
+**Long-term design** for funding network security: in preparation; subject to governance and legal review.
 
 Full tokenomics: [Whitepaper v2.1](https://latanda.online/whitepaper.html) · [Interactive page](https://latanda.online/ltd-token-economics.html)
 
@@ -104,7 +104,7 @@ Validators and node operators who join before mainnet are eligible for an alloca
 | Full Node | 20 | 500 LTD |
 | Bug Reporter | open | 100–1,000 LTD |
 
-<sub>* Targets, not guarantees. Final allocations follow the published program rules (snapshot, uptime, anti-fraud review) and legal review before mainnet.</sub>
+<sub>* Targets, not guarantees. Final allocations follow the program rules, to be published with the snapshot (uptime, anti-fraud review), and legal review before mainnet.</sub>
 
 **How to join**: [Node Operator Guide](./chain/la-tanda-chain-node-guide.md) · [Beginner's Guide](./chain/la-tanda-node-beginner-guide.md) · [latanda.online/chain](https://latanda.online/chain/)
 
@@ -227,7 +227,7 @@ La Tanda is operated by **Ray-Banks LLC**. More at [raybanks.org](https://rayban
 
 La Tanda is not a bank and does not lend money. It does not hold, move or guarantee group funds: members pay each other directly and La Tanda keeps the record. Figures on this page come from platform records and are not audited. This repository is a public mirror of the frontend, released for transparency and community contribution; nothing here is an offer of securities or financial advice.
 
-<sub>† LTD is currently a testnet token: it has no monetary value and cannot be bought, sold or exchanged for money. Any future mainnet allocation is not guaranteed and will follow published rules. \* Staking rewards have no published yield figure; they depend on validator commission and network activity and are not guaranteed. Earlier versions of this page showed a staking APY estimate and seed-round prices; both were withdrawn in September 2026.</sub>
+<sub>† LTD is currently a testnet token: it has no monetary value and cannot be bought, sold or exchanged for money. Any future mainnet allocation is not guaranteed and will follow published rules. \* Staking rewards have no published yield figure; they depend on validator commission and network activity and are not guaranteed. Earlier versions of this page showed a staking APY estimate (withdrawn in September 2026) and seed-round prices (withdrawn in October 2026).</sub>
 
 ---
 
@@ -262,7 +262,7 @@ Estamos **en etapa temprana, y es real**. Estas son cifras de los registros de l
 | **Usuarios registrados** | **95** (**80** con email verificado; ninguno con identidad verificada) |
 | **Tandas (grupos de ahorro)** | **5** creadas — **3** activas, **3** con pagos completados |
 | **Pagos completados** | **47**, registrados como completados por el coordinador del grupo (pagados fuera de la plataforma, en efectivo o transferencia) |
-| **Dinero registrado en la plataforma** | **L 1,782,100** (≈ **US$68,500** a L26/US$) registrados por los coordinadores como aportes de los pagos completados. Sin comisiones cobradas a la fecha. |
+| **Dinero registrado en la plataforma** | **L 1,782,100** (≈ **US$68,500** a L26/US$) registrados por quien coordina el grupo (el fundador coordina los 3 grupos con pagos) como aportes de los pagos completados. Sin comisiones cobradas a la fecha. |
 | **Validadores del chain** | **35 bonded** (51 registrados) |
 | **Chain** | `latanda-testnet-1`, en marcha desde el **2026-02-25**; altura ~3.54M; tiempo de bloque promedio ~5.6 s |
 | **Propuestas de gobernanza aprobadas** | **4** |
@@ -271,7 +271,7 @@ Las cifras de la cadena se verifican on-chain; las de grupos son registros de la
 
 **Cifras en vivo: https://latanda.online/api/public/metrics** (la misma consulta para toda superficie, caché de 5 minutos; la tabla de arriba es una foto fechada).
 
-**Por qué publicamos números tan pequeños.** Los miembros de 3 grupos de ahorro reales han registrado **L 1,782,100** en **47 pagos completados** en La Tanda: gente real, con sus propios ahorros, moviéndolos entre ellos fuera de la plataforma y registrándolos aquí. Detrás hay una cadena con **35 validadores bonded** y **4 propuestas de gobernanza aprobadas**. Esa es la parte difícil. Preferimos ganarnos el crecimiento a inventarlo.
+**Por qué publicamos números tan pequeños.** En 3 grupos de ahorro reales se han registrado **47 pagos completados** por **L 1,782,100** en La Tanda: los miembros se pagan entre ellos fuera de la plataforma y quien coordina lo registra aquí. Detrás hay una cadena con **35 validadores bonded** y **4 propuestas de gobernanza aprobadas**. Esa es la parte difícil. Preferimos ganarnos el crecimiento a inventarlo.
 
 > **Cómo contamos usuarios.** "Registrado" = la cuenta existe; "email verificado" = su correo está confirmado. Ninguno significa identidad verificada ni KYC. Hoy La Tanda no hace KYC; si algún día los pagos pasan por la app, la verificación de identidad la hará el socio de pagos con licencia.
 
@@ -295,7 +295,7 @@ Las cifras de la cadena se verifican on-chain; las de grupos son registros de la
 | Fondo de Seguro | 2% | 4M LTD | Emergency governance vote |
 | **TOTAL** | **100%** | **200M LTD** | |
 
-**Diseño a largo plazo** (después del año 8): el whitepaper describe seis fuentes para financiar la seguridad de la red. Solo diseño; sujeto a gobernanza y revisión legal.
+**Diseño a largo plazo** para financiar la seguridad de la red: en elaboración; sujeto a gobernanza y revisión legal.
 
 Tokenomics completa: [Whitepaper v2.1](https://latanda.online/whitepaper.html) · [Página interactiva](https://latanda.online/ltd-token-economics.html)
 
@@ -324,7 +324,7 @@ Los validadores y operadores de nodo que se sumen antes del mainnet son elegible
 | Full Node | 20 | 500 LTD |
 | Bug Reporter | abierto | 100-1,000 LTD |
 
-<sub>* Montos objetivo, no garantizados. La asignación final sigue las reglas publicadas del programa (snapshot, uptime, revisión antifraude) y revisión legal antes del mainnet.</sub>
+<sub>* Montos objetivo, no garantizados. La asignación final sigue las reglas del programa, que se publicarán con el snapshot (uptime, revisión antifraude), y revisión legal antes del mainnet.</sub>
 
 **Cómo sumarte**: [Guía de Node Operator](./chain/la-tanda-chain-node-guide.md) · [Guía para principiantes](./chain/la-tanda-node-beginner-guide.md) · [latanda.online/chain](https://latanda.online/chain/)
 
@@ -446,7 +446,7 @@ La Tanda es operada por **Ray-Banks LLC**. Más información en [raybanks.org](h
 
 La Tanda no es un banco y no presta dinero. No guarda, no mueve ni garantiza el dinero de los grupos: los miembros se pagan entre ellos y La Tanda lleva el registro. Las cifras de esta página vienen de los registros de la plataforma y no están auditadas. Este repositorio es un mirror público del frontend, liberado para transparencia y contribuciones comunitarias; nada aquí es una oferta de valores ni asesoría financiera.
 
-<sub>† LTD es hoy un token de testnet: no tiene valor monetario y no se puede comprar, vender ni cambiar por dinero. Una asignación futura en mainnet no está garantizada y seguirá reglas publicadas. \* Las recompensas de staking no tienen cifra de rendimiento publicada; dependen de la comisión del validador y de la actividad de la red, y no están garantizadas. Versiones anteriores de esta página mostraban una estimación de APY para staking y precios de ronda seed; ambos se retiraron en septiembre de 2026.</sub>
+<sub>† LTD es hoy un token de testnet: no tiene valor monetario y no se puede comprar, vender ni cambiar por dinero. Una asignación futura en mainnet no está garantizada y seguirá reglas publicadas. \* Las recompensas de staking no tienen cifra de rendimiento publicada; dependen de la comisión del validador y de la actividad de la red, y no están garantizadas. Versiones anteriores de esta página mostraban una estimación de APY para staking (retirada en septiembre de 2026) y precios de ronda seed (retirados en octubre de 2026).</sub>
 
 ---
 
