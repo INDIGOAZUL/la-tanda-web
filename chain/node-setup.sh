@@ -60,14 +60,30 @@ sudo apt-get install -y -qq build-essential git curl wget jq ufw > /dev/null 2>&
 echo -e "${GREEN}  Dependencies installed${NC}"
 
 # ============================================
-# 3. Install Go 1.24.1
+# 3. Install Go 1.25.6
 # ============================================
-echo -e "${YELLOW}[3/7] Installing Go 1.24.1...${NC}"
+# go.mod of the chain source declares go 1.25.6. Installing an older Go
+# makes the toolchain download a newer one silently on first build.
+GO_VERSION="1.25.6"
+GO_SHA256="f022b6aad78e362bcba9b0b94d09ad58c5a70c6ba3b7582905fababf5fe0181a"
 
-if command -v go &> /dev/null && [[ "$(go version)" == *"go1.24"* ]]; then
+echo -e "${YELLOW}[3/7] Installing Go ${GO_VERSION}...${NC}"
+
+if [[ "$(uname -m)" != "x86_64" ]]; then
+    echo -e "${RED}Error: This script installs the linux-amd64 Go archive. Found: $(uname -m)${NC}"
+    echo "  Follow chain/testnet-validator-guide.md and pick the archive for your CPU from https://go.dev/dl/"
+    exit 1
+fi
+
+if command -v go &> /dev/null && [[ "$(go version)" == *"go${GO_VERSION} "* ]]; then
     echo -e "${GREEN}  Go already installed: $(go version)${NC}"
 else
-    wget -q https://go.dev/dl/go1.24.1.linux-amd64.tar.gz -O /tmp/go.tar.gz
+    wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
+    if ! echo "${GO_SHA256}  /tmp/go.tar.gz" | sha256sum --check --status; then
+        rm -f /tmp/go.tar.gz
+        echo -e "${RED}  ERROR: Go archive checksum mismatch!${NC}"
+        exit 1
+    fi
     sudo rm -rf /usr/local/go
     sudo tar -C /usr/local -xzf /tmp/go.tar.gz
     rm /tmp/go.tar.gz
@@ -86,50 +102,32 @@ fi
 # ============================================
 echo -e "${YELLOW}[4/7] Building latandad binary...${NC}"
 
-CHAIN_REPO="https://github.com/INDIGOAZUL/latanda-fintech.git"
 BUILD_DIR="/tmp/latanda-build"
+SOURCE_TARBALL="/tmp/latanda-chain-source.tar.gz"
 
-# Clone and build
 rm -rf $BUILD_DIR
-# For now, download the source from the genesis node
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
-# Download chain source
+# Download the published chain source. There is no fallback: a scaffold built
+# from a different Ignite/SDK version is not guaranteed to match the chain's
+# state machine, and the node can fail later with an app hash mismatch.
 echo "  Downloading chain source..."
-wget -q https://latanda.online/chain/latanda-chain-source.tar.gz -O /tmp/latanda-chain-source.tar.gz 2>/dev/null || {
-    echo -e "${YELLOW}  Source tarball not found. Building from scaffold...${NC}"
-    export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-
-    # Install Ignite CLI
-    if ! command -v ignite &> /dev/null; then
-        echo "  Installing Ignite CLI..."
-        curl -s https://get.ignite.com/cli! | bash > /dev/null 2>&1
-    fi
-
-    # Scaffold and build
-    cd /tmp
-    rm -rf latanda-build
-    ignite scaffold chain latanda --address-prefix ltd --no-module --skip-git 2>&1 | tail -1
-    cd /tmp/latanda
-
-    # Fix unused imports from scaffold
-    sed -i 's|"fmt"||' app/app.go 2>/dev/null || true
-    sed -i 's|"cosmossdk.io/collections"||' app/export.go 2>/dev/null || true
-    sed -i '/cdctypes/d' app/ibc.go 2>/dev/null || true
-
-    go mod tidy 2>&1 | tail -3
-    go build -o /usr/local/bin/latandad ./cmd/latandad
-}
-
-# If tarball was found, extract and build
-if [[ -f /tmp/latanda-chain-source.tar.gz ]]; then
-    tar -xzf /tmp/latanda-chain-source.tar.gz -C $BUILD_DIR
-    cd $BUILD_DIR
-    export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-    go mod tidy 2>&1 | tail -3
-    go build -o /usr/local/bin/latandad ./cmd/latandad
+if ! wget -q https://latanda.online/chain/latanda-chain-source.tar.gz -O $SOURCE_TARBALL; then
+    # wget -O leaves an empty file behind on failure
+    rm -f $SOURCE_TARBALL
+    echo -e "${RED}  ERROR: Could not download https://latanda.online/chain/latanda-chain-source.tar.gz${NC}"
+    echo "  Check your connection and try again, or ask in the La Tanda Discord."
+    exit 1
 fi
+echo "  Source sha256 (record it in your operations log): $(sha256sum $SOURCE_TARBALL | awk '{print $1}')"
+
+tar -xzf $SOURCE_TARBALL -C $BUILD_DIR
+export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+# go mod download keeps go.mod/go.sum exactly as published (go mod tidy may rewrite them)
+go mod download
+go build -trimpath -o $BUILD_DIR/latandad ./cmd/latandad
+sudo install -o root -g root -m 0755 $BUILD_DIR/latandad /usr/local/bin/latandad
 
 echo -e "${GREEN}  latandad installed: $(latandad version 2>&1 || echo 'built')${NC}"
 
@@ -183,8 +181,9 @@ sed -i "s|seeds = \"\"|seeds = \"$PEERS\"|" $CONFIG_DIR/config.toml
 # Set minimum gas price
 sed -i "s|minimum-gas-prices = \"\"|minimum-gas-prices = \"0.001ultd\"|" $CONFIG_DIR/app.toml
 
-# Enable RPC from external (optional — for monitoring)
-sed -i 's|laddr = "tcp://127.0.0.1:26657"|laddr = "tcp://0.0.0.0:26657"|' $CONFIG_DIR/config.toml
+# RPC stays on 127.0.0.1:26657 (the default). Exposing it publicly on a
+# validator invites abuse; see "Keep RPC bound to loopback" in
+# chain/testnet-validator-guide.md.
 
 # Enable API
 sed -i '/^\[api\]/,/^\[/ s|enable = false|enable = true|' $CONFIG_DIR/app.toml
@@ -199,8 +198,7 @@ echo -e "${YELLOW}[7/7] Configuring firewall and starting node...${NC}"
 
 # Firewall
 sudo ufw allow 26656/tcp comment "La Tanda Chain P2P" > /dev/null 2>&1
-sudo ufw allow 26657/tcp comment "La Tanda Chain RPC" > /dev/null 2>&1
-echo -e "${GREEN}  Firewall: ports 26656 (P2P) and 26657 (RPC) opened${NC}"
+echo -e "${GREEN}  Firewall: port 26656 (P2P) opened, RPC 26657 stays local${NC}"
 
 # Start the node
 echo ""
@@ -226,7 +224,8 @@ echo ""
 echo -e "  ${YELLOW}To check latest block:${NC}"
 echo -e "  ${GREEN}latandad status | jq '.sync_info.latest_block_height'${NC}"
 echo ""
-echo -e "  The node will sync from the genesis node. This may take"
-echo -e "  a few minutes depending on how many blocks have been produced."
+echo -e "  The node will sync from the genesis node. Replaying the chain"
+echo -e "  from block 1 can take a day or more; see state sync in"
+echo -e "  chain/testnet-validator-guide.md for a faster bootstrap."
 echo ""
 echo -e "  ${CYAN}Welcome to La Tanda Chain!${NC}"
