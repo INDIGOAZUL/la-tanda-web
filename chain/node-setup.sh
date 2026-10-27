@@ -4,7 +4,7 @@
 # Chain ID: latanda-testnet-1
 # Token: LTD (denom: ultd)
 # ============================================
-set -e
+set -eo pipefail
 
 # Colors
 GREEN='\033[0;32m'
