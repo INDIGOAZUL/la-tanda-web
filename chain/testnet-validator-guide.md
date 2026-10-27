@@ -34,10 +34,35 @@ Recommended minimum host:
 
 - Ubuntu 22.04 or newer
 - 2 CPU cores
-- 4 GB RAM
-- 50 GB SSD, with room to grow
+- 8 GB RAM to replay the chain from genesis (see sizing notes below)
+- 120 GB SSD to replay the chain from genesis, with room to grow
 - A stable public network connection
 - A dedicated, non-root service account
+
+Sizing notes from a full node that replayed the chain from genesis in October
+2026 (Debian 13 VM, 2 vCPU):
+
+- Memory: with 4 GB RAM, `latandad` grew to about 3.7 GB resident during the
+  replay, slowed down sharply and was killed by the kernel OOM killer twice.
+  With 8 GB it no longer crashed, but the Go heap still reached about 5 GB
+  within four hours. Adding `Environment=GOMEMLIMIT=5GiB` to the `[Service]`
+  section of the systemd unit (section 8) and lowering `iavl-cache-size` in
+  `app.toml` from `781250` to `200000` kept it stable; the replay finished
+  with these settings.
+- Time: the replay from genesis to block 3,741,708 took about 40 hours wall
+  clock (2026-10-22 21:07 UTC to 2026-10-24 13:02 UTC), including about 9
+  hours on 4 GB with the slowdown described above. Near the tip the node
+  processed about 20 blocks per second; the chain produces one block about
+  every 5.7 seconds.
+- Disk: at block 3,779,086 the `data/` directory held 56.0 GB
+  (`blockstore.db` 29.1 GB, `application.db` 14.6 GB, `state.db` 9.7 GB).
+  With `indexer = "null"` in the `[tx_index]` section of `config.toml` it grows
+  by about 0.36 GB per day (about 15,000 blocks). A 50 GB disk is not enough
+  for a replay from genesis. State sync (section 10) starts from a recent
+  snapshot instead.
+- `indexer = "null"` saves disk but disables the transaction index: the local
+  `latandad query tx` then fails with `transaction indexing is disabled`.
+  Check transactions against the official RPC instead (section 14).
 
 Before continuing, confirm the official RPC reports the expected chain:
 
@@ -331,7 +356,8 @@ Request 10 testnet LTD from the faucet to create the validator. After the
 validator is running, complete the control-proof flow in Discord:
 
 1. `!register-validator`
-2. `!verify`
+2. `!verify <txhash>` with the hash of a transaction that carries the memo the
+   bot asks for (see below). The `create-validator` transaction does not count.
 3. `!verify-rdns <ip>`, or `!verify-http <ip>` + `!verify-http-check` (HTTP nonce,
    see below) when your ISP cannot set a PTR record
 4. Run for seven days without being jailed
@@ -343,6 +369,28 @@ infrastructure partner that provides public RPC, API, and state-sync services.
 Delegations go to validators only, are decided case by case and are not automatic.
 Confirm the current program status with the team before broadcasting a
 transaction.
+
+### Key-control proof with `!verify`
+
+The bot names a memo of the form `LATANDA-VERIFY-<number>`. It accepts only the
+hash of a transaction whose memo matches exactly; a transaction without that
+memo, such as `create-validator`, is rejected with "The memo for that
+transaction does not match". A self-transfer of 1 ultd from the validator's
+operator account is enough:
+
+```bash
+MEMO="LATANDA-VERIFY-<number-from-the-bot>"
+latandad tx bank send "$KEY_NAME" "$ADDRESS" 1ultd \
+  --note "$MEMO" \
+  --chain-id latanda-testnet-1 \
+  --keyring-backend file \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --fees 5000ultd
+```
+
+Then run `!verify <txhash>` in the `#node-onboarding` channel with the full
+64-character hash from the output.
 
 ### Control proof via HTTP nonce (no PTR needed)
 
@@ -462,6 +510,15 @@ latandad query tx <transaction-hash> --output json | jq '{code,raw_log,height}'
 VALOPER=$(latandad keys show "$KEY_NAME" \
   --bech val --address --keyring-backend file)
 latandad query staking validator "$VALOPER"
+```
+
+If your node runs with `indexer = "null"`, the local `query tx` fails with
+`transaction indexing is disabled`. Ask the official RPC instead; `code` must
+be `0`:
+
+```bash
+curl -fsSL "https://latanda.online/chain/rpc/tx?hash=0x<transaction-hash>" \
+  | jq '.result | {height, code: .tx_result.code, log: .tx_result.log}'
 ```
 
 ## 15. Validator management
