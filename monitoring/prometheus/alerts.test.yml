@@ -1,0 +1,177 @@
+# Unit tests for alerts.yml. Run from this directory:
+#   promtool test rules alerts.test.yml
+# (or: docker run --rm -v "$PWD":/w -w /w --entrypoint promtool prom/prometheus:v3.15.0 test rules alerts.test.yml)
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # WATCH_VALIDATORS set: only watched validators fire, for as long as they are jailed.
+  - interval: 1m
+    input_series:
+      - series: latanda_exporter_watch_list_configured
+        values: 1x10
+      - series: latanda_validator_jailed{operator_address="ltdvaloper1mine",moniker="mine",watched="true"}
+        values: 0 0 1 1 1 1
+      - series: latanda_validator_jailed{operator_address="ltdvaloper1other",moniker="other",watched="false"}
+        values: 1x5
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ValidatorJailed
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: ValidatorJailed
+        exp_alerts:
+          - exp_labels: {severity: critical, operator_address: ltdvaloper1mine, moniker: mine, watched: "true"}
+            exp_annotations:
+              summary: "Validator mine is jailed"
+              description: "ltdvaloper1mine is jailed and earns no rewards. Fix the node, wait for downtime_jail_duration to pass, then send an unjail transaction."
+
+  # Network-wide instance (no WATCH_VALIDATORS): only jails of the last 24 h, no tombstoned.
+  # Evaluated at 48 h, so time() = 172800.
+  - interval: 1h
+    input_series:
+      - series: latanda_exporter_watch_list_configured
+        values: 0x48
+      - series: latanda_validator_jailed{operator_address="ltdvaloper1recent",moniker="recent",watched="true"}
+        values: 1x48
+      - series: latanda_validator_tombstoned{operator_address="ltdvaloper1recent",moniker="recent",watched="true"}
+        values: 0x48
+      - series: latanda_validator_jailed_until_timestamp_seconds{operator_address="ltdvaloper1recent",moniker="recent",watched="true"}
+        values: 172000x48
+      - series: latanda_validator_jailed{operator_address="ltdvaloper1old",moniker="old",watched="true"}
+        values: 1x48
+      - series: latanda_validator_tombstoned{operator_address="ltdvaloper1old",moniker="old",watched="true"}
+        values: 0x48
+      - series: latanda_validator_jailed_until_timestamp_seconds{operator_address="ltdvaloper1old",moniker="old",watched="true"}
+        values: 1000x48
+      - series: latanda_validator_jailed{operator_address="ltdvaloper1tomb",moniker="tomb",watched="true"}
+        values: 1x48
+      - series: latanda_validator_tombstoned{operator_address="ltdvaloper1tomb",moniker="tomb",watched="true"}
+        values: 1x48
+      - series: latanda_validator_jailed_until_timestamp_seconds{operator_address="ltdvaloper1tomb",moniker="tomb",watched="true"}
+        values: 253402300799x48
+    alert_rule_test:
+      - eval_time: 48h
+        alertname: ValidatorJailed
+        exp_alerts:
+          - exp_labels: {severity: critical, operator_address: ltdvaloper1recent, moniker: recent, watched: "true"}
+            exp_annotations:
+              summary: "Validator recent is jailed"
+              description: "ltdvaloper1recent is jailed and earns no rewards. Fix the node, wait for downtime_jail_duration to pass, then send an unjail transaction."
+
+  # Missed blocks against signed_blocks_window = 10000: 20% = 2000, 40% = 4000.
+  - interval: 1m
+    input_series:
+      - series: latanda_slashing_signed_blocks_window
+        values: 10000x10
+      - series: latanda_validator_missed_blocks{operator_address="ltdvaloper1mine",moniker="mine",watched="true"}
+        values: 0 1000 2500 2500 4500 4500 4500
+      - series: latanda_validator_missed_blocks{operator_address="ltdvaloper1other",moniker="other",watched="false"}
+        values: 4500x6
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: ValidatorMissedBlocksWarning
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: ValidatorMissedBlocksWarning
+        exp_alerts:
+          - exp_labels: {severity: warning, operator_address: ltdvaloper1mine, moniker: mine, watched: "true"}
+            exp_annotations:
+              summary: "Validator mine missed over 20% of the signing window"
+              description: "ltdvaloper1mine is at 25% of signed_blocks_window."
+      - eval_time: 3m
+        alertname: ValidatorMissedBlocksCritical
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: ValidatorMissedBlocksCritical
+        exp_alerts:
+          - exp_labels: {severity: critical, operator_address: ltdvaloper1mine, moniker: mine, watched: "true"}
+            exp_annotations:
+              summary: "Validator mine missed over 40% of the signing window"
+              description: "ltdvaloper1mine is at 45% of signed_blocks_window. It gets jailed when the missed share exceeds 1 - min_signed_per_window."
+
+  - interval: 1m
+    input_series:
+      - series: cometbft_p2p_peers{instance="localhost:26660",job="cometbft",chain_id="latanda-testnet-1"}
+        values: 5 2 2 2 2 2 2 2
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: LowPeerCount
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: LowPeerCount
+        exp_alerts:
+          - exp_labels: {severity: warning, instance: "localhost:26660", job: cometbft, chain_id: latanda-testnet-1}
+            exp_annotations:
+              summary: "Node localhost:26660 has only 2 peers"
+              description: "Fewer than 3 peers makes the node fragile. Check persistent_peers/seeds and that P2P port 26656 is reachable."
+
+  - interval: 1m
+    input_series:
+      - series: latanda_gov_proposal_active{proposal_id="7",title="Raise max validators"}
+        values: 1x3
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: GovernanceProposalActive
+        exp_alerts:
+          - exp_labels: {severity: info, proposal_id: "7", title: Raise max validators}
+            exp_annotations:
+              summary: "Governance proposal 7 is in voting period"
+              description: "Raise max validators"
+
+  - interval: 1m
+    input_series:
+      - series: up{job="cometbft",instance="localhost:26660"}
+        values: 1 0 0 0 0
+      - series: up{job="node",instance="localhost:9100"}
+        values: 0x8
+      - series: latanda_exporter_up
+        values: 0x8
+      - series: latanda_exporter_watched_validator_missing{operator_address="ltdvaloper1typo"}
+        values: 1x8
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: NodeDown
+        exp_alerts:
+          - exp_labels: {severity: critical, job: cometbft, instance: "localhost:26660"}
+            exp_annotations:
+              summary: "latandad metrics at localhost:26660 unreachable"
+              description: "The node process is down or its metrics endpoint is not reachable. A down validator misses every block."
+      - eval_time: 5m
+        alertname: ScrapeTargetDown
+        exp_alerts:
+          - exp_labels: {severity: warning, job: node, instance: "localhost:9100"}
+            exp_annotations:
+              summary: "node target localhost:9100 unreachable"
+              description: "Dashboards and alerts that depend on this target are blind."
+      - eval_time: 5m
+        alertname: ChainApiUnreachable
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations:
+              summary: "latanda-exporter cannot read the chain API"
+              description: "Jail and missed-block alerts use the last known state until CHAIN_REST_URL answers again. If NodeDown fires too and CHAIN_REST_URL points to that node, fix the node first."
+      - eval_time: 1m
+        alertname: WatchedValidatorNotFound
+        exp_alerts:
+          - exp_labels: {severity: warning, operator_address: ltdvaloper1typo}
+            exp_annotations:
+              summary: "ltdvaloper1typo from WATCH_VALIDATORS is not on chain"
+              description: "Check the address in .env (it must be the ltdvaloper1... operator address). No alerts fire for it."
+
+  - interval: 1m
+    input_series:
+      - series: up{job="cometbft",instance="localhost:26660"}
+        values: 1x8
+      - series: cometbft_consensus_height{job="cometbft",instance="localhost:26660"}
+        values: 100x8
+    alert_rule_test:
+      - eval_time: 7m
+        alertname: NodeHeightStalled
+        exp_alerts:
+          - exp_labels: {severity: warning, job: cometbft, instance: "localhost:26660"}
+            exp_annotations:
+              summary: "Node localhost:26660 did not advance a block in 5 minutes"
+              description: "Either the node is stuck or the whole chain halted."

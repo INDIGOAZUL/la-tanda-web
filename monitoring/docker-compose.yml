@@ -1,0 +1,99 @@
+# La Tanda validator monitoring: Prometheus, Alertmanager, Grafana, node_exporter
+# and latanda-exporter. Copy example.env to .env and set GRAFANA_ADMIN_PASSWORD
+# before the first start (see README.md).
+#
+# All services use host networking and listen on 127.0.0.1 only (Grafana too,
+# unless GRAFANA_LISTEN is changed). That way the stack can scrape a node that
+# keeps its metrics and API on localhost, and nothing new is exposed.
+# Prometheus listens on 19090 because 9090 is the default gRPC port of latandad.
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/etc/prometheus/render-targets.sh"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+      - --web.listen-address=127.0.0.1:${PROMETHEUS_PORT:-19090}
+    environment:
+      COMETBFT_TARGETS: ${COMETBFT_TARGETS:-localhost:26660}
+      COSMOS_API_TARGETS: ${COSMOS_API_TARGETS:-localhost:1317}
+      NODE_EXPORTER_TARGETS: ${NODE_EXPORTER_TARGETS:-localhost:9100}
+      EXPORTER_TARGET: 127.0.0.1:${EXPORTER_PORT:-9561}
+      ALERTMANAGER_TARGET: 127.0.0.1:${ALERTMANAGER_PORT:-9093}
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    network_mode: host
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/etc/alertmanager/start.sh"]
+    command:
+      - --storage.path=/alertmanager
+      - --web.listen-address=127.0.0.1:${ALERTMANAGER_PORT:-9093}
+      # Single instance: no cluster port (9094) on the host network.
+      - --cluster.listen-address=
+    environment:
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+
+  grafana:
+    image: grafana/grafana:13.2.4
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      GF_SERVER_HTTP_ADDR: ${GRAFANA_LISTEN:-127.0.0.1}
+      GF_SERVER_HTTP_PORT: ${GRAFANA_PORT:-3000}
+      GF_SECURITY_ADMIN_USER: admin
+      # Only applied on the very first start; change it later in the Grafana UI.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env (cp example.env .env), see README.md}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      # Grafana 13 otherwise downloads ~17 unpinned plugins (~480 MB) on the
+      # first start. The Prometheus datasource is part of the image.
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/validator-overview.json
+      PROMETHEUS_URL: http://127.0.0.1:${PROMETHEUS_PORT:-19090}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+
+  # Skip this service if node_exporter already runs on the host:
+  #   docker compose up -d --scale node-exporter=0
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=127.0.0.1:${NODE_EXPORTER_PORT:-9100}
+    volumes:
+      - /:/host:ro,rslave
+
+  latanda-exporter:
+    build: ./exporter
+    image: latanda-exporter:1.0.0
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      CHAIN_REST_URL: ${CHAIN_REST_URL:-http://localhost:1317}
+      CHAIN_RPC_URL: ${CHAIN_RPC_URL:-http://localhost:26657}
+      WATCH_VALIDATORS: ${WATCH_VALIDATORS:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-30}
+      EXPORTER_LISTEN: 127.0.0.1
+      EXPORTER_PORT: ${EXPORTER_PORT:-9561}
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:

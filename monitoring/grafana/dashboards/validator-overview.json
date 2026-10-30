@@ -1,0 +1,1160 @@
+{
+  "uid": "latanda-validator-overview",
+  "title": "La Tanda / Validator Overview",
+  "description": "Jail status, missed blocks, uptime, voting power and peers of the watched validators.",
+  "tags": [
+    "latanda"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "chain_id",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "hide": 2,
+        "query": {
+          "query": "label_values(cometbft_consensus_height, chain_id)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(cometbft_consensus_height, chain_id)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      },
+      {
+        "name": "validator",
+        "label": "Validator",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(latanda_validator_jailed{watched=\"true\"}, moniker)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(latanda_validator_jailed{watched=\"true\"}, moniker)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      },
+      {
+        "name": "instance",
+        "label": "Node",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(cometbft_p2p_peers, instance)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(cometbft_p2p_peers, instance)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "tags": [
+        "latanda"
+      ],
+      "asDropdown": false,
+      "title": "La Tanda",
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "transparent": true,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display:flex;align-items:center;height:100%;padding:0 4px;\">\n<img src=\"data:image/png;base64,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\" alt=\"La Tanda\" width=\"56\" height=\"48\" style=\"margin-right:16px;\">\n<div>\n<div style=\"font-size:22px;font-weight:800;letter-spacing:0.22em;color:#00FFFF;line-height:1.3;\">LA TANDA CHAIN</div>\n<div style=\"font-size:12px;font-weight:600;letter-spacing:0.14em;color:#8896a8;text-transform:uppercase;\">Validator Overview</div>\n</div>\n<div style=\"margin-left:auto;\">\n<span style=\"border:1px solid rgba(0,255,255,0.3);border-radius:999px;padding:4px 14px;color:#00FFFF;font-family:monospace;font-size:13px;\">$chain_id</span>\n</div>\n</div>"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Status",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_jailed{watched=\"true\",moniker=~\"$validator\"}",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#22c55e",
+                "value": null
+              },
+              {
+                "color": "#ef4444",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "● ACTIVE",
+                  "color": "#22c55e",
+                  "index": 0
+                },
+                "1": {
+                  "text": "● JAILED",
+                  "color": "#ef4444",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Active set",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_bonded{watched=\"true\",moniker=~\"$validator\"}",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#f59e0b",
+                "value": null
+              },
+              {
+                "color": "#22c55e",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "● NOT BONDED",
+                  "color": "#f59e0b",
+                  "index": 0
+                },
+                "1": {
+                  "text": "● BONDED",
+                  "color": "#22c55e",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Voting power",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_voting_power{watched=\"true\",moniker=~\"$validator\"}",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: LTD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#06b6d4",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00FFFF"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Missed blocks",
+      "description": "Missed blocks in the current signed_blocks_window. The chain resets the counter when it jails a validator.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"}",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#06b6d4",
+                "value": null
+              }
+            ]
+          },
+          "mappings": [],
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00FFFF"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Uptime",
+      "description": "1 - missed / signed_blocks_window. Orange below 80% (warning alert), red below 60% (critical alert). Back to 100% after a jail, because the chain resets the counter.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "1 - (latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"} / on() group_left() latanda_slashing_signed_blocks_window)",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ef4444",
+                "value": null
+              },
+              {
+                "color": "#f59e0b",
+                "value": 0.6
+              },
+              {
+                "color": "#22c55e",
+                "value": 0.8
+              }
+            ]
+          },
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 8,
+        "y": 7,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Peers",
+      "description": "Connected P2P peers of the node. Alert below 3. A stopped node shows 0.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (instance) (cometbft_p2p_peers{instance=~\"$instance\"}) or max by (instance) (up{job=\"cometbft\",instance=~\"$instance\"} == 0)",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ef4444",
+                "value": null
+              },
+              {
+                "color": "#22c55e",
+                "value": 3
+              }
+            ]
+          },
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 14,
+          "valueSize": 24
+        }
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Missed blocks (share of window)",
+      "description": "Missed blocks / signed_blocks_window. Dashed: warning (20%) and critical (40%) alert, and the jail limit from the chain's slashing params. A line turns orange or red if it crossed that level in the selected time range.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"} / on() group_left() latanda_slashing_signed_blocks_window",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "1 - latanda_slashing_min_signed_per_window",
+          "legendFormat": "jailed above",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "max"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#06b6d4",
+                "value": null
+              },
+              {
+                "color": "#f59e0b",
+                "value": 0.2
+              },
+              {
+                "color": "#ef4444",
+                "value": 0.4
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#b91c1c"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Uptime",
+      "description": "Same colors as the Uptime stat, by the lowest value in the selected time range.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "1 - (latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"} / on() group_left() latanda_slashing_signed_blocks_window)",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "min"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ef4444",
+                "value": null
+              },
+              {
+                "color": "#f59e0b",
+                "value": 0.6
+              },
+              {
+                "color": "#06b6d4",
+                "value": 0.8
+              }
+            ]
+          },
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 12,
+        "y": 11,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Voting power",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "latanda_validator_voting_power{watched=\"true\",moniker=~\"$validator\"}",
+          "legendFormat": "{{moniker}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: LTD",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "shades",
+            "fixedColor": "#06b6d4"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#22c55e",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10,
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Peers",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cometbft_p2p_peers{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "color": {
+            "mode": "thresholds",
+            "seriesBy": "min"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#ef4444",
+                "value": null
+              },
+              {
+                "color": "#06b6d4",
+                "value": 3
+              }
+            ]
+          },
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 11,
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    },
+    {
+      "type": "table",
+      "title": "Watched validators",
+      "description": "",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (operator_address, moniker) (latanda_validator_jailed{watched=\"true\",moniker=~\"$validator\"})",
+          "legendFormat": "__auto",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (operator_address, moniker) (latanda_validator_bonded{watched=\"true\",moniker=~\"$validator\"})",
+          "legendFormat": "__auto",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "max by (operator_address, moniker) (latanda_validator_voting_power{watched=\"true\",moniker=~\"$validator\"})",
+          "legendFormat": "__auto",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "max by (operator_address, moniker) (latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"})",
+          "legendFormat": "__auto",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "max by (operator_address, moniker) (1 - (latanda_validator_missed_blocks{watched=\"true\",moniker=~\"$validator\"} / on() group_left() latanda_slashing_signed_blocks_window))",
+          "legendFormat": "__auto",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "moniker": "Moniker",
+              "operator_address": "Operator address",
+              "Value #A": "Jailed",
+              "Value #B": "Bonded",
+              "Value #C": "Voting power (LTD)",
+              "Value #D": "Missed blocks",
+              "Value #E": "Uptime"
+            },
+            "indexByName": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Voting power (LTD)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Jailed"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "● ACTIVE",
+                        "color": "#22c55e",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "● JAILED",
+                        "color": "#ef4444",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Bonded"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "● NOT BONDED",
+                        "color": "#f59e0b",
+                        "index": 0
+                      },
+                      "1": {
+                        "text": "● BONDED",
+                        "color": "#22c55e",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uptime"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#ef4444",
+                      "value": null
+                    },
+                    {
+                      "color": "#f59e0b",
+                      "value": 0.6
+                    },
+                    {
+                      "color": "#22c55e",
+                      "value": 0.8
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "id": 12,
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      }
+    }
+  ]
+}
