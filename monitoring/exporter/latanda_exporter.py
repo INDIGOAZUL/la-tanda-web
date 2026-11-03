@@ -18,7 +18,7 @@ import os
 import re
 import threading
 import time
-import urllib.error
+import unicodedata
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -100,9 +100,29 @@ def parse_time(value):
     return base.timestamp() + fraction
 
 
-def clean_label(value, limit=64):
-    value = re.sub(r"[\x00-\x1f]", " ", str(value or "")).strip()
-    return value[:limit]
+# Monikers and proposal titles are free text that anyone can set on chain, and they
+# reach Discord through alert labels (embed title, label list, annotations).
+MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+MARKUP = re.compile(r"[@<>\[\]`*~|\\]")
+URL = re.compile(r"(?i)\S*//\S*|\bwww\.\S*|\b[\w-]+(?:\.[\w-]+)*\.[^\W\d_]{2,}/\S*|\bhttps?\b:?/*")
+# "evil.example" -> "evil example". Digits after the dot stay, for "v1.2.3" and "10.5".
+DOMAIN_DOT = re.compile(r"(?<=\w)\.(?=[^\W\d_]{2,}\b)")
+# Bounds the regex work per label, the chain accepts much longer titles.
+MAX_RAW_LABEL = 1024
+
+
+def clean_label(value, fallback="unnamed", limit=64):
+    """Strip links and mentions from chain-controlled text, keep the rest readable."""
+    text = unicodedata.normalize("NFKC", str(value or "")[:MAX_RAW_LABEL])[:MAX_RAW_LABEL]
+    # Format characters (zero width, bidi) would hide "http" from the patterns below.
+    text = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    text = re.sub(r"[\x00-\x1f\x7f-\x9f]", " ", text)
+    text = MD_LINK.sub(r"\1", text)
+    # Replace with a space, not nothing: deleting could assemble a new link ("htt*p://").
+    text = MARKUP.sub(" ", text)
+    text = URL.sub(" ", text)
+    text = DOMAIN_DOT.sub(" ", text)
+    return " ".join(text.split())[:limit].strip() or fallback
 
 
 class ChainClient:
@@ -153,8 +173,9 @@ class Poller:
                     self.snapshot = snapshot
                     self.up = 1
                     self.last_success = time.time()
-            except (urllib.error.URLError, OSError, ValueError, KeyError) as exc:
-                log.warning("poll failed: %s", exc)
+            except Exception as exc:  # A malformed API response must not end the process.
+                log.warning("poll failed: %s: %s", type(exc).__name__, exc,
+                            exc_info=log.isEnabledFor(logging.DEBUG))
                 with self.lock:
                     self.up = 0
             with self.lock:
@@ -215,7 +236,7 @@ class Poller:
             "validators": rows,
             "proposals": [{
                 "id": str(p["id"]),
-                "title": clean_label(p.get("title") or p.get("summary") or f"proposal {p['id']}"),
+                "title": clean_label(p.get("title") or p.get("summary"), fallback=f"proposal {p['id']}"),
                 "voting_end": parse_time(p.get("voting_end_time")),
             } for p in proposals],
         }

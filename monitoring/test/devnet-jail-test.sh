@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
+#
+# WARNING: NEVER RUN THIS ON A HOST WITH A PRODUCTION VALIDATOR. Use a throwaway
+# machine. It starts two validators and a monitoring stack on the default ports.
+# It aborts if latandad is running or one of those ports is taken, but only a
+# separate machine rules out every interference with a live node.
+#
 # Deliberately jails a validator on a throwaway local devnet and checks that the
 # monitoring stack alerts in the expected order:
 #   ValidatorMissedBlocksWarning -> ValidatorMissedBlocksCritical -> ValidatorJailed
-# plus LowPeerCount and GovernanceProposalActive.
+# plus LowPeerCount and GovernanceProposalActive. The test proposal has a hostile
+# title, and the run fails if its link or mention reaches the webhook.
 #
 # Nothing here touches the public testnet: fresh keys, chain-id latanda-devnet-1,
 # no seeds, no persistent peers outside this machine.
 #
 # Requirements: a latandad binary (built like chain/node-setup.sh does), jq, curl,
-# python3, docker with the compose plugin, and this repo's monitoring/ directory.
+# python3, ss, docker with the compose plugin, and this repo's monitoring/ directory.
 # The monitoring stack must NOT be running yet (same ports); the script starts
-# its own copy with a devnet .env (the existing .env is backed up and restored).
+# its own copy with its own env file and does not touch monitoring/.env.
 # That copy runs as compose project "latanda-devnet-test" with its own volumes,
 # removed afterwards: your Prometheus data stays clean, and Alertmanager's
 # notification log from an earlier run cannot hold back repeated alerts.
@@ -21,7 +28,7 @@
 set -euo pipefail
 
 LATANDAD=${LATANDAD:-latandad}
-WORK=${WORK:-$HOME/latanda-devnet}
+WORK=$(realpath -m "${WORK:-$HOME/latanda-devnet}")
 CHAIN_ID=latanda-devnet-1
 DENOM=ultd
 # Small signing window so the test takes minutes instead of hours. The gap
@@ -34,7 +41,22 @@ MON_DIR=$(cd "$(dirname "$0")/.." && pwd)
 
 log() { printf '%s  %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 need() { command -v "$1" >/dev/null || { echo "missing: $1" >&2; exit 1; }; }
-need "$LATANDAD"; need jq; need curl; need python3; need docker
+need "$LATANDAD"; need jq; need curl; need python3; need docker; need ss
+
+log "WARNING: throwaway devnet test, never run this on a host with a production validator"
+# Runs before anything is created or started, so an abort leaves no trace.
+busy=()
+if pgrep -x latandad >/dev/null; then busy+=("a latandad process is running"); fi
+for port in 26656 26657 26658 26660 1317 9090 6060 \
+            26756 26757 26758 26760 1417 9190 6160 \
+            19090 9093 9100 9561 3000 "$HOOK_PORT"; do
+  if [ -n "$(ss -ltnH "sport = :$port")" ]; then busy+=("port $port is in use"); fi
+done
+if [ "${#busy[@]}" -gt 0 ]; then
+  printf 'ABORT: %s\n' "${busy[@]}" >&2
+  echo "Run this on a throwaway machine, with no validator and no monitoring stack running." >&2
+  exit 1
+fi
 
 if [ -e "$WORK" ]; then
   echo "$WORK exists, remove it first (rm -rf $WORK)" >&2
@@ -150,15 +172,10 @@ echo $! > "$WORK/hook.pid"
 
 # --- 5. Monitoring stack against the devnet. Both validators are watched (Grafana
 #        lists both); only validator_2 is expected to alert.
-ENV=$MON_DIR/.env
-[ -f "$ENV" ] && cp "$ENV" "$WORK/env.backup"
-restore_env() { if [ -f "$WORK/env.backup" ]; then cp "$WORK/env.backup" "$ENV"; else rm -f "$ENV"; fi; }
-compose() { (cd "$MON_DIR" && docker compose -p latanda-devnet-test "$@"); }
-# Stop the stack while the devnet .env is still in place (compose needs it).
-trap 'cleanup; compose down -v; restore_env' EXIT
-trap 'exit 130' INT TERM
 (umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(18))' > "$WORK/grafana-admin-password")
-cat > "$ENV" <<EOF
+# With --env-file, compose ignores monitoring/.env, so a real one stays untouched.
+ENV=$WORK/devnet.env
+(umask 077; cat > "$ENV" <<EOF
 GRAFANA_ADMIN_PASSWORD=$(cat "$WORK/grafana-admin-password")
 GRAFANA_LISTEN=${GRAFANA_LISTEN:-127.0.0.1}
 ALERT_WEBHOOK_URL=http://127.0.0.1:$HOOK_PORT/hook
@@ -170,7 +187,10 @@ CHAIN_REST_URL=http://127.0.0.1:1317
 CHAIN_RPC_URL=http://127.0.0.1:26657
 POLL_INTERVAL=15
 EOF
-chmod 600 "$ENV"
+)
+compose() { (cd "$MON_DIR" && docker compose -p latanda-devnet-test --env-file "$ENV" "$@"); }
+trap 'cleanup; compose down -v' EXIT
+trap 'exit 130' INT TERM
 compose up -d --build
 
 prom() { curl -s "http://127.0.0.1:19090/api/v1/query" --data-urlencode "query=$1"; }
@@ -191,9 +211,11 @@ until [ "$(height)" -ge $((WINDOW / 2 + 20)) ] 2>/dev/null; do sleep 10; done
 
 # --- 6. Governance proposal -> info alert. A text proposal without messages
 #        needs non-empty metadata, otherwise the SDK rejects it in the block.
+#        Anyone can submit one, so the title carries what must not reach Discord.
 cat > "$WORK/proposal.json" <<EOF
 {"messages": [], "metadata": "devnet-jail-test", "deposit": "1000000$DENOM",
- "title": "Devnet test proposal", "summary": "Triggers GovernanceProposalActive"}
+ "title": "Devnet test proposal @everyone [claim](https://evil.example/x)",
+ "summary": "Triggers GovernanceProposalActive"}
 EOF
 TXHASH=$("$LATANDAD" tx gov submit-proposal "$WORK/proposal.json" --from validator_1 --keyring-backend test \
   --home "$V1" --chain-id "$CHAIN_ID" --gas 400000 --fees 0$DENOM --yes --output json | jq -r .txhash)
@@ -215,6 +237,16 @@ log "validator_2 on chain: $("$LATANDAD" q staking validator "$VALOPER2" --node 
 sleep 60
 log "webhook deliveries:"
 jq -r '.embeds[]?.title' < <(cut -d' ' -f2- "$WORK/webhook.log") | sed 's/^/    /'
+# Don't search for "http": Alertmanager's own "Source:" line is a URL.
+if grep -Eq 'evil\.example|@everyone|\]\(' "$WORK/webhook.log"; then
+  log "FAILED: the proposal title's link or mention reached the webhook"
+  exit 1
+fi
+if ! grep -q 'Devnet test proposal everyone claim' "$WORK/webhook.log"; then
+  log "FAILED: the cleaned proposal title is missing from the webhook"
+  exit 1
+fi
+log "proposal title arrived without its link and mention"
 log "done. Logs and webhook payloads are in $WORK"
 if [ "${KEEP_RUNNING:-0}" = 1 ]; then
   log "KEEP_RUNNING=1: devnet and stack keep running, Ctrl+C stops everything"

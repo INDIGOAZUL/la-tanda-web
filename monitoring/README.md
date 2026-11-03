@@ -103,6 +103,8 @@ Current testnet parameters (`/cosmos/slashing/v1beta1/params`): `signed_blocks_w
 
 **Discord or generic webhook.** The receiver uses Alertmanager's native Discord integration. For any other webhook (Slack-compatible bridges, ntfy, your own service), replace `discord_configs` with `webhook_configs` and `webhook_url_file` with `url_file`, as the comment in `alertmanager.yml` shows.
 
+**Chain-controlled text.** Validator monikers and proposal titles are free text that anyone can set on chain, and they reach Discord through alert labels and annotations. latanda-exporter therefore removes URLs, `@` mentions, markdown links and Discord markup from them before they become labels (`clean_label`). It also replaces a dot in front of a word with a space, so `Vinjan.Inc` shows up as `Vinjan Inc`: Discord would otherwise turn something like `evil.example` into a link. An address spelled out in words ("evil dot example") stays, no filter can catch that. Empty results fall back to `unnamed` or `proposal <id>`.
+
 **Try it without breaking anything:** send a test alert and check that it arrives in Discord:
 
 ```bash
@@ -113,8 +115,11 @@ docker compose exec alertmanager amtool alert add TestAlert severity=info \
 
 ### How the rules were tested
 
-- `prometheus/alerts.test.yml`: `promtool` unit tests for every rule, including the 24 h logic of the network-wide mode and tombstoned validators. Run: `docker run --rm -v "$PWD/prometheus":/w -w /w --entrypoint promtool prom/prometheus:v3.15.0 test rules alerts.test.yml`
-- [`test/devnet-jail-test.sh`](test/devnet-jail-test.sh): starts a throwaway 2-validator devnet with `signed_blocks_window = 600` and stops the smaller validator. It then checks that warning, critical and jailed fire in that order, and that the Discord payloads reach a local webhook. It never touches the public testnet, and it runs its own copy of the stack with separate volumes that are removed at the end. It needs a `latandad` binary built from the chain source, `jq` and the stack stopped, and takes about 35 minutes: `LATANDAD=/path/to/latandad bash test/devnet-jail-test.sh`
+- `prometheus/alerts.test.yml`: `promtool` unit tests for every rule, including the 24 h logic of the network-wide mode and tombstoned validators. Run from `monitoring/`, with the stack up: `docker compose exec prometheus promtool test rules /etc/prometheus/alerts.test.yml`
+- `exporter/test_exporter.py`: unit tests for the label cleaning and for the poller surviving a malformed API response. Run from `monitoring/`, once the image is built: `docker run --rm -v "$PWD/exporter:/t:ro" --entrypoint python latanda-exporter:1.0.0 -m unittest discover -s /t`
+- [`test/devnet-jail-test.sh`](test/devnet-jail-test.sh): starts a throwaway 2-validator devnet with `signed_blocks_window = 600` and stops the smaller validator. It then checks that warning, critical and jailed fire in that order, that the Discord payloads reach a local webhook, and that a hostile proposal title arrives without its link and mention. It never touches the public testnet, leaves `monitoring/.env` alone, and runs its own copy of the stack with separate volumes that are removed at the end. It needs a `latandad` binary built from the chain source, `jq` and the stack stopped, and takes about 35 minutes: `LATANDAD=/path/to/latandad bash test/devnet-jail-test.sh`
+
+  **Never run it on a host with a production validator, use a throwaway machine.** It starts two validators and a monitoring stack on the default ports. It aborts before doing anything if a `latandad` process is running or one of those ports is taken.
 
 ## latanda-exporter metrics
 
@@ -138,7 +143,7 @@ Blocks proposed are counted from new blocks while the exporter runs, there is no
 
 - **Status and logs:** `docker compose ps`, `docker compose logs -f prometheus` (or `alertmanager`, `grafana`, `latanda-exporter`).
 - **Are all targets up?** Tunnel to Prometheus with `ssh -L 19090:localhost:19090 user@server` and open http://localhost:19090/targets.
-- **Updates:** raise the image tags in `docker-compose.yml`, then `docker compose pull && docker compose up -d --build`.
+- **Updates:** images are pinned by tag and digest, so a re-pushed tag cannot change what runs. That also freezes the security fixes in those images, so updating is a deliberate step. `docker pull prom/prometheus:<new-tag>` prints the new `Digest: sha256:...`. Change tag and digest together in `docker-compose.yml` (for the Python base image: `exporter/Dockerfile`), then `docker compose pull && docker compose up -d --build`.
 - **Disk:** the 2-node devnet test produced about 1,650 series. At a 15 s scrape interval that is roughly 0.5 GB for 30 days. A central instance grows with the number of targets. Grafana's plugin auto-install is disabled, so its volume stays at a few MB.
 - **Remove:** `docker compose down` (keeps data), `docker compose down -v` (deletes Prometheus, Alertmanager and Grafana data).
 
@@ -170,6 +175,6 @@ monitoring/
 ├── grafana/
 │   ├── provisioning/               datasource + dashboard providers
 │   └── dashboards/*.json           4 dashboards
-├── exporter/                       latanda-exporter (Python, prometheus_client)
+├── exporter/                       latanda-exporter (Python, prometheus_client), unit tests
 └── test/devnet-jail-test.sh        reproducible jail test on a local devnet
 ```

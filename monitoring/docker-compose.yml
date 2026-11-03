@@ -6,10 +6,13 @@
 # unless GRAFANA_LISTEN is changed). That way the stack can scrape a node that
 # keeps its metrics and API on localhost, and nothing new is exposed.
 # Prometheus listens on 19090 because 9090 is the default gRPC port of latandad.
+#
+# Images are pinned by tag and digest: the digest decides what runs, so a re-pushed
+# tag changes nothing. To update, change both (see "Operations" in README.md).
 
 services:
   prometheus:
-    image: prom/prometheus:v3.15.0
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
     network_mode: host
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/etc/prometheus/render-targets.sh"]
@@ -29,7 +32,7 @@ services:
       - prometheus-data:/prometheus
 
   alertmanager:
-    image: prom/alertmanager:v0.34.1
+    image: prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a
     network_mode: host
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/etc/alertmanager/start.sh"]
@@ -45,7 +48,7 @@ services:
       - alertmanager-data:/alertmanager
 
   grafana:
-    image: grafana/grafana:13.2.4
+    image: grafana/grafana:13.2.4@sha256:dbbc38ea21103cefb50396340cd88afec779c7e070b0a7bf5a75b4ce46651d3f
     network_mode: host
     restart: unless-stopped
     environment:
@@ -70,7 +73,7 @@ services:
   # Skip this service if node_exporter already runs on the host:
   #   docker compose up -d --scale node-exporter=0
   node-exporter:
-    image: prom/node-exporter:v1.12.1
+    image: prom/node-exporter:v1.12.1@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
     network_mode: host
     pid: host
     restart: unless-stopped
