@@ -821,6 +821,10 @@
             font-variant-numeric: tabular-nums;
         }
 
+        /* Contenedor con scroll horizontal propio: la tabla nunca desborda la pagina */
+        .blocks-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+        .blocks-table-wrap:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+
         .blocks-table tr:last-child td { border-bottom: none; }
         .blocks-table tr:hover td { background: var(--surface2); }
 
@@ -1270,8 +1274,89 @@
             .stat-value { font-size: 1.35rem; }
             .resources-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-links { flex-wrap: wrap; gap: 1rem; justify-content: center; }
+            .blocks-table th, .blocks-table td { padding-left: 0.6rem; padding-right: 0.6rem; }
+        }
+        /* ===== Community CTA (Unete a la comunidad) ===== */
+        .community-cta {
+            margin-top: 2rem;
+            padding: 1.75rem 2rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            border: 1px solid var(--border-bright);
+        }
+        .community-cta-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            margin-bottom: 0.35rem;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+        .community-cta-sub {
+            color: var(--text-dim);
+            font-size: 0.92rem;
+            margin-bottom: 1rem;
+            max-width: 480px;
+        }
+        .community-cta-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .community-stat { display: flex; flex-direction: column; }
+        .community-stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+        .community-stat-label {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .community-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.9rem 1.8rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #00d4ff, #8b5cf6);
+            color: #0a0e27;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1rem;
+            white-space: nowrap;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .community-cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.35);
+        }
+        @media (max-width: 640px) {
+            .community-cta { flex-direction: column; align-items: stretch; text-align: center; }
+            .community-cta-stats { justify-content: center; gap: 1.25rem; }
+            .community-cta-btn { justify-content: center; }
+            .community-cta-sub { max-width: none; }
         }
     </style>
+<style>
+/* ===== Pista hacia la guía de tandas (ltp-) ===== */
+.ltp-chainhint{display:flex;flex-wrap:wrap;align-items:center;gap:.25rem .5rem;margin-top:1.25rem;font-size:.9rem;line-height:1.5;color:var(--text-dim)}
+.ltp-chainhint a{display:inline-flex;align-items:center;gap:.4rem;min-height:44px;font-weight:600;color:var(--cyan);text-decoration:none}
+.ltp-chainhint a:hover{text-decoration:underline}
+.ltp-chainhint a:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:6px}
+.ltp-chainhint a i{font-size:.8rem;transition:transform .25s ease}
+.ltp-chainhint a:hover i{transform:translateX(3px)}
+@media (prefers-reduced-motion:reduce){.ltp-chainhint a i{transition:none}.ltp-chainhint a:hover i{transform:none}}
+</style>
 </head>
 <body>
 
@@ -1319,7 +1404,7 @@
         <a href="#recursos">Recursos</a>
         <div style="display:flex;gap:1rem;justify-content:center;padding:0.75rem 0;">
             <a href="https://discord.gg/Ve9M2ZSYC2" target="_blank" rel="noopener" aria-label="Discord" style="color:var(--text-dim);font-size:1.2rem;"><i class="fab fa-discord"></i></a>
-            <a href="https://t.me/latandahn" target="_blank" rel="noopener" aria-label="Telegram" style="color:var(--text-dim);font-size:1.2rem;"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://t.me/AhorroLaTanda" target="_blank" rel="noopener" aria-label="Telegram" style="color:var(--text-dim);font-size:1.2rem;"><i class="fab fa-telegram-plane"></i></a>
             <a href="https://twitter.com/TandaWeb3" target="_blank" rel="noopener" aria-label="Twitter" style="color:var(--text-dim);font-size:1.2rem;"><i class="fab fa-twitter"></i></a>
             <a href="https://github.com/INDIGOAZUL/la-tanda-chain" target="_blank" rel="noopener" aria-label="GitHub" style="color:var(--text-dim);font-size:1.2rem;"><i class="fab fa-github"></i></a>
         </div>
@@ -1365,9 +1450,13 @@
                     </a>
                 </div>
 
+                <p class="ltp-chainhint">¿Buscás organizar una tanda con tu grupo?
+                  <a href="/como-organizar-una-tanda.html">Mirá la guía paso a paso <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                </p>
+
                 <div class="hero-social">
                     <a href="https://discord.gg/Ve9M2ZSYC2" target="_blank" rel="noopener" title="Discord" aria-label="Discord"><i class="fab fa-discord"></i></a>
-                    <a href="https://t.me/latandahn" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                    <a href="https://t.me/AhorroLaTanda" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
                     <a href="https://twitter.com/TandaWeb3" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                     <a href="https://github.com/INDIGOAZUL/la-tanda-chain" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><i class="fab fa-github"></i></a>
                 </div>
@@ -1464,9 +1553,9 @@
 
                 <div class="stat-card glass">
                     <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="stat-label">Inflacion</div>
-                    <div class="stat-value green" id="inflation">0%</div>
-                    <div class="stat-sub">Suministro fijo — sin emision</div>
+                    <div class="stat-label">Inflacion testnet</div>
+                    <div class="stat-value green" id="inflation">&mdash;</div>
+                    <div class="stat-sub" id="inflationSub">Mainnet (objetivo interno Q1-2027, condicionado a asesor&iacute;a legal; no es compromiso): 0% &mdash; emision desde pool pre-acunado de 40M LTD. Detalle: ITP-SPEC (documento t&eacute;cnico en preparaci&oacute;n).</div>
                 </div>
 
                 <div class="stat-card glass">
@@ -1475,6 +1564,31 @@
                     <div class="stat-value" id="peerCount">&mdash;</div>
                     <div class="stat-sub" id="peerSub">Nodos en la red</div>
                 </div>
+            </div>
+
+            <!-- Unete a la comunidad — live stats + Discord CTA (/api/community/stats) -->
+            <div class="community-cta glass fade-up" id="comunidad">
+                <div class="community-cta-info">
+                    <h3 class="community-cta-title">&Uacute;nete a la comunidad</h3>
+                    <p class="community-cta-sub">Ahorristas, validadores y devs construyendo La Tanda &mdash; entra y pregunta lo que sea.</p>
+                    <div class="community-cta-stats">
+                        <div class="community-stat">
+                            <span class="community-stat-value" id="ccDiscord">&mdash;</span>
+                            <span class="community-stat-label">Miembros Discord</span>
+                        </div>
+                        <div class="community-stat">
+                            <span class="community-stat-value" id="ccValidators">&mdash;</span>
+                            <span class="community-stat-label">Validadores activos</span>
+                        </div>
+                        <div class="community-stat">
+                            <span class="community-stat-value" id="ccGroups">&mdash;</span>
+                            <span class="community-stat-label">Grupos de ahorro</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="https://discord.gg/Ve9M2ZSYC2" target="_blank" rel="noopener" class="community-cta-btn" id="ccJoinBtn">
+                    <i class="fab fa-discord"></i> &Uacute;nete al Discord
+                </a>
             </div>
         </div>
     </section>
@@ -1552,7 +1666,7 @@
                         <li><i class="fas fa-check"></i> Todo lo del Validador</li>
                         <li><i class="fas fa-check"></i> RPC/API p&uacute;blico o Explorer</li>
                         <li><i class="fas fa-check"></i> Statesync, snapshots o gu&iacute;as</li>
-                        <li><i class="fas fa-check"></i> 5 slots disponibles</li>
+                        <li><i class="fas fa-check"></i> Cupos limitados: se asignan por m&eacute;rito despu&eacute;s de verificar tu infraestructura p&uacute;blica</li>
                     </ul>
                     <div class="tier-reward">
                         <div class="tier-reward-label">Testnet Incentivado</div>
@@ -1620,7 +1734,7 @@
                     <div class="roadmap-title">Trusted Set</div>
                     <div class="roadmap-desc">
                         12+ validadores activos. Testnet incentivado, onboarding guiado,
-                        script automatizado, gobernanza on-chain (GOV-001, GOV-002 aprobadas, GOV-003 en votaci&oacute;n).
+                        script automatizado, gobernanza on-chain (GOV-001, GOV-002 y GOV-003 aprobadas).
                     </div>
                     <span class="roadmap-badge">En progreso</span>
                 </div>
@@ -1631,7 +1745,7 @@
                     <div class="roadmap-title">Mainnet Launch</div>
                     <div class="roadmap-desc">
                         25+ validadores. Seed round cerrado, equipo core contratado, auditor&iacute;a de seguridad,
-                        migraci&oacute;n de testnet a mainnet, primer listing DEX, IBC habilitado, TGE.
+                        migraci&oacute;n de testnet a mainnet, IBC habilitado, TGE. Objetivo interno, condicionado a asesor&iacute;a legal y consulta con la CNBS; no es compromiso. Sin promesa de listado.
                     </div>
                 </div>
 
@@ -1641,7 +1755,7 @@
                     <div class="roadmap-title">Expansi&oacute;n</div>
                     <div class="roadmap-desc">
                         50+ validadores. M&oacute;dulos nativos activos (x/tanda, x/mercado),
-                        CEX listing, expansi&oacute;n a Guatemala y El Salvador, SDK para desarrolladores.
+                        expansi&oacute;n a Guatemala y El Salvador, SDK para desarrolladores.
                     </div>
                 </div>
 
@@ -1671,12 +1785,65 @@
                 </p>
             </div>
 
+            <!-- Block Explorers (partner-operated) -->
+            <div class="explorer-subsection fade-up">
+                <div class="explorer-header">
+                    <h3><i class="fas fa-magnifying-glass-chart" style="color:var(--cyan);margin-right:0.5rem"></i>Exploradores / Block Explorers</h3>
+                    <span class="hint">Operados por partners de infraestructura</span>
+                </div>
+                <div class="community-providers">
+                    <a class="cp-card" href="https://testnet.latanda.valopers.com/" target="_blank" rel="noopener" style="text-decoration:none">
+                        <div class="cp-card-head">
+                            <div class="cp-avatar"><i class="fas fa-cube"></i></div>
+                            <div>
+                                <div class="cp-name">Valopers &mdash; Testnet</div>
+                                <span class="cp-tier cp-tier--official">Explorador Oficial</span>
+                                <div class="cp-desc">valopers.com &middot; latanda-testnet-1</div>
+                            </div>
+                        </div>
+                        <div class="cp-endpoint">
+                            <span class="cp-ep-url">testnet.latanda.valopers.com</span>
+                            <span class="cp-status"><span class="cp-dot cp-dot--ok"></span>En vivo</span>
+                        </div>
+                    </a>
+                    <a class="cp-card" href="https://latanda.valopers.com/" target="_blank" rel="noopener" style="text-decoration:none">
+                        <div class="cp-card-head">
+                            <div class="cp-avatar"><i class="fas fa-rocket"></i></div>
+                            <div>
+                                <div class="cp-name">Valopers &mdash; Mainnet</div>
+                                <span class="cp-tier cp-tier--official">Explorador Oficial</span>
+                                <div class="cp-desc">Se activa en el lanzamiento de mainnet (objetivo interno Q1-2027, condicionado a asesor&iacute;a legal; no es compromiso)</div>
+                            </div>
+                        </div>
+                        <div class="cp-endpoint">
+                            <span class="cp-ep-url">latanda.valopers.com</span>
+                            <span class="cp-status"><span class="cp-dot"></span>Objetivo Q1-2027 (no es compromiso)</span>
+                        </div>
+                    </a>
+                    <a class="cp-card" href="https://explorer.codeblocklabs.com/latanda-testnet" target="_blank" rel="noopener" style="text-decoration:none">
+                        <div class="cp-card-head">
+                            <div class="cp-avatar"><i class="fas fa-cubes"></i></div>
+                            <div>
+                                <div class="cp-name">CodeBlockLabs</div>
+                                <span class="cp-tier cp-tier--partner">Partner de Infraestructura</span>
+                                <div class="cp-desc">Explorador comunitario &middot; latanda-testnet-1</div>
+                            </div>
+                        </div>
+                        <div class="cp-endpoint">
+                            <span class="cp-ep-url">explorer.codeblocklabs.com/latanda-testnet</span>
+                            <span class="cp-status"><span class="cp-dot cp-dot--ok"></span>En vivo</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
             <!-- Recent Blocks -->
             <div class="explorer-subsection fade-up">
                 <div class="explorer-header">
                     <h3><i class="fas fa-cubes" style="color:var(--cyan);margin-right:0.5rem"></i>Bloques Recientes</h3>
                     <span class="hint">Actualiza cada 5s</span>
                 </div>
+                <div class="blocks-table-wrap" role="region" aria-label="Bloques recientes" tabindex="0">
                 <table class="blocks-table">
                     <thead>
                         <tr>
@@ -1691,6 +1858,7 @@
                         <tr><td colspan="5" class="loading">Cargando bloques...</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- Validators -->
@@ -1826,7 +1994,7 @@
                     <a href="https://discord.gg/Ve9M2ZSYC2" class="cta-email" target="_blank" rel="noopener">
                         <i class="fab fa-discord"></i> Discord
                     </a>
-                    <a href="https://t.me/latandahn" class="cta-email" target="_blank" rel="noopener" style="background:rgba(0,136,204,0.15);border-color:rgba(0,136,204,0.3)">
+                    <a href="https://t.me/AhorroLaTanda" class="cta-email" target="_blank" rel="noopener" style="background:rgba(0,136,204,0.15);border-color:rgba(0,136,204,0.3)">
                         <i class="fab fa-telegram-plane"></i> Telegram
                     </a>
                 </div>
@@ -1855,7 +2023,7 @@
 
                 <div class="footer-social">
                     <a href="https://discord.gg/Ve9M2ZSYC2" target="_blank" rel="noopener" title="Discord" aria-label="Discord"><i class="fab fa-discord"></i></a>
-                    <a href="https://t.me/latandahn" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                    <a href="https://t.me/AhorroLaTanda" target="_blank" rel="noopener" title="Telegram" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
                     <a href="https://twitter.com/TandaWeb3" target="_blank" rel="noopener" title="Twitter" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
                     <a href="https://github.com/INDIGOAZUL/la-tanda-chain" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub"><i class="fab fa-github"></i></a>
                 </div>
@@ -2245,6 +2413,35 @@
         }
 
         init();
+    })();
+    </script>
+    <script>
+    // Community CTA — live stats from /api/community/stats (5-min server cache).
+    // Honest display: a null stat hides its tile instead of showing a fake number.
+    (function () {
+        function setStat(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            if (value === null || value === undefined) {
+                var tile = el.closest('.community-stat');
+                if (tile) tile.style.display = 'none';
+            } else {
+                el.textContent = Number(value).toLocaleString('es-HN');
+            }
+        }
+        fetch('/api/community/stats')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d) return;
+                setStat('ccDiscord', d.discord_members);
+                setStat('ccValidators', d.validators_bonded);
+                setStat('ccGroups', d.groups_active);
+                if (d.discord_invite) {
+                    var btn = document.getElementById('ccJoinBtn');
+                    if (btn) btn.href = d.discord_invite;
+                }
+            })
+            .catch(function () { /* card still works as a static CTA */ });
     })();
     </script>
 </body>
