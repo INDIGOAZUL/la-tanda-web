@@ -1,0 +1,44 @@
+# Alertmanager routing. The Discord webhook URL is not stored here: start.sh
+# writes ALERT_WEBHOOK_URL from .env into /alertmanager/webhook_url.
+# For a generic (non-Discord) webhook, replace discord_configs with:
+#   webhook_configs:
+#     - url_file: /alertmanager/webhook_url
+#       send_resolved: true
+route:
+  receiver: discord
+  group_by: [alertname, operator_address, instance, proposal_id]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="info"']
+      receiver: discord
+      repeat_interval: 24h
+
+receivers:
+  - name: discord
+    discord_configs:
+      - webhook_url_file: /alertmanager/webhook_url
+        send_resolved: true
+  # Used by start.sh when ALERT_WEBHOOK_URL is empty: alerts stay visible in the
+  # Alertmanager UI, nothing is sent.
+  - name: none
+
+inhibit_rules:
+  # One message per problem: critical suppresses the warning for the same validator...
+  - source_matchers: ['alertname="ValidatorMissedBlocksCritical"']
+    target_matchers: ['alertname="ValidatorMissedBlocksWarning"']
+    equal: [operator_address]
+  # ...and once jailed, the missed-block alerts add nothing.
+  - source_matchers: ['alertname="ValidatorJailed"']
+    target_matchers: ['alertname=~"ValidatorMissedBlocks.*"']
+    equal: [operator_address]
+  # A down node explains its stalled height and missing peers...
+  - source_matchers: ['alertname="NodeDown"']
+    target_matchers: ['alertname=~"NodeHeightStalled|LowPeerCount"']
+    equal: [instance]
+  # ...and its unreachable API and node_exporter on the same machine
+  # (render-targets.sh sets the host label).
+  - source_matchers: ['alertname="NodeDown"']
+    target_matchers: ['alertname="ScrapeTargetDown"']
+    equal: [host]

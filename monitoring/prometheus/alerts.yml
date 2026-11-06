@@ -1,0 +1,118 @@
+# Alert rules for La Tanda validators. Thresholds are derived from the chain's
+# slashing params (exported by latanda-exporter), not hard-coded block counts.
+# See README.md "Alert rules" for the reasoning behind every threshold.
+groups:
+  - name: latanda-validator
+    rules:
+      # First branch, WATCH_VALIDATORS set: fires for as long as a watched
+      # validator is jailed.
+      # Second branch, no WATCH_VALIDATORS (network-wide instance): only validators
+      # jailed within the last 24 h, otherwise every long-dead jailed validator
+      # fires forever. jailed_until = jail time + downtime_jail_duration.
+      # Tombstoned validators (jailed forever after a double sign) are left out
+      # in this mode.
+      - alert: ValidatorJailed
+        expr: |
+          (
+            latanda_validator_jailed{watched="true"} == 1
+            and on() latanda_exporter_watch_list_configured == 1
+          )
+          or
+          (
+            latanda_validator_jailed == 1
+            and on() latanda_exporter_watch_list_configured == 0
+            and on(operator_address) latanda_validator_tombstoned == 0
+            and on(operator_address) (time() - latanda_validator_jailed_until_timestamp_seconds) < 86400
+          )
+        labels:
+          severity: critical
+        annotations:
+          summary: "Validator {{ $labels.moniker }} is jailed"
+          description: "{{ $labels.operator_address }} is jailed and earns no rewards. Fix the node, wait for downtime_jail_duration to pass, then send an unjail transaction."
+
+      - alert: ValidatorMissedBlocksCritical
+        expr: |
+          latanda_validator_missed_blocks{watched="true"}
+            / on() group_left() latanda_slashing_signed_blocks_window > 0.40
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Validator {{ $labels.moniker }} missed over 40% of the signing window"
+          description: "{{ $labels.operator_address }} is at {{ $value | humanizePercentage }} of signed_blocks_window. It gets jailed when the missed share exceeds 1 - min_signed_per_window."
+
+      - alert: ValidatorMissedBlocksWarning
+        expr: |
+          latanda_validator_missed_blocks{watched="true"}
+            / on() group_left() latanda_slashing_signed_blocks_window > 0.20
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Validator {{ $labels.moniker }} missed over 20% of the signing window"
+          description: "{{ $labels.operator_address }} is at {{ $value | humanizePercentage }} of signed_blocks_window."
+
+      - alert: LowPeerCount
+        expr: cometbft_p2p_peers < 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.instance }} has only {{ $value }} peers"
+          description: "Fewer than 3 peers makes the node fragile. Check persistent_peers/seeds and that P2P port 26656 is reachable."
+
+      - alert: GovernanceProposalActive
+        expr: latanda_gov_proposal_active == 1
+        labels:
+          severity: info
+        annotations:
+          summary: "Governance proposal {{ $labels.proposal_id }} is in voting period"
+          description: "{{ $labels.title }}"
+
+  # Not required by the issue, but without them the rules above can go silent:
+  # a stopped node has no peer metric, a failing chain API has no jail metric.
+  - name: latanda-monitoring-health
+    rules:
+      - alert: NodeDown
+        expr: up{job="cometbft"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "latandad metrics at {{ $labels.instance }} unreachable"
+          description: "The node process is down or its metrics endpoint is not reachable. A down validator misses every block."
+
+      - alert: NodeHeightStalled
+        expr: changes(cometbft_consensus_height[5m]) == 0 and on(instance) up{job="cometbft"} == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.instance }} did not advance a block in 5 minutes"
+          description: "Either the node is stuck or the whole chain halted."
+
+      - alert: ScrapeTargetDown
+        expr: up{job=~"cosmos-sdk|node|latanda-exporter"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} target {{ $labels.instance }} unreachable"
+          description: "Dashboards and alerts that depend on this target are blind."
+
+      - alert: ChainApiUnreachable
+        expr: latanda_exporter_up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "latanda-exporter cannot read the chain API"
+          description: "Jail and missed-block alerts use the last known state until CHAIN_REST_URL answers again. If NodeDown fires too and CHAIN_REST_URL points to that node, fix the node first."
+
+      - alert: WatchedValidatorNotFound
+        expr: latanda_exporter_watched_validator_missing == 1
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.operator_address }} from WATCH_VALIDATORS is not on chain"
+          description: "Check the address in .env (it must be the ltdvaloper1... operator address). No alerts fire for it."

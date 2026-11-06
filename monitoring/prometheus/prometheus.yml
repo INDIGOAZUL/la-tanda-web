@@ -1,0 +1,44 @@
+# Targets are not listed here: render-targets.sh writes them from .env into
+# /prometheus/targets/*.json when the container starts.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - file_sd_configs:
+        - files: [/prometheus/targets/alertmanager.json]
+
+scrape_configs:
+  # CometBFT metrics of latandad (config.toml: [instrumentation] prometheus = true)
+  - job_name: cometbft
+    file_sd_configs:
+      - files: [/prometheus/targets/cometbft.json]
+
+  # Cosmos SDK telemetry (app.toml: [telemetry] enabled = true, [api] enable = true)
+  - job_name: cosmos-sdk
+    metrics_path: /metrics
+    params:
+      format: [prometheus]
+    file_sd_configs:
+      - files: [/prometheus/targets/cosmos-sdk.json]
+    # latandad serves one Prometheus registry on both endpoints, so this one
+    # repeats every CometBFT and Go runtime metric of the cometbft job. Without
+    # this drop, LowPeerCount would fire twice per node.
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: (cometbft|go|process|promhttp)_.*
+        action: drop
+
+  # Host metrics (CPU, memory, disk, network)
+  - job_name: node
+    file_sd_configs:
+      - files: [/prometheus/targets/node.json]
+
+  # Chain state: jail status, missed blocks, voting power, governance
+  - job_name: latanda-exporter
+    file_sd_configs:
+      - files: [/prometheus/targets/latanda-exporter.json]
