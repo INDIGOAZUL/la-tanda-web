@@ -1,3 +1,4 @@
+if(typeof window.t!=="function"){window.t=function(k,o){return o&&o.defaultValue!=null?o.defaultValue:k;};}
 // ===== NOTIFICATION CENTER v3.0 =====
 // Updated: 2026-03-11
 // Features: API sync, type-based colors, toast system, preferences modal
@@ -13,7 +14,7 @@ class NotificationCenter {
         this.apiBase = window.API_BASE_URL || "";
         this.pollingInterval = null;
         this.pollingEnabled = true;
-        this.pollIntervalMs = 60000;
+        this.pollIntervalMs = 120000; // v4.25.15: 60s → 120s (push covers urgent)
         this.preferences = null;
         this.fcmSupported = false;
         this.fcmMessaging = null;
@@ -195,6 +196,8 @@ class NotificationCenter {
             // v4.16.12: Social
             "new_follower": "social", "social_repost": "social",
             "social_like": "social", "social_comment": "social",
+            // comments-polish 2026-10-14: comment reply/mention are social
+            "comment_mention": "social", "social_reply": "social",
             // v4.16.12: Loans
             "loan_payment": "transactions", "loan_payment_request": "transactions",
             "loan_coordinator_alert": "transactions", "loan_plan_created": "transactions",
@@ -205,9 +208,64 @@ class NotificationCenter {
             "creator_nudge_progress": "system", "creator_nudge_almost": "system",
             "creator_nudge_pending": "system",
             // v4.16.12: Other
-            "turn_reminder": "tandas", "suspension_recommendation": "system"
+            "turn_reminder": "tandas", "suspension_recommendation": "system",
+            // Marketplace / Tienda (2026-10-26): interacciones de tienda y reservas
+            // que antes caian en el default "system". Categoria nueva "store"
+            // (requiere una pestana "Tienda" para poder filtrarse; hasta entonces
+            // aparecen bajo "Todo" y ya NO quedan rotuladas como "Sistema").
+            "store_contact": "store", "store_visit": "store",
+            "contact_reveal": "store", "booking_confirmed": "store",
+            "booking_rescheduled": "store", "booking_reminder": "store",
+            "calendar_disconnected": "store",
+            // Social: respuesta a tu historia (como social_reply / social_comment)
+            "story_reply": "social",
+            // --- Mapeo completo (2026-10-26, decision founder): todos los tipos
+            //     reales a las 7 categorias; nada real cae a "system" por default ---
+            // Pagos / transactions
+            "payment_anomaly": "transactions", "grace_expiring": "transactions",
+            // 2026-11-02: aviso "estás en gracia" (fintech #556) y pago declarado por confirmar
+            "payment_grace": "transactions", "payment_declared": "transactions",
+            "aporte_upcoming": "transactions", "subscription_expired": "transactions",
+            "nav_update": "transactions",
+            "loan_approved": "transactions", "loan_rejected": "transactions",
+            "loan_request": "transactions", "loan_written_off": "transactions",
+            "loan_interest_residual": "transactions", "loan_config_updated": "transactions",
+            "disbursement_request": "transactions", "disbursement_approved": "transactions",
+            "disbursement_rejected": "transactions", "disbursement_fulfilled": "transactions",
+            "investment_exit": "transactions", "investment_dissolved": "transactions",
+            "receipt_confirm_request": "transactions", "receipt_confirm_reminder": "transactions",
+            "cycle_payout_overdue": "transactions", "cycle_ready_beneficiary": "transactions",
+            "cycle_ready_to_distribute": "transactions",
+            // Tandas
+            "lottery_confirmation_request": "tandas", "lottery_confirmation_reminder": "tandas",
+            "cycle_started": "tandas", "tanda_activated": "tandas",
+            "tanda_completed_member": "tandas", "turn_upcoming": "tandas",
+            "position_assigned": "tandas", "positions_complete": "tandas",
+            // Social (incluye gobernanza comunitaria que NO es disputa)
+            "coordinator_feedback": "social", "group_dissolved": "social",
+            "group_meeting_live": "social", "group_meeting_reminder": "social",
+            "group_action_assigned": "social", "member_removed": "social",
+            "join_request_sent": "social", "group_motion_open": "social",
+            "group_health_critical": "social", "group_health_warning": "social",
+            "member_churn_alert": "social",
+            // Moderacion (acciones de moderacion + disputas/reclamos/apelaciones)
+            "moderation_action": "moderation",
+            "ownership_claimed": "moderation", "ownership_claim_opened": "moderation",
+            "ownership_claim_rejected": "moderation", "ownership_claim_vote": "moderation",
+            "group_claim_escalated": "moderation", "group_claim_responded": "moderation",
+            // Sistema (genuinos: cuenta / seguridad / nudges de crecimiento)
+            "password_changed": "system", "email_changed": "system",
+            "id_verification_requested": "system", "kyc_rejected": "system",
+            "verification": "system", "admin_alert": "system",
+            "admin_request_resubmit": "system", "engagement_nudge": "system",
+            "invite_pending_nudge": "system", "reactivation_campaign": "system",
+            "near_activation": "system"
         };
-        return typeMap[apiType] || "system";
+        const _exact = typeMap[apiType];
+        if (_exact) return _exact;
+        // appeal_* es un tipo DINAMICO (concatenado en backend) -> Moderacion
+        if (typeof apiType === "string" && apiType.indexOf("appeal_") === 0) return "moderation";
+        return "system";
     }
 
     isUrgentType(apiType) {
@@ -227,6 +285,7 @@ class NotificationCenter {
             "member_suspended": "🔒", "member_reactivated": "✅",
             "compliance_alert": "🚨",
             "group_update": "📢", "group_joined": "✅", "group_rejected": "❌",
+            "group_message": "💬", "group_announcement": "📣",
             "group_invitation": "💌", "group_invited": "💌",
             "group_full": "🎉", "group_full_member": "👥",
             "join_error": "⚠️",
@@ -258,6 +317,7 @@ class NotificationCenter {
             // v4.16.12
             "new_follower": "👤", "social_repost": "🔄",
             "social_like": "❤️", "social_comment": "💬",
+            "comment_mention": "🗨️", "social_reply": "↩️",
             "loan_payment": "💳", "loan_payment_request": "📋",
             "loan_coordinator_alert": "⚠️", "loan_plan_created": "📝",
             "loan_plan_defaulted": "🚨",
@@ -265,16 +325,97 @@ class NotificationCenter {
             "creator_nudge_verify": "📧", "creator_nudge_empty": "👥",
             "creator_nudge_progress": "📊", "creator_nudge_almost": "🔥",
             "creator_nudge_pending": "📋",
-            "turn_reminder": "⏰", "suspension_recommendation": "🚨"
+            "turn_reminder": "⏰", "suspension_recommendation": "🚨",
+            // Slice 3a: workforce / equipo (shifts, memos, invites, attendance)
+            "shift_assigned": "📅", "shift_open": "🆕", "shift_reminder": "⏰",
+            "shift_updated": "🔄", "shift_cancelled": "🚫", "shift_comment": "💬",
+            "shift_off": "🌴", "shift_vacation": "🏖️",
+            "shift_open_uncovered": "⚠️",
+            "shift_claim_applied": "🙋", "shift_claim_approved": "✅",
+            "shift_claim_rejected": "❌",
+            "team_memo": "📢", "team_invite": "✉️", "attendance_enabled": "🕒",
+            // Marketplace / Tienda + moderacion + historia (2026-10-26)
+            "store_contact": "✉️", "store_visit": "👀", "contact_reveal": "📇",
+            "booking_confirmed": "📅", "booking_rescheduled": "🔄",
+            "booking_reminder": "⏰", "calendar_disconnected": "📆",
+            "moderation_action": "🛡️", "story_reply": "📖",
+            // Mapeo completo 2026-10-26 (decision founder)
+            "payment_anomaly": "⚠️", "grace_expiring": "⏳",
+            "payment_grace": "⏳", "payment_declared": "🧾",
+            "aporte_upcoming": "📅", "subscription_expired": "💳",
+            "nav_update": "📊",
+            "loan_approved": "✅", "loan_rejected": "❌",
+            "loan_request": "📋", "loan_written_off": "✍️",
+            "loan_interest_residual": "💵", "loan_config_updated": "⚙️",
+            "disbursement_request": "📋", "disbursement_approved": "✅",
+            "disbursement_rejected": "❌", "disbursement_fulfilled": "💸",
+            "investment_exit": "💸", "investment_dissolved": "💼",
+            "receipt_confirm_request": "🧾", "receipt_confirm_reminder": "⏰",
+            "cycle_payout_overdue": "⏰", "cycle_ready_beneficiary": "🎁",
+            "cycle_ready_to_distribute": "💰",
+            "lottery_confirmation_request": "🎰", "lottery_confirmation_reminder": "⏰",
+            "cycle_started": "🔄", "tanda_activated": "🚀",
+            "tanda_completed_member": "🎉", "turn_upcoming": "⏳",
+            "position_assigned": "🎯", "positions_complete": "✅",
+            "coordinator_feedback": "⭐", "group_dissolved": "🚫",
+            "group_meeting_live": "🔴", "group_meeting_reminder": "📅",
+            "group_action_assigned": "📌", "member_removed": "👋",
+            "join_request_sent": "📨", "group_motion_open": "🗳️",
+            "group_health_critical": "🔴", "group_health_warning": "🟡",
+            "member_churn_alert": "📉",
+            "ownership_claimed": "🏷️", "ownership_claim_opened": "📂",
+            "ownership_claim_rejected": "❌", "ownership_claim_vote": "🗳️",
+            "group_claim_escalated": "⚖️", "group_claim_responded": "💬",
+            "password_changed": "🔑", "email_changed": "📧",
+            "id_verification_requested": "🪪", "kyc_rejected": "❌",
+            "verification": "🔢", "admin_alert": "🚨",
+            "admin_request_resubmit": "🔁", "engagement_nudge": "👋",
+            "invite_pending_nudge": "⏳", "reactivation_campaign": "📣",
+            "near_activation": "🔥"
         };
-        return iconMap[type] || "🔔";
+        const _ic = iconMap[type];
+        if (_ic) return _ic;
+        if (typeof type === "string" && type.indexOf("appeal_") === 0) return "⚖️";
+        return "🔔";
+    }
+
+    // Slice 3a: sanitize a backend-provided action_url so only INTERNAL same-site
+    // routes are ever navigated to. Rejects external http(s)://, protocol-relative
+    // //host, javascript:/data:/mailto: and any other scheme. Returns the clean
+    // route or null. Allows leading-slash paths (/mis-turnos.html) and relative
+    // .html pages (invitaciones.html?token=...).
+    safeUrl(url) {
+        if (typeof url !== 'string') return null;
+        const u = url.trim();
+        if (!u) return null;
+        // Reject control chars / whitespace (defeats obfuscated schemes)
+        if (/[\u0000-\u001f\s]/.test(u)) return null;
+        // Reject protocol-relative //host and backslash tricks
+        if (u.startsWith('//') || u.startsWith('\\')) return null;
+        // Reject anything carrying an explicit scheme (http:, javascript:, data:, mailto:, ...)
+        if (/^[a-z][a-z0-9+.\-]*:/i.test(u)) return null;
+        // Accept leading-slash absolute path within the site
+        if (u.startsWith('/')) return u;
+        // Accept a relative page reference (foo.html, foo.html?x=y, foo.html#frag)
+        if (/^[a-z0-9._\-\/]+\.html(\?[^\s]*)?(#[^\s]*)?$/i.test(u)) return u;
+        return null;
     }
 
     getNavigationUrl(notification) {
         const data = notification.data || {};
         const type = notification.originalType || notification.type;
+
+        // Group invitation → invitaciones.html with token if available
+        if (type === 'group_invitation' || type === 'group_invited' || type === 'invitation') {
+            const token = data.invitation_token || data.token;
+            return token ? ('invitaciones.html?token=' + encodeURIComponent(token)) : 'invitaciones.html';
+        }
         const gid = data.group_id ? encodeURIComponent(data.group_id) : '';
         const groupUrl = gid ? 'groups-advanced-system.html?group=' + gid : 'groups-advanced-system.html';
+        // 2026-11-02: un miembro avisó que pagó -> Gestionar → Pagos por confirmar.
+        if (type === 'payment_declared' && gid) return '/gestionar/' + gid + '?tab=pagos';
+        // Chat de grupo (slice 3, 2026-09-20): mensajes y anuncios abren el detalle directo en la tab Chat.
+        if (type === 'group_message' || type === 'group_announcement') return groupUrl + (gid ? '&tab=chat' : '');
 
         // Wallet / financial → wallet page
         const walletTypes = ['deposit_confirmed', 'deposit_rejected', 'withdrawal_completed',
@@ -285,6 +426,7 @@ class NotificationCenter {
         // Payment types → group context (not wallet)
         const paymentTypes = ['payment_reminder', 'payment_received', 'payment_recorded',
             'payment_sent', 'payment_due', 'payment_due_soon', 'payment_late',
+            'payment_grace', 'grace_expiring',
             'mora_applied', 'distribution_executed', 'commission_request', 'commission_response',
             'loan_payment', 'loan_payment_request', 'loan_coordinator_alert',
             'loan_plan_created', 'loan_plan_defaulted'];
@@ -295,7 +437,7 @@ class NotificationCenter {
             'lottery_turn_assigned', 'lottery_executed', 'lottery_cancelled', 'lottery_reset',
             'lottery_result', 'lottery_skipped', 'lottery_failed', 'turn_assigned', 'turn_updated',
             'turn_reminder', 'tanda_joined', 'tanda_created', 'tanda_starting', 'tanda_scheduled',
-            'group_update', 'group_joined', 'group_rejected', 'group_invitation', 'group_invited',
+            'group_update', 'group_joined', 'group_rejected',
             'group_full', 'group_full_member', 'group_milestone', 'invitation'];
         if (tandaTypes.includes(type)) return groupUrl;
 
@@ -306,6 +448,15 @@ class NotificationCenter {
             'extension_approved', 'extension_rejected', 'suspension_warning',
             'suspension_recommended', 'suspension_recommendation'];
         if (memberTypes.includes(type)) return groupUrl;
+
+        // Comment reply / mention → deep-link to the post (social-feed reads ?event= and
+        // opens its detail, which shows the comments). Mirrors social_comment's social
+        // category + icon; data carries event_id + comment_id (no comment-param consumer yet).
+        const commentDeepLinkTypes = ['comment_mention', 'social_reply'];
+        if (commentDeepLinkTypes.includes(type)) {
+            const ev = data.event_id ? encodeURIComponent(data.event_id) : '';
+            return ev ? ('home-dashboard.html?event=' + ev) : 'home-dashboard.html';
+        }
 
         // Social → home feed
         const socialTypes = ['new_follower', 'social_repost', 'social_like', 'social_comment'];
@@ -320,6 +471,11 @@ class NotificationCenter {
 
         // Achievement / referral
         if (type === 'achievement' || type === 'referral_success') return 'mi-perfil.html';
+
+        // Slice 3a: general fallback for any type not mapped above (all workforce/equipo
+        // notifications, and any future type) — honor the backend-provided action_url,
+        // sanitized to internal same-site routes only. Falls back to null if absent/unsafe.
+        if (data && data.action_url) return this.safeUrl(data.action_url);
 
         return null;
     }
@@ -393,6 +549,8 @@ class NotificationCenter {
                 <button class="notification-tab" data-filter="transactions">Pagos <span class="tab-count" id="ncTabTransactions"></span></button>
                 <button class="notification-tab" data-filter="tandas">Tandas <span class="tab-count" id="ncTabTandas"></span></button>
                 <button class="notification-tab" data-filter="social">Social <span class="tab-count" id="ncTabSocial"></span></button>
+                <button class="notification-tab" data-filter="store">Tienda <span class="tab-count" id="ncTabStore"></span></button>
+                <button class="notification-tab" data-filter="moderation">Moderación <span class="tab-count" id="ncTabModeration"></span></button>
                 <button class="notification-tab" data-filter="system">Sistema <span class="tab-count" id="ncTabSystem"></span></button>
             </div>
             <div class="notification-list" id="notificationList">
@@ -654,9 +812,9 @@ class NotificationCenter {
     // v4.16.12: Update unread counts per tab
     _updateTabCounts() {
         const unread = this.notifications.filter(n => !n.read);
-        const counts = { all: unread.length, transactions: 0, tandas: 0, social: 0, system: 0 };
+        const counts = { all: unread.length, transactions: 0, tandas: 0, social: 0, store: 0, moderation: 0, system: 0 };
         unread.forEach(n => { if (counts[n.type] !== undefined) counts[n.type]++; });
-        ['all', 'transactions', 'tandas', 'social', 'system'].forEach(k => {
+        ['all', 'transactions', 'tandas', 'social', 'store', 'moderation', 'system'].forEach(k => {
             const el = document.getElementById('ncTab' + k.charAt(0).toUpperCase() + k.slice(1));
             if (el) {
                 el.textContent = counts[k] > 0 ? counts[k] : '';
@@ -814,7 +972,7 @@ class NotificationCenter {
     }
 
     updateBadge() {
-        const badge = document.querySelector("#notifBadge, .notification-badge, .notification-dot, .lt-badge, #notificationCount");
+        const badge = document.getElementById("notifBadge") || document.querySelector(".notification-badge, .notification-dot, #notificationCount");
         if (badge) {
             badge.textContent = this.unreadCount > 99 ? "99+" : this.unreadCount;
             badge.style.display = this.unreadCount > 0 ? "flex" : "none";

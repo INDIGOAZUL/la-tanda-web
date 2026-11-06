@@ -278,6 +278,22 @@
             color: var(--text-medium);
             margin: 0;
         }
+        .checkbox-container { align-items: flex-start; }
+        .checkbox-container input { flex-shrink: 0; margin-top: 2px; }
+        .checkbox-container label a,
+        .legal-hint a {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        .age-decl { border: 0; padding: 0; margin: 0 0 8px; }
+        .age-decl legend { font-size: 0.875rem; font-weight: 600; color: var(--text-medium); margin-bottom: 8px; }
+        .age-decl .checkbox-container { margin-bottom: 10px; }
+        .age-note { font-size: 0.75rem; color: var(--text-medium); opacity: 0.85; margin: 0 0 16px; }
+        .google-hint.legal-hint {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
         
         /* ========================================
            BUTTONS
@@ -380,6 +396,47 @@
         
         .social-btn.google i { color: #ea4335; }
         .social-btn.apple i { color: #000; }
+
+        /* 2026-09-23: "Entrar con Google" is the primary path (no password to forget) */
+        .google-primary {
+            width: 100%;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border: 1px solid #dadce0;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #1f1f1f;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+        .google-primary:hover { background: #f8fafc; border-color: #c6c9ce; box-shadow: var(--shadow-md); }
+        .google-primary:focus-visible,
+        .forgot-password:focus-visible,
+        .back-to-login:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+        .google-primary .g-logo { flex-shrink: 0; }
+        .google-hint {
+            text-align: center;
+            margin: 8px 0 0;
+            color: var(--text-medium);
+            font-size: 0.82rem;
+        }
+        .reset-ttl-note {
+            margin: 4px 0 16px;
+            color: var(--text-medium);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .google-primary { transition: none; }
+        }
         .social-btn.telegram i { color: #0088cc; }
         
         /* ========================================
@@ -471,15 +528,11 @@
         }
         
         .forgot-password {
-            background: none;
-            border: 0;
-            cursor: pointer;
             display: block;
             text-align: right;
             font-size: 0.875rem;
             color: var(--primary);
             margin-bottom: 20px;
-            width: 100%;
         }
         
         .link-btn {
@@ -579,6 +632,27 @@
         .two-factor-container.active {
             display: block;
         }
+
+        /* "Perdí mi 2FA" (2026-10-02) */
+        .tfa-help { margin-top: 20px; border-top: 1px solid var(--bg-gray); padding-top: 16px; }
+        .tfa-help details { margin-bottom: 12px; }
+        .tfa-help summary { cursor: pointer; color: var(--primary); font-size: 0.9rem; font-weight: 500; min-height: 44px; display: flex; align-items: center; }
+        .tfa-help .tfa-backup-row { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+        .tfa-help label { font-size: 0.85rem; color: var(--text-medium); }
+        .tfa-lost-link { background: none; border: none; color: var(--text-medium); text-decoration: underline; font-size: 0.9rem; cursor: pointer; min-height: 44px; padding: 0; text-align: left; }
+        .tfa-note { font-size: 0.8rem; color: var(--text-medium); margin: 0; }
+        .tfa-rec h2 { margin-bottom: 8px; }
+        .tfa-rec p { color: var(--text-medium); font-size: 0.92rem; line-height: 1.55; margin: 0 0 12px; }
+        .tfa-rec ol, .tfa-rec ul { color: var(--text-dark); font-size: 0.92rem; line-height: 1.55; margin: 0 0 14px; padding-left: 22px; }
+        .tfa-rec li { margin-bottom: 6px; }
+        .tfa-rec .tfa-box { border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; line-height: 1.5; margin-bottom: 14px; }
+        .tfa-rec .tfa-box-warn { background: #fff7ed; border: 1px solid #fdba74; color: #7c2d12; }
+        .tfa-rec .tfa-box-info { background: #eff6ff; border: 1px solid #93c5fd; color: #1e3a8a; }
+        .tfa-rec .tfa-box-ok { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; }
+        .tfa-rec .tfa-box-err { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }
+        .tfa-rec .tfa-safe { display: flex; gap: 8px; align-items: flex-start; font-size: 0.85rem; color: var(--text-dark); font-weight: 600; margin: 4px 0 16px; }
+        .tfa-rec .tfa-actions { display: flex; flex-direction: column; gap: 10px; }
+        .tfa-rec .tfa-actions .btn-secondary { width: 100%; min-height: 44px; }
         
         .code-input-container {
             display: flex;
@@ -904,6 +978,9 @@
     <meta name="twitter:title" content="Iniciar Sesion | La Tanda">
     <meta name="twitter:description" content="Accede a tu cuenta de La Tanda. Tandas de ahorro, marketplace y comunidad.">
     <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
+    <meta name="robots" content="noindex, follow">
+    <!-- Turnstile (2026-10-28): no hace nada salvo que /api/public/turnstile-config diga enabled -->
+    <script src="js/lt-turnstile.js?v=20261028a"></script>
 </head>
 <body>
     <!-- Notification Container -->
@@ -939,7 +1016,13 @@
             
             <!-- User Stats -->
             <div class="user-stats" id="userStats">
-                <p><span id="statUsers">15,000+</span> hondureños ya ahorran con La Tanda</p>
+                <!-- Sin cifra hardcodeada: el HTML servido NUNCA lleva un numero.
+                     La cifra la pone loadAuthStats() desde /api/public/metrics
+                     (registered_users, la fuente canonica). Si el fetch falla,
+                     queda esta frase sin numero. NUNCA redondear ni usar "+".
+                     NUNCA decir "verificados"/KYC (id_verified = 0) ni prometer
+                     que la gente "ya ahorra": lo que sabemos es que se registro. -->
+                <p id="statUsersLine">Cuentas registradas en Honduras y la diáspora</p>
             </div>
             
             <!-- Trust Badges -->
@@ -952,10 +1035,10 @@
                     <i class="fas fa-shield-alt"></i>
                     <span>Datos Protegidos</span>
                 </div>
-                <div class="trust-badge">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Verificado</span>
-                </div>
+                <a class="trust-badge" href="https://github.com/INDIGOAZUL/la-tanda-web" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">
+                    <i class="fas fa-code-branch"></i>
+                    <span>Código abierto</span>
+                </a>
             </div>
             
             <div class="auth-tabs" id="authTabs">
@@ -969,6 +1052,14 @@
             
             <!-- Login Form -->
             <form class="auth-form active" id="loginForm" data-form="login">
+                <button type="button" class="google-primary" id="googleLoginBtn" onclick="handleGoogleClick()">
+                    <svg class="g-logo" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Entrar con Google</span>
+                </button>
+                <p class="google-hint">Rápido y sin contraseña que recordar</p>
+                <p class="google-hint legal-hint">Si es tu primera vez, al continuar con Google aceptás los <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer">Términos</a> y la <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Política de privacidad</a>. Si sos menor de 18, necesitás permiso de tu madre, padre o tutor.</p>
+
+                <div class="divider">o con tu correo</div>
+
                 <div class="form-group">
                     <label for="loginEmail">Correo electrónico</label>
                     <div class="input-container">
@@ -987,11 +1078,11 @@
                     <div class="error-message" id="loginPasswordError"></div>
                 </div>
                 
-                <button type="button" class="forgot-password" onclick="window.auth.showPasswordResetForm();">
+                <a href="#" class="forgot-password" onclick="window.auth.showPasswordResetForm(); return false;">
                     ¿Olvidaste tu contraseña?
-                </button>
+                </a>
                 <div style="text-align:center;margin-top:8px;">
-                    <button type="button" style="background:none;border:0;color:rgba(255,255,255,0.35);font-size:0.78rem;text-decoration:none;padding:0;cursor:pointer;" onclick="var em=document.getElementById('loginEmail').value.trim(); if(!em||!window.auth.validateEmail(em)){window.auth.showError('Ingresa tu email primero');document.getElementById('loginEmail').focus();return false;} window.auth.showInfo('Enviando codigo...'); fetch('/api/auth/send-verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(){window.auth.showEmailVerificationForm(em)}).catch(function(){window.auth.showEmailVerificationForm(em)});">¿Ya te registraste pero no verificaste tu email?</button>
+                    <a href="#" style="color:var(--text-medium);font-size:0.78rem;text-decoration:underline;" onclick="var em=document.getElementById('loginEmail').value.trim(); if(!em||!window.auth.validateEmail(em)){window.auth.showError('Ingresa tu email primero');document.getElementById('loginEmail').focus();return false;} window.auth.showInfo('Enviando codigo...'); fetch('/api/auth/send-verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json()}).then(function(){window.auth.showEmailVerificationForm(em)}).catch(function(){window.auth.showEmailVerificationForm(em)}); return false;">¿Ya te registraste pero no verificaste tu email?</a>
                 </div>
                 
                 <button type="submit" class="btn-primary" id="loginSubmit">
@@ -999,20 +1090,23 @@
                     <i class="fas fa-arrow-right"></i>
                 </button>
                 
-                <div class="divider">o continuar con</div>
-
-                <div class="social-login">
-                    <button type="button" class="social-btn google" id="googleLoginBtn" onclick="handleGoogleClick()">
-                        <i class="fab fa-google"></i> Google
-                    </button>
-                    <button type="button" class="social-btn apple" onclick="loginWithProvider('apple')">
-                        <i class="fab fa-apple"></i> Apple
-                    </button>
-                </div>
+                <!-- 2026-10-24: botón "Apple" oculto. El inicio con Apple no está implementado
+                     (solo responde "disponible próximamente"); no mostramos un CTA de login que
+                     no funciona. El divider "otras opciones" quedaba huérfano, también oculto.
+                     Reactivar cuando haya cuenta de Apple Developer. Google (botón principal
+                     arriba) queda intacto. -->
             </form>
-            
+
             <!-- Register Form -->
             <form class="auth-form" id="registerForm" data-form="register">
+                <button type="button" class="google-primary" id="googleRegisterBtn" onclick="handleGoogleClick()">
+                    <svg class="g-logo" width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Registrarme con Google</span>
+                </button>
+                <p class="google-hint">Tu cuenta queda lista en un paso, sin contraseña que recordar</p>
+                <p class="google-hint legal-hint">Al continuar con Google aceptás los <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer">Términos</a> y la <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Política de privacidad</a>. Si sos menor de 18, necesitás permiso de tu madre, padre o tutor.</p>
+
+                <div class="divider">o con tu correo</div>
+
                 <div class="form-group">
                     <label for="registerName">Nombre completo</label>
                     <div class="input-container">
@@ -1082,30 +1176,38 @@
                     <div class="error-message" id="registerConfirmPasswordError"></div>
                 </div>
                 
+                <fieldset class="age-decl">
+                    <legend>Tu edad</legend>
+                    <div class="checkbox-container">
+                        <input type="radio" name="ageDecl" id="ageAdult" value="adult" required>
+                        <label for="ageAdult">Tengo 18 años o más</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="radio" name="ageDecl" id="guardianConsent" value="minor_with_guardian_consent">
+                        <label for="guardianConsent">Tengo entre 13 y 17 años y tengo permiso de mi madre, padre o tutor</label>
+                    </div>
+                    <p class="age-note">Si tenés menos de 13 años, no podés crear una cuenta.</p>
+                </fieldset>
                 <div class="checkbox-container">
                     <input type="checkbox" id="acceptTerms" required>
                     <label for="acceptTerms">
-                        Acepto los <a href="terms-of-service.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>
+                        Leí y acepto los <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer">Términos</a> y la <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Política de privacidad</a>. Uso La Tanda bajo mi responsabilidad.
                     </label>
                 </div>
                 
+                <!-- Turnstile (2026-10-28): oculto salvo que el backend lo active -->
+                <div id="registerTurnstile" class="lt-turnstile" data-ts-theme="light" style="display:none;margin:4px 0 14px;max-width:100%;min-height:65px"></div>
+                <p id="registerTurnstileErr" role="alert" style="display:none;color:#ff8a8a;font-size:.85rem;line-height:1.35;margin:0 0 12px;text-align:left"></p>
+                <script>(function(){try{if(window.LTTurnstile){window.__ltRegTs=window.LTTurnstile.mount(document.getElementById('registerTurnstile'),{errorEl:document.getElementById('registerTurnstileErr')});}}catch(e){}})();</script>
                 <button type="submit" class="btn-primary" id="registerSubmit">
                     <span>Crear Cuenta</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
                 
-                <div class="divider">o registrarse con</div>
-
-                <div class="social-login">
-                    <button type="button" class="social-btn google" id="googleRegisterBtn" onclick="handleGoogleClick()">
-                        <i class="fab fa-google"></i> Google
-                    </button>
-                    <button type="button" class="social-btn apple" onclick="registerWithProvider('apple')">
-                        <i class="fab fa-apple"></i> Apple
-                    </button>
-                </div>
+                <!-- 2026-10-24: botón "Apple" oculto (registro con Apple no implementado);
+                     divider "otras opciones" huérfano también oculto. Google intacto. -->
             </form>
-            
+
             <!-- Email Verification Form -->
             <div class="verification-container" id="emailVerificationContainer">
                 
@@ -1146,7 +1248,8 @@
                 
                 <div class="auth-header">
                     <h2 class="auth-title">Recuperar contraseña</h2>
-                    <p class="auth-subtitle">Ingresa tu correo y te enviaremos un código</p>
+                    <p class="auth-subtitle">Ingresa tu correo y te enviaremos un código de 6 dígitos</p>
+                    <p class="reset-ttl-note">El código vale 15 minutos. Si te registraste con Google, usa "Entrar con Google".</p>
                 </div>
                 
                 <form id="passwordResetRequestForm">
@@ -1173,7 +1276,7 @@
                 
                 <div class="auth-header">
                     <h2 class="auth-title">Ingresa el código</h2>
-                    <p class="auth-subtitle">Revisa tu correo electrónico</p>
+                    <p class="auth-subtitle">Revisa tu correo (y la carpeta de spam). El código vale 15 minutos.</p>
                 </div>
                 
                 <form id="passwordResetVerifyForm">
@@ -1186,7 +1289,7 @@
                         <input type="text" class="code-input" id="resetCode6" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]*">
                     </div>
 
-                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="resetTimeLeft" style="font-weight: 600; color: var(--primary);">10:00</span></p>
+                    <p style="text-align: center; color: var(--text-medium); font-size: 0.85rem; margin-bottom: 12px;">Expira en: <span id="resetTimeLeft" style="font-weight: 600; color: var(--primary);">15:00</span></p>
 
                     <button type="submit" class="btn-primary" id="verifyResetBtn">
                         <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
@@ -1197,8 +1300,8 @@
             <!-- Password Reset New Password Form -->
             <div class="password-reset-container" id="passwordResetNewPasswordContainer">
                 <div class="auth-header">
-                    <h2 class="auth-title">Nueva contraseña</h2>
-                    <p class="auth-subtitle">Crea una contraseña segura</p>
+                    <h2 class="auth-title" id="newPasswordTitle">Nueva contraseña</h2>
+                    <p class="auth-subtitle" id="newPasswordSubtitle">Crea una contraseña segura: mínimo 8 caracteres, con mayúscula, minúscula y número.</p>
                 </div>
                 
                 <form id="passwordResetNewPasswordForm">
@@ -1251,6 +1354,29 @@
                         <i class="fas fa-check-circle"></i> <span>Verificar Código</span>
                     </button>
                 </form>
+
+                <!-- 2026-10-02: sin teléfono → código de respaldo, o "perdí mi 2FA" -->
+                <div class="tfa-help" id="tfaHelp">
+                    <details>
+                        <summary>¿No tenés el teléfono? Usá un código de respaldo</summary>
+                        <div class="tfa-backup-row" id="backupCodeInput">
+                            <label for="backupCode">Código de respaldo (los que guardaste al activar la verificación)</label>
+                            <input type="text" id="backupCode" class="input-field" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="Ej: 1A2B3C4D">
+                            <button type="button" class="btn-secondary" id="verifyBackupBtn" onclick="window.auth.verifyBackupCode()" style="min-height:44px;">
+                                <i class="fas fa-unlock-alt"></i> Usar código de respaldo
+                            </button>
+                            <p class="tfa-note">Cada código sirve una sola vez.</p>
+                        </div>
+                    </details>
+                    <button type="button" class="tfa-lost-link" id="tfaLostLink" onclick="window.auth.show2FARecoveryRequest()">
+                        Perdí mi teléfono y mis códigos de respaldo
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2026-10-02: "Perdí mi 2FA" — pedido y enlace ?recovery2fa= (lo arma render2FARecovery) -->
+            <div class="two-factor-container" id="twoFactorRecoveryContainer">
+                <div class="tfa-rec" id="tfaRecBody" aria-live="polite"></div>
             </div>
             
             <!-- Home Link -->
@@ -1265,14 +1391,53 @@
         // H1 FIX: Safe localStorage for Safari Private Browsing
         window._safeSetItem = function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} };
         window._safeGetItem = function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } };
+        // 2026-10-24: nginx rate-limit (limit_req zone=login) and upstream faults
+        // reply with HTML/plain-text (503/429), not JSON. Calling response.json()
+        // on those threw "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+        // straight into the auth toast. Parse defensively: only read JSON when the
+        // body is JSON, and map non-JSON / 429 / 503 to honest voseo microcopy.
+        window._safeParseAuthResponse = async function(response) {
+            const ct = (response.headers.get('content-type') || '').toLowerCase();
+            let result = null;
+            if (ct.includes('application/json')) {
+                try { result = await response.json(); } catch (e) { result = null; }
+            } else {
+                // drain the body (free the socket); we don't need the text
+                try { await response.text(); } catch (e) {}
+            }
+            if (result === null) {
+                if (response.status === 429) {
+                    throw new Error('Demasiados intentos, esperá un momento.');
+                }
+                // 503 (limit_req / upstream down), 502, 504, or any non-JSON body
+                throw new Error('El servicio está ocupado, intentá en un minuto.');
+            }
+            return result;
+        };
         // Audit round 32: HTML escape helper
         window._escHtml = function(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
         // Audit round 32 C13: Validate redirect URLs are same-origin
         window._safeRedirectUrl = function(url, fallback) {
-            if (!url || typeof url !== 'string') return fallback || 'home-dashboard.html';
-            if (url.startsWith('/') && !url.startsWith('//')) return url;
-            if (!url.includes('://') && !url.startsWith('//')) return url;
-            return fallback || 'home-dashboard.html';
+            var fb = fallback || 'home-dashboard.html';
+            if (!url || typeof url !== 'string') return fb;
+            // protocol-relative (//evil.com) → tratarlo como externo
+            if (url.startsWith('//')) return fb;
+            // ruta relativa same-origin (/mi-perfil.html) → segura
+            if (url.startsWith('/')) return url;
+            // 2026-10-24: el guard de páginas protegidas guarda la URL ABSOLUTA
+            // (https://latanda.online/...). Antes _safeRedirectUrl la rechazaba por
+            // tener "://" y caía a home-dashboard. Ahora aceptamos URLs ABSOLUTAS del
+            // MISMO origen (http/https) y seguimos rechazando orígenes externos y
+            // esquemas peligrosos (javascript:, data:) → anti open-redirect.
+            if (/^[a-zA-Z][a-zA-Z0-9+.\-]*:/.test(url)) {
+                try {
+                    var u = new URL(url);
+                    if ((u.protocol === 'https:' || u.protocol === 'http:') && u.origin === window.location.origin) return url;
+                } catch (e) {}
+                return fb;
+            }
+            // relativa sin barra inicial (p.ej. "mi-perfil.html") → segura
+            return url;
         };
     </script>
     <script>
@@ -1314,22 +1479,43 @@
                     this.setupEventListeners();
                     this.setupValidators();
                     this.setupPasswordStrength();
+
+                    // 2026-10-04: store ?redirect= BEFORE checkAuthStatus. Before, a visitor who already
+                    // had a session was redirected by checkAuthStatus and only THEN was ?redirect= stored,
+                    // leaving redirect_after_auth hanging to hijack the next login's destination.
+                    // 2026-10-24: leer también ?next= (explorar.html manda el destino
+                    // de "unirme al grupo" como ?next=). Preserva la intención de unirse
+                    // para volver al grupo pedido tras el login, no a home-dashboard.
+                    const _earlyParams = new URLSearchParams(window.location.search);
+                    const _earlyRedirect = _earlyParams.get('redirect') || _earlyParams.get('next');
+                    if (_earlyRedirect && _earlyRedirect.startsWith('/') && !_earlyRedirect.startsWith('//')) {
+                        _safeSetItem('redirect_after_auth', _earlyRedirect);
+                    }
                     await this.checkAuthStatus();
                     this.preloadCredentials();
                     
                     console.log('🔐 Enhanced Auth System initialized');
                     
                     // Handle URL parameter for register tab
+                    // 2026-10-24: aceptar también ?tab=register (antes solo ?register=true,
+                    // así que "Registrarse" caía en la pestaña "Ingresar").
                     const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('register') === 'true') {
+                    if (urlParams.get('register') === 'true' || urlParams.get('tab') === 'register') {
                         this.switchTab('register');
                     }
                     
                     // Handle redirect parameter from invitation or other pages
-                    const redirectParam = urlParams.get("redirect");
-                    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
-                        _safeSetItem("redirect_after_auth", redirectParam);
+                    // (?redirect= is stored above, before checkAuthStatus)
+
+                    // 🔐 Resume a pending 2FA challenge (e.g. Google login on index.html
+                    // redirected here with a temp_login_token). Show the TOTP form.
+                    if (sessionStorage.getItem('2fa_temp_token')) {
+                        this.showInfo('Ingresa el código de tu app autenticadora');
+                        this.show2FAForm();
                     }
+
+                    // Reset/recovery forms + deep links (?reset=1&email=… / ?recovery=…)
+                    this.setupRecoveryFlows();
                 } catch (error) {
                     console.error('❌ Auth initialization error:', error);
                 }
@@ -1347,6 +1533,12 @@
                 // Form submissions
                 document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
                 document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
+                // 2026-10-24: el form 2FA no tenía listener de submit, así que el botón
+                // type=submit disparaba un GET nativo que recargaba auth-enhanced.html?,
+                // borraba los dígitos y reiniciaba el timer. Reusamos la MISMA función
+                // verify2FACode() que usa el auto-submit del 6º dígito (pega a /2fa-verify).
+                const twoFactorForm = document.getElementById('twoFactorForm');
+                if (twoFactorForm) twoFactorForm.addEventListener('submit', (e) => { e.preventDefault(); this.verify2FACode(); });
 
                 // Auto-recover pending verification
                 const pendingEmail = sessionStorage.getItem('pending_verification_email');
@@ -1450,7 +1642,8 @@
                     const currentPage = window.location.pathname;
                     const isAuthPage = currentPage.includes('auth') || currentPage.includes('login') || currentPage === '/' || currentPage.endsWith('index.html');
 
-                    if (isAuthPage) {
+                    const _onRecoveryLink = !!(urlParams.get('recovery2fa') || urlParams.get('recovery'));
+                    if (isAuthPage && !_onRecoveryLink) {
                         const redirectAfterAuth = _safeGetItem('redirect_after_auth');
                         const targetUrl = _safeRedirectUrl(redirectAfterAuth, payload.dashboard_url);
 
@@ -1647,7 +1840,7 @@
                         })
                     });
 
-                    const result = await response.json();
+                    const result = await _safeParseAuthResponse(response);
 
                     if (!response.ok || !result.success) {
                         // Check if account locked (429)
@@ -1677,11 +1870,16 @@
                         const errMsg = result.data?.error?.message || 'Credenciales incorrectas';
                         const loginEmail = sanitizedData.email;
                         if (response.status === 401 && !result.data?.error?.details?.code) {
-                            // Could be wrong password OR user not found — show helpful message
+                            // Could be wrong password OR user not found — show helpful message.
+                            // 2026-10-24: priorizar "recuperar contraseña" (lo más común tras un 401),
+                            // en voseo, sin quitar el CTA de crear cuenta (secundario).
                             this.showErrorWithCTA(
                                 'Email o contraseña incorrectos.',
-                                '¿No tienes cuenta?',
-                                'Crear Cuenta',
+                                '¿Olvidaste tu contraseña?',
+                                'Recuperar contraseña',
+                                () => { this.showPasswordResetForm(loginEmail); },
+                                '¿No tenés cuenta?',
+                                'Crear cuenta',
                                 () => { this.switchToRegister(loginEmail); }
                             );
                             return;
@@ -1689,19 +1887,22 @@
                         throw new Error(errMsg);
                     }
 
-                    // 🔐 PHASE 1: Check if 2FA is required
-                    if (result.data.two_factor_required) {
-                        console.log('[2FA] Two-factor authentication required');
-                        this.showSuccess('Código 2FA enviado a tu email');
-
-                        // Store email for 2FA verification
+                    // 🔐 2FA (TOTP) required — backend returns requires_2fa + temp_login_token
+                    if (result.data.requires_2fa) {
+                        console.log('[2FA] TOTP required');
+                        // Store the short-lived temp token to complete /api/auth/login/2fa-verify
+                        sessionStorage.setItem('2fa_temp_token', result.data.temp_login_token || '');
                         sessionStorage.setItem('2fa_email', sanitizedData.email);
 
-                        // Reset button and show 2FA form
+                        // Reset button and show TOTP code form
                         this.setLoadingState(submitBtn, false);
+                        this.showInfo('Ingresa el código de tu app autenticadora');
+                        // 2026-10-24: el timer debe decir la verdad — el backend emite el
+                        // temp token con expires_in:300 (5 min), no 10. Usamos ese valor.
+                        const _tfaExp = Number(result.data.expires_in);
                         setTimeout(() => {
-                            this.show2FAForm();
-                        }, 1000);
+                            this.show2FAForm(_tfaExp > 0 ? _tfaExp : undefined);
+                        }, 300);
                         return; // Stop here, don't proceed to dashboard
                     }
 
@@ -1716,8 +1917,17 @@
                     localStorage.removeItem('auth_redirect_in_progress');
 
                     this.resetLoginAttempts();
-                    this.showSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
                     this.showSecurityBadge(true);
+
+                    // 2026-10-02: after a "perdí mi 2FA" recovery the account must turn 2FA on again.
+                    // redirect_after_auth stays stored; seguridad.html opens the setup.
+                    if (result.data.must_setup_2fa === true) {
+                        this.showInfo('Tenés que activar de nuevo la verificación en dos pasos. Te llevamos a Seguridad.');
+                        setTimeout(() => { window.location.href = '/seguridad.html?setup2fa=1'; }, 1500);
+                        return;
+                    }
+
+                    this.showSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
 
                     // Check for duplicates before redirecting
                     const self = this;
@@ -1732,7 +1942,11 @@
                         const redirectAfterAuth = _safeGetItem('redirect_after_auth');
                         const dashboardUrl = _safeRedirectUrl(redirectAfterAuth, userData.dashboard_url);
                         localStorage.removeItem('redirect_after_auth');
-                        const redirectUrl = dashboardUrl + (dashboardUrl.includes('?') ? '&' : '?') + 'from_auth=1';
+                        // 2026-10-04: the query goes BEFORE the #hash (academia.html#/m/0.2 kept its route).
+                        const _hashAt = dashboardUrl.indexOf('#');
+                        const _base = _hashAt >= 0 ? dashboardUrl.slice(0, _hashAt) : dashboardUrl;
+                        const _hash = _hashAt >= 0 ? dashboardUrl.slice(_hashAt) : '';
+                        const redirectUrl = _base + (_base.includes('?') ? '&' : '?') + 'from_auth=1' + _hash;
                         window.location.href = redirectUrl;
                     }, 1500);
                 } catch (error) {
@@ -1768,6 +1982,11 @@
                 }
                 if (!this.validatePassword(password)) return;
 
+                // Turnstile (2026-10-28): si esta activo y falta el token, no enviamos.
+                const _ts = window.__ltRegTs || null;
+                const _tsWhy = _ts ? _ts.blockReason() : '';
+                if (_tsWhy) { this.showError(_tsWhy); return; }
+
                 const submitBtn = document.getElementById('registerSubmit');
                 this.setLoadingState(submitBtn, true);
 
@@ -1780,9 +1999,16 @@
                         email: this.sanitizeInput(email),
                         phone: phone ? this.sanitizeInput(phone) : undefined,
                         password: password, // Don.t sanitize password
-                        referral_code: this.referralCode || undefined
+                        referral_code: this.referralCode || undefined,
+                        // Consentimiento (2026-10-02). El backend aún no persiste estos campos:
+                        // migración propuesta en el PR (terms_accepted_at, terms_version, guardian_consent).
+                        terms_accepted: true,
+                        terms_version: '2026-10-02',
+                        guardian_consent: !!(document.getElementById('guardianConsent') || {}).checked,
+                        age_declaration: ((document.querySelector('input[name="ageDecl"]:checked') || {}).value) || undefined
                     };
 
+                    if (_ts) _ts.addTo(sanitizedData);
                     const regResp = await fetch(this.apiBaseURL + '/api/auth/register', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1828,6 +2054,8 @@
                         });
 
                     } else {
+                        // Turnstile: el token es de un solo uso -> reset (y re-montar si el server lo pide)
+                        if (_ts) _ts.afterFailure(response);
                         // Check for specific errors
                         const errorMsg = response.data?.error?.message || response.error?.message || response.message || 'Error al crear la cuenta';
                         if (errorMsg.includes('ya está registrado') || errorMsg.includes('No se pudo completar el registro')) {
@@ -1843,6 +2071,7 @@
                         throw new Error(errorMsg);
                     }
                 } catch (error) {
+                    if (_ts) _ts.reset();
                     console.error('Registration error:', error);
                     this.showError(this.formatAuthError(error.message));
                 } finally {
@@ -2172,18 +2401,29 @@
                 setTimeout(() => { el.remove(); }, 6000);
             }
 
-            showErrorWithCTA(message, ctaQuestion, ctaLabel, ctaAction) {
+            // 2026-10-24: params 5-7 opcionales (cta2*) para un SEGUNDO CTA secundario.
+            // Backward-compatible: las llamadas de 4 args no cambian.
+            showErrorWithCTA(message, ctaQuestion, ctaLabel, ctaAction, cta2Question, cta2Label, cta2Action) {
                 this.removeNotification();
                 const id = 'ctaBtn_' + Date.now();
+                const id2 = 'ctaBtn2_' + Date.now();
                 const el = document.createElement('div');
                 el.className = 'auth-notification error-cta';
                 el.id = 'authNotification';
-                el.innerHTML = '<div><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>' + _escHtml(message) + '</div>' +
+                let _html = '<div><i class="fas fa-exclamation-circle" style="margin-right:8px;"></i>' + _escHtml(message) + '</div>' +
                     '<div style="margin-top:10px;">' + (ctaQuestion ? _escHtml(ctaQuestion) + ' ' : '') +
                     '<button id="' + id + '" style="background:#00FFFF;color:#000;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem;">' + _escHtml(ctaLabel) + '</button></div>';
+                if (cta2Label) {
+                    _html += '<div style="margin-top:10px;">' + (cta2Question ? _escHtml(cta2Question) + ' ' : '') +
+                        '<button id="' + id2 + '" style="background:transparent;color:#00FFFF;border:1px solid rgba(0,255,255,0.5);padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.85rem;">' + _escHtml(cta2Label) + '</button></div>';
+                }
+                el.innerHTML = _html;
                 el.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;padding:18px 28px;border-radius:14px;font-size:0.9rem;background:rgba(15,23,42,0.97);color:#f8fafc;border:1px solid rgba(0,255,255,0.2);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);width:90%;max-width:400px;text-align:center;animation:slideDown 0.3s ease;box-shadow:0 12px 40px rgba(0,0,0,0.5);';
                 document.body.appendChild(el);
-                setTimeout(() => { var ctaEl = document.getElementById(id); if (ctaEl) ctaEl.addEventListener('click', function() { el.remove(); ctaAction(); }); }, 50);
+                setTimeout(() => {
+                    var ctaEl = document.getElementById(id); if (ctaEl) ctaEl.addEventListener('click', function() { el.remove(); ctaAction(); });
+                    if (cta2Label) { var ctaEl2 = document.getElementById(id2); if (ctaEl2) ctaEl2.addEventListener('click', function() { el.remove(); if (cta2Action) cta2Action(); }); }
+                }, 50);
             }
 
             switchToRegister(email) {
@@ -2279,6 +2519,11 @@
             }
 
             removeNotification() {
+                // 2026-10-24: showInfo/showErrorWithCTA crean toasts con clase
+                // .auth-notification (id authNotification). Antes removeNotification solo
+                // quitaba .notification, así que el toast de "contraseña incorrecta"
+                // quedaba pegado y se superponía con el 429. Limpiamos ambos.
+                document.querySelectorAll('.auth-notification').forEach(function(el){ el.remove(); });
                 const existing = document.querySelector('.notification');
                 if (existing) {
                     existing.remove();
@@ -2507,12 +2752,121 @@
             // Form Navigation Methods
             showLoginForm() {
                 this.hideAllForms();
+                this.recoveryToken = null;
+                const tabs = document.getElementById('authTabs');
+                if (tabs) tabs.style.display = '';
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'login'));
                 document.getElementById('loginForm').classList.add('active');
                 document.getElementById('loginForm').style.display = 'block';
             }
 
+            // 2026-09-23: the "¿Olvidaste tu contraseña?" link called this method, which did
+            // not exist (TypeError → the reset flow was unreachable from this page).
+            showPasswordResetForm(prefillEmail) {
+                const email = (prefillEmail || document.getElementById('loginEmail')?.value || sessionStorage.getItem('reset_email') || '').trim();
+                this.showPasswordResetRequestForm();
+                const input = document.getElementById('resetEmail');
+                if (input && email && !input.value) input.value = email;
+            }
+
+            _showResetContainer(id) {
+                const tabs = document.getElementById('authTabs');
+                if (tabs) tabs.style.display = 'none';
+                const c = document.getElementById(id);
+                if (c) { c.style.display = 'block'; c.classList.add('active'); }
+            }
+
+            // Reset/recovery wiring (2026-09-23): the three reset forms had no submit
+            // handlers bound, and the last step sent the already-consumed code instead of
+            // the reset_token that verify-reset-token returns.
+            setupRecoveryFlows() {
+                const bind = (id, fn) => { const f = document.getElementById(id); if (f) f.addEventListener('submit', (e) => { e.preventDefault(); fn(e); }); };
+                bind('passwordResetRequestForm', (e) => this.requestPasswordReset(e));
+                bind('passwordResetVerifyForm', () => this.verifyResetCode());
+                bind('passwordResetNewPasswordForm', (e) => this.recoveryToken ? this.completeRecovery(e) : this.resetPassword(e));
+                const tNew = document.getElementById('toggleNewPassword');
+                if (tNew) tNew.addEventListener('click', () => this.togglePasswordVisibility('newPassword', 'toggleNewPassword'));
+                const tConf = document.getElementById('toggleConfirmNewPassword');
+                if (tConf) tConf.addEventListener('click', () => this.togglePasswordVisibility('confirmNewPassword', 'toggleConfirmNewPassword'));
+
+                const params = new URLSearchParams(window.location.search);
+                const recovery = params.get('recovery');
+                const recovery2fa = params.get('recovery2fa');
+                if (recovery2fa) {
+                    // Never completes on load (mail scanners open links): the owner has to press the button.
+                    this.twoFARecoveryToken = recovery2fa;
+                    this.render2FARecovery('link');
+                } else if (recovery) {
+                    this.showRecoveryPasswordForm(recovery);
+                } else if (params.get('reset') === '1') {
+                    this.showPasswordResetForm(params.get('email') || '');
+                }
+                // Don't leave the token/email sitting in the address bar or history.
+                if (recovery || recovery2fa || params.get('reset') === '1') {
+                    try { history.replaceState(null, '', window.location.pathname); } catch (_) {}
+                }
+            }
+
+            showRecoveryPasswordForm(token) {
+                this.recoveryToken = token;
+                this.hideAllForms();
+                this._showResetContainer('passwordResetNewPasswordContainer');
+                const form = document.getElementById('passwordResetNewPasswordForm');
+                form.style.display = 'block';
+                form.classList.add('active');
+                document.getElementById('newPasswordTitle').textContent = 'Crea tu contraseña nueva';
+                document.getElementById('newPasswordSubtitle').textContent = 'Tu coordinador pidió ayuda y el equipo de La Tanda la aprobó. Este enlace vale 30 minutos y sirve una sola vez. Mínimo 8 caracteres, con mayúscula, minúscula y número.';
+                document.getElementById('newPassword').focus();
+            }
+
+            _passwordPolicyError(pw) {
+                // Same rules as the backend validatePassword()
+                if (!pw || pw.length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+                if (!/[A-Z]/.test(pw)) return 'La contraseña debe incluir al menos una letra mayúscula';
+                if (!/[a-z]/.test(pw)) return 'La contraseña debe incluir al menos una letra minúscula';
+                if (!/[0-9]/.test(pw)) return 'La contraseña debe incluir al menos un número';
+                return null;
+            }
+
+            async completeRecovery(event) {
+                if (event) event.preventDefault();
+                const pw = document.getElementById('newPassword').value;
+                const pw2 = document.getElementById('confirmNewPassword').value;
+                if (pw !== pw2) { this.showError('Las contraseñas no coinciden'); return false; }
+                const polErr = this._passwordPolicyError(pw);
+                if (polErr) { this.showError(polErr); return false; }
+                const btn = document.getElementById('resetPasswordBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/recovery/complete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: this.recoveryToken, new_password: pw })
+                    });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.data?.error?.message || result.error?.message || result.message || 'No se pudo crear la contraseña');
+                    }
+                    const email = result.data && result.data.email;
+                    this.showSuccess('Contraseña creada. Ya puedes iniciar sesión.');
+                    setTimeout(() => {
+                        this.showLoginForm();
+                        if (email) document.getElementById('loginEmail').value = email;
+                        document.getElementById('loginPassword').focus();
+                    }, 1200);
+                } catch (error) {
+                    this.showError(error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> <span>Cambiar Contraseña</span>';
+                }
+                return false;
+            }
+
             showPasswordResetRequestForm() {
                 this.hideAllForms();
+                this._showResetContainer('passwordResetRequestContainer');
                 const form = document.getElementById('passwordResetRequestForm');
                 form.style.display = 'block';
                 form.classList.add('active');
@@ -2521,16 +2875,19 @@
 
             showPasswordResetVerifyForm() {
                 this.hideAllForms();
+                this._showResetContainer('passwordResetVerifyContainer');
                 const form = document.getElementById('passwordResetVerifyForm');
                 form.style.display = 'block';
                 form.classList.add('active');
                 document.getElementById('resetCode1').focus();
                 this.setupCodeInputs('resetCode');
-                this.startTimer('reset', 10 * 60); // 10 minutes (matches backend expiry)
+                this.startTimer('reset', 15 * 60); // 15 minutes (matches backend expiry, 2026-09-23)
             }
 
             showPasswordResetNewPasswordForm() {
                 this.hideAllForms();
+                this._showResetContainer('passwordResetNewPasswordContainer');
+                document.getElementById('newPasswordTitle').textContent = 'Nueva contraseña';
                 const form = document.getElementById('passwordResetNewPasswordForm');
                 form.style.display = 'block';
                 form.classList.add('active');
@@ -2551,18 +2908,23 @@
                 sessionStorage.setItem('pending_verification_email', email);
             }
 
-            show2FAForm() {
+            show2FAForm(expiresInSeconds) {
                 this.hideAllForms();
+                const container = document.getElementById('twoFactorContainer');
+                if (container) { container.style.display = 'block'; container.classList.add('active'); }
                 const form = document.getElementById('twoFactorForm');
                 form.style.display = 'block';
                 form.classList.add('active');
                 document.getElementById('tfaCode1').focus();
                 this.setupCodeInputs('tfaCode');
-                this.startTimer('tfa', 10 * 60); // 10 minutes
+                // 2026-10-24: honramos el expires_in del server (300s); si no viene, caemos
+                // al valor histórico de 10 min para no regresionar.
+                const secs = (typeof expiresInSeconds === 'number' && expiresInSeconds > 0) ? expiresInSeconds : 10 * 60;
+                this.startTimer('tfa', secs);
             }
 
             hideAllForms() {
-                const forms = document.querySelectorAll('.form-section, .auth-form');
+                const forms = document.querySelectorAll('.form-section, .auth-form, .two-factor-container, .password-reset-container, .verification-container');
                 forms.forEach(form => {
                     form.style.display = 'none';
                     form.classList.remove('active');
@@ -2754,6 +3116,12 @@
                     return;
                 }
 
+                // Re-entry guard (2026-09-23): same auto-submit/paste/button double-fire as the
+                // reset code. After success the page redirects, so the button stays disabled.
+                if (this._verifyingEmail) return;
+                this._verifyingEmail = true;
+                let emailVerified = false;
+
                 const btn = document.getElementById('verifyEmailBtn');
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
@@ -2768,6 +3136,8 @@
                     const result = await response.json();
 
                     if (result.success) {
+                        emailVerified = true;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Email verificado';
                         sessionStorage.removeItem('pending_verification_email');
                         this.showSuccess('¡Email verificado correctamente!');
 
@@ -2778,8 +3148,13 @@
                             _safeSetItem('latanda_user', JSON.stringify(result.data.user));
                         }
 
+                        // 2026-10-04: honor redirect_after_auth (e.g. back to the Academia module) like
+                        // the Google and 2FA paths, and clear it so it can't hijack the next login.
+                        const _redirect = _safeGetItem('redirect_after_auth');
+                        try { localStorage.removeItem('redirect_after_auth'); } catch (e) {}
+                        const _target = _safeRedirectUrl(_redirect, result.data?.user?.dashboard_url || 'home-dashboard.html');
                         setTimeout(() => {
-                            window.location.href = result.data?.user?.dashboard_url || 'home-dashboard.html';
+                            window.location.href = _target;
                         }, 1500);
                     } else {
                         const errMsg = result.data?.error?.message || 'Codigo invalido o expirado';
@@ -2829,8 +3204,11 @@
                     console.error('Verify email error:', error);
                     this.showError(error.message);
                 } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Email';
+                    if (!emailVerified) {
+                        this._verifyingEmail = false;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Email';
+                    }
                 }
             }
 
@@ -2894,6 +3272,14 @@
                     return;
                 }
 
+                // Re-entry guard (2026-09-23): the 6th digit auto-submits, pasting auto-submits
+                // twice (input event + 200 ms timer) and the button can be tapped too. The first
+                // call consumes the code, so any second call would fail. One call at a time, and
+                // after success the button stays disabled until the screen changes.
+                if (this._verifyingReset) return;
+                this._verifyingReset = true;
+                let verified = false;
+
                 const btn = document.getElementById('verifyResetBtn');
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
@@ -2908,12 +3294,20 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        // Store verified code for final step
+                        // Store verified code + the reset_token the backend returns (the code
+                        // itself is consumed by verify-reset-token, so the token is what works)
                         sessionStorage.setItem('reset_code', code);
+                        if (result.data && result.data.reset_token) sessionStorage.setItem('reset_token', result.data.reset_token);
+                        verified = true;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Código verificado';
                         this.showSuccess('Código verificado correctamente');
 
                         setTimeout(() => {
                             this.showPasswordResetNewPasswordForm();
+                            // verify screen is hidden now: restore it for a future reset in this page
+                            this._verifyingReset = false;
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
                         }, 1000);
                     } else {
                         throw new Error(result.data?.error?.message || 'Código inválido o expirado');
@@ -2922,8 +3316,11 @@
                     console.error('Verify reset code error:', error);
                     this.showError(error.message);
                 } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
+                    if (!verified) {
+                        this._verifyingReset = false;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
+                    }
                 }
             }
 
@@ -2951,11 +3348,10 @@
                     return false;
                 }
 
-                // Full password policy check (matches backend)
-                const reqs = this.checkPasswordRequirements(newPassword);
-                const metCount = [reqs.upper, reqs.lower, reqs.number, reqs.special].filter(Boolean).length;
-                if (metCount < 2) {
-                    this.showError('La contraseña debe cumplir al menos 2 requisitos: mayuscula, minuscula, numero o simbolo');
+                // Full password policy check (same rules as backend validatePassword)
+                const polErr = this._passwordPolicyError(newPassword);
+                if (polErr) {
+                    this.showError(polErr);
                     return false;
                 }
 
@@ -2967,7 +3363,7 @@
                     const response = await fetch(`${this.apiBaseURL}/api/auth/reset-password`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, code, new_password: newPassword })
+                        body: JSON.stringify({ email, code, reset_token: sessionStorage.getItem('reset_token') || undefined, new_password: newPassword })
                     });
 
                     const result = await response.json();
@@ -2978,6 +3374,7 @@
                         // Clear session data
                         sessionStorage.removeItem('reset_email');
                         sessionStorage.removeItem('reset_code');
+                        sessionStorage.removeItem('reset_token');
 
                         setTimeout(() => {
                             this.showLoginForm();
@@ -2998,17 +3395,17 @@
 
             // 2FA Methods
             async verify2FACode() {
-                const email = sessionStorage.getItem('2fa_email');
+                const tempToken = sessionStorage.getItem('2fa_temp_token');
                 const code = this.getAllCodeDigits('tfaCode');
 
-                if (!email) {
-                    this.showError('Sesión expirada. Inicia sesión nuevamente.');
+                if (!tempToken) {
+                    this.showError('Sesión 2FA expirada. Inicia sesión nuevamente.');
                     this.showLoginForm();
                     return;
                 }
 
                 if (code.length !== 6) {
-                    this.showError('Ingresa el código completo de 6 dígitos');
+                    this.showError('Ingresá el código completo de 6 dígitos');
                     return;
                 }
 
@@ -3017,33 +3414,44 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
                 try {
-                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-2fa`, {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/login/2fa-verify`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, code })
+                        body: JSON.stringify({ temp_login_token: tempToken, totp_code: code })
                     });
 
-                    const result = await response.json();
+                    const result = await _safeParseAuthResponse(response);
 
-                    if (result.success) {
+                    if (response.ok && result.success) {
                         // Store auth token and user data
-                        _safeSetItem('auth_token', result.data.auth_token);
+                        _safeSetItem('auth_token', result.data.auth_token || result.data.token);
+                        if (result.data.refresh_token) _safeSetItem('refresh_token', result.data.refresh_token);
                         _safeSetItem('latanda_user', JSON.stringify(result.data.user));
 
                         // Clear 2FA session data
+                        sessionStorage.removeItem('2fa_temp_token');
                         sessionStorage.removeItem('2fa_email');
 
                         this.showSuccess('¡Autenticación exitosa!');
 
                         setTimeout(() => {
-                            window.location.href = result.data.user.dashboard_url || 'home-dashboard.html';
+                            const redirect = _safeGetItem('redirect_after_auth');
+                            localStorage.removeItem('redirect_after_auth');
+                            window.location.href = _safeRedirectUrl(redirect, result.data.user.dashboard_url);
                         }, 1000);
                     } else {
-                        throw new Error(result.data?.error?.message || 'Código 2FA inválido o expirado');
+                        // expired/invalid temp token → bounce back to login
+                        if (result.data?.error?.details?.code === 'TEMP_TOKEN_INVALID' || response.status === 401 && !result.data?.error?.details?.code) {
+                            sessionStorage.removeItem('2fa_temp_token');
+                        }
+                        throw new Error(result.data?.error?.message || result.message || 'Código 2FA inválido o expirado');
                     }
                 } catch (error) {
                     console.error('Verify 2FA error:', error);
                     this.showError(error.message);
+                    // 2026-10-24: limpiar los dígitos para que el reintento quede en blanco.
+                    for (let i = 1; i <= 6; i++) { const inp = document.getElementById('tfaCode' + i); if (inp) inp.value = ''; }
+                    const firstTfa = document.getElementById('tfaCode1'); if (firstTfa) firstTfa.focus();
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-check-circle"></i> Verificar Código';
@@ -3056,17 +3464,17 @@
             }
 
             async verifyBackupCode() {
-                const email = sessionStorage.getItem('2fa_email');
+                const tempToken = sessionStorage.getItem('2fa_temp_token');
                 const code = document.getElementById('backupCode').value.trim().toUpperCase();
 
-                if (!email) {
-                    this.showError('Sesión expirada. Inicia sesión nuevamente.');
+                if (!tempToken) {
+                    this.showError('Sesión 2FA expirada. Inicia sesión nuevamente.');
                     this.showLoginForm();
                     return;
                 }
 
-                if (!code || code.length !== 8) {
-                    this.showError('Ingresa un código de respaldo válido (8 caracteres)');
+                if (!code) {
+                    this.showError('Ingresa un código de respaldo válido');
                     return;
                 }
 
@@ -3075,40 +3483,223 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
 
                 try {
-                    const response = await fetch(`${this.apiBaseURL}/api/auth/verify-2fa`, {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/login/2fa-verify`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, code })
+                        body: JSON.stringify({ temp_login_token: tempToken, backup_code: code })
                     });
 
-                    const result = await response.json();
+                    const result = await _safeParseAuthResponse(response);
 
-                    if (result.success) {
-                        _safeSetItem('auth_token', result.data.auth_token);
+                    if (response.ok && result.success) {
+                        _safeSetItem('auth_token', result.data.auth_token || result.data.token);
+                        if (result.data.refresh_token) _safeSetItem('refresh_token', result.data.refresh_token);
                         _safeSetItem('latanda_user', JSON.stringify(result.data.user));
 
+                        sessionStorage.removeItem('2fa_temp_token');
                         sessionStorage.removeItem('2fa_email');
 
                         this.showSuccess('¡Código de respaldo verificado! Guarda los códigos restantes.');
 
                         setTimeout(() => {
-                            window.location.href = result.data.user.dashboard_url || 'home-dashboard.html';
+                            const redirect = _safeGetItem('redirect_after_auth');
+                            localStorage.removeItem('redirect_after_auth');
+                            window.location.href = _safeRedirectUrl(redirect, result.data.user.dashboard_url);
                         }, 1500);
                     } else {
-                        throw new Error(result.data?.error?.message || 'Código de respaldo inválido o ya usado');
+                        throw new Error(result.data?.error?.message || result.message || 'Código de respaldo inválido o ya usado');
                     }
                 } catch (error) {
                     console.error('Verify backup code error:', error);
                     this.showError(error.message);
                 } finally {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-unlock-alt"></i> Usar Código de Respaldo';
+                    btn.innerHTML = '<i class="fas fa-unlock-alt"></i> Usar código de respaldo';
                 }
             }
 
             cancelTwoFactor() {
+                sessionStorage.removeItem('2fa_temp_token');
                 sessionStorage.removeItem('2fa_email');
                 this.showLoginForm();
+            }
+
+            // ==================== "PERDÍ MI 2FA" (2026-10-02) ====================
+            // Backend (#392): POST /api/auth/2fa-recovery/request { temp_login_token }
+            //                 POST /api/auth/2fa-recovery/complete { token }  (>= 24 h after approval)
+            // Every failure shows the real server message; nothing is simulated.
+            show2FARecoveryRequest() {
+                if (!sessionStorage.getItem('2fa_temp_token')) {
+                    this.showError('Tu sesión se venció. Iniciá sesión de nuevo con tu contraseña y después tocá "Perdí mi teléfono y mis códigos de respaldo".');
+                    this.showLoginForm();
+                    return;
+                }
+                this.render2FARecovery('request');
+            }
+
+            _tfaSafeLine() {
+                return '<div class="tfa-safe"><i class="fas fa-shield-alt" style="margin-top:3px;color:var(--primary);"></i><span>La Tanda nunca te va a pedir tu contraseña ni tus códigos por correo, WhatsApp ni llamada. Solo los escribís aquí, en latanda.online.</span></div>';
+            }
+
+            _tfaWhen(iso) {
+                try {
+                    const d = new Date(iso);
+                    if (isNaN(d.getTime())) return null;
+                    return d.toLocaleString('es-HN', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                } catch (_) { return null; }
+            }
+
+            _tfaErrMsg(result, status) {
+                const m = result && ((result.data && result.data.error && result.data.error.message) || (result.error && result.error.message) || result.message);
+                return m || ('No se pudo completar (error ' + status + '). Probá de nuevo en un rato.');
+            }
+
+            render2FARecovery(state, info) {
+                info = info || {};
+                this.hideAllForms();
+                const tabs = document.getElementById('authTabs');
+                if (tabs) tabs.style.display = 'none';
+                const c = document.getElementById('twoFactorRecoveryContainer');
+                const body = document.getElementById('tfaRecBody');
+                if (!c || !body) return;
+                const esc = _escHtml;
+                let h = '';
+                if (state === 'request') {
+                    h += '<button class="back-to-login" onclick="window.auth.show2FAForm()"><i class="fas fa-arrow-left"></i> Volver</button>';
+                    h += '<h2 class="auth-title">Perdí mi teléfono y mis códigos</h2>';
+                    h += '<p>Si ya no tenés la app de códigos ni tus códigos de respaldo, podés pedir ayuda para quitar la verificación en dos pasos de tu cuenta.</p>';
+                    h += '<p style="font-weight:600;color:var(--text-dark);margin-bottom:6px;">Cómo funciona</p>';
+                    h += '<ol>';
+                    h += '<li>Mandás el pedido. Te llega un correo de aviso.</li>';
+                    h += '<li>El equipo de La Tanda revisa el pedido.</li>';
+                    h += '<li>Si lo aprueba, te llega otro correo con un enlace. Solo llega al correo de tu cuenta.</li>';
+                    h += '<li>Por seguridad, el enlace funciona recién <strong>24 horas después</strong> de la aprobación. Después de eso tenés 3 días para usarlo; si no, vence.</li>';
+                    h += '<li>Al usarlo se apaga la verificación en dos pasos, se borran tus códigos de respaldo y se cierran tus sesiones. Después entrás con tu contraseña y activás de nuevo la verificación en dos pasos.</li>';
+                    h += '</ol>';
+                    h += '<div class="tfa-box tfa-box-warn"><strong>¿Te llegó un correo de este pedido y no fuiste vos?</strong> Respondé ese correo cuanto antes para cancelar el pedido.</div>';
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions">';
+                    h += '<button type="button" class="btn-primary" id="tfaRecRequestBtn" onclick="window.auth.submit2FARecoveryRequest()"><i class="fas fa-paper-plane"></i> <span>Pedir ayuda</span></button>';
+                    h += '<button type="button" class="btn-secondary" onclick="window.auth.show2FAForm()">Tengo mi teléfono, volver</button>';
+                    h += '</div>';
+                } else if (state === 'requested') {
+                    h += '<h2 class="auth-title">Pedido recibido</h2>';
+                    h += '<div class="tfa-box tfa-box-ok">' + esc(info.message || 'Recibimos tu pedido.') + '</div>';
+                    if (info.email_sent === false) {
+                        h += '<div class="tfa-box tfa-box-warn">No pudimos mandarte el correo de aviso. El pedido quedó registrado igual. Si no te llega ningún correo nuestro, escribinos a soporte@latanda.online.</div>';
+                    } else {
+                        h += '<p>Revisá tu correo, también la carpeta de spam o promociones. Si el equipo aprueba, te llega otro correo con el enlace.</p>';
+                    }
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions"><button type="button" class="btn-secondary" onclick="window.auth.cancelTwoFactor()">Volver al inicio de sesión</button></div>';
+                } else if (state === 'link') {
+                    h += '<h2 class="auth-title">Quitar la verificación en dos pasos</h2>';
+                    h += '<p>Este enlace es para tu cuenta: pediste ayuda porque perdiste tu teléfono y tus códigos de respaldo.</p>';
+                    h += '<p style="font-weight:600;color:var(--text-dark);margin-bottom:6px;">Si seguís, pasa esto:</p>';
+                    h += '<ul>';
+                    h += '<li>Se apaga la verificación en dos pasos.</li>';
+                    h += '<li>Se borran tus códigos de respaldo.</li>';
+                    h += '<li>Se cierran todas tus sesiones abiertas.</li>';
+                    h += '<li>Cuando entres con tu contraseña, te vamos a pedir que actives de nuevo la verificación en dos pasos.</li>';
+                    h += '</ul>';
+                    h += '<div class="tfa-box tfa-box-warn"><strong>¿No pediste esto?</strong> Alguien tiene tu contraseña. No toques el botón. Respondé el correo que te llegó para cancelar el pedido y cambiá tu contraseña ya.</div>';
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions">';
+                    h += '<button type="button" class="btn-primary" id="tfaRecCompleteBtn" onclick="window.auth.complete2FARecovery()"><i class="fas fa-unlock"></i> <span>Quitar la verificación en dos pasos</span></button>';
+                    h += '<button type="button" class="btn-secondary" onclick="window.auth.twoFARecoveryToken=null;window.auth.showLoginForm()">No, volver al inicio de sesión</button>';
+                    h += '</div>';
+                } else if (state === 'waiting') {
+                    const when = this._tfaWhen(info.not_before);
+                    h += '<h2 class="auth-title">Todavía no se puede</h2>';
+                    h += '<div class="tfa-box tfa-box-info">Por seguridad esperamos 24 horas desde la aprobación. ' +
+                        (when ? 'Vas a poder hacerlo desde el <strong>' + esc(when) + '</strong> (hora de este teléfono o computadora).' : esc(info.message || '')) + '</div>';
+                    h += '<p>Guardá el correo y volvé a abrir el enlace después de esa hora. Desde ese momento tenés 3 días para usarlo. Mientras tanto no cambia nada en tu cuenta.</p>';
+                    h += '<div class="tfa-box tfa-box-warn"><strong>¿No pediste esto?</strong> Alguien tiene tu contraseña. Respondé el correo que te llegó para cancelar el pedido y cambiá tu contraseña ya.</div>';
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions">';
+                    h += '<button type="button" class="btn-secondary" onclick="window.auth.render2FARecovery(\'link\')">Ya pasó la hora, intentar de nuevo</button>';
+                    h += '</div>';
+                } else if (state === 'done') {
+                    h += '<h2 class="auth-title">Listo</h2>';
+                    h += '<div class="tfa-box tfa-box-ok">' + esc(info.message || 'Quitamos la verificación en dos pasos.') + '</div>';
+                    h += '<p>También cerramos tus sesiones abiertas. Al entrar con tu contraseña te vamos a pedir que actives de nuevo la verificación en dos pasos. Te mandamos un correo de confirmación. Tus códigos de respaldo viejos ya no sirven.</p>';
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions"><button type="button" class="btn-primary" onclick="window.auth.showLoginForm()"><i class="fas fa-sign-in-alt"></i> <span>Iniciar sesión</span></button></div>';
+                } else {
+                    h += '<h2 class="auth-title">No se pudo</h2>';
+                    h += '<div class="tfa-box tfa-box-err">' + esc(info.message || 'Algo salió mal.') + '</div>';
+                    h += '<p>' + (info.fromLink
+                        ? 'Si el enlace venció o ya se usó, podés pedir ayuda de nuevo: iniciá sesión con tu contraseña y tocá "Perdí mi teléfono y mis códigos de respaldo".'
+                        : 'Podés intentarlo de nuevo en un rato o escribirnos a soporte@latanda.online.') + '</p>';
+                    h += this._tfaSafeLine();
+                    h += '<div class="tfa-actions"><button type="button" class="btn-secondary" onclick="window.auth.twoFARecoveryToken=null;window.auth.cancelTwoFactor()">Ir al inicio de sesión</button></div>';
+                }
+                body.innerHTML = h;
+                c.style.display = 'block';
+                c.classList.add('active');
+                try { c.scrollIntoView({ block: 'start' }); } catch (_) {}
+            }
+
+            async submit2FARecoveryRequest() {
+                const tempToken = sessionStorage.getItem('2fa_temp_token');
+                if (!tempToken) {
+                    this.showError('Tu sesión se venció. Iniciá sesión de nuevo con tu contraseña.');
+                    this.showLoginForm();
+                    return;
+                }
+                const btn = document.getElementById('tfaRecRequestBtn');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/2fa-recovery/request`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ temp_login_token: tempToken })
+                    });
+                    const result = await response.json().catch(() => null);
+                    if (!response.ok || !result || !result.success) {
+                        if (response.status === 401) sessionStorage.removeItem('2fa_temp_token');
+                        this.render2FARecovery('error', { message: this._tfaErrMsg(result, response.status) });
+                        return;
+                    }
+                    const d = result.data || {};
+                    this.render2FARecovery('requested', { message: d.message, email_sent: d.already_pending ? undefined : d.email_sent });
+                } catch (error) {
+                    this.render2FARecovery('error', { message: 'Error de conexión. Revisá tu internet y probá de nuevo.' });
+                }
+            }
+
+            async complete2FARecovery() {
+                const token = this.twoFARecoveryToken;
+                if (!token) {
+                    this.render2FARecovery('error', { message: 'Falta el enlace. Abrilo de nuevo desde el correo.', fromLink: true });
+                    return;
+                }
+                const btn = document.getElementById('tfaRecCompleteBtn');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Quitando...'; }
+                try {
+                    const response = await fetch(`${this.apiBaseURL}/api/auth/2fa-recovery/complete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token })
+                    });
+                    const result = await response.json().catch(() => null);
+                    const details = result && result.data && result.data.error && result.data.error.details;
+                    if (response.status === 409 && details && details.code === 'TOO_EARLY') {
+                        this.render2FARecovery('waiting', { not_before: details.not_before, message: this._tfaErrMsg(result, 409) });
+                        return;
+                    }
+                    if (!response.ok || !result || !result.success) {
+                        this.render2FARecovery('error', { message: this._tfaErrMsg(result, response.status), fromLink: true });
+                        return;
+                    }
+                    this.twoFARecoveryToken = null;
+                    // The server closed every session: drop this browser's copy too.
+                    try { localStorage.removeItem('auth_token'); localStorage.removeItem('authToken'); localStorage.removeItem('refresh_token'); localStorage.removeItem('latanda_user'); } catch (_) {}
+                    sessionStorage.removeItem('2fa_temp_token');
+                    this.render2FARecovery('done', { message: result.data && result.data.message });
+                } catch (error) {
+                    this.render2FARecovery('error', { message: 'Error de conexión. Revisá tu internet y probá de nuevo.', fromLink: true });
+                }
             }
 
             // ==================== END PHASE 1 AUTHENTICATION METHODS ====================
@@ -3183,21 +3774,23 @@
                 if (el) el.textContent = greeting + " 👋";
             }
             
-            // Load real user stats from API
+            // Cifra de cuentas: SOLO en vivo desde /api/public/metrics (fuente
+            // canonica, campo registered_users). El HTML no trae ningun numero,
+            // asi que si la API falla se queda la frase sin cifra en vez de un
+            // dato fabricado. "registradas" — nunca "verificadas" ni "ahorran".
             async function loadAuthStats() {
                 try {
-                    const response = await fetch("/api/status");
+                    const response = await fetch("/api/public/metrics");
+                    if (!response.ok) throw new Error("HTTP " + response.status);
                     const data = await response.json();
-                    if (data.success && data.data.stats) {
-                        const users = data.data.stats.total_users || 0;
-                        const el = document.getElementById("statUsers");
-                        if (el && users > 0) {
-                            // Format number with comma
-                            el.textContent = users.toLocaleString("es-HN") + "+";
-                        }
+                    const users = Number(data?.registered_users ?? data?.data?.registered_users);
+                    const el = document.getElementById("statUsersLine");
+                    if (el && Number.isFinite(users) && users > 0) {
+                        // Numero exacto: sin redondeo, sin "+".
+                        el.textContent = users.toLocaleString("es-HN") + " cuentas registradas";
                     }
                 } catch (err) {
-                    console.log("Using default stats");
+                    console.warn("No se pudo leer /api/public/metrics; se muestra la frase sin cifra.", err);
                 }
             }
             
@@ -3277,12 +3870,30 @@
                 });
                 const result = await res.json();
 
+                // 🔐 2FA (TOTP) required — Google verified the email, still need the 2nd factor
+                if (result.success && result.data && result.data.requires_2fa) {
+                    sessionStorage.setItem('2fa_temp_token', result.data.temp_login_token || '');
+                    if (window.auth) {
+                        window.auth.showInfo('Ingresa el código de tu app autenticadora');
+                        window.auth.show2FAForm();
+                    }
+                    return;
+                }
+
                 if (result.success && result.data) {
                     _safeSetItem('auth_token', result.data.auth_token);
                     if (result.data.refresh_token) {
                         _safeSetItem('refresh_token', result.data.refresh_token);
                     }
                     _safeSetItem('latanda_user', JSON.stringify(result.data.user));
+
+                    // 2026-10-03: igual que el login con contraseña (#327): tras "perdí mi 2FA" hay que activarlo de nuevo.
+                    // redirect_after_auth queda guardado; seguridad.html abre la activación.
+                    if (result.data.must_setup_2fa === true) {
+                        if (window.auth) window.auth.showInfo('Tenés que activar de nuevo la verificación en dos pasos. Te llevamos a Seguridad.');
+                        setTimeout(() => { window.location.href = '/seguridad.html?setup2fa=1'; }, 1500);
+                        return;
+                    }
 
                     const msg = result.data.is_new_user ? 'Cuenta creada con Google' : 'Sesion iniciada con Google';
                     if (window.auth) window.auth.showSuccess(msg);
@@ -3310,9 +3921,27 @@
         }
     </script>
 
-    <script src="shared-components.js?v=7.20"></script>
+    <script src="shared-components.js?v=7.23"></script>
     <script src="js/user-sync.js"></script>
     <script src="pwa-manager.js"></script>
+<script>
+// 2026-11-02 (invitaciones fase 2): baja del push al cerrar sesion. Todos los "Cerrar sesion"
+// terminan aca sin token. Si este navegador sigue suscripto al push de la cuenta anterior, se da
+// de baja (pushManager.unsubscribe): asi un telefono compartido deja de recibir los avisos de otra
+// cuenta. Sin token no se puede llamar a DELETE /api/push/unsubscribe; el endpoint queda invalido
+// y el backend lo borra en el proximo envio (sendPushToUser ya borra ante 404/410). Pendiente
+// backend: reasignar el endpoint/token FCM a una sola cuenta al suscribir (BE-5).
+(function () {
+    try {
+        var tok = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || localStorage.getItem('latanda_auth_token');
+        if (tok || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        navigator.serviceWorker.getRegistration('/').then(function (reg) {
+            if (!reg || !reg.pushManager) return null;
+            return reg.pushManager.getSubscription().then(function (sub) { return sub ? sub.unsubscribe() : null; });
+        }).catch(function () {});
+    } catch (e) {}
+})();
+</script>
 </body>
 </html>
 
