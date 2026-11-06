@@ -8,9 +8,7 @@
 const SidebarWidgets = {
     // Default trending topics (fallback when API is unavailable)
     defaultTrending: [
-        { category: 'Predicciones', topic: '#Predictor', count: 0, tab: 'loteria' },
         { category: 'General', topic: '#LaTanda', count: 0, tab: 'todos' },
-        { category: 'Entretenimiento', topic: '#LoteriaTanda', count: 0, tab: 'loteria' }
     ],
 
     async init() {
@@ -50,7 +48,7 @@ await Promise.all([
                         ${this.escapeHtml(user.name)}
                         ${user.verified ? '<i class="fas fa-check-circle" style="color:#00FFFF;font-size:12px;margin-left:4px;"></i>' : ''}
                     </div>
-                    <div class="who-to-follow-handle">${this.escapeHtml(user.handle)}</div>
+                    <div class="who-to-follow-handle"><span translate="no">${this.escapeHtml(user.handle)}</span></div>
                 </div>
                 <button class="who-to-follow-btn" onclick="SidebarWidgets.toggleFollow('${this.escapeHtml(user.id)}', this)">
                     Seguir
@@ -165,7 +163,7 @@ await Promise.all([
                                     ${this.escapeHtml(newUser.name)}
                                     ${newUser.verified ? '<i class="fas fa-check-circle" style="color:#00FFFF;font-size:12px;margin-left:4px;"></i>' : ''}
                                 </div>
-                                <div class="who-to-follow-handle">${this.escapeHtml(newUser.handle)}</div>
+                                <div class="who-to-follow-handle"><span translate="no">${this.escapeHtml(newUser.handle)}</span></div>
                             </div>
                             <button class="who-to-follow-btn" onclick="SidebarWidgets.toggleFollow('${this.escapeHtml(newUser.id)}', this)">
                                 Seguir
@@ -191,10 +189,20 @@ await Promise.all([
         const container = document.getElementById('trendingList');
         if (!container) return;
 
+        // Try trending hashtags first (last 30 days)
+        try {
+            const hashRes = await fetch('/api/feed/social/trending-hashtags?limit=5&days=30');
+            const hashData = await hashRes.json();
+            if (hashData.success && hashData.data.hashtags && hashData.data.hashtags.length > 0) {
+                this.renderTrendingHashtags(container, hashData.data.hashtags);
+                return;
+            }
+        } catch (e) { /* fall through */ }
+
+        // Fallback: trending topics/tabs
         try {
             const response = await fetch('/api/feed/social/trending?limit=10');
             const data = await response.json();
-
             if (data.success && data.data.topics && data.data.topics.length > 0) {
                 this.renderTrending(container, data.data.topics.slice(0, 3));
             } else {
@@ -203,6 +211,33 @@ await Promise.all([
         } catch (error) {
             this.renderTrending(container, this.defaultTrending);
         }
+    },
+
+    renderTrendingHashtags(container, hashtags) {
+        container.innerHTML = hashtags.map(h => `
+            <div class="trending-item trending-hashtag" onclick="SidebarWidgets.goToHashtag('${this.escapeHtml(h.hashtag)}')" style="cursor:pointer;">
+                <div class="trending-category"><i class="fas fa-hashtag" style="color:#00FFFF;font-size:0.7rem;margin-right:4px;"></i>Trending</div>
+                <div class="trending-topic">#${this.escapeHtml(h.hashtag)}</div>
+                <div class="trending-count">${h.uses} publicacion${h.uses === 1 ? '' : 'es'}</div>
+            </div>
+        `).join('');
+    },
+
+    goToHashtag(tag) {
+        const cleanTag = String(tag).replace(/^#/, '').toLowerCase();
+        const currentPage = window.location.pathname;
+        if (currentPage.includes('home-dashboard')) {
+            // Already on home — apply filter directly via SocialFeed
+            if (window.SocialFeed && typeof SocialFeed.showHashtagFilter === 'function') {
+                SocialFeed.currentHashtag = cleanTag;
+                SocialFeed.showHashtagFilter(cleanTag);
+                SocialFeed.loadEvents(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+        }
+        // Navigate to home with hashtag query
+        window.location.href = '/home-dashboard.html?hashtag=' + encodeURIComponent(cleanTag);
     },
 
     renderTrending(container, topics) {

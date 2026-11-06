@@ -2,20 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grupos & Tandas | La Tanda</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Grupos | La Tanda</title>
     <meta name="description" content="Administra tus grupos de ahorro, invita miembros y gestiona contribuciones.">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0a0e27">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/header.css?v=26.0">
-    <link rel="stylesheet" href="css/onboarding.css?v=1.0">
+    <link rel="stylesheet" href="css/header.css?v=26.2">
+    <link rel="stylesheet" href="css/onboarding.css?v=2.0">
     <link rel="stylesheet" href="css/dashboard-layout.css?v=7803">
     <link rel="stylesheet" href="css/mobile-drawer.css?v=1769558148">
     <link rel="stylesheet" href="css/edge-swipe.css?v=1769558147">
@@ -25,11 +25,11 @@
     <link rel="stylesheet" href="css/components/notification-center.css">
     <link rel="stylesheet" href="css/components/wallet-dropdown.css">
     <link rel="stylesheet" href="css/mobile-touch-fixes.css">
-    <link rel="stylesheet" href="css/mobile-notification-fix.css">
+    <link rel="stylesheet" href="css/mobile-notification-fix.css?v=20261016">
     <link rel="stylesheet" href="css/mobile-network-switcher-fix.css">
     <link rel="stylesheet" href="css/mobile-wallet-connect-fix.css">
     <link rel="stylesheet" href="css/transaction-modal.css">
-    <link rel="stylesheet" href="css/groups-page.css?v=5.0">
+    <link rel="stylesheet" href="css/groups-page.css?v=20261101sincom">
     <link rel="stylesheet" href="shared-components.css">
     <link rel="stylesheet" href="notification-system.css">
     <link rel="stylesheet" href="loading-styles.css">
@@ -46,6 +46,62 @@
     <meta name="twitter:description" content="Administra tus grupos de ahorro, invita miembros y gestiona contribuciones.">
     <meta name="twitter:image" content="https://latanda.online/assets/og-image.png">
     <script src="registerSW.js" defer></script>
+    <style id="pm-capas-20261102">
+    /* 2026-11-02 (periodo de cobro): modal "Registrar mi pago" + capas que tapaban taps.
+       Va en el HTML (no-cache) a proposito: notification-system.css y notification-center.css
+       se cargan sin ?v= y quedarian viejos en Cloudflare. */
+    /* Modal de pago: columna flex con alto acotado; el CUERPO hace scroll y el pie queda
+       siempre visible (antes overflow:hidden inline tapaba el scroll y el boton quedaba
+       fuera de la pantalla en todos los telefonos). */
+    #paymentModal .pm-modal { display: flex; flex-direction: column; max-height: 90vh; max-height: min(90vh, 90dvh); overflow-y: auto; }
+    #paymentModal .pm-head { flex: 0 0 auto; }
+    #paymentModal #paymentModalContent { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    #paymentModal #paymentModalFooter { flex: 0 0 auto; flex-wrap: nowrap; gap: 12px !important; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important; }
+    #paymentModal #paymentModalFooter button { white-space: nowrap; justify-content: center; }
+    #paymentModal #paymentModalFooter #paymentModalCancelBtn { flex: 1 0 auto; }
+    #paymentModal #paymentModalFooter #paymentModalPayBtn { flex: 2 1 auto; min-width: 0; min-height: 52px !important; }
+    @media (max-width: 400px) {
+        #paymentModal .pm-head { padding: 14px 16px !important; }
+        #paymentModal #paymentModalContent { padding: 14px 16px !important; }
+        #paymentModal #paymentModalFooter button { padding: 10px 12px !important; font-size: 0.86rem !important; }
+        #paymentModal #paymentModalFooter #paymentModalPayBtn { padding: 10px !important; }
+        #paymentModal #paymentModalFooter #paymentModalCancelBtn { flex: 0 0 auto; }
+        #paymentModal .pm-summary { padding: 6px 12px !important; margin-bottom: 10px !important; font-size: 0.84rem; }
+        #paymentModal .pm-summary > div { padding: 4px 0 !important; }
+    }
+    /* B5: los overlays de modal quedan por encima de la cabecera fija (z 1000) y por debajo
+       del cajon de navegacion (z 1150-1200) y de los toasts. */
+    #paymentModal.ds-overlay, #inviteMembersModal.ds-overlay { z-index: 1100 !important; }
+    /* B2: el aviso de notificaciones (#pushBanner, fixed bottom 80px, z 9998) no se muestra
+       mientras haya un modal abierto (tapaba el pie del modal en 384-412 px). */
+    body:has(.ds-overlay.active) #pushBanner { display: none !important; }
+    /* 2026-11-03 [comprobante-pago] B6: con el modal de pago abierto los toasts no se muestran
+       (tapaban el título del modal); el modal muestra sus propios avisos y errores. */
+    body:has(#paymentModal.active) #toastContainer { visibility: hidden !important; }
+    /* B1: los toasts quedaban invisibles (notification-system.css los deja en opacity 0 sin
+       .toast-visible) y el contenedor (z 99999) se comia los taps ~5 s. El contenedor deja
+       pasar los taps; solo el toast los recibe, se ve, y tiene alto acotado. */
+    /* El contenedor queda por encima del overlay del modal (z 99999 inline > 1100). */
+    #toastContainer { pointer-events: none !important; z-index: 99999 !important; }
+    #toastContainer .toast, #toastContainer .toast button, #toastContainer .toast a { pointer-events: auto; }
+    /* Toast compacto (<= 120 px): padding 12, cuerpo a 3 lineas, "Ver" en linea a la derecha,
+       la x con 44 px de zona tactil. */
+    #toastContainer .toast { opacity: 1; transform: none; max-height: 120px; overflow: hidden; padding: 12px 44px 12px 12px !important; align-items: center; gap: 10px; margin-bottom: 0; }
+    #toastContainer .toast-icon { width: 28px; height: 28px; min-width: 28px; font-size: 14px; }
+    /* notification-system.css pone .toast-content en fila flex (titulo | mensaje | accion) y
+       el texto quedaba en una columna de ~1200 px de alto: aca va en grilla texto | accion. */
+    #toastContainer .toast-content { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; flex: 1 1 auto; min-width: 0; padding: 0; }
+    #toastContainer .toast-title, #toastContainer .toast-message { grid-column: 1; min-width: 0; }
+    #toastContainer .toast-title { margin: 0 0 2px; font-size: 0.88rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #toastContainer .toast-message { font-size: 0.82rem; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+    #toastContainer .toast-action { grid-column: 2; grid-row: 1 / span 2; padding: 0; margin: 0; }
+    #toastContainer .toast-action-btn { min-height: 44px; width: auto; padding: 0 14px; white-space: nowrap; }
+    #toastContainer .toast-close { position: absolute; top: 0; right: 0; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; }
+    @media (max-width: 480px) {
+        #toastContainer { top: 70px !important; left: 10px !important; right: 10px !important; max-width: none !important; }
+        #toastContainer .toast { min-width: 0; width: 100%; box-sizing: border-box; }
+    }
+    </style>
 </head>
 <body data-sidebar="true">
     <!-- Global Header Component -->
@@ -61,35 +117,16 @@
 
         <!-- LEFT SIDEBAR -->
         <aside class="left-sidebar" id="leftSidebar">
-            <nav class="nav-menu">
+            <!-- [nav v2 F2] Fuente unica de nav = js/nav/nav-items.js + js/nav/nav-render.js.
+                 nav-render monta DENTRO de #leftSidebar (mountRail limpia innerHTML) y
+                 reemplaza este bloque al montar con exito. Si nav-render NO carga/falla,
+                 quedan estos 5 links core usables (nunca rail vacio). -->
+            <nav class="nav-menu" data-ltn-fallback aria-label="Navegacion">
                 <a href="/home-dashboard.html" class="nav-menu-item"><i class="fas fa-home"></i><span>Inicio</span></a>
-                <a href="/explorar.html" class="nav-menu-item"><i class="fas fa-hashtag"></i><span>Explorar</span></a>
-                <a href="/trabajo.html" class="nav-menu-item"><i class="fas fa-briefcase"></i><span>Trabajo</span></a>
-                <a href="/creator-hub.html" class="nav-menu-item"><i class="fas fa-palette"></i><span>Creator Hub</span></a>
-                <a href="/guardados.html" class="nav-menu-item"><i class="fas fa-bookmark"></i><span>Guardados</span></a>
+                <a href="/groups-advanced-system.html" class="nav-menu-item"><i class="fas fa-users"></i><span>Grupos</span></a>
+                <a href="/marketplace-social.html" class="nav-menu-item"><i class="fas fa-store"></i><span>Mercado</span></a>
                 <a href="/mensajes.html" class="nav-menu-item"><i class="fas fa-envelope"></i><span>Mensajes</span></a>
-                <a href="/mineria.html" class="nav-menu-item"><i class="fas fa-hammer"></i><span>Mineria</span></a>
-                <div class="nav-more-container" style="position: relative;">
-                <div class="nav-menu-item nav-more-btn" id="navMoreBtn" data-action="toggle-more-menu" role="button" aria-expanded="false"><i class="fas fa-ellipsis-h"></i><span>Mas</span></div>
-                <div class="more-menu-dropdown" id="moreMenuDropdown" role="menu">
-                    <a href="perfil.html" class="more-menu-item" id="navProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
-                    <button type="button" class="more-menu-item" disabled aria-disabled="true"><i class="fas fa-list"></i><span>Listas</span></button>
-                    <button type="button" class="more-menu-item" disabled aria-disabled="true"><i class="fas fa-users"></i><span>Comunidades</span></button>
-                    <button type="button" class="more-menu-item" disabled aria-disabled="true"><i class="fas fa-briefcase"></i><span>Negocios</span></button>
-                    <button type="button" class="more-menu-item" disabled aria-disabled="true"><i class="fas fa-bullhorn"></i><span>Anuncios</span></button>
-                    <div class="more-menu-divider"></div>
-                    <a href="configuracion.html" class="more-menu-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>
-                    <button type="button" class="more-menu-item" data-action="logout"><i class="fas fa-sign-out-alt"></i><span>Cerrar Sesion</span></button>
-                </div>
-                </div>
-            </nav>
-            <div class="nav-section-divider"></div>
-            <div class="nav-section-label">Accesos Rapidos</div>
-            <nav class="nav-menu">
-                <a href="/mia.html" class="nav-menu-item"><i class="fas fa-robot"></i><span>MIA AI</span></a>
-                <a href="/groups-advanced-system.html" class="nav-menu-item active"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
-                <a href="/marketplace-social.html" class="nav-menu-item"><i class="fas fa-store"></i><span>Marketplace</span></a>
-                <a href="/lottery-predictor.html" class="nav-menu-item"><i class="fas fa-ticket-alt"></i><span>Loteria</span></a>
+                <a href="/mi-perfil.html" class="nav-menu-item" id="navProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
             </nav>
         </aside>
 
@@ -97,7 +134,7 @@
         <main class="main-feed" id="mainFeed">
             <div class="main-feed-header">
                 <h1 class="main-feed-title" style="font-size:1.5rem;font-weight:700;">
-                    <i class="fas fa-users" style="color:#00FFFF;margin-right:10px;"></i>Grupos &amp; Tandas
+                    <i class="fas fa-users" style="color:#00d4ff;margin-right:10px;"></i>Grupos
                 </h1>
             </div>
 
@@ -106,8 +143,11 @@
                 <button class="groups-tab active" data-action="switch-groups-tab" data-tab="groups" role="tab" aria-selected="true">
                     <i class="fas fa-users"></i> <span>Mis Grupos</span>
                 </button>
+                <button class="groups-tab" data-action="switch-groups-tab" data-tab="explore" role="tab" aria-selected="false">
+                    <i class="fas fa-compass"></i> <span>Explorar</span>
+                </button>
                 <button class="groups-tab" data-action="switch-groups-tab" data-tab="tandas" role="tab" aria-selected="false">
-                    <i class="fas fa-coins"></i> <span>Mis Tandas</span>
+                    <i class="fas fa-coins"></i> <span>Mis <span translate="no">Tandas</span></span>
                 </button>
                 <button class="groups-tab" data-action="switch-groups-tab" data-tab="create" role="tab" aria-selected="false">
                     <i class="fas fa-plus-circle"></i> <span>Crear Grupo</span>
@@ -117,21 +157,34 @@
             <!-- ===== MIS GRUPOS ===== -->
             <section id="groups" class="content-section active">
 
-        <!-- Filter Bar (compact) -->
-        <div class="filter-bar">
-            <select id="filterRole">
-                <option value="all">Rol: Todos</option>
-                <option value="creator">Creador</option>
-                <option value="coordinator">Coordinador</option>
-                <option value="member">Miembro</option>
-            </select>
-            <select id="filterPayment">
-                <option value="all">Pago: Todos</option>
-                <option value="up_to_date">Al dia</option>
-                <option value="pending">Pendiente</option>
-                <option value="late">Atrasado</option>
-            </select>
+        <!-- Search (full width, below tabs, above the type strip) -->
+        <div class="gs-search-row">
             <input type="text" id="searchGroups" placeholder="Buscar grupo...">
+        </div>
+
+        <!-- Type strip / landing (rendered by renderGroups) -->
+        <div id="groupsTypeStrip"></div>
+
+        <!-- Role + payment filters (below the "Explorar por tipo" strip) -->
+        <div class="filter-bar" id="groupsFilterBar">
+            <label class="fb-field">
+                <span class="fb-label">Tu papel</span>
+                <select id="filterRole">
+                    <option value="all">Todos</option>
+                    <option value="creator">Creé yo</option>
+                    <option value="coordinator">Coordino</option>
+                    <option value="member">Participo</option>
+                </select>
+            </label>
+            <label class="fb-field">
+                <span class="fb-label">Tu estado de pago</span>
+                <select id="filterPayment">
+                    <option value="all">Todos</option>
+                    <option value="up_to_date">Al día</option>
+                    <option value="pending">Pendiente</option>
+                    <option value="late">Atrasado</option>
+                </select>
+            </label>
         </div>
 
         <!-- Groups Grid -->
@@ -144,15 +197,113 @@
             <!-- Block 1 extracted to js/groups-system.js -->
             </section>
 
+            <!-- ===== EXPLORAR GRUPOS ABIERTOS (G2) ===== -->
+            <style>
+                /* Explorar grupos abiertos — flat discovery surface (G2). On-brand dark web3. */
+                #explore .gex-head { margin:4px 0 14px; }
+                #explore .gex-title { font-size:1.05rem; font-weight:800; color:#e8ecff; display:flex; align-items:center; gap:9px; margin:0 0 4px; }
+                #explore .gex-title i { color:#00d4ff; }
+                #explore .gex-sub { font-size:0.82rem; color:rgba(255,255,255,0.66); line-height:1.45; margin:0; }
+                #explore .gex-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 12px; }
+                #explore .gex-search { flex:1 1 220px; min-width:0; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:9px 12px; }
+                #explore .gex-search i { color:#94a3b8; font-size:0.82rem; }
+                #explore .gex-search input { flex:1; min-width:0; background:transparent; border:none; outline:none; color:#e2e8f0; font-size:0.88rem; font-family:inherit; }
+                #explore .gex-search input::placeholder { color:#64748b; }
+                #explore .gex-catwrap { display:flex; align-items:center; gap:7px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); border-radius:10px; padding:6px 10px; }
+                #explore .gex-catwrap i { color:#8b5cf6; font-size:0.78rem; }
+                #explore .gex-catwrap select { background:transparent; border:none; outline:none; color:#e2e8f0; font-size:0.85rem; font-family:inherit; cursor:pointer; }
+                #explore .gex-catwrap select option { background:#0a0e27; color:#e2e8f0; }
+                #explore .gex-count { font-size:0.76rem; color:#94a3b8; font-weight:600; margin:0 0 12px; }
+                #explore .gex-count b { color:#5eead4; }
+                #explore .gex-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+                #explore .gex-card { display:flex; flex-direction:column; background:linear-gradient(160deg,#141a3d 0%,#0a0e27 100%); border:1px solid rgba(0,212,255,0.16); border-radius:16px; padding:15px 16px; box-shadow:0 8px 26px rgba(5,8,26,0.5); }
+                #explore .gex-ctop { display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; }
+                #explore .gex-ic { flex-shrink:0; width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:rgba(0,212,255,0.10); border:1px solid rgba(0,212,255,0.22); color:#00d4ff; font-size:0.95rem; }
+                #explore .gex-name { font-size:0.94rem; font-weight:700; color:#e8ecff; line-height:1.25; overflow:hidden; }
+                #explore .gex-cat { display:inline-block; margin-top:3px; font-size:0.62rem; font-weight:700; letter-spacing:0.3px; text-transform:uppercase; color:#a78bfa; background:rgba(139,92,246,0.14); border:1px solid rgba(139,92,246,0.28); border-radius:999px; padding:2px 8px; }
+                #explore .gex-desc { font-size:0.78rem; color:rgba(255,255,255,0.66); line-height:1.42; margin:0 0 10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+                #explore .gex-meta { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:0.72rem; color:#94a3b8; margin-bottom:11px; }
+                #explore .gex-meta span { display:inline-flex; align-items:center; gap:5px; }
+                #explore .gex-meta i { font-size:0.66rem; opacity:0.85; }
+                #explore .gex-money { color:#22d55e; font-weight:600; }
+                #explore .gex-actions { display:flex; gap:8px; margin-top:auto; }
+                #explore .gex-btn { flex:1; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:9px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; border:none; }
+                #explore .gex-btn.sec { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#e2e8f0; }
+                #explore .gex-btn.sec:hover { background:rgba(255,255,255,0.12); }
+                #explore .gex-btn.pri { background:linear-gradient(135deg,#00d4ff,#8b5cf6); color:#021018; }
+                #explore .gex-btn.pri:hover { filter:brightness(1.08); }
+                #explore .gex-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+                #explore .gex-empty { text-align:center; padding:44px 20px; }
+                #explore .gex-empty i { font-size:2.6rem; color:rgba(0,212,255,0.3); margin-bottom:14px; display:block; }
+                #explore .gex-empty h3 { color:#e2e8f0; font-size:1.05rem; margin:0 0 8px; }
+                #explore .gex-empty p { color:rgba(255,255,255,0.66); font-size:0.85rem; margin:0 0 18px; line-height:1.5; }
+                #explore .gex-empty .gex-btn { display:inline-flex; flex:0 0 auto; padding:0 22px; }
+                #explore .gex-loading { text-align:center; padding:40px 20px; color:rgba(255,255,255,0.6); }
+                #explore .gex-loading i { font-size:1.5rem; }
+            </style>
+            <section id="explore" class="content-section">
+                <div class="gex-head">
+                    <h2 class="gex-title"><i class="fas fa-compass"></i> Explorar grupos abiertos</h2>
+                    <p class="gex-sub">Todos los grupos que están recibiendo miembros ahora mismo. Encontrá uno y pedí unirte.</p>
+                </div>
+                <div class="gex-controls">
+                    <div class="gex-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="exploreSearch" placeholder="Buscar por nombre, propósito o coordinador..." aria-label="Buscar grupos abiertos">
+                    </div>
+                    <div class="gex-catwrap">
+                        <i class="fas fa-layer-group"></i>
+                        <select id="exploreCategory" aria-label="Filtrar por categoría">
+                            <option value="all">Todas las categorías</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="gex-count" id="exploreCount"></p>
+                <div id="exploreContainer">
+                    <div class="gex-loading"><i class="fas fa-spinner fa-spin"></i></div>
+                </div>
+            </section>
+
             <!-- ===== CREAR GRUPO ===== -->
         <section id="create" class="content-section">
             <div class="section-header">
                 <div>
-                    <h2><i class="fas fa-plus-circle"></i> <span data-translate="groups.create_new_group">Crear Nuevo Grupo</span></h2>
-                    <p class="section-description" data-translate="groups.create_description">Configura un nuevo grupo cooperativo con funciones avanzadas</p>
+                    <h2><i class="fas fa-plus-circle"></i> <span data-translate="groups.create_new_group">Creá tu grupo</span></h2>
+                    <p class="section-description" data-translate="groups.create_description">Un grupo es donde se junta tu gente con un propósito. Si eligen ahorrar, adentro corre una <span translate="no">tanda</span>; si no, es su espacio para organizarse.</p>
                 </div>
             </div>
+            <!-- ===== SIMULADOR DE TANDA (Canasta 3 G5) — herramienta de ventas para coordinadores ===== -->
+            <style>
+                #tsim-card .tsim-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:14px 0; }
+                #tsim-card .tsim-stat { background:rgba(0,255,255,0.05); border:1px solid rgba(0,255,255,0.15); border-radius:10px; padding:12px 14px; }
+                #tsim-card .tsim-stat-label { font-size:0.72rem; color:var(--ds-text-muted,#94a3b8); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+                #tsim-card .tsim-stat-value { font-size:1.05rem; font-weight:700; color:var(--ds-cyan,#00FFFF); }
+                #tsim-card #tsim-neto { font-size:0.85rem; color:#22d55e; margin:2px 0 12px; font-weight:600; }
+                #tsim-card .tsim-table-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--ds-border,rgba(255,255,255,0.08)); }
+                #tsim-card table { width:100%; border-collapse:collapse; background:rgba(0,0,0,0.2); font-size:0.85rem; }
+                #tsim-card thead th { padding:10px 12px; text-align:left; background:rgba(0,255,255,0.08); color:var(--ds-text-secondary,#e2e8f0); font-weight:600; border-bottom:1px solid rgba(0,255,255,0.2); white-space:nowrap; }
+                #tsim-card .tsim-td { padding:9px 12px; border-bottom:1px solid rgba(148,163,184,0.1); color:var(--ds-text-secondary,#e2e8f0); white-space:nowrap; }
+                #tsim-card .tsim-turn { font-weight:700; color:var(--ds-cyan,#00FFFF); }
+                #tsim-card .tsim-amt { text-align:right; font-weight:600; }
+                #tsim-card thead th:last-child { text-align:right; }
+                #tsim-card .tsim-faint { color:var(--ds-text-muted,#94a3b8); }
+                #tsim-card .tsim-last-row td { background:rgba(52,211,153,0.10); border-top:1px solid rgba(52,211,153,0.35); }
+                #tsim-card #tsim-end { margin:10px 0 0; font-size:0.9rem; font-weight:700; color:#22d55e; }
+                #tsim-card #tsim-prefill { margin-top:14px; background:linear-gradient(135deg,rgba(0,255,255,0.18),rgba(0,255,255,0.06)); border:1px solid rgba(0,255,255,0.4); color:var(--ds-cyan,#00FFFF); padding:10px 18px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem; }
+                #tsim-card #tsim-prefill:hover { background:rgba(0,255,255,0.25); }
+                #tsim-card #tsim-prefill-note { display:none; margin-left:10px; font-size:0.8rem; color:#22d55e; }
+                #tsim-disclosure { margin-top:8px; }
+                #tsim-disclosure > summary { cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px; padding:12px 14px; border:1px solid var(--ds-border,rgba(255,255,255,0.08)); border-radius:10px; background:rgba(0,255,255,0.04); color:var(--ds-text-secondary,#e2e8f0); font-weight:600; font-size:0.9rem; }
+                #tsim-disclosure > summary:hover { background:rgba(0,255,255,0.08); }
+                #tsim-disclosure > summary::-webkit-details-marker { display:none; }
+                #tsim-disclosure > summary::before { content:"\f107"; font-family:"Font Awesome 6 Free","Font Awesome 5 Free",FontAwesome; font-weight:900; color:var(--ds-cyan,#00FFFF); transition:transform 0.2s; }
+                #tsim-disclosure[open] > summary::before { transform:rotate(180deg); }
+                #tsim-disclosure .tsim-disclosure-note { font-size:0.78rem; color:var(--ds-text-faint,#94a3b8); margin:8px 2px 0; }
+                #tsim-disclosure #tsim-card { margin-top:12px; }
+            </style>
             <div class="create-group-form">
+                <!-- Grupos G1: cupo de creacion "tenes X de Y" (poblado por create-group-form-handler-v2.js; oculto si el endpoint no responde) -->
+                <div id="cgf-limit-badge" style="display:none;margin-bottom:14px;padding:10px 14px;border:1px solid rgba(0,255,255,0.25);border-radius:10px;background:rgba(0,255,255,0.05);font-size:0.82rem;color:var(--ds-text,#e6edf3);"></div>
                 <!-- Progress Bar -->
                 <div class="progress-bar">
                     <div class="progress-fill" style="width: 0%;"></div>
@@ -179,9 +330,47 @@
                     <!-- Step 1: Basic Information -->
                     <div class="step-container active" data-step="1">
                         <div class="form-card">
-                            <h3><i class="fas fa-info-circle"></i> Información Básica</h3>
+                            <h3><i class="fas fa-info-circle"></i> ¿De qué se trata tu grupo?</h3>
                             <p class="step-description">Define los aspectos fundamentales de tu grupo cooperativo</p>
-                            
+
+                            <!-- PRIMARY: group_type (container type) — first decision -->
+                            <div class="form-group">
+                                <label class="form-label">¿Para qué se juntan? <span class="required">*</span></label>
+                                <!-- Type confirmation line (shown when arriving via tile/deep-link) -->
+                                <div id="gpt-confirm" style="display:none;padding:14px 16px;border:1px solid rgba(0,255,255,0.3);border-radius:10px;background:rgba(0,255,255,0.05);">
+                                    <span id="gpt-confirm-text"></span>
+                                    <button type="button" id="gpt-change-type" data-action="cgf-change-type" style="margin-left:6px;background:none;border:none;color:var(--ds-cyan,#00FFFF);font-weight:600;cursor:pointer;padding:0;text-decoration:underline;">Cambiar tipo</button>
+                                </div>
+                                <div class="radio-group group-type-cards" id="group-primary-type-cards">
+                                    <label class="radio-option">
+                                        <input type="radio" name="group-primary-type" value="ahorro" checked>
+                                        <span class="radio-custom"></span>
+                                        <span><i class="fas fa-piggy-bank"></i> Ahorro <small style="display:block;opacity:0.7;">Juntan dinero por turnos: una <span translate="no">tanda</span>.</small></span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="group-primary-type" value="social">
+                                        <span class="radio-custom"></span>
+                                        <span><i class="fas fa-users"></i> Social <small style="display:block;opacity:0.7;">Se organizan y comparten. Sin dinero.</small></span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="group-primary-type" value="religioso">
+                                        <span class="radio-custom"></span>
+                                        <span><i class="fas fa-place-of-worship"></i> Religioso / Misionero <small style="display:block;opacity:0.7;">Su iglesia o misión, en un solo lugar.</small></span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="group-primary-type" value="escolar">
+                                        <span class="radio-custom"></span>
+                                        <span><i class="fas fa-graduation-cap"></i> Escolar <small style="display:block;opacity:0.7;">El grupo del salón, el comité, la actividad.</small></span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="group-primary-type" value="ejecutivo">
+                                        <span class="radio-custom"></span>
+                                        <span><i class="fas fa-briefcase"></i> Ejecutivo <small style="display:block;opacity:0.7;">El equipo de trabajo, coordinado.</small></span>
+                                    </label>
+                                </div>
+                                <div class="help-text" id="gpt-help">Solo <strong>Ahorro</strong> configura contribuciones, turnos y multas. Los demás tipos omiten toda la configuración financiera.</div>
+                            </div>
+
                             <div class="form-group">
                                 <label for="group-name">Nombre del Grupo <span class="required">*</span></label>
                                 <input type="text" id="group-name" placeholder="Ej: Cooperativa Familiar Norte" required>
@@ -191,33 +380,23 @@
 
                             <div class="form-group">
                                 <label for="group-description">Descripción del Grupo <span class="required">*</span></label>
-                                <textarea id="group-description" placeholder="Ej: Tanda de ahorro mensual entre companeros de trabajo. Contribucion quincenal para metas de ahorro personal." maxlength="250" required></textarea>
+                                <textarea id="group-description" placeholder="Ej: Tanda de la familia para diciembre" maxlength="250" required></textarea>
                                 <div class="char-counter"><span id="desc-count">0</span>/250 caracteres</div>
                                 <div class="error-message" id="group-description-error"></div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="group-type">Tipo de Grupo <span class="required">*</span></label>
-                                    <select id="group-type" required>
-                                        <option value="">Seleccionar tipo...</option>
-                                        <option value="familiar">Familiar</option>
-                                        <option value="laboral">Laboral</option>
-                                        <option value="comunitario">Comunitario</option>
-                                        <option value="comercial">Comercial</option>
+                                    <label for="group-type">¿Quiénes lo integran?</label>
+                                    <select id="group-type">
+                                        <option value="">Sin especificar</option>
+                                        <option value="familiar">Familia</option>
+                                        <option value="laboral">Trabajo / compañeros</option>
+                                        <option value="comunitario">Comunidad / vecinos</option>
+                                        <option value="comercial">Negocio / clientes</option>
                                     </select>
+                                    <div class="help-text">Nos ayuda a describir tu grupo. Podés cambiarlo después.</div>
                                     <div class="error-message" id="group-type-error"></div>
-                                </div>
-                                <div class="form-group" style="margin-top:12px;">
-                                    <label for="distribution-mode">Modo de Distribucion</label>
-                                    <select id="distribution-mode">
-                                        <option value="rotation">Tanda (Rotacion de turnos)</option>
-                                        <option value="lottery">Loteria (Sorteo cada ciclo)</option>
-                                        <option value="accumulate">Ahorro Grupal (Reparto al final)</option>
-                                        <option value="request">Fondo Comunitario (Por solicitud)</option>
-                                        <option value="shares">Club de Inversion (Proporcional)</option>
-                                    </select>
-                                    <div style="font-size:0.72rem;color:var(--ds-text-faint);margin-top:4px;" id="distribution-mode-hint">Cada ciclo, un miembro recibe el total recaudado en su turno asignado.</div>
                                 </div>
 
                                 <div class="form-group">
@@ -247,12 +426,19 @@
                                 <label class="form-label">¿Hacer grupo público?</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-option">
-                                        <input type="checkbox" id="group-is-public">
+                                        <input type="checkbox" id="group-is-public" checked>
                                         <span class="checkbox-custom"></span>
                                         <span>Mostrar en la lista de Grupos Abiertos</span>
                                     </label>
                                 </div>
                                 <div class="help-text">Los grupos públicos aparecen en la sección de Grupos Abiertos. Cualquier usuario puede solicitar unirse.</div>
+                            </div>
+
+                            <!-- Grupos G1: cupo para grupos NO financieros (ahorro/tanda lo define en el paso Configuración). Mostrado solo para social/religioso/escolar/ejecutivo. -->
+                            <div class="form-group" id="group-capacity-group" style="display:none;">
+                                <label for="group-capacity">Cupo máximo <span style="opacity:0.6;font-weight:400;">(opcional)</span></label>
+                                <input type="number" id="group-capacity" placeholder="Ej: 100" min="2" max="250000">
+                                <div class="help-text">Cuántas personas pueden ser parte del grupo. Si lo dejás vacío, usamos 10.</div>
                             </div>
                         </div>
                     </div>
@@ -260,9 +446,22 @@
                     <!-- Step 2: Financial Configuration -->
                     <div class="step-container" data-step="2">
                         <div class="form-card">
-                            <h3><i class="fas fa-dollar-sign"></i> Configuración Financiera</h3>
+                            <h3><i class="fas fa-dollar-sign"></i> ¿Cómo funciona el dinero?</h3>
                             <p class="step-description">Define los aspectos económicos y de participación</p>
-                            
+
+                            <div class="form-group" id="distribution-mode-group">
+                                <label for="distribution-mode">¿Cómo se reparte el dinero?</label>
+                                <select id="distribution-mode">
+                                    <option value="rotation">Por turnos</option>
+                                    <option value="lottery">Por sorteo</option>
+                                    <option value="accumulate">Bote común</option>
+                                    <option value="request">Caja para pedir</option>
+                                    <option value="shares">Club de aportes</option>
+                                </select>
+                                <div class="help-text" style="margin-top:4px;">Elegí cómo recibe cada quien lo que juntan.</div>
+                                <div style="font-size:0.72rem;color:var(--ds-text-faint);margin-top:4px;" id="distribution-mode-hint">Cada quien recibe el pozo cuando le toca su turno.</div>
+                            </div>
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="contribution">Contribución Base (L.) <span class="required">*</span></label>
@@ -273,9 +472,44 @@
 
                                 <div class="form-group">
                                     <label for="max-participants">Máximo Participantes <span class="required">*</span></label>
-                                    <input type="number" id="max-participants" value="12" min="2" max="50" required>
+                                    <input type="number" id="max-participants" value="12" min="2" max="100" required>
                                     <div class="help-text">Número máximo de miembros en el grupo</div>
                                     <div class="error-message" id="max-participants-error"></div>
+                                </div>
+                            </div>
+
+                            <!-- Investment Club ('shares') config — shown only when Modo de Distribucion = Club de Inversion -->
+                            <div id="shares-config-block" style="display:none;background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.25);border-radius:10px;padding:14px;margin-bottom:14px;">
+                                <h4 style="margin:0 0 4px;font-size:0.95rem;color:#22d55e;"><i class="fas fa-chart-line"></i> Configuracion del Club de Inversion</h4>
+                                <p style="font-size:0.72rem;color:var(--ds-text-faint);margin:0 0 12px;">Los miembros compran acciones a su valor (NAV) actual. El valor por accion sube o baja con el rendimiento real del fondo. <strong>No hay rendimiento garantizado</strong> &mdash; producto en fase de prueba (testnet).</p>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="share-price">Precio inicial por accion (L.)</label>
+                                        <input type="number" id="share-price" value="100" min="1" max="1000000" step="0.01">
+                                        <div class="help-text">Valor (NAV) inicial de cada accion. Por defecto <span translate="no">L. 100</span>.</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lock-period-cycles">Bloqueo de rescate (ciclos)</label>
+                                        <input type="number" id="lock-period-cycles" value="0" min="0" max="60" step="1">
+                                        <div class="help-text">Ciclos que las acciones quedan bloqueadas antes de poder rescatarse. 0 = sin bloqueo.</div>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="min-contribution">Aporte minimo por compra (L.)</label>
+                                        <input type="number" id="min-contribution" placeholder="Opcional" min="0" step="0.01">
+                                        <div class="help-text">Opcional. Monto minimo que un miembro puede invertir por compra.</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="max-contribution">Aporte maximo por compra (L.)</label>
+                                        <input type="number" id="max-contribution" placeholder="Opcional" min="0" step="0.01">
+                                        <div class="help-text">Opcional. Monto maximo que un miembro puede invertir por compra.</div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shares-commission-rate">Comision sobre interes de prestamos (%)</label>
+                                    <input type="number" id="shares-commission-rate" value="2" min="0" max="5" step="0.1">
+                                    <div class="help-text">Comision (0% a 5%) que el fondo cobra sobre el interes realizado de los prestamos del club.</div>
                                 </div>
                             </div>
 
@@ -297,33 +531,121 @@
                                 </div>
                             </div>
 
+                            <!-- Gracia elegible por grupo (founder 2026-11-01): Sí/No explícito; Sí = 1 a 5 días; No = 0 -->
+                            <div class="form-group" id="grace-choice-group">
+                                <span class="form-label" id="grace-choice-label">¿Este grupo tiene período de gracia? <span class="required">*</span></span>
+                                <div class="radio-group" role="radiogroup" aria-labelledby="grace-choice-label" aria-describedby="grace-choice-help">
+                                    <label class="radio-option">
+                                        <input type="radio" name="grace-choice" id="grace-choice-no" value="no">
+                                        <span class="radio-custom"></span>
+                                        <span>No: el pago vence el día de pago</span>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="grace-choice" id="grace-choice-si" value="si">
+                                        <span class="radio-custom"></span>
+                                        <span>Sí: unos días extra para pagar sin atraso</span>
+                                    </label>
+                                </div>
+                                <div class="help-text" id="grace-choice-help">Lo decide tu grupo. Con período de gracia, quien paga dentro de esos días no queda atrasado.</div>
+                                <div id="grace-days-row" hidden>
+                                    <label for="grace-period">Días de gracia (1 a 5)</label>
+                                    <input type="number" id="grace-period" min="1" max="5" step="1" inputmode="numeric" value="1">
+                                    <div class="help-text" id="grace-example"></div>
+                                </div>
+                                <div class="error-message" id="grace-period-error" role="alert"></div>
+                            </div>
+
                             <div class="form-group">
                                 <label class="form-label">Opciones Adicionales</label>
                                 <div class="checkbox-group">
                                     <label class="checkbox-option">
-                                        <input type="checkbox" id="early-withdrawals">
+                                        <input type="checkbox" id="late-penalties">
                                         <span class="checkbox-custom"></span>
-                                        <span>Permitir retiros anticipados (con penalización)</span>
+                                        <span>Multas por pagos tardíos <em class="cgf-optional">(opcional)</em></span>
                                     </label>
-                                    <label class="checkbox-option">
-                                        <input type="checkbox" id="insurance-required">
+                                    <div class="help-text cgf-info-note">Solo si tu grupo la acuerda. Si la marcas, pones el monto en el siguiente paso (&laquo;Multas y Penalizaciones&raquo;). <span translate="no">La Tanda</span> no cobra multas: solo aplica la regla que tu grupo elija y hace los cálculos de cada ciclo.</div>
+                                    <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                        <input type="checkbox" id="early-withdrawals" disabled>
                                         <span class="checkbox-custom"></span>
-                                        <span>Requerir seguro de participación</span>
+                                        <span>Acuerdos de adelanto de turno <span class="cgf-soon-badge">Próximamente</span><small class="cgf-soon-help">El grupo lo aprueba; <span translate="no">La Tanda</span> solo lo registra.</small></span>
                                     </label>
-                                    <label class="checkbox-option">
-                                        <input type="checkbox" id="late-penalties" checked>
+                                    <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                        <input type="checkbox" id="insurance-required" disabled>
                                         <span class="checkbox-custom"></span>
-                                        <span>Aplicar multas por pagos tardíos</span>
+                                        <span>Fondo de reserva del grupo <span class="cgf-soon-badge">Próximamente</span><small class="cgf-soon-help">Aportes de los miembros para cubrir atrasos; <span translate="no">La Tanda</span> solo lo registra.</small></span>
                                     </label>
                                 </div>
+                                <div class="help-text cgf-soon-note">Las opciones marcadas &laquo;Próximamente&raquo; todavía no están disponibles.</div>
                             </div>
+
+                            <!-- Simulador de Tanda (Canasta 3 G5) — colapsado, solo Ahorro (Slice E3) -->
+                            <details id="tsim-disclosure">
+                                <summary>Ver un ejemplo de cómo quedaría la <span translate="no">tanda</span> (opcional)</summary>
+                                <p class="tsim-disclosure-note">Es solo una vista previa. No compromete nada.</p>
+                                <div class="form-card" id="tsim-card">
+                                    <h3><i class="fas fa-calculator"></i> Simulador de <span translate="no">Tanda</span></h3>
+                                    <p class="step-description">Ensena a tus futuros miembros exactamente como se vera su <span translate="no">tanda</span>: turnos, fechas de pago y montos &mdash; antes de crear el grupo.</p>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="tsim-participants"># de Participantes</label>
+                                            <input type="number" id="tsim-participants" value="10" min="2" max="30" step="1">
+                                            <div class="help-text">Entre 2 y 30 participantes</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tsim-contribution">Aporte por Participante (L.)</label>
+                                            <input type="number" id="tsim-contribution" value="500" min="1" step="any">
+                                            <div class="help-text">Lo que cada miembro aporta por turno</div>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="tsim-frequency">Frecuencia</label>
+                                            <select id="tsim-frequency">
+                                                <option value="weekly">Semanal</option>
+                                                <option value="biweekly" selected>Quincenal (dia 15 y fin de mes)</option>
+                                                <option value="monthly">Mensual</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tsim-start">Fecha de Inicio</label>
+                                            <input type="date" id="tsim-start">
+                                        </div>
+                                    </div>
+                                    <div id="tsim-results" style="display:none;">
+                                        <div class="tsim-stats">
+                                            <div class="tsim-stat"><div class="tsim-stat-label">Pozo por turno</div><div class="tsim-stat-value" id="tsim-pozo" translate="no"></div></div>
+                                            <div class="tsim-stat"><div class="tsim-stat-label">Comision del coordinador (est.)</div><div class="tsim-stat-value" id="tsim-comision" translate="no"></div></div>
+                                            <div class="tsim-stat"><div class="tsim-stat-label">Total ciclado al completar</div><div class="tsim-stat-value" id="tsim-total" translate="no"></div></div>
+                                        </div>
+                                        <div id="tsim-neto"></div>
+                                        <div class="tsim-table-wrap">
+                                            <table>
+                                                <thead><tr><th>Turno</th><th>Fecha de pago</th><th>Fecha limite (gracia)</th><th>Beneficiario recibe</th></tr></thead>
+                                                <tbody id="tsim-tbody"></tbody>
+                                            </table>
+                                        </div>
+                                        <div id="tsim-end"></div>
+                                        <button type="button" id="tsim-prefill">Usar estos datos en el formulario</button><span id="tsim-prefill-note"></span>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
+                    <style>
+                        /* grupo-form-final 2026-09-29: opciones sin backend = "Próximamente" (deshabilitadas), multa opcional */
+                        #create-group-form .cgf-soon { opacity:.62; cursor:not-allowed; }
+                        #create-group-form .cgf-soon input { pointer-events:none; }
+                        #create-group-form .cgf-soon-badge { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:.68rem; font-weight:700; letter-spacing:.02em; font-style:normal; background:rgba(0,212,255,.12); color:#00d4ff; border:1px solid rgba(0,212,255,.35); vertical-align:middle; white-space:nowrap; }
+                        #create-group-form .cgf-optional { font-style:normal; font-weight:600; font-size:.78em; color:rgba(255,255,255,.6); margin-left:4px; }
+                        #create-group-form .cgf-soon-note, #create-group-form .cgf-info-note { margin-top:6px; line-height:1.45; }
+                        #create-group-form .cgf-soon-help { display:block; margin-top:3px; font-size:.8em; font-weight:400; font-style:normal; line-height:1.4; color:rgba(255,255,255,.72); }
+                        #create-group-form input#penalty-amount:disabled { opacity:.55; cursor:not-allowed; }
+                    </style>
                     <!-- Step 3: Advanced Configuration -->
                     <div class="step-container" data-step="3">
                         <div class="form-card">
-                            <h3><i class="fas fa-shield-alt"></i> Configuración Avanzada</h3>
+                            <h3><i class="fas fa-shield-alt"></i> ¿Quién puede entrar?</h3>
                             <p class="step-description">Establece reglas y políticas del grupo con opciones avanzadas</p>
                             
                             <!-- Collapsible Section: Requisitos de Ingreso -->
@@ -332,34 +654,30 @@
                                     <span>
                                         <i class="fas fa-user-check"></i>
                                         <strong>Requisitos de Ingreso</strong>
-                                        <span class="section-description">Define quién puede unirse al grupo</span>
+                                        <span class="section-description">Próximamente: requisitos para unirse</span>
                                     </span>
                                     <i class="fas fa-chevron-down collapsible-icon"></i>
                                 </div>
                                 <div class="collapsible-content expanded">
                                     <div class="collapsible-inner">
                                         <div class="checkbox-group">
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="require-id" checked>
+                                            <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="require-id" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Verificación de identidad obligatoria</span>
+                                                <span>Foto del documento de identidad <span class="cgf-soon-badge">Próximamente</span><small class="cgf-soon-help">Cada miembro sube una foto de su ID y la revisa el coordinador del grupo.</small></span>
                                             </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="require-income">
+                                            <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="require-references" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Comprobante de ingresos</span>
+                                                <span>Referencias personales (mín. 2) <span class="cgf-soon-badge">Próximamente</span></span>
                                             </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="require-references">
+                                            <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="require-min-trust-score" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Referencias personales (mín. 2)</span>
-                                            </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="require-min-trust-score">
-                                                <span class="checkbox-custom"></span>
-                                                <span>Puntaje mínimo de confianza: 70%</span>
+                                                <span>Historial mínimo en <span translate="no">La Tanda</span> <span class="cgf-soon-badge">Próximamente</span><small class="cgf-soon-help">Tandas completadas a tiempo.</small></span>
                                             </label>
                                         </div>
+                                        <div class="help-text cgf-soon-note">Por ahora, tú decides a quién invitas y apruebas.</div>
                                     </div>
                                 </div>
                             </div>
@@ -388,13 +706,13 @@
                                 </div>
                             </div>
 
-                            <!-- Collapsible Section: Multas y Penalizaciones -->
-                            <div class="collapsible-section">
+                            <!-- Collapsible Section: Multas y Penalizaciones (financial only) -->
+                            <div class="collapsible-section" id="adv-penalties-section">
                                 <div class="collapsible-header" data-action="grp-toggle-collapsible">
                                     <span>
                                         <i class="fas fa-exclamation-triangle"></i>
                                         <strong>Multas y Penalizaciones</strong>
-                                        <span class="section-description">Configura sanciones por incumplimiento</span>
+                                        <span class="section-description">Opcional: las reglas de multa que tu grupo acuerde</span>
                                     </span>
                                     <i class="fas fa-chevron-down collapsible-icon"></i>
                                 </div>
@@ -402,30 +720,30 @@
                                     <div class="collapsible-inner">
                                         <div class="form-row">
                                             <div class="form-group">
-                                                <label for="penalty-amount">Multa por Retraso (L.)</label>
-                                                <input type="number" id="penalty-amount" placeholder="50" min="0" max="500" step="25">
-                                                <div class="help-text">Multa aplicada por pagos tardíos</div>
+                                                <label for="penalty-amount">Multa por Retraso (L.) <em class="cgf-optional">Opcional</em></label>
+                                                <input type="number" id="penalty-amount" placeholder="Ej: 50" min="0" max="500" step="1" inputmode="decimal">
+                                                <div class="help-text">Opcional — solo si tu grupo la acuerda. Vacío = sin multa. Máximo <span translate="no">L. 500</span>.</div>
+                                                <div class="help-text cgf-info-note" id="penalty-amount-hint">Para fijar una multa, marca &laquo;Multas por pagos tardíos&raquo; en el paso anterior.</div>
                                                 <div class="error-message" id="penalty-amount-error"></div>
                                             </div>
+                                        </div>
+                                        <!-- Opcion A (2026-10-14): interes sobre moras OPCIONAL, 0 por defecto, tope 20% anual -->
+                                        <div class="form-row">
                                             <div class="form-group">
-                                                <label for="grace-period">Período de Gracia (días)</label>
-                                                <input type="number" id="grace-period" placeholder="3" min="0" max="15">
-                                                <div class="help-text">Días adicionales sin multa</div>
-                                                <div class="error-message" id="grace-period-error"></div>
+                                                <label for="mora-interest-rate">Interés sobre moras (opcional) — % anual</label>
+                                                <input type="number" id="mora-interest-rate" value="0" min="0" max="20" step="0.5" inputmode="decimal">
+                                                <div class="help-text">Si lo dejás en 0, las moras quedan como deuda sin interés. Máximo 20% anual. Si lo activás, se le muestra a quien quiera unirse.</div>
+                                                <div class="error-message" id="mora-interest-rate-error"></div>
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Acciones por Incumplimiento</label>
+                                            <div class="help-text cgf-info-note" id="auto-suspend-info"><i class="fas fa-info-circle" aria-hidden="true"></i> Regla general de la plataforma (no se configura por grupo): quien acumula 3 moras en 30 días queda inactivo automáticamente en el grupo (conserva su lugar y sus aportes pendientes). Vuelve a quedar activo cuando se pone al día y el coordinador registra o verifica su pago.</div>
                                             <div class="checkbox-group">
-                                                <label class="checkbox-option">
-                                                    <input type="checkbox" id="auto-suspend" checked>
+                                                <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                    <input type="checkbox" id="require-guarantor" disabled>
                                                     <span class="checkbox-custom"></span>
-                                                    <span>Suspender automáticamente tras 3 faltas</span>
-                                                </label>
-                                                <label class="checkbox-option">
-                                                    <input type="checkbox" id="require-guarantor">
-                                                    <span class="checkbox-custom"></span>
-                                                    <span>Requerir garante para reincorporación</span>
+                                                    <span>Garante para reincorporación <span class="cgf-soon-badge">Próximamente</span><small class="cgf-soon-help">Un miembro del grupo respalda al que vuelve; <span translate="no">La Tanda</span> solo lo registra.</small></span>
                                                 </label>
                                             </div>
                                         </div>
@@ -433,8 +751,8 @@
                                 </div>
                             </div>
 
-                            <!-- Collapsible Section: Comision del Coordinador (v4.10.4) -->
-                            <div class="collapsible-section">
+                            <!-- Collapsible Section: Comision del Coordinador (v4.10.4) (financial only) -->
+                            <div class="collapsible-section" id="adv-commission-section">
                                 <div class="collapsible-header" data-action="grp-toggle-collapsible">
                                     <span>
                                         <i class="fas fa-percentage"></i>
@@ -451,17 +769,12 @@
                                                 <label class="radio-option">
                                                     <input type="radio" name="commission-type" value="default" checked>
                                                     <span class="radio-custom"></span>
-                                                    <span>Estandar de plataforma (3%-1% segun monto)</span>
+                                                    <span>Sin comision del coordinador (0%) — por defecto. El 100% del pozo va a los miembros</span>
                                                 </label>
                                                 <label class="radio-option">
                                                     <input type="radio" name="commission-type" value="custom">
                                                     <span class="radio-custom"></span>
-                                                    <span>Personalizada</span>
-                                                </label>
-                                                <label class="radio-option">
-                                                    <input type="radio" name="commission-type" value="none">
-                                                    <span class="radio-custom"></span>
-                                                    <span>Sin comision (0%)</span>
+                                                    <span>Personalizada (el coordinador cobra una comision)</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -487,34 +800,35 @@
                                     <span>
                                         <i class="fas fa-bell"></i>
                                         <strong>Notificaciones Automáticas</strong>
-                                        <span class="section-description">Configura recordatorios y alertas</span>
+                                        <span class="section-description">Próximamente: recordatorios y alertas por grupo</span>
                                     </span>
                                     <i class="fas fa-chevron-down collapsible-icon"></i>
                                 </div>
                                 <div class="collapsible-content">
                                     <div class="collapsible-inner">
                                         <div class="checkbox-group">
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="notify-payment-reminder" checked>
+                                            <label class="checkbox-option cgf-soon" id="notify-payment-reminder-row" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="notify-payment-reminder" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Recordatorio de pagos (3 días antes)</span>
+                                                <span>Recordatorio de pagos (3 días antes) <span class="cgf-soon-badge">Próximamente</span></span>
                                             </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="notify-meeting-reminder" checked>
+                                            <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="notify-meeting-reminder" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Recordatorio de reuniones</span>
+                                                <span>Recordatorio de reuniones <span class="cgf-soon-badge">Próximamente</span></span>
                                             </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="notify-turn-update" checked>
+                                            <label class="checkbox-option cgf-soon" id="notify-turn-update-row" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="notify-turn-update" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Actualización de turnos de cobro</span>
+                                                <span>Actualización de turnos de cobro <span class="cgf-soon-badge">Próximamente</span></span>
                                             </label>
-                                            <label class="checkbox-option">
-                                                <input type="checkbox" id="notify-new-members">
+                                            <label class="checkbox-option cgf-soon" aria-disabled="true" title="Próximamente">
+                                                <input type="checkbox" id="notify-new-members" disabled>
                                                 <span class="checkbox-custom"></span>
-                                                <span>Notificar nuevos miembros</span>
+                                                <span>Notificar nuevos miembros <span class="cgf-soon-badge">Próximamente</span></span>
                                             </label>
                                         </div>
+                                        <div class="help-text cgf-soon-note">Pronto el coordinador podrá elegir qué avisos automáticos recibe su grupo.</div>
                                     </div>
                                 </div>
                             </div>
@@ -524,7 +838,7 @@
                     <!-- Step 4: Confirmation -->
                     <div class="step-container" data-step="4">
                         <div class="form-card">
-                            <h3><i class="fas fa-check-circle"></i> Confirmación y Resumen</h3>
+                            <h3><i class="fas fa-check-circle"></i> Revisá y creá</h3>
                             <p class="step-description">Revisa todos los detalles antes de crear el grupo</p>
                             
                             <div class="confirmation-summary" id="confirmationSummary">
@@ -535,7 +849,7 @@
                                 <label class="checkbox-option">
                                     <input type="checkbox" id="accept-terms" required>
                                     <span class="checkbox-custom"></span>
-                                    <span>Acepto los términos y condiciones de La Tanda</span>
+                                    <span>Acepto los términos y condiciones de <span translate="no">La Tanda</span></span>
                                 </label>
                                 <div class="error-message" id="accept-terms-error"></div>
                             </div>
@@ -549,7 +863,7 @@
                             <span>Anterior</span>
                         </button>
                         <button type="button" class="btn btn-primary" id="next-step">
-                            <span>Continuar</span>
+                            <span>Siguiente</span>
                             <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
@@ -559,7 +873,7 @@
             <div id="template-modal" class="modal-overlay ds-overlay" style="display: none;">
                 <div class="modal-content template-selector-modal">
                     <div class="modal-header-templates">
-                        <h3>🎯 Elige una Plantilla para tu Grupo</h3>
+                        <h3><i class="fas fa-layer-group" style="color:#00d4ff;margin-right:8px;"></i>Elige una Plantilla para tu Grupo</h3>
                         <p>Selecciona el tipo de grupo que más se ajuste a tus necesidades. Puedes modificar todos los valores después.</p>
                         <button class="modal-close-templates">&times;</button>
                     </div>
@@ -568,71 +882,71 @@
 
                             <!-- Template Card 1: Familiar Pequeño -->
                             <div class="template-card" data-template="familiar-small">
-                                <div class="template-icon">👨‍👩‍👧‍👦</div>
+                                <div class="template-icon"><i class="fas fa-people-roof" style="color:#00d4ff;"></i></div>
                                 <h4>Grupo Familiar Pequeño</h4>
                                 <p>Ideal para 6-8 familiares cercanos</p>
                                 <div class="template-specs">
-                                    <span>💰 L. 1,500/mes</span>
-                                    <span>👥 8 miembros</span>
+                                    <span><i class="fas fa-coins" style="margin-right:5px;color:#ffd700;"></i><span translate="no">L. 1,500</span>/mes</span>
+                                    <span><i class="fas fa-users" style="margin-right:5px;color:#00d4ff;"></i>8 miembros</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="familiar-small">Seleccionar</button>
                             </div>
 
                             <!-- Template Card 2: Laboral -->
                             <div class="template-card" data-template="laboral">
-                                <div class="template-icon">💼</div>
+                                <div class="template-icon"><i class="fas fa-briefcase" style="color:#8b5cf6;"></i></div>
                                 <h4>Grupo Laboral</h4>
                                 <p>Para compañeros de trabajo</p>
                                 <div class="template-specs">
-                                    <span>💰 L. 2,000/quincenal</span>
-                                    <span>👥 12 miembros</span>
+                                    <span><i class="fas fa-coins" style="margin-right:5px;color:#ffd700;"></i><span translate="no">L. 2,000</span>/quincenal</span>
+                                    <span><i class="fas fa-users" style="margin-right:5px;color:#00d4ff;"></i>12 miembros</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="laboral">Seleccionar</button>
                             </div>
 
                             <!-- Template Card 3: Comunitario -->
                             <div class="template-card" data-template="comunitario">
-                                <div class="template-icon">🏘️</div>
+                                <div class="template-icon"><i class="fas fa-city" style="color:#5eead4;"></i></div>
                                 <h4>Grupo Comunitario</h4>
                                 <p>Vecinos y comunidad local</p>
                                 <div class="template-specs">
-                                    <span>💰 L. 500/mes</span>
-                                    <span>👥 30 miembros</span>
+                                    <span><i class="fas fa-coins" style="margin-right:5px;color:#ffd700;"></i><span translate="no">L. 500</span>/mes</span>
+                                    <span><i class="fas fa-users" style="margin-right:5px;color:#00d4ff;"></i>30 miembros</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="comunitario">Seleccionar</button>
                             </div>
 
                             <!-- Template Card 4: Comercial -->
                             <div class="template-card" data-template="comercial">
-                                <div class="template-icon">🏪</div>
+                                <div class="template-icon"><i class="fas fa-store" style="color:#ffd700;"></i></div>
                                 <h4>Grupo Comercial</h4>
                                 <p>Emprendedores y negocios</p>
                                 <div class="template-specs">
-                                    <span>💰 L. 5,000/quincenal</span>
-                                    <span>👥 15 miembros</span>
+                                    <span><i class="fas fa-coins" style="margin-right:5px;color:#ffd700;"></i><span translate="no">L. 5,000</span>/quincenal</span>
+                                    <span><i class="fas fa-users" style="margin-right:5px;color:#00d4ff;"></i>15 miembros</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="comercial">Seleccionar</button>
                             </div>
 
                             <!-- Template Card 5: Tanda Rápida -->
                             <div class="template-card" data-template="tanda-rapida">
-                                <div class="template-icon">⚡</div>
-                                <h4>Tanda Rápida Semanal</h4>
+                                <div class="template-icon"><i class="fas fa-bolt" style="color:#00e5ff;"></i></div>
+                                <h4><span translate="no">Tanda</span> Rápida Semanal</h4>
                                 <p>Ciclo corto, ahorro rápido</p>
                                 <div class="template-specs">
-                                    <span>💰 L. 500/semana</span>
-                                    <span>👥 10 miembros</span>
+                                    <span><i class="fas fa-coins" style="margin-right:5px;color:#ffd700;"></i><span translate="no">L. 500</span>/semana</span>
+                                    <span><i class="fas fa-users" style="margin-right:5px;color:#00d4ff;"></i>10 miembros</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="tanda-rapida">Seleccionar</button>
                             </div>
 
                             <!-- Template Card 6: Custom -->
                             <div class="template-card custom-template" data-template="custom">
-                                <div class="template-icon">✏️</div>
+                                <div class="template-icon"><i class="fas fa-sliders" style="color:#a78bfa;"></i></div>
                                 <h4>Custom (Desde Cero)</h4>
                                 <p>Configura todo manualmente</p>
                                 <div class="template-specs">
-                                    <span>🎨 Personalizado 100%</span>
+                                    <span><i class="fas fa-palette" style="margin-right:5px;color:#a78bfa;"></i>Personalizado 100%</span>
                                 </div>
                                 <button class="select-template-btn" data-action="grp-select-template" data-template="custom">Empezar</button>
                             </div>
@@ -650,7 +964,7 @@
         <section id="tandas" class="content-section">
             <div class="section-header">
                 <div>
-                    <h2><i class="fas fa-coins"></i> Mis Tandas</h2>
+                    <h2><i class="fas fa-coins"></i> Mis <span translate="no">Tandas</span></h2>
                     <p class="section-description">Tu centro de pagos y cobros</p>
                 </div>
                 <div class="section-actions" style="display:flex;gap:8px;">
@@ -670,7 +984,7 @@
             <div id="tandasList" class="tandas-grid">
                 <div class="loading-state" id="tandasLoading">
                     <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>
-                    <p class="loading-text">Cargando tus tandas...</p>
+                    <p class="loading-text">Cargando tus <span translate="no">tandas</span>...</p>
                 </div>
             </div>
 
@@ -712,39 +1026,39 @@
                     <!-- Detail rows -->
                     <div class="gs-rows">
                         <div class="gs-row">
-                            <span class="gs-row-icon" style="color:#00FFFF;">
+                            <span class="gs-row-icon" style="color:#00d4ff;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </span>
                             <span class="gs-row-label">Total pagado</span>
-                            <span class="gs-row-val gs-cyan" id="grpTotalPaid">L. 0</span>
+                            <span class="gs-row-val gs-cyan" id="grpTotalPaid" translate="no">L. 0</span>
                         </div>
                         <div class="gs-row">
                             <span class="gs-row-icon" style="color:#ef4444;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                             </span>
                             <span class="gs-row-label">Total pendiente</span>
-                            <span class="gs-row-val gs-red" id="grpTotalOwed">L. 0</span>
+                            <span class="gs-row-val gs-red" id="grpTotalOwed" translate="no">L. 0</span>
                         </div>
                         <div class="gs-row">
-                            <span class="gs-row-icon" style="color:#22c55e;">
+                            <span class="gs-row-icon" style="color:#22d55e;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
                             </span>
                             <span class="gs-row-label">Ciclos</span>
                             <span class="gs-row-val gs-cyan" id="grpCurrentCycle">--</span>
                         </div>
                         <div class="gs-row" id="grpTurnRow" style="display:none">
-                            <span class="gs-row-icon" style="color:#a855f7;">
+                            <span class="gs-row-icon" style="color:#8b5cf6;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
                             </span>
                             <span class="gs-row-label">Mi Turno</span>
-                            <span class="gs-row-val" id="grpMyTurn" style="color:#a855f7">--</span>
+                            <span class="gs-row-val" id="grpMyTurn" style="color:#8b5cf6">--</span>
                         </div>
                         <div class="gs-row" id="grpTandaRow" style="display:none">
-                            <span class="gs-row-icon" style="color:#00FFFF;">
+                            <span class="gs-row-icon" style="color:#00d4ff;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </span>
-                            <span class="gs-row-label">Saldo Tanda</span>
-                            <span class="gs-row-val" id="grpTandaInline" style="color:#34d399">--</span>
+                            <span class="gs-row-label">Saldo <span translate="no">Tanda</span></span>
+                            <span class="gs-row-val" id="grpTandaInline" style="color:#22d55e">--</span>
                         </div>
                     </div>
                 </div>
@@ -752,7 +1066,7 @@
 
                 <!-- ALG-05 T1: Recommended Groups Card -->
                 <div class="grp-sidebar-stats gr-rec-card" id="grRecCard" style="display:none;">
-                    <h4 class="grp-sidebar-stats-title"><i class="fas fa-magic" style="color:#a855f7;margin-right:6px;"></i>Para Ti</h4>
+                    <h4 class="grp-sidebar-stats-title"><i class="fas fa-magic" style="color:#8b5cf6;margin-right:6px;"></i>Para Ti</h4>
                     <div id="grRecList" class="gr-rec-list"></div>
                 </div>
 
@@ -776,19 +1090,19 @@
                     </div>
                     <!-- Resumen card -->
                     <div class="grp-sidebar-stats" id="tscSummary">
-                        <h4 class="grp-sidebar-stats-title">Resumen Tandas</h4>
+                        <h4 class="grp-sidebar-stats-title">Resumen <span translate="no">Tandas</span></h4>
                         <div id="tscSummaryContent">
                             <div class="gs-grid">
                                 <div class="gs-cell">
                                     <span class="gs-cell-val" id="tscTotalTandas">0</span>
-                                    <span class="gs-cell-label">Tandas</span>
+                                    <span class="gs-cell-label" translate="no">Tandas</span>
                                 </div>
                                 <div class="gs-cell">
                                     <span class="gs-cell-val gs-cyan" id="tscActiveTandas">0</span>
                                     <span class="gs-cell-label">Activas</span>
                                 </div>
                                 <div class="gs-cell">
-                                    <span class="gs-cell-val" style="color:#10b981" id="tscPaidCycles">0</span>
+                                    <span class="gs-cell-val" style="color:#22d55e" id="tscPaidCycles">0</span>
                                     <span class="gs-cell-label">Pagados</span>
                                 </div>
                                 <div class="gs-cell">
@@ -798,11 +1112,11 @@
                             </div>
                             <div class="gs-rows" style="margin-top:8px">
                                 <div class="gs-row">
-                                    <span class="gs-row-icon" style="color:#00FFFF;">
+                                    <span class="gs-row-icon" style="color:#00d4ff;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                                     </span>
                                     <span class="gs-row-label">Total pagado</span>
-                                    <span class="gs-row-val gs-cyan" id="tscTotalPaid">L. 0</span>
+                                    <span class="gs-row-val gs-cyan" id="tscTotalPaid" translate="no">L. 0</span>
                                 </div>
                             </div>
                         </div>
@@ -860,7 +1174,7 @@
 
                     <!-- Card 2: Contrato de Tanda -->
                     <div class="grp-sidebar-stats" id="cgsContract">
-                        <h4 class="grp-sidebar-stats-title">Contrato de Tanda</h4>
+                        <h4 class="grp-sidebar-stats-title">Contrato de <span translate="no">Tanda</span></h4>
                         <div id="cgsContractContent">
                             <div class="cgs-contract-items" id="cgsContractItems"></div>
                             <div class="cgs-contract-progress">
@@ -886,7 +1200,8 @@
     <script src="notification-system.js"></script>
     <script src="loading-manager.js"></script>
     <script src="error-handler.js"></script>
-    <script src="create-group-form-handler-v2.js?v=20260224002"></script>
+    <script src="create-group-form-handler-v2.js?v=20261103fechahn"></script>
+    <script src="js/tanda-simulator.js?v=20261025com"></script>
     <script src="group-duplication-system.js"></script>
 
     <!-- Group Templates System -->
@@ -896,7 +1211,7 @@
     <!-- Block 3 extracted to js/groups-system.js -->
 
     <!-- Enhanced Toast Notification System -->
-    <div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
+    <div id="toastContainer" class="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
 
 
     <!-- Block 4 extracted to js/groups-system.js -->
@@ -930,19 +1245,19 @@
                 <div class="modal-body" style="padding: 24px; max-height: calc(85vh - 180px); overflow-y: auto;">
                     <!-- Loading -->
                     <div id="editGroupLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
-                        <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #00FFFF; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                        <p style="margin-top: 16px; color: #94a3b8;">Cargando datos...</p>
+                        <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #00d4ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <p style="margin-top: 16px; color:rgba(255,255,255,0.7);">Cargando datos...</p>
                     </div>
 
                     <!-- Success Message -->
                     <div id="editGroupSuccess" style="display: none; text-align: center; padding: 20px;">
                         <div style="width: 60px; height: 60px; background: rgba(0,255,255,0.15); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00FFFF" stroke-width="2">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
                                 <polyline points="20 6 9 17 4 12"/>
                             </svg>
                         </div>
                         <h4 style="margin: 0 0 8px; color: #f8fafc;">Grupo Actualizado!</h4>
-                        <p style="margin: 0; color: #94a3b8; font-size: 0.875rem;">Los cambios han sido guardados exitosamente.</p>
+                        <p style="margin: 0; color:rgba(255,255,255,0.7); font-size: 0.875rem;">Los cambios han sido guardados exitosamente.</p>
                     </div>
 
                     <!-- Form Fields -->
@@ -979,7 +1294,7 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                             <div>
                                 <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Max Miembros</label>
-                                <input type="number" id="editGroupMaxMembers" min="2" max="50" placeholder="12" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
+                                <input type="number" id="editGroupMaxMembers" min="2" max="250000" placeholder="12" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
                             </div>
                             <div>
                                 <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Ubicacion</label>
@@ -991,7 +1306,7 @@
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Fecha de Inicio</label>
                             <input type="date" id="editGroupStartDate" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
-                            <p style="margin: 4px 0 0; font-size: 0.75rem; color: #64748b;">Fecha en que inicia el ciclo de la tanda</p>
+                            <p style="margin: 4px 0 0; font-size: 0.75rem; color:rgba(255,255,255,0.7);">Fecha en que inicia el ciclo de la <span translate="no">tanda</span></p>
                         </div>
 
                         <!-- Status -->
@@ -1009,7 +1324,7 @@
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; font-weight: 500; color: #e2e8f0; margin-bottom: 6px; font-size: 0.875rem;">Umbral de Avance (%)</label>
                             <input type="number" id="editGroupThreshold" min="50" max="100" value="80" placeholder="80" style="width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; font-size: 0.9375rem; box-sizing: border-box; background: #1e293b; color: #f8fafc;">
-                            <p style="margin: 4px 0 0; font-size: 0.75rem; color: #64748b;">El ciclo avanza cuando este porcentaje de miembros ha pagado (50-100)</p>
+                            <p style="margin: 4px 0 0; font-size: 0.75rem; color:rgba(255,255,255,0.7);">El ciclo avanza cuando este porcentaje de miembros ha pagado (50-100)</p>
                         </div>
 
                         <div id="editGroupError" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; font-size: 0.875rem;"></div>
@@ -1018,7 +1333,7 @@
 
                 <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.95); border-radius: 0 0 16px 16px; display: flex; gap: 12px; justify-content: flex-end;" id="editGroupFormFooter">
                     <button type="button" data-action="grp-close-edit" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
-                    <button type="submit" id="editGroupSubmitBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #00ffff, #00d4aa); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Guardar Cambios</button>
+                    <button type="submit" id="editGroupSubmitBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #00d4ff, #00d4aa); color: #000; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -1068,7 +1383,7 @@
                 
                 <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px;">
                     <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff9944" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
                             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                             <line x1="12" y1="9" x2="12" y2="13"/>
                             <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -1095,7 +1410,7 @@
     <!-- ===== MANAGE TURNS MODAL ===== -->
     <div id="manageTurnsModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 500px; background: #1a2332; border-radius: 16px; overflow: hidden; margin: 20px; max-height: 80vh;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 20px; position: relative;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #ffd700 0%, #ff9944 100%); color: white; padding: 20px; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1119,7 +1434,7 @@
             <div class="modal-body" style="padding: 20px; max-height: calc(80vh - 180px); overflow-y: auto;">
                 <!-- Loading -->
                 <div id="turnsLoading" style="display: none; text-align: center; padding: 40px;">
-                    <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #374151; border-top-color: #f59e0b; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                    <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #374151; border-top-color: #ffd700; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
                     <p style="margin-top: 16px; color: #9ca3af;">Cargando miembros...</p>
                 </div>
                 
@@ -1132,7 +1447,7 @@
                 <!-- Instructions -->
                 <div style="margin-top: 16px; padding: 12px; background: #1e293b; border-radius: 10px;">
                     <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="12" y1="16" x2="12" y2="12"/>
                             <line x1="12" y1="8" x2="12.01" y2="8"/>
@@ -1148,7 +1463,7 @@
                 <button data-action="grp-close-manage-turns" style="flex: 1; padding: 12px; background: #374151; border: none; border-radius: 10px; color: white; font-size: 0.9375rem; cursor: pointer;">
                     Cancelar
                 </button>
-                <button id="saveTurnsBtn" data-action="grp-save-turns" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 10px; color: white; font-size: 0.9375rem; font-weight: 500; cursor: pointer;">
+                <button id="saveTurnsBtn" data-action="grp-save-turns" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #ffd700, #ff9944); border: none; border-radius: 10px; color: white; font-size: 0.9375rem; font-weight: 500; cursor: pointer;">
                     Guardar Cambios
                 </button>
             </div>
@@ -1158,7 +1473,7 @@
     <!-- Register Payment Modal -->
     <div id="registerPaymentModal" class="modal-overlay ds-overlay" style="display: none;">
         <div class="modal-content" style="max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #059669 0%, #22d55e 100%); color: white; padding: 20px; border-radius: 16px 16px 0 0; position: relative;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1226,7 +1541,7 @@
                     <h4 style="margin: 0 0 16px; color: #f8fafc; font-size: 1rem;">Paso 2: Realiza el pago</h4>
                     
                     <!-- Reference Code Box -->
-                    <div id="referenceCodeBox" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); border-radius: 12px; padding: 16px; margin-bottom: 20px; color: white; text-align: center;">
+                    <div id="referenceCodeBox" style="background: linear-gradient(135deg, #059669 0%, #22d55e 100%); border-radius: 12px; padding: 16px; margin-bottom: 20px; color: white; text-align: center;">
                         <div style="font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px;">TU CODIGO DE REFERENCIA</div>
                         <div id="referenceCodeDisplay" style="font-size: 1.1rem; font-weight: 700; font-family: monospace; letter-spacing: 1px;">LT-CNT-XXXX-XXXX</div>
                         <button type="button" data-action="grp-copy-reference" style="margin-top: 10px; background: rgba(255,255,255,0.2); border: none; padding: 6px 12px; border-radius: 6px; color: white; cursor: pointer; font-size: 0.75rem;">
@@ -1237,12 +1552,12 @@
                     <!-- Instructions List -->
                     <div id="paymentInstructionsList" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px;">
                         <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 12px;" id="instructionsTitle">Instrucciones</div>
-                        <ol id="instructionsSteps" style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 0.875rem; line-height: 1.8;"></ol>
+                        <ol id="instructionsSteps" style="margin: 0; padding-left: 20px; color:rgba(255,255,255,0.7); font-size: 0.875rem; line-height: 1.8;"></ol>
                     </div>
 
                     <!-- Bank Details (for transfers) -->
                     <div id="bankDetailsBox" style="display: none; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 16px; margin-top: 16px;">
-                        <div style="font-weight: 600; color: #60a5fa; margin-bottom: 12px;">📋 Datos Bancarios</div>
+                        <div style="font-weight: 600; color: #00d4ff; margin-bottom: 12px;">📋 Datos Bancarios</div>
                         <div id="bankDetailsContent" style="font-size: 0.875rem; color: #93c5fd;"></div>
                     </div>
 
@@ -1264,14 +1579,14 @@
                         <div id="proofUploadPrompt">
                             <div style="font-size: 48px; margin-bottom: 12px;">📷</div>
                             <div style="font-weight: 500; color: #e2e8f0; margin-bottom: 4px;">Subir comprobante</div>
-                            <div style="font-size: 0.875rem; color: #64748b;">Toca para seleccionar imagen</div>
+                            <div style="font-size: 0.875rem; color:rgba(255,255,255,0.7);">Toca para seleccionar imagen</div>
                         </div>
                         <input type="file" id="proofFileInput" accept="image/*" style="display: none;" >
                     </div>
 
                     <div id="paymentStep3Error" style="display: none; padding: 12px; background: rgba(239,68,68,0.15); color: #fca5a5; border-radius: 8px; margin-top: 16px; font-size: 0.875rem;"></div>
 
-                    <div style="margin-top: 16px; padding: 12px; background: rgba(0,255,255,0.05); border-radius: 8px; font-size: 0.875rem; color: #94a3b8;">
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(0,255,255,0.05); border-radius: 8px; font-size: 0.875rem; color:rgba(255,255,255,0.7);">
                         <strong>Importante:</strong> El comprobante es obligatorio para verificar tu pago.
                     </div>
                 </div>
@@ -1284,9 +1599,9 @@
                         </svg>
                     </div>
                     <h4 style="margin: 0 0 8px; color: #f8fafc; font-size: 1.25rem;">Pago Registrado!</h4>
-                    <p id="paymentSuccessMessage" style="margin: 0 0 8px; color: #94a3b8; font-size: 0.875rem;">Tu pago ha sido registrado exitosamente.</p>
+                    <p id="paymentSuccessMessage" style="margin: 0 0 8px; color:rgba(255,255,255,0.7); font-size: 0.875rem;">Tu pago ha sido registrado exitosamente.</p>
                     <div id="paymentSuccessCode" style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin: 16px 0; font-family: monospace; font-size: 0.875rem; color: #f8fafc;"></div>
-                    <p style="margin: 0 0 20px; color: #94a3b8; font-size: 0.8rem;" id="paymentSuccessStatus">Estado: Esperando verificacion</p>
+                    <p style="margin: 0 0 20px; color:rgba(255,255,255,0.7); font-size: 0.8rem;" id="paymentSuccessStatus">Estado: Esperando verificacion</p>
                 </div>
 
             </div>
@@ -1298,10 +1613,10 @@
                 </button>
                 <div style="flex: 1;"></div>
                 <button type="button" id="paymentCancelBtn" data-action="grp-close-register-payment" style="padding: 10px 20px; background: rgba(255,255,255,0.1); color: #e2e8f0; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Cancelar</button>
-                <button type="button" id="paymentNextBtn" data-action="grp-payment-next" style="padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                <button type="button" id="paymentNextBtn" data-action="grp-payment-next" style="padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #22d55e 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                     Continuar →
                 </button>
-                <button type="button" id="paymentDoneBtn" data-action="grp-close-register-payment" style="display: none; padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                <button type="button" id="paymentDoneBtn" data-action="grp-close-register-payment" style="display: none; padding: 10px 24px; background: linear-gradient(135deg, #059669 0%, #22d55e 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
                     Cerrar
                 </button>
             </div>
@@ -1340,7 +1655,7 @@
                 <!-- Loading -->
                 <div id="membersLoading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
                     <div class="spinner" style="width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #8b5cf6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 16px; color: #94a3b8;">Cargando miembros...</p>
+                    <p style="margin-top: 16px; color:rgba(255,255,255,0.7);">Cargando miembros...</p>
                 </div>
 
                 <!-- Members List -->
@@ -1352,7 +1667,7 @@
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                     </svg>
-                    <p style="color: #94a3b8; margin: 0;">No hay miembros en este grupo</p>
+                    <p style="color:rgba(255,255,255,0.7); margin: 0;">No hay miembros en este grupo</p>
                 </div>
             </div>
         </div>
@@ -1470,8 +1785,8 @@
     <!-- Block 8 extracted to js/groups-system.js -->
     <!-- Block 9 extracted to js/groups-system.js -->
     <!-- Block 10 extracted to js/groups-system.js -->
-    <script defer src="js/hub/contextual-widgets.js?v=1775200000"></script>
-    <script defer src="js/hub/sidebar-widgets.js?v=1773561600"></script>
+    <script defer src="js/hub/contextual-widgets.js?v=20261019lot"></script>
+    <script defer src="js/hub/sidebar-widgets.js?v=20261019lot"></script>
 
     <!-- Mobile Drawer Overlay -->
     <div class="mobile-drawer-overlay" id="mobileDrawerOverlay" data-action="drawer-close"></div>
@@ -1483,7 +1798,7 @@
                 <div class="mobile-drawer-logo">
                     <img loading="lazy" src="images/latanda-icon.png" alt="La Tanda" class="logo-fallback">
                 </div>
-                <span class="mobile-drawer-title">La Tanda</span>
+                <span class="mobile-drawer-title" translate="no">La Tanda</span>
             </div>
             <button class="mobile-drawer-close" data-action="drawer-close">
                 <i class="fas fa-times"></i>
@@ -1509,13 +1824,12 @@
         <nav class="mobile-drawer-nav">
             <a href="perfil.html" class="mobile-drawer-item" id="drawerProfileLink"><i class="fas fa-user"></i><span>Perfil</span></a>
             <a href="my-wallet.html" class="mobile-drawer-item"><i class="fas fa-wallet"></i><span>Wallet</span></a>
-            <a href="/groups-advanced-system.html" class="mobile-drawer-item"><i class="fas fa-users"></i><span>Mis Tandas</span></a>
+            <a href="/groups-advanced-system.html" class="mobile-drawer-item"><i class="fas fa-users"></i><span>Grupos</span></a>
             <a href="/marketplace-social.html" class="mobile-drawer-item"><i class="fas fa-store"></i><span>Mercado</span></a>
             <a href="/mensajes.html" class="mobile-drawer-item"><i class="fas fa-envelope"></i><span>Mensajes</span></a>
             <div class="mobile-drawer-divider"></div>
             <div class="mobile-drawer-section-label">Herramientas</div>
-            <button type="button" class="mobile-drawer-item mia-trigger" data-action="drawer-mia"><i class="fas fa-robot" style="color:#00FFFF;"></i><span>MIA Assistant</span></button>
-            <a href="/lottery-predictor.html" class="mobile-drawer-item"><i class="fas fa-ticket-alt"></i><span>Loteria</span></a>
+            <a href="#" class="mobile-drawer-item mia-trigger" data-action="drawer-mia"><i class="fas fa-robot" style="color:#00d4ff;"></i><span><span translate="no">MIA</span> Assistant</span></a>
             <div class="mobile-drawer-divider"></div>
             <a href="/mi-perfil.html" class="mobile-drawer-item"><i class="fas fa-cog"></i><span>Configuracion</span></a>
             <a href="/help-center.html" class="mobile-drawer-item"><i class="fas fa-question-circle"></i><span>Ayuda</span></a>
@@ -1524,15 +1838,15 @@
         <div class="mobile-drawer-section-label">Tu Resumen</div>
         <div class="mobile-drawer-quick-stats" id="mobileDrawerQuickStats">
             <div class="drawer-stat-card">
-                <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #00FFFF, #00E5E5);"><i class="fas fa-robot"></i></div>
-                <div class="drawer-stat-info"><div class="drawer-stat-label">Balance</div><div class="drawer-stat-value" id="drawerBalance">0.00 LTD</div></div>
+                <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #00d4ff, #00E5E5);"><i class="fas fa-robot"></i></div>
+                <div class="drawer-stat-info"><div class="drawer-stat-label">Balance</div><div class="drawer-stat-value" id="drawerBalance" translate="no">0.00 LTD</div></div>
             </div>
             <div class="drawer-stat-card">
                 <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #22d55e, #16a34a);"><i class="fas fa-users"></i></div>
-                <div class="drawer-stat-info"><div class="drawer-stat-label">Tandas Activas</div><div class="drawer-stat-value" id="drawerTandas">0</div></div>
+                <div class="drawer-stat-info"><div class="drawer-stat-label"><span translate="no">Tandas</span> Activas</div><div class="drawer-stat-value" id="drawerTandas">0</div></div>
             </div>
             <div class="drawer-stat-card">
-                <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);"><i class="fas fa-store"></i></div>
+                <div class="drawer-stat-icon" style="background: linear-gradient(135deg, #fbbf24, #ffd700);"><i class="fas fa-store"></i></div>
                 <div class="drawer-stat-info"><div class="drawer-stat-label">Productos</div><div class="drawer-stat-value" id="drawerProducts">0</div></div>
             </div>
             <div class="drawer-stat-card">
@@ -1561,7 +1875,7 @@
         </a>
         <a href="/marketplace-social.html#mi-tienda" class="mobile-nav-item" data-action="goto-mi-tienda">
             <i class="fas fa-shopping-bag"></i>
-            <span>Mi Tienda</span>
+            <span>Mi Negocio</span>
         </a>
         <a href="/mi-perfil.html" class="mobile-nav-item">
             <i class="fas fa-user"></i>
@@ -1569,8 +1883,9 @@
         </a>
     </nav>
 
-    <script src="js/groups-system.min.js?v=1775761639"></script>
-    <script defer src="js/mobile-drawer.js?v=1769558148"></script>
+    <script src="i18next-implementation-backend.js?v=2.0"></script>
+    <script src="js/groups-system.min.js?v=20261103turnos"></script>
+    <script defer src="js/mobile-drawer.js?v=1784677001"></script>
     <script defer src="js/edge-swipe.js?v=1769558147"></script>
     <script>
     document.addEventListener('click', function(e) {
@@ -1585,183 +1900,713 @@
         }
     });
     </script>
-    <script src="js/components-loader.js?v=33.2"></script>
+    <script src="js/components-loader.js?v=20261025log"></script>
+    <script>
+    /* Deep-link: ?tab=create|tandas|groups opens that tab (used by home-dashboard simulator promo) */
+    (function() {
+        var t = new URLSearchParams(location.search).get('tab');
+        if (!t) return;
+        t = t.replace(/[^a-z-]/g, '');
+        function go() {
+            var b = document.querySelector('.groups-tab[data-tab="' + t + '"]');
+            if (b) b.click();
+            else if (window.switchTab) window.switchTab(t);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function() { setTimeout(go, 0); });
+        else setTimeout(go, 0);
+    })();
+    /* Deep-link: ?group=<id> opens that group's detail; ?pay=<id> opens the payment
+       modal. Used by the home-dashboard "Mis Tandas" widget and its ladder alerts.
+       ?manage=<id> (handled in groups-system.js) redirects to /gestionar/ and is
+       coordinator-only, so it is NOT the member path. */
+    (function() {
+        var q = new URLSearchParams(location.search);
+        var gid = q.get('group');
+        var pid = q.get('pay');
+        var target = gid || pid;
+        if (!target) return;
+        target = target.replace(/[^A-Za-z0-9_-]/g, '');
+        if (!target) return;
+        // slice 2 chat: ?group=<id>&tab=chat abre el detalle directo en el tab Chat (tiempo real).
+        if (gid && (q.get('tab') || '').toLowerCase() === 'chat') window._gcPendingChatOpen = target;
+        var tries = 0;
+        function go() {
+            var fn = pid ? window.openPaymentModal : window.viewGroup;
+            if (typeof fn === 'function') { fn(target); return; }
+            if (++tries < 40) setTimeout(go, 250);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function() { setTimeout(go, 300); });
+        else setTimeout(go, 300);
+    })();
+    </script>
 </body>
 <!-- Payment Modal — Tier 0 Rebuild (v4.25.13) -->
 <div id="paymentModal" class="ds-overlay" style="display:none;z-index:500;">
-    <div class="ds-modal" style="max-width:480px;padding:0;overflow:hidden;">
+    <div class="ds-modal pm-modal" style="max-width:480px;padding:0;">
         <!-- Header -->
-        <div style="padding:20px 24px;background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(16,185,129,0.05));border-bottom:1px solid rgba(34,197,94,0.2);display:flex;justify-content:space-between;align-items:center;">
-            <h3 style="color:#22c55e;font-size:1.1rem;margin:0;display:flex;align-items:center;gap:8px;">
-                <i class="fas fa-money-bill-wave"></i> Realizar Pago
+        <div class="pm-head" style="padding:20px 24px;background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(16,185,129,0.05));border-bottom:1px solid rgba(34,197,94,0.2);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="color:#22d55e;font-size:1.1rem;margin:0;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-money-bill-wave"></i> Registrar mi pago
             </h3>
-            <button onclick="closePaymentModal()" style="background:none;border:none;color:#94a3b8;font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
+            <button onclick="closePaymentModal()" aria-label="Cerrar" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.3rem;cursor:pointer;line-height:1;min-width:44px;min-height:44px;margin:-12px -12px -12px 0;">&times;</button>
         </div>
 
         <!-- Content -->
         <div id="paymentModalContent" style="padding:24px;">
-            <div style="text-align:center;padding:30px;color:#94a3b8;">
+            <div style="text-align:center;padding:30px;color:rgba(255,255,255,0.7);">
                 <i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i>
                 <p style="margin-top:8px;">Cargando datos de pago...</p>
             </div>
         </div>
 
         <!-- Footer (hidden until loaded) -->
-        <div id="paymentModalFooter" style="display:none;padding:16px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:10px;justify-content:flex-end;">
-            <button onclick="closePaymentModal()" style="padding:10px 20px;background:rgba(255,255,255,0.08);color:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.9rem;">Cancelar</button>
-            <button id="paymentModalPayBtn" onclick="payNow()" style="padding:10px 24px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-family:inherit;font-size:0.9rem;display:flex;align-items:center;gap:6px;">
-                <i class="fas fa-check"></i> Pagar Ahora
+        <div id="paymentModalFooter" style="display:none;padding:16px 24px;border-top:1px solid rgba(255,255,255,0.06);gap:10px;justify-content:flex-end;flex-wrap:nowrap;">
+            <button id="paymentModalCancelBtn" onclick="closePaymentModal()" style="min-height:44px;padding:10px 20px;background:rgba(255,255,255,0.08);color:#e2e8f0;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.9rem;">Cancelar</button>
+            <button id="paymentModalPayBtn" onclick="payNow()" style="min-height:44px;padding:10px 24px;background:linear-gradient(135deg,#22d55e,#16a34a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-family:inherit;font-size:0.9rem;display:flex;align-items:center;gap:6px;">
+                <i class="fas fa-check"></i> Avisar que ya pagué
             </button>
         </div>
     </div>
 </div>
 <script>
 // ============================================================
-// PAYMENT MODAL — Tier 0 Self-Contained (v4.25.13)
+// PAYMENT MODAL — "Registrar mi pago" (2026-11-02, libro contable)
+// El miembro DECLARA un pago que ya hizo por fuera (efectivo, transferencia, Tigo Money).
+// POST /api/tandas/pay -> queda 'awaiting_payment' hasta que el coordinador lo confirma
+// (backend #552). Se muestra el `message` real de la respuesta; nunca un éxito simulado.
+// Con my_payment_record_state === 'pending_confirmation' abre primero "Ver mi pago pendiente".
 // ============================================================
-var _paymentModalData = { tandaId: null, groupId: null, amount: 0 };
+var _paymentModalData = { tandaId: null, groupId: null, amount: 0, tanda: null };
+var _PM_METHODS = [
+    { v: 'cash', l: 'Efectivo' },
+    { v: 'bank_transfer', l: 'Transferencia' },
+    { v: 'tigo_money', l: 'Tigo Money' }
+];
+var _PM_HELP = 'Registrá el pago que ya hiciste. Tu coordinador/a lo confirma; hasta entonces no cuenta. La Tanda no mueve dinero.';
+
+// ------------------------------------------------------------
+// Comprobante (2026-11-03 [comprobante-pago]). Transferencia y Tigo Money: foto OBLIGATORIA.
+// Efectivo: opcional (puede no existir) y se recomienda la Nota. Se sube DESPUÉS de crear la
+// declaración (POST /api/contributions/:id/upload-proof, solo el dueño). Antes de subir se
+// achica en el teléfono (máx. 1600 px, JPEG) y el servidor la vuelve a codificar sin EXIF/GPS.
+// La imagen solo se pide con el token (fetch -> blob); nunca va en una URL pública.
+// ------------------------------------------------------------
+var _PM_PROOF_REQUIRED = { bank_transfer: true, tigo_money: true };
+var _PM_PROOF_PRIVACY = 'La ven solo vos y quienes coordinan este grupo, para confirmar tu pago. Se guarda con el registro de este pago mientras tengas tu cuenta.';
+// Qué mostrar y qué tapar (disclosure 🔴1). Texto fijo (sin datos del usuario).
+var _PM_PROOF_HELP_REQ = 'Subí una foto o captura donde se vean el <strong>monto, la fecha y el número de referencia</strong>. Antes de subirla, <strong>recortá o tapá tu saldo y el número de cuenta completo</strong>.';
+var _PM_PROOF_HELP_CASH = 'Si te dieron un recibo, subí una foto. Si no, contá en la Nota a quién y cuándo le pagaste.';
+var _PM_PROOF_MAX = 5 * 1024 * 1024;
+var _pmProofFile = null;
+var _pmProofObjUrl = null;
+var _pmViewObjUrl = null;
+var _PM_PROOF_URL_RE = /^\/api\/(proof\/[A-Za-z0-9._-]+|groups\/[A-Za-z0-9_-]+\/attachments\/[A-Za-z0-9_-]+\.jpg)$/;
+function _pmMethodLabel(v) { var m = _PM_METHODS.find(function(x) { return x.v === v; }); return m ? m.l : (v === 'mobile_money' ? 'Dinero móvil' : (v || 'Medio sin indicar')); }
+function _pmProofReset() {
+    _pmProofFile = null;
+    if (_pmProofObjUrl) { try { URL.revokeObjectURL(_pmProofObjUrl); } catch (e) {} _pmProofObjUrl = null; }
+}
+function _pmViewReset() {
+    if (_pmViewObjUrl) { try { URL.revokeObjectURL(_pmViewObjUrl); } catch (e) {} _pmViewObjUrl = null; }
+}
+function _pmToken() { return localStorage.getItem('auth_token') || localStorage.getItem('authToken') || ''; }
+
+// Achica la foto en el teléfono para que suba rápido y quede bajo 5 MB. Si el navegador no la
+// puede leer (p. ej. HEIC en algunos Android) y el original es liviano, se manda el original.
+function _pmCompressProof(file) {
+    return new Promise(function(resolve, reject) {
+        if (!file || !/^image\//i.test(file.type || 'image/')) { reject(new Error('Elegí una foto o captura (imagen).')); return; }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        var fallback = function() {
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            if (file.size <= _PM_PROOF_MAX && /^image\/(jpeg|png|webp)$/i.test(file.type || '')) resolve(file);
+            else reject(new Error('No pudimos leer esa foto. Probá con una captura de pantalla del comprobante.'));
+        };
+        img.onload = function() {
+            try {
+                var max = 1600, w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+                if (!w || !h) { fallback(); return; }
+                var s = Math.min(1, max / Math.max(w, h));
+                var c = document.createElement('canvas');
+                c.width = Math.round(w * s); c.height = Math.round(h * s);
+                var ctx = c.getContext('2d');
+                ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+                ctx.drawImage(img, 0, 0, c.width, c.height);
+                c.toBlob(function(b) {
+                    try { URL.revokeObjectURL(url); } catch (e) {}
+                    if (b && b.size > 0 && b.size <= _PM_PROOF_MAX) resolve(b);
+                    else if (file.size <= _PM_PROOF_MAX) resolve(file);
+                    else reject(new Error('La foto pesa más de 5 MB. Probá con una captura de pantalla.'));
+                }, 'image/jpeg', 0.82);
+            } catch (e) { fallback(); }
+        };
+        img.onerror = fallback;
+        img.src = url;
+    });
+}
+
+// Sube el comprobante de una declaración propia. Resuelve { ok, message }; nunca simula éxito.
+function _pmUploadProof(contributionId, file) {
+    return _pmCompressProof(file).then(function(blob) {
+        var fd = new FormData();
+        var type = (blob.type && /^image\//i.test(blob.type)) ? blob.type : 'image/jpeg';
+        var ext = type === 'image/png' ? '.png' : (type === 'image/webp' ? '.webp' : '.jpg');
+        fd.append('proof', new Blob([blob], { type: type }), 'comprobante' + ext);
+        return fetch('/api/contributions/' + encodeURIComponent(contributionId) + '/upload-proof', {
+            method: 'POST', headers: { 'Authorization': 'Bearer ' + _pmToken() }, body: fd
+        }).then(function(r) {
+            return r.json().catch(function() { return {}; }).then(function(data) {
+                if (r.ok && data && data.success) return { ok: true };
+                var m = (data && data.data && data.data.error && data.data.error.message) || (data && data.error && data.error.message) || '';
+                if (r.status === 401) m = 'Tu sesión se venció. Volvé a iniciar sesión y probá de nuevo.';
+                if (r.status === 413 && !m) m = 'La foto pesa más de 5 MB. Probá con una captura de pantalla.';
+                return { ok: false, message: m || ('No se pudo subir la foto (error ' + r.status + ').') };
+            });
+        }, function() { return { ok: false, message: 'Error de conexión.' }; });
+    }, function(err) { return { ok: false, message: (err && err.message) || 'No pudimos leer esa foto.' }; });
+}
+
+// Muestra un comprobante propio dentro del modal (fetch autenticado -> blob, sin caché).
+function _pmShowProof(src, box) {
+    if (!box) return;
+    if (!_PM_PROOF_URL_RE.test(String(src || ''))) { box.innerHTML = '<p style="color:#fca5a5;font-size:0.8rem;margin:6px 0 0;">Este comprobante tiene una dirección inválida.</p>'; return; }
+    box.innerHTML = '<p style="color:rgba(255,255,255,0.7);font-size:0.8rem;margin:6px 0 0;"><i class="fas fa-spinner fa-spin"></i> Cargando comprobante...</p>';
+    fetch(src, { headers: { 'Authorization': 'Bearer ' + _pmToken() }, cache: 'no-store' }).then(function(r) {
+        if (!r.ok) throw new Error(r.status === 401 ? 'Tu sesión se venció. Volvé a iniciar sesión para ver el comprobante.' : (r.status === 404 ? 'No encontramos el comprobante.' : 'No se pudo cargar el comprobante (error ' + r.status + ').'));
+        return r.blob();
+    }).then(function(b) {
+        _pmViewReset();
+        _pmViewObjUrl = URL.createObjectURL(b);
+        if ((b.type || '').toLowerCase() === 'application/pdf') {
+            box.innerHTML = '<a href="' + _pmViewObjUrl + '" target="_blank" rel="noopener" style="color:#67e8f9;font-size:0.82rem;">Abrir comprobante (PDF)</a>';
+        } else {
+            box.innerHTML = '<img src="' + _pmViewObjUrl + '" alt="Tu comprobante de pago" style="display:block;max-width:100%;max-height:260px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);">';
+        }
+    }).catch(function(e) {
+        box.innerHTML = '<p role="alert" style="color:#fca5a5;font-size:0.8rem;margin:6px 0 0;">' + _pmEsc((e && e.message) || 'No se pudo cargar el comprobante.') + '</p>';
+    });
+}
+
+// Campo "Foto del comprobante" del formulario (obligatorio/opcional según el medio).
+function _pmProofFieldHtml(ls) {
+    return '<div id="pmProofWrap" style="position:relative;margin-bottom:12px;">' +
+        '<span id="pmProofLabel" style="' + ls + '">Foto del comprobante <span id="pmProofReq" style="font-weight:400;color:rgba(255,255,255,0.6);"></span></span>' +
+        '<input id="pmProofInput" type="file" accept="image/*" aria-labelledby="pmProofLabel" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;">' +
+        '<div id="pmProofPreview" style="display:none;align-items:center;gap:10px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(34,213,94,.35);margin-bottom:6px;">' +
+            '<img id="pmProofImg" alt="Vista previa del comprobante" style="width:64px;height:64px;object-fit:cover;border-radius:6px;flex:0 0 auto;">' +
+            '<span id="pmProofImgFb" aria-hidden="true" style="display:none;width:64px;height:64px;border-radius:6px;flex:0 0 auto;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);color:#00d4ff;font-size:1.4rem;"><i class="fas fa-image"></i></span>' +
+            '<div style="min-width:0;flex:1;font-size:0.8rem;color:#dcfce7;"><i class="fas fa-check-circle" style="color:#22d55e;margin-right:4px;"></i>Foto lista</div>' +
+            '<button type="button" id="pmProofRemove" style="min-height:44px;padding:0 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.8rem;flex:0 0 auto;">Quitar</button>' +
+        '</div>' +
+        '<button type="button" id="pmProofPick" aria-describedby="pmProofErr pmProofHelp" style="width:100%;min-height:48px;padding:10px 12px;background:rgba(0,212,255,.06);border:1px dashed rgba(0,212,255,.45);color:#00d4ff;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.86rem;display:flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-camera" aria-hidden="true"></i><span id="pmProofPickTxt">Tomar o elegir foto</span></button>' +
+        '<div id="pmProofErr" role="alert" style="display:none;margin:6px 0 0;font-size:0.8rem;line-height:1.4;color:#fecaca;"></div>' +
+        '<p id="pmProofHelp" style="color:rgba(255,255,255,0.8);font-size:0.78rem;line-height:1.45;margin:6px 0 0;"><span id="pmProofHelpTxt">' + _PM_PROOF_HELP_REQ + '</span> <span style="color:rgba(255,255,255,0.65);">' + _PM_PROOF_PRIVACY + '</span></p>' +
+    '</div>';
+}
+function _pmSyncProofField() {
+    var sel = document.querySelector('input[name="payMethod"]:checked');
+    var req = !!(sel && _PM_PROOF_REQUIRED[sel.value]);
+    var reqEl = document.getElementById('pmProofReq');
+    var note = document.getElementById('pmNote');
+    var noteOpt = document.getElementById('pmNoteOpt');
+    if (reqEl) { reqEl.textContent = req ? '(obligatoria)' : '(opcional en efectivo)'; reqEl.style.color = req ? '#fcd34d' : 'rgba(255,255,255,0.6)'; reqEl.style.fontWeight = req ? '600' : '400'; }
+    var helpEl = document.getElementById('pmProofHelpTxt');
+    if (helpEl) helpEl.innerHTML = req ? _PM_PROOF_HELP_REQ : _PM_PROOF_HELP_CASH;
+    if (!req) _pmProofErrHide();
+    if (note) note.placeholder = req ? 'Ej.: transferí desde la cuenta de mi esposo' : 'Ej.: se lo di en mano a la coordinadora el lunes';
+    if (noteOpt) noteOpt.textContent = req ? '(opcional)' : '(recomendada)';
+}
+// Error "sin foto" junto al botón (A1): role=alert, texto #fecaca, borde #ef4444 en el botón.
+// #pmError queda solo de respaldo (si el campo no existe).
+function _pmProofErrShow(msg) {
+    var el = document.getElementById('pmProofErr');
+    var pick = document.getElementById('pmProofPick');
+    if (!el) { _pmShowError(msg); return; }
+    el.innerHTML = '<i class="fas fa-exclamation-circle" aria-hidden="true" style="margin-right:5px;color:#ef4444;"></i>' + _pmEsc(msg);
+    el.style.display = 'block';
+    if (pick) { pick.style.border = '1px solid #ef4444'; pick.setAttribute('aria-invalid', 'true'); }
+    var gen = document.getElementById('pmError');
+    if (gen) gen.style.display = 'none';
+}
+function _pmProofErrHide() {
+    var el = document.getElementById('pmProofErr');
+    var pick = document.getElementById('pmProofPick');
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+    if (pick) { pick.style.border = '1px dashed rgba(0,212,255,.45)'; pick.removeAttribute('aria-invalid'); }
+}
+function _pmBindProofField() {
+    var input = document.getElementById('pmProofInput');
+    var pick = document.getElementById('pmProofPick');
+    var prev = document.getElementById('pmProofPreview');
+    var img = document.getElementById('pmProofImg');
+    var rm = document.getElementById('pmProofRemove');
+    var txt = document.getElementById('pmProofPickTxt');
+    if (!input || !pick) return;
+    pick.onclick = function() { input.click(); };
+    input.onchange = function() {
+        var f = input.files && input.files[0];
+        if (!f) return;
+        if (f.type && !/^image\//i.test(f.type)) { _pmProofErrShow('Elegí una foto o captura (imagen).'); input.value = ''; return; }
+        _pmProofReset();
+        _pmProofFile = f;
+        try { _pmProofObjUrl = URL.createObjectURL(f); if (img) img.src = _pmProofObjUrl; } catch (e) {}
+        if (prev) prev.style.display = 'flex';
+        if (img) img.style.display = '';
+        var fb0 = document.getElementById('pmProofImgFb');
+        if (fb0) fb0.style.display = 'none';
+        if (txt) txt.textContent = 'Cambiar foto';
+        _pmProofErrHide();
+        var errEl = document.getElementById('pmError');
+        if (errEl) errEl.style.display = 'none';
+    };
+    // B4: si el navegador no puede dibujar la miniatura (p. ej. HEIC), ícono de imagen de respaldo.
+    if (img) img.onerror = function() { img.style.display = 'none'; var fb = document.getElementById('pmProofImgFb'); if (fb) fb.style.display = 'flex'; };
+    if (rm) rm.onclick = function() {
+        _pmProofReset();
+        input.value = '';
+        if (prev) prev.style.display = 'none';
+        if (img) { img.removeAttribute('src'); img.style.display = ''; }
+        var fb1 = document.getElementById('pmProofImgFb');
+        if (fb1) fb1.style.display = 'none';
+        if (txt) txt.textContent = 'Tomar o elegir foto';
+    };
+    document.querySelectorAll('input[name="payMethod"]').forEach(function(r) { r.addEventListener('change', _pmSyncProofField); });
+    _pmSyncProofField();
+}
+
+function _pmEsc(s) { return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function _pmToday() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function _pmMoney(a) { return 'L. ' + (parseFloat(a) || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function _pmDate(s) { if (!s) return ''; var d = new Date(String(s).split('T')[0] + 'T12:00:00'); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }); }
+function _pmRecState(t) {
+    if (window._gsPayPhase && typeof window._gsPayPhase.tandaRecordState === 'function') return window._gsPayPhase.tandaRecordState(t);
+    return t && t.my_payment_record_state ? t.my_payment_record_state : 'not_recorded';
+}
+function _pmFooter(mode) {
+    var footer = document.getElementById('paymentModalFooter');
+    var payBtn = document.getElementById('paymentModalPayBtn');
+    var cancel = document.getElementById('paymentModalCancelBtn');
+    if (!footer) return;
+    if (mode === 'hidden') { footer.style.display = 'none'; return; }
+    footer.style.display = 'flex';
+    if (cancel) cancel.textContent = mode === 'form' ? 'Cancelar' : 'Cerrar';
+    if (payBtn) {
+        payBtn.style.display = mode === 'form' ? '' : 'none';
+        payBtn.disabled = false;
+        payBtn.innerHTML = '<i class="fas fa-check"></i> Avisar que ya pagué';
+    }
+}
+function _pmSummary(t) {
+    var groupName = t.group_name || t.name || 'Tanda';
+    var amount = parseFloat(t.contribution_amount || 0) * (parseInt(t.num_positions, 10) || 1);
+    var due = _pmDate(t.next_payment_date);
+    var coord = t.coordinator_name || '';
+    return '<div class="pm-summary" style="background:rgba(0,255,255,0.04);border-radius:10px;padding:12px 14px;margin-bottom:14px;">' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.7);">Grupo</span><strong style="color:#fff;text-align:right;" translate="no">' + _pmEsc(groupName) + '</strong></div>' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;' + (due || coord ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '') + '"><span style="color:rgba(255,255,255,0.7);">Cuota del ciclo</span><strong style="color:#22d55e;">' + _pmMoney(amount) + '</strong></div>' +
+        (due ? '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;' + (coord ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '') + '"><span style="color:rgba(255,255,255,0.7);">Vence el</span><strong style="color:#fff;">' + _pmEsc(due) + '</strong></div>' : '') +
+        (coord ? '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;"><span style="color:rgba(255,255,255,0.7);">Coordinador/a</span><strong style="color:#fff;text-align:right;" translate="no">' + _pmEsc(coord) + '</strong></div>' : '') +
+        '</div>';
+}
 
 function closePaymentModal() {
     var m = document.getElementById('paymentModal');
-    if (m) { m.style.display = 'none'; }
+    if (m) { m.classList.remove('active'); m.style.display = 'none'; }
     document.body.style.overflow = '';
+    _pmPushBanner(false);
+    _pmProofReset();
+    _pmViewReset();
+}
+
+// B2 (2026-11-02): el aviso de notificaciones (#pushBanner) se oculta mientras el modal está
+// abierto. El CSS (body:has(.ds-overlay.active)) ya lo cubre; esto es respaldo para
+// navegadores sin :has().
+function _pmPushBanner(hide) {
+    var tc = document.getElementById('toastContainer');
+    if (tc) tc.style.visibility = hide ? 'hidden' : '';
+    var pb = document.getElementById('pushBanner');
+    if (!pb) return;
+    if (hide) { pb.setAttribute('data-pm-hidden', '1'); pb.style.display = 'none'; }
+    else if (pb.getAttribute('data-pm-hidden')) { pb.removeAttribute('data-pm-hidden'); pb.style.display = ''; }
+}
+
+// Teclado (2026-11-02): al enfocar un campo del modal, centrarlo en el área visible del
+// cuerpo con scroll (el pie con "Avisar que ya pagué" queda fijo, fuera del scroll).
+// Se repite cuando el teclado termina de abrir (visualViewport resize).
+var _pmFocusTimer = null;
+function _pmCenterField(el) {
+    if (!el || !el.scrollIntoView) return;
+    try { el.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch (e) { el.scrollIntoView(); }
+}
+(function() {
+    var content = document.getElementById('paymentModalContent');
+    if (!content) return;
+    content.addEventListener('focusin', function(ev) {
+        var el = ev.target;
+        if (!el || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+        if (el.type === 'radio' || el.type === 'checkbox') return;
+        clearTimeout(_pmFocusTimer);
+        _pmFocusTimer = setTimeout(function() { _pmCenterField(el); }, 250);
+    });
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', function() {
+            var m = document.getElementById('paymentModal');
+            var a = document.activeElement;
+            if (!m || !m.classList.contains('active') || !a || !content.contains(a)) return;
+            clearTimeout(_pmFocusTimer);
+            _pmFocusTimer = setTimeout(function() { _pmCenterField(a); }, 100);
+        });
+    }
+})();
+
+function _pmRenderPending(t) {
+    var content = document.getElementById('paymentModalContent');
+    var amt = parseFloat(t.my_pending_confirmation_amount) || 0;
+    var n = parseInt(t.my_pending_confirmation_count, 10) || 0;
+    content.innerHTML = _pmSummary(t) +
+        '<div id="pmPendingView" role="status" style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:rgba(56,189,248,0.10);border:1px solid rgba(56,189,248,0.35);margin-bottom:12px;">' +
+            '<i class="fas fa-hourglass-half" aria-hidden="true" style="color:#7dd3fc;margin-top:3px;"></i>' +
+            '<div style="min-width:0;"><div style="font-weight:700;color:#e0f2fe;font-size:0.92rem;">Pendiente de confirmar' + (amt > 0 ? ' · ' + _pmEsc(_pmMoney(amt)) : '') + '</div>' +
+            '<div style="font-size:0.8rem;color:rgba(255,255,255,0.78);margin-top:4px;line-height:1.45;">' + (n > 1 ? 'Registraste ' + n + ' pagos que' : 'Registraste un pago que') + ' tu coordinador/a todavía no confirmó. Hasta que lo confirme, no cuenta. La Tanda no mueve dinero.</div></div>' +
+        '</div>' +
+        _pmPendingListHtml(t) +
+        '<button type="button" id="pmRegisterAnother" style="min-height:44px;width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.85rem;"><i class="fas fa-plus" style="margin-right:6px;"></i>Registrar otro pago</button>';
+    var again = document.getElementById('pmRegisterAnother');
+    if (again) again.onclick = function() { _pmRenderForm(t); };
+    _pmBindPendingList(t);
+    _pmFooter('info');
+}
+
+// 2026-11-03: la tanda está activa pero todavía no tiene orden de turnos (needs_draw de
+// my-tandas o TURNS_NOT_DRAWN del API). Explica qué falta; el coordinador/a puede sortear
+// desde acá (POST lottery-assign; el API solo lo permite si no se movió dinero). Se muestra el
+// resultado real del API, nunca un éxito simulado.
+function _pmRenderNeedsDraw(t, apiMsg) {
+    var content = document.getElementById('paymentModalContent');
+    var isCoord = !!(t && t.is_coordinator);
+    content.innerHTML = _pmSummary(t) +
+        '<div id="pmNeedsDraw" role="status" style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:rgba(251,191,36,0.10);border:1px solid rgba(251,191,36,0.35);margin-bottom:12px;">' +
+            '<i class="fas fa-random" aria-hidden="true" style="color:#fbbf24;margin-top:3px;"></i>' +
+            '<div style="min-width:0;"><div style="font-weight:700;color:#fef3c7;font-size:0.92rem;">Falta sortear los turnos</div>' +
+            '<div style="font-size:0.8rem;color:rgba(255,255,255,0.8);margin-top:4px;line-height:1.45;">' +
+                (isCoord ? 'Este grupo está activo pero todavía no tiene orden de turnos. Corré la tómbola para asignar los turnos; después todos pueden registrar sus pagos.'
+                         : 'El coordinador/a tiene que correr la tómbola para asignar los turnos. Después vas a poder registrar tu pago.') +
+            '</div></div>' +
+        '</div>' +
+        '<div id="pmError" role="alert" style="display:none;margin:0 0 10px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#fecaca;font-size:0.82rem;"></div>' +
+        (isCoord ? '<button type="button" id="pmRunDraw" style="min-height:44px;width:100%;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.88rem;"><i class="fas fa-random" style="margin-right:6px;"></i>Sortear los turnos ahora</button>' : '');
+    _pmFooter('info');
+    var run = document.getElementById('pmRunDraw');
+    if (run) run.onclick = function() { _pmRunDraw(run); };
+}
+
+function _pmRunDraw(btn) {
+    var gid = _paymentModalData.groupId;
+    if (!gid) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sorteando...';
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+    fetch('/api/groups/' + encodeURIComponent(gid) + '/lottery-assign', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ group_id: gid })
+    })
+    .then(function(r) { return r.json().catch(function() { return { success: false }; }); })
+    .then(function(data) {
+        if (data && data.success) {
+            if (typeof showToast === 'function') showToast('Turnos sorteados. Ya se pueden registrar pagos.', 'success');
+            window._gsMyTandasCache = null;
+            if (typeof loadMyGroups === 'function') loadMyGroups();
+            if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.refreshTandas === 'function') window.advancedGroupsSystem.refreshTandas();
+            openPaymentModal(gid);
+        } else {
+            var e = (data && data.data && data.data.error) || (data && data.error) || {};
+            _pmShowError(e.message || 'No se pudo sortear los turnos. Probá desde Gestionar → Turnos.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-redo" style="margin-right:6px;"></i>Reintentar el sorteo';
+        }
+    })
+    .catch(function() {
+        _pmShowError('Error de conexión: no se sorteó nada. Revisá tu internet y probá de nuevo.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-redo" style="margin-right:6px;"></i>Reintentar el sorteo';
+    });
+}
+
+// 2026-11-03 [comprobante-pago]: cada pago pendiente con su comprobante (ver el propio) o,
+// si falta, la opción de agregarlo. Datos de my_pending_declarations (solo del usuario).
+function _pmPendingListHtml(t) {
+    var items = Array.isArray(t.my_pending_declarations) ? t.my_pending_declarations : [];
+    if (!items.length) return '';
+    var h = '<div id="pmPendingList" style="margin-bottom:12px;">';
+    items.forEach(function(it, i) {
+        var req = !!_PM_PROOF_REQUIRED[it.payment_method];
+        h += '<div class="pm-pend-item" style="position:relative;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);margin-bottom:8px;">';
+        h += '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:0.84rem;color:#f8fafc;"><strong>' + _pmEsc(_pmMoney(it.amount)) + '</strong><span style="color:rgba(255,255,255,0.7);">' + _pmEsc(_pmMethodLabel(it.payment_method)) + (it.created_at ? ' · avisaste el ' + _pmEsc(_pmDate(it.created_at)) : '') + '</span></div>';
+        if (it.has_proof && it.proof_url) {
+            h += '<button type="button" class="pm-proof-view" data-i="' + i + '" style="min-height:44px;padding:0;background:none;border:none;color:#67e8f9;cursor:pointer;font-family:inherit;font-size:0.82rem;"><i class="fas fa-image" style="margin-right:5px;"></i>Ver mi comprobante</button>';
+            h += '<div class="pm-proof-box" data-i="' + i + '"></div>';
+        } else {
+            h += '<div style="font-size:0.78rem;margin-top:6px;color:' + (req ? '#fcd34d' : 'rgba(255,255,255,0.65)') + ';">' + (req ? '<i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Sin comprobante: tu coordinador/a lo necesita para confirmar.' : 'Sin comprobante (en efectivo es opcional).') + '</div>';
+            h += '<input type="file" accept="image/*" class="pm-proof-add-input" data-i="' + i + '" aria-label="Foto del comprobante" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none;">';
+            h += '<button type="button" class="pm-proof-add" data-i="' + i + '" style="margin-top:6px;width:100%;min-height:44px;padding:8px 12px;background:rgba(0,212,255,.06);border:1px dashed rgba(0,212,255,.45);color:#00d4ff;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.82rem;"><i class="fas fa-camera" style="margin-right:6px;"></i>Agregar foto del comprobante</button>';
+            h += '<div class="pm-proof-msg" data-i="' + i + '" role="status" style="font-size:0.78rem;margin-top:6px;"></div>';
+        }
+        h += '</div>';
+    });
+    h += '<p style="color:rgba(255,255,255,0.6);font-size:0.74rem;line-height:1.45;margin:0;">' + _PM_PROOF_PRIVACY + '</p>';
+    return h + '</div>';
+}
+function _pmBindPendingList(t) {
+    var items = Array.isArray(t.my_pending_declarations) ? t.my_pending_declarations : [];
+    var root = document.getElementById('pmPendingList');
+    if (!root) return;
+    root.querySelectorAll('.pm-proof-view').forEach(function(btn) {
+        btn.onclick = function() {
+            var it = items[parseInt(btn.getAttribute('data-i'), 10)];
+            var box = root.querySelector('.pm-proof-box[data-i="' + btn.getAttribute('data-i') + '"]');
+            if (it) _pmShowProof(it.proof_url, box);
+        };
+    });
+    root.querySelectorAll('.pm-proof-add').forEach(function(btn) {
+        var i = btn.getAttribute('data-i');
+        var input = root.querySelector('.pm-proof-add-input[data-i="' + i + '"]');
+        var msg = root.querySelector('.pm-proof-msg[data-i="' + i + '"]');
+        var it = items[parseInt(i, 10)];
+        if (!input || !it) return;
+        btn.onclick = function() { input.click(); };
+        input.onchange = function() {
+            var f = input.files && input.files[0];
+            if (!f) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>Subiendo foto...';
+            if (msg) { msg.textContent = ''; msg.style.color = ''; }
+            _pmUploadProof(it.id, f).then(function(res) {
+                input.value = '';
+                if (res.ok) {
+                    if (msg) { msg.textContent = 'Listo: tu coordinador/a ya puede ver el comprobante.'; msg.style.color = '#86efac'; }
+                    btn.style.display = 'none';
+                    window._gsMyTandasCache = null;
+                    setTimeout(function() { if (_paymentModalData.groupId) openPaymentModal(_paymentModalData.groupId); }, 900);
+                } else {
+                    if (msg) { msg.textContent = res.message; msg.style.color = '#fecaca'; msg.setAttribute('role', 'alert'); }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-redo" style="margin-right:6px;"></i>Reintentar subir foto';
+                }
+            });
+        };
+    });
+}
+
+function _pmRenderPaid(t) {
+    var content = document.getElementById('paymentModalContent');
+    content.innerHTML = _pmSummary(t) +
+        '<div role="status" style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:rgba(34,197,94,0.10);border:1px solid rgba(34,197,94,0.35);margin-bottom:12px;">' +
+            '<i class="fas fa-check-circle" aria-hidden="true" style="color:#22d55e;margin-top:3px;"></i>' +
+            '<div style="font-size:0.85rem;color:#dcfce7;line-height:1.45;">Tu pago de este ciclo ya está confirmado por tu coordinador/a.</div>' +
+        '</div>' +
+        '<button type="button" id="pmRegisterAnother" style="min-height:44px;width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#e2e8f0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.85rem;"><i class="fas fa-forward" style="margin-right:6px;"></i>Registrar un pago adelantado</button>';
+    var again = document.getElementById('pmRegisterAnother');
+    if (again) again.onclick = function() { _pmRenderForm(t); };
+    _pmFooter('info');
+}
+
+function _pmRenderForm(t) {
+    var content = document.getElementById('paymentModalContent');
+    var amount = parseFloat(t.contribution_amount || 0) * (parseInt(t.num_positions, 10) || 1);
+    var today = _pmToday();
+    var fs = 'width:100%;box-sizing:border-box;min-height:44px;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#f8fafc;font-family:inherit;font-size:0.9rem;';
+    var ls = 'display:block;font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.85);margin:0 0 6px;';
+    var methods = _PM_METHODS.map(function(m, i) {
+        return '<label class="pm-method" style="min-width:0;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:0 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:8px;cursor:pointer;font-size:0.84rem;color:#e2e8f0;">' +
+            '<input type="radio" name="payMethod" value="' + m.v + '"' + (i === 0 ? ' checked' : '') + ' style="accent-color:#22d55e;margin:0;">' + m.l + '</label>';
+    }).join('');
+    content.innerHTML = _pmSummary(t) +
+        '<p id="pmHelp" style="color:rgba(255,255,255,0.8);font-size:0.82rem;line-height:1.45;margin:0 0 14px;">' + _PM_HELP + '</p>' +
+        '<form id="pmForm" novalidate onsubmit="event.preventDefault();payNow();">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+                '<div><label for="pmAmount" style="' + ls + '">¿Cuánto pagaste? (L.)</label><input id="pmAmount" type="number" inputmode="decimal" min="1" step="0.01" value="' + (amount > 0 ? amount : '') + '" style="' + fs + '"></div>' +
+                '<div><label for="pmDate" style="' + ls + '">¿Cuándo?</label><input id="pmDate" type="date" max="' + today + '" value="' + today + '" style="' + fs + 'color-scheme:dark;"></div>' +
+            '</div>' +
+            '<div role="radiogroup" aria-label="¿Cómo pagaste?" style="margin-bottom:12px;"><span style="' + ls + '">¿Cómo pagaste?</span><div class="pm-methods" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;">' + methods + '</div></div>' +
+            _pmProofFieldHtml(ls) +
+            '<div style="margin-bottom:10px;"><label for="pmRef" style="' + ls + '">Referencia <span style="font-weight:400;color:rgba(255,255,255,0.6);">(opcional)</span></label><input id="pmRef" type="text" maxlength="100" autocomplete="off" placeholder="N.º de transferencia o recibo" style="' + fs + '"></div>' +
+            '<div style="margin-bottom:6px;"><label for="pmNote" style="' + ls + '">Nota <span id="pmNoteOpt" style="font-weight:400;color:rgba(255,255,255,0.6);">(opcional)</span></label><textarea id="pmNote" maxlength="300" rows="2" placeholder="Ej.: se lo di en la reunión" style="' + fs + 'resize:vertical;"></textarea></div>' +
+            '<div id="pmError" role="alert" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#fecaca;font-size:0.82rem;"></div>' +
+        '</form>';
+    _pmProofReset();
+    _pmBindProofField();
+    _pmFooter('form');
+}
+
+// Resultado tras declarar (y, si había foto, subirla). Si la foto falló, se dice claro y se
+// puede reintentar solo la foto (la declaración ya existe: no se duplica).
+function _pmRenderResult(info) {
+    var content = document.getElementById('paymentModalContent');
+    var proofLine = '';
+    if (info.proof === 'ok') {
+        proofLine = '<p style="color:#86efac;font-size:0.84rem;margin:8px 0 0;"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Comprobante enviado. Tu coordinador/a lo revisa antes de confirmar.</p>';
+    } else if (info.proof === 'failed') {
+        proofLine = '<div id="pmProofFail" role="alert" style="text-align:left;margin:12px 0 0;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#fecaca;font-size:0.82rem;line-height:1.45;">' +
+            '<strong>Tu aviso de pago quedó guardado, pero la foto NO se subió.</strong> ' + _pmEsc(info.proofError || '') +
+            (info.required ? ' Tu coordinador/a la necesita para confirmar.' : '') + ' Probá de nuevo ahora o más tarde en «Ver mi pago pendiente».</div>' +
+            (!info.contributionId ? '' : '<button type="button" id="pmProofRetry" style="margin-top:10px;width:100%;min-height:48px;padding:10px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.45);color:#00d4ff;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.86rem;font-weight:600;"><i class="fas fa-redo" style="margin-right:6px;"></i>Reintentar subir foto</button>');
+    }
+    content.innerHTML = '<div id="pmResult" role="status" style="text-align:center;padding:22px 8px;">' +
+        '<i class="fas fa-hourglass-half" style="font-size:2.4rem;color:#7dd3fc;"></i>' +
+        '<p style="color:#e0f2fe;font-size:1.02rem;font-weight:700;margin:12px 0 6px;">Pendiente de confirmar</p>' +
+        '<p style="color:rgba(255,255,255,0.85);font-size:0.86rem;line-height:1.5;margin:0 0 6px;">' + _pmEsc(info.msg) + '</p>' +
+        '<p style="color:rgba(255,255,255,0.6);font-size:0.78rem;margin:0;">' + _pmEsc(info.methodLabel) + ' · ' + _pmEsc(_pmMoney(info.amount)) + (info.paidDate ? ' · ' + _pmEsc(_pmDate(info.paidDate)) : '') + '</p>' +
+        proofLine +
+        '</div>';
+    _pmFooter('info');
+    var retry = document.getElementById('pmProofRetry');
+    if (retry) retry.onclick = function() {
+        if (!_pmProofFile || !info.contributionId) return;
+        retry.disabled = true;
+        retry.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i>Subiendo foto...';
+        _pmUploadProof(info.contributionId, _pmProofFile).then(function(res) {
+            info.proof = res.ok ? 'ok' : 'failed';
+            info.proofError = res.ok ? '' : res.message;
+            _pmRenderResult(info);
+        });
+    };
 }
 
 function openPaymentModal(groupId) {
     var modal = document.getElementById('paymentModal');
     var content = document.getElementById('paymentModalContent');
-    var footer = document.getElementById('paymentModalFooter');
     if (!modal || !content) return;
 
-    // Show with loading
+    // .active is REQUIRED: #paymentModal is a .ds-overlay and css/components.css holds
+    // .ds-overlay at opacity:0/visibility:hidden without it.
     modal.style.display = 'flex';
+    modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    footer.style.display = 'none';
-    content.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><p style="margin-top:8px;">Cargando datos de pago...</p></div>';
+    _pmPushBanner(true);
+    _pmFooter('hidden');
+    content.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.7);"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;"></i><p style="margin-top:8px;">Cargando datos de pago...</p></div>';
 
     var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
     var headers = token ? { 'Authorization': 'Bearer ' + token } : {};
 
-    // Load tanda + wallet in parallel
-    Promise.all([
-        fetch('/api/tandas/my-tandas', { headers: headers }).then(function(r) { return r.json(); }),
-        fetch('/api/wallet/balance', { headers: headers }).then(function(r) { return r.json(); }).catch(function() { return { success: true, data: { balance: 0 } }; })
-    ]).then(function(results) {
-        var tandaRes = results[0];
-        var walletRes = results[1];
-
-        if (!tandaRes.success) {
-            content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>Error cargando datos</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+    fetch('/api/tandas/my-tandas', { headers: headers, cache: 'no-store' }).then(function(r) { return r.json(); }).then(function(tandaRes) {
+        if (!tandaRes || !tandaRes.success) {
+            content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>No pudimos cargar tus datos de pago. Probá de nuevo.</p></div>';
+            _pmFooter('info');
             return;
         }
-
         var tandas = tandaRes.data.tandas || tandaRes.data || [];
-        // Cache for future use
         window.tandasData = tandas;
+        window._gsMyTandasCache = { ts: Date.now(), list: tandas };
 
-        var tanda = tandas.find(function(t) { return t.group_id === groupId && (t.status === 'active' || t.status === 'collecting'); });
+        var tanda = tandas.find(function(t) { return t.group_id === groupId && (t.status === 'active' || t.status === 'collecting' || t.status === 'waiting-turn' || t.status === 'paused'); });
         if (!tanda) {
-            content.innerHTML = '<div style="text-align:center;padding:30px;color:#f59e0b;"><i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i><p>No hay tanda activa para este grupo</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+            content.innerHTML = '<div style="text-align:center;padding:30px;color:#ffd700;"><i class="fas fa-exclamation-triangle" style="font-size:1.5rem;"></i><p>Este grupo todavía no tiene una tanda activa: no hay pagos que registrar.</p></div>';
+            _pmFooter('info');
             return;
         }
-
-        var amount = parseFloat(tanda.contribution_amount || 0);
-        var balance = parseFloat(walletRes.data?.balance || walletRes.data?.balances?.available_usd || 0);
-        var beneficiary = tanda.collecting_member || 'Por definir';
-        if (typeof beneficiary === 'object') beneficiary = beneficiary.name || 'Participante';
-        var dueDate = tanda.next_payment_date ? new Date(tanda.next_payment_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sin fecha';
-        var groupName = tanda.group_name || tanda.name || 'Tanda';
-        var insufficientWallet = balance < amount;
-
-        _paymentModalData = { tandaId: tanda.tanda_id, groupId: groupId, amount: amount };
-
-        content.innerHTML =
-            '<div style="background:rgba(0,255,255,0.04);border-radius:10px;padding:16px;margin-bottom:16px;">' +
-                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Tanda</span><strong style="color:#fff;">' + escapeHtml(groupName) + '</strong></div>' +
-                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Monto</span><strong style="color:#22c55e;">L. ' + amount.toLocaleString('es-HN', {minimumFractionDigits:2}) + '</strong></div>' +
-                '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#94a3b8;">Beneficiario</span><strong style="color:#fff;">' + escapeHtml(beneficiary) + '</strong></div>' +
-                '<div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="color:#94a3b8;">Fecha limite</span><strong style="color:#fff;">' + dueDate + '</strong></div>' +
-            '</div>' +
-            '<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">' +
-                '<i class="fas fa-wallet" style="color:#22c55e;"></i>' +
-                '<span style="color:#e2e8f0;font-size:0.9rem;">Saldo disponible: <strong>L. ' + balance.toLocaleString('es-HN', {minimumFractionDigits:2}) + '</strong></span>' +
-                (insufficientWallet ? '<span style="color:#f59e0b;font-size:0.75rem;margin-left:auto;">Fondos insuficientes para wallet</span>' : '') +
-            '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:8px;">' +
-                '<label style="display:flex;align-items:center;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;">' +
-                    '<input type="radio" name="payMethod" value="wallet" ' + (insufficientWallet ? '' : 'checked') + ' style="margin-right:10px;accent-color:#22c55e;"' + (insufficientWallet ? ' disabled' : '') + '>' +
-                    '<span style="color:' + (insufficientWallet ? '#64748b' : '#e2e8f0') + ';">Billetera La Tanda</span>' +
-                '</label>' +
-                '<label style="display:flex;align-items:center;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;">' +
-                    '<input type="radio" name="payMethod" value="bank_transfer" ' + (insufficientWallet ? 'checked' : '') + ' style="margin-right:10px;accent-color:#22c55e;">' +
-                    '<span style="color:#e2e8f0;">Transferencia Bancaria</span>' +
-                '</label>' +
-            '</div>';
-
-        footer.style.display = 'flex';
-        var payBtn = document.getElementById('paymentModalPayBtn');
-        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-check"></i> Pagar Ahora'; }
-
-    }).catch(function(err) {
-        content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>Error de conexion</p><button onclick="closePaymentModal()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,0.1);color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button></div>';
+        _paymentModalData = { tandaId: tanda.tanda_id, groupId: groupId, amount: parseFloat(tanda.contribution_amount || 0), tanda: tanda };
+        var rec = _pmRecState(tanda);
+        // 2026-11-03: tanda activa SIN orden de turnos -> no hay pago que registrar todavía.
+        if (tanda.needs_draw === true) _pmRenderNeedsDraw(tanda, '');
+        else if (rec === 'pending_confirmation') _pmRenderPending(tanda);
+        else if (rec === 'paid') _pmRenderPaid(tanda);
+        else _pmRenderForm(tanda);
+    }).catch(function() {
+        content.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;"><i class="fas fa-times-circle" style="font-size:1.5rem;"></i><p>Error de conexión. Revisá tu internet y probá de nuevo.</p></div>';
+        _pmFooter('info');
     });
+}
+
+function _pmShowError(msg) {
+    var el = document.getElementById('pmError');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+    else if (typeof showToast === 'function') showToast(msg, 'error');
 }
 
 function payNow() {
     var content = document.getElementById('paymentModalContent');
-    var footer = document.getElementById('paymentModalFooter');
     var payBtn = document.getElementById('paymentModalPayBtn');
     var selected = document.querySelector('input[name="payMethod"]:checked');
+    var amtEl = document.getElementById('pmAmount');
+    var dateEl = document.getElementById('pmDate');
+    var refEl = document.getElementById('pmRef');
+    var noteEl = document.getElementById('pmNote');
+    var errEl = document.getElementById('pmError');
+    if (errEl) errEl.style.display = 'none';
 
-    if (!selected) {
-        if (typeof showToast === 'function') showToast('Selecciona un metodo de pago', 'warning');
+    if (!_paymentModalData.tandaId) { _pmShowError('No encontramos la tanda de este grupo. Cerrá y probá de nuevo.'); return; }
+    var amount = amtEl ? parseFloat(String(amtEl.value || '').replace(',', '.')) : NaN;
+    if (!isFinite(amount) || amount <= 0) { _pmShowError('Escribí cuánto pagaste.'); if (amtEl) amtEl.focus(); return; }
+    if (!selected) { _pmShowError('Elegí cómo pagaste.'); return; }
+    var paidDate = dateEl ? String(dateEl.value || '') : '';
+    if (paidDate && paidDate > _pmToday()) { _pmShowError('La fecha del pago no puede ser futura.'); if (dateEl) dateEl.focus(); return; }
+    var proofRequired = !!_PM_PROOF_REQUIRED[selected.value];
+    if (proofRequired && !_pmProofFile) {
+        _pmProofErrShow('Con ' + ((_PM_METHODS.find(function(m) { return m.v === selected.value; }) || {}).l || 'este medio') + ' tenés que subir la foto o captura del comprobante.');
+        var pickEl = document.getElementById('pmProofPick');
+        if (pickEl) { try { pickEl.focus({ preventScroll: true }); } catch (e) { pickEl.focus(); } _pmCenterField(pickEl); }
         return;
     }
-    if (!_paymentModalData.tandaId) {
-        if (typeof showToast === 'function') showToast('Error: datos de pago no disponibles', 'error');
-        return;
-    }
+    if (_pmProofFile && _pmProofFile.size > 25 * 1024 * 1024) { _pmShowError('Esa foto es demasiado pesada. Probá con una captura de pantalla.'); return; }
 
-    // Disable button, show loading
-    if (payBtn) { payBtn.disabled = true; payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'; }
-
+    if (payBtn) { payBtn.disabled = true; payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
     var token = localStorage.getItem('auth_token') || localStorage.getItem('authToken') || '';
+    var body = { tanda_id: _paymentModalData.tandaId, amount: Math.round(amount * 100) / 100, payment_method: selected.value };
+    if (paidDate) body.paid_date = paidDate;
+    var ref = refEl ? refEl.value.trim() : '';
+    var note = noteEl ? noteEl.value.trim() : '';
+    if (ref) body.reference = ref;
+    if (note) body.notes = note;
+    var methodLabel = (_PM_METHODS.find(function(m) { return m.v === selected.value; }) || {}).l || selected.value;
 
     fetch('/api/tandas/pay', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            tanda_id: _paymentModalData.tandaId,
-            amount: _paymentModalData.amount,
-            payment_method: selected.value
-        })
+        body: JSON.stringify(body)
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) { return r.json().catch(function() { return { success: false }; }); })
     .then(function(data) {
-        if (data.success) {
-            // Success — show in modal
-            content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-check-circle" style="font-size:3rem;color:#22c55e;"></i><p style="color:#22c55e;font-size:1.1rem;font-weight:600;margin-top:12px;">Pago registrado exitosamente</p><p style="color:#94a3b8;font-size:0.85rem;margin-top:4px;">Metodo: ' + (selected.value === 'wallet' ? 'Billetera' : 'Transferencia') + ' — L. ' + _paymentModalData.amount.toLocaleString('es-HN') + '</p></div>';
-            footer.style.display = 'none';
-            // Auto-close after 2.5s and refresh
-            setTimeout(function() {
-                closePaymentModal();
-                // Refresh groups data
+        if (data && data.success) {
+            var d = data.data || {};
+            var msg = d.message || 'Tu pago quedó registrado y pendiente de que tu coordinador/a lo confirme.';
+            var info = { msg: msg, methodLabel: methodLabel, amount: body.amount, paidDate: paidDate, contributionId: d.contribution_id || (d.payment && d.payment.id) || null, required: proofRequired, proof: 'none' };
+            var refreshAll = function() {
+                window._gsMyTandasCache = null;
                 if (typeof loadMyGroups === 'function') loadMyGroups();
                 if (typeof refreshTandas === 'function') refreshTandas();
                 if (window.advancedGroupsSystem && typeof window.advancedGroupsSystem.refreshTandas === 'function') window.advancedGroupsSystem.refreshTandas();
-            }, 2500);
+            };
+            if (_pmProofFile && info.contributionId) {
+                if (payBtn) payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo foto...';
+                _pmUploadProof(info.contributionId, _pmProofFile).then(function(res) {
+                    info.proof = res.ok ? 'ok' : 'failed';
+                    info.proofError = res.ok ? '' : res.message;
+                    _pmRenderResult(info);
+                    refreshAll();
+                });
+                return;
+            }
+            if (_pmProofFile && !info.contributionId) { info.proof = 'failed'; info.proofError = 'No recibimos el número del pago para ligar la foto. Abrí "Ver mi pago pendiente" y agregala desde ahí.'; }
+            _pmRenderResult(info);
+            refreshAll();
         } else {
-            // Error — show in modal, keep it open
-            var errMsg = (data.data && data.data.error && data.data.error.message) || 'Error al procesar el pago';
-            content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-exclamation-triangle" style="font-size:2.5rem;color:#f59e0b;"></i><p style="color:#f59e0b;font-size:1rem;font-weight:500;margin-top:12px;">' + escapeHtml(errMsg) + '</p></div>';
-            footer.style.display = 'flex';
-            if (payBtn) { payBtn.style.display = 'none'; }
+            var errObj = (data && data.data && data.data.error) || (data && data.error) || {};
+            var errMsg = errObj.message || 'No se pudo registrar el pago.';
+            var errCode = errObj.details && errObj.details.code;
+            // 2026-11-03: sin orden de turnos -> misma vista clara que al abrir (no un error suelto).
+            if (errCode === 'TURNS_NOT_DRAWN' && _paymentModalData.tanda) { _pmRenderNeedsDraw(_paymentModalData.tanda, errMsg); return; }
+            _pmShowError(errMsg);
+            var errEl2 = document.getElementById('pmError');
+            if (errEl2 && errEl2.scrollIntoView) { try { errEl2.scrollIntoView({ block: 'center' }); } catch (e) {} }
+            if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-check"></i> Avisar que ya pagué'; }
         }
     })
-    .catch(function(err) {
-        content.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-times-circle" style="font-size:2.5rem;color:#ef4444;"></i><p style="color:#ef4444;margin-top:12px;">Error de conexion al procesar el pago</p></div>';
-        footer.style.display = 'flex';
-        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-check"></i> Reintentar'; payBtn.style.display = ''; }
+    .catch(function() {
+        _pmShowError('Error de conexión: el pago NO se registró. Revisá tu internet y probá de nuevo.');
+        if (payBtn) { payBtn.disabled = false; payBtn.innerHTML = '<i class="fas fa-redo"></i> Reintentar'; }
     });
 }
 
@@ -1777,51 +2622,72 @@ window.payNow = payNow;
             <h3 style="color:var(--ds-cyan,#00FFFF);font-size:1.1rem;display:flex;align-items:center;gap:8px;margin:0;">
                 <i class="fas fa-user-plus"></i> Invitar Miembros
             </h3>
-            <button onclick="document.getElementById('inviteMembersModal').style.display='none';document.body.style.overflow='';" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;">&times;</button>
+            <button onclick="document.getElementById('inviteMembersModal').style.display='none';document.body.style.overflow='';" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer;">&times;</button>
         </div>
 
+        <div id="inviteFormFields">
         <!-- Method toggle -->
         <div style="display:flex;gap:4px;background:rgba(0,0,0,0.2);border-radius:8px;padding:3px;margin-bottom:16px;">
-            <button id="inviteMethodEmail" class="active" onclick="setInviteMethod('email')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:rgba(0,255,255,0.12);color:#00FFFF;">
+            <button id="inviteMethodEmail" class="active" onclick="setInviteMethod('email')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:rgba(0,255,255,0.12);color:#00d4ff;">
                 <i class="fas fa-envelope"></i> Email
             </button>
-            <button id="inviteMethodPhone" onclick="setInviteMethod('phone')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:transparent;color:#94a3b8;">
+            <button id="inviteMethodPhone" onclick="setInviteMethod('phone')" style="flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;font-family:inherit;background:transparent;color:rgba(255,255,255,0.7);">
                 <i class="fas fa-phone"></i> Telefono
             </button>
         </div>
 
         <!-- Email field -->
         <div id="inviteEmailField" style="margin-bottom:12px;">
-            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Email del invitado</label>
+            <label style="display:block;font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:4px;">Email del invitado</label>
             <input type="email" id="inviteeEmail" placeholder="correo@ejemplo.com" required
                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
         </div>
 
         <!-- Phone field (hidden by default) -->
         <div id="invitePhoneField" style="display:none;margin-bottom:12px;">
-            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Telefono del invitado</label>
+            <label style="display:block;font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:4px;">Telefono del invitado</label>
             <input type="tel" id="inviteePhone" placeholder="+504 9999-9999"
                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
         </div>
 
         <!-- Name -->
         <div style="margin-bottom:12px;">
-            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Nombre (opcional)</label>
+            <label style="display:block;font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:4px;">Nombre (opcional)</label>
             <input type="text" id="inviteeName" placeholder="Nombre del invitado"
                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;">
         </div>
 
         <!-- Message -->
         <div style="margin-bottom:16px;">
-            <label style="display:block;font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Mensaje (opcional)</label>
-            <textarea id="inviteMessage" placeholder="Unete a nuestro grupo de ahorro!" rows="2"
+            <label style="display:block;font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:4px;">Mensaje (opcional)</label>
+            <textarea id="inviteMessage" placeholder="Te invito a mi grupo en La Tanda — mirá los detalles y decidí" rows="2"
                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.9rem;font-family:inherit;resize:vertical;"></textarea>
         </div>
+
+        <!-- Error (honest, never a fake success) -->
+        <div id="inviteErrorMsg" role="alert" style="display:none;margin-bottom:12px;padding:10px 12px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:8px;color:#fca5a5;font-size:0.85rem;"></div>
 
         <!-- Submit -->
         <button id="inviteSubmitBtn" onclick="submitInvite()" style="width:100%;padding:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;">
             <i class="fas fa-paper-plane"></i> Enviar Invitacion
         </button>
+        </div><!-- /inviteFormFields -->
+
+        <!-- Success: real invitation link + share (hidden until created) -->
+        <div id="inviteSuccessBox" style="display:none;">
+            <div style="text-align:center;margin-bottom:12px;color:#22d55e;font-size:0.95rem;font-weight:600;"><i class="fas fa-check-circle"></i> Invitacion creada</div>
+            <label style="display:block;font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:4px;">Link de invitacion</label>
+            <input type="text" id="inviteLinkField" readonly onclick="this.select();"
+                style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f8fafc;font-size:0.82rem;font-family:inherit;word-break:break-all;margin-bottom:12px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" id="inviteCopyBtn" onclick="inviteCopyLink()"
+                    style="flex:1;min-width:120px;min-height:44px;padding:12px;background:rgba(255,255,255,0.1);color:#f8fafc;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><i class="fas fa-copy"></i> Copiar</button>
+                <button type="button" onclick="inviteShareWhatsApp()"
+                    style="flex:1;min-width:120px;min-height:44px;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px;"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+            </div>
+            <button type="button" onclick="resetInviteForm()"
+                style="width:100%;margin-top:10px;min-height:44px;padding:12px;background:none;color:#00d4ff;border:none;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Invitar a otra persona</button>
+        </div>
 
         <!-- Pending invitations list -->
         <div id="invitePendingList" style="margin-top:16px;"></div>
